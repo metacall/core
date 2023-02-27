@@ -44,16 +44,35 @@ sub_swig() {
 
 # Python
 sub_python() {
-	echo "configuring python"
-	brew install python3 python3-pip
+    echo "configuring python"
+	brew install pyenv openssl
+	export PKG_CONFIG_PATH=$(brew --prefix openssl)/lib/pkgconfig
+	export PYTHON_CONFIGURE_OPTS="--enable-shared"
+	pyenv install 3.11.1
+	pyenv global 3.11.1
+	pyenv rehash
+	echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+	source ~/.bash_profile
+	which python3
 	pip3 install requests
-	pip3 install setuptools
-	pip3 install wheel
-	pip3 install rsa
-	pip3 install scipy
-	pip3 install numpy
-	pip3 install joblib
-	pip3 install scikit-learn
+    pip3 install setuptools
+    pip3 install wheel
+    pip3 install rsa
+    pip3 install scipy
+    pip3 install numpy
+    pip3 install joblib
+    pip3 install scikit-learn
+	# TODO: We should look for a better way to do this
+	FINDPYTHON="$HOME/work/core/core/cmake/FindPython.cmake"
+	echo "set(Python_INCLUDE_DIRS \"$HOME/.pyenv/versions/3.11.1/include/python3.11\")" >> $FINDPYTHON
+	echo "set(Python_LIBRARY \"$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib\")" >> $FINDPYTHON
+	echo "set(Python_EXECUTABLE \"$HOME/.pyenv/versions/3.11.1/bin/python3.11\")" >> $FINDPYTHON
+	echo "set(Python_ROOT \"$HOME/.pyenv/versions/3.11.1\")" >> $FINDPYTHON
+	echo "set(Python_VERSION \"3.11.1\")" >> $FINDPYTHON
+	echo "include(FindPackageHandleStandardArgs)" >> $FINDPYTHON
+	echo "find_package_handle_standard_args(Python DEFAULT_MSG Python_INCLUDE_DIRS Python_LIBRARY Python_EXECUTABLE Python_ROOT Python_VERSION)" >> $FINDPYTHON
+	echo "mark_as_advanced(Python_INCLUDE_DIRS Python_LIBRARY Python_EXECUTABLE Python_ROOT Python_VERSION)" >> $FINDPYTHON
+
 }
 
 # NodeJS
