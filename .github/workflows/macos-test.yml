@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
     branches:
       - master
       - develop
@@ -18,11 +18,11 @@ jobs:
     strategy:
       matrix:
         buildtype: [debug] # TODO: [debug, release]
-    
+
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
-      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
     steps:
       - name: Check out the repository
@@ -30,13 +30,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Uninstall NodeJS and NPM 
+      - name: Uninstall NodeJS and NPM
         run: |
           npm uninstall npm -g
           rm -rf /usr/local/lib/node_modules/npm
 
         # TODO: This must go in metacall-environment-macos.sh as base dependencies
-      - name: Configure Clang 
+      - name: Configure Clang
         run: |
           brew install llvm cmake git wget gnupg ca-certificates
 
@@ -57,7 +57,12 @@ jobs:
         working-directory: ./build
         # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
-          cmake -DOPTION_FORK_SAFE=OFF ..
+          cmake -DOPTION_FORK_SAFE=OFF \
+             -DPython_INCLUDE_DIRS="$HOME/.pyenv/versions/3.11.1/include/python3.11" \
+             -DPython_LIBRARY="$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" \
+             -DPython_EXECUTABLE="$HOME/.pyenv/versions/3.11.1/bin/python3.11" \
+             -DPython_ROOT="$HOME/.pyenv/versions/3.11.1" \
+             -DPython_VERSION="3.11.1" ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} tests

@@ -62,16 +62,6 @@ sub_python() {
     pip3 install numpy
     pip3 install joblib
     pip3 install scikit-learn
-	# TODO: We should look for a better way to do this
-	FINDPYTHON="$HOME/work/core/core/cmake/FindPython.cmake"
-	echo "set(Python_INCLUDE_DIRS \"$HOME/.pyenv/versions/3.11.1/include/python3.11\")" >> $FINDPYTHON
-	echo "set(Python_LIBRARY \"$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib\")" >> $FINDPYTHON
-	echo "set(Python_EXECUTABLE \"$HOME/.pyenv/versions/3.11.1/bin/python3.11\")" >> $FINDPYTHON
-	echo "set(Python_ROOT \"$HOME/.pyenv/versions/3.11.1\")" >> $FINDPYTHON
-	echo "set(Python_VERSION \"3.11.1\")" >> $FINDPYTHON
-	echo "include(FindPackageHandleStandardArgs)" >> $FINDPYTHON
-	echo "find_package_handle_standard_args(Python DEFAULT_MSG Python_INCLUDE_DIRS Python_LIBRARY Python_EXECUTABLE Python_ROOT Python_VERSION)" >> $FINDPYTHON
-	echo "mark_as_advanced(Python_INCLUDE_DIRS Python_LIBRARY Python_EXECUTABLE Python_ROOT Python_VERSION)" >> $FINDPYTHON
 
 }
 
