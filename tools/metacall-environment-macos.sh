@@ -44,8 +44,16 @@ sub_swig() {
 
 # Python
 sub_python() {
-	echo "configuring python"
-	brew install python3 python3-pip
+    echo "configuring python"
+	brew install pyenv openssl
+	export PKG_CONFIG_PATH=$(brew --prefix openssl)/lib/pkgconfig
+	export PYTHON_CONFIGURE_OPTS="--enable-shared"
+	pyenv install 3.11.1
+	pyenv global 3.11.1
+	pyenv rehash
+	echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+	source ~/.bash_profile
+	which python3
 	pip3 install requests
 	pip3 install setuptools
 	pip3 install wheel
