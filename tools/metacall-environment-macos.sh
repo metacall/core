@@ -55,14 +55,13 @@ sub_python() {
 	source ~/.bash_profile
 	which python3
 	pip3 install requests
-    pip3 install setuptools
-    pip3 install wheel
-    pip3 install rsa
-    pip3 install scipy
-    pip3 install numpy
-    pip3 install joblib
-    pip3 install scikit-learn
-
+	pip3 install setuptools
+	pip3 install wheel
+	pip3 install rsa
+	pip3 install scipy
+	pip3 install numpy
+	pip3 install joblib
+	pip3 install scikit-learn
 }
 
 # NodeJS
