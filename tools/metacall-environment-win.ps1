@@ -150,6 +150,9 @@ function Add-EnvPath {
 #configure
 
 function configure {
+	# Create option variables file 
+	mkdir "$ROOT_DIR\build"
+	New-Item -Path "$ROOT_DIR\build\env_vars.txt"
 	for ($i = 0; $i -lt $Arguments.Length; $i++) {
 		$var = $Arguments[$i]
 		if ( "$var" -eq 'python' ) {
