@@ -56,7 +56,7 @@ function sub-build {
 
 		# Prerequisites
 		$files = @(
-			".\runtimes\nodejs\lib\libnode.dll",
+			"C:\Program Files\nodejs\lib\libnode.dll",
 			".\runtimes\ruby\bin\x64-vcruntime140-ruby310.dll"
 		)
 
