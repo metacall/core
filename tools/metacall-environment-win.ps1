@@ -106,7 +106,7 @@ function Set-Nodejs {
 	$Env_Opts = "$ROOT_DIR\build\env_vars.txt"
 	Write-Output "-DNodeJS_VERSION=""$NodeVersion""" >> $Env_Opts
 	Write-Output "-DNodeJS_INCLUDE_DIRS=""$NodeDir/include/node""" >> $Env_Opts
-	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.dll""" >> $Env_Opts
+	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.lib""" >> $Env_Opts
 	Write-Output "-DNodeJS_EXECUTABLE=""$NodeDir/node.exe""" >> $Env_Opts
 	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $Env_Opts
 }
