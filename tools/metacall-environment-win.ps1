@@ -30,8 +30,8 @@ function Set-Python {
 		Include_debug=1 Include_symbols=1 PrependPath=1 CompileAll=1
 
 	# Set environment variables
-	Add-EnvPath $RuntimeDir User
-	Add-EnvPath "$RuntimeDir\Scripts" User
+	Add-to-Path $RuntimeDir
+	Add-to-Path "$RuntimeDir\Scripts"
 	[Environment]::SetEnvironmentVariable("PIP_TARGET", "$RuntimeDir\Lib")
 
 	# No patch, save vars for later use
@@ -85,7 +85,8 @@ function Set-Nodejs {
 
 	msiexec.exe /quiet /i "$DepsDir\node.msi" 
 
-	Add-EnvPath $RuntimeDir "User"
+	Add-to-Path $RuntimeDir
+	Add-to-Path "$RuntimeDir\include"
 
 	cmake -E tar xzf node_headers.tar.gz
 
@@ -109,6 +110,23 @@ function Set-Nodejs {
 	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.lib""" >> $Env_Opts
 	Write-Output "-DNodeJS_EXECUTABLE=""$NodeDir/node.exe""" >> $Env_Opts
 	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $Env_Opts
+}
+
+function Add-to-Path {
+	$GivenPath = $args[0]
+
+	$NewPath = "$GivenPath;$Env:PATH"
+	setx /M PATH $NewPath
+	$Env:PATH = $NewPath
+
+	if ( $Null -ne $Env:GITHUB_ENV ) {
+		Write-Output "PATH=$Env:PATH" >> $Env:GITHUB_ENV
+		# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
+	}
+
+	refreshenv
+
+	Write-Output "PATH:: " $Env:PATH
 }
 
 function Add-EnvPath {
