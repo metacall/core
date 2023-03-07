@@ -42,7 +42,7 @@ function Set-Python {
 	Write-Output "-DPython_ROOT_DIR=""$PythonRuntimeDir""" >> $Env_Opts
 	Write-Output "-DPython_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $Env_Opts
 	Write-Output "-DPython_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $Env_Opts
-	Write-Output "-DPython_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib $PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
+	Write-Output "-DPython_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
 
 	$FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
 
