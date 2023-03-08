@@ -10,7 +10,7 @@ function Set-Python {
 	Set-Location $ROOT_DIR
 
 	$PythonVersion = '3.9.7'
-	$RuntimeDir    = "C:\python"
+	$RuntimeDir    = "$env:ProgramFiles\python"
 	$DepsDir       = "$ROOT_DIR\dependencies"
 
 	mkdir -Force $DepsDir
@@ -67,7 +67,7 @@ function Set-Nodejs {
 	$DepsDir = "$ROOT_DIR\dependencies"
 	$NodeVersion = "14.18.2"
 	$DLLReleaseVer = "v0.0.1"
-	$RuntimeDir    = "C:\Program Files\nodejs"
+	$RuntimeDir    = "$env:ProgramFiles\nodejs"
 
 	Set-Location $DepsDir
 
@@ -112,12 +112,36 @@ function Set-Nodejs {
 	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $Env_Opts
 }
 
+function Set-Java {
+		Write-Output "Setting up Java..."
+		$JAVA_VERSION = "17.0.5"
+		$RuntimeDir = "$env:ProgramFiles\openjdk"
+		$DepsDir = "$ROOT_DIR\dependencies"
+
+		Set-Location $DepsDir
+
+		if (!(Test-Path -Path "$DepsDir\openjdk.zip")) {
+			# Download installer
+			Write-Output "OpenJDK not found downloading now..."
+			(New-Object Net.WebClient).DownloadFile("https://aka.ms/download-jdk/microsoft-jdk-$JAVA_VERSION-windows-x64.zip", "$DepsDir\openjdk.zip")
+		}
+
+		Expand-Archive -Path "openjdk.zip" -DestinationPath "$RuntimeDir"
+		robocopy /move /e "$RuntimeDir\jdk-$JAVA_VERSION+8" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
+
+		Add-to-Path "JAVA_HOME=$RuntimeDir"
+		Add-to-Path "$RuntimeDir\bin"
+		Add-to-Path "$RuntimeDir\bin\server"
+}
+
 function Add-to-Path {
 	$GivenPath = $args[0]
 
 	$NewPath = "$GivenPath;$Env:PATH"
 	setx /M PATH $NewPath
 	$Env:PATH = $NewPath
+
+	$GivenPath >> $env:GITHUB_PATH
 
 	if ( $Null -ne $Env:GITHUB_ENV ) {
 		Write-Output "PATH=$Env:PATH" >> $Env:GITHUB_ENV
@@ -129,41 +153,6 @@ function Add-to-Path {
 	Write-Output "PATH:: " $Env:PATH
 }
 
-function Add-EnvPath {
-    param(
-        [Parameter(Mandatory=$true)]
-        [string] $Path,
-
-        [ValidateSet('Machine', 'User', 'Session')]
-        [string] $Container = 'Session'
-    )
-
-    if ($Container -ne 'Session') {
-        $containerMapping = @{
-            Machine = [EnvironmentVariableTarget]::Machine
-            User = [EnvironmentVariableTarget]::User
-        }
-        $containerType = $containerMapping[$Container]
-
-        $persistedPaths = [Environment]::GetEnvironmentVariable('Path', $containerType) -split ';'
-        if ($persistedPaths -notcontains $Path) {
-            $persistedPaths = $persistedPaths + $Path | Where-Object { $_ }
-            [Environment]::SetEnvironmentVariable('Path', $persistedPaths -join ';', $containerType)
-        }
-    }
-
-    $envPaths = $env:Path -split ';'
-    if ($envPaths -notcontains $Path) {
-        $envPaths = $envPaths + $Path | Where-Object { $_ }
-        $env:Path = $envPaths -join ';'
-    }
-
-	# For Github
-	if ( $Null -ne $Env:GITHUB_ENV ) {
-		Write-Output "PATH=$env:Path" >> $Env:GITHUB_ENV
-		# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
-	}
-}
 
 #configure
 
@@ -231,6 +220,7 @@ function configure {
 		}
 		if ( "$var" -eq 'java' ) {
 			Write-Output "java selected"
+			Set-Java
 		}
 		if ( "$var" -eq 'c' ) {
 			Write-Output "c selected"
