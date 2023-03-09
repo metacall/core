@@ -40,6 +40,7 @@ if(NOT OPTION_BUILD_GUIX)
 	# Dependencies
 	add_custom_target(${target}_depends
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+		COMMAND ${CMAKE_COMMAND} -E echo "Installing ${target} dependencies"
 		COMMAND ${NPM_EXECUTABLE} install
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
 	)
@@ -54,10 +55,22 @@ if(NOT OPTION_BUILD_GUIX)
 	add_custom_target(${target}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 		COMMAND ${NPM_EXECUTABLE} run build
-		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript ${PROJECT_OUTPUT_DIR}/node_modules/typescript
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${PROJECT_OUTPUT_DIR}/bootstrap.ts
 		SOURCES ${sources}
 		DEPENDS ${sources}
+	)
+
+	add_custom_target(${target}_copy_depends
+		COMMAND ${CMAKE_COMMAND} -E echo "Copying ${target} dependencies"
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript ${PROJECT_OUTPUT_DIR}/node_modules/typescript
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${PROJECT_OUTPUT_DIR}/bootstrap.ts
+		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_SOURCE_DIR}/node_modules to ${PROJECT_OUTPUT_DIR}/node_modules"
+		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
+	)
+
+	set_target_properties(${target}_copy_depends
+		PROPERTIES
+		${DEFAULT_PROJECT_OPTIONS}
+		FOLDER "${IDE_FOLDER}"
 	)
 
 	set_target_properties(${target}
@@ -66,11 +79,12 @@ if(NOT OPTION_BUILD_GUIX)
 		FOLDER "${IDE_FOLDER}"
 	)
 
-	add_dependencies(${target} ${target}_depends)
+	add_dependencies(${target}_copy_depends ${target}_depends)
+	add_dependencies(${target} ${target}_depends ${target}_copy_depends)
 
 	# Test
 	add_test(NAME ${target}
-		COMMAND ${NPM_EXECUTABLE} test
+		COMMAND ${NPM_EXECUTABLE} run test
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 	)
 
