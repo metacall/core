@@ -59,9 +59,7 @@ if(NOT OPTION_BUILD_GUIX)
 		DEPENDS ${sources}
 	)
 
-	add_dependencies(${target} ${target}_depends)
-
-	# Copy Dependencies
+	# Copy Dependencies & Build Output
 	add_custom_target(${target}_copy_depends
 		COMMAND ${CMAKE_COMMAND} -E echo "Copying ${target} dependencies"
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/node_modules
@@ -77,8 +75,8 @@ if(NOT OPTION_BUILD_GUIX)
 		FOLDER "${IDE_FOLDER}"
 	)
 
-	add_dependencies(${target}_copy_depends ${target}_depends)
-	add_dependencies(${target} ${target}_depends ${target}_copy_depends)
+	add_dependencies(${target}_copy_depends ${target}_depends ${target})
+	add_dependencies(${target} ${target}_depends)
 
 	# Test
 	add_test(NAME ${target}
