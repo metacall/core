@@ -305,7 +305,8 @@ function sub-nodejs {
 # TypeScript
 function sub-typescript {
 	echo "configure typescript"
-	
+	npm i react@latest -g
+	npm i react-dom@latest -g
 }
 
 # File
