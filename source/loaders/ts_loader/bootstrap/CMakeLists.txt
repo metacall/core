@@ -33,13 +33,13 @@ if(NOT OPTION_BUILD_GUIX)
 
 	if(NOT NPM_FOUND)
 		message(SEND_ERROR "NPM not found")
-		set(OPTION_BUILD_LOADERS_TS OFF CACHE BOOL)
 		return()
 	endif()
 
 	# Dependencies
 	add_custom_target(${target}_depends
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+		COMMAND ${CMAKE_COMMAND} -E echo "Installing ${target} dependencies"
 		COMMAND ${NPM_EXECUTABLE} install
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
 	)
