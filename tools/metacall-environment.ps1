@@ -109,6 +109,7 @@ function Set-Nodejs {
 	Write-Output "-DNodeJS_INCLUDE_DIRS=""$NodeDir/include/node""" >> $Env_Opts
 	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.lib""" >> $Env_Opts
 	Write-Output "-DNodeJS_EXECUTABLE=""$NodeDir/node.exe""" >> $Env_Opts
+	Write-Output "-DNPM_EXECUTABLE=""$NodeDir/npm.cmd""" >> $Env_Opts
 	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $Env_Opts
 }
 
