@@ -433,7 +433,7 @@ sub_metacall(){
 	elif [ INSTALL_NETCORE5 = 1 ]; then
 		NETCORE_VERSION=5.0.17
 	elif [ INSTALL_NETCORE7 = 1 ]; then
-		NETCORE_VERSION=7.0.3
+		NETCORE_VERSION=7.0.4
 	else
 		NETCORE_VERSION=0
 	fi

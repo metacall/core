@@ -149,7 +149,7 @@ sub_netcore7(){
 	rm packages-microsoft-prod.deb
 
 	$SUDO_CMD apt-get update
-	sub_apt_install_hold dotnet-runtime-7.0=7.0.3-1
+	sub_apt_install_hold dotnet-runtime-7.0=7.0.4-1
 }
 
 # V8
