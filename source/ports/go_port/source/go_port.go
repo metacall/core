@@ -89,7 +89,7 @@ type awaitCallbacks struct {
 	ctx     interface{}
 }
 
-const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
+const PtrSizeInBytes = (32 << (^uintptr(0) >> 63)) >> 3
 
 var (
 	queue  = make(chan interface{}, 1) // Queue for dispatching the work
@@ -141,25 +141,17 @@ func Initialize() error {
 			case w := <-queue:
 				switch v := w.(type) {
 				case loadFromFileSafeWork:
-					{
-						err := LoadFromFileUnsafe(v.tag, v.scripts)
-						v.err <- err
-					}
+					err := LoadFromFileUnsafe(v.tag, v.scripts)
+					v.err <- err
 				case loadFromMemorySafeWork:
-					{
-						err := LoadFromMemoryUnsafe(v.tag, v.buffer)
-						v.err <- err
-					}
+					err := LoadFromMemoryUnsafe(v.tag, v.buffer)
+					v.err <- err
 				case callSafeWork:
-					{
-						value, err := CallUnsafe(v.function, v.args...)
-						v.ret <- callReturnSafeWork{value, err}
-					}
+					value, err := CallUnsafe(v.function, v.args...)
+					v.ret <- callReturnSafeWork{value, err}
 				case awaitSafeWork:
-					{
-						value, err := AwaitUnsafe(v.function, v.resolve, v.reject, v.ctx, v.args...)
-						v.ret <- callReturnSafeWork{value, err}
-					}
+					value, err := AwaitUnsafe(v.function, v.resolve, v.reject, v.ctx, v.args...)
+					v.ret <- callReturnSafeWork{value, err}
 				}
 				wg.Done()
 			}
@@ -222,7 +214,7 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 	}
 
 	defer func() {
-		for index, _ := range args {
+		for index := range args {
 			C.metacall_value_destroy(*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes)))
 		}
 
@@ -291,7 +283,7 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 	}
 
 	defer func() {
-		for index, _ := range args {
+		for index := range args {
 			C.metacall_value_destroy(*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes)))
 		}
 
@@ -362,66 +354,62 @@ func getFunction(function string) (unsafe.Pointer, error) {
 }
 
 func goToValue(arg interface{}, ptr *unsafe.Pointer) {
-	// Create int
-	if i, ok := arg.(int); ok {
-		*ptr = C.metacall_value_create_int((C.int)(i))
-	}
-
-	// Create float32
-	if i, ok := arg.(float32); ok {
-		*ptr = C.metacall_value_create_float((C.float)(i))
-	}
-
-	// Create float64
-	if i, ok := arg.(float64); ok {
-		*ptr = C.metacall_value_create_double((C.double)(i))
-	}
-
-	// Create string
-	if str, ok := arg.(string); ok {
-		cStr := C.CString(str)
+	switch v := arg.(type) {
+	case bool:
+		if v {
+			*ptr = C.metacall_value_create_bool(C.int(1))
+		} else {
+			*ptr = C.metacall_value_create_bool(C.int(0))
+		}
+	case int:
+		*ptr = C.metacall_value_create_int(C.int(v))
+	case int16:
+		*ptr = C.metacall_value_create_short(C.short(v))
+	case int32:
+		*ptr = C.metacall_value_create_long(C.long(v))
+	case float32:
+		*ptr = C.metacall_value_create_float(C.float(v))
+	case float64:
+		*ptr = C.metacall_value_create_double(C.double(v))
+	case byte:
+		*ptr = C.metacall_value_create_char(C.char(v))
+	case string:
+		cStr := C.CString(v)
 		defer C.free(unsafe.Pointer(cStr))
-		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
+		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(v)))
 	}
-
 	// TODO: Add more types
 }
 
 func valueToGo(value unsafe.Pointer) interface{} {
 	switch C.metacall_value_id(value) {
+	case C.METACALL_BOOL:
+		return int(C.metacall_value_to_bool(value)) != 0
 	case C.METACALL_INT:
-		{
-			return int(C.metacall_value_to_int(value))
-		}
-
+		return int(C.metacall_value_to_int(value))
+	case C.METACALL_SHORT:
+		return int16(C.metacall_value_to_short(value))
+	case C.METACALL_LONG:
+		return int32(C.metacall_value_to_long(value))
 	case C.METACALL_FLOAT:
-		{
-			return float32(C.metacall_value_to_float(value))
-		}
-
+		return float32(C.metacall_value_to_float(value))
 	case C.METACALL_DOUBLE:
-		{
-			return float64(C.metacall_value_to_double(value))
-		}
-
+		return float64(C.metacall_value_to_double(value))
+	case C.METACALL_CHAR:
+		return byte(C.metacall_value_to_char(value))
 	case C.METACALL_STRING:
-		{
-			return C.GoString(C.metacall_value_to_string(value))
-		}
+		return C.GoString(C.metacall_value_to_string(value))
 	case C.METACALL_ARRAY:
-		{
-			arrayValue := C.metacall_value_to_array(value)
-			arraySize := C.metacall_value_count(value)
-			array := make([]interface{}, arraySize)
+		arrayValue := C.metacall_value_to_array(value)
+		arraySize := C.metacall_value_count(value)
+		array := make([]interface{}, arraySize)
 
-			for iterator := C.size_t(0); iterator < arraySize; iterator++ {
-				currentValue := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(arrayValue))+uintptr(iterator*PtrSizeInBytes)))
-				array[iterator] = valueToGo(*currentValue)
-			}
-
-			return array
+		for iterator := C.size_t(0); iterator < arraySize; iterator++ {
+			currentValue := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(arrayValue)) + uintptr(iterator*PtrSizeInBytes)))
+			array[iterator] = valueToGo(*currentValue)
 		}
 
+		return array
 		// TODO: Add more types
 	}
 	return nil
