@@ -754,7 +754,7 @@ The following platforms and architectures have been tested an work correctly wit
 
 ### 7.1 Docker Support
 
-To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bookworm-slim` for `amd64` architecture.
+To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bullseye-slim` for `amd64` architecture.
 
 For pulling the **METACALL** `latest` image containing the runtime, use:
 
