@@ -76,7 +76,6 @@ sub_java(){
 	brew install openjdk@19
 }
 
-
 sub_install()
 {
 	if [ $INSTALL_PYTHON = 1 ]; then
