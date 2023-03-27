@@ -50,6 +50,7 @@ option(OPTION_BUILD_PORTS_TS	"Build TypeScript port."		OFF)
 add_subdirectory(cxx_port)
 add_subdirectory(node_port)
 add_subdirectory(py_port)
+add_subdirectory(go_port)
 add_subdirectory(rs_port)
 
 #
