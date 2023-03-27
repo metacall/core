@@ -70,6 +70,11 @@ sub_nodejs(){
 	brew install node make npm curl python3
 }
 
+# Java
+sub_java(){
+	echo "configuring java"
+	brew install openjdk@19
+}
 
 sub_install()
 {
@@ -78,6 +83,9 @@ sub_install()
 	fi
 	if [ $INSTALL_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $INSTALL_JAVA = 1 ]; then
+		sub_java
 	fi
 }
 
