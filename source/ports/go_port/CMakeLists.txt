@@ -15,6 +15,11 @@ set(target go_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
+set(CMAKE_CGO_FLAGS
+	CGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -Wall"
+	CGO_LDFLAGS="-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>"
+)
+
 add_go_library(${target} SHARED
 	source/await.go
 	source/pointer.go
