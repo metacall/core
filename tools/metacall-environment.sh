@@ -63,7 +63,7 @@ PROGNAME=$(basename $0)
 # Operative System detection
 case "$(uname -s)" in
 	Linux*)		OPERATIVE_SYSTEM=Linux;;
-	Darwin*)	OPERATIVE_SYSTEM=Mac;;
+	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
 	*)			OPERATIVE_SYSTEM="Unknown"
