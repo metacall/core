@@ -35,15 +35,10 @@ jobs:
           npm uninstall npm -g
           rm -rf /usr/local/lib/node_modules/npm
 
-        # TODO: This must go in metacall-environment-macos.sh as base dependencies
-      - name: Configure Clang
-        run: |
-          brew install llvm cmake git wget gnupg ca-certificates
-
       - name: Set up the environment
-        run: sh ./tools/metacall-environment-macos.sh $METACALL_INSTALL_OPTIONS
+        run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: python nodejs java # ruby netcore5 typescript file rpc wasm c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: base python nodejs java # ruby netcore5 typescript file rpc wasm c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |

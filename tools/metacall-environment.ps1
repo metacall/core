@@ -226,6 +226,9 @@ function Configure {
 		if ( "$var" -eq 'cobol' ) {
 			Write-Output "cobol selected"
 		}
+		if ( "$var" -eq 'go' ) {
+			Write-Output "go selected"
+		}
 		if ( "$var" -eq 'swig' ) {
 			Write-Output "swig selected"
 		}
@@ -268,6 +271,7 @@ function Help {
 	Write-Output "	java"
 	Write-Output "	c"
 	Write-Output "	cobol"
+	Write-Output "	go"
 	Write-Output "	swig"
 	Write-Output "	metacall"
 	Write-Output "	pack"
