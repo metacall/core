@@ -167,9 +167,6 @@ function Configure {
 		if ( "$var" -eq 'ruby' ) {
 			Write-Output "ruby selected"
 		}
-		if ( "$var" -eq 'rust' ) {
-			Write-Output "rust selected"
-		}
 		if ( "$var" -eq 'netcore' ) {
 			Write-Output "netcore selected"
 		}
@@ -228,6 +225,9 @@ function Configure {
 		}
 		if ( "$var" -eq 'go' ) {
 			Write-Output "go selected"
+		}
+		if ( "$var" -eq 'rust' ) {
+			Write-Output "rust selected"
 		}
 		if ( "$var" -eq 'swig' ) {
 			Write-Output "swig selected"

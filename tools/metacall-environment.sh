@@ -28,7 +28,6 @@ APT_CACHE_CMD=""
 INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
-INSTALL_RUST=0
 INSTALL_RAPIDJSON=0
 INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
@@ -51,6 +50,7 @@ INSTALL_JAVA=0
 INSTALL_C=0
 INSTALL_COBOL=0
 INSTALL_GO=0
+INSTALL_RUST=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
 INSTALL_PACK=0
@@ -172,17 +172,6 @@ sub_ruby(){
 		#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
 		#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
 		#$SUDO_CMD gem install rails
-	fi
-}
-
-# Rust
-sub_rust(){
-	echo "configure rust"
-	cd $ROOT_DIR
-
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
-		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 	fi
 }
 
@@ -502,6 +491,17 @@ sub_go(){
 	fi
 }
 
+# Rust
+sub_rust(){
+	echo "configure rust"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
+		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+	fi
+}
+
 # MetaCall
 sub_metacall(){
 	# TODO: Update this or deprecate it
@@ -625,9 +625,6 @@ sub_install(){
 	if [ $INSTALL_RUBY = 1 ]; then
 		sub_ruby
 	fi
-	if [ $INSTALL_RUST = 1 ]; then
-		sub_rust
-	fi
 	if [ $INSTALL_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
@@ -679,6 +676,9 @@ sub_install(){
 	if [ $INSTALL_GO = 1 ]; then
 		sub_go
 	fi
+	if [ $INSTALL_RUST = 1 ]; then
+		sub_rust
+	fi
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
 	fi
@@ -721,10 +721,6 @@ sub_options(){
 		if [ "$var" = 'ruby' ]; then
 			echo "ruby selected"
 			INSTALL_RUBY=1
-		fi
-		if [ "$var" = 'rust' ]; then
-			echo "rust selected"
-			INSTALL_RUST=1
 		fi
 		if [ "$var" = 'netcore' ]; then
 			echo "netcore selected"
@@ -810,6 +806,10 @@ sub_options(){
 		if [ "$var" = 'go' ]; then
 			echo "go selected"
 			INSTALL_GO=1
+		fi
+		if [ "$var" = 'rust' ]; then
+			echo "rust selected"
+			INSTALL_RUST=1
 		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
