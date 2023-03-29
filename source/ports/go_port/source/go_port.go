@@ -26,6 +26,11 @@ package metacall
 
 #include <metacall/metacall.h>
 
+// TODO: Sanitizer
+// #if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__) || defined(__UB_SANITIZER__)
+// void __lsan_do_leak_check(void);
+// #endif
+
 // Since main.go has //export directives we can't place function definitions in
 // it - we'll get multiple definition errors from the linker (see
 // https://golang.org/cmd/cgo/#hdr-C_references_to_Go for more on this
@@ -100,6 +105,9 @@ var (
 )
 
 func InitializeUnsafe() error {
+	// TODO: Sanitizer
+	// C.__lsan_do_leak_check()
+
 	// TODO: Remove this once go loader is implemented
 	if result := int(C.metacall_initialize()); result != 0 {
 		return fmt.Errorf("initializing MetaCall (error code %d)", result)

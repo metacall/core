@@ -30,6 +30,11 @@ add_go_library(${target} SHARED
 # Define test
 #
 
+if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
+	# TODO: Not implemented (https://go.googlesource.com/go/+/go1.7/misc/cgo/testsanitizers/test.bash)
+	return()
+endif()
+
 include(Portability)
 
 add_test(NAME ${target}
@@ -40,6 +45,7 @@ add_test(NAME ${target}
 		-DCGO_LDFLAGS="-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>"
 		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
 		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
+		-DSANITIZER_COMPILE_DEFINITIONS=${SANITIZER_COMPILE_DEFINITIONS}
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/test.cmake
 )
 
