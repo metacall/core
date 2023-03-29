@@ -30,9 +30,17 @@ add_go_library(${target} SHARED
 # Define test
 #
 
+include(Portability)
+
 add_test(NAME ${target}
-	COMMAND go test
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/source
+	COMMAND ${CMAKE_COMMAND}
+		-DGOPATH="${GOPATH}"
+		-DCMAKE_Go_COMPILER="${CMAKE_Go_COMPILER}"
+		-DCGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include -Wall"
+		-DCGO_LDFLAGS="-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>"
+		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
+		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
+		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/test.cmake
 )
 
 #
@@ -41,4 +49,11 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
 )

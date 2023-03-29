@@ -1,4 +1,5 @@
 set(GOPATH "${CMAKE_CURRENT_BINARY_DIR}/go")
+set(GOPATH "${GOPATH}" PARENT_SCOPE)
 file(MAKE_DIRECTORY ${GOPATH})
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeDetermineGoCompiler.cmake)
