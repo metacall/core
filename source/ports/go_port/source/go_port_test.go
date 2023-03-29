@@ -3,8 +3,10 @@ package metacall
 import (
 	"log"
 	"os"
+	"reflect"
 	"sync"
 	"testing"
+	"unsafe"
 )
 
 func TestMain(m *testing.M) {
@@ -13,12 +15,12 @@ func TestMain(m *testing.M) {
 	}
 
 	// if benchmark {
-		buffer := "module.exports = { benchmark: async x => x }"
+	buffer := "module.exports = { benchmark: async x => x }"
 
-		if err := LoadFromMemory("node", buffer); err != nil {
-			log.Fatal(err)
-			return
-		}
+	if err := LoadFromMemory("node", buffer); err != nil {
+		log.Fatal(err)
+		return
+	}
 	// }
 
 	code := m.Run()
@@ -121,6 +123,67 @@ func TestNodeJSAwait(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		input interface{}
+		want  interface{}
+	}{
+		{"null", nil, nil},
+		{"bool_true", true, true},
+		{"bool_false", false, false},
+		{"char", byte('H'), byte('H')},
+		{"char_min", byte(127), byte(127)},
+		{"char_max", byte(128), byte(128)},
+		{"short", int16(1), int16(1)},
+		{"short_min", int16(-32768), int16(-32768)},
+		{"short_max", int16(32767), int16(32767)},
+		{"int", int(1), int(1)},
+		{"int_min", int(-2147483648), int(-2147483648)},
+		{"int_max", int(2147483647), int(2147483647)},
+		{"long", int64(3), int64(3)},
+		{"long_min", int64(-9223372036854775808), int64(-9223372036854775808)},
+		{"long_max", int64(9223372036854775807), int64(9223372036854775807)},
+		{"float", float32(1.0), float32(1.0)},
+		{"float_min", float32(1.2e-38), float32(1.2e-38)},
+		{"float_max", float32(3.4e+38), float32(3.4e+38)},
+		{"double", float64(1.0), float64(1.0)},
+		{"double_min", float64(2.3e-308), float64(2.3e-308)},
+		{"double_max", float64(1.7e+308), float64(1.7e+308)},
+		{"string", "hello", "hello"},
+		{"array", [3]interface{}{1, 2, 3}, []interface{}{1, 2, 3}},
+		{"array_bool", [3]bool{true, false, true}, []interface{}{true, false, true}},
+		{"array_char", [3]byte{'1', '2', '3'}, []interface{}{byte('1'), byte('2'), byte('3')}},
+		{"array_short", [3]int16{1, 2, 3}, []interface{}{int16(1), int16(2), int16(3)}},
+		{"array_int", [3]int{1, 2, 3}, []interface{}{int(1), int(2), int(3)}},
+		{"array_float", [3]float32{1.0, 2.0, 3.0}, []interface{}{float32(1.0), float32(2.0), float32(3.0)}},
+		{"array_double", [3]float64{1.0, 2.0, 3.0}, []interface{}{float64(1.0), float64(2.0), float64(3.0)}},
+		{"array_string", [3]string{"1", "2", "3"}, []interface{}{"1", "2", "3"}},
+		{"slice", []interface{}{1, 2, 3}, []interface{}{1, 2, 3}},
+		{"slice_bool", []bool{true, false, true}, []interface{}{true, false, true}},
+		{"slice_char", []byte{'1', '2', '3'}, []interface{}{byte('1'), byte('2'), byte('3')}},
+		{"slice_short", []int16{1, 2, 3}, []interface{}{int16(1), int16(2), int16(3)}},
+		{"slice_int", []int{1, 2, 3}, []interface{}{int(1), int(2), int(3)}},
+		{"slice_float", []float32{1.0, 2.0, 3.0}, []interface{}{float32(1.0), float32(2.0), float32(3.0)}},
+		{"slice_double", []float64{1.0, 2.0, 3.0}, []interface{}{float64(1.0), float64(2.0), float64(3.0)}},
+		{"slice_string", []string{"1", "2", "3"}, []interface{}{"1", "2", "3"}},
+	}
+
+	for _, tt := range tests {
+		var ptr unsafe.Pointer
+		goToValue(tt.input, &ptr)
+
+		if ptr == nil {
+			t.Errorf("invalid pointer: %s", tt.name)
+			return
+		}
+
+		if v := valueToGo(ptr); !reflect.DeepEqual(v, tt.want) {
+			t.Errorf("name: %s, input: %T,%v, want: %T,%v, got: %T,%v", tt.name, tt.input, tt.input, tt.want, tt.want, v, v)
+		}
+	}
 }
 
 func benchmarkNodeJS(b *testing.B, n int) {
