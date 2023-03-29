@@ -16,8 +16,8 @@ set(target go_port)
 message(STATUS "Port ${target}")
 
 set(CMAKE_CGO_FLAGS
-	CGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -Wall"
-	CGO_LDFLAGS="-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>"
+	CGO_CFLAGS='-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include'
+	CGO_LDFLAGS='-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>'
 )
 
 add_go_library(${target} SHARED
