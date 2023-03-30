@@ -54,19 +54,24 @@ extern "C" {
 	/* Supported */
 
 #else
+	/* TODO: Implement this only if needed */
+	/*
 	#ifndef snprintf
 		#define snprintf snprintf_impl_c89
 	#endif
 	#ifndef vsnprintf
 		#define vsnprintf vsnprintf_impl_c89
 	#endif
+	*/
 #endif
 
 /* -- Methods -- */
 
+/*
 FORMAT_API int snprintf_impl_c89(char *s, size_t n, const char *format, ...);
 
 FORMAT_API int vsnprintf_impl_c89(char *s, size_t n, const char *format, va_list arg);
+*/
 
 #ifdef __cplusplus
 }
