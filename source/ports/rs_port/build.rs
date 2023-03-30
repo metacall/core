@@ -94,7 +94,7 @@ fn main() {
     }
 
     // when running tests
-    if let Ok(val) = env::var("CMAKE_BINARY_DIR") {
+    if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
         println!("cargo:rustc-link-search={val}");
 
         match env::var("CMAKE_BUILD_TYPE") {
@@ -111,9 +111,22 @@ fn main() {
             }
         }
 
-        println!("cargo:rustc-env=LD_LIBRARY_PATH={val}");
+        if let Ok(name) = env::var("PROJECT_LIBRARY_PATH_NAME") {
+            println!("cargo:rustc-env={name}={val}");
+        }
         println!("cargo:rustc-env=CONFIGURATION_PATH={val}/configurations/global.json")
     } else {
-        println!("cargo:rustc-link-lib=metacall");
+        let profile = env::var("PROFILE").unwrap();
+        match profile.as_str() {
+            "debug" => {
+                println!("cargo:rustc-link-lib=metacalld")
+            },
+            "release" => {
+                println!("cargo:rustc-link-lib=metacall")
+            },
+            _ => {
+                println!("cargo:rustc-link-lib=metacall")
+            },
+        }
     }
 }
