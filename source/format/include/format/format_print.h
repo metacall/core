@@ -48,7 +48,8 @@ extern "C" {
 #elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) ||                      \
 	defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) ||            \
 	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
-	defined(__HAIKU__) || defined(__BEOS__)
+	defined(__HAIKU__) || defined(__BEOS__) ||                                             \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
 	/* Supported */
 
