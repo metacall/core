@@ -41,11 +41,7 @@
 
 const char *dynlink_impl_interface_extension_unix(void)
 {
-#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	static const char extension_unix[] = "dylib";
-#else
 	static const char extension_unix[] = "so";
-#endif
 
 	return extension_unix;
 }
