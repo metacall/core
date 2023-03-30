@@ -159,7 +159,7 @@ int portability_library_path(const char name[], portability_library_path_str pat
 	if (portability_library_path_ends_with(name, "so") == 0 && name_dylib_length < PORTABILITY_LIBRARY_PATH_SIZE)
 	{
 		memcpy(path, name, sizeof(char) * (name_length - 2));
-		memcpy(path, dylib_suffix, sizeof(dylib_suffix))
+		memcpy(path, dylib_suffix, sizeof(dylib_suffix));
 	}
 
 	for (image_index = 0; image_index < size; ++image_index)
