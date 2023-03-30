@@ -36,7 +36,7 @@
 
 const char *dynlink_impl_interface_extension_macos(void)
 {
-	static const char extension_macos[] = "so";
+	static const char extension_macos[] = "dylib";
 
 	return extension_macos;
 }
