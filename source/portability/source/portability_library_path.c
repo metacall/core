@@ -71,7 +71,7 @@ static int portability_library_path_phdr_callback(struct dl_phdr_info *info, siz
 
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-/* TODO: Not implemented */
+	#include <mach-o/dyld.h>
 
 #endif
 
@@ -144,7 +144,27 @@ int portability_library_path(const char name[], portability_library_path_str pat
 
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-	/* TODO: Not implemented */
+	uint32_t image_index, size = _dyld_image_count();
+
+	for (image_index = 0; image_index < size; ++image_index)
+	{
+		const char *image_name = _dyld_get_image_name(image_index);
+
+		if (portability_library_path_ends_with(image_name, name) == 0)
+		{
+			size_t image_length = strnlen(image_name, PORTABILITY_LIBRARY_PATH_SIZE);
+
+			memcpy(path, image_name, sizeof(char) * (image_length + 1));
+
+			if (length != NULL)
+			{
+				*length = image_length;
+			}
+
+			return 0;
+		}
+	}
+
 	return 1;
 
 #else
