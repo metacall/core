@@ -1,3 +1,6 @@
+# TODO: Disabled rs_port until it works properly, delete this once it works
+return()
+
 # Check if this port is enabled
 if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RS)
 	return()
