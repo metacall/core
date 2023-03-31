@@ -423,13 +423,27 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 	}
 
 	// Create array
-	if v := reflect.ValueOf(arg); v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+	v := reflect.ValueOf(arg)
+	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
 		length := v.Len()
 		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
 		for index := 0; index < length; index++ {
 			goToValue(v.Index(index).Interface(), (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
 		}
 		*ptr = C.metacall_value_create_array((*unsafe.Pointer)(cArgs), (C.size_t)(length))
+	}
+
+	// Create map
+	if v.Kind() == reflect.Map {
+		length := v.Len()
+		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
+
+		for index, m := 0, v.MapRange(); m.Next(); index++ {
+			pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
+
+			goToValue(pair, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
+		}
+		*ptr = C.metacall_value_create_map((*unsafe.Pointer)(cArgs), (C.size_t)(length))
 	}
 
 	// TODO: Add more types
@@ -487,6 +501,22 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			}
 
 			return array
+		}
+	case C.METACALL_MAP:
+		{
+			tuples := C.metacall_value_to_map(value)
+			size := C.metacall_value_count(value)
+
+			m := make(map[string]interface{}, size)
+			for i := C.size_t(0); i < size; i++ {
+				pair := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(tuples)) + uintptr(i*PtrSizeInBytes)))
+				p := reflect.ValueOf(valueToGo(*pair))
+
+				key := p.Index(0).Interface().(string)
+				m[key] = p.Index(1).Interface()
+			}
+
+			return m
 		}
 
 		// TODO: Add more types
