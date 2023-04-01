@@ -54,7 +54,14 @@ static int portability_library_path_phdr_callback(struct dl_phdr_info *info, siz
 	if (portability_library_path_ends_with(info->dlpi_name, cb->name) == 0)
 	{
 		cb->length = strnlen(info->dlpi_name, PORTABILITY_LIBRARY_PATH_SIZE);
+
+		if (cb->length >= PORTABILITY_LIBRARY_PATH_SIZE)
+		{
+			return 2;
+		}
+
 		memcpy(cb->path, info->dlpi_name, sizeof(char) * (cb->length + 1));
+
 		return 1;
 	}
 
@@ -71,7 +78,7 @@ static int portability_library_path_phdr_callback(struct dl_phdr_info *info, siz
 
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-/* TODO: Not implemented */
+	#include <mach-o/dyld.h>
 
 #endif
 
@@ -144,7 +151,41 @@ int portability_library_path(const char name[], portability_library_path_str pat
 
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-	/* TODO: Not implemented */
+	static const char dylib_suffix[] = "dylib";
+	uint32_t image_index, size = _dyld_image_count();
+	size_t name_length = strnlen(name, PORTABILITY_LIBRARY_PATH_SIZE);
+	size_t name_dylib_length = name_length + 3;
+
+	if (portability_library_path_ends_with(name, "so") == 0 && name_dylib_length < PORTABILITY_LIBRARY_PATH_SIZE)
+	{
+		memcpy(path, name, sizeof(char) * (name_length - 2));
+		memcpy(path, dylib_suffix, sizeof(dylib_suffix));
+	}
+
+	for (image_index = 0; image_index < size; ++image_index)
+	{
+		const char *image_name = _dyld_get_image_name(image_index);
+
+		if (portability_library_path_ends_with(image_name, path) == 0)
+		{
+			size_t image_length = strnlen(image_name, PORTABILITY_LIBRARY_PATH_SIZE);
+
+			if (image_length >= PORTABILITY_LIBRARY_PATH_SIZE)
+			{
+				return 1;
+			}
+
+			memcpy(path, image_name, sizeof(char) * (image_length + 1));
+
+			if (length != NULL)
+			{
+				*length = image_length;
+			}
+
+			return 0;
+		}
+	}
+
 	return 1;
 
 #else

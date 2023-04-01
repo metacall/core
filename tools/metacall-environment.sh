@@ -25,10 +25,9 @@ ROOT_DIR=$(pwd)
 
 APT_CACHE=0
 APT_CACHE_CMD=""
-INSTALL_APT=1
+INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
-INSTALL_RUST=0
 INSTALL_RAPIDJSON=0
 INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
@@ -50,6 +49,8 @@ INSTALL_WASM=0
 INSTALL_JAVA=0
 INSTALL_C=0
 INSTALL_COBOL=0
+INSTALL_GO=0
+INSTALL_RUST=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
 INSTALL_PACK=0
@@ -58,6 +59,15 @@ INSTALL_CLANGFORMAT=0
 INSTALL_BACKTRACE=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
+
+# Operative System detection
+case "$(uname -s)" in
+	Linux*)		OPERATIVE_SYSTEM=Linux;;
+	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
+	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
+	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	*)			OPERATIVE_SYSTEM="Unknown"
+esac
 
 # Check out for sudo
 if [ "`id -u`" = '0' ]; then
@@ -76,48 +86,77 @@ else
 fi
 
 # Base packages
-sub_apt(){
-	echo "configure apt"
+sub_base(){
+	echo "configure base packages"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends build-essential git cmake libgtest-dev wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends build-essential git cmake libgtest-dev wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
+	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+		brew install llvm cmake git googletest wget gnupg ca-certificates
+	fi
 }
 
 # Swig
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends g++ libpcre3-dev tar
 
-	wget http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends g++ libpcre3-dev tar
 
-	tar -xzf swig-4.0.1.tar.gz
-	cd swig-4.0.1
-	./configure --prefix=/usr/local
-	make
-	$SUDO_CMD make install
-	cd ..
-	rm -rf swig-4.0.1
+		wget http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz
 
-	# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
-	$SUDO_CMD pip3 install setuptools
+		tar -xzf swig-4.0.1.tar.gz
+		cd swig-4.0.1
+		./configure --prefix=/usr/local
+		make
+		$SUDO_CMD make install
+		cd ..
+		rm -rf swig-4.0.1
 
-
+		# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
+		$SUDO_CMD pip3 install setuptools
+	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+		brew install swig
+	fi
 }
 
 # Python
 sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 python3-dev python3-pip
-	$SUDO_CMD pip3 install requests
-	$SUDO_CMD pip3 install setuptools
-	$SUDO_CMD pip3 install wheel
-	$SUDO_CMD pip3 install rsa
-	$SUDO_CMD pip3 install scipy
-	$SUDO_CMD pip3 install numpy
-	$SUDO_CMD pip3 install scikit-learn
-	$SUDO_CMD pip3 install joblib
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 python3-dev python3-pip
+		$SUDO_CMD pip3 install requests
+		$SUDO_CMD pip3 install setuptools
+		$SUDO_CMD pip3 install wheel
+		$SUDO_CMD pip3 install rsa
+		$SUDO_CMD pip3 install scipy
+		$SUDO_CMD pip3 install numpy
+		$SUDO_CMD pip3 install scikit-learn
+		$SUDO_CMD pip3 install joblib
+	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+		brew install pyenv openssl
+		export PKG_CONFIG_PATH=$(brew --prefix openssl)/lib/pkgconfig
+		export PYTHON_CONFIGURE_OPTS="--enable-shared"
+		pyenv install 3.11.1
+		pyenv global 3.11.1
+		pyenv rehash
+		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+		source ~/.bash_profile
+		which python3
+		pip3 install requests
+		pip3 install setuptools
+		pip3 install wheel
+		pip3 install rsa
+		pip3 install scipy
+		pip3 install numpy
+		pip3 install joblib
+		pip3 install scikit-learn
+	fi
 }
 
 # Ruby
@@ -125,44 +164,43 @@ sub_ruby(){
 	echo "configure ruby"
 	cd $ROOT_DIR
 
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
 
-	# TODO: Review conflict with NodeJS (currently rails test is disabled)
-	#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
-	#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
-	#$SUDO_CMD gem install rails
-}
-
-# Rust
-sub_rust(){
-	echo "configure rust"
-	cd $ROOT_DIR
-	# install curl
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
-	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		# TODO: Review conflict with NodeJS (currently rails test is disabled)
+		#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
+		#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
+		#$SUDO_CMD gem install rails
+	fi
 }
 
 # RapidJSON
 sub_rapidjson(){
 	echo "configure rapidjson"
 	cd $ROOT_DIR
-	git clone https://github.com/miloyip/rapidjson.git
-	cd rapidjson
-	git checkout v1.1.0
-	mkdir build
-	cd build
-	cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
-	make
-	$SUDO_CMD make install
-	cd ../.. && rm -rf ./rapidjson
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		git clone https://github.com/miloyip/rapidjson.git
+		cd rapidjson
+		git checkout v1.1.0
+		mkdir build
+		cd build
+		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
+		make
+		$SUDO_CMD make install
+		cd ../.. && rm -rf ./rapidjson
+	fi
 }
 
 # FuncHook
 sub_funchook(){
 	echo "configure funchook"
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends cmake
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends cmake
+	fi
 }
 
 # NetCore
@@ -170,28 +208,29 @@ sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
 
-	# Debian Stretch
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		# Debian Stretch
+		$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+			libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
 
-	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
+		# Install .NET Sdk
+		DOTNET_SDK_VERSION=1.1.11
+		DOTNET_SDK_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-dev-debian.9-x64.$DOTNET_SDK_VERSION.tar.gz
 
-	# Install .NET Sdk
-	DOTNET_SDK_VERSION=1.1.11
-	DOTNET_SDK_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-dev-debian.9-x64.$DOTNET_SDK_VERSION.tar.gz
+		wget $DOTNET_SDK_DOWNLOAD_URL -O dotnet.tar.gz
+		mkdir -p /usr/share/dotnet
+		tar -zxf dotnet.tar.gz -C /usr/share/dotnet
+		rm dotnet.tar.gz
+		ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
 
-	wget $DOTNET_SDK_DOWNLOAD_URL -O dotnet.tar.gz
-	mkdir -p /usr/share/dotnet
-	tar -zxf dotnet.tar.gz -C /usr/share/dotnet
-	rm dotnet.tar.gz
-	ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
-
-	# Trigger the population of the local package cache
-	mkdir warmup
-	cd warmup
-	dotnet new
-	cd ..
-	rm -rf warmup
-	rm -rf /tmp/NuGetScratch
+		# Trigger the population of the local package cache
+		mkdir warmup
+		cd warmup
+		dotnet new
+		cd ..
+		rm -rf warmup
+		rm -rf /tmp/NuGetScratch
+	fi
 }
 
 # NetCore 2
@@ -199,16 +238,18 @@ sub_netcore2(){
 	echo "configure netcore 2"
 	cd $ROOT_DIR
 
-	# Set up repository
-	wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-	$SUDO_CMD dpkg -i packages-microsoft-prod.deb
-	rm packages-microsoft-prod.deb
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		# Set up repository
+		wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+		$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+		rm packages-microsoft-prod.deb
 
-	# Install .NET Core Sdk
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
+		# Install .NET Core Sdk
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
+	fi
 }
 
 # NetCore 5
@@ -216,16 +257,18 @@ sub_netcore5(){
 	echo "configure netcore 5"
 	cd $ROOT_DIR
 
-	# Set up repository
-	wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-	$SUDO_CMD dpkg -i packages-microsoft-prod.deb
-	rm packages-microsoft-prod.deb
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		# Set up repository
+		wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+		$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+		rm packages-microsoft-prod.deb
 
-	# Install .NET Core Sdk
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-5.0
+		# Install .NET Core Sdk
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-5.0
+	fi
 }
 
 # NetCore 7
@@ -233,61 +276,66 @@ sub_netcore7(){
 	echo "configure netcore 7"
 	cd $ROOT_DIR
 
-	# Set up repository
-	wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-	$SUDO_CMD dpkg -i packages-microsoft-prod.deb
-	rm packages-microsoft-prod.deb
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		# Set up repository
+		wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+		$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+		rm packages-microsoft-prod.deb
 
-	# Install .NET Core Sdk
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
+		# Install .NET Core Sdk
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
+	fi
 }
 
 # V8 Repository
 sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends software-properties-common
 
-	# V8 5.1
-	if [ $INSTALL_V8REPO51 = 1 ]; then
-		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv851.list"
-		$SUDO_CMD sh -c "echo \"deb http://archive.ubuntu.com/ubuntu trusty main\" > /etc/apt/sources.list.d/libicu52.list"
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --allow-unauthenticated libicu52 libv8-5.1.117 libv8-5.1-dev
-	fi
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends software-properties-common
 
-	# V8 5.4
-	if [ $INSTALL_V8REPO54 = 1 ]; then
-		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.4/ubuntu xenial main\" > /etc/apt/sources.list.d/libv854.list"
-		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
-		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --allow-unauthenticated libicu55 libv8-5.4-dev
-		$SUDO_CMD rm libicu55_55.1-7_amd64.deb
-	fi
+		# V8 5.1
+		if [ $INSTALL_V8REPO51 = 1 ]; then
+			$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv851.list"
+			$SUDO_CMD sh -c "echo \"deb http://archive.ubuntu.com/ubuntu trusty main\" > /etc/apt/sources.list.d/libicu52.list"
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --allow-unauthenticated libicu52 libv8-5.1.117 libv8-5.1-dev
+		fi
 
-	# V8 5.2
-	if [ $INSTALL_V8REPO52 = 1 ]; then
-		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.2
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libicu55 libv8-5.2-dev
-	fi
+		# V8 5.4
+		if [ $INSTALL_V8REPO54 = 1 ]; then
+			$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.4/ubuntu xenial main\" > /etc/apt/sources.list.d/libv854.list"
+			wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
+			$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --allow-unauthenticated libicu55 libv8-5.4-dev
+			$SUDO_CMD rm libicu55_55.1-7_amd64.deb
+		fi
 
-	# V8 5.7
-	if [ $INSTALL_V8REPO57 = 1 ]; then
-		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libicu55 libv8-5.7-dev
-	fi
+		# V8 5.2
+		if [ $INSTALL_V8REPO52 = 1 ]; then
+			$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.2
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libicu55 libv8-5.2-dev
+		fi
 
-	# V8 5.8
-	if [ $INSTALL_V8REPO58 = 1 ]; then
-		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv8-archived.list"
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends libicu57 libv8-5.8.283 libv8-5.8-dev
+		# V8 5.7
+		if [ $INSTALL_V8REPO57 = 1 ]; then
+			$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libicu55 libv8-5.7-dev
+		fi
+
+		# V8 5.8
+		if [ $INSTALL_V8REPO58 = 1 ]; then
+			$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv8-archived.list"
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends libicu57 libv8-5.8.283 libv8-5.8-dev
+		fi
 	fi
 }
 
@@ -295,38 +343,47 @@ sub_v8repo(){
 sub_v8(){
 	echo "configure v8"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python
-	git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-	export PATH=`pwd`/depot_tools:"$PATH"
 
-	export GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library"
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python
+		git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+		export PATH=`pwd`/depot_tools:"$PATH"
 
-	fetch v8
-	cd v8
-	git checkout 5.1-lkgr
-	gclient sync
+		export GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library"
 
-	patch build/all.gyp $ROOT_DIR/nobuildtest.patch
-	GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library" make library=shared native
+		fetch v8
+		cd v8
+		git checkout 5.1-lkgr
+		gclient sync
+
+		patch build/all.gyp $ROOT_DIR/nobuildtest.patch
+		GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library" make library=shared native
+	fi
 }
 
 # NodeJS
 sub_nodejs(){
 	echo "configure nodejs"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get update
 
-	# Install python to build node (gyp)
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		# Note that Python is required for GYP
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
+	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+		brew install node make npm curl python3
+	fi
 }
 
 # TypeScript
 sub_typescript(){
 	echo "configure typescript"
 
-	# Install React dependencies in order to run the tests
-	$SUDO_CMD npm i react@latest -g
-	$SUDO_CMD npm i react-dom@latest -g
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		# Install React dependencies in order to run the tests
+		$SUDO_CMD npm i react@latest -g
+		$SUDO_CMD npm i react-dom@latest -g
+	fi
 }
 
 # File
@@ -339,82 +396,109 @@ sub_rpc(){
 	echo "cofingure rpc"
 	cd $ROOT_DIR
 
-	# Install development files and documentation for libcurl (OpenSSL flavour)
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		# Install development files and documentation for libcurl (OpenSSL flavour)
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+	fi
 }
 
 # WebAssembly
 sub_wasm(){
 	echo "configure webassembly"
-
-	# TODO
-
-	# $SUDO_CMD apt-get update
-	# $SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --fix-broken lib32gcc-6-dev g++-multilib
 }
 
 # Java
 sub_java(){
 	echo "configure java"
 
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends default-jre default-jdk
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends default-jre default-jdk
+	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+		brew install openjdk@19
+	fi
 }
 
 # C
 sub_c(){
 	echo "configure c"
 
-	LLVM_VERSION_STRING=11
-	UBUNTU_CODENAME=""
-	CODENAME_FROM_ARGUMENTS=""
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		LLVM_VERSION_STRING=11
+		UBUNTU_CODENAME=""
+		CODENAME_FROM_ARGUMENTS=""
 
-	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-	source /etc/os-release
+		# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+		source /etc/os-release
 
-	case ${LINUX_DISTRO:-} in
-		debian)
-			if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
-				CODENAME="unstable"
-				LINKNAME=""
-			else
-				# "stable" Debian release
-				CODENAME="${VERSION_CODENAME:-}"
-				LINKNAME="-${CODENAME:-}"
-			fi
-			;;
-		*)
-			# ubuntu and its derivatives
-			if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
-				CODENAME="${UBUNTU_CODENAME}"
-				if [[ -n "${CODENAME:-}" ]]; then
-					LINKNAME="-${CODENAME}"
+		case ${LINUX_DISTRO:-} in
+			debian)
+				if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
+					CODENAME="unstable"
+					LINKNAME=""
+				else
+					# "stable" Debian release
+					CODENAME="${VERSION_CODENAME:-}"
+					LINKNAME="-${CODENAME:-}"
 				fi
-			fi
-			;;
-	esac
+				;;
+			*)
+				# ubuntu and its derivatives
+				if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
+					CODENAME="${UBUNTU_CODENAME}"
+					if [[ -n "${CODENAME:-}" ]]; then
+						LINKNAME="-${CODENAME}"
+					fi
+				fi
+				;;
+		esac
 
-	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+		wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+		$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+		$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+	fi
 }
 
 # Cobol
 sub_cobol(){
 	echo "configure cobol"
 
-	if [ "${LINUX_DISTRO}" == "debian" ]; then
-		echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		if [ "${LINUX_DISTRO}" == "debian" ]; then
+			echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
 
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
+
+			# Remove unstable from sources.list
+			$SUDO_CMD head -n -2 /etc/apt/sources.list
+		elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends open-cobol
+		fi
+	fi
+}
+
+# Go
+sub_go(){
+	echo "configure go"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends golang
+	fi
+}
 
-		# Remove unstable from sources.list
-		$SUDO_CMD head -n -2 /etc/apt/sources.list
-	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends open-cobol
+# Rust
+sub_rust(){
+	echo "configure rust"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
+		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 	fi
 }
 
@@ -423,42 +507,51 @@ sub_metacall(){
 	# TODO: Update this or deprecate it
 	echo "configure metacall"
 	cd $ROOT_DIR
-	git clone https://github.com/metacall/core.git
-	mkdir core/build && cd core/build
 
-	if [ $INSTALL_NETCORE = 1 ]; then
-		NETCORE_VERSION=1.1.10
-	elif [ INSTALL_NETCORE2 = 1 ]; then
-		NETCORE_VERSION=2.2.8
-	elif [ INSTALL_NETCORE5 = 1 ]; then
-		NETCORE_VERSION=5.0.17
-	elif [ INSTALL_NETCORE7 = 1 ]; then
-		NETCORE_VERSION=7.0.3
-	else
-		NETCORE_VERSION=0
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		git clone https://github.com/metacall/core.git
+		mkdir core/build && cd core/build
+
+		if [ $INSTALL_NETCORE = 1 ]; then
+			NETCORE_VERSION=1.1.10
+		elif [ INSTALL_NETCORE2 = 1 ]; then
+			NETCORE_VERSION=2.2.8
+		elif [ INSTALL_NETCORE5 = 1 ]; then
+			NETCORE_VERSION=5.0.17
+		elif [ INSTALL_NETCORE7 = 1 ]; then
+			NETCORE_VERSION=7.0.4
+		else
+			NETCORE_VERSION=0
+		fi
+
+		cmake -Wno-dev ../ -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/$NETCORE_VERSION/
+		make
+		make test && echo "test ok!"
+
+		echo "configure with cmake .. <options>"
 	fi
-
-	cmake -Wno-dev ../ -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/$NETCORE_VERSION/
-	make
-	make test && echo "test ok!"
-
-	echo "configure with cmake .. <options>"
 }
 
 # Pack
 sub_pack(){
 	echo "configure pack"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends rpm
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends rpm
+	fi
 }
 
 # Coverage
 sub_coverage(){
 	echo "configure coverage"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y --no-install-recommends lcov
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get install -y --no-install-recommends lcov
+	fi
 }
 
 # Clang format
@@ -466,67 +559,71 @@ sub_clangformat(){
 	echo "configure clangformat"
 	cd $ROOT_DIR
 
-	LLVM_VERSION_STRING=12
-	UBUNTU_CODENAME=""
-	CODENAME_FROM_ARGUMENTS=""
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		LLVM_VERSION_STRING=12
+		UBUNTU_CODENAME=""
+		CODENAME_FROM_ARGUMENTS=""
 
-	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-	source /etc/os-release
+		# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+		source /etc/os-release
 
-	case ${LINUX_DISTRO:-} in
-		debian)
-			if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
-				CODENAME="unstable"
-				LINKNAME=""
-			else
-				# "stable" Debian release
-				CODENAME="${VERSION_CODENAME:-}"
-				LINKNAME="-${CODENAME:-}"
-			fi
-			;;
-		*)
-			# ubuntu and its derivatives
-			if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
-				CODENAME="${UBUNTU_CODENAME}"
-				if [[ -n "${CODENAME:-}" ]]; then
-					LINKNAME="-${CODENAME}"
+		case ${LINUX_DISTRO:-} in
+			debian)
+				if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
+					CODENAME="unstable"
+					LINKNAME=""
+				else
+					# "stable" Debian release
+					CODENAME="${VERSION_CODENAME:-}"
+					LINKNAME="-${CODENAME:-}"
 				fi
-			fi
-			;;
-	esac
+				;;
+			*)
+				# ubuntu and its derivatives
+				if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
+					CODENAME="${UBUNTU_CODENAME}"
+					if [[ -n "${CODENAME:-}" ]]; then
+						LINKNAME="-${CODENAME}"
+					fi
+				fi
+				;;
+		esac
 
-	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
-	$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
+		wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+		$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+		$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
+		$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
+	fi
 }
 
 # Backtrace (this only improves stack traces verbosity but backtracing is enabled by default)
 sub_backtrace(){
 	echo "configure backtrace"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y --no-install-recommends libdw-dev
+
+	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get install -y --no-install-recommends libdw-dev
+	fi
 }
 
 # Install
 sub_install(){
 	if [ $APT_CACHE = 1 ]; then
-		APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
+		if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+			APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
+		fi
 	fi
-	if [ $INSTALL_APT = 1 ]; then
-		sub_apt
+	if [ $INSTALL_BASE = 1 ]; then
+		sub_base
 	fi
 	if [ $INSTALL_PYTHON = 1 ]; then
 		sub_python
 	fi
 	if [ $INSTALL_RUBY = 1 ]; then
 		sub_ruby
-	fi
-	if [ $INSTALL_RUST = 1 ]; then
-		sub_rust
 	fi
 	if [ $INSTALL_RAPIDJSON = 1 ]; then
 		sub_rapidjson
@@ -576,6 +673,12 @@ sub_install(){
 	if [ $INSTALL_COBOL = 1 ]; then
 		sub_cobol
 	fi
+	if [ $INSTALL_GO = 1 ]; then
+		sub_go
+	fi
+	if [ $INSTALL_RUST = 1 ]; then
+		sub_rust
+	fi
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
 	fi
@@ -602,12 +705,14 @@ sub_options(){
 	for var in "$@"
 	do
 		if [ "$var" = 'cache' ]; then
-			echo "apt caching selected"
-			APT_CACHE=1
+			if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+				echo "apt caching selected"
+				APT_CACHE=1
+			fi
 		fi
 		if [ "$var" = 'base' ]; then
 			echo "apt selected"
-			INSTALL_APT=1
+			INSTALL_BASE=1
 		fi
 		if [ "$var" = 'python' ]; then
 			echo "python selected"
@@ -616,10 +721,6 @@ sub_options(){
 		if [ "$var" = 'ruby' ]; then
 			echo "ruby selected"
 			INSTALL_RUBY=1
-		fi
-		if [ "$var" = 'rust' ]; then
-			echo "rust selected"
-			INSTALL_RUST=1
 		fi
 		if [ "$var" = 'netcore' ]; then
 			echo "netcore selected"
@@ -702,6 +803,14 @@ sub_options(){
 			echo "cobol selected"
 			INSTALL_COBOL=1
 		fi
+		if [ "$var" = 'go' ]; then
+			echo "go selected"
+			INSTALL_GO=1
+		fi
+		if [ "$var" = 'rust' ]; then
+			echo "rust selected"
+			INSTALL_RUST=1
+		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
 			INSTALL_SWIG=1
@@ -756,6 +865,7 @@ sub_help() {
 	echo "	java"
 	echo "	c"
 	echo "	cobol"
+	echo "	go"
 	echo "	swig"
 	echo "	metacall"
 	echo "	pack"

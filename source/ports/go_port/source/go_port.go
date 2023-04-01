@@ -26,6 +26,11 @@ package metacall
 
 #include <metacall/metacall.h>
 
+// TODO: Sanitizer
+// #if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__) || defined(__UB_SANITIZER__)
+// void __lsan_do_leak_check(void);
+// #endif
+
 // Since main.go has //export directives we can't place function definitions in
 // it - we'll get multiple definition errors from the linker (see
 // https://golang.org/cmd/cgo/#hdr-C_references_to_Go for more on this
@@ -44,6 +49,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"runtime"
 	"sync"
 	"unsafe"
@@ -99,6 +105,9 @@ var (
 )
 
 func InitializeUnsafe() error {
+	// TODO: Sanitizer
+	// C.__lsan_do_leak_check()
+
 	// TODO: Remove this once go loader is implemented
 	if result := int(C.metacall_initialize()); result != 0 {
 		return fmt.Errorf("initializing MetaCall (error code %d)", result)
@@ -362,9 +371,38 @@ func getFunction(function string) (unsafe.Pointer, error) {
 }
 
 func goToValue(arg interface{}, ptr *unsafe.Pointer) {
+	// Create null
+	if arg == nil {
+		*ptr = C.metacall_value_create_null()
+	}
+
+	// Create bool
+	if i, ok := arg.(bool); ok {
+		if i {
+			*ptr = C.metacall_value_create_bool(C.uchar(1))
+		} else {
+			*ptr = C.metacall_value_create_bool(C.uchar(0))
+		}
+	}
+
+	// Create char
+	if i, ok := arg.(byte); ok {
+		*ptr = C.metacall_value_create_char((C.char)(i))
+	}
+
+	// Create short
+	if i, ok := arg.(int16); ok {
+		*ptr = C.metacall_value_create_short((C.short)(i))
+	}
+
 	// Create int
 	if i, ok := arg.(int); ok {
 		*ptr = C.metacall_value_create_int((C.int)(i))
+	}
+
+	// Create long
+	if i, ok := arg.(int64); ok {
+		*ptr = C.metacall_value_create_long((C.long)(i))
 	}
 
 	// Create float32
@@ -384,16 +422,45 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
 	}
 
+	// Create array
+	if v := reflect.ValueOf(arg); v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+		length := v.Len()
+		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
+		for index := 0; index < length; index++ {
+			goToValue(v.Index(index).Interface(), (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
+		}
+		*ptr = C.metacall_value_create_array((*unsafe.Pointer)(cArgs), (C.size_t)(length))
+	}
+
 	// TODO: Add more types
 }
 
 func valueToGo(value unsafe.Pointer) interface{} {
 	switch C.metacall_value_id(value) {
+	case C.METACALL_NULL:
+		{
+			return nil
+		}
+	case C.METACALL_BOOL:
+		{
+			return C.metacall_value_to_bool(value) != C.uchar(0)
+		}
+	case C.METACALL_CHAR:
+		{
+			return byte(C.metacall_value_to_char(value))
+		}
+	case C.METACALL_SHORT:
+		{
+			return int16(C.metacall_value_to_short(value))
+		}
 	case C.METACALL_INT:
 		{
 			return int(C.metacall_value_to_int(value))
 		}
-
+	case C.METACALL_LONG:
+		{
+			return int64(C.metacall_value_to_long(value))
+		}
 	case C.METACALL_FLOAT:
 		{
 			return float32(C.metacall_value_to_float(value))
@@ -415,7 +482,7 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			array := make([]interface{}, arraySize)
 
 			for iterator := C.size_t(0); iterator < arraySize; iterator++ {
-				currentValue := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(arrayValue))+uintptr(iterator*PtrSizeInBytes)))
+				currentValue := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(arrayValue)) + uintptr(iterator*PtrSizeInBytes)))
 				array[iterator] = valueToGo(*currentValue)
 			}
 

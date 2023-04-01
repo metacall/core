@@ -378,7 +378,15 @@ function sub-configure {
 
 	# Build type
 	$Global:BUILD_STRING = "$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
-	
+
+	# Other Environment Options
+	$EnvOpts = Get-Content "$ROOT_DIR\env_vars.txt"
+
+
+	foreach ($opt in $EnvOpts.Split([System.Environment]::NewLine)) {
+		$Global:BUILD_STRING = "$BUILD_STRING $opt"
+	}
+
 	# Execute CMake
 	$CustomFlags = '-DOPTION_BUILD_SECURITY=OFF -DOPTION_FORK_SAFE=OFF -DWARNINGS_ENABLED=OFF' # TODO: Enable warnings when all tests pass
 	echo "BUILD COMMAND: cmake $CustomFlags $BUILD_STRING .."

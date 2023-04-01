@@ -4,7 +4,8 @@
 /* This script gets the output of ctest and returns
  * the non-finished tests or the failed ones, useful
  * for detecting deadlocks. Use it like:
- * $ node find-deadlock-tests.js ctest_output_file.txt
+ * $ ctest -VV &> ctest_output_file.txt
+ * $ node metacall-tests-find-deadlocks.js ctest_output_file.txt
  */
 
 const { readFileSync } = require('fs');

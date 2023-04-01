@@ -36,8 +36,9 @@ BUILD_RPC=0
 BUILD_WASM=0
 BUILD_JAVA=0
 BUILD_C=0
-BUILD_RUST=0
 BUILD_COBOL=0
+BUILD_GO=0
+BUILD_RUST=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_TESTS=0
@@ -121,6 +122,10 @@ sub_options() {
 		if [ "$option" = 'cobol' ]; then
 			echo "Build with cobol support"
 			BUILD_COBOL=1
+		fi
+		if [ "$option" = 'go' ]; then
+			echo "Build with go support"
+			BUILD_GO=1
 		fi
 		if [ "$option" = 'rust' ]; then
 			echo "Build with rust support"
@@ -248,7 +253,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE7 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/7.0.3/"
+			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/7.0.4/"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -352,6 +357,20 @@ sub_configure() {
 		fi
 	fi
 
+	# Go
+	if [ $BUILD_GO = 1 ]; then
+		# TODO
+		# BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_GO=On"
+
+		# if [ $BUILD_SCRIPTS = 1 ]; then
+		# 	BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_GO=On"
+		# fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_GO=On"
+		fi
+	fi
+
 	# Rust
 	if [ $BUILD_RUST = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
@@ -440,6 +459,7 @@ sub_help() {
 	echo "	java: build with java support"
 	echo "	c: build with c support"
 	echo "	cobol: build with cobol support"
+	echo "	go: build with go support"
 	echo "	rust: build with rust support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"

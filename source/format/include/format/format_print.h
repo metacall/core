@@ -48,24 +48,30 @@ extern "C" {
 #elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) ||                      \
 	defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) ||            \
 	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
-	defined(__HAIKU__) || defined(__BEOS__)
+	defined(__HAIKU__) || defined(__BEOS__) ||                                             \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
 	/* Supported */
 
 #else
+	/* TODO: Implement this only if needed */
+	/*
 	#ifndef snprintf
 		#define snprintf snprintf_impl_c89
 	#endif
 	#ifndef vsnprintf
 		#define vsnprintf vsnprintf_impl_c89
 	#endif
+	*/
 #endif
 
 /* -- Methods -- */
 
+/*
 FORMAT_API int snprintf_impl_c89(char *s, size_t n, const char *format, ...);
 
 FORMAT_API int vsnprintf_impl_c89(char *s, size_t n, const char *format, va_list arg);
+*/
 
 #ifdef __cplusplus
 }

@@ -26,35 +26,16 @@ export function sum(a: number, b: number): number {
 
 `main.rs`
 ``` rust
+use metacall::{hooks, loaders, structs::Any, metacall};
+
 fn main() {
-    let _d = defer(metacall::destroy);
+    // Metacall automatically shuts down when it goes out of scope
+    let _ = hooks::initialize().unwrap();
 
-    match metacall::initialize() {
-        Err(e) => {
-            println!("{}", e);
-            panic!();
-        }
-        _ => println!("MetaCall initialized"),
-    }
+    loaders::from_file("ts", ["sum.ts"]).unwrap();
 
-    let scripts = ["sum.ts".to_string()];
+    let sum = metacall("sum", [Any::Double(1.0), Any::Double(2.0)]).unwrap();
 
-    if let Err(e) = metacall::load_from_file("ts", &scripts) {
-        println!("{}", e);
-        panic!();
-    }
-
-    match metacall::metacall(
-        "sum",
-        &[metacall::Any::Double(1.0), metacall::Any::Double(2.0)],
-    ) {
-        Err(e) => {
-            println!("{}", e);
-            panic!();
-        }
-        Ok(ret) => {
-            println!("{:?}", ret);
-        }
-    }
+    println!("sum: {:?}", sum);
 }
 ```

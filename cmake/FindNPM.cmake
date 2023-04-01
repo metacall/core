@@ -39,6 +39,11 @@ if(NOT NPM_EXECUTABLE)
 	return()
 endif()
 
+# On Windows set NPM to the cmd version
+if(WIN32 AND EXISTS "${NPM_EXECUTABLE}.cmd")
+	set(NPM_EXECUTABLE "${NPM_EXECUTABLE}.cmd")
+endif()
+
 # Get NPM version
 execute_process(COMMAND ${NPM_EXECUTABLE} -v
 	OUTPUT_VARIABLE NPM_VERSION

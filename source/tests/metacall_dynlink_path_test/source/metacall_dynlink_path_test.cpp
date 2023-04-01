@@ -33,8 +33,6 @@ TEST_F(metacall_dynlink_path_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int)0, (int)metacall_initialize());
-
 	dynlink_library_path_str path;
 
 	const char name[] = "metacall"
@@ -54,6 +52,4 @@ TEST_F(metacall_dynlink_path_test, DefaultConstructor)
 	fflush(stdout);
 
 	ASSERT_EQ((int)0, (int)portability_path_compare(path, METACALL_LIBRARY_PATH));
-
-	EXPECT_EQ((int)0, (int)metacall_destroy());
 }
