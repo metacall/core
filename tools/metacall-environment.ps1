@@ -134,13 +134,42 @@ function Set-Java {
 		Add-to-Path "$RuntimeDir\bin\server"
 }
 
+function Set-Ruby {
+	Write-Output "Setting Ruby..."
+	$RUBY_VERSION = "3.1.2"	
+
+	Set-Location $ROOT_DIR
+	$RuntimeDir = "$env:ProgramFiles\ruby"
+	$DepsDir = "$ROOT_DIR\dependencies"
+
+	if (!(Test-Path -Path "$DepsDir\ruby-mswin.7z")) {
+		# Download installer
+		Write-Output "Ruby not found downloading now..."
+		(New-Object Net.WebClient).DownloadFile("https://github.com/MSP-Greg/ruby-mswin/releases/download/ruby-mswin-builds/Ruby-$RUBY_VERSION-ms.7z", "$DepsDir\ruby-mswin.7z")
+	}
+
+	mkdir "$DepsDir\Ruby31-ms"
+	7z x "$DepsDir\ruby-mswin.7z" -o"$DepsDir"
+
+	robocopy /move /e "$DepsDir\Ruby31-ms\" $RuntimeDir
+
+	Add-to-Path "$RuntimeDir\bin"
+
+	$Env_Opts = "$ROOT_DIR\build\env_vars.txt"
+	$RubyDir  = $RuntimeDir.Replace('\', '/')
+
+	Write-Output "-DRuby_VERSION_STRING=""$RUBY_VERSION""" >> $Env_Opts
+	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-3.1.0""" >> $Env_Opts
+	Write-Output "-DRuby_EXECUTABLE=""$RubyDir/bin/ruby.exe""" >> $Env_Opts
+	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby310.lib""" >> $Env_Opts
+}
+
 function Add-to-Path {
 	$GivenPath = $args[0]
 
 	$NewPath = "$GivenPath;$Env:PATH"
 	setx /M PATH $NewPath
 	$Env:PATH = $NewPath
-
 	$GivenPath >> $env:GITHUB_PATH
 
 	if ( $Null -ne $Env:GITHUB_ENV ) {
@@ -153,11 +182,32 @@ function Add-to-Path {
 	Write-Output "PATH:: " $Env:PATH
 }
 
+
+function Set-7z {
+	Write-Output "Setting 7z..."
+
+	$DepsDir = "$ROOT_DIR\dependencies"
+
+	if (!(Test-Path -Path "$DepsDir\7zip.exe")) {
+		# Download installer
+		Write-Output "7zip not found downloading now..."
+		(New-Object Net.WebClient).DownloadFile("https://www.7-zip.org/a/7z2201-x64.exe", "$DepsDir\7zip.exe")
+	}
+
+	#source: https://gist.github.com/dansmith65/7dd950f183af5f5deaf9650f2ad3226c
+	$installerPath = "$DepsDir\7zip.exe"
+	Start-Process -FilePath $installerPath -Args "/S" -Verb RunAs -Wait
+	Add-to-Path "$env:ProgramFiles\7-Zip"
+}
+
 # Configure
 function Configure {
 	# Create option variables file 
 	mkdir "$ROOT_DIR\build"
 	New-Item -Path "$ROOT_DIR\build\env_vars.txt"
+
+	Set-7z
+
 	for ($i = 0; $i -lt $Arguments.Length; $i++) {
 		$var = $Arguments[$i]
 		if ( "$var" -eq 'python' ) {
@@ -166,6 +216,7 @@ function Configure {
 		}
 		if ( "$var" -eq 'ruby' ) {
 			Write-Output "ruby selected"
+			Set-Ruby
 		}
 		if ( "$var" -eq 'netcore' ) {
 			Write-Output "netcore selected"
