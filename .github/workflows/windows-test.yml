@@ -38,7 +38,7 @@ jobs:
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
-          METACALL_INSTALL_OPTIONS: python nodejs typescript java ruby # netcore5 file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: python nodejs java ruby # netcore5 file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |
