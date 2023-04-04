@@ -374,45 +374,54 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 	// Create null
 	if arg == nil {
 		*ptr = C.metacall_value_create_null()
+		return
 	}
 
 	// Create bool
 	if i, ok := arg.(bool); ok {
 		if i {
 			*ptr = C.metacall_value_create_bool(C.uchar(1))
+			return
 		} else {
 			*ptr = C.metacall_value_create_bool(C.uchar(0))
+			return
 		}
 	}
 
 	// Create char
 	if i, ok := arg.(byte); ok {
 		*ptr = C.metacall_value_create_char((C.char)(i))
+		return
 	}
 
 	// Create short
 	if i, ok := arg.(int16); ok {
 		*ptr = C.metacall_value_create_short((C.short)(i))
+		return
 	}
 
 	// Create int
 	if i, ok := arg.(int); ok {
 		*ptr = C.metacall_value_create_int((C.int)(i))
+		return
 	}
 
 	// Create long
 	if i, ok := arg.(int64); ok {
 		*ptr = C.metacall_value_create_long((C.long)(i))
+		return
 	}
 
 	// Create float32
 	if i, ok := arg.(float32); ok {
 		*ptr = C.metacall_value_create_float((C.float)(i))
+		return
 	}
 
 	// Create float64
 	if i, ok := arg.(float64); ok {
 		*ptr = C.metacall_value_create_double((C.double)(i))
+		return
 	}
 
 	// Create string
@@ -420,17 +429,19 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 		cStr := C.CString(str)
 		defer C.free(unsafe.Pointer(cStr))
 		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
+		return
 	}
 
 	// Create array
 	v := reflect.ValueOf(arg)
 	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
 		length := v.Len()
-		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
+		*ptr = C.metacall_value_create_array(nil, (C.size_t)(length))
+		cArgs := C.metacall_value_to_array(*ptr)
 		for index := 0; index < length; index++ {
 			goToValue(v.Index(index).Interface(), (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
 		}
-		*ptr = C.metacall_value_create_array((*unsafe.Pointer)(cArgs), (C.size_t)(length))
+		return
 	}
 
 	// Create map
@@ -444,9 +455,12 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 			goToValue(pair, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
 		}
 		*ptr = C.metacall_value_create_map((*unsafe.Pointer)(cArgs), (C.size_t)(length))
+		return
 	}
 
 	// TODO: Add more types
+
+	*ptr = nil
 }
 
 func valueToGo(value unsafe.Pointer) interface{} {
