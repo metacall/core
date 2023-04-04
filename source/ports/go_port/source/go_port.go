@@ -458,6 +458,34 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 		return
 	}
 
+	/*
+
+	// Create map
+	if v.Kind() == reflect.Map {
+		length := v.Len()
+		*ptr = C.metacall_value_create_map(nil, (C.size_t)(length))
+		cArgs := C.metacall_value_to_map(*ptr)
+
+		for index, m := 0, v.MapRange(); m.Next(); index++ {
+			// Access to current element of the map
+			mapIndex := unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)
+
+			// Get the map pair
+			array := C.metacall_value_to_array(mapIndex)
+
+			// Transform the key
+			key := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(0)*PtrSizeInBytes))
+			goToValue(m.Key(), key)
+
+			// Transform the value
+			val := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(1)*PtrSizeInBytes))
+			goToValue(m.Value(), val)
+		}
+		return
+	}
+
+	*/
+
 	// TODO: Add more types
 
 	*ptr = nil
