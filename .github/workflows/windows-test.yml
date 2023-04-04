@@ -38,7 +38,7 @@ jobs:
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
-          METACALL_INSTALL_OPTIONS: python nodejs typescript java # ruby netcore5 file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: python nodejs java ruby # netcore5 file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |
@@ -47,7 +47,7 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests python nodejs typescript java sanitizer # ruby netcore5 file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
+          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests python nodejs java sanitizer ruby # netcore5 file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
 
       - name: Build
         working-directory: ./build

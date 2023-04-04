@@ -57,7 +57,7 @@ function sub-build {
 		# Prerequisites
 		$files = @(
 			"$env:ProgramFiles\nodejs\lib\libnode.dll",
-			".\runtimes\ruby\bin\x64-vcruntime140-ruby310.dll"
+			"$env:ProgramFiles\ruby\bin\x64-vcruntime140-ruby310.dll"
 		)
 
 		ForEach ($file in $files) {
