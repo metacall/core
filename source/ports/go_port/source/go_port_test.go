@@ -169,6 +169,14 @@ func TestValues(t *testing.T) {
 		{"slice_float", []float32{1.0, 2.0, 3.0}, []interface{}{float32(1.0), float32(2.0), float32(3.0)}},
 		{"slice_double", []float64{1.0, 2.0, 3.0}, []interface{}{float64(1.0), float64(2.0), float64(3.0)}},
 		{"slice_string", []string{"1", "2", "3"}, []interface{}{"1", "2", "3"}},
+		{"map", map[string]interface{}{"1": 1, "2": true, "3": "sss", "4": float32(1.1), "5": byte('A')}, map[string]interface{}{"1": 1, "2": true, "3": "sss", "4": float32(1.1), "5": byte('A')}},
+		{"map_bool", map[string]bool{"1": true, "2": false, "3": true}, map[string]interface{}{"1": true, "2": false, "3": true}},
+		{"map_char", map[string]byte{"1": 'A', "2": 'B', "3": 'C'}, map[string]interface{}{"1": byte('A'), "2": byte('B'), "3": byte('C')}},
+		{"map_short", map[string]int16{"1": 1, "2": 2, "3": 3}, map[string]interface{}{"1": int16(1), "2": int16(2), "3": int16(3)}},
+		{"map_int", map[string]int{"1": 1, "2": 2, "3": 3}, map[string]interface{}{"1": int(1), "2": int(2), "3": int(3)}},
+		{"map_float", map[string]float32{"1": 1.0, "2": 2.0, "3": 3.0}, map[string]interface{}{"1": float32(1.0), "2": float32(2.0), "3": float32(3.0)}},
+		{"map_double", map[string]float64{"1": 1.0, "2": 2.0, "3": 3.0}, map[string]interface{}{"1": float64(1.0), "2": float64(2.0), "3": float64(3.0)}},
+		{"map_string", map[string]string{"1": "1", "2": "2", "3": "3"}, map[string]interface{}{"1": "1", "2": "2", "3": "3"}},
 	}
 
 	for _, tt := range tests {
