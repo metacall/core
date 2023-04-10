@@ -16,7 +16,10 @@ edition = "2021"
 
 [dependencies]
 concat-idents = "1.1.4"
+downcast-rs = "1.2.0"
+dyn-clone = "1.0.11"
 metacall-inline = { path = "./inline", version = "0.1.1" }
+mockalloc = "0.1.2"
 
 [build-dependencies]
 bindgen = { version = "0.64.0", default-features = false, features = ["runtime", "logging", "which-rustfmt"]}

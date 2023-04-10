@@ -1,13 +1,16 @@
-extern crate alloc;
-use std::path::PathBuf;
-
-use alloc::ffi::NulError;
+use super::MetacallObjectProtocol;
+use std::{ffi::NulError, path::PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct MetacallInitError(pub String);
 impl MetacallInitError {
     pub fn new() -> Self {
         Self(String::from("Failed to initialize Metacall!"))
+    }
+}
+impl Default for MetacallInitError {
+    fn default() -> Self {
+        MetacallInitError::new()
     }
 }
 impl ToString for MetacallInitError {
@@ -38,12 +41,20 @@ impl ToString for MetacallStringConversionError {
 #[derive(Debug, Clone)]
 pub enum MetacallError {
     FunctionNotFound,
+    FailedCasting(Box<dyn MetacallObjectProtocol>),
     UnexpectedCStringConversionErr(MetacallStringConversionError),
 }
 
 #[derive(Debug, Clone)]
 pub enum MetacallSetAttributeError {
     SetAttributeFailure,
+    FailedCasting(Box<dyn MetacallObjectProtocol>),
+    UnexpectedCStringConversionErr(MetacallStringConversionError),
+}
+
+#[derive(Debug, Clone)]
+pub enum MetacallGetAttributeError {
+    FailedCasting(Box<dyn MetacallObjectProtocol>),
     UnexpectedCStringConversionErr(MetacallStringConversionError),
 }
 

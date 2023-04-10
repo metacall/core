@@ -1,92 +1,107 @@
+use super::{MetacallNull, MetacallObjectProtocol};
 use crate::{
-    bindings::metacall_await_future,
-    parsers::{any_to_metacall, metacall_to_any},
+    bindings::{metacall_await_future, metacall_value_destroy, metacall_value_to_future},
+    parsers,
 };
 use std::{ffi::c_void, ptr, sync::Arc};
 
-use super::Any;
-
-#[derive(Clone, Hash)]
+#[derive(Clone, Debug)]
 pub struct MetacallFuture {
-    future: Arc<*mut c_void>,
+    ptr: Arc<*mut c_void>,
 }
 unsafe impl Send for MetacallFuture {}
 unsafe impl Sync for MetacallFuture {}
 
-pub type MetacallFutureResolve = unsafe extern "C" fn(Any, Any) -> Any;
-pub type MetacallFutureReject = unsafe extern "C" fn(Any, Any) -> Any;
-type MetacallFutureHandlersTuple = (
-    Option<MetacallFutureResolve>,
-    Option<MetacallFutureReject>,
-    Option<Any>,
-);
+pub type MetacallFutureResolve =
+    fn(Box<dyn MetacallObjectProtocol>, Box<dyn MetacallObjectProtocol>);
+pub type MetacallFutureReject =
+    fn(Box<dyn MetacallObjectProtocol>, Box<dyn MetacallObjectProtocol>);
 
-impl MetacallFuture {
-    pub fn new(future: *mut c_void) -> Self {
-        Self {
-            future: Arc::new(future),
-        }
-    }
+struct MetacallHandlers {
+    pub resolve: Option<MetacallFutureResolve>,
+    pub reject: Option<MetacallFutureReject>,
+    pub user_data: Option<Box<dyn MetacallObjectProtocol>>,
+}
 
-    pub fn await_fut(
-        &self,
-        resolve: Option<MetacallFutureResolve>,
-        reject: Option<MetacallFutureReject>,
-        data: Option<Any>,
-    ) -> Any {
-        let data = if let Some(data) = data {
-            any_to_metacall([data])[0]
+unsafe extern "C" fn resolver(resolve_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
+    let handlers: Box<MetacallHandlers> = parsers::pointer_to_box(upper_data);
+
+    if let Some(resolve) = handlers.resolve {
+        let data = if let Some(data) = handlers.user_data {
+            data
         } else {
-            ptr::null_mut()
+            Box::new(MetacallNull())
         };
 
-        let handlers = &mut (resolve, reject, data) as *mut _ as *mut c_void;
+        resolve(parsers::raw_to_metacallobj_untyped(resolve_data), data);
+    }
 
-        unsafe extern "C" fn resolver(
-            resolve_data: *mut c_void,
-            upper_data: *mut c_void,
-        ) -> *mut c_void {
-            let handlers: *mut MetacallFutureHandlersTuple = upper_data.cast();
-            let handlers: MetacallFutureHandlersTuple = ptr::read(handlers);
+    ptr::null_mut()
+}
+unsafe extern "C" fn rejecter(reject_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
+    let handlers: Box<MetacallHandlers> = parsers::pointer_to_box(upper_data);
 
-            if let Some(resolve) = handlers.0 {
-                let data = if let Some(data) = handlers.2 {
-                    data
-                } else {
-                    Any::Null
-                };
+    if let Some(reject) = handlers.reject {
+        let data = if let Some(data) = handlers.user_data {
+            data
+        } else {
+            Box::new(MetacallNull())
+        };
 
-                any_to_metacall([resolve(metacall_to_any(resolve_data), data)])[0]
-            } else {
-                ptr::null_mut()
+        reject(parsers::raw_to_metacallobj_untyped(reject_data), data);
+    }
+
+    ptr::null_mut()
+}
+
+impl MetacallFuture {
+    pub fn new(ptr: *mut c_void) -> Self {
+        Self { ptr: Arc::new(ptr) }
+    }
+
+    pub fn await_fut<T: MetacallObjectProtocol>(
+        self,
+        resolve: Option<MetacallFutureResolve>,
+        reject: Option<MetacallFutureReject>,
+        user_data: Option<T>,
+    ) {
+        let future = self.into_raw();
+        let user_data = match user_data {
+            Some(user_data) => Some(Box::new(user_data) as Box<dyn MetacallObjectProtocol>),
+            None => None,
+        };
+        let handlers = parsers::new_void_pointer(MetacallHandlers {
+            resolve,
+            reject,
+            user_data,
+        });
+
+        unsafe {
+            match (resolve.is_some(), reject.is_some()) {
+                (true, true) => {
+                    metacall_await_future(future, Some(resolver), Some(rejecter), handlers)
+                }
+                (true, false) => metacall_await_future(future, Some(resolver), None, handlers),
+                (false, true) => metacall_await_future(future, None, Some(rejecter), handlers),
+                (false, false) => metacall_await_future(future, None, None, ptr::null_mut()),
             }
-        }
-        unsafe extern "C" fn rejecter(
-            reject_data: *mut c_void,
-            upper_data: *mut c_void,
-        ) -> *mut c_void {
-            let handlers: *mut MetacallFutureHandlersTuple = upper_data.cast();
-            let handlers: MetacallFutureHandlersTuple = ptr::read(handlers);
-
-            if let Some(reject) = handlers.1 {
-                let data = if let Some(data) = handlers.2 {
-                    data
-                } else {
-                    Any::Null
-                };
-
-                any_to_metacall([reject(metacall_to_any(reject_data), data)])[0]
-            } else {
-                ptr::null_mut()
-            }
-        }
-
-        metacall_to_any(unsafe {
-            metacall_await_future(*self.future, Some(resolver), Some(rejecter), handlers)
-        })
+        };
+    }
+    pub fn await_fut_no_data(
+        self,
+        resolve: Option<MetacallFutureResolve>,
+        reject: Option<MetacallFutureReject>,
+    ) {
+        self.await_fut(resolve, reject, None::<MetacallNull>)
     }
 
     pub fn into_raw(self) -> *mut c_void {
-        *self.future
+        unsafe { metacall_value_to_future(*self.ptr) }
+    }
+}
+
+impl Drop for MetacallFuture {
+    fn drop(&mut self) {
+        unsafe { metacall_value_destroy(*self.ptr) };
     }
 }

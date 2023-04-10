@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+#![allow(clippy::not_unsafe_ptr_arg_deref, clippy::boxed_local)]
 /*
  *	MetaCall Library by Parra Studios
  *	A library for providing a foreign function interface calls.
@@ -18,20 +20,18 @@
  *
  */
 
-use metacall_inline;
+pub mod hooks;
+pub mod loaders;
+pub(crate) mod macros;
+pub(crate) mod parsers;
+pub mod prelude;
+
+#[path = "metacall.rs"]
+mod metacall_mod;
+pub use metacall_mod::*;
+
 pub mod inline {
     pub use metacall_inline::*;
 }
 
 metacall_inline::include_bindings!();
-pub(crate) use generated_bindings as bindings;
-pub(crate) mod macros;
-pub(crate) mod parsers;
-
-pub mod hooks;
-pub mod loaders;
-pub mod prelude;
-
-#[path = "metacall.rs"]
-mod metacall_mod;
-pub use metacall_mod::metacall;
