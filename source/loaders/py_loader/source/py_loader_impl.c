@@ -1108,7 +1108,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 #elif PY_MAJOR_VERSION == 3
 		if (PyBytes_AsStringAndSize(obj, &str, &length) != -1)
 		{
-			v = value_create_buffer((const void *)str, (size_t)length + 1);
+			v = value_create_buffer((const void *)str, (size_t)length);
 		}
 #endif
 	}
