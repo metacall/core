@@ -237,7 +237,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((size_t)sizeof("abcd"), (size_t)metacall_value_size(ret));
+		EXPECT_EQ((size_t)sizeof("abcd") - 1, (size_t)metacall_value_size(ret));
 
 		EXPECT_EQ((int)0, (int)memcmp(metacall_value_to_buffer(ret), "abcd", metacall_value_size(ret)));
 
@@ -264,7 +264,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((size_t)sizeof("abcd"), (size_t)metacall_value_size(ret));
+		EXPECT_EQ((size_t)sizeof("abcd") - 1, (size_t)metacall_value_size(ret));
 
 		EXPECT_EQ((int)0, (int)memcmp(metacall_value_to_buffer(ret), "abcd", metacall_value_size(ret)));
 
