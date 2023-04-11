@@ -1,7 +1,9 @@
 # Sanitize the variables
 string(REPLACE "\"" "" GOPATH "${GOPATH}")
 string(REPLACE "\"" "" CGO_CFLAGS "${CGO_CFLAGS}")
+string(REPLACE "\\" "" CGO_CFLAGS "${CGO_CFLAGS}")
 string(REPLACE "\"" "" CGO_LDFLAGS "${CGO_LDFLAGS}")
+string(REPLACE "\\" "" CGO_LDFLAGS "${CGO_LDFLAGS}")
 string(REPLACE "\"" "" CMAKE_Go_COMPILER "${CMAKE_Go_COMPILER}")
 string(REPLACE "\"" "" LIBRARY_PATH_NAME "${LIBRARY_PATH_NAME}")
 string(REPLACE "\"" "" LIBRARY_PATH "${LIBRARY_PATH}")

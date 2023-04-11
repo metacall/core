@@ -15,15 +15,25 @@ set(target go_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
-set(CMAKE_CGO_FLAGS
-	CGO_CFLAGS='-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include'
-	CGO_LDFLAGS='-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>'
-)
-
-add_go_library(${target} SHARED
+set(sources
 	source/await.go
 	source/pointer.go
 	source/go_port.go
+)
+
+add_custom_target(${target}
+	COMMAND ${CMAKE_COMMAND}
+		-DGOPATH="${GOPATH}"
+		-DCMAKE_Go_COMPILER="${CMAKE_Go_COMPILER}"
+		-DCGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include -Wall"
+		-DCGO_LDFLAGS="-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>"
+		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
+		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
+		-DGO_TASK="build"
+		-DSANITIZER_COMPILE_DEFINITIONS=${SANITIZER_COMPILE_DEFINITIONS}
+		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/go_port.cmake
+	SOURCES ${sources}
+	DEPENDS ${sources}
 )
 
 #
