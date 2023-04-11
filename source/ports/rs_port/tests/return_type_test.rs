@@ -304,7 +304,7 @@ fn test_throwable() {
 fn return_type_test() {
     let _d = hooks::initialize().unwrap();
 
-    let tests_dir = env::current_dir().unwrap().join("tests/polyglot");
+    let tests_dir = env::current_dir().unwrap().join("tests/scripts");
     let js_test_file = tests_dir.join("return_type_test.js");
     let c_test_file = tests_dir.join("return_type_test.c");
     let py_test_file = tests_dir.join("return_type_test.py");
