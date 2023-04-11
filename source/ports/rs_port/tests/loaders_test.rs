@@ -1,4 +1,4 @@
-use metacall::{hooks, loaders, metacall, prelude::Any};
+use metacall::{hooks, loaders, metacall_no_arg};
 use std::{
     env,
     fs::{self, File},
@@ -8,20 +8,19 @@ use std::{
 
 // Two different names to avoid conflicts when testing both load_from_memory and load_from_file
 // in a single test.
-const SCRIPT1: &str = "function greet1() { return 'hi there' } \nmodule.exports = { greet1 };";
-const SCRIPT2: &str = "function greet2() { return 'hi there' } \nmodule.exports = { greet2 };";
+const SCRIPT1: &str = "function greet1() { return 'hi there!' } \nmodule.exports = { greet1 };";
+const SCRIPT2: &str = "function greet2() { return 'hi there!' } \nmodule.exports = { greet2 };";
 
 fn call_greet(test: &str, num: u32) {
-    let out = metacall(format!("greet{}", num), []).unwrap();
-    if let Any::String(str) = out {
-        if str.as_str() == "hi there" {
-            return ();
-        }
-
-        panic!("Invalid output of the function! Test: {}.", test);
+    let out = metacall_no_arg::<String>(format!("greet{}", num)).unwrap();
+    if out.as_str() == "hi there!" {
+        return ();
+    } else {
+        panic!(
+            "Invalid output of the function! Expected `hi there!` but received `{}`.",
+            test
+        );
     }
-
-    panic!("Invalid output type of the function! Test: {}.", test);
 }
 
 fn load_from_memory_test() {

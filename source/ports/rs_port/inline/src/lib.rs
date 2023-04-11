@@ -31,7 +31,7 @@ pub fn include_bindings(_input: TokenStream) -> TokenStream {
     let result = quote! {
         #[path = #path]
         #[allow(warnings)]
-        mod generated_bindings;
+        pub mod bindings;
     };
 
     result.into()

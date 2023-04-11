@@ -5,7 +5,7 @@ macro_rules! cstring_enum {
         match ::std::ffi::CString::new(var.clone()) {
             Ok(str) => Ok(str),
             Err(err) => Err($enum::UnexpectedCStringConversionErr(
-                crate::prelude::MetacallStringConversionError::new(var, err),
+                $crate::prelude::MetacallStringConversionError::new(var, err),
             )),
         }
     }};
@@ -22,7 +22,9 @@ macro_rules! cstring {
         let var = $var.to_string();
         match ::std::ffi::CString::new(var.clone()) {
             Ok(str) => Ok(str),
-            Err(err) => Err(crate::prelude::MetacallStringConversionError::new(var, err)),
+            Err(err) => Err($crate::prelude::MetacallStringConversionError::new(
+                var, err,
+            )),
         }
     }};
 
@@ -33,21 +35,54 @@ macro_rules! cstring {
 }
 
 #[macro_export]
-macro_rules! any_unwrap {
-    ($var:ident, $enum:ident) => {{
-        if let crate::prelude::Any::$enum(x) = $var {
-            x
-        } else {
-            panic!(
-                "Failed to parse `{:#?}` as `{:#?}`!",
-                $var,
-                stringify!($enum)
-            );
-        }
-    }};
+macro_rules! match_object_protocol_all {
+    ($any:expr, $var:ident, $action:expr, $($type: ty),*) => {
+        match_object_protocol!($any, {
+            $( $var: $type => $action, )*
+            _ => panic!("The object protocol")
+        })
+    };
+}
 
-    ($var:expr, $enum:ident) => {{
-        let var = $var;
-        any_unwrap!(var, $enum)
-    }};
+#[macro_export]
+macro_rules! match_object_protocol {
+    ( $any:expr, { $( $var:ident : $type:ty => $arm:expr ),*, _ => $default:expr } ) => (
+        $(
+            if $any.is::<$type>() {
+                let $var = $any.downcast::<$type>().unwrap();
+                $arm
+            } else
+        )*
+        {
+            $default
+        }
+    )
+}
+#[macro_export]
+macro_rules! match_object_protocol_ref {
+    ( $any:expr, { $( $var:ident : $type:ty => $arm:expr ),*, _ => $default:expr } ) => (
+        $(
+            if $any.is::<$type>() {
+                let $var = $any.downcast_ref::<$type>().unwrap();
+                $arm
+            } else
+        )*
+        {
+            $default
+        }
+    )
+}
+#[macro_export]
+macro_rules! match_object_protocol_mut {
+    ( $any:expr, { $( $var:ident : $type:ty => $arm:expr ),*, _ => $default:expr } ) => (
+        $(
+            if $any.is::<$type>() {
+                let $var = $any.downcast_mut::<$type>().unwrap();
+                $arm
+            } else
+        )*
+        {
+            $default
+        }
+    )
 }
