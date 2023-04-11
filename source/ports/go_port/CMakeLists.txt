@@ -21,6 +21,8 @@ set(sources
 	source/go_port.go
 )
 
+include(Portability)
+
 add_custom_target(${target}
 	COMMAND ${CMAKE_COMMAND}
 		-DGOPATH="${GOPATH}"
@@ -44,8 +46,6 @@ if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: Not implemented (https://go.googlesource.com/go/+/go1.7/misc/cgo/testsanitizers/test.bash)
 	return()
 endif()
-
-include(Portability)
 
 add_test(NAME ${target}
 	COMMAND ${CMAKE_COMMAND}
