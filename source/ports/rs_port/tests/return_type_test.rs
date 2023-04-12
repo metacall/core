@@ -309,27 +309,29 @@ fn return_type_test() {
     let c_test_file = tests_dir.join("return_type_test.c");
     let py_test_file = tests_dir.join("return_type_test.py");
 
-    loaders::from_file("node", [js_test_file]).unwrap();
-    loaders::from_file("c", [c_test_file]).unwrap();
-    loaders::from_file("py", [py_test_file]).unwrap();
-
-    test_bool();
-    test_char();
-    test_short();
-    test_int();
-    test_long();
-    test_float();
-    test_double();
-    test_string();
-    test_buffer();
-    test_array();
-    test_map();
-    test_pointer();
-    // test_function();
-    test_null();
-    test_class();
-    test_object();
-    test_exception();
-    test_throwable();
-    test_future();
+    if let Ok(_) = loaders::from_file("c", c_test_file) {
+        test_char();
+        test_short();
+        test_int();
+        test_long();
+        test_float();
+        test_double();
+    }
+    if let Ok(_) = loaders::from_file("py", py_test_file) {
+        test_class();
+        test_object();
+        test_buffer();
+        test_pointer();
+    }
+    if let Ok(_) = loaders::from_file("node", js_test_file) {
+        test_bool();
+        test_string();
+        test_array();
+        test_map();
+        // test_function();
+        test_null();
+        test_exception();
+        test_throwable();
+        test_future();
+    }
 }

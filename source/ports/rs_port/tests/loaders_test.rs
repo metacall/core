@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-// Two different names to avoid conflicts when testing both load_from_memory and load_from_file
+// Two different names to avoid conflicts when testing both load_from_memory and load_from_files
 // in a single test.
 const SCRIPT1: &str = "function greet1() { return 'hi there!' } \nmodule.exports = { greet1 };";
 const SCRIPT2: &str = "function greet2() { return 'hi there!' } \nmodule.exports = { greet2 };";
@@ -40,7 +40,7 @@ fn load_from_file_test() {
     temp_js.write_all(SCRIPT2.as_bytes()).unwrap();
     temp_js.flush().unwrap();
 
-    loaders::from_file("node", [temp_js_path]).unwrap();
+    loaders::from_file("node", temp_js_path).unwrap();
 
     call_greet("load_from_file", 2);
 
@@ -55,6 +55,6 @@ fn loaders_test() {
     // Testing load_from_memory
     load_from_memory_test();
 
-    // Testing load_from_file
+    // Testing load_from_files
     load_from_file_test();
 }

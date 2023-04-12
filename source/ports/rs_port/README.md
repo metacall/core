@@ -32,7 +32,7 @@ fn main() {
     // Metacall automatically shuts down when it goes out of scope
     let _ = hooks::initialize().unwrap();
 
-    loaders::from_file("ts", ["sum.ts"]).unwrap();
+    loaders::from_file("ts", "sum.ts").unwrap();
 
     let sum = metacall("sum", [Any::Double(1.0), Any::Double(2.0)]).unwrap();
 

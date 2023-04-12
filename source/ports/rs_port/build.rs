@@ -1,24 +1,17 @@
-use bindgen::builder;
-use std::{
-    env, fs,
-    path::{PathBuf},
-};
+use bindgen::{builder, CargoCallbacks};
+use std::env;
 
-use bindgen::CargoCallbacks;
-
-fn get_bindings_dir() -> PathBuf {
-    let out_dir = PathBuf::from(env::current_dir().unwrap());
-    let bindings_dir = out_dir.join("target").join("bindings");
-
-    fs::create_dir_all(&bindings_dir).unwrap();
-
-    bindings_dir.canonicalize().unwrap()
-}
-
-fn generate_bindings(bindings_dir: &PathBuf, headers: &[&str]) {
+fn generate_bindings(headers: &[&str]) {
     let mut builder = builder();
 
-    builder = builder.clang_arg(format!("-I{}", env::current_dir().unwrap().join("include").to_str().unwrap()));
+    builder = builder.clang_arg(format!(
+        "-I{}",
+        env::current_dir()
+            .unwrap()
+            .join("include")
+            .to_str()
+            .unwrap()
+    ));
 
     for header in headers {
         builder = builder.header(header.to_string());
@@ -35,13 +28,11 @@ fn generate_bindings(bindings_dir: &PathBuf, headers: &[&str]) {
     let bindings = builder.generate().unwrap();
 
     bindings
-        .write_to_file(bindings_dir.join("bindings.rs"))
+        .write_to_file(env::current_dir().unwrap().join("src/bindings.rs"))
         .unwrap();
 }
 
 fn main() {
-    let bindings_dir = get_bindings_dir();
-
     // When running from CMake
     if let Ok(_) = env::var("CMAKE_BINDGEN") {
         const HEADERS: [&str; 3] = [
@@ -50,19 +41,10 @@ fn main() {
             "include/metacall/metacall_error.h",
         ];
 
-        generate_bindings(&bindings_dir, &HEADERS);
-
-        for header in HEADERS {
-            println!(
-                "{}",
-                format!(
-                    "cargo:rerun-if-changed={}/{}",
-                    bindings_dir.to_str().unwrap(),
-                    header
-                )
-            );
-        }
+        generate_bindings(&HEADERS);
     }
+
+    println!("cargo:rerun-if-changed=src/bindings.rs");
 
     // Compile time assert for validating the minimum METACALL_VERSION
     // TODO
@@ -98,13 +80,13 @@ fn main() {
         match profile.as_str() {
             "debug" => {
                 println!("cargo:rustc-link-lib=metacalld")
-            },
+            }
             "release" => {
                 println!("cargo:rustc-link-lib=metacall")
-            },
+            }
             _ => {
                 println!("cargo:rustc-link-lib=metacall")
-            },
+            }
         }
     }
 }
