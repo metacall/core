@@ -1,4 +1,4 @@
-# TODO: Disabled rs_port until it works properly, delete this once it works
+# TODO: Remove this
 return()
 
 # Check if this port is enabled
@@ -29,10 +29,32 @@ else()
 	set(TARGET_BUILD_TYPE)
 endif()
 
+# Build Rust Port
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${CMAKE_COMMAND} -E env BINDGEN_ENABLED=1 ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 )
+
+# Copy the include files
+set(include_dirs
+	"${CMAKE_SOURCE_DIR}/source/metacall/include"
+	"${CMAKE_BINARY_DIR}/source/metacall/include"
+	"${CMAKE_BINARY_DIR}/source/include"
+)
+
+add_custom_target(${target}_includes
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${include_dirs} "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+add_dependencies(${target} ${target}_includes)
+
+# Copy bindings
+add_custom_target(${target}_bindings
+	# TODO: ./target/debug/build/metacall-b71ad50a5383b74f/out/bindings/bindings.rs
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/target/... "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings/bindings.rs"
+)
+
+add_dependencies(${target}_bindings ${target})
 
 #
 # Dependecies
@@ -59,7 +81,7 @@ if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 endif()
 
 add_test(NAME ${target}
-	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR} PROJECT_LIBRARY_PATH_NAME=${PROJECT_LIBRARY_PATH_NAME} RUSTFLAGS=-Zmacro-backtrace ${Rust_CARGO_EXECUTABLE} test
+	COMMAND ${Rust_CARGO_EXECUTABLE} test
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -78,5 +100,8 @@ test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 	"${PROJECT_LIBRARY_PATH_NAME}=${TEST_LIB_PATH}"
+	"CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+	"PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR}"
+	"RUSTFLAGS=-Zmacro-backtrace"
 	"RUST_BACKTRACE=1"
 )

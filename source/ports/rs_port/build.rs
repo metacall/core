@@ -1,69 +1,38 @@
 use bindgen::builder;
-use git2::Repository;
 use std::{
-    env, fs, io,
-    path::{Path, PathBuf},
+    env, fs,
+    path::{PathBuf},
 };
 
-const METACALL_CORE_REPO: &str = "https://github.com/metacall/core.git#v0.7.3";
+use bindgen::CargoCallbacks;
 
-pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> io::Result<()> {
-    fs::create_dir_all(&destination)?;
-    for entry in fs::read_dir(source)? {
-        let entry = entry?;
-        let filetype = entry.file_type()?;
-
-        if filetype.is_dir() {
-            copy_recursively(entry.path(), destination.as_ref().join(entry.file_name()))?;
-        } else {
-            fs::copy(entry.path(), destination.as_ref().join(entry.file_name()))?;
-        }
-    }
-    Ok(())
-}
 fn get_bindings_dir() -> PathBuf {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let bindings_dir = out_dir.join("bindings");
+    //let bindings_dir = env::current_dir().unwrap().join("src/bindings");
 
     fs::create_dir_all(&bindings_dir).unwrap();
 
     bindings_dir.canonicalize().unwrap()
 }
-fn download_the_headers<T: ToString>(bindings_dir: &PathBuf, headers: &[T]) {
-    let mut need_for_clone = false;
-    let bindings_str = bindings_dir.to_str().unwrap();
 
-    for header in headers {
-        let path = PathBuf::from(format!("{}/{}", bindings_str, header.to_string()));
-        if !path.exists() && !need_for_clone {
-            need_for_clone = true;
-        }
-    }
-
-    if need_for_clone {
-        let temp_dir = tempfile::tempdir().unwrap();
-        Repository::clone(METACALL_CORE_REPO, &temp_dir).unwrap();
-
-        let tmp_dir = temp_dir.path().to_str().unwrap();
-        let source = format!("{}/source/metacall", tmp_dir);
-        let destination = bindings_dir.join("metacall");
-        copy_recursively(source, destination).unwrap();
-    }
-}
-fn generate_bindings<T: ToString>(bindings_dir: &PathBuf, headers: &[T]) {
-    let bindings_dir_str = bindings_dir.to_str().unwrap();
+fn generate_bindings(bindings_dir: &PathBuf, headers: &[&str]) {
     let mut builder = builder();
 
+    builder = builder.clang_arg(format!("-I{}", env::current_dir().unwrap().join("include").to_str().unwrap()));
+
     for header in headers {
-        builder = builder.header(format!("{}/{}", bindings_dir_str, header.to_string()));
+        builder = builder.header(header.to_string());
     }
 
     builder = builder
-        .detect_include_paths(true)
+        .detect_include_paths(false)
         .size_t_is_usize(true)
         .rustfmt_bindings(true)
         .generate_comments(true)
+        .parse_callbacks(Box::new(CargoCallbacks))
         .derive_hash(true);
+
     let bindings = builder.generate().unwrap();
 
     bindings
@@ -72,31 +41,42 @@ fn generate_bindings<T: ToString>(bindings_dir: &PathBuf, headers: &[T]) {
 }
 
 fn main() {
-    const HEADERS: [&str; 3] = [
-        "metacall/include/metacall/metacall.h",
-        "metacall/include/metacall/metacall_value.h",
-        "metacall/include/metacall/metacall_error.h",
-    ];
-    let bindings_dir = get_bindings_dir();
+    // When running from CMake, regenerate bindings
+    if let Ok(_) = env::var("BINDGEN_ENABLED") {
+        const HEADERS: [&str; 3] = [
+            "include/metacall/metacall.h",
+            "include/metacall/metacall_value.h",
+            "include/metacall/metacall_error.h",
+        ];
 
-    download_the_headers(&bindings_dir, &HEADERS);
-    generate_bindings(&bindings_dir, &HEADERS);
+        let bindings_dir = get_bindings_dir();
 
-    for header in HEADERS {
-        println!(
-            "{}",
-            format!(
-                "cargo:rerun-if-changed={}/{}",
-                bindings_dir.to_str().unwrap(),
-                header
-            )
-        );
+        generate_bindings(&bindings_dir, &HEADERS);
+
+        for header in HEADERS {
+            println!(
+                "{}",
+                format!(
+                    "cargo:rerun-if-changed={}/{}",
+                    bindings_dir.to_str().unwrap(),
+                    header
+                )
+            );
+        }
     }
 
-    // when running tests
+    // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
+        // Link search path to build folder
         println!("cargo:rustc-link-search={val}");
 
+        // Set up environment variables
+        if let Ok(name) = env::var("PROJECT_LIBRARY_PATH_NAME") {
+            println!("cargo:rustc-env={name}={val}");
+        }
+        println!("cargo:rustc-env=CONFIGURATION_PATH={val}/configurations/global.json");
+
+        // Link against correct version of metacall
         match env::var("CMAKE_BUILD_TYPE") {
             Ok(val) => {
                 if val == "Debug" {
@@ -110,12 +90,8 @@ fn main() {
                 println!("cargo:rustc-link-lib=metacall");
             }
         }
-
-        if let Ok(name) = env::var("PROJECT_LIBRARY_PATH_NAME") {
-            println!("cargo:rustc-env={name}={val}");
-        }
-        println!("cargo:rustc-env=CONFIGURATION_PATH={val}/configurations/global.json")
     } else {
+        // When building from Cargo
         let profile = env::var("PROFILE").unwrap();
         match profile.as_str() {
             "debug" => {
