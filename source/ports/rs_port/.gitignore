@@ -13,3 +13,6 @@ Cargo.lock
 
 # Ignore include headers
 include/
+
+# Not ignore dockerignore
+!.dockerignore

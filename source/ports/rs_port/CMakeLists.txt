@@ -1,4 +1,4 @@
-# TODO: Remove this
+# TODO: Remove this once tests pass
 return()
 
 # Check if this port is enabled
@@ -32,7 +32,7 @@ endif()
 # Build Rust Port
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env BINDGEN_ENABLED=1 ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BINDGEN=1 ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 )
 
 # Copy the include files
@@ -49,12 +49,11 @@ add_custom_target(${target}_includes
 add_dependencies(${target} ${target}_includes)
 
 # Copy bindings
-add_custom_target(${target}_bindings
-	# TODO: ./target/debug/build/metacall-b71ad50a5383b74f/out/bindings/bindings.rs
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/target/... "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings/bindings.rs"
+add_custom_command(
+	TARGET ${target}
+	POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/target/bindings/bindings.rs" "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings/bindings.rs"
 )
-
-add_dependencies(${target}_bindings ${target})
 
 #
 # Dependecies

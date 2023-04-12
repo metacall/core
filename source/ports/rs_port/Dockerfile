@@ -1,33 +1,38 @@
-FROM devraymondsh/ubuntu-docker-rust
+# docker build -t metacall/rs-port .
+# docker run --rm -it metacall/rs-port
+
+FROM metacall/core:dev AS develop
 
 # Install dependencies
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends build-essential cmake ca-certificates git nodejs npm pkg-config clang-11 clang-format-11 libclang-11-dev libtcc-dev cmake valgrind libdw-dev libbfd-dev libdwarf-dev libffi-dev python3 libpython3-dev python3-pip
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+	&& apt-get install -y --no-install-recommends \
+		clang-11 clang-format-11 libclang-11-dev libtcc-dev valgrind libdw-dev libbfd-dev libdwarf-dev libffi-dev \
+	&& curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+	&& . "/root/.cargo/env" \
+	&& rustup component add rustfmt \
+	&& rustup toolchain add nightly \
+	&& rustup component add clippy
 
-WORKDIR /root/metacall-polyglot
-RUN git clone --branch v0.7.3 https://github.com/metacall/core
-RUN mkdir core/build
+ENV PATH="${PATH}:/root/.cargo/bin"
 
-WORKDIR /root/metacall-polyglot/core/build
-RUN cmake \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DOPTION_BUILD_DETOURS=Off \
-  -DOPTION_BUILD_EXAMPLES=Off \
-  -DOPTION_BUILD_LOADERS_C=On \
-  -DOPTION_BUILD_LOADERS_NODE=On \
-  -DOPTION_BUILD_LOADERS_PY=On \
-  -DOPTION_BUILD_SCRIPTS=Off \
-  -DOPTION_BUILD_SERIALS_RAPID_JSON=On \
-  -DOPTION_BUILD_TESTS=Off \
-  ..
-RUN cmake --build . --target install
-RUN cd /usr/local/lib && ldconfig
+RUN cd build \
+	&& cmake \
+		-DCMAKE_BUILD_TYPE=Debug \
+		-DOPTION_BUILD_DETOURS=Off \
+		-DOPTION_BUILD_EXAMPLES=Off \
+		-DOPTION_BUILD_LOADERS_C=On \
+		-DOPTION_BUILD_LOADERS_NODE=On \
+		-DOPTION_BUILD_LOADERS_PY=On \
+		-DOPTION_BUILD_SCRIPTS=Off \
+		-DOPTION_BUILD_SERIALS_RAPID_JSON=On \
+		-DOPTION_BUILD_TESTS=Off \
+		.. \
+	&& cmake --build . --target install \
+	&& cd /usr/local/lib \
+	&& ldconfig
 
-RUN rustup component add rustfmt
-RUN rustup toolchain add nightly
-RUN rustup component add clippy
-RUN cargo install cargo-valgrind
+WORKDIR /usr/local/metacall/source/ports/rs_port
 
-WORKDIR /root/metacall-polyglot
+COPY . .
+
 CMD ["cargo", "test"]

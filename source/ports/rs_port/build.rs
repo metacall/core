@@ -7,9 +7,8 @@ use std::{
 use bindgen::CargoCallbacks;
 
 fn get_bindings_dir() -> PathBuf {
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let bindings_dir = out_dir.join("bindings");
-    //let bindings_dir = env::current_dir().unwrap().join("src/bindings");
+    let out_dir = PathBuf::from(env::current_dir().unwrap());
+    let bindings_dir = out_dir.join("target").join("bindings");
 
     fs::create_dir_all(&bindings_dir).unwrap();
 
@@ -26,7 +25,7 @@ fn generate_bindings(bindings_dir: &PathBuf, headers: &[&str]) {
     }
 
     builder = builder
-        .detect_include_paths(false)
+        .detect_include_paths(true)
         .size_t_is_usize(true)
         .rustfmt_bindings(true)
         .generate_comments(true)
@@ -41,15 +40,15 @@ fn generate_bindings(bindings_dir: &PathBuf, headers: &[&str]) {
 }
 
 fn main() {
-    // When running from CMake, regenerate bindings
-    if let Ok(_) = env::var("BINDGEN_ENABLED") {
+    let bindings_dir = get_bindings_dir();
+
+    // When running from CMake
+    if let Ok(_) = env::var("CMAKE_BINDGEN") {
         const HEADERS: [&str; 3] = [
             "include/metacall/metacall.h",
             "include/metacall/metacall_value.h",
             "include/metacall/metacall_error.h",
         ];
-
-        let bindings_dir = get_bindings_dir();
 
         generate_bindings(&bindings_dir, &HEADERS);
 
@@ -64,6 +63,9 @@ fn main() {
             );
         }
     }
+
+    // Compile time assert for validating the minimum METACALL_VERSION
+    // TODO
 
     // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
