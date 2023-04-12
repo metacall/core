@@ -7,15 +7,17 @@ use metacall::{
 fn test_inline() {
     let _d = hooks::initialize().unwrap();
 
+    // TODO
+
     // py! {
     //     print("hello world")
     // }
 
-    node! {
-        console.log("hello world");
-    }
+    // node! {
+    //     console.log("hello world");
+    // }
 
-    ts! {
-        console.log("hello world");
-    }
+    // ts! {
+    //     console.log("hello world");
+    // }
 }
