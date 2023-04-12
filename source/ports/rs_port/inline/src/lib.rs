@@ -30,7 +30,7 @@ gen_inline_macro!(py, node, ts, cs, rb, cob, rpc, java, wasm);
 #[proc_macro]
 pub fn include_bindings(_input: TokenStream) -> TokenStream {
     let out_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let path_dir = out_dir.join("src").join("bindings").join("bindings.rs");
+    let path_dir = out_dir.join("src").join("bindings.rs");
     let path = path_dir.to_str();
 
     let result = quote! {

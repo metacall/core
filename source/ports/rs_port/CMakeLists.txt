@@ -1,6 +1,3 @@
-# TODO: Remove this once tests pass
-return()
-
 # Check if this port is enabled
 if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RS)
 	return()
@@ -52,7 +49,7 @@ add_dependencies(${target} ${target}_includes)
 add_custom_command(
 	TARGET ${target}
 	POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/target/bindings/bindings.rs" "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings/bindings.rs"
+	COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/target/bindings/bindings.rs" "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs"
 )
 
 #
