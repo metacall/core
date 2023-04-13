@@ -415,7 +415,7 @@ sub_java(){
 		$SUDO_CMD apt-get update
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends default-jre default-jdk
 	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
-		brew install openjdk@19
+		brew install openjdk@17
 	fi
 }
 
