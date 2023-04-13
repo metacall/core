@@ -47,6 +47,7 @@ extern void *rejectCgo(void *, void *);
 import "C"
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
@@ -432,6 +433,16 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 		return
 	}
 
+	if buf, ok := arg.(bytes.Buffer); ok {
+		str := buf.String()
+		p := unsafe.Pointer(C.CString(str))
+		defer C.free(p)
+
+		*ptr = C.metacall_value_create_buffer(p, (C.size_t)(len(str)))
+
+		return
+	}
+
 	// Create array
 	v := reflect.ValueOf(arg)
 	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
@@ -460,29 +471,29 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 
 	/*
 
-	// Create map
-	if v.Kind() == reflect.Map {
-		length := v.Len()
-		*ptr = C.metacall_value_create_map(nil, (C.size_t)(length))
-		cArgs := C.metacall_value_to_map(*ptr)
+		// Create map
+		if v.Kind() == reflect.Map {
+			length := v.Len()
+			*ptr = C.metacall_value_create_map(nil, (C.size_t)(length))
+			cArgs := C.metacall_value_to_map(*ptr)
 
-		for index, m := 0, v.MapRange(); m.Next(); index++ {
-			// Access to current element of the map
-			mapIndex := unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)
+			for index, m := 0, v.MapRange(); m.Next(); index++ {
+				// Access to current element of the map
+				mapIndex := unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)
 
-			// Get the map pair
-			array := C.metacall_value_to_array(mapIndex)
+				// Get the map pair
+				array := C.metacall_value_to_array(mapIndex)
 
-			// Transform the key
-			key := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(0)*PtrSizeInBytes))
-			goToValue(m.Key(), key)
+				// Transform the key
+				key := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(0)*PtrSizeInBytes))
+				goToValue(m.Key(), key)
 
-			// Transform the value
-			val := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(1)*PtrSizeInBytes))
-			goToValue(m.Value(), val)
+				// Transform the value
+				val := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(1)*PtrSizeInBytes))
+				goToValue(m.Value(), val)
+			}
+			return
 		}
-		return
-	}
 
 	*/
 
@@ -530,6 +541,15 @@ func valueToGo(value unsafe.Pointer) interface{} {
 	case C.METACALL_STRING:
 		{
 			return C.GoString(C.metacall_value_to_string(value))
+		}
+	case C.METACALL_BUFFER:
+		{
+			buffer := C.metacall_value_to_buffer(value)
+			size := C.metacall_value_size(value)
+
+			b := *bytes.NewBuffer(C.GoBytes(buffer, C.int(size)))
+
+			return b
 		}
 	case C.METACALL_ARRAY:
 		{

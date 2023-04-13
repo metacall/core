@@ -1,6 +1,7 @@
 package metacall
 
 import (
+	"bytes"
 	"log"
 	"os"
 	"reflect"
@@ -153,6 +154,10 @@ func TestValues(t *testing.T) {
 		{"double_min", float64(2.3e-308), float64(2.3e-308)},
 		{"double_max", float64(1.7e+308), float64(1.7e+308)},
 		{"string", "hello", "hello"},
+		{"buffer_empty", *bytes.NewBuffer([]byte{}), *bytes.NewBuffer([]byte{})},
+		{"buffer_nil", *bytes.NewBuffer(nil), *bytes.NewBuffer([]byte{})}, // TODO(iyear): how to handle nil buffer?
+		{"buffer_ascii", *bytes.NewBuffer([]byte{'A', 'B', 'C'}), *bytes.NewBuffer([]byte{'A', 'B', 'C'})},
+		{"buffer_unicode", *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9")), *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9"))},
 		{"array", [3]interface{}{1, 2, 3}, []interface{}{1, 2, 3}},
 		{"array_bool", [3]bool{true, false, true}, []interface{}{true, false, true}},
 		{"array_char", [3]byte{'1', '2', '3'}, []interface{}{byte('1'), byte('2'), byte('3')}},
