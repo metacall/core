@@ -34,4 +34,5 @@ pub mod inline {
     pub use metacall_inline::*;
 }
 
-metacall_inline::include_bindings!();
+#[allow(warnings)]
+pub mod bindings;

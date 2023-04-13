@@ -9,7 +9,10 @@ use std::{
     ptr,
 };
 
-pub fn from_file(
+pub fn from_file(tag: impl ToString, script: impl AsRef<Path>) -> Result<(), MetacallLoaderError> {
+    from_files(tag, [script])
+}
+pub fn from_files(
     tag: impl ToString,
     scripts: impl IntoIterator<Item = impl AsRef<Path>>,
 ) -> Result<(), MetacallLoaderError> {
