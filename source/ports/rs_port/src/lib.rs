@@ -1,5 +1,10 @@
 #![warn(clippy::all)]
-#![allow(clippy::not_unsafe_ptr_arg_deref, clippy::boxed_local)]
+#![allow(
+    clippy::not_unsafe_ptr_arg_deref,
+    clippy::boxed_local,
+    clippy::tabs_in_doc_comments,
+    clippy::needless_doctest_main
+)]
 /*
  *	MetaCall Library by Parra Studios
  *	A library for providing a foreign function interface calls.
@@ -20,19 +25,93 @@
  *
  */
 
-pub mod hooks;
-pub mod loaders;
-pub(crate) mod macros;
+//! [METACALL](https://github.com/metacall/core) is a library that allows calling functions,
+//! methods or procedures between programming languages. With METACALL you can transparently
+//! execute code from / to any programming language, for example, call TypeScript code from Rust.
+//! Click [here](https://github.com/metacall/install) for installation guide.
+//!
+//! General usage example:
+//! Let's consider we have the following Typescript code:
+//! `sum.ts`
+//! ``` javascript
+//! export function sum(a: number, b: number): number {
+//!	    return a + b;
+//! }
+//! ```
+//! Now let's jump into Rust:
+//!
+//! ```
+//! use metacall::{hooks, metacall, loaders};
+//!
+//! fn main() {
+//!     // Initialize Metacall at the top
+//!     let _metacall = hooks::initialize().unwrap();
+//!     
+//!     // Load the file (Checkout the loaders module for loading multiple files
+//!     // or loading from string)
+//!     loaders::from_single_file("ts", "sum.ts").unwrap();
+//!
+//!     // Call the sum function (Also checkout other metacall functions)
+//!     let sum = metacall::<f64>("sum", [1.0, 2.0]).unwrap();
+//!
+//!     assert_eq!(sum, 3.0);
+//! }
+//!
+//! ```
+
+pub(crate) mod helpers;
 pub(crate) mod parsers;
-pub mod prelude;
+pub(crate) use macros::private_macros::*;
+
+/// Contains Metacall loaders from file and memory. Usage example: ...
+/// ```
+/// // Loading a single file with Nodejs.
+/// metacall::loaders::from_single_file("node", "index.js").unwrap();
+///
+/// // Loading multiple files with Nodejs.
+/// metacall::loaders::from_file("node", ["index.js", "main.js"]).unwrap();
+///
+/// // Loading a string with Nodejs.
+/// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
+/// metacall::loaders::from_memory("node", script).unwrap();
+/// ```
+pub mod loaders;
+
+mod types;
+pub use hooks::initialize;
+
+#[doc(hidden)]
+pub mod macros;
+
+#[doc(hidden)]
+pub mod hooks;
+pub use types::*;
 
 #[path = "metacall.rs"]
 mod metacall_mod;
 pub use metacall_mod::*;
 
+/// Contains Metacall language inliners. Usage example: ...
+/// ```
+/// // Python
+/// py! {
+///     print("hello world")
+/// }
+///
+/// // Nodejs
+/// node! {
+///     console.log("hello world");
+/// }
+///
+/// // Typescript
+/// ts! {
+///     console.log("hello world");
+/// }
+/// ```
 pub mod inline {
     pub use metacall_inline::*;
 }
 
 #[allow(warnings)]
+#[doc(hidden)]
 pub mod bindings;

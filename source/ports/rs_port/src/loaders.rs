@@ -1,7 +1,7 @@
 use crate::{
     bindings::{metacall_load_from_file, metacall_load_from_memory},
     cstring_enum,
-    prelude::MetacallLoaderError,
+    types::MetacallLoaderError,
 };
 use std::{
     ffi::CString,
@@ -9,10 +9,23 @@ use std::{
     ptr,
 };
 
-pub fn from_file(tag: impl ToString, script: impl AsRef<Path>) -> Result<(), MetacallLoaderError> {
-    from_files(tag, [script])
+/// Loads a script from a single file. Usage example: ...
+/// ```
+/// // A Nodejs script
+/// metacall::loaders::from_single_file("node", "index.js").unwrap();
+/// ```
+pub fn from_single_file(
+    tag: impl ToString,
+    script: impl AsRef<Path>,
+) -> Result<(), MetacallLoaderError> {
+    from_file(tag, [script])
 }
-pub fn from_files(
+/// Loads a script from file. Usage example: ...
+/// ```
+/// // A Nodejs script
+/// metacall::loaders::from_file("node", ["index.js", "main.js"]).unwrap();
+/// ```
+pub fn from_file(
     tag: impl ToString,
     scripts: impl IntoIterator<Item = impl AsRef<Path>>,
 ) -> Result<(), MetacallLoaderError> {
@@ -53,6 +66,13 @@ pub fn from_files(
     Ok(())
 }
 
+/// Loads a script from memory. Usage example: ...
+/// ```
+/// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
+///
+/// // A Nodejs script
+/// metacall::loaders::from_memory("node", script).unwrap();
+/// ```
 pub fn from_memory(tag: impl ToString, script: impl ToString) -> Result<(), MetacallLoaderError> {
     let script = script.to_string();
     let c_tag = cstring_enum!(tag, MetacallLoaderError)?;

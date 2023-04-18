@@ -1,6 +1,6 @@
 use crate::{
     bindings::{metacall_destroy, metacall_initialize},
-    prelude::MetacallInitError,
+    types::MetacallInitError,
 };
 use std::ffi::c_int;
 
@@ -18,6 +18,15 @@ impl Drop for MetacallAutoDestroy {
     }
 }
 
+/// Initializes Metacall. Always remember to store the output in a variable to avoid instant drop.
+/// For example: ...
+/// ```
+/// // Initialize metacall at the top of your main function before loading your codes or
+/// // calling any function.
+/// let _metacall = metacall::initialize().unwrap();
+///
+///
+/// ```
 pub fn initialize() -> Result<MetacallAutoDestroy, MetacallInitError> {
     if initialize_manually() != 0 {
         return Err(MetacallInitError::new());

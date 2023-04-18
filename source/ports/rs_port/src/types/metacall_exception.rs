@@ -1,25 +1,37 @@
-use super::{MetacallObjectProtocol, MetacallStringConversionError};
+use super::{MetacallStringConversionError, MetacallValue};
 use crate::{
     bindings::{
         metacall_exception_type, metacall_throwable_value, metacall_value_create_exception,
         metacall_value_destroy, metacall_value_to_exception, metacall_value_to_throwable,
     },
-    cstring, match_object_protocol, parsers,
+    cstring, helpers, match_metacall_value, parsers,
 };
 use std::{
     ffi::{c_char, c_void, CStr},
     sync::Arc,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
+/// Represents Metacall exception. You can create an exception with [new](#method.new).
 pub struct MetacallException {
     exception_struct: Arc<metacall_exception_type>,
-    ptr: Arc<*mut c_void>,
+    leak: bool,
+    value: *mut c_void,
 }
 unsafe impl Send for MetacallException {}
 unsafe impl Sync for MetacallException {}
+impl Clone for MetacallException {
+    fn clone(&self) -> Self {
+        Self {
+            exception_struct: self.exception_struct.clone(),
+            leak: true,
+            value: self.value,
+        }
+    }
+}
 
 impl MetacallException {
+    /// Creates a new exception.
     pub fn new(
         message: impl ToString,
         label: impl ToString,
@@ -41,15 +53,28 @@ impl MetacallException {
 
         Ok(Self {
             exception_struct: Arc::new(exception_struct),
-            ptr: Arc::new(exception_ptr),
+            value: exception_ptr,
+            leak: false,
         })
     }
 
-    pub fn from(ptr: *mut c_void) -> Self {
-        let exception = unsafe { metacall_value_to_exception(ptr) };
+    #[doc(hidden)]
+    pub fn new_raw(value: *mut c_void) -> Self {
+        let exception = unsafe { metacall_value_to_exception(value) };
         Self {
             exception_struct: Arc::new(unsafe { *(exception as *mut metacall_exception_type) }),
-            ptr: Arc::new(ptr),
+            leak: false,
+            value,
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn new_raw_leak(value: *mut c_void) -> Self {
+        let exception = unsafe { metacall_value_to_exception(value) };
+        Self {
+            exception_struct: Arc::new(unsafe { *(exception as *mut metacall_exception_type) }),
+            leak: true,
+            value,
         }
     }
 
@@ -57,65 +82,104 @@ impl MetacallException {
         String::from(unsafe { CStr::from_ptr(string) }.to_str().unwrap())
     }
 
+    /// Gets the exception message.
     pub fn get_message(&self) -> String {
         Self::string_convertor(self.exception_struct.message)
     }
+    /// Gets the exception label.
     pub fn get_label(&self) -> String {
         Self::string_convertor(self.exception_struct.label)
     }
+    /// Gets the exception stacktrace.
     pub fn get_stacktrace(&self) -> String {
         Self::string_convertor(self.exception_struct.stacktrace)
     }
+    /// Gets the exception code.
     pub fn get_code(&self) -> i64 {
         self.exception_struct.code
     }
 
+    #[doc(hidden)]
     pub fn into_raw(self) -> *mut c_void {
-        unsafe { metacall_value_to_exception(*self.ptr) }
+        self.value
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum MetacallThrowableValue<T: MetacallObjectProtocol> {
+#[derive(Debug, Clone)]
+/// Different types of Throwable value.
+pub enum MetacallThrowableValue<T: MetacallValue> {
+    /// Exception.
     Exception(MetacallException),
-    Other(Box<dyn MetacallObjectProtocol>),
+    /// Other types.
+    Other(Box<dyn MetacallValue>),
+    /// Specified.
     Specified(T),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
+/// Represents Metacall throwable.
 pub struct MetacallThrowable {
-    value: Arc<*mut c_void>,
-    ptr: Arc<*mut c_void>,
+    leak: bool,
+    value_ptr: *mut c_void,
+    value: *mut c_void,
 }
 unsafe impl Send for MetacallThrowable {}
 unsafe impl Sync for MetacallThrowable {}
+impl Clone for MetacallThrowable {
+    fn clone(&self) -> Self {
+        Self {
+            leak: true,
+            value: self.value,
+            value_ptr: self.value_ptr,
+        }
+    }
+}
 
 impl MetacallThrowable {
-    pub fn new(ptr: *mut c_void) -> Self {
-        let throwable_value = unsafe { metacall_throwable_value(metacall_value_to_throwable(ptr)) };
+    #[doc(hidden)]
+    pub fn new_raw(value_ptr: *mut c_void) -> Self {
+        let throwable_value =
+            unsafe { metacall_throwable_value(metacall_value_to_throwable(value_ptr)) };
         Self {
-            ptr: Arc::new(ptr),
-            value: Arc::new(throwable_value),
+            leak: false,
+            value: throwable_value,
+            value_ptr,
         }
     }
 
-    pub fn get_value_untyped(&self) -> Box<dyn MetacallObjectProtocol> {
-        match parsers::raw_to_metacallobj::<MetacallException>(*self.value) {
-            Ok(value) => parsers::implementer_to_traitobj(value),
+    #[doc(hidden)]
+    pub fn new_raw_leak(value_ptr: *mut c_void) -> Self {
+        let throwable_value =
+            unsafe { metacall_throwable_value(metacall_value_to_throwable(value_ptr)) };
+        Self {
+            leak: true,
+            value: throwable_value,
+            value_ptr,
+        }
+    }
+
+    /// Gets the throwable value without type casting([MetacallValue](MetacallValue)).
+    pub fn get_value_untyped(&self) -> Box<dyn MetacallValue> {
+        match parsers::raw_to_metacallobj::<MetacallException>(self.value) {
+            Ok(mut value) => {
+                value.leak = true;
+
+                helpers::metacall_implementer_to_traitobj(value)
+            }
             Err(original) => original,
         }
     }
-    pub fn get_value<T: MetacallObjectProtocol>(
-        &self,
-    ) -> Result<T, Box<dyn MetacallObjectProtocol>> {
+    /// Gets the throwable value.
+    pub fn get_value<T: MetacallValue>(&self) -> Result<T, Box<dyn MetacallValue>> {
         match self.get_value_untyped().downcast::<T>() {
             Ok(value) => Ok(value),
             Err(original) => Err(original),
         }
     }
 
+    #[doc(hidden)]
     pub fn into_raw(self) -> *mut c_void {
-        unsafe { metacall_value_to_throwable(*self.ptr) }
+        self.value_ptr
     }
 }
 
@@ -133,7 +197,7 @@ impl ToString for MetacallThrowable {
         let throwable_value = self.get_value_untyped();
         format!(
             "[Throwable]: {}",
-            match_object_protocol!(throwable_value, {
+            match_metacall_value!(throwable_value, {
                 exception: MetacallException => exception.to_string(),
                 _ => format!("{:#?}", throwable_value)
             })
@@ -143,13 +207,17 @@ impl ToString for MetacallThrowable {
 
 impl Drop for MetacallException {
     fn drop(&mut self) {
-        unsafe { metacall_value_destroy(*self.ptr) }
+        if !self.leak {
+            unsafe { metacall_value_destroy(self.value) }
+        }
     }
 }
 impl Drop for MetacallThrowable {
     fn drop(&mut self) {
         unsafe {
-            metacall_value_destroy(*self.ptr);
+            if !self.leak {
+                metacall_value_destroy(self.value_ptr);
+            }
         }
     }
 }

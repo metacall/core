@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 char test_char(char character)
 {
 	return character;

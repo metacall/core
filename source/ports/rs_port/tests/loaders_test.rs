@@ -40,7 +40,7 @@ fn load_from_file_test() {
     temp_js.write_all(SCRIPT2.as_bytes()).unwrap();
     temp_js.flush().unwrap();
 
-    loaders::from_file("node", temp_js_path).unwrap();
+    loaders::from_single_file("node", temp_js_path).unwrap();
 
     call_greet("load_from_file", 2);
 
@@ -49,7 +49,7 @@ fn load_from_file_test() {
 }
 
 #[test]
-fn loaders_test() {
+fn loaders() {
     let _d = hooks::initialize().unwrap();
 
     // Testing load_from_memory
