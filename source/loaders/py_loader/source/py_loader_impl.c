@@ -1538,6 +1538,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	{
 		/* TODO */
 		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python future not implemented yet for arguments");
+		Py_RETURN_NONE;
 	}
 	else if (id == TYPE_FUNCTION)
 	{

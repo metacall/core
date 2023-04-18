@@ -413,6 +413,6 @@ fn metacall() {
         test_null();
         test_string();
         test_throwable();
-        // test_future();
+        test_future();
     }
 }
