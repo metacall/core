@@ -1,41 +1,38 @@
 use metacall::{
-    hooks, loaders,
-    prelude::{
-        MetacallClass, MetacallException, MetacallFuture, MetacallNull, MetacallObject,
-        MetacallObjectProtocol, MetacallPointer, MetacallThrowable,
-    },
+    hooks, loaders, MetacallClass, MetacallException, MetacallFunction, MetacallFuture,
+    MetacallNull, MetacallObject, MetacallPointer, MetacallThrowable, MetacallValue,
 };
 use std::{collections::HashMap, env, fmt::Debug};
 
-fn generate_test<T: MetacallObjectProtocol + PartialEq + Debug + Clone>(
+fn generate_test<T: MetacallValue + PartialEq + Debug + Clone>(
     name: impl ToString,
     expected: T,
-) {
-    let test =
-        if !(Box::new(expected.clone()) as Box<dyn MetacallObjectProtocol>).is::<MetacallNull>() {
-            ::metacall::metacall::<T>(name, [expected.clone()])
-        } else {
-            ::metacall::metacall_no_arg::<T>(name)
-        };
+) -> T {
+    let test = if !(Box::new(expected.clone()) as Box<dyn MetacallValue>).is::<MetacallNull>() {
+        ::metacall::metacall::<T>(name, [expected.clone()])
+    } else {
+        ::metacall::metacall_no_arg::<T>(name)
+    };
 
     match test {
         Ok(v) => {
             if v != expected {
-                invalid_return_value(expected, v);
+                invalid_return_value(expected.clone(), v);
             }
         }
-        Err(err) => invalid_return_type(expected, err),
+        Err(err) => invalid_return_type(expected.clone(), err),
     };
+
+    expected
 }
-fn generate_test_custom_validation<T: MetacallObjectProtocol + Debug>(
+fn generate_test_custom_validation<T: MetacallValue + Debug>(
     name: impl ToString,
     expected_type: impl ToString,
-    expected_value: impl MetacallObjectProtocol + Clone,
-    validator: impl Fn(T),
+    expected_value: impl MetacallValue + Clone,
+    validator: impl FnOnce(T),
 ) {
-    let test = if !(Box::new(expected_value.clone()) as Box<dyn MetacallObjectProtocol>)
-        .is::<MetacallNull>()
-    {
+    let expected_value = Box::new(expected_value) as Box<dyn MetacallValue>;
+    let test = if !expected_value.is::<MetacallNull>() {
         ::metacall::metacall::<T>(name, [expected_value])
     } else {
         ::metacall::metacall_no_arg::<T>(name)
@@ -61,8 +58,8 @@ fn invalid_return_value(expected: impl Debug, received: impl Debug) {
 }
 
 fn test_bool() {
-    generate_test::<bool>("test_bool", false);
-    generate_test::<bool>("test_bool", true);
+    generate_test::<bool>("return_the_argument_py", false);
+    generate_test::<bool>("return_the_argument_py", true);
 }
 fn test_char() {
     generate_test::<char>("test_char", 'A');
@@ -84,11 +81,14 @@ fn test_double() {
     generate_test::<f64>("test_double", 1.2345 as f64);
 }
 fn test_string() {
-    generate_test::<String>("test_string", String::from("hi there!"));
+    generate_test::<String>(
+        "return_the_argument_py",
+        generate_test::<String>("return_the_argument_py", String::from("hi there!")),
+    );
 }
 fn test_buffer() {
     generate_test::<Vec<i8>>(
-        "test_buffer",
+        "return_the_argument_py",
         String::from("hi there!")
             .as_bytes()
             .iter()
@@ -102,7 +102,7 @@ fn test_map() {
     expected_hashmap.insert(String::from("hello"), String::from("world"));
 
     generate_test_custom_validation::<HashMap<String, String>>(
-        "test_map",
+        "return_the_argument_py",
         "map",
         expected_hashmap.clone(),
         move |hashmap| {
@@ -122,9 +122,9 @@ fn test_array() {
     let expected_array = vec![String::from("hi"), String::from("there!")];
 
     generate_test_custom_validation::<Vec<String>>(
-        "test_array",
+        "return_the_argument_py",
         "array",
-        MetacallNull(),
+        expected_array.clone(),
         |array| {
             for (index, expected_value) in expected_array.iter().enumerate() {
                 if &array[index] != expected_value {
@@ -138,17 +138,23 @@ fn test_array() {
     );
 }
 fn test_pointer() {
-    metacall::metacall::<MetacallPointer>(
-        "test_pointer",
-        [MetacallPointer::new(Box::new(String::from("hi there!"))).unwrap()],
-    )
-    .unwrap();
+    let expected_value = String::from("hi there!");
+
+    generate_test_custom_validation::<MetacallPointer>(
+        "return_the_argument_py",
+        "pointer",
+        MetacallPointer::new(expected_value.clone()).unwrap(),
+        |pointer| {
+            let receieved_value = pointer.get_value::<String>().unwrap();
+
+            if receieved_value != expected_value {
+                invalid_return_value(expected_value, receieved_value)
+            }
+        },
+    );
 }
 fn test_future() {
-    fn validate(
-        upper_result: Box<dyn MetacallObjectProtocol>,
-        upper_data: Box<dyn MetacallObjectProtocol>,
-    ) {
+    fn validate(upper_result: Box<dyn MetacallValue>, upper_data: Box<dyn MetacallValue>) {
         match upper_data.downcast::<String>() {
             Ok(ret) => {
                 if ret.as_str() != "data" {
@@ -176,44 +182,64 @@ fn test_future() {
         "test_future_resolve",
         "future",
         MetacallNull(),
-        |future| {
-            fn resolve(
-                result: Box<dyn MetacallObjectProtocol>,
-                data: Box<dyn MetacallObjectProtocol>,
-            ) {
-                validate(result, data);
-            }
+        |upper_future| {
+            generate_test_custom_validation::<MetacallFuture>(
+                "return_the_argument_py",
+                "future",
+                upper_future,
+                move |future| {
+                    fn resolve(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
+                        validate(result, data);
+                    }
 
-            future.await_fut(Some(resolve), None, Some(String::from("data")));
+                    future.then(resolve).data(String::from("data")).await_fut();
+                },
+            );
         },
     );
     generate_test_custom_validation::<MetacallFuture>(
         "test_future_reject",
         "future",
         MetacallNull(),
-        |future| {
-            fn reject(
-                result: Box<dyn MetacallObjectProtocol>,
-                data: Box<dyn MetacallObjectProtocol>,
-            ) {
-                validate(result, data);
-            }
+        |upper_future| {
+            generate_test_custom_validation::<MetacallFuture>(
+                "return_the_argument_py",
+                "future",
+                upper_future,
+                move |future| {
+                    fn reject(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
+                        validate(result, data);
+                    }
 
-            future.await_fut(None, Some(reject), Some(String::from("data")));
+                    future.catch(reject).data(String::from("data")).await_fut();
+                },
+            );
         },
     );
 }
-// fn test_function() {
-//     generate_test_custom_validation::<MetacallFunction>("test_function", "function", |function| {
-//         let ret = function.call_no_arg::<String>().unwrap();
-//         if ret.as_str() == "hi there!" {
-//         } else {
-//             invalid_return_value("hi there!", ret);
-//         }
-//     });
-// }
+fn test_function() {
+    generate_test_custom_validation::<MetacallFunction>(
+        "test_function",
+        "function",
+        MetacallNull(),
+        |upper_function| {
+            generate_test_custom_validation::<MetacallFunction>(
+                "return_the_argument_py",
+                "function",
+                upper_function,
+                move |function| {
+                    let ret = function.call_no_arg::<String>().unwrap();
+                    if ret.as_str() == "hi there!" {
+                    } else {
+                        invalid_return_value("hi there!", ret);
+                    }
+                },
+            );
+        },
+    );
+}
 fn test_null() {
-    metacall::metacall_no_arg::<MetacallNull>("test_null").unwrap();
+    metacall::metacall::<MetacallNull>("return_the_argument_py", [MetacallNull()]).unwrap();
 }
 fn class_test_inner(class: MetacallClass) {
     let attr = class.get_attribute::<String>("hi").unwrap();
@@ -242,7 +268,14 @@ fn test_class() {
         "test_class",
         "class",
         MetacallNull(),
-        class_test_inner,
+        |upper_class| {
+            generate_test_custom_validation::<MetacallClass>(
+                "return_the_argument_py",
+                "class",
+                upper_class,
+                class_test_inner,
+            );
+        },
     );
 
     class_test_inner(MetacallClass::from_name("TestClass").unwrap());
@@ -267,10 +300,36 @@ fn test_object() {
         "test_object",
         "object",
         MetacallNull(),
-        object_test_inner,
+        |upper_object| {
+            generate_test_custom_validation::<MetacallObject>(
+                "return_the_argument_py",
+                "object",
+                upper_object,
+                object_test_inner,
+            );
+        },
     );
 }
 fn test_exception() {
+    // generate_test_custom_validation::<MetacallException>(
+    //     "test_exception",
+    //     "exception",
+    //     MetacallNull(),
+    //     |upper_exception| {
+    //         generate_test_custom_validation::<MetacallException>(
+    //             "return_the_argument_js",
+    //             "exception",
+    //             upper_exception,
+    //             move |exception| {
+    //                 let exception_message = exception.get_message();
+    //                 if exception_message.as_str() != "hi there!" {
+    //                     invalid_return_value("hi there!", exception_message);
+    //                 }
+    //             },
+    //         );
+    //     },
+    // );
+
     generate_test_custom_validation::<MetacallException>(
         "test_exception",
         "exception",
@@ -284,6 +343,28 @@ fn test_exception() {
     );
 }
 fn test_throwable() {
+    // generate_test_custom_validation::<MetacallThrowable>(
+    //     "test_throwable",
+    //     "throwable",
+    //     MetacallNull(),
+    //     |upper_throwable: MetacallThrowable| {
+    //         generate_test_custom_validation::<MetacallThrowable>(
+    //             "return_the_argument_py",
+    //             "throwable",
+    //             upper_throwable,
+    //             |throwable| {
+    //                 let exception_message = throwable
+    //                     .get_value::<MetacallException>()
+    //                     .unwrap()
+    //                     .get_message();
+    //                 if exception_message.as_str() != "hi there!" {
+    //                     invalid_return_value("hi there!", exception_message);
+    //                 }
+    //             },
+    //         );
+    //     },
+    // );
+
     generate_test_custom_validation::<MetacallThrowable>(
         "test_throwable",
         "throwable",
@@ -301,37 +382,37 @@ fn test_throwable() {
 }
 
 #[test]
-fn return_type_test() {
+fn metacall() {
     let _d = hooks::initialize().unwrap();
 
     let tests_dir = env::current_dir().unwrap().join("tests/scripts");
-    let js_test_file = tests_dir.join("return_type_test.js");
-    let c_test_file = tests_dir.join("return_type_test.c");
-    let py_test_file = tests_dir.join("return_type_test.py");
+    let js_test_file = tests_dir.join("script.js");
+    let c_test_file = tests_dir.join("script.c");
+    let py_test_file = tests_dir.join("script.py");
 
-    if let Ok(_) = loaders::from_file("c", c_test_file) {
-        test_char();
-        test_short();
-        test_int();
-        test_long();
-        test_float();
-        test_double();
-    }
-    if let Ok(_) = loaders::from_file("py", py_test_file) {
+    if let Ok(_) = loaders::from_single_file("py", py_test_file) {
+        test_buffer();
         test_class();
         test_object();
-        test_buffer();
         test_pointer();
     }
-    if let Ok(_) = loaders::from_file("node", js_test_file) {
-        test_bool();
-        test_string();
+    if let Ok(_) = loaders::from_single_file("c", c_test_file) {
+        test_char();
+        test_double();
+        test_float();
+        test_int();
+        test_long();
+        test_short();
+    }
+    if let Ok(_) = loaders::from_single_file("node", js_test_file) {
         test_array();
-        test_map();
-        // test_function();
-        test_null();
+        test_bool();
         test_exception();
+        test_function();
+        test_map();
+        test_null();
+        test_string();
         test_throwable();
-        test_future();
+        // test_future();
     }
 }

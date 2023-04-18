@@ -34,7 +34,7 @@ fn generate_bindings(headers: &[&str]) {
 
 fn main() {
     // When running from CMake
-    if let Ok(_) = env::var("CMAKE_BINDGEN") {
+    if env::var("CMAKE_BINDGEN").is_ok() {
         const HEADERS: [&str; 3] = [
             "include/metacall/metacall.h",
             "include/metacall/metacall_value.h",

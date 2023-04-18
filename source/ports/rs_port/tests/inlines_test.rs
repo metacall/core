@@ -4,7 +4,7 @@ use metacall::{
 };
 
 #[test]
-fn test_inline() {
+fn inlines() {
     let _d = hooks::initialize().unwrap();
 
     py! {
