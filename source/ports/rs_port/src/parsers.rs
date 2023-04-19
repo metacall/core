@@ -65,10 +65,8 @@ pub fn raw_to_metacallobj_untyped(ret: *mut c_void) -> Box<dyn MetacallValue> {
         (_, 6) => metacallobj_result_wrap(f64::from_metacall_raw(ret)),
         (_, 7) => metacallobj_result_wrap(String::from_metacall_raw(ret)),
         (_, 8) => metacallobj_result_wrap(<Vec<i8>>::from_metacall_raw(ret)),
-        (_, 9) => metacallobj_result_wrap(<Vec<Box<dyn MetacallValue>>>::from_metacall_raw(ret)),
-        (_, 10) => metacallobj_result_wrap(
-            <HashMap<String, Box<dyn MetacallValue>>>::from_metacall_raw(ret),
-        ),
+        (_, 9) => metacallobj_result_wrap(<Vec<MetacallNull>>::from_metacall_raw(ret)),
+        (_, 10) => metacallobj_result_wrap(<HashMap<String, MetacallNull>>::from_metacall_raw(ret)),
         (_, 11) => metacallobj_result_wrap(<MetacallPointer>::from_metacall_raw(ret)),
         (_, 12) => metacallobj_result_wrap(MetacallFuture::from_metacall_raw(ret)),
         (_, 13) => metacallobj_result_wrap(MetacallFunction::from_metacall_raw(ret)),
@@ -92,12 +90,10 @@ pub fn raw_to_metacallobj_untyped_leak(ret: *mut c_void) -> Box<dyn MetacallValu
         (_, 6) => metacallobj_result_wrap(f64::from_metacall_raw_leak(ret)),
         (_, 7) => metacallobj_result_wrap(String::from_metacall_raw_leak(ret)),
         (_, 8) => metacallobj_result_wrap(<Vec<i8>>::from_metacall_raw_leak(ret)),
-        (_, 9) => {
-            metacallobj_result_wrap(<Vec<Box<dyn MetacallValue>>>::from_metacall_raw_leak(ret))
+        (_, 9) => metacallobj_result_wrap(<Vec<MetacallNull>>::from_metacall_raw_leak(ret)),
+        (_, 10) => {
+            metacallobj_result_wrap(<HashMap<String, MetacallNull>>::from_metacall_raw_leak(ret))
         }
-        (_, 10) => metacallobj_result_wrap(
-            <HashMap<String, Box<dyn MetacallValue>>>::from_metacall_raw_leak(ret),
-        ),
         (_, 11) => metacallobj_result_wrap(<MetacallPointer>::from_metacall_raw_leak(ret)),
         (_, 12) => metacallobj_result_wrap(MetacallFuture::from_metacall_raw_leak(ret)),
         (_, 13) => metacallobj_result_wrap(MetacallFunction::from_metacall_raw_leak(ret)),

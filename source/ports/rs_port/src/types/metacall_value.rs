@@ -6,7 +6,7 @@ use crate::{
     bindings::*,
     cstring,
     helpers::{MetacallClone, MetacallDowncast},
-    match_metacall_value, match_metacall_value_all, parsers,
+    match_metacall_value, parsers,
 };
 use std::{
     collections::HashMap,
@@ -17,10 +17,62 @@ use std::{
 
 /// Trait of any possible object in Metacall.
 /// Checkout [match_metacall_value](match_metacall_value) macro for
-/// matching trait objects of this trait.
-/// Also check [std implementors](#foreign-impls) and [other implementors](#implementors).
+/// matching trait objects of this trait. Let' see what types we can use with an example: ...
+/// ```
+/// // bool
+/// metacall::metacall_untyped("x", [true, false]);
+/// // char
+/// metacall::metacall_untyped("x", ['A', 'Z']);
+/// // short
+/// metacall::metacall_untyped("x", [5 as i16]);
+/// // int
+/// metacall::metacall_untyped("x", [5 as i32]);
+/// // long
+/// metacall::metacall_untyped("x", [5 as i64]);
+/// // float
+/// metacall::metacall_untyped("x", [5.0 as f32]);
+/// // double
+/// metacall::metacall_untyped("x", [5.0 as f64]);
+/// // string
+/// metacall::metacall_untyped("x", [String::from("hi")]);
+/// // buffer
+/// metacall::metacall_untyped("x", [
+///     String::from("hi")
+///     .as_bytes()
+///     .iter()
+///     .map(|&b| b as i8)
+///     .collect::<Vec<i8>>()
+/// ]);
+/// // array
+/// metacall::metacall_untyped("x", [vec![5, 6]]);
+/// // map
+/// let mut hashmap = std::collections::HashMap::new();
+/// hashmap.insert(String::from("hi"), String::from("there!"));
+/// metacall::metacall_untyped("x", [hashmap]);
+/// // pointer
+/// metacall::metacall_untyped("x", [metacall::MetacallPointer::new(String::from("hi"))]);
+/// // future?
+/// // nope! you can't pass a future!
+/// // function
+/// metacall::metacall_untyped("x", [
+///     metacall::metacall_no_arg::<metacall::MetacallFunction>("my_async_function").unwrap()
+/// ]);
+/// // null
+/// metacall::metacall_untyped("x", [metacall::MetacallNull()]);
+/// // class
+/// metacall::metacall_untyped("x", [metacall::MetacallClass::from_name("MyClass").unwrap()]);
+/// // object
+/// let class = metacall::MetacallClass::from_name("MyClass").unwrap();
+/// metacall::metacall_untyped("x", [class.create_object_no_arg("myObject").unwrap()]);
+/// // exception
+/// metacall::metacall_untyped("x", [
+///     metacall::metacall_no_arg::<metacall::MetacallException>("my_function").unwrap()
+/// ]);
+/// // throwable?
+/// // nope! you can't pass a throwable!
+/// ```
 pub trait MetacallValue: MetacallClone + MetacallDowncast + Debug {
-    // It tries to convert the raw pointer to the value and return a trait object on failure
+    // It tries to convert the raw pointer to the value or return a trait object on failure.
     #[doc(hidden)]
     fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>>
     where
@@ -32,21 +84,21 @@ pub trait MetacallValue: MetacallClone + MetacallDowncast + Debug {
 
         Ok(value)
     }
-    // Same as `from_metacall_raw` but doesn't free the memory on drop and leaks
+    // Same as `from_metacall_raw` but doesn't free the memory on drop and leaks.
     #[doc(hidden)]
     fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>>
     where
         Self: Sized;
-    // It returns the enum index of Metacall Protocol in the core
+    // It returns the enum index of Metacall Protocol in the core. It's used for faster type matching.
     #[doc(hidden)]
     fn get_metacall_id() -> u32
     where
         Self: Sized;
-    // It converts the value to a raw value known by the metacall core
+    // It converts the value to a raw value known by the metacall core.
     #[doc(hidden)]
     fn into_metacall_raw(self) -> *mut c_void;
 }
-#[doc = "Equivalent to Metacall boolean type."]
+/// Equivalent to Metacall boolean type.
 impl MetacallValue for bool {
     fn get_metacall_id() -> u32 {
         0
@@ -60,7 +112,7 @@ impl MetacallValue for bool {
         unsafe { metacall_value_create_bool((self as c_int).try_into().unwrap()) }
     }
 }
-#[doc = "Equivalent to Metacall char type."]
+/// Equivalent to Metacall char type.
 impl MetacallValue for char {
     fn get_metacall_id() -> u32 {
         1
@@ -74,7 +126,7 @@ impl MetacallValue for char {
         unsafe { metacall_value_create_char(self as c_char) }
     }
 }
-#[doc = "Equivalent to Metacall short type."]
+/// Equivalent to Metacall short type.
 impl MetacallValue for i16 {
     fn get_metacall_id() -> u32 {
         2
@@ -88,7 +140,7 @@ impl MetacallValue for i16 {
         unsafe { metacall_value_create_short(self) }
     }
 }
-#[doc = "Equivalent to Metacall int type."]
+/// Equivalent to Metacall int type.
 impl MetacallValue for i32 {
     fn get_metacall_id() -> u32 {
         3
@@ -102,7 +154,7 @@ impl MetacallValue for i32 {
         unsafe { metacall_value_create_int(self) }
     }
 }
-#[doc = "Equivalent to Metacall long type."]
+/// Equivalent to Metacall long type.
 impl MetacallValue for i64 {
     fn get_metacall_id() -> u32 {
         4
@@ -116,7 +168,7 @@ impl MetacallValue for i64 {
         unsafe { metacall_value_create_long(self) }
     }
 }
-#[doc = "Equivalent to Metacall float type."]
+/// Equivalent to Metacall float type.
 impl MetacallValue for f32 {
     fn get_metacall_id() -> u32 {
         5
@@ -130,7 +182,7 @@ impl MetacallValue for f32 {
         unsafe { metacall_value_create_float(self) }
     }
 }
-#[doc = "Equivalent to Metacall double type."]
+/// Equivalent to Metacall double type.
 impl MetacallValue for f64 {
     fn get_metacall_id() -> u32 {
         6
@@ -144,7 +196,7 @@ impl MetacallValue for f64 {
         unsafe { metacall_value_create_double(self) }
     }
 }
-#[doc = "Equivalent to Metacall string type."]
+/// Equivalent to Metacall string type.
 impl MetacallValue for String {
     fn get_metacall_id() -> u32 {
         7
@@ -161,7 +213,7 @@ impl MetacallValue for String {
         unsafe { metacall_value_create_string(raw.as_ptr(), self.len()) }
     }
 }
-#[doc = "Equivalent to Metacall buffer type."]
+/// Equivalent to Metacall buffer type.
 impl MetacallValue for Vec<i8> {
     fn get_metacall_id() -> u32 {
         8
@@ -179,7 +231,7 @@ impl MetacallValue for Vec<i8> {
         unsafe { metacall_value_create_buffer(self.as_mut_ptr() as *mut c_void, self.len()) }
     }
 }
-#[doc = "Equivalent to Metacall array type."]
+/// Equivalent to Metacall array type.
 impl<T: MetacallValue + Clone> MetacallValue for Vec<T> {
     fn get_metacall_id() -> u32 {
         9
@@ -202,7 +254,7 @@ impl<T: MetacallValue + Clone> MetacallValue for Vec<T> {
         unsafe { metacall_value_create_array(array.as_mut_ptr(), array.len()) }
     }
 }
-#[doc = "Equivalent to Metacall map type."]
+/// Equivalent to Metacall map type.
 impl<T: MetacallValue + Clone> MetacallValue for HashMap<String, T> {
     fn get_metacall_id() -> u32 {
         10
@@ -255,7 +307,7 @@ impl<T: MetacallValue + Clone> MetacallValue for HashMap<String, T> {
         unsafe { metacall_value_create_map(hashmap.as_mut_ptr(), hashmap.len()) }
     }
 }
-#[doc = "Equivalent to Metacall pointer type."]
+/// Equivalent to Metacall pointer type.
 impl MetacallValue for MetacallPointer {
     fn get_metacall_id() -> u32 {
         11
@@ -270,7 +322,7 @@ impl MetacallValue for MetacallPointer {
         self.into_raw()
     }
 }
-#[doc = "Equivalent to Metacall future type."]
+/// Equivalent to Metacall future type.
 impl MetacallValue for MetacallFuture {
     fn get_metacall_id() -> u32 {
         12
@@ -285,7 +337,7 @@ impl MetacallValue for MetacallFuture {
         self.into_raw()
     }
 }
-#[doc = "Equivalent to Metacall function type."]
+/// Equivalent to Metacall function type.
 impl MetacallValue for MetacallFunction {
     fn get_metacall_id() -> u32 {
         13
@@ -300,7 +352,7 @@ impl MetacallValue for MetacallFunction {
         self.into_raw()
     }
 }
-#[doc = "Equivalent to Metacall null type."]
+/// Equivalent to Metacall null type.
 impl MetacallValue for MetacallNull {
     fn get_metacall_id() -> u32 {
         14
@@ -317,7 +369,7 @@ impl MetacallValue for MetacallNull {
         self.into_raw()
     }
 }
-#[doc = "Equivalent to Metacall class type."]
+/// Equivalent to Metacall class type.
 impl MetacallValue for MetacallClass {
     fn get_metacall_id() -> u32 {
         15
@@ -332,7 +384,7 @@ impl MetacallValue for MetacallClass {
         self.into_raw()
     }
 }
-#[doc = "Equivalent to Metacall object type."]
+/// Equivalent to Metacall object type.
 impl MetacallValue for MetacallObject {
     fn get_metacall_id() -> u32 {
         16
@@ -347,7 +399,7 @@ impl MetacallValue for MetacallObject {
         self.into_raw()
     }
 }
-#[doc = "Equivalent to Metacall exception type."]
+/// Equivalent to Metacall exception type.
 impl MetacallValue for MetacallException {
     fn get_metacall_id() -> u32 {
         17
@@ -362,7 +414,7 @@ impl MetacallValue for MetacallException {
         self.into_raw()
     }
 }
-#[doc = "Equivalent to Metacall throwable type."]
+/// Equivalent to Metacall throwable type.
 impl MetacallValue for MetacallThrowable {
     fn get_metacall_id() -> u32 {
         18
@@ -375,47 +427,5 @@ impl MetacallValue for MetacallThrowable {
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
-    }
-}
-#[doc(hidden)]
-impl MetacallValue for Box<dyn MetacallValue> {
-    fn get_metacall_id() -> u32 {
-        // Something random
-        100
-    }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
-        Ok(parsers::raw_to_metacallobj_untyped_leak(v))
-    }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
-        Ok(parsers::raw_to_metacallobj_untyped(v))
-    }
-    fn into_metacall_raw(self) -> *mut c_void {
-        match_metacall_value_all!(
-            self,
-            x,
-            x.into_metacall_raw(),
-            [
-                bool,
-                char,
-                i16,
-                i32,
-                i64,
-                f32,
-                f64,
-                String,
-                Vec<i8>,
-                Vec<Box<dyn MetacallValue>>,
-                HashMap<String, Box<dyn MetacallValue>>,
-                MetacallPointer,
-                MetacallFuture,
-                MetacallFunction,
-                MetacallNull,
-                MetacallClass,
-                MetacallObject,
-                MetacallException,
-                MetacallThrowable,
-                Box<dyn MetacallValue>
-            ]
-        )
     }
 }

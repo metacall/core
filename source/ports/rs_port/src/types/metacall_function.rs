@@ -3,9 +3,11 @@ use crate::{
     bindings::{metacall_value_destroy, metacall_value_to_function, metacallfv_s},
     parsers,
 };
-use std::ffi::c_void;
+use std::{
+    ffi::c_void,
+    fmt::{self, Debug, Formatter},
+};
 
-#[derive(Debug)]
 /// Represents Metacall function.
 pub struct MetacallFunction {
     leak: bool,
@@ -19,6 +21,11 @@ impl Clone for MetacallFunction {
             leak: true,
             value: self.value,
         }
+    }
+}
+impl Debug for MetacallFunction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "MetacallFunction {{ ... }}")
     }
 }
 

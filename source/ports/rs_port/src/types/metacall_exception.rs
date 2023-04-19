@@ -4,14 +4,14 @@ use crate::{
         metacall_exception_type, metacall_throwable_value, metacall_value_create_exception,
         metacall_value_destroy, metacall_value_to_exception, metacall_value_to_throwable,
     },
-    cstring, helpers, match_metacall_value, parsers,
+    cstring, helpers, parsers,
 };
 use std::{
     ffi::{c_char, c_void, CStr},
+    fmt::{self, Debug, Formatter},
     sync::Arc,
 };
 
-#[derive(Debug)]
 /// Represents Metacall exception. You can create an exception with [new](#method.new).
 pub struct MetacallException {
     exception_struct: Arc<metacall_exception_type>,
@@ -27,6 +27,15 @@ impl Clone for MetacallException {
             leak: true,
             value: self.value,
         }
+    }
+}
+impl Debug for MetacallException {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "MetacallException {}",
+            format!("{{ {} }}", self.to_string())
+        )
     }
 }
 
@@ -100,7 +109,9 @@ impl MetacallException {
     }
 
     #[doc(hidden)]
-    pub fn into_raw(self) -> *mut c_void {
+    pub fn into_raw(mut self) -> *mut c_void {
+        self.leak = true;
+
         self.value
     }
 }
@@ -116,8 +127,7 @@ pub enum MetacallThrowableValue<T: MetacallValue> {
     Specified(T),
 }
 
-#[derive(Debug)]
-/// Represents Metacall throwable.
+/// Represents Metacall throwable. Keep in mind that it's not supported to pass a throwable as an argument.
 pub struct MetacallThrowable {
     leak: bool,
     value_ptr: *mut c_void,
@@ -132,6 +142,15 @@ impl Clone for MetacallThrowable {
             value: self.value,
             value_ptr: self.value_ptr,
         }
+    }
+}
+impl Debug for MetacallThrowable {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "MetacallThrowable {}",
+            format!("{{ {} }}", self.to_string())
+        )
     }
 }
 
@@ -179,7 +198,10 @@ impl MetacallThrowable {
 
     #[doc(hidden)]
     pub fn into_raw(self) -> *mut c_void {
-        self.value_ptr
+        // It's not implemented in any loader as the time of writing this block of code.
+        // Feel free to implement as any loader adopted accepting Throwable as an argument.
+
+        panic!("Passing MetacallThrowable as an argument is not supported!");
     }
 }
 
@@ -195,13 +217,7 @@ impl ToString for MetacallException {
 impl ToString for MetacallThrowable {
     fn to_string(&self) -> String {
         let throwable_value = self.get_value_untyped();
-        format!(
-            "[Throwable]: {}",
-            match_metacall_value!(throwable_value, {
-                exception: MetacallException => exception.to_string(),
-                _ => format!("{:#?}", throwable_value)
-            })
-        )
+        format!("[Throwable]: {:#?}", throwable_value)
     }
 }
 

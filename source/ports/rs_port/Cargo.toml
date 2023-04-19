@@ -10,10 +10,13 @@ repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port
 version = "0.4.0"
 
 [lib]
-name = "metacall"
 crate-type = ["lib"]
-path = "src/lib.rs"
+# Code examples used in documentation are environment dependent. Meaning they need a set of
+# stuff to be done before executing the codes. Therefore we should disable doctests.
+doctest = false
 edition = "2021"
+name = "metacall"
+path = "src/lib.rs"
 
 [dependencies]
 metacall-inline = { path = "./inline", version = "0.2.0" }

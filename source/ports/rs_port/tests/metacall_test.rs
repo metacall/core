@@ -31,8 +31,8 @@ fn generate_test_custom_validation<T: MetacallValue + Debug>(
     expected_value: impl MetacallValue + Clone,
     validator: impl FnOnce(T),
 ) {
-    let expected_value = Box::new(expected_value) as Box<dyn MetacallValue>;
-    let test = if !expected_value.is::<MetacallNull>() {
+    let expected_value_boxed = Box::new(expected_value.clone()) as Box<dyn MetacallValue>;
+    let test = if !expected_value_boxed.is::<MetacallNull>() {
         ::metacall::metacall::<T>(name, [expected_value])
     } else {
         ::metacall::metacall_no_arg::<T>(name)
@@ -143,7 +143,7 @@ fn test_pointer() {
     generate_test_custom_validation::<MetacallPointer>(
         "return_the_argument_py",
         "pointer",
-        MetacallPointer::new(expected_value.clone()).unwrap(),
+        MetacallPointer::new(expected_value.clone()),
         |pointer| {
             let receieved_value = pointer.get_value::<String>().unwrap();
 
@@ -182,38 +182,24 @@ fn test_future() {
         "test_future_resolve",
         "future",
         MetacallNull(),
-        |upper_future| {
-            generate_test_custom_validation::<MetacallFuture>(
-                "return_the_argument_py",
-                "future",
-                upper_future,
-                move |future| {
-                    fn resolve(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
-                        validate(result, data);
-                    }
+        move |future| {
+            fn resolve(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
+                validate(result, data);
+            }
 
-                    future.then(resolve).data(String::from("data")).await_fut();
-                },
-            );
+            future.then(resolve).data(String::from("data")).await_fut();
         },
     );
     generate_test_custom_validation::<MetacallFuture>(
         "test_future_reject",
         "future",
         MetacallNull(),
-        |upper_future| {
-            generate_test_custom_validation::<MetacallFuture>(
-                "return_the_argument_py",
-                "future",
-                upper_future,
-                move |future| {
-                    fn reject(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
-                        validate(result, data);
-                    }
+        move |future| {
+            fn reject(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
+                validate(result, data);
+            }
 
-                    future.catch(reject).data(String::from("data")).await_fut();
-                },
-            );
+            future.catch(reject).data(String::from("data")).await_fut();
         },
     );
 }
@@ -311,60 +297,26 @@ fn test_object() {
     );
 }
 fn test_exception() {
-    // generate_test_custom_validation::<MetacallException>(
-    //     "test_exception",
-    //     "exception",
-    //     MetacallNull(),
-    //     |upper_exception| {
-    //         generate_test_custom_validation::<MetacallException>(
-    //             "return_the_argument_js",
-    //             "exception",
-    //             upper_exception,
-    //             move |exception| {
-    //                 let exception_message = exception.get_message();
-    //                 if exception_message.as_str() != "hi there!" {
-    //                     invalid_return_value("hi there!", exception_message);
-    //                 }
-    //             },
-    //         );
-    //     },
-    // );
-
     generate_test_custom_validation::<MetacallException>(
         "test_exception",
         "exception",
         MetacallNull(),
-        move |exception| {
-            let exception_message = exception.get_message();
-            if exception_message.as_str() != "hi there!" {
-                invalid_return_value("hi there!", exception_message);
-            }
+        |upper_exception| {
+            generate_test_custom_validation::<MetacallException>(
+                "return_the_argument_js",
+                "exception",
+                upper_exception,
+                move |exception| {
+                    let exception_message = exception.get_message();
+                    if exception_message.as_str() != "hi there!" {
+                        invalid_return_value("hi there!", exception_message);
+                    }
+                },
+            );
         },
     );
 }
 fn test_throwable() {
-    // generate_test_custom_validation::<MetacallThrowable>(
-    //     "test_throwable",
-    //     "throwable",
-    //     MetacallNull(),
-    //     |upper_throwable: MetacallThrowable| {
-    //         generate_test_custom_validation::<MetacallThrowable>(
-    //             "return_the_argument_py",
-    //             "throwable",
-    //             upper_throwable,
-    //             |throwable| {
-    //                 let exception_message = throwable
-    //                     .get_value::<MetacallException>()
-    //                     .unwrap()
-    //                     .get_message();
-    //                 if exception_message.as_str() != "hi there!" {
-    //                     invalid_return_value("hi there!", exception_message);
-    //                 }
-    //             },
-    //         );
-    //     },
-    // );
-
     generate_test_custom_validation::<MetacallThrowable>(
         "test_throwable",
         "throwable",

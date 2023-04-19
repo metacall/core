@@ -9,13 +9,15 @@ use crate::{
     },
     cstring_enum, parsers,
 };
-use std::ffi::c_void;
+use std::{
+    ffi::c_void,
+    fmt::{self, Debug, Formatter},
+};
 
 // Used for documentation.
 #[allow(unused_imports)]
 use super::MetacallClass;
 
-#[derive(Debug)]
 /// Represents Metacall Object. You can get this type when returned by a function or create one from
 /// a class with [create_object](MetacallClass#method.create_object).
 pub struct MetacallObject {
@@ -30,6 +32,11 @@ impl Clone for MetacallObject {
             leak: true,
             value: self.value,
         }
+    }
+}
+impl Debug for MetacallObject {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "MetacallObject {{ ... }}")
     }
 }
 
