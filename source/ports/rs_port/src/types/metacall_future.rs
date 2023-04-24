@@ -3,7 +3,11 @@ use crate::{
     bindings::{metacall_await_future, metacall_value_destroy, metacall_value_to_future},
     helpers, parsers,
 };
-use std::{ffi::c_void, ptr};
+use std::{
+    ffi::c_void,
+    fmt::{self, Debug, Formatter},
+    ptr,
+};
 
 /// Function pointer type used for resolving/rejecting Metacall futures. The first argument is the result
 /// and the second argument is the data that you may want to access when the function gets called.
@@ -11,8 +15,8 @@ use std::{ffi::c_void, ptr};
 /// [MetacallFuture reject](MetacallFuture#method.catch) for usage.
 pub type MetacallFutureHandler = fn(Box<dyn MetacallValue>, Box<dyn MetacallValue>);
 
-#[derive(Debug)]
-/// Represents MetacallFuture. Usage example: ...
+/// Represents MetacallFuture. Keep in mind that it's not supported to pass a future as an argument.
+/// Usage example: ...
 /// ```
 /// use metacall::{MetacallValue, MetacallFuture, metacall};
 ///
@@ -48,24 +52,63 @@ impl Clone for MetacallFuture {
         }
     }
 }
+impl Debug for MetacallFuture {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let boxed_data = unsafe { Box::from_raw(self.data) };
+        let data = if boxed_data.is::<MetacallNull>() {
+            None
+        } else {
+            Some(format!("{:#?}", boxed_data))
+        };
+        Box::leak(boxed_data);
+
+        let resolve = if self.resolve.is_none() {
+            "None"
+        } else {
+            "Some"
+        };
+        let reject = if self.reject.is_none() {
+            "None"
+        } else {
+            "Some"
+        };
+
+        f.debug_struct("MetacallFuture")
+            .field("data", &data)
+            .field("resolve", &resolve)
+            .field("reject", &reject)
+            .finish()
+    }
+}
+
+type MetacallFutureFFIData = (
+    // Resolve
+    Option<MetacallFutureHandler>,
+    // Reject
+    Option<MetacallFutureHandler>,
+    // User data
+    *mut dyn MetacallValue,
+);
 
 unsafe extern "C" fn resolver(resolve_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
-    let self_struct = *Box::from_raw(upper_data as *mut MetacallFuture);
-    let user_data = Box::from_raw(self_struct.data);
+    let (resolve, _, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData);
+    let user_data = Box::from_raw(data);
 
-    (self_struct.resolve.unwrap())(parsers::raw_to_metacallobj_untyped(resolve_data), user_data);
+    (resolve.unwrap())(
+        parsers::raw_to_metacallobj_untyped_leak(resolve_data),
+        user_data,
+    );
 
     ptr::null_mut()
 }
 unsafe extern "C" fn rejecter(reject_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
-    let self_struct = *Box::from_raw(upper_data as *mut MetacallFuture);
-    let user_data = Box::from_raw(self_struct.data);
+    let (_, reject, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData);
+    let user_data = Box::from_raw(data);
 
-    (self_struct.reject.unwrap())(parsers::raw_to_metacallobj_untyped(reject_data), user_data);
-
-    if !self_struct.leak {
-        unsafe { metacall_value_destroy(self_struct.value) };
-    }
+    (reject.unwrap())(
+        parsers::raw_to_metacallobj_untyped_leak(reject_data),
+        user_data,
+    );
 
     ptr::null_mut()
 }
@@ -124,32 +167,35 @@ impl MetacallFuture {
     pub fn await_fut(self) {
         let resolve_is_some = self.resolve.is_some();
         let reject_is_some = self.reject.is_some();
-        let value = self.value;
 
         unsafe {
             metacall_value_destroy(metacall_await_future(
-                metacall_value_to_future(value),
+                metacall_value_to_future(self.value),
                 if resolve_is_some {
                     Some(resolver)
                 } else {
                     None
                 },
                 if reject_is_some { Some(rejecter) } else { None },
-                Box::into_raw(Box::new(self)) as *mut c_void,
+                // TODO: Solve the memory leak that happens here
+                Box::into_raw(Box::new((self.resolve, self.reject, self.data))) as *mut c_void,
             ))
         };
     }
 
     #[doc(hidden)]
     pub fn into_raw(self) -> *mut c_void {
-        self.value
+        // It's not implemented in any loader as the time of writing this block of code.
+        // Feel free to implement as any loader adopted accepting Future as an argument.
+
+        panic!("Passing MetacallFuture as an argument is not supported!");
     }
 }
 
-// impl Drop for MetacallFuture {
-//     fn drop(&mut self) {
-//         if !self.leak {
-//             unsafe { metacall_value_destroy(self.value) };
-//         }
-//     }
-// }
+impl Drop for MetacallFuture {
+    fn drop(&mut self) {
+        if !self.leak {
+            unsafe { metacall_value_destroy(self.value) };
+        }
+    }
+}

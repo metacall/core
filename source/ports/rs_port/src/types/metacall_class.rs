@@ -3,9 +3,11 @@ use super::{
     MetacallObject, MetacallSetAttributeError, MetacallStringConversionError, MetacallValue,
 };
 use crate::{bindings::*, cstring, cstring_enum, parsers};
-use std::ffi::c_void;
+use std::{
+    ffi::c_void,
+    fmt::{self, Debug, Formatter},
+};
 
-#[derive(Debug)]
 /// Represents Metacall Class. You can get this type when returned by a function or get a class by its
 /// name with [from_name](#method.from_name).
 pub struct MetacallClass {
@@ -20,8 +22,13 @@ impl Clone for MetacallClass {
         Self {
             found_by_name: self.found_by_name,
             leak: true,
-            value: unsafe { metacall_value_copy(self.value) },
+            value: self.value,
         }
+    }
+}
+impl Debug for MetacallClass {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "MetacallClass {{ ... }}")
     }
 }
 

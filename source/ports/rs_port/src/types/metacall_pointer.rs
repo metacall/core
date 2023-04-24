@@ -1,8 +1,13 @@
 use super::MetacallValue;
-use crate::bindings::{metacall_value_create_ptr, metacall_value_destroy, metacall_value_to_ptr};
-use std::ffi::c_void;
+use crate::{
+    bindings::{metacall_value_create_ptr, metacall_value_destroy, metacall_value_to_ptr},
+    MetacallNull,
+};
+use std::{
+    ffi::c_void,
+    fmt::{self, Debug, Formatter},
+};
 
-#[derive(Debug)]
 /// Represents Metacall pointer. This type cannot be used in other languages. This type is highly
 /// unsafe so be careful!
 pub struct MetacallPointer {
@@ -21,6 +26,21 @@ impl Clone for MetacallPointer {
             rust_value_leak: true,
             value: self.value,
         }
+    }
+}
+impl Debug for MetacallPointer {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let boxed_value = unsafe { Box::from_raw(self.rust_value) };
+        let value = if (*boxed_value).is::<MetacallNull>() {
+            None
+        } else {
+            Some(format!("{:#?}", boxed_value))
+        };
+        Box::leak(boxed_value);
+
+        f.debug_struct("MetacallPointer")
+            .field("value", &value)
+            .finish()
     }
 }
 
@@ -50,15 +70,15 @@ impl MetacallPointer {
     }
 
     /// Creates a new Metacall pointer and casts it to T.
-    pub fn new(ptr: impl MetacallValue) -> Result<Self, Box<dyn MetacallValue>> {
+    pub fn new(ptr: impl MetacallValue) -> Self {
         let rust_value = Box::into_raw(Box::new(Box::new(ptr) as Box<dyn MetacallValue>));
 
-        Ok(Self {
+        Self {
             leak: false,
             rust_value,
             rust_value_leak: false,
             value: unsafe { metacall_value_create_ptr(rust_value.cast()) },
-        })
+        }
     }
 
     /// Consumes the Metacall pointer and returns ownership of the value without type

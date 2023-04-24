@@ -35,61 +35,8 @@ pub(crate) mod private_macros {
         }};
     }
 
-    macro_rules! match_metacall_value_all {
-        ($any:expr, $var:ident, $action:expr, [ $($type: ty),* ]) => {{
-            use std::{collections::HashMap, vec::Vec};
-
-            match_metacall_value!($any, {
-                $( $var: $type => $action, )*
-
-                // Support up to 5 dimensional vectors for type casting
-                $( $var: Vec<$type> => $action, )*
-                $( $var: Vec<Vec<$type>> => $action, )*
-                $( $var: Vec<Vec<Vec<$type>>> => $action, )*
-                $( $var: Vec<Vec<Vec<Vec<$type>>>> => $action, )*
-                $( $var: Vec<Vec<Vec<Vec<Vec<$type>>>>> => $action, )*
-                $( $var: Vec<Vec<Vec<Vec<Vec<Vec<$type>>>>>> => $action, )*
-
-                // Support up to 5 dimensional hashmaps for type casting
-                $( $var: HashMap::<String, $type> => $action, )*
-                $( $var: HashMap::<String, HashMap::<String, $type>> => $action, )*
-                $( $var: HashMap::<String, HashMap::<String, HashMap::<String, $type>>> => $action, )*
-                $(
-                    $var: HashMap::<String, HashMap::<
-                        String, HashMap::<
-                            String, HashMap::<String, $type>>
-                        >
-                    > => $action,
-                )*
-                $(
-                    $var: HashMap::<String, HashMap::<
-                        String, HashMap::<
-                            String, HashMap::<
-                                String, HashMap::<String, $type>>
-                            >
-                        >
-                    > => $action,
-                )*
-                $(
-                    $var: HashMap::<String, HashMap::<
-                    String, HashMap::<
-                        String, HashMap::<
-                            String, HashMap::<
-                                String, HashMap::<String, $type>>
-                                >
-                            >
-                        >
-                    > => $action,
-                )*
-
-                _ => panic!("Unkown type: {:#?}", $any)
-            })
-        }};
-    }
-
     pub(crate) use cstring;
     pub(crate) use cstring_enum;
-    pub(crate) use match_metacall_value_all;
 }
 
 #[macro_export]

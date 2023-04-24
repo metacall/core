@@ -29,7 +29,6 @@ fn load_from_memory_test() {
     call_greet("load_from_memory", 1);
 }
 
-// TODO: Why not putting this into a script inside scripts folder?
 fn load_from_file_test() {
     // Finding a temporary address to store the temporary js file
     let temp_js_pathbuf =
