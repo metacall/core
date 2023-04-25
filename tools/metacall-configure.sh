@@ -20,7 +20,7 @@
 #
 
 set -euxo pipefail
-
+ROOT_DIR=$(pwd)
 BUILD_TYPE=Release
 BUILD_PYTHON=0
 BUILD_RUBY=0
@@ -431,6 +431,16 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=On"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=Off"
+	fi
+
+	# Split env file line by line and add each line to the build string
+	ENV_FILE=$ROOT_DIR/CMakeConfig.txt
+	if [ -f $ENV_FILE ]; then
+		while IFS= read -r line
+		do
+			echo $line
+			BUILD_STRING="$BUILD_STRING $line"
+		done < "$ENV_FILE"
 	fi
 
 	# Build type
