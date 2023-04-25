@@ -6,22 +6,22 @@ $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 $Global:Arguments = $args
 
 function Set-Python {
-    Write-Output "configure python"
+	Write-Output "configure python"
 	Set-Location $ROOT_DIR
 
 	$PythonVersion = '3.9.7'
-	$RuntimeDir    = "$env:ProgramFiles\python"
-	$DepsDir       = "$ROOT_DIR\dependencies"
+	$RuntimeDir = "$env:ProgramFiles\python"
+	$DepsDir = "$ROOT_DIR\dependencies"
 
 	mkdir -Force $DepsDir
 	mkdir -Force $RuntimeDir
 	Set-Location $DepsDir
 
-    if (!(Test-Path -Path "$DepsDir\python_installer.exe")) {
+	if (!(Test-Path -Path "$DepsDir\python_installer.exe")) {
 		# Download installer
 		Write-Output "Python installer not found downloading now..."
 		(New-Object Net.WebClient).DownloadFile("https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe", "$(Get-Location)\python_installer.exe")
-    }
+	}
 
 	Write-Output "Installing python $PythonVersion"
 
@@ -35,7 +35,7 @@ function Set-Python {
 	[Environment]::SetEnvironmentVariable("PIP_TARGET", "$RuntimeDir\Lib")
 
 	# No patch, save vars for later use
-	$Env_Opts = "$ROOT_DIR\build\env_vars.txt"
+	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$PythonRuntimeDir = $RuntimeDir.Replace('\', '/')
 
 	Write-Output "-DPython_VERSION=$PythonVersion" >> $Env_Opts
@@ -43,11 +43,6 @@ function Set-Python {
 	Write-Output "-DPython_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $Env_Opts
 	Write-Output "-DPython_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $Env_Opts
 	Write-Output "-DPython_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
-
-	$FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
-
-	Write-Output "FIND_PACKAGE_HANDLE_STANDARD_ARGS(Python REQUIRED_VARS Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS VERSION_VAR Python_VERSION)" >> $FindPython
-	Write-Output "mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS)" >> $FindPython
 
 	# Install dependencies for tests
 	pip3 install requests
@@ -67,7 +62,7 @@ function Set-Nodejs {
 	$DepsDir = "$ROOT_DIR\dependencies"
 	$NodeVersion = "14.18.2"
 	$DLLReleaseVer = "v0.0.1"
-	$RuntimeDir    = "$env:ProgramFiles\nodejs"
+	$RuntimeDir = "$env:ProgramFiles\nodejs"
 
 	Set-Location $DepsDir
 
@@ -75,13 +70,13 @@ function Set-Nodejs {
 		# Download installer
 		Write-Output "Nodejs MSI installer not found downloading now..."
 		(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-x64.msi", "$DepsDir\node.msi")
-    }
+	}
 
 	if (!(Test-Path -Path "$DepsDir\node_headers.tar.gz")) {
 		# Download installer
 		Write-Output "Nodejs headers installer not found downloading now..."
 		(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", "$DepsDir\node_headers.tar.gz")
-    }
+	}
 
 	msiexec.exe /quiet /i "$DepsDir\node.msi" 
 
@@ -98,13 +93,13 @@ function Set-Nodejs {
 		# Download installer
 		Write-Output "Nodejs Custom DLLs not found downloading now..."
 		(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/node.dll/releases/download/$DLLReleaseVer/node-shared-v$NodeVersion-x64.zip", "$DepsDir\node_dll.zip")
-    }
+	}
 
 	Expand-Archive -Path "node_dll.zip" -DestinationPath "$RuntimeDir\lib"
 	
 	$NodeDir  = $RuntimeDir.Replace('\', '/')
 
-	$Env_Opts = "$ROOT_DIR\build\env_vars.txt"
+	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
 	Write-Output "-DNodeJS_VERSION=""$NodeVersion""" >> $Env_Opts
 	Write-Output "-DNodeJS_INCLUDE_DIRS=""$NodeDir/include/node""" >> $Env_Opts
 	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.lib""" >> $Env_Opts
@@ -155,7 +150,7 @@ function Set-Ruby {
 
 	Add-to-Path "$RuntimeDir\bin"
 
-	$Env_Opts = "$ROOT_DIR\build\env_vars.txt"
+	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$RubyDir  = $RuntimeDir.Replace('\', '/')
 
 	Write-Output "-DRuby_VERSION_STRING=""$RUBY_VERSION""" >> $Env_Opts
@@ -174,7 +169,6 @@ function Add-to-Path {
 
 	if ( $Null -ne $Env:GITHUB_ENV ) {
 		Write-Output "PATH=$Env:PATH" >> $Env:GITHUB_ENV
-		# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
 	}
 
 	refreshenv
@@ -204,7 +198,7 @@ function Set-7z {
 function Configure {
 	# Create option variables file 
 	mkdir "$ROOT_DIR\build"
-	New-Item -Path "$ROOT_DIR\build\env_vars.txt"
+	New-Item -Path "$ROOT_DIR\build\CMakeConfig.txt"
 
 	Set-7z
 

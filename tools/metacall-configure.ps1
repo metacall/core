@@ -380,8 +380,7 @@ function sub-configure {
 	$Global:BUILD_STRING = "$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
 	# Other Environment Options
-	$EnvOpts = Get-Content "$ROOT_DIR\env_vars.txt"
-
+	$EnvOpts = Get-Content "$ROOT_DIR\CMakeConfig.txt"
 
 	foreach ($opt in $EnvOpts.Split([System.Environment]::NewLine)) {
 		$Global:BUILD_STRING = "$BUILD_STRING $opt"

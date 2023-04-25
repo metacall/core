@@ -250,9 +250,9 @@ if(WIN32 AND MSVC)
 	endif()
 endif()
 
-if (PROJECT_OS_FAMILY MATCHES "unix")
+if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 
-	if(APPLE)
+	if(PROJECT_OS_FAMILY MATCHES "macos")
 		# We cannot enable "stack-protector-strong" On OS X due to a bug in clang compiler (current version 7.0.2)
 
 		# Enable threads in OS X
@@ -270,17 +270,6 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 	#add_compile_options(-Werror)
 	add_compile_options(-Wall)
 	add_compile_options(-Wextra)
-
-	# Debug symbols
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		add_compile_options(-g)
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
-	endif()
-
-	# Optimizations
-	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		add_compile_options(-O3)
-	endif()
 
 	# Sanitizers
 	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
@@ -305,6 +294,17 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 	elseif(OPTION_BUILD_UB_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		# TODO
 	endif()
+
+	# Debug symbols
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		add_compile_options(-g)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
+	endif()
+
+	# Optimizations
+	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		add_compile_options(-O3)
+	endif()
 endif()
 
 #
@@ -313,7 +313,7 @@ endif()
 
 set(DEFAULT_LINKER_OPTIONS)
 
-if(APPLE OR PROJECT_OS_LINUX OR MINGW)
+if(PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_LINUX OR PROJECT_OS_MINGW)
 	# Enable threads in linux, macos and mingw
 	set(DEFAULT_LINKER_OPTIONS
 		-pthread
