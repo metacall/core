@@ -26,8 +26,7 @@ function Set-Python {
 	Write-Output "Installing python $PythonVersion"
 
 	# Install Python
-	./python_installer.exe /quiet "TargetDir=$RuntimeDir" `
-		Include_debug=1 Include_symbols=1 PrependPath=1 CompileAll=1
+	./python_installer.exe /quiet "TargetDir=$RuntimeDir" Include_debug=1 Include_symbols=1 PrependPath=1 CompileAll=1
 
 	# Set environment variables
 	Add-to-Path $RuntimeDir
@@ -43,6 +42,7 @@ function Set-Python {
 	Write-Output "-DPython3_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $Env_Opts
 	Write-Output "-DPython3_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $Env_Opts
 	Write-Output "-DPython3_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
+	Write-Output "-DPython3_Development_FOUND=1" >> $Env_Opts
 
 	# Install dependencies for tests
 	pip3 install requests
