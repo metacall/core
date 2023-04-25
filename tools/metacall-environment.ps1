@@ -10,7 +10,7 @@ function Set-Python {
 	Set-Location $ROOT_DIR
 
 	$PythonVersion = '3.9.7'
-	$RuntimeDir = "$env:ProgramFiles\python"
+	$RuntimeDir = "$env:ProgramFiles\Python3"
 	$DepsDir = "$ROOT_DIR\dependencies"
 
 	mkdir -Force $DepsDir
@@ -38,11 +38,11 @@ function Set-Python {
 	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$PythonRuntimeDir = $RuntimeDir.Replace('\', '/')
 
-	Write-Output "-DPython_VERSION=$PythonVersion" >> $Env_Opts
-	Write-Output "-DPython_ROOT_DIR=""$PythonRuntimeDir""" >> $Env_Opts
-	Write-Output "-DPython_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $Env_Opts
-	Write-Output "-DPython_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $Env_Opts
-	Write-Output "-DPython_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
+	Write-Output "-DPython3_VERSION=$PythonVersion" >> $Env_Opts
+	Write-Output "-DPython3_ROOT_DIR=""$PythonRuntimeDir""" >> $Env_Opts
+	Write-Output "-DPython3_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $Env_Opts
+	Write-Output "-DPython3_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $Env_Opts
+	Write-Output "-DPython3_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
 
 	# Install dependencies for tests
 	pip3 install requests

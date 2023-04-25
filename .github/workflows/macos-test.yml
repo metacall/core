@@ -53,11 +53,11 @@ jobs:
         # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
           cmake -DOPTION_FORK_SAFE=OFF \
-             -DPython_INCLUDE_DIRS="$HOME/.pyenv/versions/3.11.1/include/python3.11" \
-             -DPython_LIBRARY="$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" \
-             -DPython_EXECUTABLE="$HOME/.pyenv/versions/3.11.1/bin/python3.11" \
-             -DPython_ROOT="$HOME/.pyenv/versions/3.11.1" \
-             -DPython_VERSION="3.11.1" ..
+             -DPython3_INCLUDE_DIRS="$HOME/.pyenv/versions/3.11.1/include/python3.11" \
+             -DPython3_LIBRARY="$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" \
+             -DPython3_EXECUTABLE="$HOME/.pyenv/versions/3.11.1/bin/python3.11" \
+             -DPython3_ROOT="$HOME/.pyenv/versions/3.11.1" \
+             -DPython3_VERSION="3.11.1" ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} tests
