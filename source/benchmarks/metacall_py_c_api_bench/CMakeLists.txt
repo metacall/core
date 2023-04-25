@@ -2,9 +2,9 @@
 # External dependencies
 #
 
-find_package(Python COMPONENTS Development)
+find_package(Python3 COMPONENTS Development)
 
-if(NOT Python_Development_FOUND)
+if(NOT Python3_Development_FOUND)
 	return()
 endif()
 

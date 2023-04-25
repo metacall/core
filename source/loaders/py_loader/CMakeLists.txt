@@ -8,16 +8,16 @@ endif()
 #
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(Python_FIND_ABI "ON" "ANY" "ANY")
-	find_package(Python COMPONENTS Development)
+	set(Python3_FIND_ABI "ON" "ANY" "ANY")
+	find_package(Python3 COMPONENTS Development)
 
 	# Fallback to release if not found
-	if(NOT Python_Development_FOUND)
-		set(Python_FIND_ABI)
-		find_package(Python COMPONENTS Development REQUIRED)
+	if(NOT Python3_Development_FOUND)
+		set(Python3_FIND_ABI)
+		find_package(Python3 COMPONENTS Development REQUIRED)
 	endif()
 else()
-	find_package(Python COMPONENTS Development REQUIRED)
+	find_package(Python3 COMPONENTS Development REQUIRED)
 endif()
 
 #
