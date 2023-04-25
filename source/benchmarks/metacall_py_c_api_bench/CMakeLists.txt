@@ -78,7 +78,7 @@ target_include_directories(${target}
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
 
-	${Python_INCLUDE_DIRS} # Python includes
+	${Python3_INCLUDE_DIRS} # Python includes
 )
 
 #
@@ -91,7 +91,7 @@ target_link_libraries(${target}
 
 	GBench
 
-	${Python_LIBRARIES} # Python libraries
+	${Python3_LIBRARIES} # Python libraries
 )
 
 #

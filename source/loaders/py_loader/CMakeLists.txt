@@ -118,7 +118,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${Python_INCLUDE_DIRS} # Python includes
+	${Python3_INCLUDE_DIRS} # Python includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -136,7 +136,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${Python_LIBRARIES} # Python libraries
+	${Python3_LIBRARIES} # Python libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
