@@ -43,6 +43,7 @@ function Set-Python {
 	Write-Output "-DPython3_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $Env_Opts
 	Write-Output "-DPython3_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
 	Write-Output "-DPython3_Development_FOUND=1" >> $Env_Opts
+	Write-Output "-DPython3_FIND_REGISTRY=NEVER" >> $Env_Opts
 
 	# Install dependencies for tests
 	pip3 install requests
