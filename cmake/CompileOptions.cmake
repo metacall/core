@@ -115,7 +115,7 @@ else()
 	set(SANITIZER_COMPILE_DEFINITIONS)
 endif()
 
-if((WIN32 AND MSVC) OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+if(WIN32 AND MSVC)
 	# MSVC and Clang do not require to link manually the sanitizer libraries
 	set(SANITIZER_LIBRARIES)
 endif()
