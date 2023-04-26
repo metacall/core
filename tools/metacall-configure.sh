@@ -435,13 +435,13 @@ sub_configure() {
 	fi
 
 	# Split env file line by line and add each line to the build string
-	ENV_FILE=$ROOT_DIR/CMakeConfig.txt
-	if [ -f $ENV_FILE ]; then
+	CMAKE_CONFIG_FILE=$ROOT_DIR/CMakeConfig.txt
+	if [ -f $CMAKE_CONFIG_FILE ]; then
 		while IFS= read -r line
 		do
 			echo $line
 			BUILD_STRING="$BUILD_STRING $line"
-		done < "$ENV_FILE"
+		done < "$CMAKE_CONFIG_FILE"
 	fi
 
 	# Build type
