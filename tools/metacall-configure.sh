@@ -20,6 +20,7 @@
 #
 
 set -euxo pipefail
+
 ROOT_DIR=$(pwd)
 BUILD_TYPE=Release
 BUILD_PYTHON=0
