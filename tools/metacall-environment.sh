@@ -145,16 +145,19 @@ sub_python(){
 		pyenv install 3.11.1
 		pyenv global 3.11.1
 		pyenv rehash
+
 		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
 		source ~/.bash_profile
+
 		mkdir -p build
-		CMAKE_CONFIG_PATH=$ROOT_DIR/build/CMakeConfig.txt
-		echo "-DPython3_INCLUDE_DIRS=\"$HOME/.pyenv/versions/3.11.1/include/python3.11\"" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_LIBRARY=\"$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib\"" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_EXECUTABLE=\"$HOME/.pyenv/versions/3.11.1/bin/python3.11\"" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_ROOT=\"$HOME/.pyenv/versions/3.11.1\"" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_VERSION=\"3.11.1\"" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_FIND_FRAMEWORK=\"NEVER\"" >> $CMAKE_CONFIG_PATH
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DPython3_INCLUDE_DIRS=$HOME/.pyenv/versions/3.11.1/include/python3.11" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_LIBRARY=$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_EXECUTABLE=$HOME/.pyenv/versions/3.11.1/bin/python3.11" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_ROOT=$HOME/.pyenv/versions/3.11.1" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_VERSION=3.11.1" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_FIND_FRAMEWORK=NEVER" >> $CMAKE_CONFIG_PATH
+
 		pip3 install requests
 		pip3 install setuptools
 		pip3 install wheel
@@ -181,16 +184,18 @@ sub_ruby(){
 		#$SUDO_CMD gem install rails
 	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
 		brew install ruby@3.2
+
 		echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> /Users/runner/.bash_profile
 		source ~/.bash_profile
+
 		mkdir -p build
-		CMAKE_CONFIG_PATH=$ROOT_DIR/build/CMakeConfig.txt
-		RUBY_PREFIX=$(brew --prefix ruby@3.2)
-		RUBY_VERSION=$(ruby -e 'puts RUBY_VERSION')
-		echo "-DRuby_INCLUDE_DIR=\"$RUBY_PREFIX/include/ruby-3.2.0\"" >> $CMAKE_CONFIG_PATH
-		echo "-DRuby_LIBRARY=\"$RUBY_PREFIX/lib/libruby.3.2.dylib\"" >> $CMAKE_CONFIG_PATH
-		echo "-DRuby_EXECUTABLE=\"$RUBY_PREFIX/bin/ruby\"" >> $CMAKE_CONFIG_PATH
-		echo "-DRuby_VERSION_STRING=\"$RUBY_VERSION\"" >> $CMAKE_CONFIG_PATH
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		RUBY_PREFIX="$(brew --prefix ruby@3.2)"
+		RUBY_VERSION="$(ruby -e 'puts RUBY_VERSION')"
+		echo "-DRuby_INCLUDE_DIR=$RUBY_PREFIX/include/ruby-3.2.0" >> $CMAKE_CONFIG_PATH
+		echo "-DRuby_LIBRARY=$RUBY_PREFIX/lib/libruby.3.2.dylib" >> $CMAKE_CONFIG_PATH
+		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
+		echo "-DRuby_VERSION_STRING=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
