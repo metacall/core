@@ -1,6 +1,3 @@
-# TODO: Remove this when tests pass
-return()
-
 # Check if this port is enabled
 if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RS)
 	return()
@@ -29,10 +26,20 @@ else()
 	set(TARGET_BUILD_TYPE)
 endif()
 
+if(OPTION_BUILD_SANITIZER)
+	set(SANITIZER_FLAGS
+		CMAKE_ADDRESS_SANITIZER=1
+	)
+elseif(OPTION_BUILD_THREAD_SANITIZER)
+	set(SANITIZER_FLAGS
+		CMAKE_THREAD_SANITIZER=1
+	)
+endif()
+
 # Build Rust Port
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BINDGEN=1 ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BINDGEN=1 ${SANITIZER_FLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 )
 
 # Copy the include files
@@ -67,18 +74,6 @@ add_dependencies(${target}
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
-	# TODO: This test fails when run with sanitizers:
-	#
-	# Address Sanitizer:
-	# ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
-	# For solving the issue compile the test with sanitizers when enabled or preload asan
-	#
-	# Thread Sanitizer:
-	# process didn't exit successfully: `/usr/local/metacall/source/ports/rs_port/target/debug/deps/metacall-f8cdc0b6dd115278` (signal: 11, SIGSEGV: invalid memory reference)
-	return()
-endif()
-
 add_test(NAME ${target}
 	COMMAND ${Rust_CARGO_EXECUTABLE} test
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -102,4 +97,5 @@ test_environment_variables(${target}
 	"CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
 	"PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR}"
 	"RUST_BACKTRACE=1"
+	${SANITIZER_FLAGS}
 )

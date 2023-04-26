@@ -49,6 +49,16 @@ fn main() {
     // Compile time assert for validating the minimum METACALL_VERSION
     // TODO
 
+    // Address sanitizer
+    if env::var("CMAKE_ADDRESS_SANITIZER").is_ok() {
+        println!("cargo:rustc-link-lib=asan");
+    }
+
+    // Thread sanitizer
+    if env::var("CMAKE_THREAD_SANITIZER").is_ok() {
+        println!("cargo:rustc-link-lib=tsan");
+    }
+
     // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
         // Link search path to build folder

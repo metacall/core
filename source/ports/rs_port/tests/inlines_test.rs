@@ -1,5 +1,6 @@
 use metacall::{
     hooks,
+    loaders,
     inline::{node, py, ts},
 };
 
@@ -7,15 +8,21 @@ use metacall::{
 fn inlines() {
     let _d = hooks::initialize().unwrap();
 
-    py! {
-        print("hello world")
+    if loaders::from_memory("py", "").is_ok() {
+        py! {
+            print("hello world")
+        }
     }
 
-    node! {
-        console.log("hello world");
+    if loaders::from_memory("node", "").is_ok() {
+        node! {
+            console.log("hello world");
+        }
     }
 
-    ts! {
-        console.log("hello world");
+    if loaders::from_memory("ts", "").is_ok() {
+        ts! {
+            console.log("hello world");
+        }
     }
 }
