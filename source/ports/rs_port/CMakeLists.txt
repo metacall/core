@@ -7,7 +7,10 @@ endif()
 # Port name and options
 #
 
-find_package(Rust COMPONENTS 1.68.2)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/rust-toolchain TARGET_TOOLCHAIN)
+string(STRIP "${TARGET_TOOLCHAIN}" TARGET_TOOLCHAIN)
+
+find_package(Rust COMPONENTS ${TARGET_TOOLCHAIN})
 
 if(NOT Rust_FOUND)
 	message(STATUS "Rust not found")
