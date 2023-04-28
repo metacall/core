@@ -23,6 +23,40 @@ set(target rs_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
+# Find bindgen
+find_program(Rust_BINDGEN_EXECUTABLE bindgen
+	HINTS ${Rust_CARGO_HOME}
+	PATH_SUFFIXES "bin"
+)
+
+if(NOT Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_GUIX)
+	execute_process(COMMAND ${Rust_CARGO_EXECUTABLE} install bindgen)
+
+	find_program(Rust_BINDGEN_EXECUTABLE bindgen
+		HINTS ${Rust_CARGO_HOME}
+		PATH_SUFFIXES "bin"
+	)
+endif()
+
+# Generate bindings
+if(Rust_BINDGEN_EXECUTABLE)
+	add_custom_target(${target}_bindings
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		COMMAND ${Rust_BINDGEN_EXECUTABLE}
+			--no-include-path-detection
+			"${CMAKE_SOURCE_DIR}/source/metacall/include/metacall/metacall.h"
+			-o "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs"
+			--
+			-I${CMAKE_SOURCE_DIR}/source/metacall/include
+			-I${CMAKE_BINARY_DIR}/source/metacall/include
+			-I${CMAKE_BINARY_DIR}/source/include
+		DEPENDS ${META_PROJECT_NAME}::metacall
+	)
+endif()
+
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs" PROPERTIES GENERATED TRUE)
+
+# Build Rust Port
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(TARGET_BUILD_TYPE "--release")
 else()
@@ -31,47 +65,31 @@ endif()
 
 if(OPTION_BUILD_SANITIZER)
 	set(SANITIZER_FLAGS
-		CMAKE_ADDRESS_SANITIZER=1
+		${CMAKE_COMMAND} -E env CMAKE_ADDRESS_SANITIZER=1
 	)
 elseif(OPTION_BUILD_THREAD_SANITIZER)
 	set(SANITIZER_FLAGS
-		CMAKE_THREAD_SANITIZER=1
+		${CMAKE_COMMAND} -E env CMAKE_THREAD_SANITIZER=1
 	)
+else()
+	set(SANITIZER_FLAGS)
 endif()
 
-# Build Rust Port
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BINDGEN=1 ${SANITIZER_FLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
-)
-
-# Copy the include files
-set(include_dirs
-	"${CMAKE_SOURCE_DIR}/source/metacall/include"
-	"${CMAKE_BINARY_DIR}/source/metacall/include"
-	"${CMAKE_BINARY_DIR}/source/include"
-)
-
-add_custom_target(${target}_includes
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${include_dirs} "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-
-add_dependencies(${target} ${target}_includes)
-
-# Copy bindings
-add_custom_command(
-	TARGET ${target}
-	POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/target/bindings/bindings.rs" "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs"
+	COMMAND ${SANITIZER_FLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	DEPENDS ${META_PROJECT_NAME}::metacall
 )
 
 #
 # Dependecies
 #
 
-add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall
-)
+if(Rust_BINDGEN_EXECUTABLE)
+	add_dependencies(${target}
+		${target}_bindings
+	)
+endif()
 
 #
 # Define test

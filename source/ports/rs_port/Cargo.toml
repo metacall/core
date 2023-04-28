@@ -20,6 +20,3 @@ path = "src/lib.rs"
 
 [dependencies]
 metacall-inline = { path = "./inline", version = "0.2.0" }
-
-[build-dependencies]
-bindgen = { version = "0.64.0", default-features = false, features = ["runtime", "logging", "which-rustfmt"]}

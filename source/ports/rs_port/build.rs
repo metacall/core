@@ -1,54 +1,6 @@
-use bindgen::{builder, CargoCallbacks};
 use std::env;
 
-fn generate_bindings(headers: &[&str]) {
-    let mut builder = builder();
-
-    builder = builder.clang_arg(format!(
-        "-I{}",
-        env::current_dir()
-            .unwrap()
-            .join("include")
-            .to_str()
-            .unwrap()
-    ));
-
-    for header in headers {
-        builder = builder.header(header.to_string());
-    }
-
-    builder = builder
-        .detect_include_paths(true)
-        .size_t_is_usize(true)
-        .rustfmt_bindings(true)
-        .generate_comments(true)
-        .parse_callbacks(Box::new(CargoCallbacks))
-        .derive_hash(true);
-
-    let bindings = builder.generate().unwrap();
-
-    bindings
-        .write_to_file(env::current_dir().unwrap().join("src/bindings.rs"))
-        .unwrap();
-}
-
 fn main() {
-    // When running from CMake
-    if env::var("CMAKE_BINDGEN").is_ok() {
-        const HEADERS: [&str; 3] = [
-            "include/metacall/metacall.h",
-            "include/metacall/metacall_value.h",
-            "include/metacall/metacall_error.h",
-        ];
-
-        generate_bindings(&HEADERS);
-    }
-
-    println!("cargo:rerun-if-changed=src/bindings.rs");
-
-    // Compile time assert for validating the minimum METACALL_VERSION
-    // TODO
-
     // Address sanitizer
     if env::var("CMAKE_ADDRESS_SANITIZER").is_ok() {
         println!("cargo:rustc-link-lib=asan");
