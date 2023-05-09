@@ -14,7 +14,7 @@ fn main() {
     // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
         // Link search path to build folder
-        println!("cargo:rustc-link-search={val}");
+        println!("cargo:rustc-link-search=native={val}");
 
         // Set up environment variables
         if let Ok(name) = env::var("PROJECT_LIBRARY_PATH_NAME") {
@@ -27,13 +27,13 @@ fn main() {
             Ok(val) => {
                 if val == "Debug" {
                     // try to link the debug version when running tests
-                    println!("cargo:rustc-link-lib=metacalld");
+                    println!("cargo:rustc-link-lib=dylib=metacalld");
                 } else {
-                    println!("cargo:rustc-link-lib=metacall");
+                    println!("cargo:rustc-link-lib=dylib=metacall");
                 }
             }
             Err(_) => {
-                println!("cargo:rustc-link-lib=metacall");
+                println!("cargo:rustc-link-lib=dylib=metacall");
             }
         }
     } else {
@@ -41,13 +41,13 @@ fn main() {
         let profile = env::var("PROFILE").unwrap();
         match profile.as_str() {
             "debug" => {
-                println!("cargo:rustc-link-lib=metacalld")
+                println!("cargo:rustc-link-lib=dylib=metacalld")
             }
             "release" => {
-                println!("cargo:rustc-link-lib=metacall")
+                println!("cargo:rustc-link-lib=dylib=metacall")
             }
             _ => {
-                println!("cargo:rustc-link-lib=metacall")
+                println!("cargo:rustc-link-lib=dylib=metacall")
             }
         }
     }
