@@ -443,6 +443,41 @@ sub_nodejs(){
 
 			# Build dependencies (note libexecinfo-dev is not available in Alpine 3.17)
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main linux-headers libexecinfo libexecinfo-dev
+
+			# Build NodeJS shared library
+			$SUDO_CMD apk add --no-cache --virtual .build-nodejs-deps \
+				git \
+				alpine-sdk \
+				alpine-conf \
+				ccache \
+				brotli-dev \
+				c-ares-dev \
+				icu-dev \
+				linux-headers \
+				nghttp2-dev \
+				openssl-dev \
+				py3-jinja2 \
+				python3 \
+				samurai \
+				zlib-dev
+
+			git clone --depth 1 --branch v3.17.3 https://git.alpinelinux.org/aports
+			cd aports/main/nodejs
+			sed -i 's/--shared-brotli\ \\/--shared \\\n		--shared-brotli\ \\/g' APKBUILD
+			if [ "$SUDO_CMD" = "" ]; then
+				ABUILD_ROOT=-F
+			else
+				ABUILD_ROOT=
+			fi
+			echo "abuild-key" | abuild-keygen -a
+			$SUDO_CMD cp abuild-key.pub /etc/apk/keys
+			$SUDO_CMD abuild $ABUILD_ROOT checksum
+			$SUDO_CMD abuild $ABUILD_ROOT || true
+			cp pkg/nodejs/usr/bin/node /usr/bin/node
+			cp src/node-v18.14.2/out/Release/lib/libnode.so.108 /usr/lib/.
+			cd ../../..
+			rm -rf aports
+			$SUDO_CMD apk del .build-nodejs-deps
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install node make npm curl python3
