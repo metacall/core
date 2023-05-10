@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #
-#	MetaCall Configuration Environment Bash Script by Parra Studios
+#	MetaCall Configuration Environment Shell Script by Parra Studios
 #	Configure and install MetaCall environment script utility.
 #
 #	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
@@ -19,7 +19,7 @@
 #	limitations under the License.
 #
 
-set -euxo pipefail
+set -euxo
 
 ROOT_DIR=$(pwd)
 
@@ -90,10 +90,15 @@ sub_base(){
 	echo "configure base packages"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends build-essential git cmake libgtest-dev wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
-	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends build-essential git cmake libgtest-dev wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk update
+			$SUDO_CMD apk add --no-cache g++ make git cmake gtest-dev wget gnupg ca-certificates
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git googletest wget gnupg ca-certificates
 	fi
 }
@@ -103,22 +108,30 @@ sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends g++ libpcre3-dev tar
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends g++ libpcre3-dev tar
+
+			# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
+			$SUDO_CMD pip3 install setuptools
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache g++ pcre-dev tar
+
+			# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
+			$SUDO_CMD apk add --no-cache py3-setuptools
+		fi
 
 		wget http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz
 
 		tar -xzf swig-4.0.1.tar.gz
 		cd swig-4.0.1
 		./configure --prefix=/usr/local
-		make
+		make -j$(getconf _NPROCESSORS_ONLN)
 		$SUDO_CMD make install
 		cd ..
 		rm -rf swig-4.0.1
 
-		# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
-		$SUDO_CMD pip3 install setuptools
-	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install swig
 	fi
 }
@@ -128,17 +141,39 @@ sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 python3-dev python3-pip
-		$SUDO_CMD pip3 install requests
-		$SUDO_CMD pip3 install setuptools
-		$SUDO_CMD pip3 install wheel
-		$SUDO_CMD pip3 install rsa
-		$SUDO_CMD pip3 install scipy
-		$SUDO_CMD pip3 install numpy
-		$SUDO_CMD pip3 install scikit-learn
-		$SUDO_CMD pip3 install joblib
-	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 python3-dev python3-pip
+
+			# Python test dependencies
+			$SUDO_CMD pip3 install requests
+			$SUDO_CMD pip3 install setuptools
+			$SUDO_CMD pip3 install wheel
+			$SUDO_CMD pip3 install rsa
+			$SUDO_CMD pip3 install scipy
+			$SUDO_CMD pip3 install numpy
+			$SUDO_CMD pip3 install scikit-learn
+			$SUDO_CMD pip3 install joblib
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			# Fix to a lower Python version (3.9) in order avoid conflicts with Python dependency of Clang from C Loader
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main python3=3.9.16-r0 python3-dev=3.9.16-r0
+
+			# Python test dependencies
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/community \
+				py3-pip=20.3.4-r1 \
+				py3-rsa=4.7.2-r0 \
+				py3-scipy=1.7.2-r0 \
+				py3-numpy=1.21.4-r0 \
+				py3-scikit-learn=0.24.0-r1 \
+				py3-joblib=1.0.1-r1
+
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main \
+				py3-requests=2.26.0-r1 \
+				py3-setuptools=52.0.0-r4 \
+				py3-wheel=0.36.2-r2
+
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install pyenv openssl
 		export PKG_CONFIG_PATH=$(brew --prefix openssl)/lib/pkgconfig
 		export PYTHON_CONFIGURE_OPTS="--enable-shared"
@@ -174,15 +209,18 @@ sub_ruby(){
 	echo "configure ruby"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
 
-		# TODO: Review conflict with NodeJS (currently rails test is disabled)
-		#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
-		#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
-		#$SUDO_CMD gem install rails
-	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+			# TODO: Review conflict with NodeJS (currently rails test is disabled)
+			#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
+			#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
+			#$SUDO_CMD gem install rails
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache ruby ruby-dev
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install ruby@3.2
 
 		echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> /Users/runner/.bash_profile
@@ -204,14 +242,14 @@ sub_rapidjson(){
 	echo "configure rapidjson"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		git clone https://github.com/miloyip/rapidjson.git
 		cd rapidjson
 		git checkout v1.1.0
 		mkdir build
 		cd build
 		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
-		make
+		make -j$(getconf _NPROCESSORS_ONLN)
 		$SUDO_CMD make install
 		cd ../.. && rm -rf ./rapidjson
 	fi
@@ -221,10 +259,6 @@ sub_rapidjson(){
 sub_funchook(){
 	echo "configure funchook"
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends cmake
-	fi
 }
 
 # NetCore
@@ -232,28 +266,30 @@ sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		# Debian Stretch
-		$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-			libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# Debian Stretch
+			$SUDO_CMD apt-get update && $SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+				libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
 
-		# Install .NET Sdk
-		DOTNET_SDK_VERSION=1.1.11
-		DOTNET_SDK_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-dev-debian.9-x64.$DOTNET_SDK_VERSION.tar.gz
+			# Install .NET Sdk
+			DOTNET_SDK_VERSION=1.1.11
+			DOTNET_SDK_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-dev-debian.9-x64.$DOTNET_SDK_VERSION.tar.gz
 
-		wget $DOTNET_SDK_DOWNLOAD_URL -O dotnet.tar.gz
-		mkdir -p /usr/share/dotnet
-		tar -zxf dotnet.tar.gz -C /usr/share/dotnet
-		rm dotnet.tar.gz
-		ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+			wget $DOTNET_SDK_DOWNLOAD_URL -O dotnet.tar.gz
+			mkdir -p /usr/share/dotnet
+			tar -zxf dotnet.tar.gz -C /usr/share/dotnet
+			rm dotnet.tar.gz
+			ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
 
-		# Trigger the population of the local package cache
-		mkdir warmup
-		cd warmup
-		dotnet new
-		cd ..
-		rm -rf warmup
-		rm -rf /tmp/NuGetScratch
+			# Trigger the population of the local package cache
+			mkdir warmup
+			cd warmup
+			dotnet new
+			cd ..
+			rm -rf warmup
+			rm -rf /tmp/NuGetScratch
+		fi
 	fi
 }
 
@@ -262,17 +298,19 @@ sub_netcore2(){
 	echo "configure netcore 2"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		# Set up repository
-		wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-		$SUDO_CMD dpkg -i packages-microsoft-prod.deb
-		rm packages-microsoft-prod.deb
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# Set up repository
+			wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+			$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+			rm packages-microsoft-prod.deb
 
-		# Install .NET Core Sdk
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
+			# Install .NET Core Sdk
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
+		fi
 	fi
 }
 
@@ -281,17 +319,19 @@ sub_netcore5(){
 	echo "configure netcore 5"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		# Set up repository
-		wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-		$SUDO_CMD dpkg -i packages-microsoft-prod.deb
-		rm packages-microsoft-prod.deb
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# Set up repository
+			wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+			$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+			rm packages-microsoft-prod.deb
 
-		# Install .NET Core Sdk
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-5.0
+			# Install .NET Core Sdk
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-5.0
+		fi
 	fi
 }
 
@@ -300,17 +340,21 @@ sub_netcore7(){
 	echo "configure netcore 7"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		# Set up repository
-		wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-		$SUDO_CMD dpkg -i packages-microsoft-prod.deb
-		rm packages-microsoft-prod.deb
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# Set up repository
+			wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+			$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+			rm packages-microsoft-prod.deb
 
-		# Install .NET Core Sdk
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
+			# Install .NET Core Sdk
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache dotnet7-sdk
+		fi
 	fi
 }
 
@@ -319,7 +363,7 @@ sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends software-properties-common
 
 		# V8 5.1
@@ -368,7 +412,7 @@ sub_v8(){
 	echo "configure v8"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python
 		git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 		export PATH=`pwd`/depot_tools:"$PATH"
@@ -381,7 +425,7 @@ sub_v8(){
 		gclient sync
 
 		patch build/all.gyp $ROOT_DIR/nobuildtest.patch
-		GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library" make library=shared native
+		GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library" make -j$(getconf _NPROCESSORS_ONLN) library=shared native
 	fi
 }
 
@@ -390,11 +434,17 @@ sub_nodejs(){
 	echo "configure nodejs"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		# Note that Python is required for GYP
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
-	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# Note that Python is required for GYP
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache python3 g++ make nodejs nodejs-dev npm curl
+
+			# Build dependencies (note libexecinfo-dev is not available in Alpine 3.17)
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main linux-headers libexecinfo libexecinfo-dev
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install node make npm curl python3
 	fi
 }
@@ -403,7 +453,7 @@ sub_nodejs(){
 sub_typescript(){
 	echo "configure typescript"
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		# Install React dependencies in order to run the tests
 		$SUDO_CMD npm i react@latest -g
 		$SUDO_CMD npm i react-dom@latest -g
@@ -420,9 +470,13 @@ sub_rpc(){
 	echo "cofingure rpc"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		# Install development files and documentation for libcurl (OpenSSL flavour)
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# Install development files and documentation for libcurl (OpenSSL flavour)
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache curl-dev
+		fi
 	fi
 }
 
@@ -435,10 +489,13 @@ sub_wasm(){
 sub_java(){
 	echo "configure java"
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends default-jre default-jdk
-	elif [ "${OPERATIVE_SYSTEM}" == "Darwin" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends default-jdk default-jre
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache openjdk8 openjdk8-jre
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install openjdk@17
 	fi
 }
@@ -447,41 +504,47 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		LLVM_VERSION_STRING=11
-		UBUNTU_CODENAME=""
-		CODENAME_FROM_ARGUMENTS=""
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			LLVM_VERSION_STRING=11
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
 
-		# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-		source /etc/os-release
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
 
-		case ${LINUX_DISTRO:-} in
-			debian)
-				if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
-					CODENAME="unstable"
-					LINKNAME=""
-				else
-					# "stable" Debian release
-					CODENAME="${VERSION_CODENAME:-}"
-					LINKNAME="-${CODENAME:-}"
-				fi
-				;;
-			*)
-				# ubuntu and its derivatives
-				if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
-					CODENAME="${UBUNTU_CODENAME}"
-					if [[ -n "${CODENAME:-}" ]]; then
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION}" = "unstable" ] || [ "${VERSION}" = "testing" ] || [ "${PRETTY_NAME}" = */sid ]; then
+						CODENAME="unstable"
+						LINKNAME=""
+					else
+						# "stable" Debian release
+						CODENAME="${VERSION_CODENAME}"
 						LINKNAME="-${CODENAME}"
 					fi
-				fi
-				;;
-		esac
+					;;
+				*)
+					# Ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+						if [ -n "${CODENAME}" ]; then
+							LINKNAME="-${CODENAME}"
+						fi
+					fi
+					;;
+			esac
 
-		wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-		$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-		$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache libffi-dev
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing tcc
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.14/main clang-libs=11.1.0-r1 clang-dev=11.1.0-r1
+		fi
 	fi
 }
 
@@ -489,8 +552,8 @@ sub_c(){
 sub_cobol(){
 	echo "configure cobol"
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		if [ "${LINUX_DISTRO}" == "debian" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ]; then
 			echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
 
 			$SUDO_CMD apt-get update
@@ -498,8 +561,26 @@ sub_cobol(){
 
 			# Remove unstable from sources.list
 			$SUDO_CMD head -n -2 /etc/apt/sources.list
-		elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
+		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends open-cobol
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache --virtual .build-cobol-deps build-base tar libaio libnsl libc6-compat binutils abuild make gcc gmp-dev db-dev libxml2-dev ncurses-dev
+
+			# Install gnucobol
+			wget https://sourceforge.net/projects/gnucobol/files/gnucobol/3.1/gnucobol-3.1-rc1.tar.gz/download -O gnucobol-3.1-rc1.tar.gz
+			tar xvfz gnucobol-3.1-rc1.tar.gz
+			cd gnucobol-3.1-rc1
+			./configure
+			make -j$(getconf _NPROCESSORS_ONLN)
+			make install
+			cd ..
+			rm -rf gnucobol-3.1-rc1 gnucobol-3.1-rc1.tar.gz
+
+			# Clean build deps
+			$SUDO_CMD apk del .build-cobol-deps
+
+			# Runtime deps
+			$SUDO_CMD apk add --no-cache db ncurses
 		fi
 	fi
 }
@@ -509,9 +590,12 @@ sub_go(){
 	echo "configure go"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends golang
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends golang
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache go
+		fi
 	fi
 }
 
@@ -520,8 +604,12 @@ sub_rust(){
 	echo "configure rust"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache curl
+		fi
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 	fi
 }
@@ -532,7 +620,7 @@ sub_metacall(){
 	echo "configure metacall"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		git clone https://github.com/metacall/core.git
 		mkdir core/build && cd core/build
 
@@ -561,9 +649,12 @@ sub_pack(){
 	echo "configure pack"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends rpm
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends rpm
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache rpm
+		fi
 	fi
 }
 
@@ -572,9 +663,12 @@ sub_coverage(){
 	echo "configure coverage"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get install -y --no-install-recommends lcov
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get install -y --no-install-recommends lcov
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache lcov
+		fi
 	fi
 }
 
@@ -583,42 +677,46 @@ sub_clangformat(){
 	echo "configure clangformat"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		LLVM_VERSION_STRING=12
-		UBUNTU_CODENAME=""
-		CODENAME_FROM_ARGUMENTS=""
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			LLVM_VERSION_STRING=12
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
 
-		# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-		source /etc/os-release
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
 
-		case ${LINUX_DISTRO:-} in
-			debian)
-				if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
-					CODENAME="unstable"
-					LINKNAME=""
-				else
-					# "stable" Debian release
-					CODENAME="${VERSION_CODENAME:-}"
-					LINKNAME="-${CODENAME:-}"
-				fi
-				;;
-			*)
-				# ubuntu and its derivatives
-				if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
-					CODENAME="${UBUNTU_CODENAME}"
-					if [[ -n "${CODENAME:-}" ]]; then
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION}" = "unstable" ] || [ "${VERSION}" = "testing" ] || [ "${PRETTY_NAME}" = */sid ]; then
+						CODENAME="unstable"
+						LINKNAME=""
+					else
+						# "stable" Debian release
+						CODENAME="${VERSION_CODENAME}"
 						LINKNAME="-${CODENAME}"
 					fi
-				fi
-				;;
-		esac
+					;;
+				*)
+					# ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+						if [ -n "${CODENAME}" ]; then
+							LINKNAME="-${CODENAME}"
+						fi
+					fi
+					;;
+			esac
 
-		wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-		$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-		$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
-		$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
+			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
+			$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main clang-extra-tools=12.0.1-r1
+		fi
 	fi
 }
 
@@ -627,16 +725,19 @@ sub_backtrace(){
 	echo "configure backtrace"
 	cd $ROOT_DIR
 
-	if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get install -y --no-install-recommends libdw-dev
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get install -y --no-install-recommends libdw-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache binutils-dev
+		fi
 	fi
 }
 
 # Install
 sub_install(){
 	if [ $APT_CACHE = 1 ]; then
-		if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+		if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 			APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
 		fi
 	fi
@@ -729,7 +830,7 @@ sub_options(){
 	for var in "$@"
 	do
 		if [ "$var" = 'cache' ]; then
-			if [ "${OPERATIVE_SYSTEM}" == "Linux" ]; then
+			if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 				echo "apt caching selected"
 				APT_CACHE=1
 			fi

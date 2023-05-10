@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #
-#	MetaCall Build Bash Script by Parra Studios
-#	Build and install bash script utility for MetaCall.
+#	MetaCall Build Shell Script by Parra Studios
+#	Build and install shell script utility for MetaCall.
 #
 #	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
@@ -19,7 +19,7 @@
 #	limitations under the License.
 #
 
-set -euxo pipefail
+set -euxo
 
 ROOT_DIR=$(pwd)
 BUILD_TYPE=Release
@@ -48,6 +48,15 @@ BUILD_PORTS=0
 BUILD_COVERAGE=0
 BUILD_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
+
+# Linux Distro detection
+if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
+	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces
+	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+else
+	# TODO: Implement more distros or better detection
+	LINUX_DISTRO=unknown
+fi
 
 sub_options() {
 	for option in "$@"
@@ -172,6 +181,12 @@ sub_configure() {
 			-DOPTION_BUILD_LOADERS=On \
 			-DOPTION_BUILD_LOADERS_MOCK=On"
 
+
+	# Enable build with musl libc
+	if [ "$LINUX_DISTRO" = "alpine" ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MUSL=On"
+	fi
+
 	# Scripts
 	if [ $BUILD_SCRIPTS = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS=On"
@@ -252,9 +267,13 @@ sub_configure() {
 
 	# NetCore 7
 	if [ $BUILD_NETCORE7 = 1 ]; then
-		BUILD_STRING="$BUILD_STRING \
-			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/7.0.5/"
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_CS=On"
+
+		if [ "$LINUX_DISTRO" = "alpine" ]; then
+			BUILD_STRING="$BUILD_STRING -DDOTNET_CORE_PATH=/usr/lib/dotnet/shared/Microsoft.NETCore.App/7.0.4/"
+		else
+			BUILD_STRING="$BUILD_STRING -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/7.0.5/"
+		fi
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -334,6 +353,10 @@ sub_configure() {
 	# Java
 	if [ $BUILD_JAVA = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_JAVA=On"
+
+		if [ "$LINUX_DISTRO" = "alpine" ]; then
+			BUILD_STRING="$BUILD_STRING -DJAVA_HOME=/usr/lib/jvm/java-1.8-openjdk"
+		fi
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_JAVA=On"

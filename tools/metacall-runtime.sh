@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #
-#	MetaCall Configuration Environment Bash Script by Parra Studios
+#	MetaCall Configuration Environment Shell Script by Parra Studios
 #	Configure and install MetaCall environment script utility.
 #
 #	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
@@ -19,7 +19,7 @@
 #	limitations under the License.
 #
 
-set -euxo pipefail
+set -euxo
 
 ROOT_DIR=$(pwd)
 
@@ -210,11 +210,11 @@ sub_c(){
 	CODENAME_FROM_ARGUMENTS=""
 
 	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-	source /etc/os-release
+	. /etc/os-release
 
 	case ${LINUX_DISTRO} in
 		debian)
-			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
+			if [ "${VERSION}" == "unstable" ] || [ "${VERSION}" == "testing" ]; then
 				CODENAME="unstable"
 				LINKNAME=""
 			else
@@ -225,9 +225,9 @@ sub_c(){
 			;;
 		*)
 			# ubuntu and its derivatives
-			if [[ -n "${UBUNTU_CODENAME}" ]]; then
+			if [ -n "${UBUNTU_CODENAME}" ]; then
 				CODENAME="${UBUNTU_CODENAME}"
-				if [[ -n "${CODENAME}" ]]; then
+				if [ -n "${CODENAME}" ]; then
 					LINKNAME="-${CODENAME}"
 				fi
 			fi

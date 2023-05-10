@@ -41,7 +41,11 @@ endif()
 
 # Configure
 if(PROJECT_OS_FAMILY STREQUAL unix)
-	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --with-libgcc --with-selinux)
+	if(OPTION_BUILD_MUSL)
+		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --config-musl)
+	else()
+		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --with-libgcc --with-selinux)
+	endif()
 elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static --with-libgcc --with-selinux)

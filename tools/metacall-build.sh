@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #
-#	MetaCall Build Bash Script by Parra Studios
-#	Build and install bash script utility for MetaCall.
+#	MetaCall Build Shell Script by Parra Studios
+#	Build and install shell script utility for MetaCall.
 #
 #	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
@@ -19,7 +19,7 @@
 #	limitations under the License.
 #
 
-set -euxo pipefail
+set -euxo
 
 BUILD_TYPE=Release
 BUILD_TESTS=0

@@ -88,9 +88,16 @@ else()
 	set(RUSTC_LIBS ${Rust_RUSTC_LIBRARIES})
 endif()
 
+if(OPTION_BUILD_MUSL)
+	set(RUST_CTR_STATIC "-C target-feature=-crt-static")
+	set(RUSTFLAGS ${CMAKE_COMMAND} -E env RUSTFLAGS=${RUST_CTR_STATIC})
+else()
+	set(RUSTFLAGS)
+endif()
+
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
 	DEPENDS ${target}_runtime ${TARGET_DEPENDENCY}
 )

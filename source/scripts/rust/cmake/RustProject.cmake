@@ -74,23 +74,6 @@ function(rust_package target version script)
 	# Set custom target
 	add_custom_target(${custom_target} ALL)
 
-	#
-	# Deployment
-	#
-
-	# Install cmake script config
-	#install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/${custom_target}/${custom_target}-config.cmake"
-	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
-	#	COMPONENT   runtime
-	#)
-
-	# CMake config
-	#install(EXPORT  ${custom_target}-export
-	#	NAMESPACE   ${META_PROJECT_NAME}::
-	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
-	#	COMPONENT   dev
-	#)
-
 	# Set project properties
 	set_target_properties(${custom_target}
 		PROPERTIES
@@ -100,14 +83,10 @@ function(rust_package target version script)
 
 	# Compile scripts
 	add_custom_command(TARGET ${custom_target} PRE_BUILD
-		# fix the version of rustc
+		# Fix the version of rustc
 		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
-		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=lib 
-		${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs 
-		--out-dir ${LOADER_SCRIPT_PATH}
-		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=dylib -Cprefer-dynamic 
-		${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs 
-		--out-dir ${LOADER_SCRIPT_PATH}
+		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=lib ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
+		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=dylib -Cprefer-dynamic ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
 	)
 
 	# Include generated project file
@@ -140,23 +119,6 @@ function(cargo_package target version)
 	# Set custom target
 	add_custom_target(${custom_target} ALL)
 
-	#
-	# Deployment
-	#
-
-	# Install cmake script config
-	#install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/${custom_target}/${custom_target}-config.cmake"
-	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
-	#	COMPONENT   runtime
-	#)
-
-	# CMake config
-	#install(EXPORT  ${custom_target}-export
-	#	NAMESPACE   ${META_PROJECT_NAME}::
-	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
-	#	COMPONENT   dev
-	#)
-
 	# Set project properties
 	set_target_properties(${custom_target}
 		PROPERTIES
@@ -166,11 +128,9 @@ function(cargo_package target version)
 
 	# Compile project
 	add_custom_command(TARGET ${custom_target} PRE_BUILD
-		# fix the version of rustc
+		# Fix the version of rustc
 		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
-		COMMAND ${Rust_CARGO_EXECUTABLE} build 
-		--manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml 
-		--target-dir ${LOADER_SCRIPT_PATH}
+		COMMAND ${Rust_CARGO_EXECUTABLE} build --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml --target-dir ${PROJECT_OUTPUT_DIR}
 	)
 
 	# Include generated project file
