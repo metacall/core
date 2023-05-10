@@ -26,6 +26,20 @@
 
 class netcore
 {
+private:
+	template <typename T> void **delegate_cast(T *fn)
+	{
+		union
+		{
+			void **ptr;
+			T *fptr;
+		} u;
+
+		u.fptr = fn;
+
+		return u.ptr;
+	}
+
 protected:
 	reflect_function functions[100];
 	int functions_count;

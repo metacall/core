@@ -45,72 +45,72 @@ reflect_function *netcore::get_functions(int *count)
 
 bool netcore::create_delegates()
 {
-	if (!this->create_delegate(this->delegate_execution_path_w, (void **)&this->core_execution_path_w))
+	if (!this->create_delegate(this->delegate_execution_path_w, delegate_cast(&this->core_execution_path_w)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_execution_path_c, (void **)&this->core_execution_path_c))
+	if (!this->create_delegate(this->delegate_execution_path_c, delegate_cast(&this->core_execution_path_c)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_get_functions, (void **)&this->core_get_functions))
+	if (!this->create_delegate(this->delegate_get_functions, delegate_cast(&this->core_get_functions)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_load_source_w, (void **)&this->core_load_from_source_w))
+	if (!this->create_delegate(this->delegate_load_source_w, delegate_cast(&this->core_load_from_source_w)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_load_source_c, (void **)&this->core_load_from_source_c))
+	if (!this->create_delegate(this->delegate_load_source_c, delegate_cast(&this->core_load_from_source_c)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_load_files_w, (void **)&this->core_load_from_files_w))
+	if (!this->create_delegate(this->delegate_load_files_w, delegate_cast(&this->core_load_from_files_w)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_load_files_c, (void **)&this->core_load_from_files_c))
+	if (!this->create_delegate(this->delegate_load_files_c, delegate_cast(&this->core_load_from_files_c)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_load_assembly_w, (void **)&this->core_load_from_assembly_w))
+	if (!this->create_delegate(this->delegate_load_assembly_w, delegate_cast(&this->core_load_from_assembly_w)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_load_assembly_c, (void **)&this->core_load_from_assembly_c))
+	if (!this->create_delegate(this->delegate_load_assembly_c, delegate_cast(&this->core_load_from_assembly_c)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_execute_w, (void **)&this->execute_w))
+	if (!this->create_delegate(this->delegate_execute_w, delegate_cast(&this->execute_w)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_execute_c, (void **)&this->execute_c))
+	if (!this->create_delegate(this->delegate_execute_c, delegate_cast(&this->execute_c)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_execute_with_params_w, (void **)&this->execute_with_params_w))
+	if (!this->create_delegate(this->delegate_execute_with_params_w, delegate_cast(&this->execute_with_params_w)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_execute_with_params_c, (void **)&this->execute_with_params_c))
+	if (!this->create_delegate(this->delegate_execute_with_params_c, delegate_cast(&this->execute_with_params_c)))
 	{
 		return false;
 	}
 
-	if (!this->create_delegate(this->delegate_destroy_execution_result, (void **)&this->core_destroy_execution_result))
+	if (!this->create_delegate(this->delegate_destroy_execution_result, delegate_cast(&this->core_destroy_execution_result)))
 	{
 		return false;
 	}
