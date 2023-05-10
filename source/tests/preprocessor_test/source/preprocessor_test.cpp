@@ -127,9 +127,9 @@ TEST_F(preprocessor_test, for)
 
 	char for_each_str[PREPROCESSOR_TEST_FOR_EACH_STR_SIZE];
 
-	for_each_str[0] = '\0';
+	memset(for_each_str, '\0', sizeof(char) * PREPROCESSOR_TEST_FOR_EACH_STR_SIZE);
 
-#define PREPROCESSOR_TEST_FOR_EACH(expr) strncat(for_each_str, expr, PREPROCESSOR_TEST_FOR_EACH_STR_SIZE);
+#define PREPROCESSOR_TEST_FOR_EACH(expr) strncat(for_each_str, expr, PREPROCESSOR_TEST_FOR_EACH_STR_SIZE - 1);
 
 	PREPROCESSOR_FOR_EACH(PREPROCESSOR_TEST_FOR_EACH, "a", "b", "c")
 
