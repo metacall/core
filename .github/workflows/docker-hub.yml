@@ -33,6 +33,7 @@ jobs:
       - name: Build MetaCall Docker Images
         run: bash ./docker-compose.sh build
 
+      # TODO: Build with alpine and provide multiple tags (debian & alpine) once all tests pass
       - name: Push MetaCall Docker Image to DockerHub
         run: |
           if [[ "${{ github.ref == 'refs/heads/master' }}" = true ]]; then
