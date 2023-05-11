@@ -101,18 +101,19 @@ This section describes all programming languages that **METACALL** allows to loa
 | Language                                                           | Runtime                                                                                                                                               |                 Version                 | Tag  |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------: | :--: |
 | [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                                                            |            **>= 3.2 <= 3.9**            |  py  |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                                                            |        **>= 10.22.0 <= 17.x.x**        | node |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                                                            |        **>= 10.22.0 <= 17.x.x**         | node |
 | [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API)                                        |                **4.2.3**                |  ts  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                                                                 |               **5.1.117**               |  js  |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                                                          |     **>= 1.0.0-preview2 <= 5.0.17**     |  cs  |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                                                          |     **>= 1.0.0-preview2 <= 7.0.4**      |  cs  |
 | [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                                                             |            **>= 2.1 <= 2.7**            |  rb  |
 | [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)                                                                      |              **>= 1.1.0**               | cob  |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                                                                                 |                **0.1.0**                | file |
 | [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                                                                                 |                **0.1.0**                | mock |
 | [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                                                                         |              **>=7.64.0**               | rpc  |
 | [Java](https://www.java.com)                                       | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)                                                                                             |                **>=11**                 | java |
-| [WebAssembly](https://webassembly.org/)                            | [Wasmtime](https://github.com/bytecodealliance/wasmtime)                                                                                              |               **>= 0.27**               | wasm |
+| [WebAssembly](https://webassembly.org/)                            | [Wasmtime](https://github.com/bytecodealliance/wasmtime)                                                                                              |          **>= 0.27 <= 8.0.1**           | wasm |
 | [C](https://en.wikipedia.org/wiki/C_(programming_language))        | [libclang](https://clang.llvm.org/doxygen/group__CINDEX.html) - [Tiny C Compiler](https://bellard.org/tcc/) - [libffi](http://sourceware.org/libffi/) | **>=12** - **>=2021-10-30** - **>=3.2** |  c   |
+| [Rust](https://www.rust-lang.org/)                                 | [rustc](https://doc.rust-lang.org/rustc/what-is-rustc.html - [libffi](http://sourceware.org/libffi/)                                                  |         **nightly-2021-12-04**          |  rs  |
 
 - Languages and run-times under construction:
 
@@ -745,12 +746,12 @@ Click the button below. A workspace with all required environments will be creat
 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-|      Operative System      |    Architecture     |    Compiler     |
-| :------------------------: | :-----------------: | :-------------: |
-|       **`ubuntu`**         |     **`amd64`**     |    **`gcc`**    |
-|       **`debian`**         |     **`amd64`**     |    **`gcc`**    |
-|       **`debian`**         |     **`amd64`**     |   **`clang`**   |
-|       **`windows`**        | **`x86`** **`x64`** |   **`msvc`**    |
+| Operative System |    Architecture     |  Compiler   |
+| :--------------: | :-----------------: | :---------: |
+|   **`ubuntu`**   |     **`amd64`**     |  **`gcc`**  |
+|   **`debian`**   |     **`amd64`**     |  **`gcc`**  |
+|   **`debian`**   |     **`amd64`**     | **`clang`** |
+|  **`windows`**   | **`x86`** **`x64`** | **`msvc`**  |
 
 ### 7.1 Docker Support
 
