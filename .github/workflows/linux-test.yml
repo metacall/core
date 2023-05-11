@@ -16,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        buildtype: [debug, release]
+        build_type: [debug, release]
+        build_image: [debian:bullseye-slim, alpine:3.17]
 
     env:
       DEBIAN_FRONTEND:             noninteractive
@@ -33,4 +34,5 @@ jobs:
       - name: Install, build and run tests
         run: ./docker-compose.sh test
         env:
-          METACALL_BUILD_TYPE: ${{ matrix.buildtype }}
+          METACALL_BUILD_TYPE: ${{ matrix.build_type }}
+          METACALL_BASE_IMAGE: ${{ matrix.build_image }}
