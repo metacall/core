@@ -11,7 +11,6 @@ find_package(Julia 1.6)
 
 if(NOT JULIA_FOUND)
 	message(SEND_ERROR "Julia libraries not found")
-	set(OPTION_BUILD_LOADERS_JL OFF CACHE BOOL)
 	return()
 endif()
 

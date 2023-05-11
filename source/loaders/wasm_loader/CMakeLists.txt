@@ -7,7 +7,12 @@ endif()
 # External dependencies
 #
 
-find_package(Wasmtime 0.28.0 REQUIRED)
+find_package(Wasmtime 8.0.1 REQUIRED)
+
+if(NOT Wasmtime_FOUND)
+	message(STATUS "Wasmtime library not found")
+	return()
+endif()
 
 #
 # Plugin name and options
@@ -110,7 +115,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${WASMTIME_INCLUDE_DIR}
+	${Wasmtime_INCLUDE_DIR}
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -128,7 +133,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${WASMTIME_LIBRARY}
+	${Wasmtime_LIBRARY}
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -142,7 +147,8 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	WASMTIME
+	WASMTIME # TODO: In the future it will be possible to support other runtimes
+
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
@@ -190,4 +196,6 @@ install(TARGETS ${target}
 
 
 # Runtime
-install(FILES ${WASMTIME_LIBRARY} DESTINATION ${INSTALL_LIB} COMPONENT runtime)
+if(Wasmtime_LIBRARY_INSTALLED)
+	install(FILES ${Wasmtime_LIBRARY} DESTINATION ${INSTALL_LIB} COMPONENT runtime)
+endif()

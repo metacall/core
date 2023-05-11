@@ -5,81 +5,88 @@
 
 # Find Wasmtime library and include paths
 #
-# WASMTIME_LIBRARY - Wasmtime shared library
-# WASMTIME_INCLUDE_DIR - Wasmtime include directory
+# Wasmtime_LIBRARY - Wasmtime shared library
+# Wasmtime_INCLUDE_DIR - Wasmtime include directory
+
+option(Wasmtime_CMAKE_DEBUG "Show full output of the Wasmtime related commands for debugging." OFF)
 
 include(Portability)
 
-set(WASMTIME_VERSION ${Wasmtime_FIND_VERSION})
+set(Wasmtime_VERSION ${Wasmtime_FIND_VERSION})
 
 # See https://docs.wasmtime.dev/contributing-building.html#building-the-wasmtime-c-api
 if(PROJECT_OS_LINUX)
-	set(WASMTIME_LIBRARY_NAME libwasmtime.so)
-	set(WASMTIME_PLATFORM "linux")
-	set(WASMTIME_ARCHIVE_EXTENSION "tar.xz")
+	set(Wasmtime_LIBRARY_NAME libwasmtime.so)
+	set(Wasmtime_PLATFORM "linux")
+	set(Wasmtime_ARCHIVE_EXTENSION "tar.xz")
 elseif(PROJECT_OS_FAMILY STREQUAL "macos")
-	set(WASMTIME_LIBRARY_NAME libwasmtime.dylib)
-	set(WASMTIME_PLATFORM "macos")
-	set(WASMTIME_ARCHIVE_EXTENSION "tar.xz")
+	set(Wasmtime_LIBRARY_NAME libwasmtime.dylib)
+	set(Wasmtime_PLATFORM "macos")
+	set(Wasmtime_ARCHIVE_EXTENSION "tar.xz")
 elseif(PROJECT_OS_WIN)
-	set(WASMTIME_LIBRARY_NAME wasmtime.dll)
-	set(WASMTIME_PLATFORM "windows")
-	set(WASMTIME_ARCHIVE_EXTENSION "zip")
+	set(Wasmtime_LIBRARY_NAME wasmtime.dll)
+	set(Wasmtime_PLATFORM "windows")
+	set(Wasmtime_ARCHIVE_EXTENSION "zip")
 elseif(PROJECT_OS_MINGW)
-	set(WASMTIME_LIBRARY_NAME wasmtime.dll)
-	set(WASMTIME_PLATFORM "mingw")
-	set(WASMTIME_ARCHIVE_EXTENSION "zip")
+	set(Wasmtime_LIBRARY_NAME wasmtime.dll)
+	set(Wasmtime_PLATFORM "mingw")
+	set(Wasmtime_ARCHIVE_EXTENSION "zip")
 else()
 	message(FATAL_ERROR "Could not determine target platform or target platform is not supported")
 endif()
 
 if(PROJECT_ARCH_AMD64)
-	set(WASMTIME_ARCH "x86_64")
+	set(Wasmtime_ARCH "x86_64")
 elseif(PROJECT_ARCH_AARCH64)
-	set(WASMTIME_ARCH "aarch64")
+	set(Wasmtime_ARCH "aarch64")
 else()
-	set(WASMTIME_ARCH "x86_64")
+	set(Wasmtime_ARCH "x86_64")
 	message(WARNING "Could not determine target architecture, assuming x86_64")
 endif()
 
-message(DEBUG "Set target architecture to ${WASMTIME_ARCH}")
+message(DEBUG "Set target architecture to ${Wasmtime_ARCH}")
 
-set(WASMTIME_LOCAL_PATH "${CMAKE_BINARY_DIR}/wasmtime")
-set(WASMTIME_DOWNLOAD_DIR_NAME "wasmtime-v${WASMTIME_VERSION}-${WASMTIME_ARCH}-${WASMTIME_PLATFORM}-c-api")
-set(WASMTIME_API_PATH "${WASMTIME_LOCAL_PATH}/${WASMTIME_DOWNLOAD_DIR_NAME}")
-set(WASMTIME_DOWNLOAD_LIBRARY_PATH "${WASMTIME_API_PATH}/lib")
-set(WASMTIME_DOWNLOAD_INCLUDE_DIR "${WASMTIME_API_PATH}/include")
+set(Wasmtime_LOCAL_PATH "${CMAKE_BINARY_DIR}/wasmtime")
+set(Wasmtime_DOWNLOAD_DIR_NAME "wasmtime-v${Wasmtime_VERSION}-${Wasmtime_ARCH}-${Wasmtime_PLATFORM}-c-api")
+set(Wasmtime_API_PATH "${Wasmtime_LOCAL_PATH}/${Wasmtime_DOWNLOAD_DIR_NAME}")
+set(Wasmtime_DOWNLOAD_LIBRARY_PATH "${Wasmtime_API_PATH}/lib")
+set(Wasmtime_DOWNLOAD_INCLUDE_DIR "${Wasmtime_API_PATH}/include")
 
-find_library(WASMTIME_LIBRARY
-	NAMES ${WASMTIME_LIBRARY_NAME}
-	PATHS ${WASMTIME_DOWNLOAD_LIBRARY_PATH}
-	DOC "Wasmtime C API library"
-)
+if(NOT Wasmtime_LIBRARY)
+	set(Wasmtime_DEFAULT_LIBRARY_PATHS
+		/usr/lib
+	)
+	find_library(Wasmtime_LIBRARY
+		NAMES ${Wasmtime_LIBRARY_NAME}
+		DOC "Wasmtime C API library"
+	)
+endif()
 
-find_path(WASMTIME_INCLUDE_DIR
-	NAMES wasm.h wasmtime.h
-	PATHS ${WASMTIME_DOWNLOAD_INCLUDE_DIR}
-	DOC "Wasmtime C API headers"
-)
+if(NOT Wasmtime_INCLUDE_DIR)
+	set(Wasmtime_DEFAULT_INCLUDE_PATHS
+		/usr/include
+	)
+	find_path(Wasmtime_INCLUDE_DIR
+		NAMES wasm.h wasmtime.h
+		DOC "Wasmtime C API headers"
+	)
+endif()
 
-if(WASMTIME_LIBRARY AND WASMTIME_INCLUDE_DIR)
-	message(DEBUG "Found Wasmtime C API library at ${WASMTIME_LIBRARY}")
-	message(DEBUG "Found Wasm C API header in ${WASMTIME_INCLUDE_DIR}")
-else()
-	message(STATUS "Wasmtime C API library or header not found, downloading from archive")
+if(NOT Wasmtime_LIBRARY OR NOT Wasmtime_INCLUDE_DIR)
+	message(STATUS "Wasmtime C API library or headers not found, downloading from archive")
 
-	if(WASMTIME_ARCH STREQUAL "x86_64" AND PROJECT_ARCH_32BIT)
+	if(Wasmtime_ARCH STREQUAL "x86_64" AND PROJECT_ARCH_32BIT)
 		# We assumed target architecture was x86_64, but it is 32-bit, so the
 		# assumption is definitely invalid.
 		message(FATAL_ERROR "No downloads available for target architecture, please install Wasmtime manually")
 	endif()
 
-	set(WASMTIME_DOWNLOAD_ARCHIVE_NAME "${WASMTIME_DOWNLOAD_DIR_NAME}.${WASMTIME_ARCHIVE_EXTENSION}")
-	set(WASMTIME_DOWNLOAD_URL
-		"https://github.com/bytecodealliance/wasmtime/releases/download/v${WASMTIME_VERSION}/${WASMTIME_DOWNLOAD_ARCHIVE_NAME}")
-	set(WASMTIME_DOWNLOAD_DEST "${WASMTIME_LOCAL_PATH}/${WASMTIME_DOWNLOAD_ARCHIVE_NAME}")
+	set(Wasmtime_DOWNLOAD_ARCHIVE_NAME "${Wasmtime_DOWNLOAD_DIR_NAME}.${Wasmtime_ARCHIVE_EXTENSION}")
+	set(Wasmtime_DOWNLOAD_URL
+		"https://github.com/bytecodealliance/wasmtime/releases/download/v${Wasmtime_VERSION}/${Wasmtime_DOWNLOAD_ARCHIVE_NAME}")
+	set(Wasmtime_DOWNLOAD_DEST "${Wasmtime_LOCAL_PATH}/${Wasmtime_DOWNLOAD_ARCHIVE_NAME}")
 
-	file(DOWNLOAD ${WASMTIME_DOWNLOAD_URL} ${WASMTIME_DOWNLOAD_DEST}
+	file(DOWNLOAD ${Wasmtime_DOWNLOAD_URL} ${Wasmtime_DOWNLOAD_DEST}
 		STATUS DOWNLOAD_STATUS
 		SHOW_PROGRESS)
 
@@ -91,21 +98,48 @@ else()
 	endif()
 
 	file(ARCHIVE_EXTRACT
-		INPUT ${WASMTIME_DOWNLOAD_DEST}
-		DESTINATION ${WASMTIME_LOCAL_PATH}
+		INPUT ${Wasmtime_DOWNLOAD_DEST}
+		DESTINATION ${Wasmtime_LOCAL_PATH}
 	)
 
-	find_library(WASMTIME_LIBRARY
-		NAMES ${WASMTIME_LIBRARY_NAME}
-		PATHS ${WASMTIME_DOWNLOAD_LIBRARY_PATH}
-		NO_DEFAULT_PATH
-		DOC "Wasmtime C API library"
-	)
+	if(NOT Wasmtime_LIBRARY)
+		find_library(Wasmtime_LIBRARY
+			NAMES ${Wasmtime_LIBRARY_NAME}
+			PATHS ${Wasmtime_DOWNLOAD_LIBRARY_PATH}
+			NO_DEFAULT_PATH
+			DOC "Wasmtime C API library"
+		)
 
-	find_path(WASMTIME_INCLUDE_DIR
-		NAMES wasm.h wasmtime.h
-		PATHS ${WASMTIME_DOWNLOAD_INCLUDE_DIR}
-		NO_DEFAULT_PATH
-		DOC "Wasmtime C API headers"
-	)
+		if(Wasmtime_LIBRARY)
+			set(Wasmtime_LIBRARY_INSTALLED ON)
+		endif()
+	endif()
+
+	if(NOT Wasmtime_INCLUDE_DIR)
+		find_path(Wasmtime_INCLUDE_DIR
+			NAMES wasm.h wasmtime.h
+			PATHS ${Wasmtime_DOWNLOAD_INCLUDE_DIR}
+			NO_DEFAULT_PATH
+			DOC "Wasmtime C API headers"
+		)
+	endif()
+endif()
+
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args(Wasmtime
+	FOUND_VAR Wasmtime_FOUND
+	REQUIRED_VARS Wasmtime_LIBRARY Wasmtime_INCLUDE_DIR
+	VERSION_VAR Wasmtime_VERSION
+)
+
+mark_as_advanced(
+	Wasmtime_FOUND
+	Wasmtime_LIBRARY
+	Wasmtime_INCLUDE_DIR
+)
+
+if(Wasmtime_CMAKE_DEBUG)
+	message(STATUS "Found Wasmtime C API library at ${Wasmtime_LIBRARY}")
+	message(STATUS "Found Wasmtime C API header in ${Wasmtime_INCLUDE_DIR}")
 endif()

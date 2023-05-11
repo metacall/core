@@ -3,6 +3,13 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_RS)
 	return()
 endif()
 
+if(OPTION_BUILD_MUSL)
+	# TODO: Implement musl support and remove this
+	message(WARNING "Rust Loader is not implemented yet for musl toolchain, turning off Rust Loader build")
+	set(OPTION_BUILD_LOADERS_RS OFF CACHE BOOL "" FORCE)
+	return()
+endif()
+
 #
 # External dependencies
 #

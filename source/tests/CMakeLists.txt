@@ -21,7 +21,6 @@ if(NOT GTEST_FOUND)
 
 	if(NOT GTEST_FOUND)
 		message(SEND_ERROR "GTest libraries not found")
-		set(OPTION_BUILD_TESTS OFF CACHE BOOL)
 		return()
 	endif()
 

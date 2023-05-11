@@ -52,7 +52,6 @@ INSTALL_COBOL=0
 INSTALL_GO=0
 INSTALL_RUST=0
 INSTALL_SWIG=0
-INSTALL_METACALL=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_CLANGFORMAT=0
@@ -456,10 +455,13 @@ sub_nodejs(){
 				linux-headers \
 				nghttp2-dev \
 				openssl-dev \
-				py3-jinja2 \
-				python3 \
 				samurai \
 				zlib-dev
+
+			# Fix to a lower Python version (3.9) in order avoid conflicts with Python dependency of Clang from C Loader
+			$SUDO_CMD apk add --no-cache --virtual .build-nodejs-python-deps --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main \
+				python3=3.9.16-r0 \
+				py3-jinja2=3.0.1-r0
 
 			git clone --depth 1 --branch v3.17.3 https://git.alpinelinux.org/aports
 			cd aports/main/nodejs
@@ -478,6 +480,7 @@ sub_nodejs(){
 			cd ../../..
 			rm -rf aports
 			$SUDO_CMD apk del .build-nodejs-deps
+			$SUDO_CMD apk del .build-nodejs-python-deps
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install node make npm curl python3
@@ -518,6 +521,12 @@ sub_rpc(){
 # WebAssembly
 sub_wasm(){
 	echo "configure webassembly"
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing wasmtime libwasmtime
+		fi
+	fi
 }
 
 # Java
@@ -643,39 +652,9 @@ sub_rust(){
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			$SUDO_CMD apk add --no-cache curl
+			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
-	fi
-}
-
-# MetaCall
-sub_metacall(){
-	# TODO: Update this or deprecate it
-	echo "configure metacall"
-	cd $ROOT_DIR
-
-	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		git clone https://github.com/metacall/core.git
-		mkdir core/build && cd core/build
-
-		if [ $INSTALL_NETCORE = 1 ]; then
-			NETCORE_VERSION=1.1.10
-		elif [ INSTALL_NETCORE2 = 1 ]; then
-			NETCORE_VERSION=2.2.8
-		elif [ INSTALL_NETCORE5 = 1 ]; then
-			NETCORE_VERSION=5.0.17
-		elif [ INSTALL_NETCORE7 = 1 ]; then
-			NETCORE_VERSION=7.0.5
-		else
-			NETCORE_VERSION=0
-		fi
-
-		cmake -Wno-dev ../ -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/$NETCORE_VERSION/
-		make
-		make test && echo "test ok!"
-
-		echo "configure with cmake .. <options>"
 	fi
 }
 
@@ -842,9 +821,6 @@ sub_install(){
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
 	fi
-	if [ $INSTALL_METACALL = 1 ]; then
-		sub_metacall
-	fi
 	if [ $INSTALL_PACK = 1 ]; then
 		sub_pack
 	fi
@@ -975,10 +951,6 @@ sub_options(){
 			echo "swig selected"
 			INSTALL_SWIG=1
 		fi
-		if [ "$var" = 'metacall' ]; then
-			echo "metacall selected"
-			INSTALL_METACALL=1
-		fi
 		if [ "$var" = 'pack' ]; then
 			echo "pack selected"
 			INSTALL_PACK=1
@@ -1027,7 +999,6 @@ sub_help() {
 	echo "	cobol"
 	echo "	go"
 	echo "	swig"
-	echo "	metacall"
 	echo "	pack"
 	echo "	coverage"
 	echo "	clangformat"

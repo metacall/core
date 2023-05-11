@@ -89,7 +89,7 @@ else()
 endif()
 
 if(OPTION_BUILD_MUSL)
-	set(RUST_CTR_STATIC "-C target-feature=-crt-static")
+	set(RUST_CTR_STATIC "-Ctarget-feature=-crt-static -Clink-self-contained=off -L/usr/lib/x86_64-linux-musl") #-Clink-args=--dynamic-linker /lib/ld-musl-x86_64.so.1
 	set(RUSTFLAGS ${CMAKE_COMMAND} -E env RUSTFLAGS=${RUST_CTR_STATIC})
 else()
 	set(RUSTFLAGS)
