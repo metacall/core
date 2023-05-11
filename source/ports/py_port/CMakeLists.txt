@@ -19,7 +19,7 @@ message(STATUS "Port ${target}")
 
 if(NOT OPTION_BUILD_GUIX)
 	find_package(Python3 COMPONENTS Interpreter REQUIRED)
-	install(CODE "execute_process(COMMAND pip3 install ${CMAKE_CURRENT_SOURCE_DIR})")
+	install(CODE "execute_process(COMMAND pip3 install --break-system-packages ${CMAKE_CURRENT_SOURCE_DIR})")
 endif()
 
 #
