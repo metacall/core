@@ -112,7 +112,7 @@ sub_swig(){
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends g++ libpcre3-dev tar
 
 			# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
-			$SUDO_CMD pip3 install setuptools
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3-setuptools
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache g++ pcre-dev tar
 
@@ -145,14 +145,16 @@ sub_python(){
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 python3-dev python3-pip
 
 			# Python test dependencies
-			$SUDO_CMD pip3 install requests
-			$SUDO_CMD pip3 install setuptools
-			$SUDO_CMD pip3 install wheel
-			$SUDO_CMD pip3 install rsa
-			$SUDO_CMD pip3 install scipy
-			$SUDO_CMD pip3 install numpy
-			$SUDO_CMD pip3 install scikit-learn
-			$SUDO_CMD pip3 install joblib
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+				python3-requests \
+				python3-setuptools \
+				python3-wheel \
+				python3-rsa \
+				python3-scipy \
+				python3-numpy \
+				python3-sklearn \
+				python3-joblib
+
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			# Fix to a lower Python version (3.9) in order avoid conflicts with Python dependency of Clang from C Loader
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main python3=3.9.16-r0 python3-dev=3.9.16-r0
@@ -170,7 +172,6 @@ sub_python(){
 				py3-requests=2.26.0-r1 \
 				py3-setuptools=52.0.0-r4 \
 				py3-wheel=0.36.2-r2
-
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install pyenv openssl
@@ -559,7 +560,8 @@ sub_c(){
 
 			case ${LINUX_DISTRO} in
 				debian)
-					if [ "${VERSION}" = "unstable" ] || [ "${VERSION}" = "testing" ] || [ "${PRETTY_NAME}" = */sid ]; then
+					if [ "${VERSION}" = "unstable" ] || [ "${VERSION}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ]; then
+						# TODO: For now, bookworm == sid, change when bookworm is released
 						CODENAME="unstable"
 						LINKNAME=""
 					else
@@ -702,7 +704,8 @@ sub_clangformat(){
 
 			case ${LINUX_DISTRO} in
 				debian)
-					if [ "${VERSION}" = "unstable" ] || [ "${VERSION}" = "testing" ] || [ "${PRETTY_NAME}" = */sid ]; then
+					if [ "${VERSION}" = "unstable" ] || [ "${VERSION}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ]; then
+						# TODO: For now, bookworm == sid, change when bookworm is released
 						CODENAME="unstable"
 						LINKNAME=""
 					else
