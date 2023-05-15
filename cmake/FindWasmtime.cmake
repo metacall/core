@@ -133,6 +133,9 @@ find_package_handle_standard_args(Wasmtime
 	VERSION_VAR Wasmtime_VERSION
 )
 
+configure_file("${Wasmtime_DOWNLOAD_LIBRARY_PATH}/wasmtime.dll" "${PROJECT_OUTPUT_DIR}/wasmtime.dll")
+configure_file("${Wasmtime_DOWNLOAD_LIBRARY_PATH}/wasmtime.lib" "${PROJECT_OUTPUT_DIR}/wasmtime.lib")
+
 mark_as_advanced(
 	Wasmtime_FOUND
 	Wasmtime_LIBRARY
