@@ -106,13 +106,18 @@ static value wasm_results_to_reflect_type(const wasm_val_vec_t *results)
 	}
 	else
 	{
-		value values[results->size];
+		value* values = (value*) malloc(results->size * sizeof(value));
+
 		for (size_t idx = 0; idx < results->size; idx++)
 		{
 			values[idx] = wasm_to_reflect_type(results->data[idx]);
 		}
 
-		return value_create_array(values, results->size);
+		value return_result = value_create_array(values, results->size);
+		
+		free(values);
+		
+		return return_result;
 	}
 }
 
@@ -173,7 +178,7 @@ static function_return function_wasm_interface_invoke(function func, function_im
 	}
 	else
 	{
-		wasm_val_t wasm_args[args_size];
+		wasm_val_t* wasm_args = (wasm_val_t*) malloc(args_size * sizeof(wasm_val_t));
 
 		for (size_t idx = 0; idx < args_size; idx++)
 		{
@@ -195,6 +200,8 @@ static function_return function_wasm_interface_invoke(function func, function_im
 		}
 
 		const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
+		
+		free(wasm_args);
 
 		return call_func(sig, wasm_func->func, args_vec);
 	}
