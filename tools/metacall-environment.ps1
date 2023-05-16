@@ -195,6 +195,12 @@ function Set-7z {
 	Add-to-Path "$env:ProgramFiles\7-Zip"
 }
 
+function Set-TypeScript {
+	Write-Output "Setting TypeScript..."
+	npm i react@latest -g
+	npm i react-dom@latest -g
+}
+
 # Configure
 function Configure {
 	# Create option variables file 
@@ -249,6 +255,7 @@ function Configure {
 		}
 		if ( "$var" -eq 'typescript' ) {
 			Write-Output "typescript selected"
+			Set-TypeScript
 		}
 		if ( "$var" -eq 'file' ) {
 			Write-Output "file selected"
