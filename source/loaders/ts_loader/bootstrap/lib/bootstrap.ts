@@ -139,7 +139,7 @@ const getMetacallExportTypes = (
 	const exportTypes: MetacallExports = {};
 	const files = paths.length === 0 ?
 		p.getRootFileNames() :
-		paths.map(fileResolveNoThrow).filter(file => p.getRootFileNames().includes(file));
+		paths.map(fileResolveNoThrow).filter(file => p.getRootFileNames().map(path.normalize).includes(path.normalize(file)));
 	const sourceFiles = files.map((name) =>
 		[name, p.getSourceFile(name)] as const
 	);

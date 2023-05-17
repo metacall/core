@@ -6,7 +6,7 @@ $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 $Global:Arguments = $args
 
 function Set-Python {
-	Write-Output "configure python"
+	Write-Output "Install Python"
 	Set-Location $ROOT_DIR
 
 	$PythonVersion = '3.9.7'
@@ -57,7 +57,7 @@ function Set-Python {
 }
 
 function Set-Nodejs {
-	Write-Output "Setting up Node.js"
+	Write-Output "Install Node.js"
 	Set-Location $ROOT_DIR
 
 	$DepsDir = "$ROOT_DIR\dependencies"
@@ -109,29 +109,29 @@ function Set-Nodejs {
 }
 
 function Set-Java {
-		Write-Output "Setting up Java..."
-		$JAVA_VERSION = "17.0.5"
-		$RuntimeDir = "$env:ProgramFiles\openjdk"
-		$DepsDir = "$ROOT_DIR\dependencies"
+	Write-Output "Install Java"
+	$JAVA_VERSION = "17.0.5"
+	$RuntimeDir = "$env:ProgramFiles\openjdk"
+	$DepsDir = "$ROOT_DIR\dependencies"
 
-		Set-Location $DepsDir
+	Set-Location $DepsDir
 
-		if (!(Test-Path -Path "$DepsDir\openjdk.zip")) {
-			# Download installer
-			Write-Output "OpenJDK not found downloading now..."
-			(New-Object Net.WebClient).DownloadFile("https://aka.ms/download-jdk/microsoft-jdk-$JAVA_VERSION-windows-x64.zip", "$DepsDir\openjdk.zip")
-		}
+	if (!(Test-Path -Path "$DepsDir\openjdk.zip")) {
+		# Download installer
+		Write-Output "OpenJDK not found downloading now..."
+		(New-Object Net.WebClient).DownloadFile("https://aka.ms/download-jdk/microsoft-jdk-$JAVA_VERSION-windows-x64.zip", "$DepsDir\openjdk.zip")
+	}
 
-		Expand-Archive -Path "openjdk.zip" -DestinationPath "$RuntimeDir"
-		robocopy /move /e "$RuntimeDir\jdk-$JAVA_VERSION+8" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
+	Expand-Archive -Path "openjdk.zip" -DestinationPath "$RuntimeDir"
+	robocopy /move /e "$RuntimeDir\jdk-$JAVA_VERSION+8" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
 
-		Add-to-Path "JAVA_HOME=$RuntimeDir"
-		Add-to-Path "$RuntimeDir\bin"
-		Add-to-Path "$RuntimeDir\bin\server"
+	Add-to-Path "JAVA_HOME=$RuntimeDir"
+	Add-to-Path "$RuntimeDir\bin"
+	Add-to-Path "$RuntimeDir\bin\server"
 }
 
 function Set-Ruby {
-	Write-Output "Setting Ruby..."
+	Write-Output "Install Ruby"
 	$RUBY_VERSION = "3.1.2"	
 
 	Set-Location $ROOT_DIR
@@ -178,21 +178,30 @@ function Add-to-Path {
 }
 
 
-function Set-7z {
-	Write-Output "Setting 7z..."
-
+function Set-Base {
 	$DepsDir = "$ROOT_DIR\dependencies"
 
-	if (!(Test-Path -Path "$DepsDir\7zip.exe")) {
-		# Download installer
-		Write-Output "7zip not found downloading now..."
-		(New-Object Net.WebClient).DownloadFile("https://www.7-zip.org/a/7z2201-x64.exe", "$DepsDir\7zip.exe")
-	}
+	# Check if 7zip is installed
+	$zipInstalled = Get-WmiObject Win32_Product | Where {Name -match '7(-)?zip'}
+	if (!$zipInstalled) {
+		Write-Output "Install 7zip"
 
-	#source: https://gist.github.com/dansmith65/7dd950f183af5f5deaf9650f2ad3226c
-	$installerPath = "$DepsDir\7zip.exe"
-	Start-Process -FilePath $installerPath -Args "/S" -Verb RunAs -Wait
-	Add-to-Path "$env:ProgramFiles\7-Zip"
+		if (!(Test-Path -Path "$DepsDir\7zip.exe")) {
+			# Download installer
+			(New-Object Net.WebClient).DownloadFile("https://www.7-zip.org/a/7z2201-x64.exe", "$DepsDir\7zip.exe")
+		}
+
+		# https://gist.github.com/dansmith65/7dd950f183af5f5deaf9650f2ad3226c
+		$installerPath = "$DepsDir\7zip.exe"
+		Start-Process -FilePath $installerPath -Args "/S" -Verb RunAs -Wait
+		Add-to-Path "$env:ProgramFiles\7-Zip"
+	}
+}
+
+function Set-TypeScript {
+	Write-Output "Install TypeScript"
+	npm i react@latest -g
+	npm i react-dom@latest -g
 }
 
 # Configure
@@ -201,7 +210,8 @@ function Configure {
 	mkdir "$ROOT_DIR\build"
 	New-Item -Path "$ROOT_DIR\build\CMakeConfig.txt"
 
-	Set-7z
+	# Install base requirements
+	Set-Base
 
 	for ($i = 0; $i -lt $Arguments.Length; $i++) {
 		$var = $Arguments[$i]
@@ -249,6 +259,7 @@ function Configure {
 		}
 		if ( "$var" -eq 'typescript' ) {
 			Write-Output "typescript selected"
+			Set-TypeScript
 		}
 		if ( "$var" -eq 'file' ) {
 			Write-Output "file selected"
