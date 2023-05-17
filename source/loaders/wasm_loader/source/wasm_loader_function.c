@@ -199,9 +199,14 @@ static function_return function_wasm_interface_invoke(function func, function_im
 			}
 		}
 
-		const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
+		// Using the macro doesn't work for some reason
+		// const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
+		wasm_val_vec_t args_vec;
+		args_vec.data = wasm_args;
+		args_vec.size = args_size;
 		
-		free(wasm_args);
+		// freeing the memory will lead to reading garbage values
+		// free(wasm_args);
 
 		return call_func(sig, wasm_func->func, args_vec);
 	}
