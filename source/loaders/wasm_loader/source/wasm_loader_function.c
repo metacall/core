@@ -205,10 +205,11 @@ static function_return function_wasm_interface_invoke(function func, function_im
 		args_vec.data = wasm_args;
 		args_vec.size = args_size;
 		
-		// freeing the memory will lead to reading garbage values
-		// free(wasm_args);
-
-		return call_func(sig, wasm_func->func, args_vec);
+		value return_value = call_func(sig, wasm_func->func, args_vec);
+		
+		free(wasm_args);
+		
+		return return_value;
 	}
 }
 
