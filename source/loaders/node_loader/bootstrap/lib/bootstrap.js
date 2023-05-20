@@ -266,6 +266,7 @@ function node_loader_trampoline_discover_function(func) {
 		if (node_loader_trampoline_is_callable(func)) {
 			// Espree can't parse native code functions so we can do a workaround
 			const str = func.toString().replace('{ [native code] }', '{}');
+
 			const ast = espree.parse(`(${str})`, {
 				ecmaVersion: 14
 			});
@@ -276,7 +277,7 @@ function node_loader_trampoline_discover_function(func) {
 			if (node_loader_trampoline_is_valid_symbol(node)) {
 				const args = node_loader_trampoline_discover_arguments(node);
 				const discover = {
-					ptr: func,
+					func,
 					signature: args,
 					async: node.async,
 				};
@@ -287,9 +288,98 @@ function node_loader_trampoline_discover_function(func) {
 
 				return discover;
 			}
+			else
+			{
+				return node_loader_trampoline_discover_klass(func);
+			}
 		}
 	} catch (ex) {
 		console.log(`Exception while parsing '${func}' in node_loader_trampoline_discover_function`, ex);
+	}
+}
+
+function node_loader_trampoline_discover_klass_attributes(node) {
+	let attributes = [];
+	for (let i = 0; i < node.length; i++) {
+		if (node[i].kind === 'constructor')
+		{
+			for (let exp of node[i].value.body.body)
+			{
+				if (exp.type === 'ExpressionStatement' && exp.expression.type === 'AssignmentExpression') {
+					let left = exp.expression.left;
+
+					if (left.type == 'MemberExpression' && (left.object && left.object.type === 'ThisExpression')) {
+						attributes.push(left.property && left.property.name);
+					}
+				}
+			}
+		}
+	}
+
+	return attributes;
+}
+
+function node_loader_trampoline_discover_klass_methods(node, str) {
+	const ret = {};
+	for (let method of node) {
+		if (method.type === 'MethodDefinition') {
+			let method_name = method.key.name;
+			if (method.kind === 'constructor') {
+				method_name = 'klass_' + method_name;
+			}
+			ret[method_name] = {
+				name: method.key.name,
+				signature: node_loader_trampoline_discover_arguments(method.value)
+			}
+
+			if (method.kind === 'method' && str.substring(method.start-1, method.start+5) === 'static') {
+				ret[method_name].static = true;
+			}
+		}
+	}
+
+	return ret
+}
+
+function node_loader_trampoline_discover_klass(klass) {
+	try {
+		if (node_loader_trampoline_is_callable(klass)) {
+			const str = klass.toString();
+			const ast = espree.parse(`(${str})`, {
+				ecmaVersion: 14
+			});
+
+			const node = (ast.body[0].type === 'ExpressionStatement') && ast.body[0].expression;
+			if (node.type === 'ClassExpression') {
+				const methods = node_loader_trampoline_discover_klass_methods(node.body.body, str)
+				const discover = {
+					klass,
+					methods
+				};
+
+				if (node.id && node.id.name) {
+					discover['name'] = node.id.name;
+				}
+
+				if (methods.klass_constructor) {
+					discover['attributes'] = node_loader_trampoline_discover_klass_attributes(node.body.body);
+				}
+
+				return discover;
+			}
+		}
+	} catch (ex) {
+		console.log(`Exception while parsing '${klass}' in node_loader_trampoline_discover_klass`, ex);
+	}
+}
+
+function node_loader_trampoline_discover_object(obj) {
+	if (typeof obj === 'object') {
+		const constructor =  (obj && obj.constructor) && obj.constructor.name
+		if (constructor !== 'Object' && constructor !== 'Array')
+			return {
+				obj
+			};
 	}
 }
 
@@ -305,8 +395,9 @@ function node_loader_trampoline_discover(handle) {
 
 			for (let j = 0; j < keys.length; ++j) {
 				const key = keys[j];
-				const func = exports[key];
-				const descriptor = node_loader_trampoline_discover_function(func);
+				const value = exports[key];
+				const descriptor = node_loader_trampoline_discover_function(value)
+					|| node_loader_trampoline_discover_klass(value) || node_loader_trampoline_discover_object(value);
 
 				if (descriptor !== undefined) {
 					discover[key] = descriptor;
@@ -411,6 +502,8 @@ module.exports = ((impl, ptr) => {
 			'clear': node_loader_trampoline_clear,
 			'discover': node_loader_trampoline_discover,
 			'discover_function': node_loader_trampoline_discover_function,
+			'discover_klass': node_loader_trampoline_discover_klass,
+			'discover_object': node_loader_trampoline_discover_object,
 			'test': node_loader_trampoline_test,
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),

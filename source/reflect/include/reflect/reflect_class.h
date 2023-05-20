@@ -99,9 +99,17 @@ REFLECT_API method class_static_method(klass cls, const char *key, type_id ret, 
 
 REFLECT_API method class_method(klass cls, const char *key, type_id ret, type_id args[], size_t size);
 
+REFLECT_API vector class_get_methods(klass cls);
+
+REFLECT_API vector class_get_static_methods(klass cls);
+
 REFLECT_API attribute class_static_attribute(klass cls, const char *key);
 
 REFLECT_API attribute class_attribute(klass cls, const char *key);
+
+REFLECT_API vector class_get_attributes(klass cls);
+
+REFLECT_API vector class_get_static_attributes(klass cls);
 
 REFLECT_API int class_register_constructor(klass cls, constructor ctor);
 
