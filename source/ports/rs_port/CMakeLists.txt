@@ -38,8 +38,8 @@ if(NOT Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_GUIX)
 	)
 endif()
 
-# Generate bindings (note: do not run with thread sanitizer as bindgen tests fail)
-if(Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_THREAD_SANITIZER)
+# Generate bindings
+if(Rust_BINDGEN_EXECUTABLE)
 	add_custom_target(${target}_bindings
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMAND ${Rust_BINDGEN_EXECUTABLE}
@@ -87,7 +87,7 @@ add_custom_target(${target} ALL
 # Dependecies
 #
 
-if(Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_THREAD_SANITIZER)
+if(Rust_BINDGEN_EXECUTABLE)
 	add_dependencies(${target}
 		${target}_bindings
 	)
@@ -97,8 +97,13 @@ endif()
 # Define test
 #
 
+if(OPTION_BUILD_THREAD_SANITIZER)
+	# Disable unit tests because bindgen layout tests fail when building with thread sanitizers
+	set(RUN_INTEGRATION_TESTS_ONLY "--test '*'")
+endif()
+
 add_test(NAME ${target}
-	COMMAND ${Rust_CARGO_EXECUTABLE} test
+	COMMAND ${Rust_CARGO_EXECUTABLE} test ${RUN_INTEGRATION_TESTS_ONLY}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
