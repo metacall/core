@@ -142,9 +142,8 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
 
-
 if(OPTION_BUILD_THREAD_SANITIZER)
-	# TODO: This test fails when run with sanitizers:
+	# TODO: This test fails when run with thread sanitizers:
 	#
 	# WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=14007)
 	# 	#0 malloc ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:647 (libtsan.so.2+0x3ebb8)
@@ -195,6 +194,12 @@ if(OPTION_BUILD_THREAD_SANITIZER)
 	# For solving this, we should enable WASM support for sanitizers and debug it properly
 	set_tests_properties(${target} PROPERTIES
 		PASS_REGULAR_EXPRESSION "[  PASSED  ]"
+	)
+elseif(OPTION_BUILD_SANITIZER)
+	# Sanitizer builds take very long to execute with WASM
+	set_tests_properties(${target} PROPERTIES
+		LABELS ${target}
+		TIMEOUT 10800
 	)
 endif()
 
