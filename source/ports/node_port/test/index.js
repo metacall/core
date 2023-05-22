@@ -207,7 +207,38 @@ describe('metacall', () => {
 			// Require the 'core' submodule from 'rsa' Python package
 			const { encrypt_int } = require('rsa.core');
 
-			assert.strictEqual(encrypt_int(3, 2, 5), 4);
+			// In NodeJS, the numbers are of type 'Number', this gets converted to TYPE_DOUBLE,
+			// but this function requires values of type 'int' in Python, which is TYPE_LONG.
+			// So basically in python3-rsa at version 4.0-4, this function has assertions
+			// for requiring type int as parameters, but the parameters are not annotated with types
+			// so the casting is impossible to be done, thus it throws an exception. In newer versions
+			// this has been solved and they added type hints, so it does not throw.
+			//
+			// Old version:
+			// def encrypt_int(message, ekey, n):
+			//   """Encrypts a message using encryption key 'ekey', working modulo n"""
+			//
+			//   assert_int(message, 'message')
+			//   assert_int(ekey, 'ekey')
+			//   assert_int(n, 'n')
+			//   ...
+			//
+			// New version:
+			// def encrypt_int(message: int, ekey: int, n: int) -> int:
+			//   """Encrypts a message using encryption key 'ekey', working modulo n"""
+			//
+			//   assert_int(message, 'message')
+			//   assert_int(ekey, 'ekey')
+			//   assert_int(n, 'n')
+			//   ...
+			//
+			// Without the type annotations metacall has no way to convert from NodeJS Number to Python int.
+			// So both paths of try and catch are valid for this tests, there is not a bug in MetaCall.
+			try {
+				assert.strictEqual(encrypt_int(3, 2, 5), 4);
+			} catch (e) {
+				assert.strictEqual(e.message, 'message should be an integer, not <class \'float\'>')
+			}
 		});
 		it('require (rb)', () => {
 			const cache = require('./cache.rb');
