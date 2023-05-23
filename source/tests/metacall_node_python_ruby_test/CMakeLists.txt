@@ -11,7 +11,7 @@ if(NOT NodeJS_FOUND)
 	return()
 endif()
 
-if(NodeJS_VERSION_MAJOR LESS 18)
+if(NodeJS_VERSION VERSION_LESS 18)
 	return()
 endif()
 

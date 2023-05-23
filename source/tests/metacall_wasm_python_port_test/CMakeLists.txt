@@ -195,12 +195,6 @@ if(OPTION_BUILD_THREAD_SANITIZER)
 	set_tests_properties(${target} PROPERTIES
 		PASS_REGULAR_EXPRESSION "[  PASSED  ]"
 	)
-elseif(OPTION_BUILD_SANITIZER)
-	# Sanitizer builds take very long to execute with WASM
-	set_tests_properties(${target} PROPERTIES
-		LABELS ${target}
-		TIMEOUT 10800
-	)
 endif()
 
 include(TestEnvironmentVariables)
