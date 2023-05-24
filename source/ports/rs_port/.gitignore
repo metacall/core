@@ -16,3 +16,6 @@ include/
 
 # Not ignore dockerignore
 !.dockerignore
+
+# Not ignore .vscode
+!.vscode
