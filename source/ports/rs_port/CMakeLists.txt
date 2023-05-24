@@ -13,7 +13,7 @@ string(STRIP "${TARGET_TOOLCHAIN}" TARGET_TOOLCHAIN)
 find_package(Rust COMPONENTS ${TARGET_TOOLCHAIN})
 
 if(NOT Rust_FOUND)
-	message(STATUS "Rust not found")
+	message(SEND_ERROR "Rust not found")
 	return()
 endif()
 

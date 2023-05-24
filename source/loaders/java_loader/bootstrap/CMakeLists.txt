@@ -10,7 +10,7 @@ endif()
 find_package(Java)
 
 if(NOT Java_JAVAC_EXECUTABLE)
-	message(STATUS "Java Compiler not found")
+	message(SEND_ERROR "Java Compiler not found")
 	return()
 endif()
 

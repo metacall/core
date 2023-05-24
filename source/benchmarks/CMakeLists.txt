@@ -19,7 +19,6 @@ if(NOT GBENCH_FOUND)
 
 	if(NOT GBENCH_FOUND)
 		message(SEND_ERROR "GBench libraries not found")
-		set(OPTION_BUILD_BENCHMARKS OFF CACHE BOOL)
 		return()
 	endif()
 

@@ -158,7 +158,7 @@ find_package(ClangFormat)
 if(ClangFormat_FOUND)
 	include(ClangDevTools)
 else()
-    message(WARNING "clang-format executable not found")
+    message(WARNING "Linting disabled: clang-format executable not found")
 endif()
 
 #

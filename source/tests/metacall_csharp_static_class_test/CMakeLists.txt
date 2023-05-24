@@ -10,7 +10,7 @@ endif()
 find_package(DotNET)
 
 if(NOT DOTNET_FOUND)
-	message(STATUS "DotNET command not found")
+	message(SEND_ERROR "DotNET command not found")
 	return()
 endif()
 

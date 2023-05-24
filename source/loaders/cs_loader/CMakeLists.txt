@@ -14,7 +14,6 @@ find_package(CoreCLR)
 
 if(NOT CORECLR_FOUND)
 	message(SEND_ERROR "CoreCLR libraries not found")
-	set(OPTION_BUILD_LOADERS_CS OFF CACHE BOOL)
 	return()
 endif()
 

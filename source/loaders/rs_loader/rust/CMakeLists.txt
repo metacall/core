@@ -28,7 +28,7 @@ set(Rust_TOOLCHAIN_COMPONENT_LIST
 find_package(Rust COMPONENTS ${TARGET_TOOLCHAIN})
 
 if(NOT Rust_FOUND)
-	message(STATUS "Rust not found")
+	message(SEND_ERROR "Rust not found")
 	return()
 endif()
 
@@ -65,7 +65,7 @@ if(NOT WIN32 AND NOT APPLE)
 		include(InstallPatchelf)
 
 		if(NOT Patchelf_FOUND)
-			message(STATUS "Patchelf not found")
+			message(SEND_ERROR "Patchelf not found")
 			return()
 		endif()
 

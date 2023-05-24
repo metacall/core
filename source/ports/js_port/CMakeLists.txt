@@ -10,7 +10,7 @@ endif()
 find_package(V8 5.1)
 
 if(NOT V8_FOUND)
-	message(STATUS "V8 libraries not found")
+	message(SEND_ERROR "V8 libraries not found")
 	return()
 endif()
 

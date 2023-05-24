@@ -7,10 +7,10 @@ endif()
 # External dependencies
 #
 
-find_package(Wasmtime 8.0.1 REQUIRED)
+find_package(Wasmtime 8.0.1)
 
 if(NOT Wasmtime_FOUND)
-	message(STATUS "Wasmtime library not found")
+	message(SEND_ERROR "Wasmtime library not found")
 	return()
 endif()
 

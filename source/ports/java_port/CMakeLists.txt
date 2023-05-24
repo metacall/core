@@ -10,14 +10,14 @@ endif()
 find_package(Java)
 
 if(NOT JAVA_FOUND)
-	message(STATUS "Java libraries not found")
+	message(SEND_ERROR "Java libraries not found")
 	return()
 endif()
 
 find_package(JNI)
 
 if(NOT JNI_FOUND)
-	message(STATUS "JNI libraries not found")
+	message(SEND_ERROR "JNI libraries not found")
 	return()
 endif()
 
@@ -26,7 +26,7 @@ include(UseJava)
 find_package(Maven)
 
 if(NOT MAVEN_FOUND)
-	message(STATUS "Maven not found")
+	message(SEND_ERROR "Maven not found")
 	return()
 endif()
 

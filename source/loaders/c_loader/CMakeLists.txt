@@ -11,7 +11,6 @@ find_package(LibFFI)
 
 if(NOT LIBFFI_FOUND)
 	message(SEND_ERROR "Foreing Function Interface library not found")
-	set(OPTION_BUILD_LOADERS_C OFF CACHE BOOL)
 	return()
 endif()
 
@@ -23,7 +22,6 @@ if(NOT LIBTCC_FOUND)
 
 	if(NOT LIBTCC_FOUND)
 		message(SEND_ERROR "TCC library not found")
-		set(OPTION_BUILD_LOADERS_C OFF CACHE BOOL)
 		return()
 	endif()
 endif()
@@ -32,7 +30,6 @@ find_package(LibClang 11)
 
 if(NOT LibClang_FOUND)
 	message(SEND_ERROR "Clang C API library not found")
-	set(OPTION_BUILD_LOADERS_C OFF CACHE BOOL)
 	return()
 endif()
 

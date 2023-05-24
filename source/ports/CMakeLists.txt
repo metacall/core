@@ -27,7 +27,7 @@ endif()
 #
 
 # Project options
-option(OPTION_BUILD_PORTS_CS	"Build C# port."				ON)
+option(OPTION_BUILD_PORTS_CS	"Build C# port."				OFF)
 option(OPTION_BUILD_PORTS_CXX	"Build C++ port."				OFF)
 option(OPTION_BUILD_PORTS_D		"Build D port."					OFF)
 option(OPTION_BUILD_PORTS_GO	"Build Go port."				OFF)
@@ -61,7 +61,7 @@ add_subdirectory(rs_port)
 find_package(SWIG)
 
 if(NOT SWIG_FOUND)
-	message(STATUS "Swig not found")
+	message(WARNING "Swig not found: disabling ports depending on swig")
 	return()
 endif()
 

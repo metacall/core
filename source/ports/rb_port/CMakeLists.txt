@@ -1,5 +1,5 @@
 # Check if port is enabled
-if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RB)
+if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RB OR NOT OPTION_BUILD_LOADERS_RB)
 	return()
 endif()
 
@@ -10,7 +10,7 @@ endif()
 find_package(Ruby)
 
 if(NOT Ruby_FOUND)
-	message(STATUS "Ruby libraries not found")
+	message(SEND_ERROR "Ruby libraries not found")
 	return()
 endif()
 

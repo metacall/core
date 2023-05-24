@@ -29,7 +29,7 @@ endif()
 find_package(Java)
 
 if(NOT Java_FOUND OR NOT Java_JAR_EXECUTABLE)
-	message(STATUS "Java command not found")
+	message(SEND_ERROR "Java command not found")
 	return()
 endif()
 
