@@ -48,6 +48,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends wget
           wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/cc 40
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-16 60
+          sudo update-alternatives --config cc
+          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/c++ 40
+          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 60
+          sudo update-alternatives --config c++
 
       - name: Install, build and run sanitizer tests
         env:
