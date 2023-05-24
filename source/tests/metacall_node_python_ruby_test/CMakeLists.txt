@@ -12,11 +12,8 @@ if(NOT NodeJS_FOUND)
 endif()
 
 if(NodeJS_VERSION VERSION_LESS "18.0.0")
-	message(STATUS "Skipping metacall-node-python-ruby-test: ${NodeJS_VERSION}")
 	return()
 endif()
-
-message(STATUS "Not skipping metacall-node-python-ruby-test: ${NodeJS_VERSION}")
 
 #
 # Executable name and options
