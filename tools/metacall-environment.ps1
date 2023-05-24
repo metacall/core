@@ -182,8 +182,7 @@ function Set-Base {
 	$DepsDir = "$ROOT_DIR\dependencies"
 
 	# Check if 7zip is installed
-	$zipInstalled = Get-WmiObject Win32_Product | Where {Name -match '7(-)?zip'}
-	if (!$zipInstalled) {
+	if (!(Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | ?{$_.DisplayName -like "7-Zip*"})) {
 		Write-Output "Install 7zip"
 
 		if (!(Test-Path -Path "$DepsDir\7zip.exe")) {
