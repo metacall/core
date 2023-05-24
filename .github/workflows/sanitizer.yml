@@ -54,4 +54,4 @@ jobs:
           /usr/bin/c++ --version
 
       - name: Install, build and run sanitizer tests
-        run: ./tools/metacall-sanitizer.sh thread-sanitizer
+        run: ./tools/metacall-sanitizer.sh sanitizer

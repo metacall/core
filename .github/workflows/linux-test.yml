@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         build_type: [debug, release]
-        build_image: ["debian:bookworm-slim", "debian:bullseye-slim"] # TODO: "alpine:3.17"
+        build_image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:jammy"] # TODO: "alpine:3.17"
 
     env:
       DEBIAN_FRONTEND:             noninteractive
