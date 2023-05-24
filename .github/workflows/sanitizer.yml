@@ -46,7 +46,7 @@ jobs:
       - name: Install Clang
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommmends wget
+          sudo apt-get install -y --no-install-recommends wget
           wget -O - https://apt.llvm.org/llvm.sh | bash -s -- 16
 
       - name: Install, build and run sanitizer tests
