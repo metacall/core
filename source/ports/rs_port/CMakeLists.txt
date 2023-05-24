@@ -92,6 +92,7 @@ if(OPTION_BUILD_SANITIZER)
 	else()
 		# Apparently GCC address sanitizer works well (without false positives) in rs_port
 		# when it is not instrumented, so we can run the test even without rs_port instrumentation
+		message(STATUS "Building rs_port without instrumentation, rebuild with clang for instrumenting it")
 		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
 		set(SANITIZER_FLAGS
 			CMAKE_ADDRESS_SANITIZER=1
