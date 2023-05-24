@@ -614,7 +614,7 @@ sub_cobol(){
 			# Remove unstable from sources.list
 			$SUDO_CMD head -n -2 /etc/apt/sources.list
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends open-cobol
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol4
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache --virtual .build-cobol-deps build-base tar libaio libnsl libc6-compat binutils abuild make gcc gmp-dev db-dev libxml2-dev ncurses-dev
 
