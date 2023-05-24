@@ -111,7 +111,7 @@ if(NOT NodeJS_EXECUTABLE)
 	)
 endif()
 
-if(NodeJS_EXECUTABLE)
+if(NodeJS_EXECUTABLE NOT NodeJS_VERSION)
 	# Detect NodeJS version
 	execute_process(COMMAND ${NodeJS_EXECUTABLE} --version
 		OUTPUT_VARIABLE NodeJS_VERSION_TAG
