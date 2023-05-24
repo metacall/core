@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux-sanitizer:
+  linux-sanitizer-gcc:
     name: Linux (Ubuntu) GCC Thread Sanitizer Test
     runs-on: ubuntu-latest
     env:
@@ -29,4 +29,28 @@ jobs:
           fetch-depth: 0
 
       - name: Install, build and run thread sanitizer tests
+        run: ./docker-compose.sh test-thread-sanitizer
+
+  linux-sanitizer-clang:
+    name: Linux (Ubuntu) Clang Sanitizer Test
+    runs-on: ubuntu-latest
+    env:
+      SANITIZER_SKIP_SUMMARY: 1
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install Clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommmends wget
+          wget -O - https://apt.llvm.org/llvm.sh | bash -s -- 16
+
+      - name: Install, build and run thread sanitizer tests
+        env:
+          CC: /usr/bin/clang-16
+          CXX: /usr/bin/clang++-16
         run: ./docker-compose.sh test-thread-sanitizer

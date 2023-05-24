@@ -63,6 +63,9 @@ else()
 	set(TARGET_BUILD_TYPE)
 endif()
 
+# Fix version for using LLVM 16 with instrumentation
+set(RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION 2023-05-24)
+
 if(OPTION_BUILD_SANITIZER)
 	if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 		if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR
@@ -72,13 +75,14 @@ if(OPTION_BUILD_SANITIZER)
 			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-fuchsia" OR
 			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
 			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
+			set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
 			set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
 			set(SANITIZER_FLAGS
 				CMAKE_ADDRESS_SANITIZER=1
 				RUSTFLAGS=-Zsanitizer=address
 			)
 			set(NIGHTLY_FLAGS
-				+nightly
+				+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
 			)
 			set(BUILD_STD_FLAGS
 				-Zbuild-std
@@ -86,6 +90,9 @@ if(OPTION_BUILD_SANITIZER)
 			)
 		endif()
 	else()
+		# Apparently GCC address sanitizer works well (without false positives) in rs_port
+		# when it is not instrumented, so we can run the test even without rs_port instrumentation
+		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
 		set(SANITIZER_FLAGS
 			CMAKE_ADDRESS_SANITIZER=1
 		)
@@ -97,13 +104,14 @@ elseif(OPTION_BUILD_THREAD_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Cla
 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-apple-darwin" OR
 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
+		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
 		set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
 		set(SANITIZER_FLAGS
 			CMAKE_THREAD_SANITIZER=1
 			RUSTFLAGS=-Zsanitizer=thread
 		)
 		set(NIGHTLY_FLAGS
-			+nightly
+			+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
 		)
 		set(BUILD_STD_FLAGS
 			-Zbuild-std
@@ -111,6 +119,7 @@ elseif(OPTION_BUILD_THREAD_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Cla
 		)
 	endif()
 else()
+	set(RS_PORT_RUN_INSTRUMENTED_TEST OFF)
 	set(SANITIZER_FLAGS)
 	set(BUILD_STD_FLAGS)
 endif()
@@ -123,12 +132,12 @@ add_custom_target(${target} ALL
 )
 
 if(RUSTUP_NIGTHLY_INSTALL_SRC)
-	add_custom_target(${target}_rustup_nightly_src ALL
+	add_custom_target(${target}_rustup_nightly ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		COMMAND ${Rust_RUSTUP_EXECUTABLE} component add rust-src --toolchain nightly-${Rust_TOOLCHAIN_TRIPLET}
+		COMMAND ${Rust_RUSTUP_EXECUTABLE} install --profile complete nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
 	)
 	add_dependencies(${target}
-		${target}_rustup_nightly_src
+		${target}_rustup_nightly
 	)
 endif()
 
@@ -145,6 +154,10 @@ endif()
 #
 # Define test
 #
+
+if((OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER) AND NOT RS_PORT_RUN_INSTRUMENTED_TEST)
+	return()
+endif()
 
 add_test(NAME ${target}
 	COMMAND ${Rust_CARGO_EXECUTABLE} ${NIGHTLY_FLAGS} test ${BUILD_STD_FLAGS}

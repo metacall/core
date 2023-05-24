@@ -94,7 +94,8 @@ TEST_F(metacall_wasm_test, LoadTextFromMemory)
 	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, strlen(invalid_module), NULL));
 }
 
-#if defined(BUILD_SCRIPT_TESTS)
+/* TODO: Address sanitizer seems to break with WASM loading, we should either review this or instrument properly wasmtime library */
+#if defined(BUILD_SCRIPT_TESTS) && !defined(__ADDRESS_SANITIZER__)
 TEST_F(metacall_wasm_test, LoadFromFile)
 {
 	const char *empty_module_filename = "empty_module.wat";

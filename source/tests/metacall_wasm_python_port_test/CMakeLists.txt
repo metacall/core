@@ -121,6 +121,11 @@ target_link_libraries(${target}
 # Define test
 #
 
+if(OPTION_BUILD_SANITIZER)
+	# TODO: Address sanitizer seems to break with WASM loading, we should either review this or instrument properly wasmtime library
+	return()
+endif()
+
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
