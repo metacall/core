@@ -47,7 +47,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends wget
-          wget -O - https://apt.llvm.org/llvm.sh | bash -s -- 16
+          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
 
       - name: Install, build and run thread sanitizer tests
         env:
