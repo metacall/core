@@ -63,10 +63,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends build-essential ca-certificates lsb-release wget software-properties-common gnupg
           wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
-          sudo ln -sf /usr/bin/clang-16 /usr/bin/cc
-          sudo ln -sf /usr/bin/clang++-16 /usr/bin/c++
-          /usr/bin/cc --version
-          /usr/bin/c++ --version
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-16 100
+          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
 
       - name: Install, build and run sanitizer tests
         run: ./tools/metacall-sanitizer.sh sanitizer
