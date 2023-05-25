@@ -237,19 +237,20 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 			# Generate the module from cached handle
 			return generate_module(name, handle)
 
-		# Otherwhise, try to load it by guessing the loader
-		tags = set(file_extensions_to_tag.values())
+		# TODO: Improve cross-language module guessing
+		# # Otherwhise, try to load it by guessing the loader
+		# tags = set(file_extensions_to_tag.values())
 
-		# Remove mock and py in order to avoid mock to automatically load
-		# or python to enter into an endless loop
-		tags.discard('mock')
-		tags.discard('py')
+		# # Remove mock and py in order to avoid mock to automatically load
+		# # or python to enter into an endless loop
+		# tags.discard('mock')
+		# tags.discard('py')
 
-		for tag in list(tags):
-			handle = module.metacall_load_from_file_export(tag, [name])
-			if handle != None:
-				# Generate the module from cached handle
-				return generate_module(name, handle)
+		# for tag in list(tags):
+		# 	handle = module.metacall_load_from_file_export(tag, [name])
+		# 	if handle != None:
+		# 		# Generate the module from cached handle
+		# 		return generate_module(name, handle)
 
 	raise ImportException(f'MetaCall could not import: {name}')
 

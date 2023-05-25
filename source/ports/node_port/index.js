@@ -286,24 +286,25 @@ mod.prototype.require = function (name) {
 		/* Call to real NodeJS require */
 		return node_require.apply(this, [ filename ]);
 	} catch (e) {
-		/* If it is not a NodeJS module, try to guess the runtime */
-		const loaders = new Set(Object.values(tags));
+		// TODO: Improve cross-language module guessing
+		// /* If it is not a NodeJS module, try to guess the runtime */
+		// const loaders = new Set(Object.values(tags));
 
-		/* Mock and node are not included, Mock will always load
-		* so it's not an option and NodeJS has been already tested */
-		loaders.delete('mock');
-		loaders.delete('node');
+		// /* Mock and node are not included, Mock will always load
+		// * so it's not an option and NodeJS has been already tested */
+		// loaders.delete('mock');
+		// loaders.delete('node');
 
-		for (let it = loaders.values(), tag = null; tag = it.next().value; ) {
-			try {
-				return metacall_require(tag, name);
-			} catch (_) {
-				/* Keep trying with the next loader */
-			}
-		}
+		// for (let it = loaders.values(), tag = null; tag = it.next().value; ) {
+		// 	try {
+		// 		return metacall_require(tag, name);
+		// 	} catch (_) {
+		// 		/* Keep trying with the next loader */
+		// 	}
+		// }
 
-		/* It could not be loaded */
-		console.log(e);
+		// /* It could not be loaded */
+		// console.log(e);
 		throw e;
 	}
 };
