@@ -776,7 +776,7 @@ static struct PyModuleDef metacall_definition = {
 	NULL
 };
 
-PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC()
+PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC(void)
 {
 	static PyObject *module = NULL;
 

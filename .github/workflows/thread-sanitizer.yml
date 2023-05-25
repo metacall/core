@@ -32,7 +32,7 @@ jobs:
         run: ./docker-compose.sh test-thread-sanitizer
 
   linux-sanitizer-clang:
-    name: Linux (Ubuntu) Clang Sanitizer Test
+    name: Linux (Ubuntu) Clang Thread Sanitizer Test
     runs-on: ubuntu-latest
     env:
       SANITIZER_SKIP_SUMMARY: 1

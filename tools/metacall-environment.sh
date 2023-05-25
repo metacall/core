@@ -181,6 +181,7 @@ sub_python(){
 		pyenv global 3.11.1
 		pyenv rehash
 
+		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
 		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
 		source ~/.bash_profile
 
@@ -223,7 +224,8 @@ sub_ruby(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install ruby@3.2
 
-		echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> /Users/runner/.bash_profile
+		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
+		echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> ~/.bash_profile
 		source ~/.bash_profile
 
 		mkdir -p build
@@ -341,7 +343,7 @@ sub_netcore7(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ]; then
 			# Set up repository
 			wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 			$SUDO_CMD dpkg -i packages-microsoft-prod.deb
@@ -351,6 +353,8 @@ sub_netcore7(){
 			$SUDO_CMD apt-get update
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
 			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
+		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache dotnet7-sdk

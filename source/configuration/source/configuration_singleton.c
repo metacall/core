@@ -131,7 +131,7 @@ int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_value val
 	return 0;
 }
 
-void configuration_singleton_destroy()
+void configuration_singleton_destroy(void)
 {
 	configuration_singleton singleton = configuration_singleton_instance();
 

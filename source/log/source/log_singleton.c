@@ -60,7 +60,7 @@ log_singleton log_singleton_create(void)
 	return s;
 }
 
-int log_singleton_destroy()
+int log_singleton_destroy(void)
 {
 	log_singleton *s = log_singleton_instance();
 
@@ -129,7 +129,7 @@ void log_singleton_initialize(log_singleton singleton)
 	}
 }
 
-size_t log_singleton_size()
+size_t log_singleton_size(void)
 {
 	log_singleton s = log_singleton_instance_impl();
 

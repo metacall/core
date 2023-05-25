@@ -176,6 +176,11 @@ sub_options() {
 	done
 }
 
+sub_find_dotnet_runtime() {
+	NETCORE_BASE_PATH=`dotnet --list-runtimes | grep "Microsoft.NETCore.App $1"`
+	echo "`echo \"$NETCORE_BASE_PATH\" | awk '{ print $3 }' | tail -c +2 | head -c -2`/`echo \"$NETCORE_BASE_PATH\" | awk '{ print $2 }'`/"
+}
+
 sub_configure() {
 	BUILD_STRING="-DOPTION_BUILD_LOG_PRETTY=Off \
 			-DOPTION_BUILD_LOADERS=On \
@@ -220,11 +225,12 @@ sub_configure() {
 		fi
 	fi
 
+
 	# NetCore
 	if [ $BUILD_NETCORE = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/"
+			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 1`"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -239,7 +245,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE2 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/"
+			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 2`"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -254,7 +260,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE5 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.17/"
+			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 5`"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -267,13 +273,9 @@ sub_configure() {
 
 	# NetCore 7
 	if [ $BUILD_NETCORE7 = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_CS=On"
-
-		if [ "$LINUX_DISTRO" = "alpine" ]; then
-			BUILD_STRING="$BUILD_STRING -DDOTNET_CORE_PATH=/usr/lib/dotnet/shared/Microsoft.NETCore.App/7.0.4/"
-		else
-			BUILD_STRING="$BUILD_STRING -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/7.0.5/"
-		fi
+		BUILD_STRING="$BUILD_STRING \
+			-DOPTION_BUILD_LOADERS_CS=On \
+			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 7`"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"

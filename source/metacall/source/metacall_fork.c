@@ -291,7 +291,7 @@ static void metacall_fork_exit(void)
 	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork destroyed");
 }
 
-int metacall_fork_initialize()
+int metacall_fork_initialize(void)
 {
 	void (*fork_func)(void) = metacall_fork_func();
 

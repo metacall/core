@@ -716,7 +716,7 @@ void rb_object_interface_destroy(object obj, object_impl impl)
 	}
 }
 
-object_interface rb_object_interface_singleton()
+object_interface rb_object_interface_singleton(void)
 {
 	static struct object_interface_type rb_object_interface = {
 		&rb_object_interface_create,
@@ -898,7 +898,7 @@ void rb_class_interface_destroy(klass cls, class_impl impl)
 	}
 }
 
-class_interface rb_class_interface_singleton()
+class_interface rb_class_interface_singleton(void)
 {
 	static struct class_interface_type rb_class_interface = {
 		&rb_class_interface_create,
