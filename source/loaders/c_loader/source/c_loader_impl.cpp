@@ -176,7 +176,6 @@ private:
 	ffi_cif cif;
 	ffi_closure *closure;
 	void *address;
-	void **values;
 	c_loader_closure_type *closure_type;
 
 public:

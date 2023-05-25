@@ -72,7 +72,6 @@ private:
 	std::string managedAssemblyFullName;
 	char appPath[MAX_LONGPATH] = "";
 	std::string runtimePath;
-	char appNiPath[MAX_LONGPATH * 2] = "";
 	std::string nativeDllSearchDirs;
 	unsigned int domainId = 0;
 

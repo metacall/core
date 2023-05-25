@@ -225,7 +225,6 @@ sub_configure() {
 		fi
 	fi
 
-
 	# NetCore
 	if [ $BUILD_NETCORE = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \

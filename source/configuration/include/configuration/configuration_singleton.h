@@ -37,7 +37,7 @@ typedef struct configuration_singleton_type *configuration_singleton;
 *    Pointer to configuration singleton instance
 *
 */
-CONFIGURATION_API configuration_singleton configuration_singleton_instance();
+CONFIGURATION_API configuration_singleton configuration_singleton_instance(void);
 
 /**
 *  @brief

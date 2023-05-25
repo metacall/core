@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   linux-test:
-    name: Linux (Ubuntu) GCC Test
+    name: Linux GCC Test
     runs-on: ubuntu-latest
     strategy:
       matrix:

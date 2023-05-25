@@ -1085,7 +1085,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, struct accesso
 					jclass cls = (jclass)java_impl->env->GetObjectClass(gotVal);
 					jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
 					jstring name = (jstring)java_impl->env->CallObjectMethod(cls, mid_getName);
-					const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+					// const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
 					/* TODO */
 					// object obj = object_create()
 					return value_create_object(NULL /* obj */);
@@ -1231,7 +1231,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, struct accesso
 									jclass cls = (jclass)java_impl->env->GetObjectClass(cur_ele);
 									jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
 									jstring name = (jstring)java_impl->env->CallObjectMethod(cls, mid_getName);
-									const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+									// const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
 									/* TODO */
 									// object obj = object_create()
 									array_value[i] = value_create_object(NULL /* obj */);
