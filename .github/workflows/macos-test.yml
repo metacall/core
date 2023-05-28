@@ -34,6 +34,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Uninstall NodeJS and NPM
         run: |
           npm uninstall npm -g
