@@ -211,37 +211,52 @@ const module_exports = {
 /* Monkey patch require for simplifying load */
 const node_require = mod.prototype.require;
 
+/* File Extension -> Tag */
+const file_extensions_to_tag = {
+	/* Mock Loader */
+	mock: 'mock',
+	/* Python Loader */
+	py: 'py',
+	/* Ruby Loader */
+	rb: 'rb',
+	/* C# Loader */
+	cs: 'cs',
+	vb: 'cs',
+	/* Cobol Loader */
+	cob: 'cob',
+	cbl: 'cob',
+	cpy: 'cob',
+	/* NodeJS Loader */
+	js: 'node',
+	node: 'node', /* TODO: Load by package on node is not implemented */
+	/* WebAssembly Loader */
+	wat: 'wasm',
+	/* TypeScript Loader */
+	ts: 'ts',
+	jsx: 'ts',
+	tsx: 'ts',
+	/* Rust Loader */
+	rs: 'rs',
+
+	/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
+	/* Probably in the future we can differenciate between them, but it is not trivial */
+};
+
+/* Package Extension -> Tag */
+const package_extensions_to_tag = {
+	/* C# Loader */
+	dll: 'cs',
+	/* WebAssembly Loader */
+	wasm: 'wasm',
+	/* Rust Loader */
+	rlib: 'rs',
+};
+
+/* Set containing all tags */
+const available_tags = new Set([...Object.values(file_extensions_to_tag), ...Object.values(package_extensions_to_tag)]);
+
 /* Override require */
 mod.prototype.require = function (name) {
-
-	/* Extension -> Tag */
-	const tags = {
-		/* Mock Loader */
-		mock: 'mock',
-		/* Python Loader */
-		py: 'py',
-		/* Ruby Loader */
-		rb: 'rb',
-		/* C# Loader */
-		cs: 'cs',
-		vb: 'cs',
-		dll: 'cs',
-		/* Cobol Loader */
-		cob: 'cob',
-		cbl: 'cob',
-		cpy: 'cob',
-		/* NodeJS Loader */
-		js: 'node',
-		node: 'node',
-		/* TypeScript Loader */
-		ts: 'ts',
-		jsx: 'ts',
-		tsx: 'ts',
-		rs: 'rs'
-
-		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
-		/* Probably in the future we can differenciate between them, but it is not trivial */
-	};
 
 	// TODO:
 	// /* Check if the module is an URL */
@@ -253,60 +268,42 @@ mod.prototype.require = function (name) {
 	// 	/* Continue loading */
 	// }
 
+	/* Try to load by extension: require('./script.py') */
 	const extension = path.extname(name);
 
 	if (extension !== '') {
 		/* If there is extension, load the module depending on the tag */
-		const tag = tags[extension.substring(1)];
+		const ext = extension.substring(1)
+		const file_tag = file_extensions_to_tag[ext];
 
-		if (tag && tag !== 'node') {
-			/* Load with MetaCall if we found a tag and it is not NodeJS */
-			return metacall_require(tag, name);
+		if (file_tag && file_tag !== 'node') {
+			/* Load with MetaCall if we found a file tag and it is not NodeJS */
+			return metacall_require(file_tag, name);
+		}
+
+		const package_tag = package_extensions_to_tag[ext];
+
+		if (package_tag && package_tag !== 'node') {
+			/* Load with MetaCall if we found a package tag and it is not NodeJS */
+			/* TODO: return metacall_require_package(package_tag, name); */
+			throw new Error(`Cannot load ${name} because MetaCall NodeJS Port has not implemented load from package function`);
+		}
+	}
+
+	/* Try to load by tag prefix: require('py:ctypes') */
+	const require_substrings = name.split(':');
+
+	if (require_substrings.length >= 2) {
+		const prefix_tag = require_substrings[0];
+
+		if (available_tags.has(prefix_tag) && prefix_tag !== 'node') {
+			/* Load with MetaCall if we found a file tag and it is not NodeJS */
+			return metacall_require(prefix_tag, require_substrings[1]);
 		}
 	}
 
 	/* Try NodeJS */
-	try {
-		return node_require.apply(this, [ name ]);
-	} catch (e) {
-		if (e.code !== 'MODULE_NOT_FOUND') {
-			throw e;
-		}
-	}
-
-	/* If there is no extension or the extension is not supported or it is 'node', load it with NodeJS require */
-	try {
-		const filename = require.resolve(name);
-
-		/* Cache the port (detect if this file is being loaded) */
-		if (filename === path.resolve(__filename)) {
-			return module_exports;
-		}
-
-		/* Call to real NodeJS require */
-		return node_require.apply(this, [ filename ]);
-	} catch (e) {
-		// TODO: Improve cross-language module guessing
-		// /* If it is not a NodeJS module, try to guess the runtime */
-		// const loaders = new Set(Object.values(tags));
-
-		// /* Mock and node are not included, Mock will always load
-		// * so it's not an option and NodeJS has been already tested */
-		// loaders.delete('mock');
-		// loaders.delete('node');
-
-		// for (let it = loaders.values(), tag = null; tag = it.next().value; ) {
-		// 	try {
-		// 		return metacall_require(tag, name);
-		// 	} catch (_) {
-		// 		/* Keep trying with the next loader */
-		// 	}
-		// }
-
-		// /* It could not be loaded */
-		// console.log(e);
-		throw e;
-	}
+	return node_require.apply(this, [ name ]);
 };
 
 /* Debug logs */

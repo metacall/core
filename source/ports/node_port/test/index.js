@@ -104,7 +104,6 @@ describe('metacall', () => {
 			// TODO: Need a way to test the symbol is not globally defined.
 			//assert.strictEqual(metacall('py_memory_export'), undefined);
 
-
 			const handle_except = metacall_load_from_memory_export('py', 'def py_throw_error():\n\traise TypeError("yeet");\n');
 			assert.notStrictEqual(handle_except, undefined);
 			try {
@@ -161,7 +160,6 @@ describe('metacall', () => {
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
 		});
 		it('require (ts)', () => {
-			// TODO: Improve cross-language module guessing
 			const { isExported } = require('./badrequire/index.ts');
 			assert.notStrictEqual(isExported, undefined);
 			assert.strictEqual(isExported(), true);
@@ -189,59 +187,58 @@ describe('metacall', () => {
 			// TODO: Implement classes
 			// assert.notStrictEqual(classname.MyClass, undefined);
 		});
-		// TODO: Improve cross-language module guessing
-		// it('require (py module)', () => {
-		// 	// This code loads directly a module without extension from Python
-		// 	const { escape } = require('html');
-		// 	assert.notStrictEqual(escape, undefined);
-		// 	assert.strictEqual(escape('<html></html>'), '&lt;html&gt;&lt;/html&gt;');
-		// });
-		// it('require (py submodule)', () => {
-		// 	// This code loads directly a module without extension from Python
-		// 	const { find_library } = require('ctypes.util');
-		// 	assert.notStrictEqual(find_library, undefined);
+		it('require (py module)', () => {
+			// This code loads directly a module without extension from Python
+			const { escape } = require('py:html');
+			assert.notStrictEqual(escape, undefined);
+			assert.strictEqual(escape('<html></html>'), '&lt;html&gt;&lt;/html&gt;');
+		});
+		it('require (py submodule)', () => {
+			// This code loads directly a module without extension from Python
+			const { find_library } = require('py:ctypes.util');
+			assert.notStrictEqual(find_library, undefined);
 
-		// 	const { py_encode_basestring_ascii } = require('json.encoder');
-		// 	assert.notStrictEqual(py_encode_basestring_ascii, undefined);
-		// 	assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
-		// });
-		// it('require (py submodule dependency)', () => {
-		// 	// Require the 'core' submodule from 'rsa' Python package
-		// 	const { encrypt_int } = require('rsa.core');
+			const { py_encode_basestring_ascii } = require('py:json.encoder');
+			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
+			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
+		});
+		it('require (py submodule dependency)', () => {
+			// Require the 'core' submodule from 'rsa' Python package
+			const { encrypt_int } = require('py:rsa.core');
 
-		// 	// In NodeJS, the numbers are of type 'Number', this gets converted to TYPE_DOUBLE,
-		// 	// but this function requires values of type 'int' in Python, which is TYPE_LONG.
-		// 	// So basically in python3-rsa at version 4.0-4, this function has assertions
-		// 	// for requiring type int as parameters, but the parameters are not annotated with types
-		// 	// so the casting is impossible to be done, thus it throws an exception. In newer versions
-		// 	// this has been solved and they added type hints, so it does not throw.
-		// 	//
-		// 	// Old version:
-		// 	// def encrypt_int(message, ekey, n):
-		// 	//   """Encrypts a message using encryption key 'ekey', working modulo n"""
-		// 	//
-		// 	//   assert_int(message, 'message')
-		// 	//   assert_int(ekey, 'ekey')
-		// 	//   assert_int(n, 'n')
-		// 	//   ...
-		// 	//
-		// 	// New version:
-		// 	// def encrypt_int(message: int, ekey: int, n: int) -> int:
-		// 	//   """Encrypts a message using encryption key 'ekey', working modulo n"""
-		// 	//
-		// 	//   assert_int(message, 'message')
-		// 	//   assert_int(ekey, 'ekey')
-		// 	//   assert_int(n, 'n')
-		// 	//   ...
-		// 	//
-		// 	// Without the type annotations metacall has no way to convert from NodeJS Number to Python int.
-		// 	// So both paths of try and catch are valid for this tests, there is not a bug in MetaCall.
-		// 	try {
-		// 		assert.strictEqual(encrypt_int(3, 2, 5), 4);
-		// 	} catch (e) {
-		// 		assert.strictEqual(e.message, 'message should be an integer, not <class \'float\'>')
-		// 	}
-		// });
+			// In NodeJS, the numbers are of type 'Number', this gets converted to TYPE_DOUBLE,
+			// but this function requires values of type 'int' in Python, which is TYPE_LONG.
+			// So basically in python3-rsa at version 4.0-4, this function has assertions
+			// for requiring type int as parameters, but the parameters are not annotated with types
+			// so the casting is impossible to be done, thus it throws an exception. In newer versions
+			// this has been solved and they added type hints, so it does not throw.
+			//
+			// Old version:
+			// def encrypt_int(message, ekey, n):
+			//   """Encrypts a message using encryption key 'ekey', working modulo n"""
+			//
+			//   assert_int(message, 'message')
+			//   assert_int(ekey, 'ekey')
+			//   assert_int(n, 'n')
+			//   ...
+			//
+			// New version:
+			// def encrypt_int(message: int, ekey: int, n: int) -> int:
+			//   """Encrypts a message using encryption key 'ekey', working modulo n"""
+			//
+			//   assert_int(message, 'message')
+			//   assert_int(ekey, 'ekey')
+			//   assert_int(n, 'n')
+			//   ...
+			//
+			// Without the type annotations metacall has no way to convert from NodeJS Number to Python int.
+			// So both paths of try and catch are valid for this tests, there is not a bug in MetaCall.
+			try {
+				assert.strictEqual(encrypt_int(3, 2, 5), 4);
+			} catch (e) {
+				assert.strictEqual(e.message, 'message should be an integer, not <class \'float\'>')
+			}
+		});
 		it('require (rb)', () => {
 			const cache = require('./cache.rb');
 			assert.notStrictEqual(cache, undefined);
