@@ -228,7 +228,7 @@ const file_extensions_to_tag = {
 	cpy: 'cob',
 	/* NodeJS Loader */
 	js: 'node',
-	node: 'node', /* TODO: Load by package on node is not implemented */
+	node: 'node', /* TODO: Load by package on node is not implemented or it is unnecesary */
 	/* WebAssembly Loader */
 	wat: 'wasm',
 	/* TypeScript Loader */

@@ -4048,7 +4048,7 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 void py_loader_impl_error_print(loader_impl_py py_impl)
 {
-	static const char error_format_str[] = "Python Error: [Type: %s]: %s\n%s";
+	static const char error_format_str[] = "Python %s: %s\n%s";
 	static const char separator_str[] = "";
 	static const char traceback_not_found[] = "Traceback not available";
 

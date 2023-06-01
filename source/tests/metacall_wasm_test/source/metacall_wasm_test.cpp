@@ -177,15 +177,11 @@ TEST_F(metacall_wasm_test, CallFunctions)
 	ASSERT_EQ(4, metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
-	// TODO: In newer versions of wasmtime it throws illegal instruction, we should
-	// create a fail test only for this feature, in order to test it properly.
-	// I am removing it for now until we do the test.
-
-	// The return value should be NULL when a trap is reached
-	/*
-	ret = metacall("trap");
-	ASSERT_EQ(NULL, ret);
-	*/
+	// It should exit with illegal instruction
+	#if defined(unix) || defined(__unix__) || defined(__unix) || \
+		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
+	ASSERT_EXIT((metacall("trap"), exit(0)), ::testing::KilledBySignal(SIGILL), ".*");
+	#endif
 }
 
 TEST_F(metacall_wasm_test, LinkModules)

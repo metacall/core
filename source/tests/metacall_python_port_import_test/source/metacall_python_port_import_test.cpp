@@ -29,28 +29,96 @@ class metacall_python_port_import_test : public testing::Test
 public:
 };
 
-TEST_F(metacall_python_port_import_test, DefaultConstructor)
+TEST_F(metacall_python_port_import_test, metacall_node_ramda_case_1)
 {
-	metacall_print_info();
-
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-/* Python */
-#if defined(OPTION_BUILD_LOADERS_PY)
+	/* Case 0 */
 	{
-		// TODO: Improve cross-language module guessing
+		static const char buffer[] =
+			"import sys\n"
+			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
+			"import metacall\n"
+			"from asd.mock import two_doubles\n"
+			"if two_doubles(3.0, 6.0) != 3.1416:\n"
+			"	sys.exit(1)\n";
+
+		void *handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), &handle));
+
+		ASSERT_NE((void *)handle, (void *)NULL);
+	}
+
+	/* Case 1 */
+	{
+		static const char buffer[] =
+			"import sys\n"
+			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
+			"import metacall\n"
+			"import metacall.node.ramda\n"
+			"if metacall.node.ramda.all(metacall.node.ramda.equals(3))([3, 3, 3, 3]) != True:\n"
+			"	sys.exit(1)\n";
+
+		void *handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), &handle));
+
+		ASSERT_NE((void *)handle, (void *)NULL);
+	}
+
+	/* Case 2 */
+	{
+		static const char buffer[] =
+			"import sys\n"
+			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
+			"import metacall\n"
+			"from metacall.node.ramda import equals, all\n"
+			"if all(equals(3))([3, 3, 3, 3]) != True:\n"
+			"	sys.exit(1)\n";
+
+		void *handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), &handle));
+
+		ASSERT_NE((void *)handle, (void *)NULL);
+	}
+
+	/* Case 2 star */
+	{
+		static const char buffer[] =
+			"import sys\n"
+			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
+			"import metacall\n"
+			"from metacall.node.ramda import *\n"
+			"if all(equals(3))([3, 3, 3, 3]) != True:\n"
+			"	sys.exit(1)\n";
+
+		void *handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), &handle));
+
+		ASSERT_NE((void *)handle, (void *)NULL);
+	}
+
+	/* TODO: Case 3 */
+	{
 		/*
 		static const char buffer[] =
 			"import sys\n"
 			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
 			"import metacall\n"
-			"from ramda import equals, all\n"
-			"print(all(equals(3))([3, 3, 3, 3]))\n";
+			"from metacall.node import ramda\n"
+			"if ramda.all(ramda.equals(3))([3, 3, 3, 3]) != True:\n"
+			"	sys.exit(1)\n";
 
-		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
+		void *handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), &handle));
+
+		ASSERT_NE((void*)handle, (void*)NULL);
 		*/
 	}
-#endif /* OPTION_BUILD_LOADERS_PY */
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

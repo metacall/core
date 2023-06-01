@@ -96,6 +96,7 @@ except NameError as e:
 	ImportException = ImportError
 
 def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
+
 	def find_handle(handle_name):
 		metadata = metacall_inspect()
 
@@ -146,7 +147,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		'cbl': 'cob',
 		'cpy': 'cob',
 		# NodeJS Loader
-		'node': 'node',
+		'node': 'node', # TODO: Load by package on node is not implemented or it is unnecesary
 		'js': 'node',
 		# WebAssembly Loader
 		'wat': 'wasm',
@@ -166,93 +167,104 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		# WebAssembly Loader
 		'wasm': 'wasm',
 		# Rust Loader
-		'rlib': 'rs'
+		'rlib': 'rs',
 	}
 
-	# Try to load it as a Python module
-	mod = None
+	# Set containing all tags
+	available_tags = set({**file_extensions_to_tag, **package_extensions_to_tag})
 
-	with suppress(ImportError):
-		mod = __python_import__(name, globals, locals, fromlist, level)
+	# Try to load by module: import metacall.node.ramda
+	metacall_module_import = name.split('.')
+	metacall_module_import_size = len(metacall_module_import)
 
-	if mod:
-		return mod
+	if metacall_module_import_size > 1 and metacall_module_import[0] == 'metacall':
+		if not metacall_module_import[1] in available_tags:
+			raise ImportException(f'MetaCall could not import: {name}; the loader {metacall_module_import[1]} does not exist')
 
-	# Obtain the extension of the module if any
-	extension = None if name.count('.') == 0 else name.split('.')[-1]
+		# Case 1: import metacall.node.ramda && Case 2: from metacall.node.ramda import func1, func2, func3
+		if metacall_module_import_size >= 3:
+			module_name = '.'.join(metacall_module_import[2:])
 
-	# Load by extension if there is any (import puppeteer.js)
-	if (
-		extension in file_extensions_to_tag.keys()
-		or extension in package_extensions_to_tag.keys()
-	):
-		# Get handle name without extension
-		handle_name = name.split('.')[-2]
+			# Check if it is already loaded
+			metacall_module = sys.modules['metacall']
+			if hasattr(metacall_module, metacall_module_import[1]):
+				metacall_module_tag = getattr(metacall_module, metacall_module_import[1])
+				if hasattr(metacall_module_tag, module_name):
+					return getattr(metacall_module_tag, module_name)
 
-		# Check if it is already loaded in MetaCall
-		handle = find_handle(name)
-
-		if handle != None:
-			# Generate the module from cached handle
-			return generate_module(handle_name, handle)
-
-		# This breaks a recursion loop when trying to load py files
-		# The problem is basically that PyImport_Import in the loader tries to
-		# load as module first, so it jumps to this method again. Probably
-		# we should find a more efficient solution, for example reimplementing
-		# PyImport_Import (which I failed) or checking if the port is present
-		# and the import is monkey patched, so in this case we should populate
-		# the real python __import__ from the port into the loader, so we can
-		# avoid jumping always to the patched import, this is a workaround
-		# that must be removed because it is dirty and slow (TODO)
-		if extension == 'py':
-			current_frame = inspect.currentframe()
-			call_frame = inspect.getouterframes(current_frame, 2)
-			if (
-				call_frame[1][3] == 'metacall_load_from_file'
-				or call_frame[1][3] == 'metacall_load_from_package'
-				or call_frame[1][3] == 'metacall_load_from_memory'
-				or call_frame[1][3] == 'metacall_load_from_file_export'
-				or call_frame[1][3] == 'metacall_load_from_package_export'
-			):
-				return ImportException(f'MetaCall could not import: {name}')
-
-		if (extension in file_extensions_to_tag.keys()):
 			handle = module.metacall_load_from_file_export(
-				file_extensions_to_tag[extension], [name]
-			)
-		elif (extension in package_extensions_to_tag.keys()):
-			handle = module.metacall_load_from_package_export(
-				package_extensions_to_tag[extension], name
+				metacall_module_import[1], [module_name]
 			)
 
-		if handle != None:
-			# Generate the module from cached handle
-			return generate_module(handle_name, handle)
-	else:
-		# Check if it is already loaded in MetaCall
-		handle = find_handle(name)
+			if handle != None:
+				# Generate the module
+				imported_module = generate_module(module_name, handle)
 
-		if handle != None:
-			# Generate the module from cached handle
-			return generate_module(name, handle)
+				if imported_module is None:
+					raise ImportException(f'MetaCall could not import: {name}; failed to generate the module')
 
-		# TODO: Improve cross-language module guessing
-		# # Otherwhise, try to load it by guessing the loader
-		# tags = set(file_extensions_to_tag.values())
+				# Add the new functions to metacall module
+				metacall_module = sys.modules['metacall']
+				if not hasattr(metacall_module, metacall_module_import[1]):
+					setattr(metacall_module, metacall_module_import[1], types.ModuleType(metacall_module_import[1]))
 
-		# # Remove mock and py in order to avoid mock to automatically load
-		# # or python to enter into an endless loop
-		# tags.discard('mock')
-		# tags.discard('py')
+				metacall_module_tag = getattr(metacall_module, metacall_module_import[1])
+				setattr(metacall_module_tag, module_name, imported_module)
+				setattr(metacall_module, metacall_module_import[1], metacall_module_tag)
 
-		# for tag in list(tags):
-		# 	handle = module.metacall_load_from_file_export(tag, [name])
-		# 	if handle != None:
-		# 		# Generate the module from cached handle
-		# 		return generate_module(name, handle)
+				return metacall_module
+			else:
+				raise ImportException(f'MetaCall could not import: {name}')
 
-	raise ImportException(f'MetaCall could not import: {name}')
+		# Case 3: from metacall.node import ramda, express
+		elif metacall_module_import_size == 2:
+			if fromlist is None:
+				raise ImportException(f'MetaCall could not import: {name}; you need to specify the submodules: from {name} import moduleA, moduleB')
+
+			# TODO: Implement this
+			raise ImportException('Not implemented')
+
+	# Try to load by extension: import script.js
+	filename, extension = os.path.splitext(name)
+
+	if extension != '':
+		ext = extension[1:]
+
+		if (
+			ext in file_extensions_to_tag.keys()
+			or ext in package_extensions_to_tag.keys()
+		):
+			# Check if it is already loaded in MetaCall
+			handle = find_handle(name)
+
+			if handle != None:
+				# Generate the module from cached handle
+				return generate_module(filename, handle)
+
+			if ext in file_extensions_to_tag.keys():
+				# Load from file
+				file_tag = file_extensions_to_tag[ext]
+
+				if file_tag == 'py':
+					return __python_import__(filename, globals, locals, fromlist, level)
+				else:
+					handle = module.metacall_load_from_file_export(file_tag, [name])
+
+			elif ext in package_extensions_to_tag.keys():
+				# Load from package
+				package_tag = package_extensions_to_tag[ext]
+
+				if package_tag == 'py':
+					return __python_import__(filename, globals, locals, fromlist, level)
+				else:
+					handle = module.metacall_load_from_package_export(package_tag, name)
+
+			if handle != None:
+				# Generate the module
+				return generate_module(filename, handle)
+
+	# Load with Python
+	return __python_import__(name, globals, locals, fromlist, level)
 
 # Override Python import
 builtins.__import__ = __metacall_import__
