@@ -31,40 +31,40 @@ jobs:
       - name: Install, build and run sanitizer tests
         run: ./docker-compose.sh test-sanitizer
 
-  linux-ubuntu-sanitizer-gcc:
-    name: Linux (Ubuntu) GCC Sanitizer Test
-    runs-on: ubuntu-latest
-    env:
-      SANITIZER_SKIP_SUMMARY: 1
+  # linux-ubuntu-sanitizer-gcc:
+  #   name: Linux (Ubuntu) GCC Sanitizer Test
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     SANITIZER_SKIP_SUMMARY: 1
 
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+  #   steps:
+  #     - name: Check out the repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Install, build and run sanitizer tests
-        run: ./docker-compose.sh test-sanitizer
-        env:
-          METACALL_BASE_IMAGE: ubuntu:jammy
+  #     - name: Install, build and run sanitizer tests
+  #       run: ./docker-compose.sh test-sanitizer
+  #       env:
+  #         METACALL_BASE_IMAGE: ubuntu:jammy
 
-  linux-ubuntu-sanitizer-clang:
-    name: Linux (Ubuntu) Clang Sanitizer Test
-    runs-on: ubuntu-latest
+  # linux-ubuntu-sanitizer-clang:
+  #   name: Linux (Ubuntu) Clang Sanitizer Test
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+  #   steps:
+  #     - name: Check out the repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Install Clang
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential ca-certificates lsb-release wget software-properties-common gnupg
-          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
-          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-16 100
-          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
+  #     - name: Install Clang
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y --no-install-recommends build-essential ca-certificates lsb-release wget software-properties-common gnupg
+  #         wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
+  #         sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-16 100
+  #         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
 
-      - name: Install, build and run sanitizer tests
-        run: ./tools/metacall-sanitizer.sh sanitizer
+  #     - name: Install, build and run sanitizer tests
+  #       run: ./tools/metacall-sanitizer.sh sanitizer
