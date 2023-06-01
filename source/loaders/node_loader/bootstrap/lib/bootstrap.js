@@ -266,9 +266,23 @@ function node_loader_trampoline_discover_function(func) {
 		if (node_loader_trampoline_is_callable(func)) {
 			// Espree can't parse native code functions so we can do a workaround
 			const str = func.toString().replace('{ [native code] }', '{}');
-			const ast = espree.parse(`(${str})`, {
-				ecmaVersion: 14
-			});
+
+			const ast = (() => {
+				try {
+					// Parse the function
+					return espree.parse(`(${str})`, {
+						ecmaVersion: 14
+					});
+				} catch (e) {
+					// Espree can't parse a function exported directly from a map without key, like:
+					// const exports = { myfunc() {} };
+					// Because it lacks from function prefix, so as a workaround, we add function prefix
+					// if it does not exist. It is a nasty trick but it's the best solution I found by now.
+					return espree.parse(`(function ${str})`, {
+						ecmaVersion: 14
+					});
+				}
+			})();
 
 			const node = (ast.body[0].type === 'ExpressionStatement') ?
 				ast.body[0].expression : ast.body[0];

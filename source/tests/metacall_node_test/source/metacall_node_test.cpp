@@ -109,6 +109,16 @@ TEST_F(metacall_node_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 		metacall_value_destroy(args[0]);
+
+		const char *node_module_scripts[] = {
+			"path"
+		};
+
+		void *handle = NULL;
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_module_scripts, sizeof(node_module_scripts) / sizeof(node_module_scripts[0]), &handle));
+
+		EXPECT_NE((void *)NULL, (void *)handle);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 

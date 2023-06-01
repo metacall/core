@@ -181,19 +181,19 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		if not metacall_module_import[1] in available_tags:
 			raise ImportException(f'MetaCall could not import: {name}; the loader {metacall_module_import[1]} does not exist')
 
-		# Case 1: import metacall.node.ramda && Case 2: from metacall.node.ramda import func1, func2, func3
-		if metacall_module_import_size >= 3:
-			module_name = '.'.join(metacall_module_import[2:])
-
+		def _metacall_module_import(module_tag, module_name, return_root):
 			# Check if it is already loaded
 			metacall_module = sys.modules['metacall']
-			if hasattr(metacall_module, metacall_module_import[1]):
-				metacall_module_tag = getattr(metacall_module, metacall_module_import[1])
+			if hasattr(metacall_module, module_tag):
+				metacall_module_tag = getattr(metacall_module, module_tag)
 				if hasattr(metacall_module_tag, module_name):
-					return getattr(metacall_module_tag, module_name)
+					if return_root == True:
+						return getattr(metacall_module_tag, module_name)
+					else:
+						return metacall_module_tag
 
 			handle = module.metacall_load_from_file_export(
-				metacall_module_import[1], [module_name]
+				module_tag, [module_name]
 			)
 
 			if handle != None:
@@ -205,24 +205,38 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 
 				# Add the new functions to metacall module
 				metacall_module = sys.modules['metacall']
-				if not hasattr(metacall_module, metacall_module_import[1]):
-					setattr(metacall_module, metacall_module_import[1], types.ModuleType(metacall_module_import[1]))
+				if not hasattr(metacall_module, module_tag):
+					setattr(metacall_module, module_tag, types.ModuleType(module_tag))
 
-				metacall_module_tag = getattr(metacall_module, metacall_module_import[1])
+				metacall_module_tag = getattr(metacall_module, module_tag)
 				setattr(metacall_module_tag, module_name, imported_module)
-				setattr(metacall_module, metacall_module_import[1], metacall_module_tag)
+				setattr(metacall_module, module_tag, metacall_module_tag)
 
-				return metacall_module
+				if return_root == True:
+					return metacall_module
+				else:
+					return metacall_module_tag
 			else:
 				raise ImportException(f'MetaCall could not import: {name}')
+
+		# Case 1: import metacall.node.ramda && Case 2: from metacall.node.ramda import func1, func2, func3
+		if metacall_module_import_size >= 3:
+			module_tag = metacall_module_import[1]
+			module_name = '.'.join(metacall_module_import[2:])
+			return _metacall_module_import(module_tag, module_name, True)
 
 		# Case 3: from metacall.node import ramda, express
 		elif metacall_module_import_size == 2:
 			if fromlist is None:
 				raise ImportException(f'MetaCall could not import: {name}; you need to specify the submodules: from {name} import moduleA, moduleB')
 
-			# TODO: Implement this
-			raise ImportException('Not implemented')
+			metacall_module_tag = None
+			module_tag = metacall_module_import[1]
+
+			for module_name in fromlist:
+				metacall_module_tag = _metacall_module_import(module_tag, module_name, False)
+
+			return metacall_module_tag
 
 	# Try to load by extension: import script.js
 	filename, extension = os.path.splitext(name)

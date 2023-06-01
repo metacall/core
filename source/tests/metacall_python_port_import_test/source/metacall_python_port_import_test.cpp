@@ -101,23 +101,21 @@ TEST_F(metacall_python_port_import_test, metacall_node_ramda_case_1)
 		ASSERT_NE((void *)handle, (void *)NULL);
 	}
 
-	/* TODO: Case 3 */
+	/* Case 3 */
 	{
-		/*
 		static const char buffer[] =
 			"import sys\n"
 			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
 			"import metacall\n"
-			"from metacall.node import ramda\n"
-			"if ramda.all(ramda.equals(3))([3, 3, 3, 3]) != True:\n"
+			"from metacall.node import ramda, path\n"
+			"if ramda.all(ramda.equals(3))([3, 3, 3, 3]) != True or path.extname('index.html') != '.html':\n"
 			"	sys.exit(1)\n";
 
 		void *handle = NULL;
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), &handle));
 
-		ASSERT_NE((void*)handle, (void*)NULL);
-		*/
+		ASSERT_NE((void *)handle, (void *)NULL);
 	}
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
