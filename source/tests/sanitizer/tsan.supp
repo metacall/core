@@ -16,8 +16,9 @@
 # NodeJS
 #
 race:v8::platform::tracing::TracingController::GetCategoryGroupEnabled
-race:v8::platform::DefaultJobWorker::~DefaultJobWorker()
+race:v8::platform::DefaultJobWorker::~DefaultJobWorker
 race:v8::platform::DefaultJobState::~DefaultJobState
+race:v8::internal::ScavengerCollector::JobTask::~JobTask
 #
 # Ruby
 #
