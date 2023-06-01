@@ -5027,7 +5027,7 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 		closing);
 #endif
 
-	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) /*+ closing*/;
+	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) - closing; /*+ closing*/;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
