@@ -16,9 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux-debian-sanitizer-gcc:
-    name: Linux (Debian) GCC Sanitizer Test
+  linux-sanitizer-gcc:
+    name: Linux GCC Sanitizer Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_image: ["debian:bookworm-slim", "debian:bullseye-slim"] # TODO: "ubuntu:jammy"
     env:
       SANITIZER_SKIP_SUMMARY: 1
 
@@ -30,26 +33,11 @@ jobs:
 
       - name: Install, build and run sanitizer tests
         run: ./docker-compose.sh test-sanitizer
+        env:
+          METACALL_BASE_IMAGE: ${{ matrix.build_image }}
 
-  # linux-ubuntu-sanitizer-gcc:
-  #   name: Linux (Ubuntu) GCC Sanitizer Test
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     SANITIZER_SKIP_SUMMARY: 1
-
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
-
-  #     - name: Install, build and run sanitizer tests
-  #       run: ./docker-compose.sh test-sanitizer
-  #       env:
-  #         METACALL_BASE_IMAGE: ubuntu:jammy
-
-  # linux-ubuntu-sanitizer-clang:
-  #   name: Linux (Ubuntu) Clang Sanitizer Test
+  # linux-sanitizer-clang:
+  #   name: Linux Clang Sanitizer Test
   #   runs-on: ubuntu-latest
 
   #   steps:
