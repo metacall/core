@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_image: ["debian:bookworm-slim", "debian:bullseye-slim"] # TODO: "ubuntu:jammy"
+        build_image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"]
     env:
       SANITIZER_SKIP_SUMMARY: 1
 
