@@ -533,8 +533,6 @@ static void node_loader_impl_thread_log(void *data);
 
 /* static void node_loader_impl_walk(uv_handle_t *handle, void *data); */
 
-static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg);
-
 static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 
 static void node_loader_impl_try_destroy(loader_impl_node node_impl);
@@ -4981,53 +4979,46 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	node_loader_impl_exception(env, status);
 }
 
-void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
+struct node_loader_impl_uv__queue
 {
-	int64_t *async_count = static_cast<int64_t *>(arg);
+	struct node_loader_impl_uv__queue *next;
+	struct node_loader_impl_uv__queue *prev;
+};
 
-	if (uv_is_active(handle) && !uv_is_closing(handle))
-	{
-		// NOTE: I am not sure if this check for timers is correct, at least for versions
-		// previous from v11.0.0. Now the node loader seems to be working for versions >=v12.
-		// If there is any other error when closing, improve counter for timers and timeouts.
-		// Signals have been added because they do not prevent the event loop from closing.
-		if (/*(!(handle->type == UV_TIMER && !uv_has_ref(handle))) ||*/ handle->type != UV_SIGNAL)
-		{
-			(*async_count)++;
-		}
-	}
+static inline int uv__queue_empty(const struct node_loader_impl_uv__queue *q)
+{
+	return q == q->next;
 }
 
 int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 {
-	int64_t active_handles = 0;
-	uv_walk(node_impl->thread_loop, node_loader_impl_walk_async_handles_count, (void *)&active_handles);
+	int64_t active_handles = (int64_t)node_impl->thread_loop->active_handles +
+							 (int64_t)node_impl->thread_loop->active_reqs.count +
+#if defined(WIN32) || defined(_WIN32)
+							 (int64_t)(node_impl->thread_loop->pending_reqs_tail != NULL) +
+							 (int64_t)(node_impl->thread_loop->endgame_handles != NULL);
+#else
+							 (int64_t)(!uv__queue_empty((const struct node_loader_impl_uv__queue *)(&node_impl->thread_loop->pending_queue))) +
+							 (int64_t)(node_impl->thread_loop->closing_handles != NULL);
+#endif
+
 	return active_handles;
 }
 
 int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 {
 	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
+	int64_t extra_active_handles = node_impl->extra_active_handles.load();
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	int64_t closing =
-	#if defined(WIN32) || defined(_WIN32)
-		(node_impl->thread_loop->endgame_handles != NULL)
-	#else
-		(node_impl->thread_loop->closing_handles != NULL)
-	#endif
-		;
-
-	printf("[active_handles] - [base_active_handles] - [extra_active_handles] + [active_reqs] + [closing]\n");
-	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +       %" PRId64 "       +     %" PRId64 "\n",
+	printf("[active_handles] - [base_active_handles] - [extra_active_handles]\n");
+	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "\n",
 		active_handles,
 		node_impl->base_active_handles,
-		node_impl->extra_active_handles.load(),
-		(int64_t)node_impl->thread_loop->active_reqs.count,
-		closing);
+		extra_active_handles);
 #endif
 
-	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) /*+ closing*/;
+	return active_handles - node_impl->base_active_handles - extra_active_handles;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
