@@ -514,6 +514,10 @@ sub_typescript(){
 		# Install React dependencies in order to run the tests
 		$SUDO_CMD npm i react@latest -g
 		$SUDO_CMD npm i react-dom@latest -g
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		# Install React dependencies in order to run the tests
+		npm i react@latest -g
+		npm i react-dom@latest -g
 	fi
 }
 
