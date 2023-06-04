@@ -539,7 +539,7 @@ sub_rpc(){
 			$SUDO_CMD apk add --no-cache curl-dev
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		brew install curl-openssl
+		brew install curl
 	fi
 }
 
