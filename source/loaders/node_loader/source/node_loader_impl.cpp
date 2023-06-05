@@ -5016,7 +5016,7 @@ int64_t node_loader_impl_async_closing_handles_count(loader_impl_node node_impl)
 int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 {
 	int64_t active_handles = (int64_t)node_impl->thread_loop->active_handles +
-							 (int64_t)node_impl->thread_loop->active_reqs.count +
+							 (int64_t)(node_impl->thread_loop->active_reqs.count > 0) +
 							 node_loader_impl_async_closing_handles_count(node_impl);
 
 	return active_handles;
@@ -5031,7 +5031,7 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 	int64_t closing = node_loader_impl_async_closing_handles_count(node_impl);
 
 	printf("[active_handles] - [base_active_handles] - [extra_active_handles] + [active_reqs] + [closing]\n");
-	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +       %" PRId64 "       +     %" PRId64 "\n",
+	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +    %" PRId64 " [> 0]    +    %" PRId64 "\n",
 		(int64_t)node_impl->thread_loop->active_handles,
 		node_impl->base_active_handles,
 		extra_active_handles,
