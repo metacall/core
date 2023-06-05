@@ -538,6 +538,8 @@ sub_rpc(){
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl-dev
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install curl
 	fi
 }
 
