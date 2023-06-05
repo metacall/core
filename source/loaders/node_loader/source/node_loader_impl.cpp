@@ -4012,6 +4012,10 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	node_impl->extra_active_handles.store(0);
 	node_impl->event_loop_empty.store(false);
 
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	node_loader_impl_print_handles(node_impl);
+#endif
+
 	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
 	node_loader_node_dll_handle = GetModuleHandle(NODEJS_LIBRARY_NAME);
@@ -4990,17 +4994,30 @@ static inline int uv__queue_empty(const struct node_loader_impl_uv__queue *q)
 	return q == q->next;
 }
 
+int64_t node_loader_impl_async_closing_handles_count(loader_impl_node node_impl)
+{
+#if defined(WIN32) || defined(_WIN32)
+	return (int64_t)(node_impl->thread_loop->pending_reqs_tail != NULL) +
+		   (int64_t)(node_impl->thread_loop->endgame_handles != NULL);
+#else
+	union
+	{
+		void *data;
+		const struct node_loader_impl_uv__queue *ptr;
+	} uv__queue_cast;
+
+	uv__queue_cast.data = (void *)&node_impl->thread_loop->pending_queue;
+
+	return (int64_t)(!uv__queue_empty(uv__queue_cast.ptr)) +
+		   (int64_t)(node_impl->thread_loop->closing_handles != NULL);
+#endif
+}
+
 int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 {
 	int64_t active_handles = (int64_t)node_impl->thread_loop->active_handles +
 							 (int64_t)node_impl->thread_loop->active_reqs.count +
-#if defined(WIN32) || defined(_WIN32)
-							 (int64_t)(node_impl->thread_loop->pending_reqs_tail != NULL) +
-							 (int64_t)(node_impl->thread_loop->endgame_handles != NULL);
-#else
-							 (int64_t)(!uv__queue_empty((const struct node_loader_impl_uv__queue *)(&node_impl->thread_loop->pending_queue))) +
-							 (int64_t)(node_impl->thread_loop->closing_handles != NULL);
-#endif
+							 node_loader_impl_async_closing_handles_count(node_impl);
 
 	return active_handles;
 }
@@ -5011,11 +5028,15 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 	int64_t extra_active_handles = node_impl->extra_active_handles.load();
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	printf("[active_handles] - [base_active_handles] - [extra_active_handles]\n");
-	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "\n",
-		active_handles,
+	int64_t closing = node_loader_impl_async_closing_handles_count(node_impl);
+
+	printf("[active_handles] - [base_active_handles] - [extra_active_handles] + [active_reqs] + [closing]\n");
+	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +       %" PRId64 "       +     %" PRId64 "\n",
+		(int64_t)node_impl->thread_loop->active_handles,
 		node_impl->base_active_handles,
-		extra_active_handles);
+		extra_active_handles,
+		(int64_t)node_impl->thread_loop->active_reqs.count,
+		closing);
 #endif
 
 	return active_handles - node_impl->base_active_handles - extra_active_handles;

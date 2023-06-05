@@ -488,13 +488,14 @@ sub_nodejs(){
 			$SUDO_CMD apk del .build-nodejs-python-deps
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		brew install node@16 make curl 
+		# TODO: Fork backend-nodejs or let metacall build system compile NodeJS library itself
+		brew install node@16
 		# Make node 16 the default
 		brew link node@16 --force --overwrite
 		NODE_PREFIX=$(brew --prefix node@16)
 		wget https://github.com/puerts/backend-nodejs/releases/download/NodeJS_16.16.0_230216/nodejs_bin_16.16.0.tgz
 		tar -xzf nodejs_bin_16.16.0.tgz
-		# copy dylib to /usr/local/lib
+		# Copy dylib to /usr/local/lib
 		sudo cp nodejs_16/lib/macOS/libnode.93.dylib $NODE_PREFIX/lib
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
