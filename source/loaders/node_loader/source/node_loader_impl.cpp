@@ -4016,17 +4016,6 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	node_impl->extra_active_handles.store(0);
 	node_impl->event_loop_empty.store(false);
 
-	/* In MacOS, from the beginning it seems there is active requests, for avoiding issues when closing
-	* let's remove them from the base active handles */
-	/*
-#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	if ((int64_t)(node_impl->thread_loop->active_reqs.count > 0))
-	{
-		--node_impl->base_active_handles;
-	}
-#endif
-	*/
-
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	node_loader_impl_print_handles(node_impl);
 #endif
