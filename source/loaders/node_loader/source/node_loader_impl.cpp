@@ -533,6 +533,10 @@ static void node_loader_impl_thread_log(void *data);
 
 /* static void node_loader_impl_walk(uv_handle_t *handle, void *data); */
 
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg);
+#endif
+
 static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 
 static void node_loader_impl_try_destroy(loader_impl_node node_impl);
@@ -4992,6 +4996,7 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	node_loader_impl_exception(env, status);
 }
 
+#if !defined(WIN32) || defined(_WIN32)
 struct node_loader_impl_uv__queue
 {
 	struct node_loader_impl_uv__queue *next;
@@ -5002,6 +5007,26 @@ static inline int uv__queue_empty(const struct node_loader_impl_uv__queue *q)
 {
 	return q == q->next;
 }
+#endif
+
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
+{
+	int64_t *async_count = static_cast<int64_t *>(arg);
+
+	if (uv_is_active(handle) && !uv_is_closing(handle))
+	{
+		// NOTE: I am not sure if this check for timers is correct, at least for versions
+		// previous from v11.0.0. Now the node loader seems to be working for versions >=v12.
+		// If there is any other error when closing, improve counter for timers and timeouts.
+		// Signals have been added because they do not prevent the event loop from closing.
+		if (/*(!(handle->type == UV_TIMER && !uv_has_ref(handle))) ||*/ handle->type != UV_SIGNAL)
+		{
+			(*async_count)++;
+		}
+	}
+}
+#endif
 
 int64_t node_loader_impl_async_closing_handles_count(loader_impl_node node_impl)
 {
@@ -5024,11 +5049,19 @@ int64_t node_loader_impl_async_closing_handles_count(loader_impl_node node_impl)
 
 int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 {
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	int64_t active_handles = 0;
+	uv_walk(node_impl->thread_loop, node_loader_impl_walk_async_handles_count, (void *)&active_handles);
+
+	return active_handles +
+		   (int64_t)(node_impl->thread_loop->active_reqs.count > 0) +
+		   node_loader_impl_async_closing_handles_count(node_impl);
+#else
 	int64_t active_handles = (int64_t)node_impl->thread_loop->active_handles +
 							 (int64_t)(node_impl->thread_loop->active_reqs.count > 0) +
 							 node_loader_impl_async_closing_handles_count(node_impl);
-
 	return active_handles;
+#endif
 }
 
 int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
