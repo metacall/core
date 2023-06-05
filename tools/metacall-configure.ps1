@@ -418,7 +418,6 @@ function sub-help {
 	echo "	benchmarks: build and run all benchmarks"
 	echo "	install: install all libraries"
 	echo "	static: build as static libraries"
-	echo "	dynamic: build as dynamic libraries"
 	echo "	ports: build all ports"
 	echo "	coverage: build all coverage reports"
 	echo "	sanitizer: build with address, memory, thread... sanitizers"

@@ -30,4 +30,4 @@ services:
     build:
       args:
         METACALL_BUILD_TYPE: ${METACALL_BUILD_TYPE}
-        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} python ruby netcore7 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports dynamic install pack benchmarks # v8 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} python ruby netcore7 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack benchmarks # v8 coverage

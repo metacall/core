@@ -52,7 +52,7 @@ export DETOUR_LIBRARY_PATH="${BUILD_DIR}"
 export PORT_LIBRARY_PATH="${BUILD_DIR}"
 
 BUILD_OPTIONS=(
-	${BUILD_SANITIZER} debug ${BUILD_LANGUAGES[@]} examples tests scripts ports dynamic install pack benchmarks
+	${BUILD_SANITIZER} debug ${BUILD_LANGUAGES[@]} examples tests scripts ports install pack benchmarks
 )
 
 mkdir -p ${BUILD_DIR}

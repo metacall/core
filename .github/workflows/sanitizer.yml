@@ -36,23 +36,23 @@ jobs:
         env:
           METACALL_BASE_IMAGE: ${{ matrix.build_image }}
 
-  # linux-sanitizer-clang:
-  #   name: Linux Clang Sanitizer Test
-  #   runs-on: ubuntu-latest
+  linux-sanitizer-clang:
+    name: Linux Clang Sanitizer Test
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-  #     - name: Install Clang
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y --no-install-recommends build-essential ca-certificates lsb-release wget software-properties-common gnupg
-  #         wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
-  #         sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-16 100
-  #         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
+      - name: Install Clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential ca-certificates lsb-release wget software-properties-common gnupg
+          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16 all
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-16 100
+          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
 
-  #     - name: Install, build and run sanitizer tests
-  #       run: ./tools/metacall-sanitizer.sh sanitizer
+      - name: Install, build and run sanitizer tests
+        run: ./tools/metacall-sanitizer.sh sanitizer

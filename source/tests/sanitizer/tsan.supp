@@ -19,6 +19,7 @@ race:v8::platform::tracing::TracingController::GetCategoryGroupEnabled
 race:v8::platform::DefaultJobWorker::~DefaultJobWorker
 race:v8::platform::DefaultJobState::~DefaultJobState
 race:v8::internal::ScavengerCollector::JobTask::~JobTask
+race:heap::base::Worklist<std::pair<v8::internal::HeapObject, int>, (unsigned short)256>::Local::Pop(std::pair<v8::internal::HeapObject, int>*)
 #
 # Ruby
 #

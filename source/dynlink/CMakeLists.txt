@@ -116,7 +116,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${DYNAMIC_LOADING_INCLUDE_DIR} # Native dynamic load library
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
