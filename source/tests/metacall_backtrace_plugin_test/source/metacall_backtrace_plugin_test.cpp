@@ -32,7 +32,6 @@ void badass_function(void)
 #if defined(__clang__)
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Warray-bounds"
-	#pragma clang diagnostic ignored "-Wstringop-overflow="
 #elif defined(__GNUC__)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Warray-bounds"

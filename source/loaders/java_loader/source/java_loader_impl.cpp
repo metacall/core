@@ -1081,12 +1081,14 @@ value java_class_interface_static_get(klass cls, class_impl impl, struct accesso
 				}
 
 				case TYPE_OBJECT: {
+					/* TODO */
+					/*
 					jobject gotVal = java_impl->env->GetStaticObjectField(clscls, fID);
 					jclass cls = (jclass)java_impl->env->GetObjectClass(gotVal);
 					jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
 					jstring name = (jstring)java_impl->env->CallObjectMethod(cls, mid_getName);
-					// const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
-					/* TODO */
+					const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+					*/
 					// object obj = object_create()
 					return value_create_object(NULL /* obj */);
 				}
@@ -1227,12 +1229,14 @@ value java_class_interface_static_get(klass cls, class_impl impl, struct accesso
 							case TYPE_OBJECT: {
 								for (size_t i = 0; i < array_size; i++)
 								{
+									/* TODO */
+									/*
 									jobject cur_ele = (jobject)java_impl->env->GetObjectArrayElement(gotVal, i);
 									jclass cls = (jclass)java_impl->env->GetObjectClass(cur_ele);
 									jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
 									jstring name = (jstring)java_impl->env->CallObjectMethod(cls, mid_getName);
-									// const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
-									/* TODO */
+									const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+									*/
 									// object obj = object_create()
 									array_value[i] = value_create_object(NULL /* obj */);
 								}
@@ -1720,6 +1724,7 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_pat
 loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	(void)impl;
+	(void)size;
 
 	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
 
