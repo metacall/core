@@ -659,6 +659,8 @@ sub_cobol(){
 			# Runtime deps
 			$SUDO_CMD apk add --no-cache db ncurses
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install gnu-cobol
 	fi
 }
 
