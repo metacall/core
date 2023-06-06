@@ -1072,8 +1072,6 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	for (iterator = 0; iterator < argc; ++iterator)
 	{
 		args[iterator] = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, recv, argv[iterator]);
-
-		node_loader_impl_finalizer(env, argv[iterator], args[iterator]);
 	}
 
 	void *ret = metacallfv_s(value_to_function(closure_cast.safe->func), args, argc);
@@ -1085,8 +1083,12 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 		napi_throw(env, result);
 	}
 
-	/* Set result finalizer */
-	node_loader_impl_finalizer(env, result, ret);
+	for (iterator = 0; iterator < argc; ++iterator)
+	{
+		value_type_destroy(args[iterator]);
+	}
+
+	value_type_destroy(ret);
 
 	/* Reset environment */
 	// closure_cast.safe->node_impl->env = NULL;
