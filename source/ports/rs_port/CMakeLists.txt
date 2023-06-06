@@ -23,11 +23,13 @@ set(target rs_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
-# Find bindgen
-find_program(Rust_BINDGEN_EXECUTABLE bindgen
-	HINTS ${Rust_CARGO_HOME}
-	PATH_SUFFIXES "bin"
-)
+# Find bindgen (disable when using sanitizers)
+if(NOT (OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER OR OPTION_BUILD_UB_SANITIZER))
+	find_program(Rust_BINDGEN_EXECUTABLE bindgen
+		HINTS ${Rust_CARGO_HOME}
+		PATH_SUFFIXES "bin"
+	)
+endif()
 
 if(NOT Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_GUIX)
 	execute_process(COMMAND ${Rust_CARGO_EXECUTABLE} install bindgen)

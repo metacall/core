@@ -50,7 +50,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends build-essential ca-certificates lsb-release wget software-properties-common gnupg
-          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16 all
+          wget -O - https://apt.llvm.org/llvm.sh | sudo bash -s -- 16
           sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-16 100
           sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
 
