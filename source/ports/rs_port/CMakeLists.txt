@@ -29,15 +29,15 @@ if(NOT (OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_
 		HINTS ${Rust_CARGO_HOME}
 		PATH_SUFFIXES "bin"
 	)
-endif()
 
-if(NOT Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_GUIX)
-	execute_process(COMMAND ${Rust_CARGO_EXECUTABLE} install bindgen)
+	if(NOT Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_GUIX)
+		execute_process(COMMAND ${Rust_CARGO_EXECUTABLE} install bindgen)
 
-	find_program(Rust_BINDGEN_EXECUTABLE bindgen
-		HINTS ${Rust_CARGO_HOME}
-		PATH_SUFFIXES "bin"
-	)
+		find_program(Rust_BINDGEN_EXECUTABLE bindgen
+			HINTS ${Rust_CARGO_HOME}
+			PATH_SUFFIXES "bin"
+		)
+	endif()
 endif()
 
 # Generate bindings
