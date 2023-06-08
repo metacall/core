@@ -662,6 +662,14 @@ sub_cobol(){
 			# Runtime deps
 			$SUDO_CMD apk add --no-cache db ncurses
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install gnu-cobol
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		COBOL_PREFIX=$(brew --prefix gnu-cobol)
+		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.dylib" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
