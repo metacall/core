@@ -630,7 +630,7 @@ sub_c(){
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		TCC_PREFIX=$(brew --prefix tcc)
-		echo "-DLIBTCC_LIBRARY=${TCC_PREFIX}/lib/libtcc.a" > $CMAKE_CONFIG_PATH
+		echo "-DLIBTCC_LIBRARY=${TCC_PREFIX}/lib/libtcc.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBTCC_INCLUDE_DIR=${TCC_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 	fi
 }
