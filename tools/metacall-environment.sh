@@ -630,8 +630,12 @@ sub_c(){
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		TCC_PREFIX=$(brew --prefix tcc)
+		LIBC_PREFIX=$(brew --prefix llvm@11)
 		echo "-DLIBTCC_LIBRARY=${TCC_PREFIX}/lib/libtcc.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBTCC_INCLUDE_DIR=${TCC_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_INCLUDE_DIR=${LIBC_PREFIX}/include/clang-c" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBC_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
+
 	fi
 }
 
