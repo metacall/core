@@ -46,9 +46,6 @@ jobs:
           RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
           sudo rm -rf $RUBY_FRAMEWORK_DIR
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-
       - name: Set up the environment
         run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
