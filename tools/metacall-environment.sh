@@ -624,7 +624,9 @@ sub_c(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install libffi
-		brew install tcc
+		brew install --HEAD tcc
+		brew install llvm@11 
+		brew link llvm@11 --force --overwrite
 	fi
 }
 
