@@ -389,7 +389,6 @@ int py_loader_impl_finalizer_object(loader_impl impl, PyObject *obj, value v)
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 {
 	PyObject *capsule = (PyObject *)data;
-
 	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)PyCapsule_GetPointer(capsule, NULL);
 
 	(void)v;
@@ -785,10 +784,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 
 value py_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
-	// TODO
 	(void)cls;
-	(void)impl;
-	(void)args;
 
 	loader_impl_py_class cls_impl = (loader_impl_py_class)impl;
 
@@ -1744,7 +1740,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		if (values[args_count] != NULL)
 		{
-			PyTuple_SetItem(tuple_args, args_count, values[args_count]);
+			PyTuple_SET_ITEM(tuple_args, args_count, values[args_count]);
 		}
 	}
 
@@ -1763,7 +1759,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 	}
 
-	Py_DECREF(tuple_args);
+	Py_XDECREF(tuple_args);
 
 	if (is_var_args)
 	{
