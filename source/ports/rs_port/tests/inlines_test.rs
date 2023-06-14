@@ -1,12 +1,11 @@
 use metacall::{
-    hooks,
-    loaders,
     inline::{node, py, ts},
+    loaders, switch,
 };
 
 #[test]
 fn inlines() {
-    let _d = hooks::initialize().unwrap();
+    let _d = switch::initialize().unwrap();
 
     if loaders::from_memory("py", "").is_ok() {
         py! {

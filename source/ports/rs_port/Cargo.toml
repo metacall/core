@@ -11,8 +11,6 @@ version = "0.4.0"
 
 [lib]
 crate-type = ["lib"]
-# Code examples used in documentation are environment dependent. Meaning they need a set of
-# stuff to be done before executing the codes. Therefore we should disable doctests.
 doctest = false
 edition = "2021"
 name = "metacall"

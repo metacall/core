@@ -41,11 +41,11 @@
 //! Now let's jump into Rust:
 //!
 //! ```
-//! use metacall::{hooks, metacall, loaders};
+//! use metacall::{switch, metacall, loaders};
 //!
 //! fn main() {
 //!     // Initialize Metacall at the top
-//!     let _metacall = hooks::initialize().unwrap();
+//!     let _metacall = switch::initialize().unwrap();
 //!     
 //!     // Load the file (Checkout the loaders module for loading multiple files
 //!     // or loading from string)
@@ -78,13 +78,13 @@ pub(crate) use macros::private_macros::*;
 pub mod loaders;
 
 mod types;
-pub use hooks::initialize;
+pub use switch::initialize;
 
 #[doc(hidden)]
 pub mod macros;
 
 #[doc(hidden)]
-pub mod hooks;
+pub mod switch;
 pub use types::*;
 
 #[path = "metacall.rs"]

@@ -1,9 +1,9 @@
-use metacall::{hooks, loaders};
+use metacall::{loaders, switch};
 use std::env;
 
 #[test]
 fn inlines() {
-    let _d = hooks::initialize().unwrap();
+    let _d = switch::initialize().unwrap();
 
     let tests_dir = env::current_dir().unwrap().join("tests/scripts");
     let js_test_file = tests_dir.join("script.js");

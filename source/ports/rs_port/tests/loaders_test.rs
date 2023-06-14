@@ -1,4 +1,4 @@
-use metacall::{hooks, loaders, metacall_no_arg};
+use metacall::{loaders, metacall_no_arg, switch};
 use std::{
     env,
     fs::{self, File},
@@ -50,7 +50,7 @@ fn load_from_file_test() {
 
 #[test]
 fn loaders() {
-    let _d = hooks::initialize().unwrap();
+    let _d = switch::initialize().unwrap();
 
     // Testing load_from_memory
     load_from_memory_test();

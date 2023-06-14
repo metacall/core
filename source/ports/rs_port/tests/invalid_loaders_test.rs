@@ -1,9 +1,9 @@
-use metacall::{hooks, loaders, MetacallLoaderError};
+use metacall::{loaders, switch, MetacallLoaderError};
 use std::env;
 
 #[test]
 fn invalid_loaders() {
-    let _d = hooks::initialize().unwrap();
+    let _d = switch::initialize().unwrap();
 
     let scripts_dir = env::current_dir().unwrap().join("tests/scripts");
     let inavlid_file = scripts_dir.join("whatever.yeet");
