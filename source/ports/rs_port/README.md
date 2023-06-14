@@ -10,9 +10,9 @@
 
 # Install
 
-MetaCall is a C plugin based library. This crate wraps the C library into Rust, so in order to make it work, you should install MetaCall binaries first ([click here](https://github.com/metacall/install) for additional info about the install script):
+MetaCall is a C plugin based library. This crate wraps the C library into Rust, so in order to make it work, you should install MetaCall binaries first ([click here](https://github.com/metacall/install) for installing it on other platforms):
 ``` sh
-bash <(curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh)
+curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
 ```
 
 # Example

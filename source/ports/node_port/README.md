@@ -10,9 +10,9 @@
 
 # Install
 
-Install MetaCall binaries first ([click here](https://github.com/metacall/install) for additional info about the install script):
+Install MetaCall binaries first ([click here](https://github.com/metacall/install) for installing it on other platforms):
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh)
+curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
 ```
 
 # Example
