@@ -194,8 +194,10 @@ install(TARGETS ${target}
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
 
-
 # Runtime
 if(Wasmtime_LIBRARY_INSTALLED)
 	install(FILES ${Wasmtime_LIBRARY} DESTINATION ${INSTALL_LIB} COMPONENT runtime)
+	if(WIN32)
+		install(FILES ${Wasmtime_LIBRARY_DLL} DESTINATION ${INSTALL_LIB} COMPONENT runtime)
+	endif()
 endif()

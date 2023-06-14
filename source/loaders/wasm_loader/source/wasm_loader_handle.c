@@ -175,12 +175,12 @@ static int discover_function(loader_impl impl, scope scp, const wasm_externtype_
 		return 0;
 	}
 
-	const wasm_functype_t *func_type =
-		wasm_externtype_as_functype_const(extern_type);
+	const wasm_functype_t *func_type = wasm_externtype_as_functype_const(extern_type);
 	const wasm_valtype_vec_t *params = wasm_functype_params(func_type);
 	const wasm_valtype_vec_t *results = wasm_functype_results(func_type);
 
-	loader_impl_wasm_function func_impl = loader_impl_wasm_function_create(wasm_extern_as_func_const(extern_val));
+	loader_impl_wasm_function func_impl = loader_impl_wasm_function_create(wasm_extern_as_func_const(extern_val), results->size);
+
 	if (func_impl == NULL)
 	{
 		return 1;
@@ -197,8 +197,7 @@ static int discover_function(loader_impl impl, scope scp, const wasm_externtype_
 
 	for (size_t param_idx = 0; param_idx < params->size; param_idx++)
 	{
-		signature_set(sig, param_idx, "unnamed",
-			valkind_to_type(impl, wasm_valtype_kind(params->data[param_idx])));
+		signature_set(sig, param_idx, "unnamed", valkind_to_type(impl, wasm_valtype_kind(params->data[param_idx])));
 	}
 
 	value v = value_create_function(func);

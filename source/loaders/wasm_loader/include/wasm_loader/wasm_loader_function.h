@@ -34,7 +34,8 @@ extern "C" {
 typedef struct loader_impl_wasm_function_type *loader_impl_wasm_function;
 
 WASM_LOADER_API function_interface function_wasm_singleton(void);
-WASM_LOADER_API loader_impl_wasm_function loader_impl_wasm_function_create(const wasm_func_t *func);
+
+WASM_LOADER_API loader_impl_wasm_function loader_impl_wasm_function_create(const wasm_func_t *func, size_t args_size);
 
 #ifdef __cplusplus
 }

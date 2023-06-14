@@ -10,6 +10,7 @@
 struct loader_impl_wasm_function_type
 {
 	const wasm_func_t *func;
+	wasm_val_t *args;
 };
 
 static function_return function_wasm_interface_invoke(function func, function_impl impl, function_args args, size_t args_size);
@@ -31,9 +32,10 @@ function_interface function_wasm_singleton(void)
 	return &wasm_function_interface;
 }
 
-loader_impl_wasm_function loader_impl_wasm_function_create(const wasm_func_t *func)
+loader_impl_wasm_function loader_impl_wasm_function_create(const wasm_func_t *func, size_t args_size)
 {
 	loader_impl_wasm_function func_impl = malloc(sizeof(struct loader_impl_wasm_function_type));
+
 	if (func_impl == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to allocate memory for function handle");
@@ -42,6 +44,21 @@ loader_impl_wasm_function loader_impl_wasm_function_create(const wasm_func_t *fu
 
 	// Ugly hack to subvert the type system and initialize a const member
 	*(wasm_func_t **)&func_impl->func = (wasm_func_t *)func;
+
+	if (args_size > 0)
+	{
+		func_impl->args = malloc(sizeof(wasm_val_t) * args_size);
+
+		if (func_impl->args == NULL)
+		{
+			free(func_impl);
+			return NULL;
+		}
+	}
+	else
+	{
+		func_impl->args = NULL;
+	}
 
 	return func_impl;
 }
@@ -106,13 +123,15 @@ static value wasm_results_to_reflect_type(const wasm_val_vec_t *results)
 	}
 	else
 	{
-		value values[results->size];
+		value v = value_create_array(NULL, results->size);
+		value *array = value_to_array(v);
+
 		for (size_t idx = 0; idx < results->size; idx++)
 		{
-			values[idx] = wasm_to_reflect_type(results->data[idx]);
+			array[idx] = wasm_to_reflect_type(results->data[idx]);
 		}
 
-		return value_create_array(values, results->size);
+		return v;
 	}
 }
 
@@ -154,7 +173,7 @@ static value call_func(const signature sig, const wasm_func_t *func, const wasm_
 	return ret;
 }
 
-static function_return function_wasm_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
+function_return function_wasm_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
 {
 	loader_impl_wasm_function wasm_func = (loader_impl_wasm_function)impl;
 	signature sig = function_signature(func);
@@ -173,8 +192,6 @@ static function_return function_wasm_interface_invoke(function func, function_im
 	}
 	else
 	{
-		wasm_val_t wasm_args[args_size];
-
 		for (size_t idx = 0; idx < args_size; idx++)
 		{
 			type param_type = signature_get_type(sig, idx);
@@ -187,22 +204,35 @@ static function_return function_wasm_interface_invoke(function func, function_im
 				return NULL;
 			}
 
-			if (reflect_to_wasm_type(args[idx], &wasm_args[idx]) != 0)
+			if (reflect_to_wasm_type(args[idx], &wasm_func->args[idx]) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Unsupported type for argument %d in call to function %s", idx, function_name(func));
 				return NULL;
 			}
 		}
 
-		const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
+		wasm_val_vec_t args_vec;
+
+		args_vec.data = wasm_func->args;
+		args_vec.size = args_size;
 
 		return call_func(sig, wasm_func->func, args_vec);
 	}
 }
 
-static void function_wasm_interface_destroy(function func, function_impl impl)
+void function_wasm_interface_destroy(function func, function_impl impl)
 {
+	loader_impl_wasm_function func_impl = (loader_impl_wasm_function)impl;
+
 	(void)func;
 
-	free((loader_impl_wasm_function)impl);
+	if (func_impl != NULL)
+	{
+		if (func_impl->args != NULL)
+		{
+			free(func_impl->args);
+		}
+
+		free(func_impl);
+	}
 }

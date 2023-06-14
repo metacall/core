@@ -60,6 +60,14 @@ if(NOT Wasmtime_LIBRARY)
 		NAMES ${Wasmtime_LIBRARY_NAME}
 		DOC "Wasmtime C API library"
 	)
+
+	if(Wasmtime_LIBRARY)
+		if(WIN32)
+			string(REGEX REPLACE "\\.[^.]*$" "" Wasmtime_LIBRARY_DLL ${Wasmtime_LIBRARY})
+			set(Wasmtime_LIBRARY_DLL "${Wasmtime_LIBRARY_DLL}.dll")
+			file(COPY "${Wasmtime_LIBRARY_DLL}" DESTINATION "${PROJECT_OUTPUT_DIR}")
+		endif()
+	endif()
 endif()
 
 if(NOT Wasmtime_INCLUDE_DIR)
@@ -112,6 +120,12 @@ if(NOT Wasmtime_LIBRARY OR NOT Wasmtime_INCLUDE_DIR)
 
 		if(Wasmtime_LIBRARY)
 			set(Wasmtime_LIBRARY_INSTALLED ON)
+
+			if(WIN32)
+				string(REGEX REPLACE "\\.[^.]*$" "" Wasmtime_LIBRARY_DLL ${Wasmtime_LIBRARY})
+				set(Wasmtime_LIBRARY_DLL "${Wasmtime_LIBRARY_DLL}.dll")
+				file(COPY "${Wasmtime_LIBRARY_DLL}" DESTINATION "${PROJECT_OUTPUT_DIR}")
+			endif()
 		endif()
 	endif()
 
