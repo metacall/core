@@ -2,7 +2,7 @@
 authors = ["Mahdi Sharifi <devraymondsh@gmail.com>", "Vicente Eduardo Ferrer Garcia <vic798@gmail.com>", "Swarnim Arun <swarnimarun11@gmail.com>"]
 description = "Call NodeJS, TypeScript, Python, C#, Ruby... functions from Rust (a Rust Port for MetaCall)."
 edition = "2021"
-keywords = ["programming-language", "ffi", "polyglot", "metacall", "function-mesh", "inter-language", "polyglot-programming"]
+keywords = ["ffi", "polyglot", "metacall", "inter-language", "polyglot-programming"]
 license = "Apache-2.0"
 name = "metacall"
 readme = "README.md"
