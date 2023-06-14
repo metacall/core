@@ -134,6 +134,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 	${Wasmtime_LIBRARY}
+	${Wasmtime_LIBRARY_DEPENDENCIES}
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

@@ -36,6 +36,9 @@
 #include <stdlib.h>
 
 #ifdef WASMTIME
+	#if defined(_WIN32) && defined(_MSC_VER)
+		#define WASM_API_EXTERN
+	#endif
 	#include <wasmtime.h>
 #endif
 

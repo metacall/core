@@ -27,6 +27,9 @@
 
 #include <adt/adt_vector.h>
 
+#if defined(WASMTIME) && defined(_WIN32) && defined(_MSC_VER)
+	#define WASM_API_EXTERN
+#endif
 #include <wasm.h>
 
 #ifdef __cplusplus

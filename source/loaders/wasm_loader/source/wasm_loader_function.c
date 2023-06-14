@@ -5,6 +5,9 @@
 
 #include <log/log.h>
 
+#if defined(WASMTIME) && defined(_WIN32) && defined(_MSC_VER)
+	#define WASM_API_EXTERN
+#endif
 #include <wasm.h>
 
 struct loader_impl_wasm_function_type

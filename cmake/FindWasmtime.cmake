@@ -67,10 +67,6 @@ if(NOT Wasmtime_LIBRARY)
 		elseif(PROJECT_OS_MINGW)
 			string(REGEX REPLACE "[.]a$" ".dll" Wasmtime_LIBRARY_DLL ${Wasmtime_LIBRARY})
 		endif()
-
-		if(Wasmtime_LIBRARY_DLL)
-			file(COPY "${Wasmtime_LIBRARY_DLL}" DESTINATION "${PROJECT_OUTPUT_DIR}")
-		endif()
 	endif()
 endif()
 
@@ -130,10 +126,6 @@ if(NOT Wasmtime_LIBRARY OR NOT Wasmtime_INCLUDE_DIR)
 			elseif(PROJECT_OS_MINGW)
 				string(REGEX REPLACE "[.]a$" ".dll" Wasmtime_LIBRARY_DLL ${Wasmtime_LIBRARY})
 			endif()
-
-			if(Wasmtime_LIBRARY_DLL)
-				file(COPY "${Wasmtime_LIBRARY_DLL}" DESTINATION "${PROJECT_OUTPUT_DIR}")
-			endif()
 		endif()
 	endif()
 
@@ -145,6 +137,20 @@ if(NOT Wasmtime_LIBRARY OR NOT Wasmtime_INCLUDE_DIR)
 			DOC "Wasmtime C API headers"
 		)
 	endif()
+endif()
+
+# Copy Wasmtime DLL to the output directory
+if(Wasmtime_LIBRARY_DLL)
+	file(COPY "${Wasmtime_LIBRARY_DLL}" DESTINATION "${PROJECT_OUTPUT_DIR}")
+	set(Wasmtime_LIBRARY_DEPENDENCIES
+		ws2_32.lib
+		advapi32.lib
+		userenv.lib
+		ntdll.lib
+		shell32.lib
+		ole32.lib
+		bcrypt.lib
+	)
 endif()
 
 include(FindPackageHandleStandardArgs)
