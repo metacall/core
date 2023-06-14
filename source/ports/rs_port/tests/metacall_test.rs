@@ -1,5 +1,5 @@
 use metacall::{
-    hooks, loaders, MetacallClass, MetacallException, MetacallFunction, MetacallFuture,
+    loaders, switch, MetacallClass, MetacallException, MetacallFunction, MetacallFuture,
     MetacallNull, MetacallObject, MetacallPointer, MetacallThrowable, MetacallValue,
 };
 use std::{collections::HashMap, env, fmt::Debug};
@@ -335,7 +335,7 @@ fn test_throwable() {
 
 #[test]
 fn metacall() {
-    let _d = hooks::initialize().unwrap();
+    let _d = switch::initialize().unwrap();
 
     let tests_dir = env::current_dir().unwrap().join("tests/scripts");
     let js_test_file = tests_dir.join("script.js");
