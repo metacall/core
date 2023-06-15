@@ -136,13 +136,19 @@ TEST_F(metacall_wasm_test, CallFunctions)
 	ASSERT_EQ(0, metacall_load_from_file("wasm", &functions_module_filename, 1, NULL));
 
 	void *ret = metacall("none_ret_none");
-	ASSERT_EQ(NULL, ret);
+	ASSERT_NE((void *)NULL, (void *)ret);
+	ASSERT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+	metacall_value_destroy(ret);
 
 	ret = metacall("i64_ret_none", 0L);
-	ASSERT_EQ(NULL, ret);
+	ASSERT_NE((void *)NULL, (void *)ret);
+	ASSERT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+	metacall_value_destroy(ret);
 
 	ret = metacall("i32_f32_i64_f64_ret_none", 0, 0.0f, 0L, 0.0);
-	ASSERT_EQ(NULL, ret);
+	ASSERT_NE((void *)NULL, (void *)ret);
+	ASSERT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+	metacall_value_destroy(ret);
 
 	ret = metacall("none_ret_i32");
 	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));

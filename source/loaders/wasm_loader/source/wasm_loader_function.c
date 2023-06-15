@@ -155,6 +155,7 @@ static value call_func(const signature sig, const wasm_func_t *func, const wasm_
 	wasm_trap_t *trap = wasm_func_call(func, &args, &results);
 
 	value ret = NULL;
+
 	if (trap != NULL)
 	{
 		// BEWARE: Wasmtime executes an undefined instruction in order to
@@ -171,8 +172,13 @@ static value call_func(const signature sig, const wasm_func_t *func, const wasm_
 	{
 		ret = wasm_results_to_reflect_type(&results);
 	}
+	else
+	{
+		ret = value_create_null();
+	}
 
 	wasm_val_vec_delete(&results);
+
 	return ret;
 }
 
