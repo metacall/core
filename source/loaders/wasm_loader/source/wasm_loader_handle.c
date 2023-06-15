@@ -179,7 +179,7 @@ static int discover_function(loader_impl impl, scope scp, const wasm_externtype_
 	const wasm_valtype_vec_t *params = wasm_functype_params(func_type);
 	const wasm_valtype_vec_t *results = wasm_functype_results(func_type);
 
-	loader_impl_wasm_function func_impl = loader_impl_wasm_function_create(wasm_extern_as_func_const(extern_val), results->size);
+	loader_impl_wasm_function func_impl = loader_impl_wasm_function_create(wasm_extern_as_func_const(extern_val), params->size);
 
 	if (func_impl == NULL)
 	{
