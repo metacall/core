@@ -21,12 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        buildtype: [debug] # [debug, release] # TODO: Enable release when all debug tests pass
-
-    env:
-      LTTNG_UST_REGISTER_TIMEOUT:  0
-      NUGET_XMLDOC_MODE:           skip
-      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+        options: [ {buildtype: debug, sanitizer: without-sanitizer}, {buildtype: debug, sanitizer: sanitizer} ] # TODO: Enable release when all debug tests pass {buildtype: release, sanitizer: without-sanitizer}
 
     steps:
       - name: Check out the repository
@@ -42,7 +37,7 @@ jobs:
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
-          METACALL_INSTALL_OPTIONS: python nodejs java ruby typescript # wasm netcore5 file rpc java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: python nodejs java ruby typescript wasm # netcore5 file rpc java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |
@@ -51,10 +46,10 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests sanitizer python nodejs java ruby typescript # wasm netcore5 file rpc java c cobol rust examples install pack benchmarks # v8 coverage
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.buildtype }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs java ruby typescript wasm # netcore5 file rpc java c cobol rust examples install pack benchmarks # v8 coverage
 
       - name: Build
         working-directory: ./build
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} tests
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.buildtype }} tests
