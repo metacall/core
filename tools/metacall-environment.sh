@@ -185,8 +185,8 @@ sub_python(){
 		pyenv rehash
 
 		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		# echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
-		# source ~/.bash_profile
+		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+		source ~/.bash_profile
 
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
@@ -226,11 +226,7 @@ sub_ruby(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install ruby@3.2
-
-		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> ~/.bash_profile
-		source ~/.bash_profile
-
+		brew link ruby@3.2 --force --overwrite
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		RUBY_PREFIX="$(brew --prefix ruby@3.2)"
