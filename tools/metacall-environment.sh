@@ -185,8 +185,8 @@ sub_python(){
 		pyenv rehash
 
 		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
-		source ~/.bash_profile
+		# echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+		# source ~/.bash_profile
 
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
