@@ -51,6 +51,9 @@ jobs:
         env:
           METACALL_INSTALL_OPTIONS: base python nodejs typescript java ruby wasm rpc file cobol  #netcore5 rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Configure
         run: |
           cd build
