@@ -568,6 +568,10 @@ sub_java(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install openjdk@17
+		JAVA_PREFIX=$(brew --prefix openjdk@17)
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DJAVA_HOME=$JAVA_PREFIX" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
