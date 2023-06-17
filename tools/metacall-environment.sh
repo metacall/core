@@ -187,7 +187,7 @@ sub_python(){
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		ENV_FILE="$ROOT_DIR/build/.env"
 		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> $ENV_FILE
+		echo $(eval "$(pyenv init -)") >> $ENV_FILE
 
 		echo "-DPython3_INCLUDE_DIRS=$HOME/.pyenv/versions/3.11.1/include/python3.11" >> $CMAKE_CONFIG_PATH
 		echo "-DPython3_LIBRARY=$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" >> $CMAKE_CONFIG_PATH
