@@ -54,6 +54,7 @@ jobs:
       - name: Configure
         run: |
           cd build
+          cat .env
           . .env
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
@@ -63,6 +64,7 @@ jobs:
         working-directory: ./build
         # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
+          . .env
           cmake -DOPTION_FORK_SAFE=OFF  ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
