@@ -572,6 +572,8 @@ sub_java(){
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		echo "-DJAVA_HOME=$JAVA_PREFIX" >> $CMAKE_CONFIG_PATH
+		ENV_FILE="$ROOT_DIR/build/.env"
+		echo "PATH=$JAVA_PREFIX/include:$PATH" >> $ENV_FILE
 	fi
 }
 
