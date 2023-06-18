@@ -46,13 +46,17 @@ jobs:
           RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
           sudo rm -rf $RUBY_FRAMEWORK_DIR
 
+      - name: Uninstall Java
+        run: |
+          sudo rm -rf /Library/Java/JavaVirtualMachines/*
+          sudo rm -rf /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin
+          sudo rm -rf /Library/PreferencePanes/JavaControlPanel.prefPane
+          unset JAVA_HOME
+          
       - name: Set up the environment
         run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
           METACALL_INSTALL_OPTIONS: base python nodejs typescript java ruby wasm rpc file cobol  #netcore5 rust rapidjson funchook swig pack # clangformat v8rep51 coverage
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
 
       - name: Configure
         run: |
