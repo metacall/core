@@ -629,17 +629,6 @@ sub_c(){
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing tcc
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.14/main clang-libs=11.1.0-r1 clang-dev=11.1.0-r1
 		fi
-	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		brew install libffi
-		brew install llvm@11 
-		brew link llvm@11 --force --overwrite
-		mkdir -p build
-		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
-		TCC_PREFIX=$(brew --prefix tcc)
-		LIBC_PREFIX=$(brew --prefix llvm@11)
-		echo "-DLibClang_INCLUDE_DIR=${LIBC_PREFIX}/include/clang-c" >> $CMAKE_CONFIG_PATH
-		echo "-DLibClang_LIBRARY=${LIBC_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
-
 	fi
 }
 
