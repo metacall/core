@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build: [ debug, release ]
-        image: [ "debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic" ] # TODO: "alpine:3.17"
+        build: [debug, release]
+        image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"] # TODO: "alpine:3.17"
 
     env:
       DEBIAN_FRONTEND:             noninteractive
