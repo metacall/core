@@ -288,7 +288,7 @@ case "$1" in
 		sub_test
 		;;
 	test-address-sanitizer)
-		sub_test_address-sanitizer
+		sub_test_address_sanitizer
 		;;
 	test-thread-sanitizer)
 		sub_test_thread_sanitizer
