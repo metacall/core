@@ -19,6 +19,7 @@ jobs:
     name: Linux GCC Test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         build: [debug, release]
         image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"] # TODO: "alpine:3.17"

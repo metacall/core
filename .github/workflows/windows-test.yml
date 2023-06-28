@@ -20,6 +20,7 @@ jobs:
     runs-on: windows-2019 # TODO: Implement matrix with windows 2019 and 2022
 
     strategy:
+      fail-fast: false
       matrix:
         options: [
           {build: debug, sanitizer: without-sanitizer},
@@ -28,7 +29,7 @@ jobs:
           {build: debug, sanitizer: memory-sanitizer},
           {build: debug, sanitizer: ub-sanitizer},
           # TODO: Release build not working
-          # {build: release, sanitizer: without-sanitizer}
+          {build: release, sanitizer: without-sanitizer}
         ]
 
     steps:

@@ -20,6 +20,7 @@ jobs:
     name: Linux GCC Thread Sanitizer Test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"]
     env:
