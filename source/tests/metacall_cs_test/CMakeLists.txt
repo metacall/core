@@ -170,7 +170,7 @@ add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
 
-if(OPTION_BUILD_SANITIZER)
+if(OPTION_BUILD_ADDRESS_SANITIZER)
 	# TODO: This test fails when run with sanitizers (this happens when C# loader is enabled):
 	# Tracer caught signal 11: addr=0x81e000278 pc=0x7f21968e07c8 sp=0x7ee064c83d20
 	# LeakSanitizer has encountered a fatal error.

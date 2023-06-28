@@ -533,7 +533,7 @@ if(NOT NodeJS_LIBRARY)
 			if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 				set(BUILD_DEBUG "--debug")
 
-				if(OPTION_BUILD_SANITIZER)
+				if(OPTION_BUILD_ADDRESS_SANITIZER)
 					set(BUILD_DEBUG "${BUILD_DEBUG} --enable-asan")
 				endif()
 			else()

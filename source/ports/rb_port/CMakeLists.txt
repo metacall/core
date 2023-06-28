@@ -265,7 +265,7 @@ configure_file(test/run.rb.in ${rb_port_test_path})
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
 	#
 	# Sanitizer:

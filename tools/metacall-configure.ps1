@@ -22,8 +22,10 @@ $Global:BUILD_TESTS =             0
 $Global:BUILD_BENCHMARKS =        0
 $Global:BUILD_PORTS =             0
 $Global:BUILD_COVERAGE =          0
-$Global:BUILD_SANITIZER =         0
+$Global:BUILD_ADDRESS_SANITIZER = 0
 $Global:BUILD_THREAD_SANITIZER =  0
+$Global:BUILD_MEMORY_SANITIZER =  0
+$Global:BUILD_UB_SANITIZER =      0
 $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 
 $Global:Arguments = $args
@@ -75,6 +77,10 @@ function sub-options {
 			echo "Build with typescript support"
 			$Global:BUILD_TYPESCRIPT = 1
 		}
+		if ( "$option" -eq 'rust' ) {
+			echo "Build with rust support"
+			$Global:BUILD_RUST = 1
+		}
 		if ( "$option" -eq 'file' ) {
 			echo "Build with file support"
 			$Global:BUILD_FILE = 1
@@ -123,17 +129,21 @@ function sub-options {
 			echo "Build all coverage reports"
 			$Global:BUILD_COVERAGE = 1
 		}
-		if ( "$option" -eq 'sanitizer' ) {
-			echo "Build with sanitizers"
-			$Global:BUILD_SANITIZER = 1
+		if ( "$option" -eq 'address-sanitizer' ) {
+			echo "Build with address sanitizers"
+			$Global:BUILD_ADDRESS_SANITIZER = 1
 		}
 		if ( "$option" -eq 'thread-sanitizer' ) {
-			echo "Build with sanitizers"
+			echo "Build with thread sanitizers"
 			$Global:BUILD_THREAD_SANITIZER = 1
 		}
-		if ( "$option" -eq 'rust' ) {
-			echo "Build with rust support"
-			$Global:BUILD_RUST = 1
+		if ( "$option" -eq 'memory-sanitizer' ) {
+			echo "Build with memory sanitizers"
+			$Global:BUILD_MEMORY_SANITIZER = 1
+		}
+		if ( "$option" -eq 'ub-sanitizer' ) {
+			echo "Build with undefined behavior sanitizers"
+			$Global:BUILD_UB_SANITIZER = 1
 		}
 	}
 }
@@ -260,6 +270,19 @@ function sub-configure {
 		}
 	}
 
+	# Rust
+	if ( $BUILD_RUST -eq 1 ) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
+
+		if ( $BUILD_SCRIPTS -eq 1 ) {
+			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
+		}
+
+		if ( $BUILD_PORTS -eq 1 ) {
+			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
+		}
+	}
+
 	# File
 	if ( $BUILD_FILE -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_FILE=On"
@@ -349,11 +372,11 @@ function sub-configure {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_COVERAGE=Off"
 	}
 
-	# Sanitizer
-	if ( $BUILD_SANITIZER -eq 1 ) {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
+	# Address Sanitizer
+	if ( $BUILD_ADDRESS_SANITIZER -eq 1 ) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_ADDRESS_SANITIZER=On"
 	} else {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_ADDRESS_SANITIZER=Off"
 	}
 
 	# Thread Sanitizer
@@ -363,17 +386,18 @@ function sub-configure {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=Off"
 	}
 
-	# Rust
-	if ( $BUILD_RUST -eq 1 ) {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
+	# Memory Sanitizer
+	if ( $BUILD_MEMORY_SANITIZER -eq 1 ) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=On"
+	} else {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
+	}
 
-		if ( $BUILD_SCRIPTS -eq 1 ) {
-			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
-		}
-
-		if ( $BUILD_PORTS -eq 1 ) {
-			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
-		}
+	# Undefined Behavior Sanitizer
+	if ( $BUILD_UB_SANITIZER -eq 1 ) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_UB_SANITIZER=On"
+	} else {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_UB_SANITIZER=Off"
 	}
 
 	# Build type
@@ -420,8 +444,10 @@ function sub-help {
 	echo "	static: build as static libraries"
 	echo "	ports: build all ports"
 	echo "	coverage: build all coverage reports"
-	echo "	sanitizer: build with address, memory, thread... sanitizers"
+	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
+	echo "	memory-sanitizer: build with memory sanitizer"
+	echo "	ub-sanitizer: build with undefined behavior sanitizer"
 	echo ""
 }
 

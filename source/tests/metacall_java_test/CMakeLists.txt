@@ -139,7 +139,7 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
 
-if(OPTION_BUILD_SANITIZER)
+if(OPTION_BUILD_ADDRESS_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
 	# Tracer caught signal 11: addr=0x100000688 pc=0x7fd2e80790f0 sp=0x7fd2489b7d10
 	# LeakSanitizer has encountered a fatal error.
