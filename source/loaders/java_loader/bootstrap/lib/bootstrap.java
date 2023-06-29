@@ -143,8 +143,8 @@ public class bootstrap {
             JarFile jarFile = new JarFile(curJarPath.toString());
             Enumeration<JarEntry> e = jarFile.entries();
 
-            Path jpath = Paths.get("jar:file:", curExecPath, path);
-            String jarPath = jpath.toString() + "!/";
+            Path jpath = Paths.get(curExecPath, path);
+            String jarPath = "jar:file:" + jpath.toString() + "!/";
 
             Path epath = Paths.get(curExecPath, path);
             executionPath.add(epath.toString());
