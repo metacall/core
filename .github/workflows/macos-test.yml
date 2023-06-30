@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-      options: [
+        options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
           {build: debug, sanitizer: thread-sanitizer},
