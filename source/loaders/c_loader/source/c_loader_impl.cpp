@@ -304,7 +304,10 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 	tcc_set_output_type(c_handle->state, TCC_OUTPUT_MEMORY);
 
 	/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
-	tcc_set_lib_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	if (!c_impl->libtcc_runtime_path.empty())
+	{
+		tcc_set_lib_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	}
 
 	/* Register execution paths */
 	for (auto exec_path : c_impl->execution_paths)
@@ -339,7 +342,10 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 	tcc_add_include_path(c_handle->state, metacall_incl_path);
 
 	/* Add metacall library path (in other to find metacall library) */
-	tcc_add_library_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	if (!c_impl->libtcc_runtime_path.empty())
+	{
+		tcc_add_library_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	}
 
 	return c_handle;
 }
@@ -603,9 +609,12 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 	}
 
 	/* Store the configuration path for later use */
-	value path = configuration_value(config, "loader_library_path");
+	value path = configuration_value_type(config, "loader_library_path", TYPE_STRING);
 
-	c_impl->libtcc_runtime_path = std::string(value_to_string(path), value_type_size(path));
+	if (path != NULL)
+	{
+		c_impl->libtcc_runtime_path = std::string(value_to_string(path), value_type_size(path));
+	}
 
 	/* Register initialization */
 	loader_initialization_register(impl);

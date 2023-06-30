@@ -262,7 +262,7 @@ plugin loader_impl_plugin(loader_impl impl)
 
 void loader_impl_configuration(loader_impl_interface iface, loader_impl impl, configuration config)
 {
-	value execution_paths_value = configuration_value(config, "execution_paths");
+	value execution_paths_value = configuration_value_type(config, "execution_paths", TYPE_ARRAY);
 
 	if (execution_paths_value != NULL)
 	{
@@ -357,7 +357,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	*/
 
 	/* Check if the configuration has a custom loader_library_path, otherwise set it up */
-	if (config != NULL && configuration_value(config, loader_library_path) == NULL)
+	if (config != NULL && configuration_value_type(config, loader_library_path, TYPE_STRING) == NULL)
 	{
 		loader_library_path_value = value_create_string(library_path, strnlen(library_path, LOADER_PATH_SIZE));
 		configuration_define(config, loader_library_path, loader_library_path_value);
@@ -404,7 +404,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	*/
 
 	/* Load the library path as execution path */
-	loader_library_path_value = configuration_value(config, loader_library_path);
+	loader_library_path_value = configuration_value_type(config, loader_library_path, TYPE_STRING);
 
 	if (loader_library_path_value != NULL)
 	{

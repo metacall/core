@@ -99,6 +99,25 @@ CONFIGURATION_API value configuration_value(configuration config, const char *ke
 
 /**
 *  @brief
+*    Get value from @key inside a configuration @config checking if @id is the correct expected type
+*
+*  @param[in] config
+*    Configuration
+*
+*  @param[in] key
+*    Scope of the configuration
+*
+*  @param[in] id
+*    Type of the expected value
+*
+*  @return
+*    Returns value containing data related to @key or null if value or type @id is the wrong one
+*
+*/
+CONFIGURATION_API value configuration_value_type(configuration config, const char *key, type_id id);
+
+/**
+*  @brief
 *    Set value @v by @key inside a configuration @config.
 *    This function will not include the value into the internal deserialized version of
 *    the configuration, so the value@v must be deleted manually after the configuration is used.

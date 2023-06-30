@@ -1587,9 +1587,11 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 	java_impl = new loader_impl_java_type();
 
-	const char *loader_library_path = value_to_string(configuration_value(config, "loader_library_path"));
+	value loader_library_path_value = configuration_value_type(config, "loader_library_path", TYPE_STRING);
+	const char *loader_library_path = loader_library_path_value != NULL ? value_to_string(loader_library_path_value) :
+																			NULL;
 
-	if (java_impl != nullptr)
+	if (java_impl != nullptr && loader_library_path != NULL)
 	{
 		std::string st = (std::string) "-Djava.class.path=" + loader_library_path;
 		char *javaClassPath = &st[0];
