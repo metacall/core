@@ -183,13 +183,13 @@ sub_python(){
 		pyenv install 3.11.1
 		pyenv global 3.11.1
 		pyenv rehash
-
-		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
-		source ~/.bash_profile
-
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		ENV_FILE="$ROOT_DIR/build/.env"
+
+		echo eval "$(pyenv init -)" >> $ENV_FILE
+		. $ENV_FILE
+
 		echo "-DPython3_INCLUDE_DIRS=$HOME/.pyenv/versions/3.11.1/include/python3.11" >> $CMAKE_CONFIG_PATH
 		echo "-DPython3_LIBRARY=$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DPython3_EXECUTABLE=$HOME/.pyenv/versions/3.11.1/bin/python3.11" >> $CMAKE_CONFIG_PATH
@@ -226,11 +226,7 @@ sub_ruby(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install ruby@3.2
-
-		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> ~/.bash_profile
-		source ~/.bash_profile
-
+		brew link ruby@3.2 --force --overwrite
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		RUBY_PREFIX="$(brew --prefix ruby@3.2)"
@@ -238,7 +234,7 @@ sub_ruby(){
 		echo "-DRuby_INCLUDE_DIR=$RUBY_PREFIX/include/ruby-3.2.0" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_LIBRARY=$RUBY_PREFIX/lib/libruby.3.2.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
-		echo "-DRuby_VERSION_STRING=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
+		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -572,6 +568,14 @@ sub_java(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install openjdk@17
+		sudo ln -sfn $(brew --prefix openjdk@17)/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+		JAVA_PREFIX=$(/usr/libexec/java_home -v 17)
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DJAVA_HOME=$JAVA_PREFIX" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
