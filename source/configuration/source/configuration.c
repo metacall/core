@@ -196,6 +196,28 @@ value configuration_value(configuration config, const char *key)
 	return configuration_object_get(config, key);
 }
 
+value configuration_value_type(configuration config, const char *key, type_id id)
+{
+	if (config == NULL)
+	{
+		return NULL;
+	}
+
+	value v = configuration_object_get(config, key);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	if (value_type_id(v) != id)
+	{
+		return NULL;
+	}
+
+	return v;
+}
+
 int configuration_define(configuration config, const char *key, value v)
 {
 	return configuration_object_set(config, key, v);

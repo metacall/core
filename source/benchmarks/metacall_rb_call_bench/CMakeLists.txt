@@ -118,7 +118,7 @@ target_link_libraries(${target}
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
 	#
 	# Address Sanitizer:

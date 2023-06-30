@@ -1,5 +1,6 @@
+
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE)
 	return()
 endif()
 
@@ -8,8 +9,8 @@ endif()
 #
 
 # Target name
-set(target metacall-cs-call-bench)
-message(STATUS "Benchmark ${target}")
+set(target metacall-load-configuration-fail-test)
+message(STATUS "Test ${target}")
 
 #
 # Compiler warnings
@@ -31,7 +32,8 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
-	${source_path}/metacall_cs_call_bench.cpp
+	${source_path}/main.cpp
+	${source_path}/metacall_load_configuration_fail_test.cpp
 )
 
 # Group source files
@@ -82,7 +84,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	GBench
+	GTest
 
 	${META_PROJECT_NAME}::metacall
 )
@@ -94,6 +96,9 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	# Configuration path
+	METACALL_TEST_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/"
 )
 
 #
@@ -118,17 +123,6 @@ target_link_libraries(${target}
 # Define test
 #
 
-if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
-	# TODO: This test fails when run with sanitizers:
-	# Tracer caught signal 11: addr=0x5000002b0 pc=0x7f614774a0f0 sp=0x7f609fb40d10
-	# LeakSanitizer has encountered a fatal error.
-	# HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
-	# HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
-	#
-	# For solving this, we should enable C# support for sanitizers and debug it properly
-	return()
-endif()
-
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
@@ -138,7 +132,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	cs_loader
+	node_loader
 )
 
 #

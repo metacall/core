@@ -91,13 +91,13 @@ sub_test() {
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
-# Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
-sub_test_sanitizer() {
+# Build MetaCall Docker Compose with Address Sanitizer for testing (link manually dockerignore files)
+sub_test_address_sanitizer() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
 
 	# Enable build with sanitizer
-	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-sanitizer}
+	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
 
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
@@ -129,7 +129,7 @@ sub_test_sanitizer() {
 
 		if [ -z "${BEGIN}" ] || [ -z "${END}" ]; then
 			echo "ERROR! CTest failed to print properly the output, run tests again:"
-			echo "	Recompiling everything: docker rmi metacall/core:dev && ./docker-compose.sh test-sanitizer"
+			echo "	Recompiling everything: docker rmi metacall/core:dev && ./docker-compose.sh test-${METACALL_BUILD_SANITIZER}"
 			echo "	Without recompiling (needs to be built successfully previously): docker run --rm -it metacall/core:dev sh -c \"cd build && ctest -j$(getconf _NPROCESSORS_ONLN) --output-on-failure\""
 		else
 			BEGIN=$((BEGIN + 1))
@@ -148,7 +148,7 @@ sub_test_thread_sanitizer() {
 	export METACALL_BUILD_SANITIZER="thread-sanitizer"
 
 	# Run tests with thread sanitizer
-	sub_test_sanitizer
+	sub_test_address_sanitizer
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -266,7 +266,7 @@ sub_help() {
 	echo "	build"
 	echo "	rebuild"
 	echo "	test"
-	echo "	test-sanitizer"
+	echo "	test-address-sanitizer"
 	echo "	test-thread-sanitizer"
 	echo "	cache"
 	echo "	push"
@@ -287,8 +287,8 @@ case "$1" in
 	test)
 		sub_test
 		;;
-	test-sanitizer)
-		sub_test_sanitizer
+	test-address-sanitizer)
+		sub_test_address_sanitizer
 		;;
 	test-thread-sanitizer)
 		sub_test_thread_sanitizer

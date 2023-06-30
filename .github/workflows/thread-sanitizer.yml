@@ -1,4 +1,4 @@
-# Note: This is duplicated from sanitizer.yml in order to keep the ci running if one of both sanitizers fail
+# Note: This is duplicated from address-sanitizer.yml in order to keep the ci running if one of both sanitizers fail
 name: Thread Sanitizer Test
 
 on:
@@ -20,8 +20,9 @@ jobs:
     name: Linux GCC Thread Sanitizer Test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        build_image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"]
+        image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"]
     env:
       SANITIZER_SKIP_SUMMARY: 1
 
@@ -34,4 +35,4 @@ jobs:
       - name: Install, build and run thread sanitizer tests
         run: ./docker-compose.sh test-thread-sanitizer
         env:
-          METACALL_BASE_IMAGE: ${{ matrix.build_image }}
+          METACALL_BASE_IMAGE: ${{ matrix.image }}

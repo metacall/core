@@ -42,7 +42,7 @@ add_custom_target(${target}
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER OR OPTION_BUILD_UB_SANITIZER)
 	# TODO: Not implemented (https://go.googlesource.com/go/+/go1.7/misc/cgo/testsanitizers/test.bash)
 	return()
 endif()

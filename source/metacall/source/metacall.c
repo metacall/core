@@ -200,7 +200,7 @@ int metacall_initialize(void)
 
 		if (config != NULL)
 		{
-			value *level = configuration_value(config, "log_level");
+			value *level = configuration_value_type(config, "log_level", TYPE_STRING);
 
 			if (level != NULL)
 			{
