@@ -131,6 +131,8 @@ PORTABILITY_API size_t portability_path_join(const char *left_path, size_t left_
 
 PORTABILITY_API size_t portability_path_canonical(const char *path, size_t path_size, char *canonical, size_t canonical_size);
 
+PORTABILITY_API int portability_path_separator_normalize_inplace(char *path, size_t size);
+
 PORTABILITY_API int portability_path_compare(const char *left_path, const char *right_path);
 
 PORTABILITY_API int portability_path_is_pattern(const char *path, size_t size);
