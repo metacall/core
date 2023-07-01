@@ -353,6 +353,8 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				EXPECT_EQ((int)30, (int)metacall_value_to_int(array[2]));
 				metacall_value_destroy(param1);
 			}
+
+			metacall_value_destroy(new_object_v);
 		}
 
 		{ /* TEST LOAD FROM PACKAGE get, set and invoke for Static and Non Static */
