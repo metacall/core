@@ -23,6 +23,7 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
+#include <signal.h>
 
 class metacall_node_test : public testing::Test
 {
@@ -32,7 +33,7 @@ public:
 TEST_F(metacall_node_test, DefaultConstructor)
 {
 	metacall_print_info();
-
+	raise(SIGSEGV); 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 /* NodeJS */
