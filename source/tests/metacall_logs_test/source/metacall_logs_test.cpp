@@ -29,6 +29,8 @@ public:
 
 TEST_F(metacall_logs_test, DefaultConstructor)
 {
+	int *a = NULL;
+	*a;
 	metacall_log_stdio_type log_stdio = { stdout };
 
 	metacall_print_info();
