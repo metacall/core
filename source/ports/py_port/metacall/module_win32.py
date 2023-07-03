@@ -18,7 +18,6 @@
 #	limitations under the License.
 
 import os
-import ctypes
 from ctypes import wintypes, windll
 
 def metacall_module_load():
