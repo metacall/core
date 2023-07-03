@@ -798,6 +798,15 @@ sub_backtrace(){
 		brew install llvm@11 
 		brew link llvm@11 --force --overwrite
 		brew install dwarfutils
+		brew install libelf
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		LIBDWARD_PREFIX=$(brew --prefix dwarfutils)
+		LIBELF_PREFIX=$(brew --prefix libelf)
+		echo "-DLIBDWARF_INCLUDE_DIR=${LIBDWARD_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
+		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+
 	fi
 }
 
