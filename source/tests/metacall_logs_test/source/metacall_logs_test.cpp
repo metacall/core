@@ -19,7 +19,7 @@
  */
 
 #include <gtest/gtest.h>
-
+#include <signal.h>
 #include <metacall/metacall.h>
 
 class metacall_logs_test : public testing::Test
@@ -29,8 +29,7 @@ public:
 
 TEST_F(metacall_logs_test, DefaultConstructor)
 {
-	int *a = NULL;
-	*a;
+	raise(SIGSEGV);
 	metacall_log_stdio_type log_stdio = { stdout };
 
 	metacall_print_info();
