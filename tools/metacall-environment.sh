@@ -794,6 +794,10 @@ sub_backtrace(){
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache binutils-dev
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install llvm@11 
+		brew link llvm@11 --force --overwrite
+		brew install dwarfutils
 	fi
 }
 
