@@ -17,7 +17,7 @@ concurrency:
 jobs:
   windows-test:
     name: Windows MSVC Test
-    runs-on: windows-2019 # TODO: Implement matrix with windows 2019 and 2022
+    runs-on: windows-2022
 
     strategy:
       fail-fast: false
