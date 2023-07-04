@@ -35,7 +35,7 @@ set(export_macro "${target_upper}_API")
 
 set(interface_path "${CMAKE_CURRENT_SOURCE_DIR}/interface/${target}")
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
+set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(interfaces
 	${interface_path}/rb_port.i
@@ -102,6 +102,7 @@ else()
 	swig_add_library(${target}
 		LANGUAGE ruby
 		SOURCES ${interfaces} ${headers} ${sources}
+		OUTPUT_DIR "${PROJECT_OUTPUT_DIR}"
 	)
 endif()
 
