@@ -16,8 +16,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-// TODO: Review this: https://www.codeproject.com/Tips/1129615/JNI-Signature-for-Java-Method
-
 public class bootstrap {
   private static Set<String> executionPath = new HashSet<String>();
 
@@ -143,8 +141,8 @@ public class bootstrap {
             JarFile jarFile = new JarFile(curJarPath.toString());
             Enumeration<JarEntry> e = jarFile.entries();
 
-            Path jpath = Paths.get("jar:file:", curExecPath, path);
-            String jarPath = jpath.toString() + "!/";
+            Path jpath = Paths.get(curExecPath, path);
+            String jarPath = "jar:file:" + jpath.toString().replace("\\", "/") + "!/";
 
             Path epath = Paths.get(curExecPath, path);
             executionPath.add(epath.toString());
@@ -158,6 +156,7 @@ public class bootstrap {
 
                 String className = je.getName().substring(0, je.getName().length() - 6);
                 className = className.replace(File.separatorChar, '.');
+                System.out.println(className);
                 try {
                   Class<?> c = clsLoader.loadClass(className);
 

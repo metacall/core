@@ -449,7 +449,7 @@ int portability_path_separator_normalize_inplace(char *path, size_t size)
 		{
 			if (separator == 0)
 			{
-				separator = path[iterator];
+				separator = PORTABILITY_PATH_SEPARATOR_C; /* Use current platform style as default */
 			}
 			else
 			{
