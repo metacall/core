@@ -213,25 +213,43 @@ public class bootstrap {
     return new String[] { name, primitive ? "L" + signature + ";" : signature };
   }
 
-  public static String getSignature(Method m) {
-    String sig;
-    try {
-      Field gSig = java.lang.reflect.Method.class.getDeclaredField("signature");
-      gSig.setAccessible(true);
-      sig = (String) gSig.get(m);
-      if (sig != null)
-        return sig;
-    } catch (IllegalAccessException | NoSuchFieldException e) {
-      e.printStackTrace();
+  // Holds a mapping from Java type names to native type codes
+  private static final Map<Class<?>, String> PRIMITIVE_TO_SIGNATURE;
+  static {
+    PRIMITIVE_TO_SIGNATURE = new HashMap<Class<?>, String>(9);
+    PRIMITIVE_TO_SIGNATURE.put(byte.class, "B");
+    PRIMITIVE_TO_SIGNATURE.put(char.class, "C");
+    PRIMITIVE_TO_SIGNATURE.put(short.class, "S");
+    PRIMITIVE_TO_SIGNATURE.put(int.class, "I");
+    PRIMITIVE_TO_SIGNATURE.put(long.class, "J");
+    PRIMITIVE_TO_SIGNATURE.put(float.class, "F");
+    PRIMITIVE_TO_SIGNATURE.put(double.class, "D");
+    PRIMITIVE_TO_SIGNATURE.put(void.class, "V");
+    PRIMITIVE_TO_SIGNATURE.put(boolean.class, "Z");
+  }
+
+  // Returns the internal name of {@code clazz} (also known as the descriptor)
+  private static String getSignature(Class<?> clazz) {
+    String primitiveSignature = PRIMITIVE_TO_SIGNATURE.get(clazz);
+    if (primitiveSignature != null) {
+      return primitiveSignature;
+    } else if (clazz.isArray()) {
+      return "[" + getSignature(clazz.getComponentType());
+    } else {
+      return "L" + clazz.getName().replace('.', '/') + ";";
     }
+  }
 
-    StringBuilder sb = new StringBuilder("(");
-
-    for (Class<?> c : m.getParameterTypes())
-      sb.append((sig = Array.newInstance(c, 0).toString()).substring(1, sig.indexOf('@')));
-
-    return sb.append(')').append(m.getReturnType() == void.class ? "V"
-        : (sig = Array.newInstance(m.getReturnType(), 0).toString()).substring(1, sig.indexOf('@'))).toString();
+  public static String getSignature(Method m) {
+    StringBuilder result = new StringBuilder();
+    result.append('(');
+    Class<?>[] parameterTypes = m.getParameterTypes();
+    for (Class<?> parameterType : parameterTypes) {
+      result.append(getSignature(parameterType));
+    }
+    result.append(')');
+    result.append(getSignature(m.getReturnType()));
+    return result.toString();
   }
 
   public static String get_Field_Type(Class<?> cls, String key) {
