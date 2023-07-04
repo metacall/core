@@ -182,12 +182,11 @@ TEST_F(metacall_wasm_test, CallFunctions)
 	ASSERT_EQ((double)4.0, (double)metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
-	// // It should exit with illegal instruction
-	// #if defined(unix) || defined(__unix__) || defined(__unix) || defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
-	// ASSERT_EXIT((metacall("trap"), exit(0)), ::testing::KilledBySignal(SIGILL), ".*");
-	// #endif
-
-	ASSERT_EQ((void *)NULL, metacall("trap"));
+	// It should exit with illegal instruction
+	#if defined(unix) || defined(__unix__) || defined(__unix) || \
+		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
+	ASSERT_EXIT((metacall("trap"), exit(0)), ::testing::KilledBySignal(SIGILL), ".*");
+	#endif
 }
 
 TEST_F(metacall_wasm_test, LinkModules)
