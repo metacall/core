@@ -36,26 +36,6 @@ protected:
 	}
 };
 
-void TestFunction(void *handle, const char *name, const std::vector<enum metacall_value_id> &expected_param_types, enum metacall_value_id expected_return_type)
-{
-	void *func = metacall_handle_function(handle, name);
-
-	// GoogleTest does not support `ASSERT_NE(NULL, actual)`.
-	ASSERT_TRUE(func != NULL);
-	ASSERT_EQ(expected_param_types.size(), metacall_function_size(func));
-
-	for (size_t i = 0; i < expected_param_types.size(); i++)
-	{
-		enum metacall_value_id param_type;
-		ASSERT_EQ(0, metacall_function_parameter_type(func, i, &param_type));
-		ASSERT_EQ(expected_param_types[i], param_type);
-	}
-
-	enum metacall_value_id return_type;
-	ASSERT_EQ(0, metacall_function_return_type(func, &return_type));
-	ASSERT_EQ(expected_return_type, return_type);
-}
-
 TEST_F(metacall_wasm_test, InitializeAndDestroy)
 {
 	// This is extremely hacky and causes an error when loading the buffer,
@@ -65,13 +45,15 @@ TEST_F(metacall_wasm_test, InitializeAndDestroy)
 	const char dummy_buffer[1] = { 0 };
 	metacall_load_from_memory("wasm", dummy_buffer, 1, NULL);
 
-	ASSERT_EQ(0, metacall_is_initialized("wasm"));
+	ASSERT_EQ((int)0, (int)metacall_is_initialized("wasm"));
 
 	// `metacall_destroy` does nothing if Metacall is not initialized, so we
 	// can safely call it here even though we also call it during tear-down.
-	ASSERT_EQ(0, metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 }
 
+/* TODO: Address sanitizer seems to break with WASM loading, we should either review this or instrument properly wasmtime library */
+#if !defined(__ADDRESS_SANITIZER__)
 TEST_F(metacall_wasm_test, LoadBinaryFromMemory)
 {
 	// See https://webassembly.github.io/spec/core/binary/modules.html#binary-module
@@ -79,36 +61,53 @@ TEST_F(metacall_wasm_test, LoadBinaryFromMemory)
 		0x00, 0x61, 0x73, 0x6d, // Magic bytes
 		0x01, 0x00, 0x00, 0x00	// Version
 	};
-	ASSERT_EQ(0, metacall_load_from_memory("wasm", empty_module, sizeof(empty_module), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_memory("wasm", empty_module, sizeof(empty_module), NULL));
 
 	const char invalid_module[] = { 0 };
-	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, sizeof(invalid_module), NULL));
+	ASSERT_NE((int)0, (int)metacall_load_from_memory("wasm", invalid_module, sizeof(invalid_module), NULL));
 }
 
 TEST_F(metacall_wasm_test, LoadTextFromMemory)
 {
 	const char *empty_module = "(module)";
-	ASSERT_EQ(0, metacall_load_from_memory("wasm", empty_module, strlen(empty_module), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_memory("wasm", empty_module, strlen(empty_module), NULL));
 
 	const char *invalid_module = "(invalid)";
-	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, strlen(invalid_module), NULL));
+	ASSERT_NE((int)0, (int)metacall_load_from_memory("wasm", invalid_module, strlen(invalid_module), NULL));
 }
 
-/* TODO: Address sanitizer seems to break with WASM loading, we should either review this or instrument properly wasmtime library */
-#if defined(BUILD_SCRIPT_TESTS) && !defined(__ADDRESS_SANITIZER__)
 TEST_F(metacall_wasm_test, LoadFromFile)
 {
 	const char *empty_module_filename = "empty_module.wat";
 	const char *invalid_module_filename = "invalid_module.wat";
 
-	ASSERT_EQ(0, metacall_load_from_file("wasm", &empty_module_filename, 1, NULL));
-	ASSERT_NE(0, metacall_load_from_file("wasm", &invalid_module_filename, 1, NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("wasm", &empty_module_filename, 1, NULL));
+	ASSERT_NE((int)0, (int)metacall_load_from_file("wasm", &invalid_module_filename, 1, NULL));
 }
 
 TEST_F(metacall_wasm_test, LoadFromPackage)
 {
-	ASSERT_EQ(0, metacall_load_from_package("wasm", "empty_module.wasm", NULL));
-	ASSERT_NE(0, metacall_load_from_package("wasm", "invalid_module.wasm", NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_package("wasm", "empty_module.wasm", NULL));
+	ASSERT_NE((int)0, (int)metacall_load_from_package("wasm", "invalid_module.wasm", NULL));
+}
+
+void TestFunction(void *handle, const char *name, const std::vector<enum metacall_value_id> &expected_param_types, enum metacall_value_id expected_return_type)
+{
+	void *func = metacall_handle_function(handle, name);
+
+	ASSERT_NE((void *)NULL, (void *)func);
+	ASSERT_EQ((size_t)expected_param_types.size(), (size_t)metacall_function_size(func));
+
+	for (size_t i = 0; i < expected_param_types.size(); ++i)
+	{
+		enum metacall_value_id param_type;
+		ASSERT_EQ((int)0, (int)metacall_function_parameter_type(func, i, &param_type));
+		ASSERT_EQ((enum metacall_value_id)expected_param_types[i], (enum metacall_value_id)param_type);
+	}
+
+	enum metacall_value_id return_type;
+	ASSERT_EQ((int)0, (int)metacall_function_return_type(func, &return_type));
+	ASSERT_EQ((enum metacall_value_id)expected_return_type, (enum metacall_value_id)return_type);
 }
 
 TEST_F(metacall_wasm_test, DiscoverFunctions)
@@ -116,9 +115,9 @@ TEST_F(metacall_wasm_test, DiscoverFunctions)
 	const char *functions_module_filename = "functions.wat";
 	void *handle = NULL;
 
-	ASSERT_EQ(0, metacall_load_from_file("wasm", &functions_module_filename, 1, &handle));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("wasm", &functions_module_filename, 1, &handle));
 
-	ASSERT_EQ(NULL, metacall_handle_function(handle, "does_not_exist"));
+	ASSERT_EQ((void *)NULL, (void *)metacall_handle_function(handle, "does_not_exist"));
 
 	TestFunction(handle, "none_ret_none", {}, METACALL_INVALID);
 	TestFunction(handle, "i64_ret_none", { METACALL_LONG }, METACALL_INVALID);
@@ -133,7 +132,7 @@ TEST_F(metacall_wasm_test, CallFunctions)
 {
 	const char *functions_module_filename = "functions.wat";
 
-	ASSERT_EQ(0, metacall_load_from_file("wasm", &functions_module_filename, 1, NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("wasm", &functions_module_filename, 1, NULL));
 
 	void *ret = metacall("none_ret_none");
 	ASSERT_NE((void *)NULL, (void *)ret);
@@ -151,43 +150,44 @@ TEST_F(metacall_wasm_test, CallFunctions)
 	metacall_value_destroy(ret);
 
 	ret = metacall("none_ret_i32");
-	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
-	ASSERT_EQ(1, metacall_value_to_int(ret));
+	ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
+	ASSERT_EQ((int)1, (int)metacall_value_to_int(ret));
 	metacall_value_destroy(ret);
 
 	ret = metacall("none_ret_i32_f32_i64_f64");
-	ASSERT_EQ(METACALL_ARRAY, metacall_value_id(ret));
+	ASSERT_EQ((enum metacall_value_id)METACALL_ARRAY, (enum metacall_value_id)metacall_value_id(ret));
 
 	void **values = metacall_value_to_array(ret);
-	ASSERT_EQ(METACALL_INT, metacall_value_id(values[0]));
-	ASSERT_EQ(METACALL_FLOAT, metacall_value_id(values[1]));
-	ASSERT_EQ(METACALL_LONG, metacall_value_id(values[2]));
-	ASSERT_EQ(METACALL_DOUBLE, metacall_value_id(values[3]));
-	ASSERT_EQ(1, metacall_value_to_int(values[0]));
-	ASSERT_EQ(2, metacall_value_to_float(values[1]));
-	ASSERT_EQ(3, metacall_value_to_long(values[2]));
-	ASSERT_EQ(4, metacall_value_to_double(values[3]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(values[0]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_FLOAT, (enum metacall_value_id)metacall_value_id(values[1]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(values[2]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(values[3]));
+	ASSERT_EQ((int)1, (int)metacall_value_to_int(values[0]));
+	ASSERT_EQ((float)2.0f, (float)metacall_value_to_float(values[1]));
+	ASSERT_EQ((long)3, (long)metacall_value_to_long(values[2]));
+	ASSERT_EQ((double)4.0, (double)metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
 	ret = metacall("i32_f32_i64_f64_ret_i32_f32_i64_f64", 0, 0, 0, 0);
-	ASSERT_EQ(METACALL_ARRAY, metacall_value_id(ret));
+	ASSERT_EQ((enum metacall_value_id)METACALL_ARRAY, (enum metacall_value_id)metacall_value_id(ret));
 
 	values = metacall_value_to_array(ret);
-	ASSERT_EQ(METACALL_INT, metacall_value_id(values[0]));
-	ASSERT_EQ(METACALL_FLOAT, metacall_value_id(values[1]));
-	ASSERT_EQ(METACALL_LONG, metacall_value_id(values[2]));
-	ASSERT_EQ(METACALL_DOUBLE, metacall_value_id(values[3]));
-	ASSERT_EQ(1, metacall_value_to_int(values[0]));
-	ASSERT_EQ(2, metacall_value_to_float(values[1]));
-	ASSERT_EQ(3, metacall_value_to_long(values[2]));
-	ASSERT_EQ(4, metacall_value_to_double(values[3]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(values[0]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_FLOAT, (enum metacall_value_id)metacall_value_id(values[1]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(values[2]));
+	ASSERT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(values[3]));
+	ASSERT_EQ((int)1, (int)metacall_value_to_int(values[0]));
+	ASSERT_EQ((float)2.0f, (float)metacall_value_to_float(values[1]));
+	ASSERT_EQ((long)3, (long)metacall_value_to_long(values[2]));
+	ASSERT_EQ((double)4.0, (double)metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
-	// It should exit with illegal instruction
-	#if defined(unix) || defined(__unix__) || defined(__unix) || \
-		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
-	ASSERT_EXIT((metacall("trap"), exit(0)), ::testing::KilledBySignal(SIGILL), ".*");
-	#endif
+	// // It should exit with illegal instruction
+	// #if defined(unix) || defined(__unix__) || defined(__unix) || defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
+	// ASSERT_EXIT((metacall("trap"), exit(0)), ::testing::KilledBySignal(SIGILL), ".*");
+	// #endif
+
+	ASSERT_EQ((void *)NULL, metacall("trap"));
 }
 
 TEST_F(metacall_wasm_test, LinkModules)
@@ -198,16 +198,16 @@ TEST_F(metacall_wasm_test, LinkModules)
 		"imports.wat"
 	};
 
-	ASSERT_EQ(0, metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
 
 	void *ret = metacall("duplicate_func_i32");
-	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
-	ASSERT_EQ(1, metacall_value_to_int(ret));
+	ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
+	ASSERT_EQ((int)1, (int)metacall_value_to_int(ret));
 	metacall_value_destroy(ret);
 
 	ret = metacall("duplicate_func_i64");
-	ASSERT_EQ(METACALL_LONG, metacall_value_id(ret));
-	ASSERT_EQ(2, metacall_value_to_long(ret));
+	ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+	ASSERT_EQ((long)2, (long)metacall_value_to_long(ret));
 	metacall_value_destroy(ret);
 }
 
@@ -218,6 +218,6 @@ TEST_F(metacall_wasm_test, InvalidLinkModules)
 		"imports.wat"
 	};
 
-	ASSERT_EQ(1, metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
+	ASSERT_EQ((int)1, (int)metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
 }
 #endif
