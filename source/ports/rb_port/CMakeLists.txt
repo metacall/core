@@ -134,6 +134,9 @@ set_target_properties(${SWIG_MODULE_${target}_REAL_NAME}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
+
+	# Set Ruby extension properies
+	SUFFIX ".so"
 )
 
 #
@@ -183,6 +186,7 @@ target_compile_definitions(${SWIG_MODULE_${target}_REAL_NAME}
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
+	$<$<BOOL:${MSVC}>:RB_PORT_USINGSWIG_EXPORTS>
 
 	INTERFACE
 )
