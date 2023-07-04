@@ -155,8 +155,7 @@ public class bootstrap {
               if (je.getName().endsWith(".class")) {
 
                 String className = je.getName().substring(0, je.getName().length() - 6);
-                className = className.replace(File.separatorChar, '.');
-                System.out.println(className);
+                className = className.replace('/', '.');
                 try {
                   Class<?> c = clsLoader.loadClass(className);
 
