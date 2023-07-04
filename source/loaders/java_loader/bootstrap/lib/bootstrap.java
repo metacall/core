@@ -216,7 +216,7 @@ public class bootstrap {
   public static String getSignature(Method m) {
     String sig;
     try {
-      Field gSig = Method.class.getDeclaredField("signature");
+      Field gSig = java.lang.reflect.Method.class.getDeclaredField("signature");
       gSig.setAccessible(true);
       sig = (String) gSig.get(m);
       if (sig != null)
