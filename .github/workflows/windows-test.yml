@@ -25,9 +25,10 @@ jobs:
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
-          {build: debug, sanitizer: thread-sanitizer},
-          {build: debug, sanitizer: memory-sanitizer},
-          {build: debug, sanitizer: ub-sanitizer},
+          # TODO: Not supported yet
+          # {build: debug, sanitizer: thread-sanitizer},
+          # {build: debug, sanitizer: memory-sanitizer},
+          # {build: debug, sanitizer: ub-sanitizer},
           # TODO: Release build not working
           {build: release, sanitizer: without-sanitizer}
         ]
