@@ -29,8 +29,8 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 ROOT_DIR=$(dirname "$SCRIPT_DIR")
 BUILD_DIR="${ROOT_DIR}/build"
 
-if [ "${BUILD_SANITIZER}" != "address-sanitizer" ] && [ "${BUILD_SANITIZER}" != "thread-sanitizer" ] && [ "${BUILD_SANITIZER}" != "memory-sanitizer" ] && [ "${BUILD_SANITIZER}" != "ub-sanitizer" ]; then
-	echo "Sanitizer '${BUILD_SANITIZER}' not supported, use 'address-sanitizer' or 'thread-sanitizer' or 'memory-sanitizer' or 'ub-sanitizer'."
+if [ "${BUILD_SANITIZER}" != "address-sanitizer" ] && [ "${BUILD_SANITIZER}" != "thread-sanitizer" ] && [ "${BUILD_SANITIZER}" != "memory-sanitizer" ]; then
+	echo "Sanitizer '${BUILD_SANITIZER}' not supported, use 'address-sanitizer' or 'thread-sanitizer' or 'memory-sanitizer'."
 	exit 1
 fi
 

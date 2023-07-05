@@ -91,8 +91,8 @@ sub_test() {
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
-# Build MetaCall Docker Compose with Address Sanitizer for testing (link manually dockerignore files)
-sub_test_address_sanitizer() {
+# Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
+sub_test_sanitizer() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
 
@@ -140,15 +140,6 @@ sub_test_address_sanitizer() {
 
 		rm /tmp/metacall-test-output
 	fi
-}
-
-# Build MetaCall Docker Compose with Thread Sanitizer for testing (link manually dockerignore files)
-sub_test_thread_sanitizer() {
-	# Enable build with thread sanitizer
-	export METACALL_BUILD_SANITIZER="thread-sanitizer"
-
-	# Run tests with thread sanitizer
-	sub_test_address_sanitizer
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -268,6 +259,7 @@ sub_help() {
 	echo "	test"
 	echo "	test-address-sanitizer"
 	echo "	test-thread-sanitizer"
+	echo "	test-memory-sanitizer"
 	echo "	cache"
 	echo "	push"
 	echo "	pack"
@@ -288,10 +280,16 @@ case "$1" in
 		sub_test
 		;;
 	test-address-sanitizer)
-		sub_test_address_sanitizer
+		export METACALL_BUILD_SANITIZER="address-sanitizer"
+		sub_test_sanitizer
 		;;
 	test-thread-sanitizer)
-		sub_test_thread_sanitizer
+		export METACALL_BUILD_SANITIZER="thread-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-memory-sanitizer)
+		export METACALL_BUILD_SANITIZER="memory-sanitizer"
+		sub_test_sanitizer
 		;;
 	cache)
 		sub_cache

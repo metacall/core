@@ -320,7 +320,7 @@ void ModulesClear()
 		 it != modules.end(); ++it)
 	{
 /* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
-#if !defined(__ADDRESS_SANITIZER__) && !defined(__THREAD_SANITIZER__) && !defined(__MEMORY_SANITIZER__) && !defined(__UB_SANITIZER__)
+#if !defined(__ADDRESS_SANITIZER__) && !defined(__THREAD_SANITIZER__) && !defined(__MEMORY_SANITIZER__)
 	#if defined(JS_PORT_TEST_WIN)
 		FreeLibrary(it->second);
 	#elif defined(JS_PORT_TEST_UNIX)

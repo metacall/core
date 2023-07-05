@@ -27,7 +27,7 @@ package metacall
 #include <metacall/metacall.h>
 
 // TODO: Sanitizer
-// #if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__) || defined(__UB_SANITIZER__)
+// #if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
 // void __lsan_do_leak_check(void);
 // #endif
 

@@ -708,9 +708,8 @@ For debugging memory leaks, undefined behaviors and other related problems, the 
 | :--------------------------------: | -------------------------------------------------------------- | :-----------: |
 |    **OPTION_TEST_MEMORYCHECK**     | Enable Valgrind with memcheck tool for the tests.              |      OFF      |
 | **OPTION_BUILD_ADDRESS_SANITIZER** | Build with AddressSanitizer family (GCC, Clang and MSVC).      |      OFF      |
-| **OPTION_BUILD_MEMORY_SANITIZER**  | Build with MemorySanitizer family (Clang and MSVC).            |      OFF      |
 | **OPTION_BUILD_THREAD_SANITIZER**  | Build with ThreadSanitizer family (GCC, Clang and MSVC).       |      OFF      |
-|   **OPTION_BUILD_UB_SANITIZER**    | Build with UndefinedBehaviorSanitizer family (Clang and MSVC). |      OFF      |
+| **OPTION_BUILD_MEMORY_SANITIZER**  | Build with MemorySanitizer family (Clang and MSVC).            |      OFF      |
 
 All options are mutually exclusive. Valgrind is not compatible with AddressSanitizer and AddressSanitizer is not compatible with ThreadSanitizer and AddressSanitizer with MemorySanitizer. Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
 
