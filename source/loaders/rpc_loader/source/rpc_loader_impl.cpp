@@ -392,7 +392,7 @@ int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, s
 	{
 		/* Remove white spaces */
 		url.erase(std::remove_if(url.begin(), url.end(), [](char &c) {
-			return std::isspace<char>(c, std::locale::classic());
+			return std::isspace(c);
 		}),
 			url.end());
 

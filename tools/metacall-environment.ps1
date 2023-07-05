@@ -203,6 +203,38 @@ function Set-TypeScript {
 	npm i react-dom@latest -g
 }
 
+function Set-Curl {
+	Write-Output "Installing curl"
+
+	Set-Location $ROOT_DIR
+	$RuntimeDir = "$env:ProgramFiles\curl"
+	$DepsDir = "$ROOT_DIR\dependencies"
+
+	if (!(Test-Path -Path "$DepsDir\curl.zip")) {
+		# Download installer
+		Write-Output "Curl not found downloading now..."
+		(New-Object Net.WebClient).DownloadFile("https://curl.se/windows/dl-8.1.2_3/curl-8.1.2_3-win64-mingw.zip", "$DepsDir\curl.zip")
+	}
+
+	Set-Location $DepsDir
+
+	7z x "$DepsDir\curl.zip"
+
+	robocopy /move /e "$DepsDir\curl-8.1.2_3-win64-mingw" $RuntimeDir
+
+	Add-to-Path "$RuntimeDir\bin"
+
+	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$CurlDir  = $RuntimeDir.Replace('\', '/')
+
+	$CURL_INCLUDE_DIR="$CurlDir/include"
+	$CURL_LIB="$CurlDir/lib/libcurl.dll.a"
+
+	Write-Output "-DCURL_INCLUDE_DIRS=""$CURL_INCLUDE_DIR""" >> $Env_Opts
+	Write-Output "-DCURL_LIBRARY=""$CURL_LIB""" >> $Env_Opts
+
+}
+
 # Configure
 function Configure {
 	# Create option variables file 
@@ -265,6 +297,7 @@ function Configure {
 		}
 		if ( "$var" -eq 'rpc' ) {
 			Write-Output "rpc selected"
+			Set-Curl
 		}
 		if ( "$var" -eq 'wasm' ) {
 			Write-Output "wasm selected"

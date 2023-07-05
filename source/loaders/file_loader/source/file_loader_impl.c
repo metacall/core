@@ -47,8 +47,10 @@
 	#endif
 
 	#include <windows.h>
+	#include <sys/stat.h>
 
-typedef struct _stat file_stat_type;
+
+	typedef struct _stat file_stat_type;
 
 	#define file_stat _stat
 

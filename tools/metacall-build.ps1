@@ -48,16 +48,19 @@ function sub-build {
 		echo "Failure in build with exit code: $RecentExitCode"
 
 		$Global:ExitCode = $RecentExitCode
+		exit
 	}
 
 	# Tests (coverage needs to run the tests)
 	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
 		echo "Running the tests..."
 
+		# TODO: Move to CMAKE
 		# Prerequisites
 		$files = @(
 			"$env:ProgramFiles\nodejs\lib\libnode.dll",
 			"$env:ProgramFiles\ruby\bin\x64-vcruntime140-ruby310.dll"
+			"$env:ProgramFiles\curl\bin\libcurl-x64.dll"
 		)
 
 		ForEach ($file in $files) {
