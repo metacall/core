@@ -32,10 +32,8 @@ public:
 TEST_F(metacall_node_test, DefaultConstructor)
 {
 	metacall_print_info();
-	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	char *s = NULL;
- 	printf( "%c\n", s[0] );
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
