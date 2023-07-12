@@ -19,6 +19,7 @@
  */
 
 #include <gtest/gtest.h>
+
 #include <metacall/metacall.h>
 
 class metacall_logs_test : public testing::Test
