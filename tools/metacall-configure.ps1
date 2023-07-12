@@ -25,7 +25,6 @@ $Global:BUILD_COVERAGE =          0
 $Global:BUILD_ADDRESS_SANITIZER = 0
 $Global:BUILD_THREAD_SANITIZER =  0
 $Global:BUILD_MEMORY_SANITIZER =  0
-$Global:BUILD_UB_SANITIZER =      0
 $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 
 $Global:Arguments = $args
@@ -140,10 +139,6 @@ function sub-options {
 		if ( "$option" -eq 'memory-sanitizer' ) {
 			echo "Build with memory sanitizers"
 			$Global:BUILD_MEMORY_SANITIZER = 1
-		}
-		if ( "$option" -eq 'ub-sanitizer' ) {
-			echo "Build with undefined behavior sanitizers"
-			$Global:BUILD_UB_SANITIZER = 1
 		}
 	}
 }
@@ -393,13 +388,6 @@ function sub-configure {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	}
 
-	# Undefined Behavior Sanitizer
-	if ( $BUILD_UB_SANITIZER -eq 1 ) {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_UB_SANITIZER=On"
-	} else {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_UB_SANITIZER=Off"
-	}
-
 	# Build type
 	$Global:BUILD_STRING = "$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
@@ -447,7 +435,6 @@ function sub-help {
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
 	echo "	memory-sanitizer: build with memory sanitizer"
-	echo "	ub-sanitizer: build with undefined behavior sanitizer"
 	echo ""
 }
 

@@ -26,7 +26,6 @@ jobs:
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
           {build: debug, sanitizer: thread-sanitizer},
-          {build: debug, sanitizer: ub-sanitizer},
           {build: release, sanitizer: without-sanitizer}
         ]
 

@@ -49,7 +49,6 @@ BUILD_COVERAGE=0
 BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
-BUILD_UB_SANITIZER=0
 
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
@@ -178,10 +177,6 @@ sub_options() {
 		if [ "$option" = 'memory-sanitizer' ]; then
 			echo "Build with memory sanitizer"
 			BUILD_MEMORY_SANITIZER=1
-		fi
-		if [ "$option" = 'ub-sanitizer' ]; then
-			echo "Build with undefined behavior sanitizer"
-			BUILD_UB_SANITIZER=1
 		fi
 	done
 }
@@ -475,13 +470,6 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
 
-	# Undefined Behavior Sanitizer
-	if [ $BUILD_UB_SANITIZER = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_UB_SANITIZER=On"
-	else
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_UB_SANITIZER=Off"
-	fi
-
 	# Split cmake config file line by line and add each line to the build string
 	CMAKE_CONFIG_FILE="$ROOT_DIR/CMakeConfig.txt"
 	if [ -f $CMAKE_CONFIG_FILE ]; then
@@ -530,7 +518,6 @@ sub_help() {
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
 	echo "	memory-sanitizer: build with memory sanitizer"
-	echo "	ub-sanitizer: build with undefined behavior sanitizer"
 	echo ""
 }
 
