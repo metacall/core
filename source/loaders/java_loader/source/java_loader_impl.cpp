@@ -501,6 +501,7 @@ value java_object_interface_get(object obj, object_impl impl, struct accessor_ty
 				}
 
 				case TYPE_ARRAY: {
+					// TODO: Make this generic and recursive for any kind of array
 					if (!strcmp(fType, "[Z"))
 					{
 						jbooleanArray gotVal = (jbooleanArray)java_impl->env->GetObjectField(clsObj, fID);
@@ -601,7 +602,6 @@ value java_object_interface_get(object obj, object_impl impl, struct accessor_ty
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
-						// TODO: Make this generic and recursive for any kind of array
 						jobjectArray gotVal = (jobjectArray)java_impl->env->GetObjectField(clsObj, fID);
 						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
 
@@ -616,6 +616,11 @@ value java_object_interface_get(object obj, object_impl impl, struct accessor_ty
 						}
 
 						return v;
+					}
+					else
+					{
+						log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert array type %s from Java to MetaCall value", type_name(fieldType));
+						return NULL;
 					}
 				}
 
@@ -1257,9 +1262,19 @@ value java_class_interface_static_get(klass cls, class_impl impl, struct accesso
 
 								break;
 							}
+
+							default: {
+								log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert array type %s from Java to MetaCall value", type_name(fieldType));
+								break;
+							}
 						}
 
 						return v;
+					}
+					else
+					{
+						log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert array type %s from Java to MetaCall value", type_name(fieldType));
+						break;
 					}
 				}
 
@@ -1608,7 +1623,15 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 		vm_args.options = options;
 		vm_args.ignoreUnrecognized = false; // Invalid options make the JVM init fail
 
-		jint rc = JNI_CreateJavaVM(&java_impl->jvm, (void **)&java_impl->env, &vm_args);
+		union
+		{
+			JNIEnv **env;
+			void **ptr;
+		} env_cast;
+
+		env_cast.env = &java_impl->env;
+
+		jint rc = JNI_CreateJavaVM(&java_impl->jvm, env_cast.ptr, &vm_args);
 
 		delete[] options;
 
@@ -2038,7 +2061,15 @@ int java_loader_impl_destroy(loader_impl impl)
 
 	if (java_impl != NULL)
 	{
-		jint rc = java_impl->jvm->AttachCurrentThread((void **)&java_impl->env, NULL);
+		union
+		{
+			JNIEnv **env;
+			void **ptr;
+		} env_cast;
+
+		env_cast.env = &java_impl->env;
+
+		jint rc = java_impl->jvm->AttachCurrentThread(env_cast.ptr, NULL);
 
 		if (rc != JNI_OK)
 		{

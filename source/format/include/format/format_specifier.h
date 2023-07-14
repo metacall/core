@@ -101,7 +101,7 @@ extern "C" {
 	#define FORMAT_PREFIX "z"
 #elif defined(FORMAT_64BIT)
 	#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		#define FORMAT_PREFIX "l"
+		#define FORMAT_PREFIX "ll"
 	#else
 		#define FORMAT_PREFIX
 	#endif
