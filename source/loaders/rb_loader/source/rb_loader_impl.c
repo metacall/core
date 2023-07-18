@@ -488,18 +488,10 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			struct loader_impl_rb_funcall_protect_type protect;
 			int state;
 
-			/* TODO: Improve this horrible code in the future */
-			for (args_count = args_size; args_count > 0; --args_count)
-			{
-				args_value[args_count] = args_value[args_count - 1];
-			}
-
-			args_value[0] = ID2SYM(rb_function->method_id);
-
-			protect.argc = 1 + args_size;
+			protect.argc = args_size;
 			protect.argv = args_value;
 			protect.module_instance = rb_function->module_instance;
-			protect.id = rb_intern("send");
+			protect.id = rb_function->method_id;
 
 			result_value = rb_protect(rb_loader_impl_funcall2_protect, (VALUE)&protect, &state);
 
@@ -515,20 +507,12 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			struct loader_impl_rb_funcall_protect_type protect;
 			int state;
 
-			/* TODO: Improve this horrible code in the future */
-			for (args_count = ducktype_args_count; args_count > 0; --args_count)
-			{
-				args_value[args_count] = args_value[args_count - 1];
-			}
+			args_value[ducktype_args_count] = rb_function->args_hash;
 
-			args_value[0] = ID2SYM(rb_function->method_id);
-
-			args_value[ducktype_args_count + 1] = rb_function->args_hash;
-
-			protect.argc = 1 + ducktype_args_count + 1;
+			protect.argc = ducktype_args_count + 1;
 			protect.argv = args_value;
 			protect.module_instance = rb_function->module_instance;
-			protect.id = rb_intern("send");
+			protect.id = rb_function->method_id;
 
 			result_value = rb_protect(rb_loader_impl_funcallv_kw_protect, (VALUE)&protect, &state);
 
