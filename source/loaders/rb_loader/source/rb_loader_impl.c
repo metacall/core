@@ -468,12 +468,11 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 		{
 			struct loader_impl_rb_funcall_protect_type protect;
 			int state;
-			VALUE argv[2] = { ID2SYM(rb_function->method_id), rb_function->args_hash };
 
-			protect.argc = 2;
-			protect.argv = argv;
+			protect.argc = 1;
+			protect.argv = &rb_function->args_hash;
 			protect.module_instance = rb_function->module_instance;
-			protect.id = rb_intern("send");
+			protect.id = rb_function->method_id;
 
 			result_value = rb_protect(rb_loader_impl_funcallv_kw_protect, (VALUE)&protect, &state);
 
