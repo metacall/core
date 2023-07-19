@@ -50,10 +50,12 @@ include(FindPackageHandleStandardArgs)
 # Find Clang C API Library
 _libclang_generate_search_paths("/usr/lib/llvm-VERSION/lib/" LibClang_LIBRARY_PATHS)
 
-find_library(LibClang_LIBRARY
-	NAMES clang
-	PATHS ${LibClang_LIBRARY_PATHS} /usr/lib # Use this path as a fallback
-)
+if(NOT LibClang_LIBRARY)
+	find_library(LibClang_LIBRARY
+		NAMES clang
+		PATHS ${LibClang_LIBRARY_PATHS} /usr/lib # Use this path as a fallback
+	)
+endif()
 
 # Find Clang C API Headers
 _libclang_generate_search_paths("/usr/lib/llvm-VERSION/include/clang-c" LibClang_INCLUDE_PATHS)
@@ -68,10 +70,12 @@ set(LibClang_INCLUDE_HEADERS
 	Platform.h
 )
 
-find_path(LibClang_INCLUDE_DIR
-	NAMES ${LibClang_INCLUDE_HEADERS}
-	PATHS ${LibClang_INCLUDE_PATHS} /usr/include/clang-c # Use this path as a fallback
-)
+if(NOT LibClang_INCLUDE_DIR)
+	find_path(LibClang_INCLUDE_DIR
+		NAMES ${LibClang_INCLUDE_HEADERS}
+		PATHS ${LibClang_INCLUDE_PATHS} /usr/include/clang-c # Use this path as a fallback
+	)
+endif()
 
 get_filename_component(LibClang_INCLUDE_DIR ${LibClang_INCLUDE_DIR} DIRECTORY)
 
