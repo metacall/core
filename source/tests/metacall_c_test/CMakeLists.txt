@@ -4,6 +4,17 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_C OR NOT OPTION_BUILD_SC
 endif()
 
 #
+# External dependencies
+#
+
+find_package(LibFFI)
+
+if(NOT LIBFFI_FOUND)
+	message(SEND_ERROR "Foreing Function Interface library not found")
+	return()
+endif()
+
+#
 # Executable name and options
 #
 
@@ -95,6 +106,9 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	LIBFFI_INCLUDE_DIR="${LIBFFI_INCLUDE_DIR}"
+	LIBFFI_LIBRARY="${LIBFFI_LIBRARY}"
 )
 
 #

@@ -14,7 +14,6 @@ if(NOT LIBFFI_FOUND)
 	return()
 endif()
 
-
 find_package(LibTCC)
 
 if(NOT LIBTCC_FOUND)
