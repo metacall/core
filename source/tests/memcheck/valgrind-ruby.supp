@@ -1,0 +1,171 @@
+{
+    Init Ruby VM
+    Memcheck:Leak
+    ...
+    fun:ruby_setup
+    ...
+}
+{
+    Ruby false positive eval_string_with_cref
+    Memcheck:Leak
+    ...
+    fun:eval_string_with_cref
+    ...
+}
+{
+    Ruby false positive rb_add_method_cfunc
+    Memcheck:Leak
+    ...
+    fun:rb_add_method_cfunc
+    ...
+}
+{
+    Ruby false positive rb_check_funcall
+    Memcheck:Leak
+    ...
+    fun:rb_check_funcall
+    ...
+}
+{
+    Ruby false positive rb_class_boot: Called for all the different ways to create a Class
+    Memcheck:Leak
+    ...
+    fun:rb_class_boot
+    ...
+}
+{
+    Ruby false positive rb_enc_raise
+    Memcheck:Leak
+    ...
+    fun:rb_enc_raise
+    ...
+}
+{
+    Ruby false positive rb_exc_raise
+    Memcheck:Leak
+    ...
+    fun:rb_exc_raise
+    ...
+}
+{
+    Ruby false positive rb_extend_object
+    Memcheck:Leak
+    ...
+    fun:rb_extend_object
+    ...
+}
+{
+    Ruby false positive rb_funcall
+    Memcheck:Leak
+    ...
+    fun:rb_funcall
+    ...
+}
+{
+    Ruby false positive rb_intern
+    Memcheck:Leak
+    ...
+    fun:rb_intern
+    ...
+}
+{
+    Ruby false positive rb_ivar_set
+    Memcheck:Leak
+    ...
+    fun:rb_ivar_set
+    ...
+}
+{
+    Ruby false positive rb_module_new
+    Memcheck:Leak
+    ...
+    fun:rb_module_new
+    ...
+}
+{
+    Ruby false positive rb_raise
+    Memcheck:Leak
+    ...
+    fun:rb_raise
+    ...
+}
+{
+    Ruby false positive rb_rescue
+    Memcheck:Leak
+    ...
+    fun:rb_rescue
+    ...
+}
+{
+    Ruby false positive rb_respond_to
+    Memcheck:Leak
+    ...
+    fun:rb_respond_to
+    ...
+}
+{
+    Ruby false positive rb_thread_create: Threads are relased to a cache, so they may be reported as a leak
+    Memcheck:Leak
+    ...
+    fun:rb_thread_create
+    ...
+}
+{
+    Ruby false positive rb_yield
+    Memcheck:Leak
+    ...
+    fun:rb_yield
+    ...
+}
+{
+    On platforms where memcpy is safe for overlapped memory, the compiler will sometimes replace memmove with memcpy. Valgrind may report a false positive.
+    Memcheck:Overlap
+    fun:__memcpy_chk
+    fun:memmove
+    ...
+}
+{
+    Requiring a file will add it to the loaded features, which may be reported as a leak.
+    Memcheck:Leak
+    ...
+    fun:require_internal
+    ...
+}
+{
+    Remove this after Ruby 2.7.7, 3.0.5, 3.1.3 are relased. See: https://github.com/Shopify/ruby_memcheck/issues/6
+    Memcheck:Leak
+    ...
+    fun:stack_chunk_alloc
+    ...
+}
+{
+    recursive_list_access creates a hash called `list` that is stored on the threadptr_recursive_hash. This is reported as a memory leak.
+    Memcheck:Leak
+    ...
+    fun:rb_ident_hash_new
+    fun:recursive_list_access
+    fun:exec_recursive
+    ...
+}
+{
+    "Invalid read of size 8" when marking the stack of fibers
+    Memcheck:Addr8
+    fun:each_location*
+    ...
+}
+{
+    Rust probes for statx(buf), will be fixed in Valgrind >= 3.1.6.0
+    Memcheck:Param
+    statx(buf)
+    ...
+    fun:*try_statx*
+    ...
+}
+{
+    Rust probes for statx(file_name), will be fixed in Valgrind >= 3.1.6.0
+    Memcheck:Param
+    statx(file_name)
+    ...
+    fun:*try_statx*
+    ...
+}
