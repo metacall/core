@@ -47,7 +47,44 @@ if(PROJECT_OS_FAMILY STREQUAL unix)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --with-libgcc --with-selinux)
 	endif()
 elseif(PROJECT_OS_FAMILY STREQUAL macos)
-	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --enable-cross)
+	# TODO: --disable-static is not working on MacOS, this should be reported or further investigated
+
+	# AddressSanitizer:DEADLYSIGNAL
+	# =================================================================
+	# ==5339==ERROR: AddressSanitizer: BUS on unknown address 0x7fffac377b10 (pc 0x7fffac377b10 bp 0x7ffee8c2a0a0 sp 0x7ffee8c29f98 T0)
+	#     #0 0x7fffac377b0f in off32 (libsystem_c.dylib:x86_64+0x3647db0f)
+	#     #1 0x10bab502d in parse_btype tccgen.c
+	#     #2 0x10babcd02 in decl0 tccgen.c:8197
+	#     #3 0x10baa74d8 in tccgen_compile tccgen.c:8449
+	#     #4 0x10ba90c48 in tcc_compile libtcc.c:742
+	#     #5 0x10ba9186a in tcc_add_file_internal libtcc.c:1101
+	#     #6 0x10b9e8db1 in c_loader_impl_load_from_file c_loader_impl.cpp:933
+	#     #7 0x1071b8fc5 in loader_impl_load_from_file loader_impl.c:842
+	#     #8 0x1071b302d in loader_load_from_file loader.c:317
+	#     #9 0x1071c9488 in metacall_load_from_file metacall.c:348
+	#     #10 0x106fd7ce1 in metacall_c_test_DefaultConstructor_Test::TestBody() metacall_c_test.cpp:53
+	#     #11 0x10704125d in void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) (metacall-c-testd:x86_64+0x10006d25d)
+	#     #12 0x107002e9a in void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) (metacall-c-testd:x86_64+0x10002ee9a)
+	#     #13 0x107002dd2 in testing::Test::Run() (metacall-c-testd:x86_64+0x10002edd2)
+	#     #14 0x107004011 in testing::TestInfo::Run() (metacall-c-testd:x86_64+0x100030011)
+	#     #15 0x1070051ff in testing::TestSuite::Run() (metacall-c-testd:x86_64+0x1000311ff)
+	#     #16 0x107014ce5 in testing::internal::UnitTestImpl::RunAllTests() (metacall-c-testd:x86_64+0x100040ce5)
+	#     #17 0x10704570d in bool testing::internal::HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>(testing::internal::UnitTestImpl*, bool (testing::internal::UnitTestImpl::*)(), char const*) (metacall-c-testd:x86_64+0x10007170d)
+	#     #18 0x10701465a in bool testing::internal::HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>(testing::internal::UnitTestImpl*, bool (testing::internal::UnitTestImpl::*)(), char const*) (metacall-c-testd:x86_64+0x10004065a)
+	#     #19 0x10701452f in testing::UnitTest::Run() (metacall-c-testd:x86_64+0x10004052f)
+	#     #20 0x106fd6049 in RUN_ALL_TESTS() gtest.h:2490
+	#     #21 0x106fd5ee3 in main main.cpp:27
+	#     #22 0x7fff75eb03d4 in start (libdyld.dylib:x86_64+0x163d4)
+
+	# ==5339==Register values:
+	# rax = 0x000000000000002c  rbx = 0x0000000000000001  rcx = 0x00006250000062a0  rdx = 0x0000000000000000
+	# rdi = 0x000000000000002c  rsi = 0x00007ffee8c2a028  rbp = 0x00007ffee8c2a0a0  rsp = 0x00007ffee8c29f98
+	#  r8 = 0x000000010bb0f350   r9 = 0x0000000111c5457c  r10 = 0x0000000000000000  r11 = 0x00007fffac377b10
+	# r12 = 0x0000000000000000  r13 = 0x00007ffee8c29fe0  r14 = 0x000000010bb13c50  r15 = 0x000000000000053b
+	# AddressSanitizer can not provide additional info.
+	# SUMMARY: AddressSanitizer: BUS (libsystem_c.dylib:x86_64+0x3647db0f) in off32
+
+	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --enable-cross) # --disable-static
 elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static --with-libgcc --with-selinux)

@@ -75,7 +75,7 @@ if(PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 	set(RUSTC_LIBS)
 	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime ${TARGET_INSTALL_DEPENDENCY})
 	foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
-		get_filename_component(rustc_lib_name ${rustc_lib} NAME )
+		get_filename_component(rustc_lib_name ${rustc_lib} NAME)
 		list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
 		add_custom_command(TARGET ${target}_patchelf POST_BUILD
 			COMMAND ${Patchelf_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
