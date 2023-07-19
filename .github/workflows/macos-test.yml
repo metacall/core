@@ -62,7 +62,7 @@ jobs:
       - name: Set up the environment
         run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base python nodejs typescript java ruby wasm rpc file cobol go backtrace #netcore5 rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: base python nodejs typescript java ruby wasm rpc file cobol rust c go backtrace #netcore5 rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |
@@ -70,7 +70,7 @@ jobs:
           . .env
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs typescript java ruby wasm rpc file cobol go benchmarks install # netcore5 c rust examples pack # v8 coverage
+          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs typescript java ruby wasm rpc file cobol rust c go benchmarks install # netcore5 examples pack # v8 coverage
 
       - name: Build
         working-directory: ./build

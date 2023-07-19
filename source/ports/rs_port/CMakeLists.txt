@@ -147,7 +147,8 @@ endif()
 # Dependecies
 #
 
-if(Rust_BINDGEN_EXECUTABLE)
+# Find bindgen (disable bindgen dependency for Clang as a workaround for stdlib.h not found issue)
+if(Rust_BINDGEN_EXECUTABLE AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	add_dependencies(${target}
 		${target}_bindings
 	)

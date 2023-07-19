@@ -629,6 +629,15 @@ sub_c(){
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing tcc
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.14/main clang-libs=11.1.0-r1 clang-dev=11.1.0-r1
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install libffi
+		brew install llvm@11
+		brew link llvm@11 --force --overwrite
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		LIBCLANG_PREFIX=$(brew --prefix llvm@11)
+		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -705,6 +714,9 @@ sub_rust(){
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		brew install patchelf
 	fi
 }
 

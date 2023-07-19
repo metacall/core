@@ -113,8 +113,12 @@ if(APPLE)
 
 	set(PROJECT_OS_FAMILY macos)
 
-	exec_program(uname ARGS -v  OUTPUT_VARIABLE PROJECT_OS_VERSION)
-	string(REGEX MATCH "[0-9]+" PROJECT_OS_VERSION ${PROJECT_OS_VERSION})
+	# Retrieve MacOs version from sv_vers
+	exec_program(sw_vers OUTPUT_VARIABLE SW_VERS_OUTPUT)
+	string(REPLACE "\n" ";" SW_VERS_OUTPUT "${SW_VERS_OUTPUT}")
+	string(REPLACE ":" ";" SW_VERS_OUTPUT "${SW_VERS_OUTPUT}")
+	list(GET SW_VERS_OUTPUT 3 PROJECT_OS_VERSION)
+	string(STRIP "${PROJECT_OS_VERSION}" PROJECT_OS_VERSION)
 endif()
 
 # Check QNX

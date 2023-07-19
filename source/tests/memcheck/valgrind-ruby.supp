@@ -118,6 +118,55 @@
     ...
 }
 {
+    Ruby false positive rb_iseq_new_with_opt
+    Memcheck:Leak
+    ...
+    fun:rb_iseq_new_with_opt
+    ...
+}
+{
+    Ruby false positive rb_str_subseq
+    Memcheck:Leak
+    ...
+    fun:rb_str_subseq
+    ...
+}
+{
+    Ruby false positive rb_iseq_constant_body_alloc
+    Memcheck:Leak
+    ...
+    fun:rb_iseq_constant_body_alloc
+    ...
+}
+{
+    Ruby false positive rb_singleton_class
+    Memcheck:Leak
+    ...
+    fun:rb_singleton_class
+    ...
+}
+{
+    Ruby false positive rb_include_module
+    Memcheck:Leak
+    ...
+    fun:rb_include_module
+    ...
+}
+{
+    Ruby false positive rb_define_class
+    Memcheck:Leak
+    ...
+    fun:rb_define_class
+    ...
+}
+{
+    Ruby false positive rb_enc_str_new
+    Memcheck:Leak
+    ...
+    fun:rb_enc_str_new
+    ...
+}
+{
     On platforms where memcpy is safe for overlapped memory, the compiler will sometimes replace memmove with memcpy. Valgrind may report a false positive.
     Memcheck:Overlap
     fun:__memcpy_chk
