@@ -56,11 +56,13 @@ else()
 	set(LIBFFI_PREFIXES)
 endif()
 
-find_path(LIBFFI_INCLUDE_DIR ffi.h
-	PATHS /usr /usr/include /usr/local /opt/local /usr/include/ffi
-	PATH_SUFFIXES ${LIBFFI_SUFFIXES}
-	HINT LIBFFI_PREFIXES
-)
+if(NOT LIBFFI_INCLUDE_DIR)
+	find_path(LIBFFI_INCLUDE_DIR ffi.h
+		PATHS /usr /usr/include /usr/local /opt/local /usr/include/ffi
+		PATH_SUFFIXES ${LIBFFI_SUFFIXES}
+		HINT LIBFFI_PREFIXES
+	)
+endif()
 
 # Try to load by using PkgConfig
 if(NOT LIBFFI_LIBRARY OR NOT LIBFFI_INCLUDE_DIR)
