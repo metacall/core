@@ -69,7 +69,7 @@ jobs:
         uses: benchmark-action/github-action-benchmark@v1
         with:
             tool: 'googlecpp'
-            output-file-path: ./build/source/benchmarks/metacall_py_call_bench/metacall-py-call-bench.json
+            output-file-path: ./metacall-py-call-bench.json
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Push and deploy GitHub pages branch automatically
