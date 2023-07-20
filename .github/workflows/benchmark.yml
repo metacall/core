@@ -1,0 +1,69 @@
+name: Metacall Benchmarks
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    tags:
+      - "v*.*.*"
+    branches:
+      - master
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [ubuntu-latest, macos-latest]
+          options: [
+            {build: debug, sanitizer: address-sanitizer}
+          ]
+
+    env:
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
+      - name: Set up the environment
+        run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+        env:
+          METACALL_INSTALL_OPTIONS: base python backtrace 
+      - name: Configure
+        run: |
+          cd build
+          . .env
+          bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
+        env:
+          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python benchmarks install 
+
+      - name: Build
+        working-directory: ./build
+        # TODO: Remove the disable option for fork safe once funchook problem is solved
+        run: |
+          . .env
+          cmake -DOPTION_FORK_SAFE=OFF  ..
+          bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
+        env:
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+            tool: 'googlecpp'
+            output-file-path: ./build/source/benchmarks/metacall_py_call_bench/metacall_py_call_bench.json
+            # Access token to deploy GitHub Pages branch
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            # Push and deploy GitHub pages branch automatically
+            auto-push: true
