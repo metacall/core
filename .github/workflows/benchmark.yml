@@ -75,14 +75,15 @@ jobs:
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
+            name: Metacall Benchmarks
             tool: 'googlecpp'
             output-file-path: ./build/metacall-py-call-bench.json
-            # Previos benchmark data
-            external-data-json-path: ./cache/benchmark-data.json
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Push and deploy GitHub pages branch automatically
             auto-push: true
             # Github Pages branch name
             gh-pages-branch: pages
+            # Comment in case of alert
+            comment-on-alert: true
 
