@@ -44,8 +44,8 @@ jobs:
 
       - name: Configure
         run: |
+          cd build
           if [ "$(uname)" == "Darwin" ]; then
-            cd build
             . .env
           fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
