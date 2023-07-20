@@ -21,10 +21,8 @@ jobs:
         fail-fast: false
         matrix:
           os: [ubuntu-latest, macos-latest]
-          options: [
-            {build: debug, sanitizer: address-sanitizer}
-          ]
-
+          options: [ {build:debug, sanitizer: address-sanitizer} ]
+          
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
