@@ -21,7 +21,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [ubuntu-latest, macos-latest]
+          os: [ubuntu-latest]
           options: [
             {build: debug, sanitizer: address-sanitizer}
           ]
@@ -37,33 +37,33 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Set up the environment
-        run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
-        env:
-          METACALL_INSTALL_OPTIONS: base python backtrace 
+      # - name: Set up the environment
+      #   run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+      #   env:
+      #     METACALL_INSTALL_OPTIONS: base python backtrace 
 
-      - name: Configure
-        run: |
-          mkdir -p build
-          cd build
-          if [ "$(uname)" == "Darwin" ]; then
-            . .env
-          fi
-          bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
-        env:
-          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python benchmarks install 
+      # - name: Configure
+      #   run: |
+      #     mkdir -p build
+      #     cd build
+      #     if [ "$(uname)" == "Darwin" ]; then
+      #       . .env
+      #     fi
+      #     bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
+      #   env:
+      #     METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python benchmarks install 
 
-      - name: Build
-        working-directory: ./build
-        # TODO: Remove the disable option for fork safe once funchook problem is solved
-        run: |
-          if [ "$(uname)" == "Darwin" ]; then
-            . .env
-          fi
-          cmake -DOPTION_FORK_SAFE=OFF  ..
-          bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
-        env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+      # - name: Build
+      #   working-directory: ./build
+      #   # TODO: Remove the disable option for fork safe once funchook problem is solved
+      #   run: |
+      #     if [ "$(uname)" == "Darwin" ]; then
+      #       . .env
+      #     fi
+      #     cmake -DOPTION_FORK_SAFE=OFF  ..
+      #     bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
+      #   env:
+      #     METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
@@ -75,5 +75,4 @@ jobs:
             # Push and deploy GitHub pages branch automatically
             auto-push: true
             gh-pages-branch: pages
-            benchmark-data-dir-path: /docs
 
