@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - develop
+      - benchmark_ci
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -21,7 +22,9 @@ jobs:
         fail-fast: false
         matrix:
           os: [ubuntu-latest, macos-latest]
-          options: [ {build:debug, sanitizer: address-sanitizer} ]
+          options: [
+            {build: debug, sanitizer: address-sanitizer}
+          ]
           
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
