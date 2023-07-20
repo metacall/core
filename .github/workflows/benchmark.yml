@@ -41,11 +41,13 @@ jobs:
         run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
           METACALL_INSTALL_OPTIONS: base python backtrace 
+
       - name: Configure
         run: |
-          mkdir -p build
-          cd build
-          . .env
+          if [ "$(uname)" == "Darwin" ]; then
+            cd build
+            . .env
+          fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
           METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python benchmarks install 
@@ -54,7 +56,9 @@ jobs:
         working-directory: ./build
         # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
-          . .env
+          if [ "$(uname)" == "Darwin" ]; then
+            . .env
+          fi
           cmake -DOPTION_FORK_SAFE=OFF  ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
