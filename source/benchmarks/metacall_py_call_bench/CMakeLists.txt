@@ -120,7 +120,7 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
-	--benchmark_out=${CMAKE_CURRENT_BINARY_DIR}/${target}.json
+	--benchmark_out=${PROJECT_OUTPUT_DIR}/${target}.json
 )
 
 #
