@@ -42,6 +42,7 @@ jobs:
           METACALL_INSTALL_OPTIONS: base python backtrace 
       - name: Configure
         run: |
+          mkdir -p build
           cd build
           . .env
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
@@ -62,7 +63,7 @@ jobs:
         uses: benchmark-action/github-action-benchmark@v1
         with:
             tool: 'googlecpp'
-            output-file-path: ./build/source/benchmarks/metacall_py_call_bench/metacall_py_call_bench.json
+            output-file-path: ./build/source/benchmarks/metacall_py_call_bench/metacall-py-call-bench.json
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Push and deploy GitHub pages branch automatically
