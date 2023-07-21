@@ -79,4 +79,4 @@ jobs:
             gh-pages-branch: pages
             # Comment in case of alert
             comment-on-alert: true
-            benchmark-data-dir-path: dev/bench/${{ matrix.options.os }}/
+            benchmark-data-dir-path: dev/bench/ahmed/
