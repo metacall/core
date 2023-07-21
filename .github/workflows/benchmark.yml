@@ -68,7 +68,7 @@ jobs:
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
-            name: Metacall ${{ matrix.options.os }} Benchmarks
+            name: Metacall Benchmarks
             tool: 'googlecpp'
             output-file-path: ./metacall-py-call-bench.json
             # Access token to deploy GitHub Pages branch
