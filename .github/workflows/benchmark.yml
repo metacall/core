@@ -25,7 +25,11 @@ jobs:
           options: [
             {build: debug, sanitizer: without-sanitizer}
           ]
-          benchs : [metacall-py-call-bench.json, metacall-py-init-bench.json]
+          benchs : [
+            metacall-py-call-bench.json, 
+            metacall-py-init-bench.json,
+            metacall-py-c-api-bench.json
+            ]
           
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
