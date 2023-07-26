@@ -45,6 +45,7 @@ jobs:
           BENCH_NAME=$(echo ${{ matrix.benchs }} | sed 's/metacall-\(.*\)-bench.json/\1/')
           # Set the OS_NAME environment variable for use in subsequent steps
           echo "OS_NAME=${OS_NAME}" >> $GITHUB_ENV
+          echo "BENCH_NAME=${BENCH_NAME}" >> $GITHUB_ENV
           sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
           METACALL_INSTALL_OPTIONS: base python backtrace 
