@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - develop
+      - benchmark_ci
       
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -20,10 +21,11 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macos-latest, ubuntu-latest]
+          os: [macos-latest, ubuntu-latest, windows-latest]
           options: [
-            {build: debug, sanitizer: address-sanitizer}
+            {build: debug, sanitizer: without-sanitizer}
           ]
+          benchs : [metacall-py-call-bench.json, metacall-py-init-bench.json]
           
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -75,7 +77,7 @@ jobs:
         with:
             name: Metacall ${{ env.OS_NAME }} Benchmarks
             tool: 'googlecpp'
-            output-file-path: ./build/metacall-py-call-bench.json
+            output-file-path: ./build/${{ matrix.benchs }}
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Push and deploy GitHub pages branch automatically
