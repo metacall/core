@@ -128,8 +128,8 @@ jobs:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
         if: matrix.os == 'windows-2019'
 
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
         if:  matrix.os == 'windows-2019'
 
       - name: Store benchmark result
