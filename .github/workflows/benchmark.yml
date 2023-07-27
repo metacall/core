@@ -59,6 +59,7 @@ jobs:
           # Set the OS_NAME environment variable for use in subsequent steps
           echo "OS_NAME=${OS_NAME}" >> $GITHUB_ENV
           echo "BENCH_NAME=${BENCH_NAME}" >> $GITHUB_ENV
+          echo "BENCH_PATH=./build/" >> $GITHUB_ENV
         if: matrix.os != 'windows-2019'
 
       - name: Prepare variables (Windows)
@@ -71,6 +72,7 @@ jobs:
           echo "OS_NAME=$env:OS_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
           # Set the BENCH_NAME environment variable for use in subsequent steps
           echo "BENCH_NAME=$env:BENCH_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "BENCH_PATH=./build/Debug/" | Out-File -FilePath $env:GITHUB_ENV -Append
         if: matrix.os == 'windows-2019'
           
       - name: Set up the environment (macOS/Linux)
@@ -140,7 +142,7 @@ jobs:
         with:
             name: Metacall ${{ env.OS_NAME }}-${{ env.BENCH_NAME }} Benchmark
             tool: 'googlecpp'
-            output-file-path: ./build/${{ matrix.benchs }}
+            output-file-path: ${{ env.BENCH_PATH }}${{ matrix.benchs }}
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Push and deploy GitHub pages branch automatically
