@@ -51,28 +51,26 @@ jobs:
           arch: amd64
         if: matrix.os == 'windows-2019'
 
-      - name: Prepare variables
+      - name: Prepare variables (macOS/Linux)
         run: |
-          # Check if the OS is Windows
-          if [ ${{ matrix.os }} == "windows-2019" ]; then
-            # Extract the OS name from matrix.os
-            $env:OS_NAME = $env:matrix_os -replace '-latest$', ''
-            # Extract the benchmark name from matrix.benchs
-            $env:BENCH_NAME = $env:matrix_benchs -replace 'metacall-(.*?)-bench.json', '$1'
+          # Extract the OS name from matrix.os
+          OS_NAME=$(echo ${{ matrix.os }} | sed 's/-latest$//')
+          BENCH_NAME=$(echo ${{ matrix.benchs }} | sed 's/metacall-\(.*\)-bench.json/\1/')
+          # Set the OS_NAME environment variable for use in subsequent steps
+          echo "OS_NAME=${OS_NAME}" >> $GITHUB_ENV
+          echo "BENCH_NAME=${BENCH_NAME}" >> $GITHUB_ENV
 
-            # Set the OS_NAME environment variable for use in subsequent steps
-            echo "OS_NAME=$env:OS_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
-            # Set the BENCH_NAME environment variable for use in subsequent steps
-            echo "BENCH_NAME=$env:BENCH_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
-          else
-            # Extract the OS name from matrix.os
-            OS_NAME=$(echo ${{ matrix.os }} | sed 's/-latest$//')
-            BENCH_NAME=$(echo ${{ matrix.benchs }} | sed 's/metacall-\(.*\)-bench.json/\1/')
-            # Set the OS_NAME environment variable for use in subsequent steps
-            echo "OS_NAME=${OS_NAME}" >> $GITHUB_ENV
-            echo "BENCH_NAME=${BENCH_NAME}" >> $GITHUB_ENV
-          fi
-
+      - name: Prepare variables (Windows)
+        run: |
+          # Extract the OS name from matrix.os
+          $env:OS_NAME = $env:matrix_os -replace '-latest$', ''
+          # Extract the benchmark name from matrix.benchs
+          $env:BENCH_NAME = $env:matrix_benchs -replace 'metacall-(.*?)-bench.json', '$1'
+          # Set the OS_NAME environment variable for use in subsequent steps
+          echo "OS_NAME=$env:OS_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Set the BENCH_NAME environment variable for use in subsequent steps
+          echo "BENCH_NAME=$env:BENCH_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
+          
       - name: Set up the environment (macOS/Linux)
         run: |
           sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
