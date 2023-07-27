@@ -69,10 +69,8 @@ jobs:
           # Extract the benchmark name from matrix.benchs
           $env:BENCH_NAME = $env:matrix_benchs -replace 'metacall-(.*?)-bench.json', '$1'
           # Set the OS_NAME environment variable for use in subsequent steps
-          echo "OS_NAME=$env:OS_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
-          # Set the BENCH_NAME environment variable for use in subsequent steps
-          echo "BENCH_NAME=$env:BENCH_NAME" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "BENCH_PATH=./build/Debug/" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $envVariables = "OS_NAME=$env:OS_NAME`nBENCH_NAME=$env:BENCH_NAME`nBENCH_PATH=./build/Debug/"
+          $envVariables | Out-File -FilePath $env:GITHUB_ENV -Append
         if: matrix.os == 'windows-2019'
 
       - name: Print all github env
