@@ -21,7 +21,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [windows-2019]
+          os: [macos-latest, ubuntu-latest, windows-2019]
           options: [
             {build: debug, sanitizer: without-sanitizer}
           ]
@@ -30,7 +30,7 @@ jobs:
             metacall-py-init-bench.json,
             metacall-py-c-api-bench.json,
             # metacall-cs-call-bench.json,
-            # metacall-node-call-bench.json,
+            metacall-node-call-bench.json,
             # metacall-rb-call-bench.json
             ]
           
@@ -79,13 +79,13 @@ jobs:
         run: |
           sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base python backtrace 
+          METACALL_INSTALL_OPTIONS: base python nodejs backtrace 
         if : matrix.os != 'windows-2019'
 
       - name: Set up the environment (Windows)
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
-          METACALL_INSTALL_OPTIONS: python
+          METACALL_INSTALL_OPTIONS: python nodejs
         if: matrix.os == 'windows-2019'
 
       - name: Configure (macOS/Linux)
@@ -97,7 +97,7 @@ jobs:
           fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python benchmarks install 
+          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs benchmarks install 
         if: matrix.os != 'windows-2019'
 
       - name: Configure (Windows)
@@ -107,7 +107,7 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python benchmarks
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs benchmarks
         if: matrix.os == 'windows-2019'
 
       - name: Build (macOS/Linux)
