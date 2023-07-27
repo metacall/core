@@ -21,7 +21,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macos-latest, ubuntu-latest, windows-2019]
+          os: [windows-2019]
           options: [
             {build: debug, sanitizer: without-sanitizer}
           ]
@@ -128,9 +128,12 @@ jobs:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
         if: matrix.os == 'windows-2019'
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if:  matrix.os == 'windows-2019'
+      - name: List files in build directory (windows)
+        run: |
+          $METACALL_PATH = $PWD
+          cd "$METACALL_PATH\build"
+          ls
+        if: matrix.os == 'windows-2019'
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
