@@ -128,6 +128,10 @@ jobs:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
         if: matrix.os == 'windows-2019'
 
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        if:  matrix.os == 'windows-2019'
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
