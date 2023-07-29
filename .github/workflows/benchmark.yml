@@ -65,9 +65,9 @@ jobs:
       - name: Prepare variables (Windows)
         run: |
           # Extract the OS name from matrix.os
-          $env:OS_NAME = ${{ matrix.os }} -replace '-latest$', ''
+          $env:OS_NAME = "${{ matrix.os }}" -replace '-2019$', ''
           # Extract the benchmark name from matrix.benchs
-          $env:BENCH_NAME = ${{ matrix.benchs }} -replace 'metacall-(.*?)-bench.json', '$1'
+          $env:BENCH_NAME = "${{ matrix.benchs }}" -replace 'metacall-(.*?)-bench.json', '$1'
           # Set the OS_NAME environment variable for use in subsequent steps
           $envVariables = "OS_NAME=$env:OS_NAME`nBENCH_NAME=$env:BENCH_NAME`nBENCH_PATH=./build/Debug/"
           $envVariables | Out-File -FilePath $env:GITHUB_ENV -Append
