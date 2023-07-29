@@ -69,18 +69,19 @@ jobs:
           $envVariables = "OS_NAME=$env:OS_NAME`nBENCH_NAME=$env:BENCH_NAME`nBENCH_PATH=./build/Debug/"
           $envVariables | Out-File -FilePath $env:GITHUB_ENV -Append
         if: matrix.os == 'windows-2019'
-          
+      
+      # TODO:: Add support for NetCore Bench
       - name: Set up the environment (macOS/Linux)
         run: |
           sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base python nodejs ruby netcore7 backtrace 
+          METACALL_INSTALL_OPTIONS: base python nodejs ruby backtrace 
         if : matrix.os != 'windows-2019'
 
       - name: Set up the environment (Windows)
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
-          METACALL_INSTALL_OPTIONS: python nodejs ruby netcore
+          METACALL_INSTALL_OPTIONS: python nodejs ruby
         if: matrix.os == 'windows-2019'
 
       - name: Configure (macOS/Linux)
@@ -92,7 +93,7 @@ jobs:
           fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: release scripts ports tests python nodejs ruby netcore7 benchmarks install 
+          METACALL_CONFIGURE_OPTIONS: release scripts ports tests python nodejs ruby benchmarks install 
         if: matrix.os != 'windows-2019'
 
       - name: Configure (Windows)
@@ -102,7 +103,7 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: release scripts ports tests python nodejs ruby netcore benchmarks
+          METACALL_BUILD_OPTIONS: release scripts ports tests python nodejs ruby benchmarks
         if: matrix.os == 'windows-2019'
 
       - name: Build (macOS/Linux)
