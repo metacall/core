@@ -22,9 +22,6 @@ jobs:
         fail-fast: false
         matrix:
           os: [macos-latest, ubuntu-latest, windows-2019]
-          options: [
-            {build: debug, sanitizer: without-sanitizer}
-          ]
           benchs : [
             metacall-py-call-bench.json, 
             metacall-py-init-bench.json,
@@ -72,13 +69,6 @@ jobs:
           $envVariables = "OS_NAME=$env:OS_NAME`nBENCH_NAME=$env:BENCH_NAME`nBENCH_PATH=./build/Debug/"
           $envVariables | Out-File -FilePath $env:GITHUB_ENV -Append
         if: matrix.os == 'windows-2019'
-
-      - name: Print all github env
-        run: |
-          echo "GITHUB_ENV=${GITHUB_ENV}"
-          echo "OS_NAME=${OS_NAME}"
-          echo "BENCH_NAME=${BENCH_NAME}"
-          echo "BENCH_PATH=${BENCH_PATH}"
           
       - name: Set up the environment (macOS/Linux)
         run: |
@@ -102,7 +92,7 @@ jobs:
           fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs benchmarks install 
+          METACALL_CONFIGURE_OPTIONS: release scripts ports tests python nodejs benchmarks install 
         if: matrix.os != 'windows-2019'
 
       - name: Configure (Windows)
@@ -112,7 +102,7 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs benchmarks
+          METACALL_BUILD_OPTIONS: release scripts ports tests python nodejs benchmarks
         if: matrix.os == 'windows-2019'
 
       - name: Build (macOS/Linux)
@@ -125,14 +115,14 @@ jobs:
           cmake -DOPTION_FORK_SAFE=OFF  ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+          METACALL_BUILD_OPTIONS: release tests
         if: matrix.os != 'windows-2019'
 
       - name: Build (Windows)
         working-directory: ./build
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+          METACALL_BUILD_OPTIONS: release tests
         if: matrix.os == 'windows-2019'
 
       - name: Store benchmark result
