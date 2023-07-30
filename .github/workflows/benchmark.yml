@@ -93,7 +93,7 @@ jobs:
           fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: release scripts tests python nodejs ruby benchmarks install 
+          METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby benchmarks install 
         if: matrix.os != 'windows-2019'
 
       - name: Configure (Windows)
@@ -103,7 +103,7 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: release scripts tests python nodejs benchmarks
+          METACALL_BUILD_OPTIONS: release scripts python nodejs benchmarks
         if: matrix.os == 'windows-2019'
 
       - name: Build (macOS/Linux)
