@@ -35,7 +35,10 @@
 #endif
 
 /* Disable warnings from Ruby */
-#if defined(__GNUC__)
+#if defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunused-parameter"
+#elif defined(__GNUC__)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wredundant-decls"
 	#pragma GCC diagnostic ignored "-Wpedantic"
@@ -44,8 +47,44 @@
 #include <ruby.h>
 
 /* Disable warnings from Ruby */
-#if defined(__GNUC__)
+#if defined(__clang__)
+	#pragma clang diagnostic pop
+#elif defined(__GNUC__)
 	#pragma GCC diagnostic pop
+#endif
+
+/* Backward compatible macros for Ruby < 2.7 */
+#ifndef RB_PASS_KEYWORDS
+	#define rb_funcallv_kw(o, m, c, v, kw)					 rb_funcallv(o, m, c, v)
+	#define rb_funcallv_public_kw(o, m, c, v, kw)			 rb_funcallv_public(o, m, c, v)
+	#define rb_funcall_passing_block_kw(o, m, c, v, kw)		 rb_funcall_passing_block(o, m, c, v)
+	#define rb_funcall_with_block_kw(o, m, c, v, b, kw)		 rb_funcall_with_block(o, m, c, v, b)
+	#define rb_scan_args_kw(kw, c, v, s, ...)				 rb_scan_args(c, v, s, __VA_ARGS__)
+	#define rb_call_super_kw(c, v, kw)						 rb_call_super(c, v)
+	#define rb_yield_values_kw(c, v, kw)					 rb_yield_values2(c, v)
+	#define rb_yield_splat_kw(a, kw)						 rb_yield_splat(a)
+	#define rb_block_call_kw(o, m, c, v, f, p, kw)			 rb_block_call(o, m, c, v, f, p)
+	#define rb_fiber_resume_kw(o, c, v, kw)					 rb_fiber_resume(o, c, v)
+	#define rb_fiber_yield_kw(c, v, kw)						 rb_fiber_yield(c, v)
+	#define rb_enumeratorize_with_size_kw(o, m, c, v, f, kw) rb_enumeratorize_with_size(o, m, c, v, f)
+	#define SIZED_ENUMERATOR_KW(obj, argc, argv, size_fn, kw_splat)     \
+		rb_enumeratorize_with_size((obj), ID2SYM(rb_frame_this_func()), \
+			(argc), (argv), (size_fn))
+	#define RETURN_SIZED_ENUMERATOR_KW(obj, argc, argv, size_fn, kw_splat) \
+		do                                                                 \
+		{                                                                  \
+			if (!rb_block_given_p())                                       \
+				return SIZED_ENUMERATOR(obj, argc, argv, size_fn);         \
+		} while (0)
+	#define RETURN_ENUMERATOR_KW(obj, argc, argv, kw_splat) RETURN_SIZED_ENUMERATOR(obj, argc, argv, 0)
+	#define rb_check_funcall_kw(o, m, c, v, kw)				rb_check_funcall(o, m, c, v)
+	#define rb_obj_call_init_kw(o, c, v, kw)				rb_obj_call_init(o, c, v)
+	#define rb_class_new_instance_kw(c, v, k, kw)			rb_class_new_instance(c, v, k)
+	#define rb_proc_call_kw(p, a, kw)						rb_proc_call(p, a)
+	#define rb_proc_call_with_block_kw(p, c, v, b, kw)		rb_proc_call_with_block(p, c, v, b)
+	#define rb_method_call_kw(c, v, m, kw)					rb_method_call(c, v, m)
+	#define rb_method_call_with_block_kw(c, v, m, b, kw)	rb_method_call_with_block(c, v, m, b)
+	#define rb_eval_cmd_kwd(c, a, kw)						rb_eval_cmd(c, a, 0)
 #endif
 
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
@@ -429,12 +468,11 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 		{
 			struct loader_impl_rb_funcall_protect_type protect;
 			int state;
-			VALUE argv[2] = { ID2SYM(rb_function->method_id), rb_function->args_hash };
 
-			protect.argc = 2;
-			protect.argv = argv;
+			protect.argc = 1;
+			protect.argv = &rb_function->args_hash;
 			protect.module_instance = rb_function->module_instance;
-			protect.id = rb_intern("send");
+			protect.id = rb_function->method_id;
 
 			result_value = rb_protect(rb_loader_impl_funcallv_kw_protect, (VALUE)&protect, &state);
 
@@ -450,18 +488,10 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			struct loader_impl_rb_funcall_protect_type protect;
 			int state;
 
-			/* TODO: Improve this horrible code in the future */
-			for (args_count = args_size; args_count > 0; --args_count)
-			{
-				args_value[args_count] = args_value[args_count - 1];
-			}
-
-			args_value[0] = ID2SYM(rb_function->method_id);
-
-			protect.argc = 1 + args_size;
+			protect.argc = args_size;
 			protect.argv = args_value;
 			protect.module_instance = rb_function->module_instance;
-			protect.id = rb_intern("send");
+			protect.id = rb_function->method_id;
 
 			result_value = rb_protect(rb_loader_impl_funcall2_protect, (VALUE)&protect, &state);
 
@@ -477,20 +507,12 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			struct loader_impl_rb_funcall_protect_type protect;
 			int state;
 
-			/* TODO: Improve this horrible code in the future */
-			for (args_count = ducktype_args_count; args_count > 0; --args_count)
-			{
-				args_value[args_count] = args_value[args_count - 1];
-			}
+			args_value[ducktype_args_count] = rb_function->args_hash;
 
-			args_value[0] = ID2SYM(rb_function->method_id);
-
-			args_value[ducktype_args_count + 1] = rb_function->args_hash;
-
-			protect.argc = 1 + ducktype_args_count + 1;
+			protect.argc = ducktype_args_count + 1;
 			protect.argv = args_value;
 			protect.module_instance = rb_function->module_instance;
-			protect.id = rb_intern("send");
+			protect.id = rb_function->method_id;
 
 			result_value = rb_protect(rb_loader_impl_funcallv_kw_protect, (VALUE)&protect, &state);
 

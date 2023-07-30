@@ -19,15 +19,10 @@ jobs:
     name: Linux GCC Test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        build_type: [debug, release]
-        build_image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"] # TODO: "alpine:3.17"
-
-    env:
-      DEBIAN_FRONTEND:             noninteractive
-      LTTNG_UST_REGISTER_TIMEOUT:  0
-      NUGET_XMLDOC_MODE:           skip
-      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+        build: [debug, release]
+        image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"] # TODO: "alpine:3.17"
 
     steps:
       - name: Check out the repository
@@ -38,5 +33,5 @@ jobs:
       - name: Install, build and run tests
         run: ./docker-compose.sh test
         env:
-          METACALL_BUILD_TYPE: ${{ matrix.build_type }}
-          METACALL_BASE_IMAGE: ${{ matrix.build_image }}
+          METACALL_BUILD_TYPE: ${{ matrix.build }}
+          METACALL_BASE_IMAGE: ${{ matrix.image }}

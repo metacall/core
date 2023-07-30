@@ -183,13 +183,13 @@ sub_python(){
 		pyenv install 3.11.1
 		pyenv global 3.11.1
 		pyenv rehash
-
-		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		echo -e '\nif command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
-		source ~/.bash_profile
-
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		ENV_FILE="$ROOT_DIR/build/.env"
+
+		echo eval "$(pyenv init -)" >> $ENV_FILE
+		. $ENV_FILE
+
 		echo "-DPython3_INCLUDE_DIRS=$HOME/.pyenv/versions/3.11.1/include/python3.11" >> $CMAKE_CONFIG_PATH
 		echo "-DPython3_LIBRARY=$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DPython3_EXECUTABLE=$HOME/.pyenv/versions/3.11.1/bin/python3.11" >> $CMAKE_CONFIG_PATH
@@ -226,11 +226,7 @@ sub_ruby(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install ruby@3.2
-
-		# TODO: Avoid this, do no asume bash, find a better way to deal with environment variables
-		echo 'export PATH="/usr/local/opt/ruby/bin:$PATH"' >> ~/.bash_profile
-		source ~/.bash_profile
-
+		brew link ruby@3.2 --force --overwrite
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		RUBY_PREFIX="$(brew --prefix ruby@3.2)"
@@ -238,7 +234,7 @@ sub_ruby(){
 		echo "-DRuby_INCLUDE_DIR=$RUBY_PREFIX/include/ruby-3.2.0" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_LIBRARY=$RUBY_PREFIX/lib/libruby.3.2.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
-		echo "-DRuby_VERSION_STRING=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
+		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -572,6 +568,14 @@ sub_java(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install openjdk@17
+		sudo ln -sfn $(brew --prefix openjdk@17)/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+		JAVA_PREFIX=$(/usr/libexec/java_home -v 17)
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DJAVA_HOME=$JAVA_PREFIX" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -625,6 +629,15 @@ sub_c(){
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing tcc
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.14/main clang-libs=11.1.0-r1 clang-dev=11.1.0-r1
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install libffi
+		brew install llvm@11
+		brew link llvm@11 --force --overwrite
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		LIBCLANG_PREFIX=$(brew --prefix llvm@11)
+		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -684,6 +697,8 @@ sub_go(){
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache go
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install go
 	fi
 }
 
@@ -699,6 +714,9 @@ sub_rust(){
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		brew install patchelf
 	fi
 }
 
@@ -790,6 +808,17 @@ sub_backtrace(){
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache binutils-dev
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install dwarfutils
+		brew install libelf
+		mkdir -p build
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		LIBDWARD_PREFIX=$(brew --prefix dwarfutils)
+		LIBELF_PREFIX=$(brew --prefix libelf)
+		echo "-DLIBDWARF_INCLUDE_DIR=${LIBDWARD_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
+		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+
 	fi
 }
 

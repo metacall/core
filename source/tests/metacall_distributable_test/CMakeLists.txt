@@ -172,7 +172,7 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${target} MEMCHECK_IGNORE
 )
 
-if(OPTION_BUILD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
+if(OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_CS)
 	# TODO: This test fails when run with sanitizers (this happens when C# loader is enabled):
 	# Tracer caught signal 11: addr=0x600000690 pc=0x7f3a7b6710f0 sp=0x7f3a75e32d10
 	# LeakSanitizer has encountered a fatal error.

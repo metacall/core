@@ -21,6 +21,9 @@
 #ifndef METACALL_SWIG_WRAPPER_RB_PORT_H
 #define METACALL_SWIG_WRAPPER_RB_PORT_H 1
 
+/* TODO: Review https://github.com/SketchUp/testup-2/blob/e32a68c5c02e2cbc3a924f40d4987faa05dbcc89/ruby-c-extension/sketchup-taskbarlist/TaskbarProgress/src/RubyUtils/RubyLib.h */
+/* TODO: Unify rb_port with rb_loader */
+
 /* ... */
 
 #endif /* METACALL_SWIG_WRAPPER_RB_PORT_H */

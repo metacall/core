@@ -17,11 +17,20 @@ concurrency:
 jobs:
   windows-test:
     name: Windows MSVC Test
-    runs-on: windows-2019
+    runs-on: windows-2019 # TODO: Implement matrix with windows 2019 and 2022
 
     strategy:
+      fail-fast: false
       matrix:
-        options: [ {buildtype: debug, sanitizer: without-sanitizer}, {buildtype: debug, sanitizer: sanitizer} ] # TODO: Enable release when all debug tests pass {buildtype: release, sanitizer: without-sanitizer}
+        options: [
+          {build: debug, sanitizer: without-sanitizer},
+          {build: debug, sanitizer: address-sanitizer},
+          # TODO: Not supported yet
+          # {build: debug, sanitizer: thread-sanitizer},
+          # {build: debug, sanitizer: memory-sanitizer},
+          # TODO: Release build not working
+          {build: release, sanitizer: without-sanitizer}
+        ]
 
     steps:
       - name: Check out the repository
@@ -52,4 +61,4 @@ jobs:
         working-directory: ./build
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.buildtype }} tests
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests

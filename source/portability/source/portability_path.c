@@ -22,6 +22,9 @@
 
 #include <string.h>
 
+/* Define separator checking for any platform */
+#define PORTABILITY_PATH_SEPARATOR_ALL(chr) (chr == '\\' || chr == '/')
+
 size_t portability_path_get_name(const char *path, size_t path_size, char *name, size_t name_size)
 {
 	if (path == NULL || name == NULL)
@@ -428,6 +431,34 @@ size_t portability_path_canonical(const char *path, size_t path_size, char *cano
 	}
 
 	return size;
+}
+
+int portability_path_separator_normalize_inplace(char *path, size_t size)
+{
+	if (path == NULL)
+	{
+		return 1;
+	}
+
+	size_t iterator;
+	char separator = 0;
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		if (PORTABILITY_PATH_SEPARATOR_ALL(path[iterator]))
+		{
+			if (separator == 0)
+			{
+				separator = PORTABILITY_PATH_SEPARATOR_C; /* Use current platform style as default */
+			}
+			else
+			{
+				path[iterator] = separator;
+			}
+		}
+	}
+
+	return 0;
 }
 
 int portability_path_compare(const char *left_path, const char *right_path)

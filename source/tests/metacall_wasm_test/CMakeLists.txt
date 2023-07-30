@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_WASM)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_WASM OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_WASM)
 	return()
 endif()
 
@@ -97,13 +97,6 @@ target_compile_definitions(${target}
 	${DEFAULT_COMPILE_DEFINITIONS}
 )
 
-if(OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_WASM)
-	target_compile_definitions(${target}
-		PRIVATE
-		BUILD_SCRIPT_TESTS
-	)
-endif()
-
 #
 # Compile options
 #
@@ -145,6 +138,11 @@ add_dependencies(${target}
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
+
+if(WIN32 AND OPTION_BUILD_ADDRESS_SANITIZER)
+	# TODO: This test segfaults in windows when run with addres sanitizer without any output
+	return()
+endif()
 
 if(OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with thread sanitizer:

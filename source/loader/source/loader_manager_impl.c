@@ -74,6 +74,11 @@ vector loader_manager_impl_script_paths_initialize(void)
 		script_path = environment_variable_path_create(LOADER_SCRIPT_PATH, LOADER_SCRIPT_DEFAULT_PATH, sizeof(LOADER_SCRIPT_DEFAULT_PATH), &script_path_size);
 	}
 
+#if defined(WIN32) || defined(_WIN32)
+	/* Normalize the path in place */
+	(void)portability_path_separator_normalize_inplace(script_path, script_path_size);
+#endif
+
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", script_path);
 
 	/* Split multiple paths */

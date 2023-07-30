@@ -125,7 +125,7 @@ target_link_libraries(${target}
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER)
+if(OPTION_BUILD_ADDRESS_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
 	# ERROR: LeakSanitizer: detected memory leaks
 	#

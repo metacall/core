@@ -391,7 +391,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 		return 1;
 	}
 
-	tag = configuration_value(config, "language_id");
+	tag = configuration_value_type(config, "language_id", TYPE_STRING);
 
 	if (tag == NULL)
 	{
@@ -402,7 +402,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 		return 1;
 	}
 
-	scripts = configuration_value(config, "scripts");
+	scripts = configuration_value_type(config, "scripts", TYPE_ARRAY);
 
 	if (scripts == NULL)
 	{
@@ -435,7 +435,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 		return 1;
 	}
 
-	context_path = configuration_value(config, "path");
+	context_path = configuration_value_type(config, "path", TYPE_STRING);
 
 	if (context_path != NULL)
 	{

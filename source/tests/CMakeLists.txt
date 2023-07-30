@@ -48,18 +48,19 @@ endif()
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
 
 
-if(OPTION_TEST_MEMORYCHECK AND (OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
-	message(WARNING "OPTION_TEST_MEMORYCHECK and OPTION_BUILD_SANITIZER are not compatible, disabling memcheck tests.")
+if(OPTION_TEST_MEMORYCHECK AND (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
+	message(WARNING "OPTION_TEST_MEMORYCHECK and OPTION_BUILD_ADDRESS_SANITIZER are not compatible, disabling memcheck tests.")
 endif()
 
-if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
+if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --leak-check=full")
+	# set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-leak-kinds=all")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --trace-children=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-reachable=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-origins=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=50")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all-non-file") # for JITs
-	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-dl.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-python.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-node.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-wasm.supp")
@@ -80,7 +81,7 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREA
 			--force-new-ctest-process
 			--test-action memcheck
 			--timeout 5400
-		#COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
+		COMMAND ${CMAKE_COMMAND} -E cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
 	)
 endif()
 
@@ -113,6 +114,7 @@ add_subdirectory(metacall_logs_test)
 add_subdirectory(metacall_load_memory_test)
 add_subdirectory(metacall_load_memory_empty_test)
 add_subdirectory(metacall_load_configuration_test)
+add_subdirectory(metacall_load_configuration_fail_test)
 add_subdirectory(metacall_load_configuration_relative_test)
 add_subdirectory(metacall_load_configuration_python_node_test)
 add_subdirectory(metacall_load_configuration_node_python_test)

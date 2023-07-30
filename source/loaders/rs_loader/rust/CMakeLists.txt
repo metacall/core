@@ -56,8 +56,8 @@ add_custom_target(${target}_runtime
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
-# On Linux, execute patchelf in order to patch rpath in the dependencies (TODO: Implement this for Mac and Windows)
-if(NOT WIN32 AND NOT APPLE)
+# On Linux, execute patchelf in order to patch rpath in the dependencies
+if(PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 	# Find Patchelf
 	find_package(Patchelf)
 
@@ -75,7 +75,7 @@ if(NOT WIN32 AND NOT APPLE)
 	set(RUSTC_LIBS)
 	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime ${TARGET_INSTALL_DEPENDENCY})
 	foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
-		get_filename_component(rustc_lib_name ${rustc_lib} NAME )
+		get_filename_component(rustc_lib_name ${rustc_lib} NAME)
 		list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
 		add_custom_command(TARGET ${target}_patchelf POST_BUILD
 			COMMAND ${Patchelf_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}

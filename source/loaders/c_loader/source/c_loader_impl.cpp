@@ -304,7 +304,10 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 	tcc_set_output_type(c_handle->state, TCC_OUTPUT_MEMORY);
 
 	/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
-	tcc_set_lib_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	if (!c_impl->libtcc_runtime_path.empty())
+	{
+		tcc_set_lib_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	}
 
 	/* Register execution paths */
 	for (auto exec_path : c_impl->execution_paths)
@@ -339,7 +342,10 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 	tcc_add_include_path(c_handle->state, metacall_incl_path);
 
 	/* Add metacall library path (in other to find metacall library) */
-	tcc_add_library_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	if (!c_impl->libtcc_runtime_path.empty())
+	{
+		tcc_add_library_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
+	}
 
 	return c_handle;
 }
@@ -603,9 +609,12 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 	}
 
 	/* Store the configuration path for later use */
-	value path = configuration_value(config, "loader_library_path");
+	value path = configuration_value_type(config, "loader_library_path", TYPE_STRING);
 
-	c_impl->libtcc_runtime_path = std::string(value_to_string(path), value_type_size(path));
+	if (path != NULL)
+	{
+		c_impl->libtcc_runtime_path = std::string(value_to_string(path), value_type_size(path));
+	}
 
 	/* Register initialization */
 	loader_initialization_register(impl);
@@ -744,8 +753,13 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 {
 	auto cursor_type = clang_getCursorType(cursor);
 	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
+	auto symbol_name = func_name;
 
-	if (c_handle->symbols.count(func_name) == 0)
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	symbol_name.insert(0, 1, '_');
+#endif
+
+	if (c_handle->symbols.count(symbol_name) == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Symbol '%s' not found, skipping the function", func_name.c_str());
 		return 1;
@@ -753,7 +767,7 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 
 	loader_impl_c_function c_function = new loader_impl_c_function_type();
 
-	c_function->address = c_handle->symbols[func_name];
+	c_function->address = c_handle->symbols[symbol_name];
 
 	int num_args = clang_Cursor_getNumArguments(cursor);
 	size_t args_size = num_args < 0 ? (size_t)0 : (size_t)num_args;

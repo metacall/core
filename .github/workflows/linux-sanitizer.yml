@@ -1,5 +1,4 @@
-# Note: This is duplicated from sanitizer.yml in order to keep the ci running if one of both sanitizers fail
-name: Thread Sanitizer Test
+name: Linux Sanitizer Test
 
 on:
   workflow_dispatch:
@@ -17,11 +16,15 @@ concurrency:
 
 jobs:
   linux-sanitizer-gcc:
-    name: Linux GCC Thread Sanitizer Test
+    name: Linux GCC Sanitizer Test
     runs-on: ubuntu-latest
+
     strategy:
+      fail-fast: false
       matrix:
-        build_image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"]
+        image: ["debian:bookworm-slim", "debian:bullseye-slim", "ubuntu:kinetic"]
+        sanitizer: [address-sanitizer, thread-sanitizer] # TODO: memory-sanitizer not supported by GCC
+
     env:
       SANITIZER_SKIP_SUMMARY: 1
 
@@ -32,6 +35,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install, build and run thread sanitizer tests
-        run: ./docker-compose.sh test-thread-sanitizer
+        run: ./docker-compose.sh test-${{ matrix.sanitizer }}
         env:
-          METACALL_BASE_IMAGE: ${{ matrix.build_image }}
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}

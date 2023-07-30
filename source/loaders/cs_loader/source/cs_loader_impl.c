@@ -219,8 +219,8 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration confi
 
 	if (config != NULL)
 	{
-		dotnet_root_value = configuration_value(config, "dotnet_root");
-		dotnet_loader_assembly_path_value = configuration_value(config, "dotnet_loader_assembly_path");
+		dotnet_root_value = configuration_value_type(config, "dotnet_root", TYPE_STRING);
+		dotnet_loader_assembly_path_value = configuration_value_type(config, "dotnet_loader_assembly_path", TYPE_STRING);
 
 		if (dotnet_root_value != NULL)
 		{

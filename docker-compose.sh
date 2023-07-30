@@ -97,7 +97,7 @@ sub_test_sanitizer() {
 	export DOCKER_BUILDKIT=0
 
 	# Enable build with sanitizer
-	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-sanitizer}
+	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
 
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
@@ -129,7 +129,7 @@ sub_test_sanitizer() {
 
 		if [ -z "${BEGIN}" ] || [ -z "${END}" ]; then
 			echo "ERROR! CTest failed to print properly the output, run tests again:"
-			echo "	Recompiling everything: docker rmi metacall/core:dev && ./docker-compose.sh test-sanitizer"
+			echo "	Recompiling everything: docker rmi metacall/core:dev && ./docker-compose.sh test-${METACALL_BUILD_SANITIZER}"
 			echo "	Without recompiling (needs to be built successfully previously): docker run --rm -it metacall/core:dev sh -c \"cd build && ctest -j$(getconf _NPROCESSORS_ONLN) --output-on-failure\""
 		else
 			BEGIN=$((BEGIN + 1))
@@ -140,15 +140,6 @@ sub_test_sanitizer() {
 
 		rm /tmp/metacall-test-output
 	fi
-}
-
-# Build MetaCall Docker Compose with Thread Sanitizer for testing (link manually dockerignore files)
-sub_test_thread_sanitizer() {
-	# Enable build with thread sanitizer
-	export METACALL_BUILD_SANITIZER="thread-sanitizer"
-
-	# Run tests with thread sanitizer
-	sub_test_sanitizer
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -266,8 +257,9 @@ sub_help() {
 	echo "	build"
 	echo "	rebuild"
 	echo "	test"
-	echo "	test-sanitizer"
+	echo "	test-address-sanitizer"
 	echo "	test-thread-sanitizer"
+	echo "	test-memory-sanitizer"
 	echo "	cache"
 	echo "	push"
 	echo "	pack"
@@ -287,11 +279,17 @@ case "$1" in
 	test)
 		sub_test
 		;;
-	test-sanitizer)
+	test-address-sanitizer)
+		export METACALL_BUILD_SANITIZER="address-sanitizer"
 		sub_test_sanitizer
 		;;
 	test-thread-sanitizer)
-		sub_test_thread_sanitizer
+		export METACALL_BUILD_SANITIZER="thread-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-memory-sanitizer)
+		export METACALL_BUILD_SANITIZER="memory-sanitizer"
+		sub_test_sanitizer
 		;;
 	cache)
 		sub_cache

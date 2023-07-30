@@ -1,0 +1,25 @@
+# False positives from libdl from GLIBC
+
+{
+    Ignore dlopen allocation memory leak from GLIB.
+    Memcheck:Leak
+    fun:?alloc
+    ...
+    fun:do_dlopen
+}
+
+{
+    Ignore dlopen allocation memory leak from GLIB.
+    Memcheck:Leak
+    fun:?alloc
+    ...
+    fun:dlopen*
+}
+
+{
+    Ignore dlclose allocation memory leak from GLIB.
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:dlclose
+}

@@ -66,6 +66,10 @@ TEST_F(metacall_c_test, DefaultConstructor)
 		"ffi.ld"
 	};
 
+	/* Set dependency paths */
+	EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_INCLUDE_DIR));
+	EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_LIBRARY));
+
 	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
 
 	ret = metacall("call_fp_address");

@@ -57,15 +57,15 @@ extern "C" {
 		atomic_fetch_add_explicit(&name.decrements, 1, memory_order_relaxed)
 
 	#if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__)
-		#define reflect_memory_tracker_print(name, title)                                                               \
-			do                                                                                                          \
-			{                                                                                                           \
-				printf("----------------- " title " -----------------\n");                                              \
-				printf("Allocations: %" PRIuS "\n", atomic_load_explicit(&name.allocations, memory_order_relaxed));     \
-				printf("Deallocations: %" PRIuS "\n", atomic_load_explicit(&name.deallocations, memory_order_relaxed)); \
-				printf("Increments: %" PRIuS "\n", atomic_load_explicit(&name.increments, memory_order_relaxed));       \
-				printf("Decrements: %" PRIuS "\n", atomic_load_explicit(&name.decrements, memory_order_relaxed));       \
-				fflush(stdout);                                                                                         \
+		#define reflect_memory_tracker_print(name, title)                                                                 \
+			do                                                                                                            \
+			{                                                                                                             \
+				printf("----------------- " title " -----------------\n");                                                \
+				printf("Allocations: %" PRIuMAX "\n", atomic_load_explicit(&name.allocations, memory_order_relaxed));     \
+				printf("Deallocations: %" PRIuMAX "\n", atomic_load_explicit(&name.deallocations, memory_order_relaxed)); \
+				printf("Increments: %" PRIuMAX "\n", atomic_load_explicit(&name.increments, memory_order_relaxed));       \
+				printf("Decrements: %" PRIuMAX "\n", atomic_load_explicit(&name.decrements, memory_order_relaxed));       \
+				fflush(stdout);                                                                                           \
 			} while (0)
 	#else
 		#define reflect_memory_tracker_print(name, title)                                                          \
@@ -79,10 +79,10 @@ extern "C" {
 				if (allocations != deallocations || increments != decrements)                                      \
 				{                                                                                                  \
 					printf("----------------- " title " -----------------\n");                                     \
-					printf("Allocations: %" PRIuS "\n", allocations);                                              \
-					printf("Deallocations: %" PRIuS "\n", deallocations);                                          \
-					printf("Increments: %" PRIuS "\n", increments);                                                \
-					printf("Decrements: %" PRIuS "\n", decrements);                                                \
+					printf("Allocations: %" PRIuMAX "\n", allocations);                                            \
+					printf("Deallocations: %" PRIuMAX "\n", deallocations);                                        \
+					printf("Increments: %" PRIuMAX "\n", increments);                                              \
+					printf("Decrements: %" PRIuMAX "\n", decrements);                                              \
 					fflush(stdout);                                                                                \
 				}                                                                                                  \
 			} while (0)

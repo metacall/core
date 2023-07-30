@@ -21,7 +21,7 @@
 
 set -euxo pipefail
 
-BUILD_SANITIZER=${1:-sanitizer}
+BUILD_SANITIZER=${1:-address-sanitizer}
 BUILD_LANGUAGES=(
 	python ruby netcore7 nodejs typescript file rpc wasm java c cobol rust
 )
@@ -29,15 +29,10 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 ROOT_DIR=$(dirname "$SCRIPT_DIR")
 BUILD_DIR="${ROOT_DIR}/build"
 
-if [ "${BUILD_SANITIZER}" != "sanitizer" ] && [ "${BUILD_SANITIZER}" != "thread-sanitizer" ]; then
-	echo "Sanitizer '${BUILD_SANITIZER}' not supported, use 'sanitizer' or 'thread-sanitizer'."
+if [ "${BUILD_SANITIZER}" != "address-sanitizer" ] && [ "${BUILD_SANITIZER}" != "thread-sanitizer" ] && [ "${BUILD_SANITIZER}" != "memory-sanitizer" ]; then
+	echo "Sanitizer '${BUILD_SANITIZER}' not supported, use 'address-sanitizer' or 'thread-sanitizer' or 'memory-sanitizer'."
 	exit 1
 fi
-
-export DEBIAN_FRONTEND="noninteractive"
-export LTTNG_UST_REGISTER_TIMEOUT=0
-export NUGET_XMLDOC_MODE="skip"
-export DOTNET_CLI_TELEMETRY_OPTOUT="true"
 
 # Install
 "${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} rapidjson funchook swig pack backtrace

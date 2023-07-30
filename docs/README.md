@@ -9,14 +9,16 @@
 **METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from/to any programming language, e.g. by calling a Python function from NodeJS:
 
 `sum.py`
-``` python
+
+```python
 def sum(a, b):
   return a + b
 ```
 
 `main.js`
-``` javascript
-const { sum } = require('sum.py');
+
+```javascript
+const { sum } = require("sum.py");
 
 sum(3, 4); // 7
 ```
@@ -112,7 +114,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                                                                         |              **>=7.64.0**               | rpc  |
 | [Java](https://www.java.com)                                       | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)                                                                                             |                **>=11**                 | java |
 | [WebAssembly](https://webassembly.org/)                            | [Wasmtime](https://github.com/bytecodealliance/wasmtime)                                                                                              |          **>= 0.27 <= 8.0.1**           | wasm |
-| [C](https://en.wikipedia.org/wiki/C_(programming_language))        | [libclang](https://clang.llvm.org/doxygen/group__CINDEX.html) - [Tiny C Compiler](https://bellard.org/tcc/) - [libffi](http://sourceware.org/libffi/) | **>=12** - **>=2021-10-30** - **>=3.2** |  c   |
+| [C](<https://en.wikipedia.org/wiki/C_(programming_language)>)      | [libclang](https://clang.llvm.org/doxygen/group__CINDEX.html) - [Tiny C Compiler](https://bellard.org/tcc/) - [libffi](http://sourceware.org/libffi/) | **>=12** - **>=2021-10-30** - **>=3.2** |  c   |
 | [Rust](https://www.rust-lang.org/)                                 | [rustc](https://doc.rust-lang.org/rustc/what-is-rustc.html - [libffi](http://sourceware.org/libffi/)                                                  |         **nightly-2021-12-04**          |  rs  |
 
 - Languages and run-times under construction:
@@ -129,7 +131,6 @@ This section describes all programming languages that **METACALL** allows to loa
 | [LuaJIT](https://luajit.org/)                                                 | [LuaJIT2](https://github.com/openresty/luajit2)                                                        | lua  |
 | [LLVM IR](https://www.llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) | [LLVM](https://llvm.org/)                                                                              | llvm |
 | [Julia](https://julialang.org/)                                               | [Julia Runtime](https://docs.julialang.org/en/v1/devdocs/init/)                                        |  jl  |
-
 
 ### 2.2 Ports (Frontends)
 
@@ -248,6 +249,7 @@ The environment variables are optional, in case you want to modify default paths
 - [`detour`](/source/detour) provides an interface to hook into functions. Detours are used by the [fork model](#57-fork-model) to intercept fork calls.
 
 - [`detours`](/source/detours) implement the [`detour`](/source/detour) interface by using a plugin architecture. The current list of available detour plugins is the following one.
+
   - [`funchook_detour`](/source/detours/funchook_detour) implemented by means of FuncHook library.
 
 - [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **METACALL**.
@@ -368,7 +370,7 @@ A function is composed of a name and a signature. The signature defines the argu
 
 The function interface must be implemented by the [`loaders`](/source/loaders) and it has the following form.
 
-``` c
+```c
 typedef struct function_interface_type
 {
   function_impl_interface_create create;
@@ -386,7 +388,7 @@ typedef struct function_interface_type
 
 The type deduction can be done at different levels. For example, it is possible to guess function types from the loaded code.
 
-``` python
+```python
 def multiply_type(a: int, b: int) -> int:
   return a * b
 ```
@@ -395,7 +397,7 @@ If this code is loaded, **METACALL** will be able to inspect the types and defin
 
 It may be possible that the function loaded into **METACALL** is duck typed. This means it does not have information about what types it supports and therefore they cannot be inspected statically.
 
-``` python
+```python
 def multiply_duck(a, b):
   return a * b
 ```
@@ -404,7 +406,7 @@ At low level **METACALL** must always know the types to do the call. This types 
 
 In the first example, we can simply call the function without specifying the types.
 
-``` c
+```c
 metacall("multiply_type", 3, 4); // 12
 ```
 
@@ -412,7 +414,7 @@ As the signature is already know the literal values `3` and `4` can be converted
 
 In the second example, the values are not know. If we use the same API to call the function, **METACALL** will not be able to call correctly the function as its types are not know. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
 
-``` c
+```c
 const enum metacall_value_id multiply_types[] =
 {
   METACALL_INT, METACALL_INT
@@ -423,7 +425,7 @@ metacallt("multiply_duck", multiply_types, 3, 4); // 12
 
 This method allows to pass different value types to the same function. The following call would be valid too.
 
-``` c
+```c
 const enum metacall_value_id multiply_types[] =
 {
   METACALL_DOUBLE, METACALL_DOUBLE
@@ -448,7 +450,7 @@ Each plugin is a piece of software that can be dynamically loaded into the **MET
 
 Loaders are responsible for embedding run-times into **METACALL**. Each loader has the following interface.
 
-``` c
+```c
 typedef struct loader_impl_interface_type
 {
   loader_impl_interface_initialize initialize;
@@ -480,7 +482,7 @@ A loader must implement it to be considered a valid loader.
 
 ##### 5.3.1.3 JavaScript
 
-##### 5.3.1.4 C# #
+##### 5.3.1.4 C#
 
 ##### 5.3.1.5 Ruby
 
@@ -520,15 +522,15 @@ Because of these restrictions, **METACALL** cannot preserve the status of the ru
 
 Although the state is not preserved, fork safety is. The mechanism **METACALL** uses to allow fork safety is described in the following enumeration.
 
-1) Intercept fork call done by the program where **METACALL** is running.
+1. Intercept fork call done by the program where **METACALL** is running.
 
-2) Shutdown all run-times by means of unloading all loaders.
+2. Shutdown all run-times by means of unloading all loaders.
 
-3) Execute the real fork function.
+3. Execute the real fork function.
 
-4) Restore all run-times by means of reloading all loaders.
+4. Restore all run-times by means of reloading all loaders.
 
-5) Execute user defined fork callback if any.
+5. Execute user defined fork callback if any.
 
 To achieve this, **METACALL** hooks fork primitives depending on the platform.
 
@@ -560,57 +562,57 @@ To overcome the blocking nature of `node::Start`, the event loop is launched in 
 
 This solution of waiting to the call with the condition, introduces new problems. For completely async calls, there is no problem at all, but for synchronous calls, it can deadlock. For example, when calling recursively to the same synchronous function via **METACALL**, in the second call it will try to block twice and deadlock the thread. So in order to solve this an atomic variable was added in addition to a variable storing the thread id of the V8 thread. With this, recursive calls can be detected, and instead of blocking and enqueueing them, it is possible to call directly and safely to the function because we are already in the V8 thread when the second iteration is done.
 
-This solves all (known) issues related to NodeJS threading model __if and only if__ you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
+This solves all (known) issues related to NodeJS threading model **if and only if** you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
 
 If you use the CLI instead, and your host language is Python or any other (which does not allow to use you the low level API), and you want to load scripts from other languages, you have to use **METACALL** through `Ports`. Ports provide a high abstraction of the low level API and allow you to load and call functions of other languages. Here is where the fun begins.
 
 There are few considerations we must take into account. In order to explain this we are going to use a simple example first, using Python and NodeJS. Depending on the runtime, there are different mechanisms to handle threads and thread safety:
 
-  - Python:
-    1) Python uses a Global Interpreter Lock (GIL), which can be acquired from different threads in order to do thread safe calls. This can be problematic due to deadlocks.
-    2) Python event loop can be decoupled from Python interpreter thread by using Python Thread API (work in progress: https://github.com/metacall/core/pull/64). This fact simplifies the design.
-    3) Python can run multiple interpreter instances, starting from newer versions (not implemented yet).
+- Python:
 
-  - NodeJS:
-    1) NodeJS uses a submission queue and does not suffer from a global mutex like Python.
-    2) NodeJS V8 thread is coupled to the event loop (at least with the current version used in **METACALL**, and it is difficult to have control over it).
-    3) NodeJS can execute multiple V8 threads with the multi-isolate library from the latest versions of V8 (not implemented yet).
+  1. Python uses a Global Interpreter Lock (GIL), which can be acquired from different threads in order to do thread safe calls. This can be problematic due to deadlocks.
+  2. Python event loop can be decoupled from Python interpreter thread by using Python Thread API (work in progress: https://github.com/metacall/core/pull/64). This fact simplifies the design.
+  3. Python can run multiple interpreter instances, starting from newer versions (not implemented yet).
+
+- NodeJS:
+  1. NodeJS uses a submission queue and does not suffer from a global mutex like Python.
+  2. NodeJS V8 thread is coupled to the event loop (at least with the current version used in **METACALL**, and it is difficult to have control over it).
+  3. NodeJS can execute multiple V8 threads with the multi-isolate library from the latest versions of V8 (not implemented yet).
 
 Once these concerns are clear, now we can go further and inspect some cases where we can find deadlocks or problems related to them:
 
-1) __NodeJS is the host language__, and it launches the Python interprer in the V8 thread:
+1. **NodeJS is the host language**, and it launches the Python interprer in the V8 thread:
 
-  ![Threading Model NodeJS Python](https://github.com/metacall/core/blob/master/docs/diagrams/threading-model-nodejs-python.png)
+![Threading Model NodeJS Python](https://github.com/metacall/core/blob/master/docs/diagrams/threading-model-nodejs-python.png)
 
-  This model is relatively safe because Node Loader is completely reentrant, and Python GIL too. This means you can do recursive calls safely, and all those calls will always happen in V8. Even if we do callbacks, all of them will happen in the same thread, so there aren't potential deadlocks. This means we can safely use a functional library from NodeJS, and it won't deadlock. For example: [Using Fn.py from NodeJS](https://github.com/metacall/fn.py-javascript-example).
+This model is relatively safe because Node Loader is completely reentrant, and Python GIL too. This means you can do recursive calls safely, and all those calls will always happen in V8. Even if we do callbacks, all of them will happen in the same thread, so there aren't potential deadlocks. This means we can safely use a functional library from NodeJS, and it won't deadlock. For example: [Using Fn.py from NodeJS](https://github.com/metacall/fn.py-javascript-example).
 
-  But there is a problem when we try to destroy the loaders. Python interpreter does not allow to be destroyed from a different thread where it was launched. This means, if we destroy the Node Loader first, then it will be impossible to destroy the Python Loader, because the V8 thread has been finished. We must destroy the Loaders in order and in the correct thread. This means if we try to destroy Node Loader, during its destruction in the V8 thread, we must destroy Python Loader and any other loader that has been initialized in that thread.
+But there is a problem when we try to destroy the loaders. Python interpreter does not allow to be destroyed from a different thread where it was launched. This means, if we destroy the Node Loader first, then it will be impossible to destroy the Python Loader, because the V8 thread has been finished. We must destroy the Loaders in order and in the correct thread. This means if we try to destroy Node Loader, during its destruction in the V8 thread, we must destroy Python Loader and any other loader that has been initialized in that thread.
 
-  As a result, each loader must use the following instructions:
+As a result, each loader must use the following instructions:
 
-  - When the loader has finished the initialization, it must register its initialization order. It will record internally the current thread id too.
+- When the loader has finished the initialization, it must register its initialization order. It will record internally the current thread id too.
 
-    ```c
-    loader_initialization_register(impl);
-    ```
+  ```c
+  loader_initialization_register(impl);
+  ```
 
-  - When the loader is going to be destroyed, but before destroy starts, the children must be destroyed in a recursive way, so the whole tree can be iterated properly in order.
+- When the loader is going to be destroyed, but before destroy starts, the children must be destroyed in a recursive way, so the whole tree can be iterated properly in order.
 
-    ```c
-    loader_unload_children();
-    ```
+  ```c
+  loader_unload_children();
+  ```
 
-  The result of the current destruction model is that: __`metacall_initialize` and `metacall_destroy` must be done from the same thread__. This should not be a problem for developers using the CLI. But embedders must take this into account.
+The result of the current destruction model is that: **`metacall_initialize` and `metacall_destroy` must be done from the same thread**. This should not be a problem for developers using the CLI. But embedders must take this into account.
 
-
-2) __Python is the host language__, and it launches NodeJS in a new (V8) thread:
-[TODO: Explain why callbacks deadlock in this context]
-
+2. **Python is the host language**, and it launches NodeJS in a new (V8) thread:
+   [TODO: Explain why callbacks deadlock in this context]
 
 In order to end this section, here's a list of ideas that are not completely implemented yet, but they are in progress:
- - Lock free data structures for holding the functions.
- - Asynchronous non-deadlocking, non-stack growing callbacks between runtimes (running multiple event loops between languages). This will solve the second case where Python is the host language and deadlocks because of NodeJS event loop nature.
- - Support for multi-isolate and multiple interpreters instances.
+
+- Lock free data structures for holding the functions.
+- Asynchronous non-deadlocking, non-stack growing callbacks between runtimes (running multiple event loops between languages). This will solve the second case where Python is the host language and deadlocks because of NodeJS event loop nature.
+- Support for multi-isolate and multiple interpreters instances.
 
 ## 5. Application Programming Interface (API)
 
@@ -618,7 +620,7 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 Follow these steps to build and install **METACALL** manually.
 
-``` sh
+```sh
 git clone https://github.com/metacall/core.git
 mkdir core/build && cd core/build
 cmake ..
@@ -632,7 +634,7 @@ cmake --build . --target install
 
 These options can be set using **`-D`** prefix when configuring CMake. For example, the following configuration enables the build of Python and Ruby loaders.
 
-``` sh
+```sh
 cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_RB=On ..
 ```
 
@@ -660,25 +662,25 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 
 |    Build Option Prefix    | Build Option Suffix                                                   |
 | :-----------------------: | --------------------------------------------------------------------- |
-| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `FILE`                    |
-| **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
-| **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                               |
-| **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                            |
-|  **OPTION_BUILD_PORTS_**  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
-
+| **OPTION*BUILD_LOADERS*** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `FILE`                    |
+| **OPTION*BUILD_SCRIPTS*** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
+| **OPTION*BUILD_SERIALS*** | `METACALL` `RAPID_JSON`                                               |
+| **OPTION*BUILD_DETOURS*** | `FUNCHOOK`                                                            |
+|  **OPTION*BUILD_PORTS***  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
 
 To format the entire C/C++ codebase use:
-``` sh
+
+```sh
 cmake --build build --target clang-format
 ```
-Be aware that this target won't exist if clang-format was not installed when cmake was last run.
 
+Be aware that this target won't exist if clang-format was not installed when cmake was last run.
 
 ### 6.2 Coverage
 
 In order to run code coverage and obtain html reports use the following commands. Note, test must be run before executing code coverage.
 
-``` sh
+```sh
 make
 make test
 make -k gcov
@@ -690,7 +692,7 @@ The output reports will be generated in `${CMAKE_BINARY_DIR}/lcov/html/selected_
 
 To obtain a report of a single `target` do:
 
-``` sh
+```sh
 make
 make test
 make <target>-gcov
@@ -702,14 +704,14 @@ make <target>-genhtml
 
 For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
 
-|           Build Option            | Description                                         | Default Value |
-| :-------------------------------: | --------------------------------------------------- | :-----------: |
-|    **OPTION_TEST_MEMORYCHECK**    | Enable Valgrind with memcheck tool for the tests.   |      OFF      |
-|    **OPTION_BUILD_SANITIZER**     | Build with AddressSanitizer family (GCC and Clang). |      OFF      |
-| **OPTION_BUILD_MEMORY_SANITIZER** | Build with MemorySanitizer family (Clang).          |      OFF      |
-| **OPTION_BUILD_THREAD_SANITIZER** | Build with ThreadSanitizer family (GCC and Clang).  |      OFF      |
+|            Build Option            | Description                                                    | Default Value |
+| :--------------------------------: | -------------------------------------------------------------- | :-----------: |
+|    **OPTION_TEST_MEMORYCHECK**     | Enable Valgrind with memcheck tool for the tests.              |      OFF      |
+| **OPTION_BUILD_ADDRESS_SANITIZER** | Build with AddressSanitizer family (GCC, Clang and MSVC).      |      OFF      |
+| **OPTION_BUILD_THREAD_SANITIZER**  | Build with ThreadSanitizer family (GCC, Clang and MSVC).       |      OFF      |
+| **OPTION_BUILD_MEMORY_SANITIZER**  | Build with MemorySanitizer family (Clang and MSVC).            |      OFF      |
 
-All options are mutually exclusive. Valgrind is not compatible with AddressSanitizer and AddressSanitizer is not compatible with ThreadSanitizer and AddressSanitizer with MemorySanitizer. The current implementation does not support MSVC compiler (yet). Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
+All options are mutually exclusive. Valgrind is not compatible with AddressSanitizer and AddressSanitizer is not compatible with ThreadSanitizer and AddressSanitizer with MemorySanitizer. Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
 
 For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag and then run:
 
@@ -717,7 +719,7 @@ For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag a
 make memcheck
 ```
 
-For runing a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
+For runing a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_ADDRESS_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
 
 ```sh
 # Run one test
@@ -731,7 +733,6 @@ ctest
 
 For running other Valgrind's tools like helgrind or similar, I recommend running them manually. Just run one test with `ctest -VV -R metacall-node-port-test`, copy the environment variables, and configure the flags by yourself.
 
-
 ### 6.4 Build on Cloud - Gitpod
 
 Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), an automated cloud dev environment.
@@ -741,7 +742,6 @@ Click the button below. A workspace with all required environments will be creat
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/metacall/core)
 
 > To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/core`
-
 
 ## 7. Platform Support
 
@@ -760,7 +760,7 @@ To provide a reproducible environment **METACALL** is also distributed under Doc
 
 For pulling the **METACALL** `latest` image containing the runtime, use:
 
-``` sh
+```sh
 docker pull metacall/core
 ```
 
@@ -768,25 +768,25 @@ For pulling a specific image depending on the tag, use:
 
 - **METACALL** `deps` image. Includes all dependencies for development:
 
-``` sh
+```sh
 docker pull metacall/core:deps
 ```
 
 - **METACALL** `dev` image. Includes all dependencies, headers and libraries for development:
 
-``` sh
+```sh
 docker pull metacall/core:dev
 ```
 
 - **METACALL** `runtime` image. Includes all dependencies and libraries for runtime:
 
-``` sh
+```sh
 docker pull metacall/core:runtime
 ```
 
 - **METACALL** `cli` image. Includes all dependencies and libraries for runtime and the CLI as entry point (equivalent to `latest`):
 
-``` sh
+```sh
 docker pull metacall/core:cli
 ```
 
@@ -796,14 +796,14 @@ It is possible to develop **METACALL** itself or applications using **METACALL**
 
 Use the following commands to start developing with **METACALL**:
 
-``` sh
+```sh
 mkdir -p $HOME/metacall
 code $HOME/metacall
 ```
 
 We are going to run a docker container with a mounted volume. This volume will connect the `LOADER_SCRIPT_PATH` inside the container, and your development path in the host. We are using `$HOME/metacall`, where we have our editor opened.
 
-``` sh
+```sh
 docker pull metacall/core:dev
 docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:dev /bin/bash
 ```
@@ -816,14 +816,14 @@ An alternative for testing is to use a reduced image that includes the runtime a
 
 Use the following commands to start testing with **METACALL**:
 
-``` sh
+```sh
 mkdir -p $HOME/metacall
 code $HOME/metacall
 ```
 
 We are going to run a docker container with a mounted volume. This volume will connect the `LOADER_SCRIPT_PATH` inside the container, and your development path in the host. We are using `$HOME/metacall`, where we have our editor opened.
 
-``` sh
+```sh
 docker pull metacall/core:cli
 docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:cli
 ```
@@ -831,18 +831,20 @@ docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metac
 After the container is up, it is possible to load any script contained in host folder `$HOME/metacall`. If we have a `script.js` inside the folder, we can just load it (each line beginning with `>` is the input command):
 
 `script.js`
-``` js
+
+```js
 function sum(left, right) {
-    return left + right;
+  return left + right;
 }
 
 module.exports = {
-    sum
+  sum,
 };
 ```
 
 `Command Line Interface`
-``` sh
+
+```sh
 > load node script.js
 Script (script.js) loaded correctly
 > inspect
@@ -863,16 +865,16 @@ Where `script.js` is a script contained in host folder `$HOME/metacall` that wil
 
 **METACALL** is licensed under **[Apache License Version 2.0](/LICENSE)**.
 
->Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <<vic798@gmail.com>>
+> Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <<vic798@gmail.com>>
 >
->Licensed under the Apache License, Version 2.0 (the "License");
->you may not use this file except in compliance with the License.
->You may obtain a copy of the License at
+> Licensed under the Apache License, Version 2.0 (the "License");
+> you may not use this file except in compliance with the License.
+> You may obtain a copy of the License at
 >
 >       http://www.apache.org/licenses/LICENSE-2.0
 >
->Unless required by applicable law or agreed to in writing, software
->distributed under the License is distributed on an "AS IS" BASIS,
->WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
->See the License for the specific language governing permissions and
->limitations under the License.
+> Unless required by applicable law or agreed to in writing, software
+> distributed under the License is distributed on an "AS IS" BASIS,
+> WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+> See the License for the specific language governing permissions and
+> limitations under the License.

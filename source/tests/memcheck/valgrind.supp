@@ -1,7 +1,0 @@
-# GLIBC
-{
-	Ignore dlopen allocation memory leak from GLIB.
-	Memcheck:Leak
-	...
-	fun:dlopen@@GLIBC_2.2.5
-}

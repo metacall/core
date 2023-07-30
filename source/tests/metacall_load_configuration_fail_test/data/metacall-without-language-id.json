@@ -1,0 +1,6 @@
+{
+	"path": ".",
+	"scripts": [
+		"pluginA.js"
+	]
+}

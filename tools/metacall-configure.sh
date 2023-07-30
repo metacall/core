@@ -46,8 +46,9 @@ BUILD_TESTS=0
 BUILD_BENCHMARKS=0
 BUILD_PORTS=0
 BUILD_COVERAGE=0
-BUILD_SANITIZER=0
+BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
+BUILD_MEMORY_SANITIZER=0
 
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
@@ -165,13 +166,17 @@ sub_options() {
 			echo "Build all coverage reports"
 			BUILD_COVERAGE=1
 		fi
-		if [ "$option" = 'sanitizer' ]; then
-			echo "Build with sanitizers"
-			BUILD_SANITIZER=1
+		if [ "$option" = 'address-sanitizer' ]; then
+			echo "Build with address sanitizer"
+			BUILD_ADDRESS_SANITIZER=1
 		fi
 		if [ "$option" = 'thread-sanitizer' ]; then
-			echo "Build with thread sanitizers"
+			echo "Build with thread sanitizer"
 			BUILD_THREAD_SANITIZER=1
+		fi
+		if [ "$option" = 'memory-sanitizer' ]; then
+			echo "Build with memory sanitizer"
+			BUILD_MEMORY_SANITIZER=1
 		fi
 	done
 }
@@ -444,11 +449,11 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_COVERAGE=Off"
 	fi
 
-	# Sanitizer
-	if [ $BUILD_SANITIZER = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
+	# Address Sanitizer
+	if [ $BUILD_ADDRESS_SANITIZER = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_ADDRESS_SANITIZER=On"
 	else
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_ADDRESS_SANITIZER=Off"
 	fi
 
 	# Thread Sanitizer
@@ -456,6 +461,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=On"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=Off"
+	fi
+
+	# Memory Sanitizer
+	if [ $BUILD_MEMORY_SANITIZER = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
 
 	# Split cmake config file line by line and add each line to the build string
@@ -503,7 +515,9 @@ sub_help() {
 	echo "	static: build as static libraries"
 	echo "	ports: build all ports"
 	echo "	coverage: build all coverage reports"
-	echo "	sanitizer: build with address, memory, thread... sanitizers"
+	echo "	address-sanitizer: build with address sanitizer"
+	echo "	thread-sanitizer: build with thread sanitizer"
+	echo "	memory-sanitizer: build with memory sanitizer"
 	echo ""
 }
 

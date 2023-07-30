@@ -35,7 +35,7 @@ set(export_macro "${target_upper}_API")
 
 set(interface_path "${CMAKE_CURRENT_SOURCE_DIR}/interface/${target}")
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
+set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(interfaces
 	${interface_path}/rb_port.i
@@ -102,6 +102,7 @@ else()
 	swig_add_library(${target}
 		LANGUAGE ruby
 		SOURCES ${interfaces} ${headers} ${sources}
+		OUTPUT_DIR "${PROJECT_OUTPUT_DIR}"
 	)
 endif()
 
@@ -133,6 +134,9 @@ set_target_properties(${SWIG_MODULE_${target}_REAL_NAME}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
+
+	# Set Ruby extension properies
+	SUFFIX ".so"
 )
 
 #
@@ -182,6 +186,7 @@ target_compile_definitions(${SWIG_MODULE_${target}_REAL_NAME}
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
+	$<$<BOOL:${MSVC}>:RB_PORT_USINGSWIG_EXPORTS>
 
 	INTERFACE
 )
@@ -265,7 +270,7 @@ configure_file(test/run.rb.in ${rb_port_test_path})
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
 	#
 	# Sanitizer:

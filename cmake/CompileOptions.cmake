@@ -2,12 +2,12 @@
 # Compile options configuration
 #
 
-option(OPTION_BUILD_SANITIZER			"Build with sanitizer compiler options."			OFF)
-option(OPTION_BUILD_MEMORY_SANITIZER	"Build with memory sanitizer compiler options."		OFF)
-option(OPTION_BUILD_THREAD_SANITIZER	"Build with thread sanitizer compiler options."		OFF)
+option(OPTION_BUILD_ADDRESS_SANITIZER	"Build with sanitizer compiler options."						OFF)
+option(OPTION_BUILD_THREAD_SANITIZER	"Build with thread sanitizer compiler options."					OFF)
+option(OPTION_BUILD_MEMORY_SANITIZER	"Build with memory sanitizer compiler options."					OFF)
 
-if((OPTION_BUILD_SANITIZER AND OPTION_BUILD_MEMORY_SANITIZER) OR (OPTION_BUILD_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER) OR (OPTION_BUILD_MEMORY_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER))
-	message(FATAL_ERROR "OPTION_BUILD_SANITIZER and OPTION_BUILD_MEMORY_SANITIZER and OPTION_BUILD_THREAD_SANITIZER are mutually exclusive, choose one of them")
+if((OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_MEMORY_SANITIZER) OR (OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER) OR (OPTION_BUILD_MEMORY_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER))
+	message(FATAL_ERROR "OPTION_BUILD_ADDRESS_SANITIZER and OPTION_BUILD_MEMORY_SANITIZER and OPTION_BUILD_THREAD_SANITIZER are mutually exclusive, choose one of them")
 endif()
 
 #
@@ -84,16 +84,7 @@ elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Cla
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__MEMORY_SANITIZER__=1"
 	)
-elseif(OPTION_BUILD_UB_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	# TODO
-	set(SANITIZER_LIBRARIES)
-	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-		"UBSAN_OPTIONS=print_stacktrace=1"
-	)
-	set(SANITIZER_COMPILE_DEFINITIONS
-		"__UB_SANITIZER__=1"
-	)
-elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -lasan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
@@ -236,16 +227,15 @@ if(WIN32 AND MSVC)
 	# Sanitizers
 	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(/fsanitize=thread)
+		# add_compile_options(/fsanitize=undefined)
 		add_link_options(/INCREMENTAL:NO)
-	elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+	elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(/fsanitize=address)
+		# add_compile_options(/fsanitize=undefined)
 		add_link_options(/INCREMENTAL:NO)
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(/fsanitize=memory)
 		add_compile_options(/fsanitize=leak)
-		add_link_options(/INCREMENTAL:NO)
-	elseif(OPTION_BUILD_UB_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(/fsanitize=undefined)
 		add_link_options(/INCREMENTAL:NO)
 	endif()
 endif()
@@ -279,14 +269,18 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
 			add_link_options(-fsanitize=thread)
 		endif()
-	elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+	elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(-fno-omit-frame-pointer)
 		add_compile_options(-fno-optimize-sibling-calls)
 		add_compile_options(-fsanitize=undefined)
 		add_compile_options(-fsanitize=address)
 		add_compile_options(-fsanitize-address-use-after-scope)
+		add_compile_options(-fsanitize=float-divide-by-zero)
+		add_compile_options(-fsanitize=float-cast-overflow)
 		if(PROJECT_OS_FAMILY MATCHES "unix")
 			if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+				add_compile_options(-fsanitize=pointer-compare)
+				add_compile_options(-fsanitize=pointer-subtract)
 				add_compile_options(-fuse-ld=gold)
 			endif()
 			add_compile_options(-fsanitize=leak)
@@ -309,8 +303,6 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 			add_link_options(-fsanitize-memory-track-origins)
 			add_link_options(-fsanitize-memory-use-after-dtor)
 		endif()
-	elseif(OPTION_BUILD_UB_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		# TODO
 	endif()
 
 	# Debug symbols

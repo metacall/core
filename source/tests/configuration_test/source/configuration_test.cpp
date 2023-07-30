@@ -70,7 +70,7 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		EXPECT_EQ((int)12345, (int)value_to_int(v));
 
-		v = configuration_value(global, key_value_local);
+		v = configuration_value_type(global, key_value_local, TYPE_INT);
 
 		ASSERT_NE((value)NULL, (value)v);
 
@@ -92,7 +92,7 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		EXPECT_EQ((int)65432345, (int)value_to_int(v));
 
-		v = configuration_value(child_a, key_value_local);
+		v = configuration_value_type(child_a, key_value_local, TYPE_INT);
 
 		ASSERT_NE((value)NULL, (value)v);
 
@@ -114,7 +114,7 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		EXPECT_EQ((int)54321, (int)value_to_int(v));
 
-		v = configuration_value(child_b, key_value_local);
+		v = configuration_value_type(child_b, key_value_local, TYPE_INT);
 
 		ASSERT_NE((value)NULL, (value)v);
 
@@ -136,7 +136,7 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		EXPECT_EQ((int)1111, (int)value_to_int(v));
 
-		v = configuration_value(child_c, key_value_local);
+		v = configuration_value_type(child_c, key_value_local, TYPE_INT);
 
 		ASSERT_NE((value)NULL, (value)v);
 
@@ -158,7 +158,7 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		EXPECT_EQ((int)22222, (int)value_to_int(v));
 
-		v = configuration_value(child_d, key_value_local);
+		v = configuration_value_type(child_d, key_value_local, TYPE_INT);
 
 		ASSERT_NE((value)NULL, (value)v);
 
