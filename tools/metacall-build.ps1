@@ -56,7 +56,7 @@ function sub-build {
 	}
 
 	# Tests (coverage needs to run the tests)
-	if ( ($BUILD_TESTS -eq 1) -or ( ($BUILD_BENCHMARKS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
+	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_BENCHMARKS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
 		echo "Running the tests..."
 
 		# Prerequisites
