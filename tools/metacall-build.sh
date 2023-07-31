@@ -25,6 +25,7 @@ BUILD_TYPE=Release
 BUILD_TESTS=0
 BUILD_COVERAGE=0
 BUILD_INSTALL=0
+BUILD_BENCHMARKS=0
 
 # Check out for sudo
 if [ "`id -u`" = '0' ]; then
@@ -52,6 +53,10 @@ sub_options() {
 			echo "Build and run all tests"
 			BUILD_TESTS=1
 		fi
+		if [ "$option" = 'benchmarks' ]; then
+			echo "Build and run all benchmarks"
+			BUILD_BENCHMARKS=1
+		fi
 		if [ "$option" = 'coverage' ]; then
 			echo "Build coverage reports"
 			BUILD_COVERAGE=1
@@ -69,7 +74,7 @@ sub_build() {
 	make -k -j$(getconf _NPROCESSORS_ONLN)
 
 	# Tests (coverage needs to run the tests)
-	if [ $BUILD_TESTS = 1 ] || [ $BUILD_COVERAGE = 1 ]; then
+	if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS=1 ] || [ $BUILD_COVERAGE = 1 ]; then
 		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
 	fi
 

@@ -116,14 +116,14 @@ jobs:
           cmake -DOPTION_FORK_SAFE=OFF  ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
-          METACALL_BUILD_OPTIONS: release 
+          METACALL_BUILD_OPTIONS: release benchmarks
         if: matrix.os != 'windows-2019'
 
       - name: Build (Windows)
         working-directory: ./build
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: release 
+          METACALL_BUILD_OPTIONS: release benchmarks
         if: matrix.os == 'windows-2019'
 
       - name: Store benchmark result

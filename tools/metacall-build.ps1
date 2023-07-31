@@ -1,5 +1,6 @@
 $Global:BUILD_TYPE     = 'Release'
 $Global:BUILD_TESTS    = 0
+$Global:BUILD_BENCHMARKS = 0
 $Global:BUILD_COVERAGE = 0
 $Global:BUILD_INSTALL  = 0
 
@@ -24,6 +25,10 @@ function sub-options {
 		if ( "$option" -eq "tests" ) {
 			echo "Build and run all tests"
 			$Global:BUILD_TESTS = 1
+		}
+		if ( "$option" -eq "benchmarks" ) {
+			echo "Build and run all benchmarks"
+			$Global:BUILD_BENCHMARKS = 1
 		}
 		if ( "$option" -eq "coverage" ) {
 			echo "Build coverage reports"
@@ -51,7 +56,7 @@ function sub-build {
 	}
 
 	# Tests (coverage needs to run the tests)
-	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
+	if ( ($BUILD_TESTS -eq 1) -or ( ($BUILD_BENCHMARKS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
 		echo "Running the tests..."
 
 		# Prerequisites
