@@ -16,12 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  benchmark:
+  benchmark-macOS-Linux:
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
         matrix:
-          os: [macos-latest, ubuntu-latest, windows-2019]
+          os: [macos-latest, ubuntu-latest]
           benchs : [
             metacall-py-call-bench.json, 
             metacall-py-init-bench.json,
@@ -41,50 +41,21 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-
-      - name: Activate the Visual Studio Developer Prompt
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: amd64
-        if: matrix.os == 'windows-2019'
-
-      - name: Prepare variables (macOS/Linux)
+        
+      - name: Prepare variables
         run: |
-          # Extract the OS name from matrix.os
-          OS_NAME=$(echo ${{ matrix.os }} | sed 's/-latest$//')
-          BENCH_NAME=$(echo ${{ matrix.benchs }} | sed 's/metacall-\(.*\)-bench.json/\1/')
-          # Set the OS_NAME environment variable for use in subsequent steps
-          echo "OS_NAME=${OS_NAME}" >> $GITHUB_ENV
-          echo "BENCH_NAME=${BENCH_NAME}" >> $GITHUB_ENV
-          echo "BENCH_PATH=./build/" >> $GITHUB_ENV
-        if: matrix.os != 'windows-2019'
-
-      - name: Prepare variables (Windows)
-        run: |
-          # Extract the OS name from matrix.os
-          $env:OS_NAME = "${{ matrix.os }}" -replace '-2019$', ''
-          # Extract the benchmark name from matrix.benchs
-          $env:BENCH_NAME = "${{ matrix.benchs }}" -replace 'metacall-(.*?)-bench.json', '$1'
-          # Set the OS_NAME environment variable for use in subsequent steps
-          $envVariables = "OS_NAME=$env:OS_NAME`nBENCH_NAME=$env:BENCH_NAME`nBENCH_PATH=./build/Debug/"
-          $envVariables | Out-File -FilePath $env:GITHUB_ENV -Append
-        if: matrix.os == 'windows-2019'
-      
+         sh ./tools/metacall-bench-vars.sh $METACALL_PREPARE_OPTIONS
+        env:
+          METACALL_PREPARE_OPTIONS: ${{ matrix.os }} ${{ matrix.benchs }}
+        
       # TODO:: Add support for NetCore Bench
       - name: Set up the environment (macOS/Linux)
         run: |
           sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base python nodejs ruby backtrace 
-        if : matrix.os != 'windows-2019'
+          METACALL_INSTALL_OPTIONS: base python nodejs ruby netcore7 backtrace 
 
-      - name: Set up the environment (Windows)
-        run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
-        env:
-          METACALL_INSTALL_OPTIONS: python nodejs ruby
-        if: matrix.os == 'windows-2019'
-
-      - name: Configure (macOS/Linux)
+      - name: Configure 
         run: |
           mkdir -p build
           cd build
@@ -93,20 +64,9 @@ jobs:
           fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby benchmarks install 
-        if: matrix.os != 'windows-2019'
-
-      - name: Configure (Windows)
-        run: |
-          $METACALL_PATH = $PWD
-          md -Force "$METACALL_PATH\build"
-          cd "$METACALL_PATH\build"
-          cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
-        env:
-          METACALL_BUILD_OPTIONS: debug scripts python nodejs ruby benchmarks
-        if: matrix.os == 'windows-2019'
-
-      - name: Build (macOS/Linux)
+          METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby netcore7 benchmarks install 
+ 
+      - name: Build 
         working-directory: ./build
         # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
@@ -117,15 +77,7 @@ jobs:
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: release benchmarks
-        if: matrix.os != 'windows-2019'
-
-      - name: Build (Windows)
-        working-directory: ./build
-        run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
-        env:
-          METACALL_BUILD_OPTIONS: debug benchmarks
-        if: matrix.os == 'windows-2019'
-
+        
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -141,3 +93,79 @@ jobs:
             # Comment in case of alert
             comment-on-alert: true
             benchmark-data-dir-path: bench/${{ env.OS_NAME }}/${{ env.BENCH_NAME }}
+
+  benchmark-windows:
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [windows-2019]
+          benchs : [
+            metacall-py-call-bench.json, 
+            metacall-py-init-bench.json,
+            metacall-py-c-api-bench.json,
+            metacall-node-call-bench.json,
+            metacall-rb-call-bench.json,
+            # metacall-cs-call-bench.json,  # TODO:: Enable once NetCore is implemented in windows
+            ]
+          
+    env:
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Activate the Visual Studio Developer Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+        
+      - name: Prepare variables
+        run: |
+          cmd.exe /c "powershell .\tools\metacall-bench-vars.ps1 $Env:METACALL_PREPARE_OPTIONS"
+        env:
+          METACALL_PREPARE_OPTIONS: ${{ matrix.os }} ${{ matrix.benchs }}
+        
+      - name: Set up the environment
+        run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
+        env:
+          METACALL_INSTALL_OPTIONS: python nodejs ruby
+ 
+      - name: Configure 
+        run: |
+          $METACALL_PATH = $PWD
+          md -Force "$METACALL_PATH\build"
+          cd "$METACALL_PATH\build"
+          cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
+        env:
+          METACALL_BUILD_OPTIONS: debug scripts python nodejs ruby benchmarks
+ 
+      - name: Build
+        working-directory: ./build
+        run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
+        env:
+          METACALL_BUILD_OPTIONS: debug benchmarks
+        
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+            name: Metacall ${{ env.OS_NAME }}-${{ env.BENCH_NAME }} Benchmark
+            tool: 'googlecpp'
+            output-file-path: ${{ env.BENCH_PATH }}${{ matrix.benchs }}
+            # Access token to deploy GitHub Pages branch
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            # Push and deploy GitHub pages branch automatically
+            auto-push: true
+            # Github Pages branch name
+            gh-pages-branch: pages
+            # Comment in case of alert
+            comment-on-alert: true
+            benchmark-data-dir-path: bench/${{ env.OS_NAME }}/${{ env.BENCH_NAME }}
+
+
+    
