@@ -15,6 +15,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+defaults:
+  env:
+    LTTNG_UST_REGISTER_TIMEOUT: 0
+    NUGET_XMLDOC_MODE: skip
+    DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
 jobs:
   benchmark-macOS-Linux:
     runs-on: ${{ matrix.os }}
@@ -31,11 +37,6 @@ jobs:
             metacall-rb-call-bench.json
             ]
           
-    env:
-      LTTNG_UST_REGISTER_TIMEOUT: 0
-      NUGET_XMLDOC_MODE: skip
-      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
-
     steps:
       - name: Check out the repository
         uses: actions/checkout@v2
@@ -108,11 +109,6 @@ jobs:
             metacall-rb-call-bench.json,
             # metacall-cs-call-bench.json,  # TODO:: Enable once NetCore is implemented in windows
             ]
-          
-    env:
-      LTTNG_UST_REGISTER_TIMEOUT: 0
-      NUGET_XMLDOC_MODE: skip
-      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
     steps:
       - name: Check out the repository
