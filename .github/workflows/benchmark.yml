@@ -23,12 +23,12 @@ jobs:
         matrix:
           os: [macos-latest, ubuntu-latest]
           benchs : [
-            metacall-py-call-bench.json, 
-            metacall-py-init-bench.json,
-            metacall-py-c-api-bench.json,
+            # metacall-py-call-bench.json, 
+            # metacall-py-init-bench.json,
+            # metacall-py-c-api-bench.json,
             metacall-cs-call-bench.json,
-            metacall-node-call-bench.json,
-            metacall-rb-call-bench.json
+            # metacall-node-call-bench.json,
+            # metacall-rb-call-bench.json
             ]
           
     env:
@@ -65,6 +65,9 @@ jobs:
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
           METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby netcore7 benchmarks install 
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
  
       - name: Build 
         working-directory: ./build
@@ -95,11 +98,10 @@ jobs:
             benchmark-data-dir-path: bench/${{ env.OS_NAME }}/${{ env.BENCH_NAME }}
 
   benchmark-windows:
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-2019
     strategy:
         fail-fast: false
         matrix:
-          os: [windows-2019]
           benchs : [
             metacall-py-call-bench.json, 
             metacall-py-init-bench.json,
@@ -129,7 +131,7 @@ jobs:
         run: |
           cmd.exe /c "powershell .\tools\metacall-bench-vars.ps1 $Env:METACALL_PREPARE_OPTIONS"
         env:
-          METACALL_PREPARE_OPTIONS: ${{ matrix.os }} ${{ matrix.benchs }}
+          METACALL_PREPARE_OPTIONS: windows-2019 ${{ matrix.benchs }}
         
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
