@@ -65,9 +65,6 @@ jobs:
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
           METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby netcore7 benchmarks install 
-
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
  
       - name: Build 
         working-directory: ./build
