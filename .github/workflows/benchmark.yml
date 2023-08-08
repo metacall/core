@@ -23,12 +23,12 @@ jobs:
         matrix:
           os: [macos-latest, ubuntu-latest]
           benchs : [
-            # metacall-py-call-bench.json, 
-            # metacall-py-init-bench.json,
-            # metacall-py-c-api-bench.json,
+            metacall-py-call-bench.json, 
+            metacall-py-init-bench.json,
+            metacall-py-c-api-bench.json,
             metacall-cs-call-bench.json,
-            # metacall-node-call-bench.json,
-            # metacall-rb-call-bench.json
+            metacall-node-call-bench.json,
+            metacall-rb-call-bench.json
             ]
           
     env:
