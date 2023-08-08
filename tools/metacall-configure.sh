@@ -182,7 +182,7 @@ sub_options() {
 }
 
 sub_find_dotnet_runtime() {
-	NETCORE_BASE_PATH=`dotnet --list-runtimes | grep "Microsoft.NETCore.App $1"`
+	NETCORE_BASE_PATH=`dotnet --list-runtimes | grep -m 1 "Microsoft.NETCore.App $1"`
 	echo "`echo \"$NETCORE_BASE_PATH\" | awk '{ print $3 }' | tail -c +2 | head -c -2`/`echo \"$NETCORE_BASE_PATH\" | awk '{ print $2 }'`/"
 }
 
