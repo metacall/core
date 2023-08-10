@@ -106,6 +106,7 @@ function Set-Nodejs {
 	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.lib""" >> $EnvOpts
 	Write-Output "-DNodeJS_EXECUTABLE=""$NodeDir/node.exe""" >> $EnvOpts
 	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $EnvOpts
+	Write-Output "-DNodeJS_LIBRARY_NAME_PATH=""$NodeDir/lib/libnode.dll""" >> $EnvOpts
 }
 
 function Set-Java {

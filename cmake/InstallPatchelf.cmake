@@ -45,11 +45,11 @@ ExternalProject_Add(Patchelf
 	STAMP_DIR           "${Patchelf_STAMP_DIR}"
 	TMP_DIR             "${Patchelf_TMP_DIR}"
 	CONFIGURE_COMMAND   ${Patchelf_ENV_COMMAND} ${Patchelf_SOURCE_DIR}/configure
-	INSTALL_COMMAND     ""
-	LOG_DOWNLOAD        ON
-	LOG_CONFIGURE       ON
-	LOG_BUILD           ON
-	LOG_INSTALL         ON
+	INSTALL_COMMAND ""
+	LOG_DOWNLOAD 1
+	LOG_CONFIGURE 1
+	LOG_BUILD 1
+	LOG_INSTALL 1
 )
 
 set(Patchelf_EXECUTABLE "${CMAKE_BINARY_DIR}/Patchelf/src/patchelf/src/patchelf")

@@ -14,6 +14,14 @@ if(NOT NodeJS_FOUND)
 	return()
 endif()
 
+# Copy NodeJS DLL into project output directory
+# TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
+# TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
+if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
+	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
+	file(COPY ${NodeJS_LIBRARY_NAME_PATH} DESTINATION ${PROJECT_OUTPUT_DIR})
+endif()
+
 #
 # Plugin name and options
 #
@@ -220,9 +228,9 @@ install(TARGETS ${target}
 # Runtime (pack NodeJS DLL in windows)
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
-if(WIN32)
+if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
 	install(FILES
-		${NodeJS_LIBRARY_NAME}
+		${NodeJS_LIBRARY_NAME_PATH}
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)
