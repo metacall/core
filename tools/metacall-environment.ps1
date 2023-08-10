@@ -158,7 +158,7 @@ function Set-Ruby {
 	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-3.1.0""" >> $EnvOpts
 	Write-Output "-DRuby_EXECUTABLE=""$RubyDir/bin/ruby.exe""" >> $EnvOpts
 	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby310.lib""" >> $EnvOpts
-	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/lib/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
 }
 
 function Set-TypeScript {
