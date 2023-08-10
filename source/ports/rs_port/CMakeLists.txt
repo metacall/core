@@ -68,37 +68,27 @@ endif()
 # Fix version for using LLVM 16 with instrumentation
 set(RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION 2023-05-24)
 
-if(OPTION_BUILD_ADDRESS_SANITIZER)
-	if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-		if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR
-			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-fuchsia" OR
-			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-linux-gnu" OR
-			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-apple-darwin" OR
-			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-fuchsia" OR
-			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
-			"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
-			set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
-			set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
-			set(SANITIZER_FLAGS
-				CMAKE_ADDRESS_SANITIZER=1
-				RUSTFLAGS=-Zsanitizer=address
-			)
-			set(NIGHTLY_FLAGS
-				+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
-			)
-			set(BUILD_STD_FLAGS
-				-Zbuild-std
-				--target ${Rust_TOOLCHAIN_TRIPLET}
-			)
-		endif()
-	else()
-		# Apparently GCC address sanitizer works well (without false positives) in rs_port
-		# when it is not instrumented, so we can run the test even without rs_port instrumentation
+if(OPTION_BUILD_ADDRESS_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+	if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR
+		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-fuchsia" OR
+		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-linux-gnu" OR
+		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-apple-darwin" OR
+		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-fuchsia" OR
+		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
+		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
 		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
+		set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
 		set(SANITIZER_FLAGS
 			CMAKE_ADDRESS_SANITIZER=1
+			RUSTFLAGS=-Zsanitizer=address
 		)
-		set(BUILD_STD_FLAGS)
+		set(NIGHTLY_FLAGS
+			+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
+		)
+		set(BUILD_STD_FLAGS
+			-Zbuild-std
+			--target ${Rust_TOOLCHAIN_TRIPLET}
+		)
 	endif()
 elseif(OPTION_BUILD_THREAD_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR

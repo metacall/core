@@ -52,6 +52,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		UPDATE_COMMAND ""
 		INSTALL_COMMAND ""
 		TEST_COMMAND ""
+		DOWNLOAD_EXTRACT_TIMESTAMP OFF
 	)
 
 	# Google Test include and binary directories

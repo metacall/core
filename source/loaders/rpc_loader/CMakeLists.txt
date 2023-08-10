@@ -9,6 +9,14 @@ endif()
 
 find_package(CURL REQUIRED)
 
+# Copy cURL DLL into project output directory
+# TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
+# TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
+if(WIN32 AND CURL_LIBRARY_NAME)
+	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
+	file(COPY ${CURL_LIBRARY_NAME} DESTINATION ${PROJECT_OUTPUT_DIR})
+endif()
+
 #
 # Plugin name and options
 #
@@ -183,3 +191,14 @@ install(TARGETS ${target}
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
+
+# Runtime (pack cURL DLL in windows)
+# TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
+# TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
+if(WIN32 AND CURL_LIBRARY_NAME)
+	install(FILES
+		${CURL_LIBRARY_NAME}
+		DESTINATION ${INSTALL_LIB}
+		COMPONENT runtime
+	)
+endif()

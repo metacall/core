@@ -6,79 +6,67 @@ $Global:BUILD_INSTALL  = 0
 $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 $Global:Arguments = $args
 
-function sub-options {
+function Sub-Options {
 	for ($i = 0; $i -lt $Arguments.Length; $i++) {
 		$option = $Arguments[$i]
-		if ( "$option" -eq "debug" ) {
+		if ("$option" -eq "debug") {
 			echo "Build all scripts in debug mode"
 			$Global:BUILD_TYPE = 'Debug'
 		}
-		if ( "$option" -eq "release" ) {
+		if ("$option" -eq "release") {
 			echo "Build all scripts in release mode"
 			$Global:BUILD_TYPE = 'Release'
 		}
-		if ( "$option" -eq "relwithdebinfo" ) {
+		if ("$option" -eq "relwithdebinfo") {
 			echo "Build all scripts in release mode with debug symbols"
 			$Global:BUILD_TYPE = 'RelWithDebInfo'
 		}
-		if ( "$option" -eq "tests" ) {
+		if ("$option" -eq "tests") {
 			echo "Build and run all tests"
 			$Global:BUILD_TESTS = 1
 		}
-		if ( "$option" -eq "coverage" ) {
+		if ("$option" -eq "coverage") {
 			echo "Build coverage reports"
 			$Global:BUILD_COVERAGE = 1
 		}
-		if ( "$option" -eq "install" ) {
+		if ("$option" -eq "install") {
 			echo "Install all libraries"
 			$Global:BUILD_INSTALL = 1
 		}
 	}
 }
 
-function sub-build {
+function Sub-Build {
 	$Global:ExitCode = 0
 
 	# Build the project
 	echo "Building MetaCall..."
-	cmake --build . "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)"
+	cmake --build . -j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors) --config $BUILD_TYPE
 
-	if ( -not $? ) {
+	if (-not $?) {
 		$RecentExitCode = $LASTEXITCODE
 		echo "Failure in build with exit code: $RecentExitCode"
 
 		$Global:ExitCode = $RecentExitCode
+		Exit $ExitCode
 	}
 
 	# Tests (coverage needs to run the tests)
-	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
+	if (($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1)) {
 		echo "Running the tests..."
+		ctest -j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors) --timeout 5400 --output-on-failure -C $BUILD_TYPE
 
-		# Prerequisites
-		$files = @(
-			"$env:ProgramFiles\nodejs\lib\libnode.dll",
-			"$env:ProgramFiles\ruby\bin\x64-vcruntime140-ruby310.dll"
-		)
-
-		ForEach ($file in $files) {
-			if ( (Test-Path $file -PathType Leaf) ) {
-				echo "Copying ""$file"" to "".\$BUILD_TYPE\""..."
-				cp $file ".\$BUILD_TYPE\"
-			}
-		}
-
-		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 5400 --output-on-failure -C $BUILD_TYPE
-
-		if ( -not $? ) {
+		if (-not $?) {
 			$RecentExitCode = $LASTEXITCODE
 			echo "Failure in tests with exit code: $RecentExitCode"
 
 			$Global:ExitCode = $RecentExitCode
+			Exit $ExitCode
 		}
 	}
 
 	# Coverage
-	<# if ( $BUILD_COVERAGE = 1 ) {
+	<# if ($BUILD_COVERAGE = 1) {
 		# TODO (copied): Remove -k, solve coverage issues
 		# TODO: Migrate to Windows
 		echo "Reporting coverage..."
@@ -86,7 +74,7 @@ function sub-build {
 		make -k lcov
 		make -k lcov-genhtml
 
-		if ( -not $? ) {
+		if (-not $?) {
 			$RecentExitCode = $LASTEXITCODE
 			echo "Failure in coverage with exit code: $RecentExitCode"
 
@@ -95,22 +83,23 @@ function sub-build {
 	} #>
 
 	# Install
-	if ( $BUILD_INSTALL -eq 1 ) {
+	if ($BUILD_INSTALL -eq 1) {
 		echo "Building and installing MetaCall..."
-		cmake --build . --target install
+		cmake --build . --target install --config $BUILD_TYPE
 
-		if ( -not $? ) {
+		if (-not $?) {
 			$RecentExitCode = $LASTEXITCODE
 			echo "Failure in install with exit code: $RecentExitCode"
 
 			$Global:ExitCode = $RecentExitCode
+			Exit $ExitCode
 		}
 	}
 
 	Exit $ExitCode
 }
 
-function sub-help {
+function Sub-Help {
 	echo "Usage: $PROGNAME list of options"
 	echo "Options:"
 	echo "	debug | release | relwithdebinfo: build type"
@@ -122,11 +111,11 @@ function sub-help {
 
 switch($args.length) {
 	0 {
-		sub-help
+		Sub-Help
 		Break
 	}
 	Default {
-		sub-options
-		sub-build
+		Sub-Options
+		Sub-Build
 	}
 }

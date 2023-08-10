@@ -34,16 +34,16 @@ function Set-Python {
 	[Environment]::SetEnvironmentVariable("PIP_TARGET", "$RuntimeDir\Lib")
 
 	# No patch, save vars for later use
-	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$PythonRuntimeDir = $RuntimeDir.Replace('\', '/')
 
-	Write-Output "-DPython3_VERSION=$PythonVersion" >> $Env_Opts
-	Write-Output "-DPython3_ROOT_DIR=""$PythonRuntimeDir""" >> $Env_Opts
-	Write-Output "-DPython3_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $Env_Opts
-	Write-Output "-DPython3_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $Env_Opts
-	Write-Output "-DPython3_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $Env_Opts
-	Write-Output "-DPython3_Development_FOUND=1" >> $Env_Opts
-	Write-Output "-DPython3_FIND_REGISTRY=NEVER" >> $Env_Opts
+	Write-Output "-DPython3_VERSION=$PythonVersion" >> $EnvOpts
+	Write-Output "-DPython3_ROOT_DIR=""$PythonRuntimeDir""" >> $EnvOpts
+	Write-Output "-DPython3_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $EnvOpts
+	Write-Output "-DPython3_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $EnvOpts
+	Write-Output "-DPython3_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $EnvOpts
+	Write-Output "-DPython3_Development_FOUND=1" >> $EnvOpts
+	Write-Output "-DPython3_FIND_REGISTRY=NEVER" >> $EnvOpts
 
 	# Install dependencies for tests
 	pip3 install requests
@@ -100,12 +100,12 @@ function Set-Nodejs {
 	
 	$NodeDir  = $RuntimeDir.Replace('\', '/')
 
-	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
-	Write-Output "-DNodeJS_VERSION=""$NodeVersion""" >> $Env_Opts
-	Write-Output "-DNodeJS_INCLUDE_DIRS=""$NodeDir/include/node""" >> $Env_Opts
-	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.lib""" >> $Env_Opts
-	Write-Output "-DNodeJS_EXECUTABLE=""$NodeDir/node.exe""" >> $Env_Opts
-	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $Env_Opts
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
+	Write-Output "-DNodeJS_VERSION=""$NodeVersion""" >> $EnvOpts
+	Write-Output "-DNodeJS_INCLUDE_DIRS=""$NodeDir/include/node""" >> $EnvOpts
+	Write-Output "-DNodeJS_LIBRARY=""$NodeDir/lib/libnode.lib""" >> $EnvOpts
+	Write-Output "-DNodeJS_EXECUTABLE=""$NodeDir/node.exe""" >> $EnvOpts
+	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $EnvOpts
 }
 
 function Set-Java {
@@ -151,13 +151,53 @@ function Set-Ruby {
 
 	Add-to-Path "$RuntimeDir\bin"
 
-	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$RubyDir  = $RuntimeDir.Replace('\', '/')
 
-	Write-Output "-DRuby_VERSION_STRING=""$RUBY_VERSION""" >> $Env_Opts
-	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-3.1.0""" >> $Env_Opts
-	Write-Output "-DRuby_EXECUTABLE=""$RubyDir/bin/ruby.exe""" >> $Env_Opts
-	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby310.lib""" >> $Env_Opts
+	Write-Output "-DRuby_VERSION_STRING=""$RUBY_VERSION""" >> $EnvOpts
+	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-3.1.0""" >> $EnvOpts
+	Write-Output "-DRuby_EXECUTABLE=""$RubyDir/bin/ruby.exe""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby310.lib""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/lib/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
+}
+
+function Set-TypeScript {
+	Write-Output "Install TypeScript"
+	npm i react@latest -g
+	npm i react-dom@latest -g
+}
+
+function Set-Curl {
+	Write-Output "Installing cURL"
+
+	Set-Location $ROOT_DIR
+	$RuntimeDir = "$env:ProgramFiles\curl"
+	$DepsDir = "$ROOT_DIR\dependencies"
+
+	if (!(Test-Path -Path "$DepsDir\curl.zip")) {
+		# Download installer
+		Write-Output "Curl not found downloading now..."
+		(New-Object Net.WebClient).DownloadFile("https://curl.se/windows/dl-8.1.2_3/curl-8.1.2_3-win64-mingw.zip", "$DepsDir\curl.zip")
+	}
+
+	Set-Location $DepsDir
+
+	7z x "$DepsDir\curl.zip"
+
+	robocopy /move /e "$DepsDir\curl-8.1.2_3-win64-mingw" $RuntimeDir
+
+	Add-to-Path "$RuntimeDir\bin"
+
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$CurlDir  = $RuntimeDir.Replace('\', '/')
+
+	$CURL_INCLUDE_DIR="$CurlDir/include"
+	$CURL_LIB="$CurlDir/lib/libcurl.dll.a"
+	$CURL_LIB_NAME="$CurlDir/bin/libcurl-x64.dll"
+
+	Write-Output "-DCURL_INCLUDE_DIRS=""$CURL_INCLUDE_DIR""" >> $EnvOpts
+	Write-Output "-DCURL_LIBRARY=""$CURL_LIB""" >> $EnvOpts
+	Write-Output "-DCURL_LIBRARY_NAME=""$CURL_LIB_NAME""" >> $EnvOpts
 }
 
 function Add-to-Path {
@@ -168,7 +208,7 @@ function Add-to-Path {
 	$Env:PATH = $NewPath
 	$GivenPath >> $env:GITHUB_PATH
 
-	if ( $Null -ne $Env:GITHUB_ENV ) {
+	if ($Null -ne $Env:GITHUB_ENV) {
 		Write-Output "PATH=$Env:PATH" >> $Env:GITHUB_ENV
 	}
 
@@ -176,7 +216,6 @@ function Add-to-Path {
 
 	Write-Output "PATH:: " $Env:PATH
 }
-
 
 function Set-Base {
 	$DepsDir = "$ROOT_DIR\dependencies"
@@ -197,12 +236,6 @@ function Set-Base {
 	}
 }
 
-function Set-TypeScript {
-	Write-Output "Install TypeScript"
-	npm i react@latest -g
-	npm i react-dom@latest -g
-}
-
 # Configure
 function Configure {
 	# Create option variables file 
@@ -214,90 +247,91 @@ function Configure {
 
 	for ($i = 0; $i -lt $Arguments.Length; $i++) {
 		$var = $Arguments[$i]
-		if ( "$var" -eq 'python' ) {
+		if ("$var" -eq 'python') {
 			Write-Output "python selected"
 			Set-Python
 		}
-		if ( "$var" -eq 'ruby' ) {
+		if ("$var" -eq 'ruby') {
 			Write-Output "ruby selected"
 			Set-Ruby
 		}
-		if ( "$var" -eq 'netcore' ) {
+		if ("$var" -eq 'netcore') {
 			Write-Output "netcore selected"
 		}
-		if ( "$var" -eq 'netcore2' ) {
+		if ("$var" -eq 'netcore2') {
 			Write-Output "netcore 2 selected"
 		}
-		if ( "$var" -eq 'netcore5' ) {
+		if ("$var" -eq 'netcore5') {
 			Write-Output "netcore 5 selected"
 		}
-		if ( "$var" -eq 'rapidjson' ) {
+		if ("$var" -eq 'rapidjson') {
 			Write-Output "rapidjson selected"
 		}
-		if ( "$var" -eq 'funchook' ) {
+		if ("$var" -eq 'funchook') {
 			Write-Output "funchook selected"
 		}
-		if ( ("$var" -eq 'v8') -or ("$var" -eq 'v8rep54') ) {
+		if (("$var" -eq 'v8') -or ("$var" -eq 'v8rep54')) {
 			Write-Output "v8 selected"
 		}
-		if ( "$var" -eq 'v8rep57' ) {
+		if ("$var" -eq 'v8rep57') {
 			Write-Output "v8 selected"
 		}
-		if ( "$var" -eq 'v8rep58' ) {
+		if ("$var" -eq 'v8rep58') {
 			Write-Output "v8 selected"
 		}
-		if ( "$var" -eq 'v8rep52' ) {
+		if ("$var" -eq 'v8rep52') {
 			Write-Output "v8 selected"
 		}
-		if ( "$var" -eq 'v8rep51' ) {
+		if ("$var" -eq 'v8rep51') {
 			Write-Output "v8 selected"
 		}
-		if ( "$var" -eq 'nodejs' ) {
+		if ("$var" -eq 'nodejs') {
 			Write-Output "nodejs selected"
 			Set-Nodejs
 		}
-		if ( "$var" -eq 'typescript' ) {
+		if ("$var" -eq 'typescript') {
 			Write-Output "typescript selected"
 			Set-TypeScript
 		}
-		if ( "$var" -eq 'file' ) {
+		if ("$var" -eq 'file') {
 			Write-Output "file selected"
 		}
-		if ( "$var" -eq 'rpc' ) {
+		if ("$var" -eq 'rpc') {
 			Write-Output "rpc selected"
+			Set-Curl
 		}
-		if ( "$var" -eq 'wasm' ) {
+		if ("$var" -eq 'wasm') {
 			Write-Output "wasm selected"
 		}
-		if ( "$var" -eq 'java' ) {
+		if ("$var" -eq 'java') {
 			Write-Output "java selected"
 			Set-Java
 		}
-		if ( "$var" -eq 'c' ) {
+		if ("$var" -eq 'c') {
 			Write-Output "c selected"
 		}
-		if ( "$var" -eq 'cobol' ) {
+		if ("$var" -eq 'cobol') {
 			Write-Output "cobol selected"
 		}
-		if ( "$var" -eq 'go' ) {
+		if ("$var" -eq 'go') {
 			Write-Output "go selected"
 		}
-		if ( "$var" -eq 'rust' ) {
+		if ("$var" -eq 'rust') {
 			Write-Output "rust selected"
 		}
-		if ( "$var" -eq 'swig' ) {
+		if ("$var" -eq 'swig') {
 			Write-Output "swig selected"
 		}
-		if ( "$var" -eq 'metacall' ) {
+		if ("$var" -eq 'metacall') {
 			Write-Output "metacall selected"
 		}
-		if ( "$var" -eq 'pack' ) {
+		if ("$var" -eq 'pack') {
 			Write-Output "pack selected"
 		}
-		if ( "$var" -eq 'coverage' ) {
+		if ("$var" -eq 'coverage') {
 			Write-Output "coverage selected"
 		}
-		if ( "$var" -eq 'clangformat' ) {
+		if ("$var" -eq 'clangformat') {
 			Write-Output "clangformat selected"
 		}
 	}

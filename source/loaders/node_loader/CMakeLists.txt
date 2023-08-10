@@ -162,7 +162,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	$<$<BOOL:${MSVC}>:NODEJS_LIBRARY_NAME="${NodeJS_LIBRARY_NAME}">
+	$<$<BOOL:${WIN32}>:NODEJS_LIBRARY_NAME="${NodeJS_LIBRARY_NAME}">
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
@@ -217,9 +217,13 @@ install(TARGETS ${target}
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
 
-# Runtime (pack the runtime meanwhile NodeJS is not distributed as a library)
-install(FILES
-	${NodeJS_LIBRARY}
-	DESTINATION ${INSTALL_LIB}
-	COMPONENT runtime
-)
+# Runtime (pack NodeJS DLL in windows)
+# TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
+# TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
+if(WIN32)
+	install(FILES
+		${NodeJS_LIBRARY_NAME}
+		DESTINATION ${INSTALL_LIB}
+		COMPONENT runtime
+	)
+endif()

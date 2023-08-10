@@ -29,15 +29,15 @@ if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
 	endif()
 
 	ExternalProject_Add(rapid-json-depends
-		DOWNLOAD_NAME	RapidJSON-${RAPIDJSON_VERSION}.tar.gz
-		URL				https://github.com/Tencent/rapidjson/archive/${RAPIDJSON_VERSION}.tar.gz
-		URL_MD5			${RAPIDJSON_URL_MD5}
-		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-			-DRAPIDJSON_BUILD_DOC=Off
-			-DRAPIDJSON_BUILD_EXAMPLES=Off
-			-DRAPIDJSON_BUILD_TESTS=Off
-		TEST_COMMAND	""
+		DOWNLOAD_NAME				RapidJSON-${RAPIDJSON_VERSION}.tar.gz
+		URL							https://github.com/Tencent/rapidjson/archive/${RAPIDJSON_VERSION}.tar.gz
+		URL_MD5						${RAPIDJSON_URL_MD5}
+		CMAKE_ARGS					-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+									-DRAPIDJSON_BUILD_DOC=Off
+									-DRAPIDJSON_BUILD_EXAMPLES=Off
+									-DRAPIDJSON_BUILD_TESTS=Off
+		TEST_COMMAND				""
+		DOWNLOAD_EXTRACT_TIMESTAMP	OFF
 	)
 
 	ExternalProject_Get_Property(rapid-json-depends INSTALL_DIR)
