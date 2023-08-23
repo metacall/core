@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 
 		if (metacall_load_from_memory(tag, int_mem_type, sizeof(int_mem_type), NULL) != 0)
 		{
-			state.SkipWithError("Error loading int_mem_type function");
+			return 2;
 		}
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
