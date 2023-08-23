@@ -22,6 +22,7 @@ if(Patchelf_FOUND)
 endif()
 
 if(WIN32 OR APPLE)
+	# TODO: Download binaries (https://github.com/NixOS/patchelf/releases/tag/0.18.0)
 	message(WARNING "Patchelf not supported in MacOs or Windows")
 endif()
 
@@ -33,23 +34,23 @@ set(Patchelf_TMP_DIR     "${Patchelf_PREFIX_DIR}/tmp/patchelf")
 
 include(ExternalProject)
 
-set(Patchelf_ENV_COMMAND env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CXXFLAGS=-static)
-
 ExternalProject_Add(Patchelf
 	PREFIX				"${Patchelf_PREFIX_DIR}"
-	URL                 "http://nixos.org/releases/patchelf/patchelf-0.11/patchelf-0.11.tar.bz2"
-	PATCH_COMMAND
+	GIT_REPOSITORY      "https://github.com/NixOS/patchelf"
+	GIT_TAG             "0.18.0"
+	PATCH_COMMAND       ""
 	SOURCE_DIR          "${Patchelf_SOURCE_DIR}"
 	BINARY_DIR          "${Patchelf_SOURCE_DIR}"
 	INSTALL_DIR         "${Patchelf_INSTALL_DIR}"
 	STAMP_DIR           "${Patchelf_STAMP_DIR}"
 	TMP_DIR             "${Patchelf_TMP_DIR}"
-	CONFIGURE_COMMAND   ${Patchelf_ENV_COMMAND} ${Patchelf_SOURCE_DIR}/configure
-	INSTALL_COMMAND ""
-	LOG_DOWNLOAD 1
-	LOG_CONFIGURE 1
-	LOG_BUILD 1
-	LOG_INSTALL 1
+	CONFIGURE_COMMAND   ${Patchelf_SOURCE_DIR}/bootstrap.sh
+	BUILD_COMMAND       ${Patchelf_SOURCE_DIR}/configure
+	INSTALL_COMMAND     make
+	LOG_DOWNLOAD        1
+	LOG_CONFIGURE       1
+	LOG_BUILD           1
+	LOG_INSTALL         1
 )
 
 set(Patchelf_EXECUTABLE "${CMAKE_BINARY_DIR}/Patchelf/src/patchelf/src/patchelf")

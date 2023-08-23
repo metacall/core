@@ -31,7 +31,7 @@ if(NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTIO
 	)
 
 	if(NOT Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_GUIX)
-		execute_process(COMMAND ${Rust_CARGO_EXECUTABLE} install bindgen)
+		execute_process(COMMAND ${Rust_CARGO_EXECUTABLE} install bindgen-cli)
 
 		find_program(Rust_BINDGEN_EXECUTABLE bindgen
 			HINTS ${Rust_CARGO_HOME}

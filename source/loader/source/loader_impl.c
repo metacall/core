@@ -125,7 +125,7 @@ static int loader_impl_initialize_registered(plugin_manager manager, plugin p);
 
 static int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl);
 
-static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const loader_path path);
+static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size);
 
 static int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr, int populated);
 
@@ -522,7 +522,7 @@ int loader_impl_type_define(loader_impl impl, const char *name, type t)
 	return 1;
 }
 
-loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const loader_path path)
+loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
 
@@ -533,7 +533,7 @@ loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interfa
 
 	handle_impl->impl = impl;
 	handle_impl->iface = iface;
-	strncpy(handle_impl->path, path, LOADER_PATH_SIZE);
+	strncpy(handle_impl->path, path, size);
 	handle_impl->module = module;
 	handle_impl->ctx = context_create(handle_impl->path);
 
@@ -846,7 +846,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, path);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, path, LOADER_PATH_SIZE);
 
 				/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 				/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle impl: %p", (void *)handle_impl); */
@@ -979,7 +979,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, name);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, name, LOADER_NAME_SIZE);
 
 				if (handle_impl != NULL)
 				{
@@ -1077,7 +1077,7 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, subpath);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, subpath, LOADER_PATH_SIZE);
 
 				if (handle_impl != NULL)
 				{

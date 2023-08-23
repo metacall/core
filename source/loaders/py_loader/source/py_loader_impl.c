@@ -2410,7 +2410,9 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 #endif
 		;
 
-	py_impl->import_module = py_loader_impl_load_from_memory_compile(py_impl, "py_loader_impl_load_from_file_path", import_module_str);
+	static const loader_name name = "py_loader_impl_load_from_file_path";
+
+	py_impl->import_module = py_loader_impl_load_from_memory_compile(py_impl, name, import_module_str);
 
 	if (py_impl->import_module == NULL)
 	{
@@ -2499,7 +2501,9 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		main()
 	*/
 
-	py_impl->thread_background_module = py_loader_impl_load_from_memory_compile(py_impl, "py_loader_impl_thread_background", thread_background_module_str);
+	static const loader_name name = "py_loader_impl_thread_background";
+
+	py_impl->thread_background_module = py_loader_impl_load_from_memory_compile(py_impl, name, thread_background_module_str);
 
 	if (py_impl->thread_background_module == NULL)
 	{

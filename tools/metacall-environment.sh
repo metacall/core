@@ -709,7 +709,7 @@ sub_rust(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
