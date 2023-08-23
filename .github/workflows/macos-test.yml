@@ -52,6 +52,12 @@ jobs:
           RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
           sudo rm -rf $RUBY_FRAMEWORK_DIR
 
+      - name: Uninstall Go
+        run: |
+          brew uninstall --force go
+          brew autoremove
+          sudo rm -rf /usr/local/Cellar/go
+
       - name: Uninstall Java
         run: |
           sudo rm -rf /Library/Java/JavaVirtualMachines/*
