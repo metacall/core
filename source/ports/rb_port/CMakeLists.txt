@@ -8,7 +8,7 @@ endif()
 # so there is no need to make it work anyway. In any case this project should be reviewed.
 include(Portability)
 
-if(PROJECT_OS_FAMILY STREQUAL win32 OR PROJECT_OS_FAMILY STREQUAL macos OR PROJECT_OS_NAME STREQUAL MinGW)
+if(PROJECT_OS_FAMILY STREQUAL win32 OR PROJECT_OS_FAMILY STREQUAL macos)
 	message(WARNING "rb_port does not work on Windows neither MacOS")
 	return()
 endif()
