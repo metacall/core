@@ -26,16 +26,17 @@ endif()
 include(Portability)
 
 if(Python3_LIBRARIES)
-	if(PROJECT_OS_WIN)
-		string(REGEX REPLACE "[.]lib$" ".dll" Python3_LIBRARIES_NAME ${Python3_LIBRARIES})
-	elseif(PROJECT_OS_MINGW)
-		string(REGEX REPLACE "[.]a$" ".dll" Python3_LIBRARIES_NAME ${Python3_LIBRARIES})
-	endif()
+	foreach(library ${Python3_LIBRARIES})
+		if(${library} MATCHES "[.].dll$")
+			set(Python3_LIBRARY_NAME ${library})
+			break()
+		endif()
+	endforeach()
 endif()
 
-if(Python3_LIBRARIES_NAME)
+if(Python3_LIBRARY_NAME)
 	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-	file(COPY ${Python3_LIBRARIES_NAME} DESTINATION ${PROJECT_OUTPUT_DIR})
+	file(COPY ${Python3_LIBRARY_NAME} DESTINATION ${PROJECT_OUTPUT_DIR})
 endif()
 
 #
@@ -218,9 +219,9 @@ install(TARGETS ${target}
 # Runtime (pack Python DLL in windows)
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
-if(Python3_LIBRARIES_NAME)
+if(Python3_LIBRARY_NAME)
 	install(FILES
-		${Python3_LIBRARIES_NAME}
+		${Python3_LIBRARY_NAME}
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)
