@@ -3,6 +3,16 @@ if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RB OR NOT OPTION_BUILD_LOADE
 	return()
 endif()
 
+# TODO: This port is not passing tests properly in MacOS and Windows.
+# In any case this implementation will be deleted eventually (once SWIG gets removed),
+# so there is no need to make it work anyway. In any case this project should be reviewed.
+include(Portability)
+
+if(PROJECT_OS_FAMILY STREQUAL win32 OR PROJECT_OS_FAMILY STREQUAL macos OR PROJECT_OS_NAME STREQUAL MinGW)
+	message(WARNING "rb_port does not work on Windows neither MacOS")
+	return()
+endif()
+
 #
 # External dependencies
 #
