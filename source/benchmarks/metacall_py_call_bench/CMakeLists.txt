@@ -117,7 +117,7 @@ target_link_libraries(${target}
 #
 # Define test
 #
-message(STATUS "Benchmark path: ${PROJECT_OUTPUT_DIR}/${target}.json")
+
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 	--benchmark_out=${PROJECT_OUTPUT_DIR}/${target}.json
