@@ -29,7 +29,6 @@ if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_LIBRARIES AND Python3_ROOT_DIR A
 	foreach(library ${Python3_LIBRARIES})
 		if(${library} MATCHES "[^_d][.]lib$")
 			string(REGEX REPLACE "[.]lib$" ".dll" Python3_LIBRARY_NAME ${library})
-			string(REGEX REPLACE "[/\\]lib" "" Python3_LIBRARY_NAME ${Python3_LIBRARY_NAME})
 			break()
 		endif()
 	endforeach()
