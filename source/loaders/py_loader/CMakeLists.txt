@@ -28,8 +28,18 @@ include(Portability)
 if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_LIBRARIES AND Python3_ROOT_DIR AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 	foreach(library ${Python3_LIBRARIES})
 		if(${library} MATCHES "[^_d][.]lib$")
-			string(REGEX REPLACE "[.]lib$" ".dll" Python3_LIBRARY_NAME ${library})
-			break()
+			# Get the library path with dll suffix
+			string(REGEX REPLACE "[.]lib$" ".dll" LI_PATH ${library})
+			# Get the library name
+			get_filename_component(LIB_NAME "${LIB_PATH}" NAME)
+			# Find the library in the Python3 root path
+			find_file(Python3_LIBRARY_NAME ${LIB_NAME}
+				PATHS ${Python3_ROOT_DIR}
+				NO_DEFAULT_PATH
+			)
+			if(Python3_LIBRARY_NAME)
+				break()
+			endif()
 		endif()
 	endforeach()
 endif()

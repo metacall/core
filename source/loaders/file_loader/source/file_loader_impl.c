@@ -47,6 +47,7 @@
 	#endif
 
 	#include <windows.h>
+	#include <sys/stat.h>
 
 typedef struct _stat file_stat_type;
 
