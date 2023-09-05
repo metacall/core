@@ -29,7 +29,7 @@ if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_LIBRARIES AND Python3_ROOT_DIR A
 	foreach(library ${Python3_LIBRARIES})
 		if(${library} MATCHES "[^_d][.]lib$")
 			# Get the library path with dll suffix
-			string(REGEX REPLACE "[.]lib$" ".dll" LI_PATH ${library})
+			string(REGEX REPLACE "[.]lib$" ".dll" LIB_PATH ${library})
 			# Get the library name
 			get_filename_component(LIB_NAME "${LIB_PATH}" NAME)
 			# Find the library in the Python3 root path
