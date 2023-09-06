@@ -60,12 +60,21 @@ function Sub-Build {
 			$RecentExitCode = $LASTEXITCODE
 			echo "Failure in tests with exit code: $RecentExitCode"
 
+			# TODO: Remove this, used for debugging
+			$currentPath="$(Get-Location)"
+			$env:LOADER_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
+			$env:LOADER_SCRIPT_PATH="$currentPath/$BUILD_TYPE/scripts"
+			$env:CONFIGURATION_PATH="$currentPath/$BUILD_TYPE/configurations/global.json"
+			$env:SERIAL_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
+			$env:DETOUR_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
+			gflags -i .\$BUILD_TYPE\metacall-python-test.exe +sls
+
 			$Global:ExitCode = $RecentExitCode
 			Exit $ExitCode
 		}
 	}
 
-	# Coverage
+	# TODO: Coverage
 	<# if ($BUILD_COVERAGE = 1) {
 		# TODO (copied): Remove -k, solve coverage issues
 		# TODO: Migrate to Windows
