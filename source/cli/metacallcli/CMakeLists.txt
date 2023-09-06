@@ -157,44 +157,6 @@ target_link_libraries(${target}
 )
 
 #
-# Deployment
-#
-
-# Executable
-install(TARGETS ${target}
-	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT cli
-	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT cli
-)
-
-#
-# Define test
-#
-
-# Define variables for testing the CLI interactively
-set(TEST_COMMAND_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/test/commands/${target}")
-set(TEST_COMMAND_RUNNER "${CMAKE_CURRENT_SOURCE_DIR}/test/commands/command_runner.cmake")
-
-include(TestEnvironmentVariables)
-
-add_test(NAME ${target}
-	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}.txt" -P ${TEST_COMMAND_RUNNER}
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-set_property(TEST ${target}
-	PROPERTY LABELS ${target}
-)
-
-set_tests_properties(${target} PROPERTIES
-	PASS_REGULAR_EXPRESSION "function three_str\\(a_str, b_str, c_str\\)"
-)
-
-test_environment_variables(${target}
-	""
-	${TESTS_ENVIRONMENT_VARIABLES}
-)
-
-#
 # Define dependencies
 #
 
@@ -212,8 +174,44 @@ add_loader_dependencies(${target}
 )
 
 #
-# Define tests
+# Deployment
 #
+
+# Executable
+install(TARGETS ${target}
+	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT cli
+	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT cli
+)
+
+#
+# Define test
+#
+
+# Check if tests are enabled
+if(NOT OPTION_BUILD_TESTS)
+	return()
+endif()
+
+# Define variables for testing the CLI interactively
+set(TEST_COMMAND_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/test/commands/${target}")
+set(TEST_COMMAND_RUNNER "${CMAKE_CURRENT_SOURCE_DIR}/test/commands/command_runner.cmake")
+
+include(TestEnvironmentVariables)
+
+add_test(NAME ${target}
+	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}.txt" -P ${TEST_COMMAND_RUNNER}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+set_property(TEST ${target}
+	PROPERTY LABELS ${target}
+)
+set_tests_properties(${target} PROPERTIES
+	PASS_REGULAR_EXPRESSION "function three_str\\(a_str, b_str, c_str\\)"
+)
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)
 
 add_test(NAME ${target}-inspect-leak
 	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-inspect-leak.txt" -P ${TEST_COMMAND_RUNNER}

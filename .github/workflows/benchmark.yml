@@ -77,11 +77,11 @@ jobs:
             # Push and deploy GitHub pages branch automatically
             auto-push: true
             # Github Pages branch name
-            gh-pages-branch: benchmarks
+            gh-pages-branch: gh-pages
             # Comment in case of alert
             comment-on-alert: true
             # Output directory
-            benchmark-data-dir-path: ${{ matrix.os }}
+            benchmark-data-dir-path: bench/${{ matrix.os }}
 
   benchmark-windows:
     runs-on: ${{ matrix.os }}
@@ -142,8 +142,8 @@ jobs:
             # Push and deploy GitHub pages branch automatically
             auto-push: true
             # Github Pages branch name
-            gh-pages-branch: benchmarks
+            gh-pages-branch: gh-pages
             # Comment in case of alert
             comment-on-alert: true
             # Output directory
-            benchmark-data-dir-path: ${{ matrix.os }}
+            benchmark-data-dir-path: bench/${{ matrix.os }}
