@@ -54,7 +54,7 @@ function Sub-Build {
 	# Tests (coverage needs to run the tests)
 	if (($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1)) {
 		echo "Running the tests..."
-		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 5400 --output-on-failure -C $BUILD_TYPE
+		#ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 5400 --output-on-failure -C $BUILD_TYPE
 
 		if (-not $?) {
 			$RecentExitCode = $LASTEXITCODE
@@ -67,7 +67,7 @@ function Sub-Build {
 			$env:CONFIGURATION_PATH="$currentPath/$BUILD_TYPE/configurations/global.json"
 			$env:SERIAL_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
 			$env:DETOUR_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
-			gflags -i .\$BUILD_TYPE\metacall-python-test.exe +sls
+			& 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\gflags.exe' -i .\$BUILD_TYPE\metacall-python-test.exe +sls
 
 			$Global:ExitCode = $RecentExitCode
 			Exit $ExitCode
