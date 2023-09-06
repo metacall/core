@@ -69,7 +69,7 @@ jobs:
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
-            name: MetaCall ${{ matrix.os }} Benchmark
+            name: MetaCall Benchmark (${{ matrix.os }})
             tool: 'googlecpp'
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
@@ -80,15 +80,15 @@ jobs:
             gh-pages-branch: benchmarks
             # Comment in case of alert
             comment-on-alert: true
-            # Skip pulling
-            skip-fetch-gh-pages: true
             # Output directory
             benchmark-data-dir-path: ${{ matrix.os }}
 
   benchmark-windows:
-    runs-on: windows-2019
+    runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
+        matrix:
+          os: [windows-2019]
 
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -134,7 +134,7 @@ jobs:
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
-            name: MetaCall ${{ matrix.os }} Benchmark
+            name: MetaCall Benchmark (${{ matrix.os }})
             tool: 'googlecpp'
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
@@ -145,7 +145,5 @@ jobs:
             gh-pages-branch: benchmarks
             # Comment in case of alert
             comment-on-alert: true
-            # Skip pulling
-            skip-fetch-gh-pages: true
             # Output directory
             benchmark-data-dir-path: ${{ matrix.os }}
