@@ -25,10 +25,13 @@ jobs:
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
-          # TODO: Not supported yet
+
+          # TODO: Not supported yet by MSVC
           # {build: debug, sanitizer: thread-sanitizer},
           # {build: debug, sanitizer: memory-sanitizer},
-          {build: release, sanitizer: without-sanitizer}
+
+          # TODO: https://github.com/metacall/core/issues/461
+          # {build: release, sanitizer: without-sanitizer}
         ]
 
     steps:
@@ -41,9 +44,6 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
-
-      - name: Uninstall Python
-        run: cmd.exe /c "rd /s /q C:\hostedtoolcache\windows\Python"
 
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
