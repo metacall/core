@@ -82,7 +82,7 @@ jobs:
             # Push and deploy GitHub pages branch automatically
             auto-push: true
             # Github Pages branch name
-            gh-pages-branch: pages
+            gh-pages-branch: benchmakrs
             # Comment in case of alert
             comment-on-alert: true
             benchmark-data-dir-path: bench/${{ matrix.os }}/metacall-${{ matrix.bench }}.json
@@ -150,7 +150,7 @@ jobs:
             # Push and deploy GitHub pages branch automatically
             auto-push: true
             # Github Pages branch name
-            gh-pages-branch: pages
+            gh-pages-branch: benchmakrs
             # Comment in case of alert
             comment-on-alert: true
             benchmark-data-dir-path: bench/${{ matrix.os }}/metacall-${{ matrix.bench }}.json
