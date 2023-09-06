@@ -47,7 +47,7 @@
 	#endif
 
 	#include <windows.h>
-	#include <sys/stat.h>
+	#include <sys/stat.h> /* Apparently it is supported on newer windows standards */
 
 typedef struct _stat file_stat_type;
 
@@ -67,7 +67,7 @@ typedef struct stat file_stat_type;
 
 #endif
 
-/* Support for glob, only in POSIX for now */
+/* Support for glob, only in POSIX for now (TODO: Implement Windows support) */
 #if !defined(_WIN32) &&                                                                     \
 	(defined(unix) || defined(__unix__) || defined(__unix) ||                               \
 		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \

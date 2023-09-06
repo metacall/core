@@ -9,7 +9,7 @@ endif()
 include(Portability)
 
 if(PROJECT_OS_FAMILY STREQUAL win32 OR PROJECT_OS_FAMILY STREQUAL macos)
-	message(WARNING "rb_port does not work on Windows neither MacOS")
+	message(WARNING "Port rb_port does not work on Windows neither MacOS")
 	return()
 endif()
 
