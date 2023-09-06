@@ -49,6 +49,9 @@ if(GBENCH_INSTALL)
 	add_dependencies(GBench google-bench-depends)
 endif()
 
+# Create output directory
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/benchmarks)
+
 #
 # Benchmarks
 #
