@@ -56,18 +56,18 @@ function Sub-Build {
 		echo "Running the tests..."
 		#ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 5400 --output-on-failure -C $BUILD_TYPE
 
+		# TODO: Remove this, used for debugging
+		$currentPath="$(Get-Location)"
+		$env:LOADER_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
+		$env:LOADER_SCRIPT_PATH="$currentPath/$BUILD_TYPE/scripts"
+		$env:CONFIGURATION_PATH="$currentPath/$BUILD_TYPE/configurations/global.json"
+		$env:SERIAL_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
+		$env:DETOUR_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
+		& 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\gflags.exe' -i .\$BUILD_TYPE\metacall-python-test.exe +sls
+
 		if (-not $?) {
 			$RecentExitCode = $LASTEXITCODE
 			echo "Failure in tests with exit code: $RecentExitCode"
-
-			# TODO: Remove this, used for debugging
-			$currentPath="$(Get-Location)"
-			$env:LOADER_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
-			$env:LOADER_SCRIPT_PATH="$currentPath/$BUILD_TYPE/scripts"
-			$env:CONFIGURATION_PATH="$currentPath/$BUILD_TYPE/configurations/global.json"
-			$env:SERIAL_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
-			$env:DETOUR_LIBRARY_PATH="$currentPath/$BUILD_TYPE"
-			& 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\gflags.exe' -i .\$BUILD_TYPE\metacall-python-test.exe +sls
 
 			$Global:ExitCode = $RecentExitCode
 			Exit $ExitCode
