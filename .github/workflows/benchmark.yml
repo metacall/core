@@ -1,0 +1,159 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    tags:
+      - "v*.*.*"
+    branches:
+      - master
+      - develop
+      
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark-unix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [macos-latest, ubuntu-latest]
+          bench: [
+            py-call-bench, 
+            py-init-bench,
+            py-c-api-bench,
+            cs-call-bench,
+            node-call-bench,
+            rb-call-bench
+          ]
+          
+    env:
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+        
+      # TODO: Add support for NetCore Bench
+      - name: Set up the environment
+        run: |
+          sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+        env:
+          METACALL_INSTALL_OPTIONS: base python nodejs ruby netcore7 backtrace 
+
+      - name: Configure 
+        run: |
+          mkdir -p build
+          cd build
+          if [ "$(uname)" == "Darwin" ]; then
+            . .env
+          fi
+          bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
+        env:
+          METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby netcore7 benchmarks install 
+
+      - name: Build 
+        working-directory: ./build
+        # TODO: Remove the disable option for fork safe once funchook problem is solved
+        run: |
+          if [ "$(uname)" == "Darwin" ]; then
+            . .env
+          fi
+          cmake -DOPTION_FORK_SAFE=OFF  ..
+          bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
+        env:
+          METACALL_BUILD_OPTIONS: release benchmarks
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+            name: MetaCall ${{ matrix.os }}-${{ matrix.bench }} Benchmark
+            tool: 'googlecpp'
+            output-file-path: ./build/benchmarks/metacall-${{ matrix.bench }}.json
+            # Access token to deploy GitHub Pages branch
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            # Push and deploy GitHub pages branch automatically
+            auto-push: true
+            # Github Pages branch name
+            gh-pages-branch: pages
+            # Comment in case of alert
+            comment-on-alert: true
+            benchmark-data-dir-path: bench/${{ matrix.os }}/metacall-${{ matrix.bench }}.json
+
+  benchmark-windows:
+    runs-on: windows-2019
+    strategy:
+        fail-fast: false
+        matrix:
+          bench: [
+            py-call-bench, 
+            py-init-bench,
+            py-c-api-bench,
+            node-call-bench,
+            rb-call-bench,
+            # cs-call-bench,  # TODO:: Enable once NetCore is implemented in windows
+          ]
+
+    env:
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Activate the Visual Studio Developer Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+        
+      - name: Set up the environment
+        run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
+        env:
+          METACALL_INSTALL_OPTIONS: python nodejs ruby
+ 
+      # TODO: Use release when this bug is solved: https://github.com/metacall/core/issues/461
+      - name: Configure
+        run: |
+          $METACALL_PATH = $PWD
+          md -Force "$METACALL_PATH\build"
+          cd "$METACALL_PATH\build"
+          cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
+        env:
+          METACALL_BUILD_OPTIONS: debug scripts python nodejs ruby benchmarks
+ 
+      # TODO: Use release when this bug is solved: https://github.com/metacall/core/issues/461
+      - name: Build
+        working-directory: ./build
+        run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
+        env:
+          METACALL_BUILD_OPTIONS: debug benchmarks
+        
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+            name: MetaCall ${{ matrix.os }}-${{ matrix.bench }} Benchmark
+            tool: 'googlecpp'
+            output-file-path: ./build/benchmarks/metacall-${{ matrix.bench }}.json
+            # Access token to deploy GitHub Pages branch
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            # Push and deploy GitHub pages branch automatically
+            auto-push: true
+            # Github Pages branch name
+            gh-pages-branch: pages
+            # Comment in case of alert
+            comment-on-alert: true
+            benchmark-data-dir-path: bench/${{ matrix.os }}/metacall-${{ matrix.bench }}.json
+
+
+    

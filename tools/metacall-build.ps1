@@ -1,7 +1,27 @@
-$Global:BUILD_TYPE     = 'Release'
-$Global:BUILD_TESTS    = 0
-$Global:BUILD_COVERAGE = 0
-$Global:BUILD_INSTALL  = 0
+<#
+#	MetaCall Build PowerShell Script by Parra Studios
+#	Build and install powershell script utility for MetaCall.
+#
+#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	Licensed under the Apache License, Version 2.0 (the "License");
+#	you may not use this file except in compliance with the License.
+#	You may obtain a copy of the License at
+#
+#		http://www.apache.org/licenses/LICENSE-2.0
+#
+#	Unless required by applicable law or agreed to in writing, software
+#	distributed under the License is distributed on an "AS IS" BASIS,
+#	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#	See the License for the specific language governing permissions and
+#	limitations under the License.
+#>
+
+$Global:BUILD_TYPE       = 'Release'
+$Global:BUILD_TESTS      = 0
+$Global:BUILD_BENCHMARKS = 0
+$Global:BUILD_COVERAGE   = 0
+$Global:BUILD_INSTALL    = 0
 
 $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 $Global:Arguments = $args
@@ -24,6 +44,10 @@ function Sub-Options {
 		if ("$option" -eq "tests") {
 			echo "Build and run all tests"
 			$Global:BUILD_TESTS = 1
+		}
+		if ("$option" -eq "benchmarks") {
+			echo "Build and run all benchmarks"
+			$Global:BUILD_BENCHMARKS = 1
 		}
 		if ("$option" -eq "coverage") {
 			echo "Build coverage reports"
@@ -52,7 +76,7 @@ function Sub-Build {
 	}
 
 	# Tests (coverage needs to run the tests)
-	if (($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1)) {
+	if (($BUILD_TESTS -eq 1) -or ($BUILD_BENCHMARKS -eq 1) -or ($BUILD_COVERAGE -eq 1)) {
 		echo "Running the tests..."
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 5400 --output-on-failure -C $BUILD_TYPE
 

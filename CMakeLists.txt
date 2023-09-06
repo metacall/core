@@ -245,7 +245,7 @@ endif()
 # CTest configuration
 #
 
-if(OPTION_BUILD_TESTS)
+if(OPTION_BUILD_TESTS OR OPTION_BUILD_BENCHMARKS)
 	enable_testing()
 endif()
 

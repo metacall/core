@@ -131,6 +131,7 @@ endif()
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+		--benchmark_out=${CMAKE_BINARY_DIR}/benchmarks/${target}.json
 )
 
 #
