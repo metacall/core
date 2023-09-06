@@ -43,7 +43,7 @@ jobs:
           arch: amd64
 
       - name: Uninstall Python
-        run: python -c "import sys; print(sys.executable)"
+        run: rd /s /q "C:\hostedtoolcache\windows\Python"
 
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
