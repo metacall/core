@@ -38,7 +38,7 @@ jobs:
         run: |
           sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base python nodejs ruby netcore7 backtrace
+          METACALL_INSTALL_OPTIONS: base python nodejs ruby # TODO: Implement NetCore once it works with MacOS
 
       - name: Configure 
         run: |
@@ -49,7 +49,7 @@ jobs:
           fi
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby netcore7 benchmarks
+          METACALL_CONFIGURE_OPTIONS: release scripts python nodejs ruby benchmarks # TODO: Implement NetCore once it works with MacOS
 
       - name: Build 
         working-directory: ./build
