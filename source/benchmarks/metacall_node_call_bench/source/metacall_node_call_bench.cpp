@@ -37,10 +37,8 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)
 		METACALL_DOUBLE, METACALL_DOUBLE
 	};
 
-	state.PauseTiming();
-
 	// Print memory usage
-	metacall_value_destroy(metacall("mem_check"));
+	// metacall_value_destroy(metacall("mem_check"));
 
 	for (auto _ : state)
 	{
@@ -87,10 +85,8 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
 
-	state.PauseTiming();
-
 	// Print memory usage
-	metacall_value_destroy(metacall("mem_check"));
+	// metacall_value_destroy(metacall("mem_check"));
 
 	for (auto _ : state)
 	{
@@ -155,10 +151,8 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
 
-	state.PauseTiming();
-
 	// Print memory usage
-	metacall_value_destroy(metacall("mem_check"));
+	// metacall_value_destroy(metacall("mem_check"));
 
 	for (auto _ : state)
 	{
