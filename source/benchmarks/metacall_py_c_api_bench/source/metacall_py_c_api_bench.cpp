@@ -145,7 +145,6 @@ BENCHMARK_DEFINE_F(metacall_py_c_api_bench, call_object)
 }
 
 BENCHMARK_REGISTER_F(metacall_py_c_api_bench, call_object)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(5);

@@ -56,7 +56,6 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, init)
 }
 
 BENCHMARK_REGISTER_F(metacall_py_init_bench, init)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(1);
@@ -88,7 +87,6 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load)
 }
 
 BENCHMARK_REGISTER_F(metacall_py_init_bench, load)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(1);
@@ -120,7 +118,6 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load_warm)
 }
 
 BENCHMARK_REGISTER_F(metacall_py_init_bench, load_warm)
-	->Threads(1)
 	->Unit(benchmark::kMicrosecond)
 	->Iterations(1)
 	->Repetitions(1);
@@ -145,7 +142,6 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, destroy)
 }
 
 BENCHMARK_REGISTER_F(metacall_py_init_bench, destroy)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(1);

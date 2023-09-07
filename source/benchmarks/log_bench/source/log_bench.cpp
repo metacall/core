@@ -73,7 +73,6 @@ BENCHMARK_DEFINE_F(log_bench, call_macro)
 }
 
 BENCHMARK_REGISTER_F(log_bench, call_macro)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(3);
@@ -96,7 +95,6 @@ BENCHMARK_DEFINE_F(log_bench, call_va)
 }
 
 BENCHMARK_REGISTER_F(log_bench, call_va)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(3);

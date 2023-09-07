@@ -37,6 +37,8 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)
 		METACALL_DOUBLE, METACALL_DOUBLE
 	};
 
+	state.PauseTiming();
+
 	// Print memory usage
 	metacall_value_destroy(metacall("mem_check"));
 
@@ -75,7 +77,6 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)
 }
 
 BENCHMARK_REGISTER_F(metacall_node_call_bench, call_va_args)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(3);
@@ -85,6 +86,8 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)
 {
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
+
+	state.PauseTiming();
 
 	// Print memory usage
 	metacall_value_destroy(metacall("mem_check"));
@@ -142,7 +145,6 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)
 }
 
 BENCHMARK_REGISTER_F(metacall_node_call_bench, call_array_args)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(3);
@@ -152,6 +154,8 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 {
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
+
+	state.PauseTiming();
 
 	// Print memory usage
 	metacall_value_destroy(metacall("mem_check"));
@@ -220,7 +224,6 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 }
 
 BENCHMARK_REGISTER_F(metacall_node_call_bench, call_async)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(3);

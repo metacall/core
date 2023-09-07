@@ -69,7 +69,6 @@ BENCHMARK_DEFINE_F(metacall_rb_call_bench, call_va_args)
 }
 
 BENCHMARK_REGISTER_F(metacall_rb_call_bench, call_va_args)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(5);
@@ -133,7 +132,6 @@ BENCHMARK_DEFINE_F(metacall_rb_call_bench, call_array_args)
 }
 
 BENCHMARK_REGISTER_F(metacall_rb_call_bench, call_array_args)
-	->Threads(1)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(5);
