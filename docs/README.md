@@ -82,7 +82,8 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
     - [7.1 Docker Support](#71-docker-support)
     - [7.1.1 Docker Development](#711-docker-development)
     - [7.1.2 Docker Testing](#712-docker-testing)
-  - [8. License](#8-license)
+  - [8. Benchmarks](#8-benchmarks)
+  - [9. License](#9-license)
 
 <!-- /TOC -->
 
@@ -704,12 +705,12 @@ make <target>-genhtml
 
 For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
 
-|            Build Option            | Description                                                    | Default Value |
-| :--------------------------------: | -------------------------------------------------------------- | :-----------: |
-|    **OPTION_TEST_MEMORYCHECK**     | Enable Valgrind with memcheck tool for the tests.              |      OFF      |
-| **OPTION_BUILD_ADDRESS_SANITIZER** | Build with AddressSanitizer family (GCC, Clang and MSVC).      |      OFF      |
-| **OPTION_BUILD_THREAD_SANITIZER**  | Build with ThreadSanitizer family (GCC, Clang and MSVC).       |      OFF      |
-| **OPTION_BUILD_MEMORY_SANITIZER**  | Build with MemorySanitizer family (Clang and MSVC).            |      OFF      |
+|            Build Option            | Description                                               | Default Value |
+| :--------------------------------: | --------------------------------------------------------- | :-----------: |
+|    **OPTION_TEST_MEMORYCHECK**     | Enable Valgrind with memcheck tool for the tests.         |      OFF      |
+| **OPTION_BUILD_ADDRESS_SANITIZER** | Build with AddressSanitizer family (GCC, Clang and MSVC). |      OFF      |
+| **OPTION_BUILD_THREAD_SANITIZER**  | Build with ThreadSanitizer family (GCC, Clang and MSVC).  |      OFF      |
+| **OPTION_BUILD_MEMORY_SANITIZER**  | Build with MemorySanitizer family (Clang and MSVC).       |      OFF      |
 
 All options are mutually exclusive. Valgrind is not compatible with AddressSanitizer and AddressSanitizer is not compatible with ThreadSanitizer and AddressSanitizer with MemorySanitizer. Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
 
@@ -861,7 +862,17 @@ runtime __metacall_host__
 
 Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.
 
-## 8. License
+## 8. Benchmarks
+
+**METACALL** provides benchmarks for multiple operative systems in order to improve performance iteratively, those can be found in GitHub Pages:
+
+|  Operative System   |                         URL                          |
+| :-----------------: | :--------------------------------------------------: |
+| **`ubuntu-latest`** | https://metacall.github.io/core/bench/ubuntu-latest/ |
+| **`macos-latest`**  | https://metacall.github.io/core/bench/macos-latest/  |
+| **`windows-2019`**  | https://metacall.github.io/core/bench/windows-2019/  |
+
+## 9. License
 
 **METACALL** is licensed under **[Apache License Version 2.0](/LICENSE)**.
 
