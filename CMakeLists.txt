@@ -317,7 +317,6 @@ install(FILES README.md	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 # # Install runtime data
 # install(DIRECTORY ${PROJECT_SOURCE_DIR}/data DESTINATION ${INSTALL_DATA} COMPONENT runtime)
 
-
 #
 # Install githooks directory
 #
@@ -325,7 +324,7 @@ install(FILES README.md	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 if(OPTION_GIT_HOOKS)
 	message(STATUS "Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR}")
 	execute_process(
-		COMMAND git config --local core.hooksPath githooks
+		COMMAND git config --local core.hooksPath githooks/${PROJECT_OS_FAMILY}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 endif()
