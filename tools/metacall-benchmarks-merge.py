@@ -30,7 +30,7 @@ for file in os.listdir(sys.argv[1]):
 				'NaN': 0 # float('nan')
 			}
 			# TODO: Eventually solve this from the root of problem in Windows
-			print('Warning: Got value "' + arg + '", review where the test is failing')
+			print('Warning: Got value "' + arg + '" in the test ' + file + ', review why it is failing')
 			return c[arg]
 
 		data = json.loads(f.read(), parse_constant=sanitize)
