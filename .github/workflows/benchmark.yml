@@ -1,7 +1,6 @@
 name: Benchmarks
 
 on:
-  workflow_dispatch:
   pull_request:
   push:
     tags:
@@ -74,8 +73,8 @@ jobs:
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
-            # Push and deploy GitHub pages branch automatically
-            auto-push: true
+            # Push GitHub pages branch automatically
+            auto-push: ${{ github.event_name != 'pull_request' }}
             # Github Pages branch name
             gh-pages-branch: gh-pages
             # Comment in case of alert
@@ -139,8 +138,8 @@ jobs:
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
-            # Push and deploy GitHub pages branch automatically
-            auto-push: true
+            # Push GitHub pages branch automatically
+            auto-push: ${{ github.event_name != 'pull_request' }}
             # Github Pages branch name
             gh-pages-branch: gh-pages
             # Comment in case of alert
