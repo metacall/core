@@ -36,7 +36,6 @@ jobs:
         run: |
           git checkout --orphan gh-pages
           git rm -rf .
-          git commit --allow-empty -m "Initial commit."
           git checkout ${{ github.head_ref || github.ref_name }}
 
       # TODO: Add support for NetCore Bench
@@ -117,7 +116,6 @@ jobs:
         run: |
           git checkout --orphan gh-pages
           git rm -rf .
-          git commit --allow-empty -m "Initial commit."
           git checkout ${{ github.head_ref || github.ref_name }}
 
       - name: Activate the Visual Studio Developer Prompt
