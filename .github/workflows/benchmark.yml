@@ -13,13 +13,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+
 jobs:
   benchmark-unix:
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
         matrix:
-          os: [macos-latest, ubuntu-latest]
+          os: [ubuntu-latest, macos-latest]
 
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -73,14 +74,27 @@ jobs:
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
-            # Push GitHub pages branch automatically
-            auto-push: ${{ github.event_name != 'pull_request' }}
+            # Push and deploy GitHub pages branch automatically
+            auto-push: false
             # Github Pages branch name
             gh-pages-branch: gh-pages
             # Comment in case of alert
             comment-on-alert: true
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
+
+      # chekcout gh-pages branch
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+
+      # Upload benchmark website artifacts
+      - name: Upload benchmark artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./bench/${{ matrix.os }}/
+          name: ${{ matrix.os }}-benchmarks
 
   benchmark-windows:
     runs-on: ${{ matrix.os }}
@@ -130,6 +144,10 @@ jobs:
       - name: Merge benchmarks 
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
+      - name: Print becnhmark json for debugging
+        run: |
+          Get-Content -Path .\build\benchmarks\metacall-benchmarks.json
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -139,10 +157,45 @@ jobs:
             # Access token to deploy GitHub Pages branch
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Push GitHub pages branch automatically
-            auto-push: ${{ github.event_name != 'pull_request' }}
+            auto-push: false
             # Github Pages branch name
             gh-pages-branch: gh-pages
             # Comment in case of alert
             comment-on-alert: true
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
+
+      # chekcout gh-pages branch
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+
+      # Upload benchmark website artifacts
+      - name: Upload benchmark artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./bench/${{ matrix.os }}/
+          name: ${{ matrix.os }}-benchmarks
+
+  # Deployment job
+  deploy:
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [windows-2019, ubuntu-latest, macos-latest]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}${{ matrix.os }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    needs: [benchmark-unix, benchmark-windows]
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+        with:
+          artifact_name: ${{ matrix.os }}-benchmarks
