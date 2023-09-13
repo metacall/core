@@ -78,8 +78,8 @@ jobs:
             skip-fetch-gh-pages: true
             # Github Pages branch name
             gh-pages-branch: ${{ github.head_ref || github.ref_name }}
-            # Comment in case of alert
-            comment-on-alert: true
+            # # Comment in case of alert
+            # comment-on-alert: true
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
 
@@ -151,8 +151,8 @@ jobs:
             skip-fetch-gh-pages: true
             # Github Pages branch name
             gh-pages-branch: ${{ github.head_ref || github.ref_name }}
-            # Comment in case of alert
-            comment-on-alert: true
+            # # Comment in case of alert
+            # comment-on-alert: true
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
 
