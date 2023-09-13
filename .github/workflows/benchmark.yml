@@ -75,17 +75,11 @@ jobs:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Disable push and deploy GitHub pages branch automatically
             auto-push: false
-            # Github Pages branch name
-            gh-pages-branch: gh-pages
+            skip-fetch-gh-pages: true
             # Comment in case of alert
             comment-on-alert: true
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
-
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v2
-        with:
-          ref: gh-pages
 
       # Upload benchmark website artifacts
       - name: Upload benchmark artifact
@@ -152,17 +146,11 @@ jobs:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             # Disable push and deploy GitHub pages branch automatically
             auto-push: false
-            # Github Pages branch name
-            gh-pages-branch: gh-pages
+            skip-fetch-gh-pages: true
             # Comment in case of alert
             comment-on-alert: true
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
-
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v2
-        with:
-          ref: gh-pages
 
       # Upload benchmark website artifacts
       - name: Upload benchmark artifact
