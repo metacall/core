@@ -66,6 +66,14 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          path: ./cache
+          key: ${{ matrix.os }}-benchmark
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         if: ${{ github.event_name != 'pull_request' }}
@@ -82,6 +90,8 @@ jobs:
             gh-pages-branch: ${{ github.head_ref || github.ref_name }}
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
+            # Where the previous data file is stored
+            external-data-json-path: ./cache/metacall-benchmarks.json
 
       # Upload benchmark artifacts
       - name: Upload benchmark artifact
@@ -140,6 +150,14 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          path: ./cache
+          key: ${{ matrix.os }}-benchmark
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         if: ${{ github.event_name != 'pull_request' }}
@@ -156,6 +174,8 @@ jobs:
             gh-pages-branch: ${{ github.head_ref || github.ref_name }}
             # Output directory
             benchmark-data-dir-path: bench/${{ matrix.os }}
+            # Where the previous data file is stored
+            external-data-json-path: ./cache/metacall-benchmarks.json
 
       # Upload benchmark artifacts
       - name: Upload benchmark artifact
