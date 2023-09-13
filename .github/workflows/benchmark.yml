@@ -13,14 +13,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-
 jobs:
   benchmark-unix:
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
         matrix:
-          os: [ubuntu-latest, macos-latest]
+          os: [macos-latest, ubuntu-latest]
 
     env:
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -144,10 +143,6 @@ jobs:
       - name: Merge benchmarks 
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
-      - name: Print becnhmark json for debugging
-        run: |
-          Get-Content -Path .\build\benchmarks\metacall-benchmarks.json
-
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -181,6 +176,7 @@ jobs:
   # Deployment job
   deploy:
     runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name != 'pull_request' }}
     strategy:
         fail-fast: false
         matrix:
