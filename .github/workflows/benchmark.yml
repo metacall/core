@@ -170,21 +170,24 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     needs: [benchmark-unix, benchmark-windows]
+    steps:
+      # Ubuntu
+      - uses: actions/download-artifact@master
+        with:
+          name: ubuntu-latest-benchmark
+          path: ./bench/
 
-    - uses: actions/download-artifact@master
-      with:
-        name: ubuntu-latest-benchmark
-        path: ./bench/
+      # MacOS
+      - uses: actions/download-artifact@master
+        with:
+          name: macos-latest-benchmark
+          path: ./bench/
 
-    - uses: actions/download-artifact@master
-      with:
-        name: macos-latest-benchmark
-        path: ./bench/
-
-    - uses: actions/download-artifact@master
-      with:
-        name: windows-2019-benchmark
-        path: ./bench/
+      # Windows
+      - uses: actions/download-artifact@master
+        with:
+          name: windows-2019-benchmark
+          path: ./bench/
 
       # Upload benchmark website artifacts
       - name: Upload benchmark artifact
