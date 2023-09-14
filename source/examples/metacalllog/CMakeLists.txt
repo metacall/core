@@ -99,16 +99,6 @@ target_link_libraries(${target}
 )
 
 #
-# Deployment
-#
-
-# Executable
-install(TARGETS ${target}
-	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
-	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
-)
-
-#
 # Define test
 #
 
