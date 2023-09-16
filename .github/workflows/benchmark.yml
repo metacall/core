@@ -82,7 +82,7 @@ jobs:
             tool: 'googlecpp'
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
-            github-token: ${{ secrets.GITHUB_TOKEN }}
+            github-token: ${{ secrets.PUSH_TOKEN }}
             # Disable push and deploy GitHub pages branch automatically
             auto-push: false
             # Github Pages repository name
