@@ -66,14 +66,6 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
-      # Download previous benchmark result from cache (if exists)
-      - name: Download previous benchmark data
-        uses: actions/cache@v1
-        if: ${{ github.event_name != 'pull_request' }}
-        with:
-          path: ./cache
-          key: ${{ matrix.os }}-benchmark
-
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         if: ${{ github.event_name != 'pull_request' }}
