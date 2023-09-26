@@ -56,12 +56,14 @@ extern "C" fn function_singleton_await(
 
 #[no_mangle]
 extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueType) {
-    // comment out this due to the seg fault
+    // TODO: This generates a segmentation fault in NodeJS Port Test, commented until it is fully reviewed
     if !func_impl.is_null() {
+        /*
         unsafe {
             let func_ptr = Box::from_raw(func_impl as *mut class::NormalFunction);
             drop(func_ptr);
         }
+        */
     }
 }
 

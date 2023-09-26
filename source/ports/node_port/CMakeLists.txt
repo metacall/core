@@ -158,6 +158,18 @@ if(OPTION_BUILD_LOADERS_RS)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
 endif()
 
+# Add dependencies and optional dependencies
+add_dependencies(${target}
+	node_loader
+	mock_loader
+	py_loader
+	rb_loader
+	ts_loader
+	${COBOL_DEPENDENCY}
+	${C_DEPENDENCY}
+	${RS_DEPENDENCY}
+)
+
 # Disable OpenSSL related tests if versions are incompatible
 set(NodeJS_EXECUTABLE_ONLY ON)
 
@@ -192,26 +204,6 @@ if(NodeJS_FOUND AND Python_Interpreter_FOUND)
 		endif()
 	endif()
 endif()
-
-# TODO: When trying multiple versions of OpenSSL in the same project,
-# Rust Loader generates a segmentation fault trying to free an unallocated block of memory,
-# disable it for now until we can diagnose it
-if(OPTION_BUILD_LOADERS_RS AND TESTS_ENVIRONMENT_VARIABLES_OPENSSL)
-	set(RS_DEPENDENCY)
-	set(TESTS_ENVIRONMENT_VARIABLES_RS)
-endif()
-
-# Add dependencies and optional dependencies
-add_dependencies(${target}
-	node_loader
-	mock_loader
-	py_loader
-	rb_loader
-	ts_loader
-	${COBOL_DEPENDENCY}
-	${C_DEPENDENCY}
-	${RS_DEPENDENCY}
-)
 
 test_environment_variables(${target}
 	""
