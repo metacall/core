@@ -197,7 +197,7 @@ function Set-Curl {
 	if (!(Test-Path -Path "$DepsDir\curl.zip")) {
 		# Download installer
 		Write-Output "Curl not found downloading now..."
-		(New-Object Net.WebClient).DownloadFile("https://curl.se/windows/dl-8.1.2_3/curl-8.1.2_3-win64-mingw.zip", "$DepsDir\curl.zip")
+		(New-Object Net.WebClient).DownloadFile("https://curl.se/windows/dl-8.3.0_2/curl-8.3.0_2-win64-mingw.zip", "$DepsDir\curl.zip")
 	}
 
 	Set-Location $DepsDir
