@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_RS OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-node-port-await-test)
+set(target metacall-node-port-rs-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_node_port_await_test.cpp
+	${source_path}/metacall_node_port_rs_test.cpp
 )
 
 # Group source files
@@ -131,8 +131,9 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	node_loader
 	node_port
+	node_loader
+	rs_loader
 )
 
 #

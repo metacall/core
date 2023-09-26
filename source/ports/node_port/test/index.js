@@ -202,7 +202,7 @@ describe('metacall', () => {
 			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
 			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
-		if (!process.env['OPTION_NODEJS_PYTHON_OPENSSL_MISMATCH']) {
+		if (process.env['OPTION_NODEJS_PYTHON_OPENSSL_MATCH']) {
 			it('require (py submodule dependency)', () => {
 				// Require the 'core' submodule from 'rsa' Python package
 				const { encrypt_int } = require('py:rsa.core');

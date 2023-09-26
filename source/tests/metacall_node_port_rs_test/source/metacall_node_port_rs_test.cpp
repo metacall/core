@@ -24,52 +24,36 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-class metacall_node_port_await_test : public testing::Test
+class metacall_node_port_rs_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_node_port_await_test, DefaultConstructor)
+TEST_F(metacall_node_port_rs_test, DefaultConstructor)
 {
 	metacall_print_info();
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-/* NodeJS */
-#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS & Rust */
+#if defined(OPTION_BUILD_LOADERS_NODE) && defined(OPTION_BUILD_LOADERS_RS)
 	{
 		static const char buffer[] =
 			/* NodeJS */
-			"const { metacall_await, metacall_load_from_memory, metacall_inspect } = require('" METACALL_NODE_PORT_PATH "');\n"
-			"metacall_load_from_memory('node', `"
-			/* NodeJS */
-			"function sleep(n) { return new Promise(resolve => { setTimeout(() => resolve(n), 200); }); }\n"
-			"module.exports = { sleep };\n"
-			"`);\n"
-			/* NodeJS Check */
-			"let buffer = new SharedArrayBuffer(4);\n"
-			"let int32 = new Int32Array(buffer);\n"
-			"Atomics.store(int32, 0, 0);\n"
-			"process.on('exit', () => {\n"
-			"	if (Atomics.load(int32, 0) != 1) {\n"
-			"		process.exit(3);\n"
-			"	}\n"
-			"});\n"
-			/* NodeJS Promise */
-			"metacall_await('sleep', 32).then(v => {\n"
-			"	console.log('RESULT:', v);\n"
-			"	if (v !== 32) {\n"
-			"		process.exit(1);\n"
-			"	}\n"
-			"	Atomics.add(int32, 0, 1);\n"
-			"}).catch(v => {\n"
-			"	console.log('ERROR:', v);\n"
-			"	process.exit(2);\n"
-			"});\n";
+			"const assert = require('assert');\n"
+			"require('" METACALL_NODE_PORT_PATH "');\n"
+			/* Rust Require */
+			"const { new_string, add_vec2, add_float, return_vec } = require('./basic.rs');\n"
+			/* Rust Assert */
+			"assert.strictEqual(new_string(123), 'get number 123');\n"
+			"assert.strictEqual(add_vec2([1, 2, 3, 4]), 10);\n"
+			"assert.strictEqual(add_float(12, 23), 35);\n"
+			"assert.strictEqual(return_vec().reduce((partialSum, a) => partialSum + a, 0), 15);\n"
+			"\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 	}
-#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE && OPTION_BUILD_LOADERS_RS */
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }
