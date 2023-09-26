@@ -215,6 +215,7 @@ function Set-Curl {
 	$CURL_LIB="$CurlDir/lib/libcurl.dll.a"
 	$CURL_LIB_NAME="$CurlDir/bin/libcurl-x64.dll"
 
+	Write-Output "-DCURL_INCLUDE_DIR=""$CURL_INCLUDE_DIR""" >> $EnvOpts
 	Write-Output "-DCURL_INCLUDE_DIRS=""$CURL_INCLUDE_DIR""" >> $EnvOpts
 	Write-Output "-DCURL_LIBRARY=""$CURL_LIB""" >> $EnvOpts
 	Write-Output "-DCURL_LIBRARY_NAME=""$CURL_LIB_NAME""" >> $EnvOpts
