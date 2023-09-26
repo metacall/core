@@ -149,32 +149,7 @@ add_test(NAME ${target}
 )
 
 #
-# Define dependencies
-#
-
-if(OPTION_BUILD_LOADERS_COB)
-	set(COBOL_DEPENDENCY cob_loader)
-	set(TESTS_ENVIRONMENT_VARIABLES_COB "OPTION_BUILD_LOADERS_COB=1")
-endif()
-
-if(OPTION_BUILD_LOADERS_C)
-	set(C_DEPENDENCY c_loader)
-	set(TESTS_ENVIRONMENT_VARIABLES_C "OPTION_BUILD_LOADERS_C=1")
-endif()
-
-add_dependencies(${target}
-	node_port
-	node_loader
-	mock_loader
-	py_loader
-	rb_loader
-	ts_loader
-	${COBOL_DEPENDENCY}
-	${C_DEPENDENCY}
-)
-
-#
-# Define test properties
+# Define test labels
 #
 
 set_property(TEST ${target}
@@ -183,9 +158,86 @@ set_property(TEST ${target}
 
 include(TestEnvironmentVariables)
 
+# Enable cobol test if it is built
+if(OPTION_BUILD_LOADERS_COB)
+	set(COBOL_DEPENDENCY cob_loader)
+	set(TESTS_ENVIRONMENT_VARIABLES_COB "OPTION_BUILD_LOADERS_COB=1")
+endif()
+
+# Enable c test if it is built
+if(OPTION_BUILD_LOADERS_C)
+	set(C_DEPENDENCY c_loader)
+	set(TESTS_ENVIRONMENT_VARIABLES_C "OPTION_BUILD_LOADERS_C=1")
+endif()
+
+# Enable rust test if it is built
+if(OPTION_BUILD_LOADERS_RS)
+	set(RS_DEPENDENCY rs_loader)
+	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
+endif()
+
+# Disable OpenSSL related tests if versions are incompatible
+set(NodeJS_EXECUTABLE_ONLY ON)
+
+find_package(NodeJS)
+find_package(Python COMPONENTS Interpreter)
+
+set(TESTS_ENVIRONMENT_VARIABLES_OPENSSL "OPTION_NODEJS_PYTHON_OPENSSL_MISMATCH=1")
+
+if(NodeJS_FOUND AND Python_Interpreter_FOUND)
+	execute_process(
+		COMMAND ${NodeJS_EXECUTABLE} -e "console.log(process.versions.openssl)"
+		OUTPUT_VARIABLE NODEJS_OPENSSL_VERSION
+	)
+	execute_process(
+		COMMAND ${Python_EXECUTABLE} -c "import ssl; print(ssl.OPENSSL_VERSION.split()[1])"
+		OUTPUT_VARIABLE PYTHON_OPENSSL_VERSION
+	)
+
+	if(NOT "${NODEJS_OPENSSL_VERSION}" STREQUAL "" AND NOT "${PYTHON_OPENSSL_VERSION}" STREQUAL "")
+		string(REGEX MATCHALL "-.*$|[0-9]+" NODEJS_OPENSSL_PARTIAL_VERSION_LIST "${NODEJS_OPENSSL_VERSION}")
+		list(GET NODEJS_OPENSSL_PARTIAL_VERSION_LIST 0 NODEJS_OPENSSL_VERSION_MAJOR)
+		list(GET NODEJS_OPENSSL_PARTIAL_VERSION_LIST 1 NODEJS_OPENSSL_VERSION_MINOR)
+		list(GET NODEJS_OPENSSL_PARTIAL_VERSION_LIST 2 NODEJS_OPENSSL_VERSION_PATCH)
+
+		string(REGEX MATCHALL "-.*$|[0-9]+" PYTHON_OPENSSL_PARTIAL_VERSION_LIST "${PYTHON_OPENSSL_VERSION}")
+		list(GET PYTHON_OPENSSL_PARTIAL_VERSION_LIST 0 PYTHON_OPENSSL_VERSION_MAJOR)
+		list(GET PYTHON_OPENSSL_PARTIAL_VERSION_LIST 1 PYTHON_OPENSSL_VERSION_MINOR)
+		list(GET PYTHON_OPENSSL_PARTIAL_VERSION_LIST 2 PYTHON_OPENSSL_VERSION_PATCH)
+
+		# If major and minor version match, then enable the OpenSSL related tests (https://github.com/metacall/core/issues/31#issuecomment-1736039845)
+		if(NODEJS_OPENSSL_VERSION_MAJOR VERSION_EQUAL PYTHON_OPENSSL_VERSION_MAJOR
+			AND NODEJS_OPENSSL_VERSION_MINOR VERSION_EQUAL PYTHON_OPENSSL_VERSION_MINOR)
+			set(TESTS_ENVIRONMENT_VARIABLES_OPENSSL)
+		endif()
+	endif()
+endif()
+
+# TODO: When trying multiple versions of OpenSSL in the same project,
+# Rust Loader generates a segmentation fault trying to free an unallocated block of memory,
+# disable it for now until we can diagnose it
+if(OPTION_BUILD_LOADERS_RS AND NOT TESTS_ENVIRONMENT_VARIABLES_OPENSSL)
+	set(RS_DEPENDENCY)
+	set(TESTS_ENVIRONMENT_VARIABLES_RS)
+endif()
+
+# Add dependencies and optional dependencies
+add_dependencies(${target}
+	node_loader
+	mock_loader
+	py_loader
+	rb_loader
+	ts_loader
+	${COBOL_DEPENDENCY}
+	${C_DEPENDENCY}
+	${RS_DEPENDENCY}
+)
+
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 	${TESTS_ENVIRONMENT_VARIABLES_COB}
 	${TESTS_ENVIRONMENT_VARIABLES_C}
+	${TESTS_ENVIRONMENT_VARIABLES_RS}
+	${TESTS_ENVIRONMENT_VARIABLES_OPENSSL}
 )
