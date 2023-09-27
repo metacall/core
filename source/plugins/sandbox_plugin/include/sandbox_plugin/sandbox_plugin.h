@@ -1,6 +1,6 @@
 /*
- *	MetaCall Library by Parra Studios
- *	A library for providing a foreign function interface calls.
+ *	Sandbox Plugin by Parra Studios
+ *	A plugin implementing sandboxing functionality for MetaCall Core.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,11 +18,23 @@
  *
  */
 
-#include <gtest/gtest.h>
+#ifndef SANDBOX_PLUGIN_H
+#define SANDBOX_PLUGIN_H 1
 
-int main(int argc, char *argv[])
-{
-	::testing::InitGoogleTest(&argc, argv);
+#include <sandbox_plugin/sandbox_plugin_api.h>
 
-	return RUN_ALL_TESTS();
+#include <dynlink/dynlink.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+SANDBOX_PLUGIN_API int sandbox_plugin(void *loader, void *handle, void *context);
+
+DYNLINK_SYMBOL_EXPORT(sandbox_plugin);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* SANDBOX_PLUGIN_H */

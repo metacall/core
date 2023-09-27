@@ -1,5 +1,5 @@
 /*
- *	CLI Core Plugin by Parra Studios
+ *	Backtrace Plugin by Parra Studios
  *	A plugin implementing backtracing functionality for MetaCall Core.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>

@@ -1,5 +1,12 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_PLUGINS_BACKTRACE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_PLUGINS_SANDBOX)
+	return()
+endif()
+
+include(Portability)
+
+if(NOT PROJECT_OS_FAMILY STREQUAL unix)
+	message(WARNING "Sandbox plugin requires LibSecComp which only works on Linux families by now, skipping sandbox plugin compilation")
 	return()
 endif()
 
@@ -7,32 +14,13 @@ endif()
 # External dependencies
 #
 
-include(FetchContent)
+# Include cmake modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-FetchContent_Declare(BackwardCpp
-	GIT_REPOSITORY https://github.com/bombela/backward-cpp
-	GIT_TAG f30744bcf726ea3735df7ecf9e9de9ddac540283
-)
+find_package(LibSecComp 2)
 
-FetchContent_MakeAvailable(BackwardCpp)
-
-FetchContent_GetProperties(BackwardCpp
-	SOURCE_DIR BackwardCpp_SOURCE
-	POPULATED BackwardCpp_POPULATED
-)
-
-if(NOT BackwardCpp_POPULATED OR NOT BackwardCpp_SOURCE)
-	message(STATUS "BackwardCpp could not be installed, trying to find it on the system")
-	return()
-endif()
-
-find_package(Backward
-	CONFIG
-	PATHS ${BackwardCpp_SOURCE}
-)
-
-if(NOT BACKWARD_FOUND)
-	message(WARNING "BackwardCpp could not be found, skipping backtrace plugin compilation")
+if(NOT LibSecComp_FOUND)
+	message(WARNING "LibSecComp could not be found, skipping sandbox plugin compilation")
 	return()
 endif()
 
@@ -41,7 +29,7 @@ endif()
 #
 
 # Target name
-set(target backtrace_plugin)
+set(target sandbox_plugin)
 
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
@@ -71,11 +59,11 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/backtrace_plugin.h
+	${include_path}/sandbox_plugin.h
 )
 
 set(sources
-	${source_path}/backtrace_plugin.cpp
+	${source_path}/sandbox_plugin.cpp
 )
 
 # Group source files
@@ -169,10 +157,10 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
+	LibSecComp::LibSecComp # LibSecComp library
+
 	PUBLIC
 	${DEFAULT_LIBRARIES}
-
-	Backward::Backward # Backward-cpp library
 
 	INTERFACE
 )

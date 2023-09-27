@@ -1,6 +1,6 @@
 /*
- *	Loader Library by Parra Studios
- *	A plugin for loading ruby code at run-time into a process.
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -58,10 +58,7 @@ TEST_F(metacall_backtrace_plugin_test, DefaultConstructor)
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	/* Generate a segmentation fault in order to catch it by backtrace plugin */
-	EXPECT_DEATH({
-		badass_function();
-	},
-		"");
+	EXPECT_DEATH({ badass_function(); }, "");
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

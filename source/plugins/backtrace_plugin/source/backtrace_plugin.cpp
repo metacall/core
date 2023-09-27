@@ -1,5 +1,5 @@
 /*
- *	CLI Core Plugin by Parra Studios
+ *	Backtrace Plugin by Parra Studios
  *	A plugin implementing backtracing functionality for MetaCall Core.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
@@ -37,5 +37,6 @@ int backtrace_plugin(void *loader, void *handle, void *context)
 		log_write("metacall", LOG_LEVEL_ERROR, "Backtrace plugin failed to load, you need unwind/libunwind for stacktracing and libbfd/libdw/libdwarf for the debug information. Install the required libraries and recompile to utilise the backtrace plugin. For more information visit https://github.com/bombela/backward-cpp");
 		return 1;
 	}
+
 	return 0;
 }

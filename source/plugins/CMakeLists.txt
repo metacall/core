@@ -5,9 +5,11 @@ endif()
 
 # Plugins options
 option(OPTION_BUILD_PLUGINS_BACKTRACE "Build cross-platform backtrace plugin." ON)
+option(OPTION_BUILD_PLUGINS_SANDBOX "Build cross-platform Linux sandbox plugin." OFF)
 
 # Plugin sub-projects
 add_subdirectory(backtrace_plugin)
+add_subdirectory(sandbox_plugin)
 
 # Install plugin directory
 install(DIRECTORY ${PROJECT_OUTPUT_DIR}/plugins

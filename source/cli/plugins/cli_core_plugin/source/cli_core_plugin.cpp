@@ -319,13 +319,13 @@ void *inspect(size_t argc, void *args[], void *data)
 int cli_core_plugin(void *loader, void *handle, void *context)
 {
 	(void)handle;
-	int ret = 0;
+
 	{
 		enum metacall_value_id *arg_types = NULL;
 		if (metacall_register_loaderv(loader, context, "inspect", inspect, METACALL_STRING, 0, arg_types) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: inspect");
-			ret = 1;
+			return 1;
 		}
 	}
 
@@ -334,7 +334,7 @@ int cli_core_plugin(void *loader, void *handle, void *context)
 		if (metacall_register_loaderv(loader, context, "clear", clear, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: clear");
-			ret = 1;
+			return 1;
 		}
 	}
 
@@ -343,7 +343,7 @@ int cli_core_plugin(void *loader, void *handle, void *context)
 		if (metacall_register_loaderv(loader, context, "call", call, METACALL_PTR, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: call");
-			ret = 1;
+			return 1;
 		}
 	}
 
@@ -352,7 +352,7 @@ int cli_core_plugin(void *loader, void *handle, void *context)
 		if (metacall_register_loaderv(loader, context, "await", await, METACALL_PTR, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: await");
-			ret = 1;
+			return 1;
 		}
 	}
 
@@ -361,7 +361,7 @@ int cli_core_plugin(void *loader, void *handle, void *context)
 		if (metacall_register_loaderv(loader, context, "eval", eval, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: eval");
-			ret = 1;
+			return 1;
 		}
 	}
 
@@ -370,9 +370,9 @@ int cli_core_plugin(void *loader, void *handle, void *context)
 		if (metacall_register_loaderv(loader, context, "load", load, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: load");
-			ret = 1;
+			return 1;
 		}
 	}
 
-	return ret;
+	return 0;
 }
