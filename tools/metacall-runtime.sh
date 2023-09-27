@@ -39,6 +39,7 @@ INSTALL_JAVA=0
 INSTALL_C=0
 INSTALL_COBOL=0
 INSTALL_BACKTRACE=0
+INSTALL_SANDBOX=0
 INSTALL_PORTS=0
 INSTALL_CLEAN=0
 SHOW_HELP=0
@@ -267,7 +268,30 @@ sub_cobol(){
 sub_backtrace(){
 	echo "configure backtrace"
 
-	sub_apt_install_hold libdw1
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			sub_apt_install_hold libdw1
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache binutils
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install dwarfutils
+		brew install libelf
+	fi
+}
+
+# Sandbox (this provides sandboxing features in Linux through BFS filters with libseccomp)
+sub_sandbox(){
+	echo "configure sandbox"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get install -y --no-install-recommends libseccomp
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache libseccomp
+		fi
+	fi
 }
 
 # Ports
@@ -326,6 +350,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
+	fi
+	if [ $INSTALL_SANDBOX = 1 ]; then
+		sub_sandbox
 	fi
 	if [ $INSTALL_PORTS = 1 ]; then
 		sub_ports
@@ -413,6 +440,10 @@ sub_options(){
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
 		fi
+		if [ "$var" = 'sandbox' ]; then
+			echo "sandbox selected"
+			INSTALL_SANDBOX=1
+		fi
 		if [ "$var" = 'ports' ]; then
 			echo "ports selected"
 			INSTALL_PORTS=1
@@ -443,6 +474,7 @@ sub_help() {
 	echo "	c"
 	echo "	cobol"
 	echo "	backtrace"
+	echo "	sandbox"
 	echo "	ports"
 	echo "	clean"
 	echo ""

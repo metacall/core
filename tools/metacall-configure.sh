@@ -45,6 +45,7 @@ BUILD_EXAMPLES=0
 BUILD_TESTS=0
 BUILD_BENCHMARKS=0
 BUILD_PORTS=0
+BUILD_SANDBOX=0
 BUILD_COVERAGE=0
 BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
@@ -161,6 +162,10 @@ sub_options() {
 		if [ "$option" = 'ports' ]; then
 			echo "Build all ports"
 			BUILD_PORTS=1
+		fi
+		if [ "$option" = 'sandbox' ]; then
+			echo "Build with sandboxing support"
+			BUILD_SANDBOX=1
 		fi
 		if [ "$option" = 'coverage' ]; then
 			echo "Build all coverage reports"
@@ -442,6 +447,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS=Off"
 	fi
 
+	# Sandbox
+	if [ $BUILD_SANDBOX = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PLUGINS_SANDBOX=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PLUGINS_SANDBOX=Off"
+	fi
+
 	# Coverage
 	if [ $BUILD_COVERAGE = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_COVERAGE=On"
@@ -514,6 +526,7 @@ sub_help() {
 	echo "	install: install all libraries"
 	echo "	static: build as static libraries"
 	echo "	ports: build all ports"
+	echo "	sandbox: build with sandboxing support"
 	echo "	coverage: build all coverage reports"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"

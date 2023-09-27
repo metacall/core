@@ -56,6 +56,7 @@ INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_CLANGFORMAT=0
 INSTALL_BACKTRACE=0
+INSTALL_SANDBOX=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -818,7 +819,20 @@ sub_backtrace(){
 		echo "-DLIBDWARF_INCLUDE_DIR=${LIBDWARD_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+	fi
+}
 
+# Sandbox (this provides sandboxing features in Linux through BFS filters with libseccomp)
+sub_sandbox(){
+	echo "configure sandbox"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get install -y --no-install-recommends libseccomp-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache libseccomp-dev
+		fi
 	fi
 }
 
@@ -906,6 +920,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
+	fi
+	if [ $INSTALL_SANDBOX = 1 ]; then
+		sub_sandbox
 	fi
 	echo "install finished in workspace $ROOT_DIR"
 }
@@ -1041,6 +1058,10 @@ sub_options(){
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
 		fi
+		if [ "$var" = 'sandbox' ]; then
+			echo "sandbox selected"
+			INSTALL_SANDBOX=1
+		fi
 	done
 }
 
@@ -1077,6 +1098,7 @@ sub_help() {
 	echo "	coverage"
 	echo "	clangformat"
 	echo "	backtrace"
+	echo "	sandbox"
 	echo ""
 }
 
