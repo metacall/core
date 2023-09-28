@@ -14,7 +14,7 @@ find_package(CURL REQUIRED)
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
 if(WIN32 AND CURL_LIBRARY_NAME)
 	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-	file(COPY ${CURL_LIBRARY_NAME} DESTINATION ${PROJECT_OUTPUT_DIR})
+	file(COPY "${CURL_LIBRARY_NAME}" DESTINATION ${PROJECT_OUTPUT_DIR})
 endif()
 
 #
@@ -197,7 +197,7 @@ install(TARGETS ${target}
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
 if(WIN32 AND CURL_LIBRARY_NAME)
 	install(FILES
-		${CURL_LIBRARY_NAME}
+		"${CURL_LIBRARY_NAME}"
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)

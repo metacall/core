@@ -19,7 +19,7 @@ endif()
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
 if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
 	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-	file(COPY ${NodeJS_LIBRARY_NAME_PATH} DESTINATION ${PROJECT_OUTPUT_DIR})
+	file(COPY "${NodeJS_LIBRARY_NAME_PATH}" DESTINATION ${PROJECT_OUTPUT_DIR})
 endif()
 
 #
@@ -230,7 +230,7 @@ install(TARGETS ${target}
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
 if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
 	install(FILES
-		${NodeJS_LIBRARY_NAME_PATH}
+		"${NodeJS_LIBRARY_NAME_PATH}"
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)

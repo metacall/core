@@ -489,7 +489,7 @@ if(NOT NodeJS_LIBRARY)
 
 				# Copy library to MetaCall output path
 				execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-				file(COPY ${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME} DESTINATION ${PROJECT_OUTPUT_DIR})
+				file(COPY "${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME}" DESTINATION ${PROJECT_OUTPUT_DIR})
 
 				message(STATUS "Install NodeJS shared library")
 			endif()
