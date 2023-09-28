@@ -193,18 +193,19 @@ function Set-Curl {
 	Set-Location $ROOT_DIR
 	$RuntimeDir = "$env:ProgramFiles\curl"
 	$DepsDir = "$ROOT_DIR\dependencies"
+	$Version = "8.3.0_2"
 
 	if (!(Test-Path -Path "$DepsDir\curl.zip")) {
 		# Download installer
 		Write-Output "Curl not found downloading now..."
-		(New-Object Net.WebClient).DownloadFile("https://curl.se/windows/dl-8.3.0_2/curl-8.3.0_2-win64-mingw.zip", "$DepsDir\curl.zip")
+		(New-Object Net.WebClient).DownloadFile("https://curl.se/windows/dl-$Version/curl-$Version-win64-mingw.zip", "$DepsDir\curl.zip")
 	}
 
 	Set-Location $DepsDir
 
 	7z x "$DepsDir\curl.zip"
 
-	robocopy /move /e "$DepsDir\curl-8.1.2_3-win64-mingw" $RuntimeDir
+	robocopy /move /e "$DepsDir\curl-$Version-win64-mingw" $RuntimeDir
 
 	Add-to-Path "$RuntimeDir\bin"
 
