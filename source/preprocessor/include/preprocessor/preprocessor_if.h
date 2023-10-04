@@ -50,8 +50,6 @@ extern "C" {
 #if defined(__EDG__) || defined(__EDG_VERSION__)
 	#define PREPROCESSOR_IF_IMPL(condition, true_expr, false_expr) PREPROCESSOR_IIF(PREPROCESSOR_BOOL(condition), true_expr, false_expr)
 	#define PREPROCESSOR_IF(condition, true_expr, false_expr)	   PREPROCESSOR_IF_IMPL(condition, true_expr, false_expr)
-#elif defined(_MSC_VER) && !defined(__clang__)
-	#define PREPROCESSOR_IF(condition, true_expr, false_expr) PREPROCESSOR_IIF(PREPROCESSOR_BOOL(condition), true_expr, false_expr)
 #else
 	#define PREPROCESSOR_IF(condition, true_expr, false_expr) PREPROCESSOR_IIF(PREPROCESSOR_BOOL(condition), (true_expr), (false_expr))
 #endif

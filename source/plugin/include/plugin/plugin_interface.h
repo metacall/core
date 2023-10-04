@@ -22,6 +22,7 @@
 #define PLUGIN_INTERFACE_H 1
 
 /* Private interface for using it inside any loader, extension or plugin for registering functions */
+/* TODO: Move this to source/metacall/include/metacall/private? */
 
 #include <preprocessor/preprocessor.h>
 
