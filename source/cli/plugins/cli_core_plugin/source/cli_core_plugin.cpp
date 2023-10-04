@@ -20,8 +20,7 @@
 
 #include <cli_core_plugin/cli_core_plugin.h>
 
-#include <log/log.h>
-#include <metacall/metacall.h>
+#include <plugin/plugin_interface.h>
 
 #include <string.h>
 
@@ -320,59 +319,12 @@ int cli_core_plugin(void *loader, void *handle, void *context)
 {
 	(void)handle;
 
-	{
-		enum metacall_value_id *arg_types = NULL;
-		if (metacall_register_loaderv(loader, context, "inspect", inspect, METACALL_STRING, 0, arg_types) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: inspect");
-			return 1;
-		}
-	}
-
-	{
-		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_STRING };
-		if (metacall_register_loaderv(loader, context, "clear", clear, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: clear");
-			return 1;
-		}
-	}
-
-	{
-		enum metacall_value_id arg_types[] = { METACALL_STRING };
-		if (metacall_register_loaderv(loader, context, "call", call, METACALL_PTR, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: call");
-			return 1;
-		}
-	}
-
-	{
-		enum metacall_value_id arg_types[] = { METACALL_STRING };
-		if (metacall_register_loaderv(loader, context, "await", await, METACALL_PTR, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: await");
-			return 1;
-		}
-	}
-
-	{
-		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_STRING };
-		if (metacall_register_loaderv(loader, context, "eval", eval, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: eval");
-			return 1;
-		}
-	}
-
-	{
-		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_ARRAY };
-		if (metacall_register_loaderv(loader, context, "load", load, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: load");
-			return 1;
-		}
-	}
+	EXTENSION_FUNCTION(METACALL_STRING, inspect);
+	EXTENSION_FUNCTION(METACALL_INT, clear, METACALL_STRING, METACALL_STRING);
+	EXTENSION_FUNCTION(METACALL_PTR, call, METACALL_STRING);
+	EXTENSION_FUNCTION(METACALL_PTR, await, METACALL_STRING);
+	EXTENSION_FUNCTION(METACALL_INT, eval, METACALL_STRING, METACALL_STRING);
+	EXTENSION_FUNCTION(METACALL_INT, load, METACALL_STRING, METACALL_ARRAY);
 
 	return 0;
 }

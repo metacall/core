@@ -20,13 +20,9 @@
 
 #include <sandbox_plugin/sandbox_plugin.h>
 
+#include <plugin/plugin_interface.h>
+
 #include <seccomp.h>
-
-#include <preprocessor/preprocessor.h>
-
-#include <log/log.h>
-
-#include <metacall/metacall.h>
 
 /* TODO: Use SCMP_ACT_KILL_PROCESS for catching the signal and showing the stack trace? */
 #define SANDBOX_DEFAULT_ACTION SCMP_ACT_ALLOW // SCMP_ACT_KILL
@@ -148,39 +144,9 @@ int sandbox_plugin(void *loader, void *handle, void *context)
 {
 	(void)handle;
 
-#define SANDBOX_FUNCTION_IMPL_0(ret, name)                                                                        \
-	do                                                                                                            \
-	{                                                                                                             \
-		if (metacall_register_loaderv(loader, context, PREPROCESSOR_STRINGIFY(name), name, ret, 0, NULL) != 0)    \
-		{                                                                                                         \
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name)); \
-			return 1;                                                                                             \
-		}                                                                                                         \
-	} while (0)
-
-#define SANDBOX_FUNCTION_IMPL(ret, name, ...)                                                                                                          \
-	do                                                                                                                                                 \
-	{                                                                                                                                                  \
-		enum metacall_value_id arg_types[] = { __VA_ARGS__ };                                                                                          \
-		if (metacall_register_loaderv(loader, context, PREPROCESSOR_STRINGIFY(name), name, ret, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), arg_types) != 0) \
-		{                                                                                                                                              \
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name));                                      \
-			return 1;                                                                                                                                  \
-		}                                                                                                                                              \
-	} while (0)
-
-#define SANDBOX_FUNCTION(ret, name, ...)                                   \
-	PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__),                  \
-		SANDBOX_FUNCTION_IMPL_0(ret, PREPROCESSOR_CONCAT(sandbox_, name)), \
-		SANDBOX_FUNCTION_IMPL(ret, PREPROCESSOR_CONCAT(sandbox_, name), __VA_ARGS__))
-
-	SANDBOX_FUNCTION(METACALL_PTR, initialize);
-	SANDBOX_FUNCTION_IMPL(METACALL_INT, sandbox_uname, METACALL_PTR, METACALL_BOOL);
-	SANDBOX_FUNCTION_IMPL(METACALL_INT, sandbox_destroy, METACALL_PTR);
-
-#undef SANDBOX_FUNCTION_IMPL_0
-#undef SANDBOX_FUNCTION_IMPL
-#undef SANDBOX_FUNCTION
+	EXTENSION_FUNCTION(METACALL_PTR, sandbox_initialize);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_uname, METACALL_PTR, METACALL_BOOL);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_destroy, METACALL_PTR);
 
 #if 0 /* TODO: Fork safety */
 	#ifdef METACALL_FORK_SAFE
