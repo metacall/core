@@ -129,7 +129,8 @@ error_args:
 	return metacall_value_create_int(1);
 }
 
-#ifdef METACALL_FORK_SAFE
+#if 0 /* TODO: Fork safety */
+	#ifdef METACALL_FORK_SAFE
 static int sandbox_plugin_post_fork_callback(metacall_pid id, void *data)
 {
 	(void)id;
@@ -138,7 +139,8 @@ static int sandbox_plugin_post_fork_callback(metacall_pid id, void *data)
 	/* Reset libseccomp library status: https://man7.org/linux/man-pages/man3/seccomp_init.3.html */
 	return seccomp_reset(NULL, SANDBOX_DEFAULT_ACTION);
 }
-#endif /* METACALL_FORK_SAFE */
+	#endif /* METACALL_FORK_SAFE */
+#endif
 
 int sandbox_plugin(void *loader, void *handle, void *context)
 {
