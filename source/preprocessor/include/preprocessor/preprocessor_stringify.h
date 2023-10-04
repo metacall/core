@@ -21,6 +21,7 @@ extern "C" {
 
 /* -- Macros -- */
 
+/* Stringify a symbol */
 #define PREPROCESSOR_STRINGIFY_IMPL(...) #__VA_ARGS__
 
 #if defined(__MWERKS__)
@@ -33,6 +34,28 @@ extern "C" {
 	#define PREPROCESSOR_STRINGIFY(expr) PREPROCESSOR_STRINGIFY_IMPL(expr)
 #endif
 
+/* Stringify a symbol or return empty string if the expression expands to nothing */
+#if defined(_MSC_VER) && !defined(__clang__)
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_II(...) #__VA_ARGS__
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(...)                      \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_NOT_EMPTY(__VA_ARGS__),          \
+			PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_II(__VA_ARGS__),          \
+			"")
+#else
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(expr) #expr
+#endif
+
+#if defined(__MWERKS__)
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_I(tuple) PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL##tuple
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY(expr)		 PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_I((expr))
+#elif defined(_MSC_VER) && !defined(__clang__)
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_I(tuple) PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL tuple
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY(expr)		 PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_I((expr))
+#else
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY(expr) PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(expr)
+#endif
+
+/* Stringify a list of symbols */
 #define PREPROCESSOR_STRINGIFY_VARIADIC(...) \
 	PREPROCESSOR_FOR_EACH(PREPROCESSOR_STRINGIFY, __VA_ARGS__)
 
