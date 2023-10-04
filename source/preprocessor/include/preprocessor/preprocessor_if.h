@@ -21,7 +21,6 @@ extern "C" {
 
 /* -- Macros -- */
 
-
 #if defined(__GNUC__) || defined(__clang__)
 	#define PREPROCESSOR_IIF_IMPL_EXPAND_ARGS(...) __VA_ARGS__
 	#define PREPROCESSOR_IIF_IMPL_EXPAND(expr) expr

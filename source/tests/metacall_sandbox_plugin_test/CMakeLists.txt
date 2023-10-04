@@ -5,7 +5,13 @@ endif()
 
 include(Portability)
 
+# Sandbox is only supported in Linux
 if(NOT PROJECT_OS_FAMILY STREQUAL unix)
+	return()
+endif()
+
+# Thread Sanitizer deadlocks with ASSERT_EXIT
+if(OPTION_BUILD_THREAD_SANITIZER)
 	return()
 endif()
 
