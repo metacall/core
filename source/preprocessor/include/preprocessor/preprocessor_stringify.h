@@ -37,9 +37,9 @@ extern "C" {
 /* Stringify a symbol or return empty string if the expression expands to nothing */
 #if defined(_MSC_VER) && !defined(__clang__)
 	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_II(...) #__VA_ARGS__
-	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(...)                      \
-		PREPROCESSOR_IF(PREPROCESSOR_ARGS_NOT_EMPTY(__VA_ARGS__),          \
-			PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_II(__VA_ARGS__),          \
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(...) \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_NOT_EMPTY(__VA_ARGS__), \
+			PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_II(__VA_ARGS__), \
 			"")
 #else
 	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(...) #__VA_ARGS__

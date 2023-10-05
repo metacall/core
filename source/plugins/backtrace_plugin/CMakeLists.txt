@@ -222,18 +222,18 @@ target_link_libraries(${target}
 #
 
 # Copy metacall.json
-add_custom_target(${target}-create-plugin-dir ALL
+add_custom_target(${target}_config ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${PLUGIN_OUTPUT_DIRECTORY}
 	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall.json ${PLUGIN_OUTPUT_DIRECTORY}/metacall.json
 )
 
-set_target_properties(${target}-create-plugin-dir
+set_target_properties(${target}_config
 	PROPERTIES
 	FOLDER "${IDE_FOLDER}"
 )
 
 add_dependencies(${target}
-	${target}-create-plugin-dir
+	${target}_config
 	plugin_extension
 )

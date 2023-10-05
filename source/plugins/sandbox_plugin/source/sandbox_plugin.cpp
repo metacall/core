@@ -20,113 +20,71 @@
 
 #include <sandbox_plugin/sandbox_plugin.h>
 
-#include <plugin/plugin_interface.h>
+#include <plugin/plugin_interface.hpp>
 
 #include <seccomp.h>
 
-/* TODO: Use SCMP_ACT_KILL_PROCESS for catching the signal and showing the stack trace? */
-#define SANDBOX_DEFAULT_ACTION SCMP_ACT_ALLOW // SCMP_ACT_KILL
+/* TODO: Use SCMP_ACT_KILL_PROCESS instead of SCMP_ACT_KILL for catching the signal and showing the stack trace? */
+/* TODO: We can disable bool (true/false) for string ("allow"/"disable") */
+#define SANDBOX_ACTION(value) \
+	metacall_value_to_bool(value) == 0L ? SCMP_ACT_KILL : SCMP_ACT_ALLOW
+
+/* Error messages */
+#define SANDBOX_INITIALIZE_ERROR "Sandbox plugin failed to initialize a context"
+#define SANDBOX_UNAME_ERROR		 "Sandbox plugin failed to set uname syscall permissions"
+#define SANDBOX_DESTROY_ERROR	 "Sandbox plugin failed to destroy a context"
 
 void *sandbox_initialize(size_t argc, void *args[], void *data)
 {
 	scmp_filter_ctx ctx;
 
-	(void)argc;
-	(void)args;
-	(void)data;
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_INITIALIZE_ERROR, METACALL_BOOL);
 
-	/* Initialize the scmp context */
-	ctx = seccomp_init(SANDBOX_DEFAULT_ACTION);
+	/* Initialize the seccomp context */
+	ctx = seccomp_init(SANDBOX_ACTION(args[0]));
 
 	if (ctx == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Sandbox plugin failed to initialize a context.");
+		/* Throw exception if seccomp initialization failed */
+		EXTENSION_FUNCTION_THROW(SANDBOX_INITIALIZE_ERROR);
 	}
 
 	return metacall_value_create_ptr(ctx);
 }
 
-/*int sandbox_uname(void *ctx, int allow)
-{
-    seccomp_rule_add(ctx, allow == 0L ? SCMP_ACT_KILL : SCMP_ACT_ALLOW, SCMP_SYS(uname), 0);
-    seccomp_load(ctx);
-	return 0;
-}*/
-
 void *sandbox_uname(size_t argc, void *args[], void *data)
 {
 	scmp_filter_ctx ctx;
 
-	(void)data;
-
-	if (argc != 2)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Sandbox plugin failed to set uname syscall permissions. The required number of argumens is one, received: %" PRIuS, argc);
-		goto error_args;
-	}
-
-	if (metacall_value_id(args[0]) != METACALL_PTR)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Sandbox plugin failed to set uname syscall permissions. "
-											   "The first parameter requires a pointer to the context, received: %s",
-			metacall_value_type_name(args[0]));
-		goto error_args;
-	}
-
-	if (metacall_value_id(args[1]) != METACALL_BOOL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Sandbox plugin failed to set uname syscall permissions. "
-											   "The second parameter requires a boolean indicating if it is allowed or not, received: %s",
-			metacall_value_type_name(args[1]));
-		goto error_args;
-	}
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_UNAME_ERROR, METACALL_PTR, METACALL_BOOL);
 
 	ctx = metacall_value_to_ptr(args[0]);
 
-	seccomp_rule_add(ctx, metacall_value_to_bool(args[1]) == 0L ? SCMP_ACT_KILL : SCMP_ACT_ALLOW, SCMP_SYS(uname), 0);
+	seccomp_rule_add(ctx, SANDBOX_ACTION(args[1]), SCMP_SYS(uname), 0);
 	seccomp_load(ctx);
 
 	return metacall_value_create_int(0);
-
-error_args:
-	return metacall_value_create_int(1);
 }
 
 void *sandbox_destroy(size_t argc, void *args[], void *data)
 {
 	scmp_filter_ctx ctx;
 
-	(void)data;
-
-	if (argc != 1)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Sandbox plugin failed to destroy a context. The required number of argumens is one, received: %" PRIuS, argc);
-		goto error_args;
-	}
-
-	if (metacall_value_id(args[0]) != METACALL_PTR)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Sandbox plugin failed to destroy a context. "
-											   "The first parameter requires a pointer to the context, received: %s",
-			metacall_value_type_name(args[0]));
-		goto error_args;
-	}
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_DESTROY_ERROR, METACALL_PTR);
 
 	ctx = metacall_value_to_ptr(args[0]);
 
 	if (ctx == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Sandbox plugin failed to destroy a context. "
-											   "The first parameter requires a non null pointer");
-		goto error_args;
+		EXTENSION_FUNCTION_THROW(SANDBOX_DESTROY_ERROR ", the first parameter requires a non null pointer");
 	}
 
 	seccomp_release(ctx);
 
 	return metacall_value_create_int(0);
-
-error_args:
-	return metacall_value_create_int(1);
 }
 
 #if 0 /* TODO: Fork safety */

@@ -10,7 +10,7 @@ if(NOT PROJECT_OS_FAMILY STREQUAL unix)
 	return()
 endif()
 
-# Thread Sanitizer deadlocks with ASSERT_EXIT
+# Thread Sanitizer deadlocks with ASSERT_EXIT (TODO: Review this when fork safety is implemented in sandbox_plugin)
 if(OPTION_BUILD_THREAD_SANITIZER)
 	return()
 endif()
