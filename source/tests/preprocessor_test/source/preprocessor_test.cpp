@@ -22,8 +22,6 @@
 
 #include <preprocessor/preprocessor.h>
 
-#include <string.h>
-
 class preprocessor_test : public testing::Test
 {
 public:
@@ -114,14 +112,15 @@ TEST_F(preprocessor_test, empty)
 {
 	const char empty_str[] = "";
 
-	EXPECT_EQ((int)0, (int)strcmp(empty_str, PREPROCESSOR_STRINGIFY_OR_EMPTY(PREPROCESSOR_EMPTY_SYMBOL())));
+	EXPECT_STREQ("", PREPROCESSOR_STRINGIFY_OR_EMPTY(PREPROCESSOR_EMPTY_SYMBOL()));
+	EXPECT_STREQ(empty_str, PREPROCESSOR_STRINGIFY_OR_EMPTY(PREPROCESSOR_EMPTY_SYMBOL()));
 
 	PREPROCESSOR_EMPTY_EXPANSION(this must compile)
 
 	PREPROCESSOR_EMPTY_EXPANSION_VARIADIC(this, must, compile)
 }
 
-TEST_F(preprocessor_test, for)
+TEST_F(preprocessor_test, foreach)
 {
 #define PREPROCESSOR_TEST_FOR_EACH_STR_SIZE 0x04
 
@@ -137,7 +136,22 @@ TEST_F(preprocessor_test, for)
 
 #undef PREPROCESSOR_TEST_FOR_EACH_STR_SIZE
 
-	EXPECT_EQ((int)0, (int)strcmp(for_each_str, "abc"));
+	EXPECT_STREQ(for_each_str, "abc");
+}
+
+TEST_F(preprocessor_test, for)
+{
+#define PREPROCESSOR_TEST_FOR(context, iterator, element) \
+	context \
+		PREPROCESSOR_STRINGIFY(iterator) \
+			element \
+		"-"
+
+	const char for_str[] = PREPROCESSOR_FOR(PREPROCESSOR_TEST_FOR, "yeet", "a", "b", "c", "d", "e", "f");
+
+#undef PREPROCESSOR_TEST_FOR
+
+	EXPECT_STREQ(for_str, "yeet0a-yeet1b-yeet2c-yeet3d-yeet4e-yeet5f-");
 }
 
 TEST_F(preprocessor_test, if)
@@ -155,7 +169,7 @@ TEST_F(preprocessor_test, serial)
 
 	const char serial_id_b[] = PREPROCESSOR_STRINGIFY(PREPROCESSOR_SERIAL_ID(PREPROCESSOR_TEST_SERIAL_TAG));
 
-	EXPECT_NE((int)0, (int)strcmp(serial_id_a, serial_id_b));
+	EXPECT_STRNE(serial_id_a, serial_id_b);
 
 #undef PREPROCESSOR_TEST_SERIAL_TAG
 }
@@ -166,9 +180,9 @@ TEST_F(preprocessor_test, stringify)
 
 	const char stringify_tag[] = "abc";
 
-	EXPECT_EQ((int)0, (int)strcmp(stringify_tag, PREPROCESSOR_STRINGIFY(PREPROCESSOR_TEST_STRINGIFY_TAG)));
+	EXPECT_STREQ(stringify_tag, PREPROCESSOR_STRINGIFY(PREPROCESSOR_TEST_STRINGIFY_TAG));
 
-	EXPECT_EQ((int)0, (int)strcmp(stringify_tag, PREPROCESSOR_STRINGIFY_VARIADIC(a, b, c)));
+	EXPECT_STREQ(stringify_tag, PREPROCESSOR_STRINGIFY_VARIADIC(a, b, c));
 
 #undef PREPROCESSOR_TEST_STRINGIFY_TAG
 }

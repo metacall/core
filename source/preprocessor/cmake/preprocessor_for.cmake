@@ -74,6 +74,36 @@ function(preprocessor_for_generate _for_size)
 
 	endforeach()
 
+	# Definition implementation: PREPROCESSOR_FOR_IMPL
+	set(PREPROCESSOR_FOR_IMPL_BODY "")
+
+	foreach(iterator RANGE 3 ${PREPROCESSOR_FOR_SIZE})
+
+		math(EXPR prev "${iterator} - 1")
+
+		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY}#define PREPROCESSOR_FOR_IMPL_${iterator}(expr, context, element, ...) expr(context, ${prev}, element)")
+
+		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY} PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_${prev}(expr, context, __VA_ARGS__))\n")
+
+	endforeach()
+
+	# Definition implementation: PREPROCESSOR_FOR_IMPL_GNUC
+	set(PREPROCESSOR_FOR_IMPL_GNUC_BODY "")
+
+	math(EXPR preprocessor_for_limit "${PREPROCESSOR_FOR_SIZE} - 1")
+
+	foreach(iterator RANGE ${preprocessor_for_limit} 1)
+
+		math(EXPR iterator_modulo "${iterator} % ${preprocessor_for_line_align}")
+
+		if(${iterator_modulo} EQUAL 0)
+			set(PREPROCESSOR_FOR_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_IMPL_GNUC_BODY}PREPROCESSOR_FOR_IMPL_${iterator}, \\\n\t\t")
+		else()
+			set(PREPROCESSOR_FOR_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_IMPL_GNUC_BODY}PREPROCESSOR_FOR_IMPL_${iterator}, ")
+		endif()
+
+	endforeach()
+
 	# Configure for template headers
 	string(CONFIGURE ${preprocessor_for_headers_in} preprocessor_for_headers @ONLY)
 

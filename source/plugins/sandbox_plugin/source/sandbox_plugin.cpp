@@ -25,7 +25,7 @@
 #include <seccomp.h>
 
 /* TODO: Use SCMP_ACT_KILL_PROCESS instead of SCMP_ACT_KILL for catching the signal and showing the stack trace? */
-/* TODO: We can disable bool (true/false) for string ("allow"/"disable") */
+/* TODO: We can disable bool (true/false) for string ("allow"/"kill") */
 #define SANDBOX_ACTION(value) \
 	metacall_value_to_bool(value) == 0L ? SCMP_ACT_KILL : SCMP_ACT_ALLOW
 

@@ -70,7 +70,7 @@
 		return value_create_throwable(th); \
 	} while (0)
 
-#define EXTENSION_FUNCTION_CHECK_ITERATOR(value, iterator, error) \
+#define EXTENSION_FUNCTION_CHECK_ITERATOR(error, iterator, value) \
 	if (metacall_value_id(args[iterator]) != value) \
 	{ \
 		std::stringstream ss; \
@@ -78,9 +78,6 @@
 		std::string error_msg = ss.str(); \
 		EXTENSION_FUNCTION_THROW(error_msg.c_str()); \
 	}
-
-/* TODO: */
-#define PREPROCESSOR_FOR(macro, context, ...)
 
 #define EXTENSION_FUNCTION_CHECK(error, ...) \
 	do \
