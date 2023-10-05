@@ -139,6 +139,24 @@ TEST_F(preprocessor_test, foreach)
 	EXPECT_STREQ(for_each_str, "abc");
 }
 
+TEST_F(preprocessor_test, foreach_empty)
+{
+#define PREPROCESSOR_TEST_FOR_EACH(expr) "33434"
+
+	EXPECT_EQ((int)1, (int)PREPROCESSOR_ARGS_EMPTY(PREPROCESSOR_FOR_EACH(PREPROCESSOR_TEST_FOR_EACH)));
+
+#undef PREPROCESSOR_TEST_FOR_EACH
+}
+
+TEST_F(preprocessor_test, for_empty)
+{
+#define PREPROCESSOR_TEST_FOR(context, iterator, element) "33434"
+
+	EXPECT_EQ((int)1, (int)PREPROCESSOR_ARGS_EMPTY(PREPROCESSOR_FOR(PREPROCESSOR_TEST_FOR, "yeet")));
+
+#undef PREPROCESSOR_TEST_FOR
+}
+
 TEST_F(preprocessor_test, for)
 {
 #define PREPROCESSOR_TEST_FOR(context, iterator, element) \

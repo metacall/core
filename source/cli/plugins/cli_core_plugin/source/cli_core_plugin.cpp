@@ -22,121 +22,105 @@
 
 #include <plugin/plugin_interface.hpp>
 
-#include <string.h>
-
 #include <condition_variable>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+/* Error messages */
+#define LOAD_ERROR	  "Failed to load a script"
+#define INSPECT_ERROR "Failed to inspect MetaCall context"
+#define EVAL_ERROR	  "Failed to evaluate the expression"
+#define CALL_ERROR	  "Failed to call the function"
+#define AWAIT_ERROR	  "Failed to await the function"
+#define CLEAR_ERROR	  "Failed to clear the handle"
 
 void *load(size_t argc, void *args[], void *data)
 {
-	(void)argc;
-	(void)data;
-
-	if (argc < 2)
-	{
-		return metacall_value_create_int(1);
-	}
-
-	void **script_val = NULL;
-	char **scripts = NULL;
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(LOAD_ERROR, METACALL_STRING, METACALL_ARRAY);
 
 	char *tag = metacall_value_to_string(args[0]);
-	if (tag == NULL)
-	{
-		return metacall_value_create_int(1);
-	}
+	size_t size = metacall_value_count(args[1]);
+	void **script_values = metacall_value_to_array(args[1]);
+	std::vector<std::string> scripts;
+	std::vector<const char *> scripts_cstr;
 
-	size_t size = 0;
-	if (metacall_value_id(args[1]) == METACALL_ARRAY)
-	{
-		size = metacall_value_count(args[1]);
-		script_val = metacall_value_to_array(args[1]);
-		if (script_val == NULL)
-		{
-			return metacall_value_create_int(1);
-		}
-	}
-	else
-	{
-		script_val = (args + 1);
-		size = argc - 1;
-	}
-
-	scripts = (char **)malloc(sizeof(char *) * size);
+	scripts.reserve(size);
+	scripts_cstr.reserve(size);
 
 	for (size_t i = 0; i < size; ++i)
 	{
-		if (metacall_value_id(script_val[i]) == METACALL_STRING)
+		if (metacall_value_id(script_values[i]) != METACALL_STRING)
 		{
-			scripts[i] = metacall_value_to_string(script_val[i]);
+			std::stringstream ss;
+
+			ss << LOAD_ERROR ", calling load with wrong type of argument at argument position "
+			   << (i + 1) << ", expected " << metacall_value_id_name(METACALL_STRING)
+			   << ", got " << metacall_value_type_name(script_values[i]);
+
+			EXTENSION_FUNCTION_THROW(ss.str().c_str());
 		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Calling load with wrong type of argument at argument position %" PRIuS ", expected %s, got %s",
-				i + 1, metacall_value_id_name(METACALL_STRING), metacall_value_type_name(script_val[i]));
-			return metacall_value_create_int(1);
-		}
+
+		scripts.push_back(metacall_value_to_string(script_values[i]));
+		scripts_cstr.push_back(const_cast<const char *>(scripts[i].c_str()));
 	}
 
-	int ret = metacall_load_from_file(tag, const_cast<const char **>(scripts), size, NULL);
-
-	free(scripts);
+	int ret = metacall_load_from_file(tag, scripts_cstr.data(), size, NULL);
 
 	return metacall_value_create_int(ret);
 }
 
-void *eval(size_t argc, void *args[], void *data)
+void *inspect(size_t argc, void *args[], void *data)
 {
-	(void)data;
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(INSPECT_ERROR);
 
-	if (argc != 2)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling eval with wrong number of arguments, expected 2 arguments, got %" PRIuS " arguments", argc);
-		return metacall_value_create_int(1);
-	}
+	size_t size = 0;
 
-	if (metacall_value_id(args[0]) == METACALL_STRING && metacall_value_id(args[1]) == METACALL_STRING)
-	{
-		char *tag = metacall_value_to_string(args[0]);
-		char *script = metacall_value_to_string(args[1]);
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		return metacall_value_create_int(metacall_load_from_memory(tag, script, strlen(script) + 1, NULL));
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling eval with wrong type of arguments, expected two %s, got %s and %s",
-			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]), metacall_value_type_name(args[1]));
-	}
+	char *inspect_str = metacall_inspect(&size, allocator);
 
-	return metacall_value_create_int(1);
+	void *inspect_value_str = metacall_value_create_string(inspect_str, size > 0 ? size - 1 : 0);
+
+	metacall_allocator_free(allocator, inspect_str);
+
+	metacall_allocator_destroy(allocator);
+
+	return inspect_value_str;
 }
 
-void *await(size_t argc, void *args[], void *data)
+void *eval(size_t argc, void *args[], void *data)
 {
-	(void)argc;
-	(void)data;
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(EVAL_ERROR, METACALL_STRING, METACALL_STRING);
 
-	if (argc != 1)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling await with wrong number of arguments, expected 1 arguments, got %" PRIuS " arguments", argc);
-		return metacall_value_create_int(1);
-	}
+	char *tag = metacall_value_to_string(args[0]);
+	char *script = metacall_value_to_string(args[1]);
+	size_t size = metacall_value_size(args[1]);
 
-	if (metacall_value_id(args[0]) != METACALL_STRING)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling await with wrong type of arguments, expected %s, got %s",
-			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]));
-		return metacall_value_create_int(1);
-	}
+	return metacall_value_create_int(metacall_load_from_memory(tag, script, size, NULL));
+}
+
+void *call(size_t argc, void *args[], void *data)
+{
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(CALL_ERROR, METACALL_STRING);
 
 	/* Parse function call */
 	std::string func_str = metacall_value_to_string(args[0]);
+
 	if (func_str.find('(') == std::string::npos || func_str.find(')') == std::string::npos)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "'await' called with mangled function call string: %s", func_str.c_str());
-		return metacall_value_create_int(1);
+		std::stringstream ss;
+
+		ss << CALL_ERROR ", calling function with malformed function call string: " << func_str;
+
+		EXTENSION_FUNCTION_THROW(ss.str().c_str());
 	}
 
 	std::string::size_type idx = func_str.find_first_of('(');
@@ -150,18 +134,69 @@ void *await(size_t argc, void *args[], void *data)
 	/* Check if function is loaded */
 	const char *func_name_str = const_cast<const char *>(func_name.c_str());
 	void *func = metacall_function(func_name_str);
+
 	if (func == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Function %s does not exist", func_name_str);
-		return metacall_value_create_int(1);
+		std::stringstream ss;
+
+		ss << CALL_ERROR ", function '" << func_name << "' does not exist";
+
+		EXTENSION_FUNCTION_THROW(ss.str().c_str());
 	}
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-
 	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	std::mutex await_mutex;				/**< Mutex for blocking the process until await is resolved */
-	std::condition_variable await_cond; /**< Condition to be fired once await method is resolved or rejected */
+	void *result = metacallfs(func, func_args.c_str(), func_args.length() + 1, allocator);
+
+	metacall_allocator_destroy(allocator);
+
+	return result;
+}
+
+void *await(size_t argc, void *args[], void *data)
+{
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(CALL_ERROR, METACALL_STRING);
+
+	/* Parse function call */
+	std::string func_str = metacall_value_to_string(args[0]);
+
+	if (func_str.find('(') == std::string::npos || func_str.find(')') == std::string::npos)
+	{
+		std::stringstream ss;
+
+		ss << CALL_ERROR ", calling function with malformed function call string: " << func_str;
+
+		EXTENSION_FUNCTION_THROW(ss.str().c_str());
+	}
+
+	std::string::size_type idx = func_str.find_first_of('(');
+	std::string func_name = func_str.substr(0, idx);
+
+	/* Convert arguments into an array */
+	std::string func_args = "[";
+	func_args += func_str.substr(idx + 1, func_str.size() - (idx + 2));
+	func_args += "]";
+
+	/* Check if function is loaded */
+	const char *func_name_str = const_cast<const char *>(func_name.c_str());
+	void *func = metacall_function(func_name_str);
+
+	if (func == NULL)
+	{
+		std::stringstream ss;
+
+		ss << CALL_ERROR ", function '" << func_name << "' does not exist";
+
+		EXTENSION_FUNCTION_THROW(ss.str().c_str());
+	}
+
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	std::mutex await_mutex;				/* Mutex for blocking the process until await is resolved */
+	std::condition_variable await_cond; /* Condition to be fired once await method is resolved or rejected */
 
 	std::unique_lock<std::mutex> lock(await_mutex);
 
@@ -204,75 +239,10 @@ void *await(size_t argc, void *args[], void *data)
 	return fdata.v;
 }
 
-void *call(size_t argc, void *args[], void *data)
-{
-	(void)argc;
-	(void)data;
-
-	if (argc != 1)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong number of arguments, expected 1 arguments, got %" PRIuS " arguments", argc);
-		return metacall_value_create_int(1);
-	}
-
-	if (metacall_value_id(args[0]) != METACALL_STRING)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong type of arguments, expected %s, got %s",
-			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]));
-		return metacall_value_create_int(1);
-	}
-
-	/* Parse function call */
-	std::string func_str = metacall_value_to_string(args[0]);
-	if (func_str.find('(') == std::string::npos || func_str.find(')') == std::string::npos)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "'call' called with mangled function call string: %s", func_str.c_str());
-		return metacall_value_create_int(1);
-	}
-
-	std::string::size_type idx = func_str.find_first_of('(');
-	std::string func_name = func_str.substr(0, idx);
-
-	/* Convert arguments into an array */
-	std::string func_args = "[";
-	func_args += func_str.substr(idx + 1, func_str.size() - (idx + 2));
-	func_args += "]";
-
-	/* Check if function is loaded */
-	const char *func_name_str = const_cast<const char *>(func_name.c_str());
-	void *func = metacall_function(func_name_str);
-	if (func == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Function %s does not exist", func_name_str);
-		return metacall_value_create_int(1);
-	}
-
-	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-
-	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
-	void *result = metacallfs(func, func_args.c_str(), func_args.length() + 1, allocator);
-
-	metacall_allocator_destroy(allocator);
-	return result;
-}
-
 void *clear(size_t argc, void *args[], void *data)
 {
-	(void)data;
-
-	if (argc != 2)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong number of arguments, expected 2 arguments, got %" PRIuS " arguments", argc);
-		return metacall_value_create_int(1);
-	}
-
-	if (metacall_value_id(args[0]) != METACALL_STRING && metacall_value_id(args[1]) != METACALL_STRING)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling clear with wrong type of arguments, expected two %s, got %s and %s",
-			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]), metacall_value_type_name(args[1]));
-		return metacall_value_create_int(1);
-	}
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(CLEAR_ERROR, METACALL_STRING, METACALL_STRING);
 
 	char *tag = metacall_value_to_string(args[0]);
 	char *script = metacall_value_to_string(args[1]);
@@ -281,50 +251,26 @@ void *clear(size_t argc, void *args[], void *data)
 
 	if (handle == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %s not found in loader (%s)", script, tag);
-		return metacall_value_create_int(1);
+		std::stringstream ss;
+
+		ss << CLEAR_ERROR ", handle '" << script << "' was not found in loader with tag: " << tag;
+
+		EXTENSION_FUNCTION_THROW(ss.str().c_str());
 	}
 
-	if (metacall_clear(handle) != 0)
-	{
-		return metacall_value_create_int(1);
-	}
-
-	return metacall_value_create_int(0);
-}
-
-void *inspect(size_t argc, void *args[], void *data)
-{
-	(void)argc;
-	(void)args;
-	(void)data;
-
-	size_t size = 0;
-
-	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
-	char *inspect_str = metacall_inspect(&size, allocator);
-
-	void *inspect_value_str = metacall_value_create_string(inspect_str, size > 0 ? size - 1 : 0);
-
-	metacall_allocator_free(allocator, inspect_str);
-
-	metacall_allocator_destroy(allocator);
-
-	return inspect_value_str;
+	return metacall_value_create_int(metacall_clear(handle));
 }
 
 int cli_core_plugin(void *loader, void *handle, void *context)
 {
 	(void)handle;
 
+	EXTENSION_FUNCTION(METACALL_INT, load, METACALL_STRING, METACALL_ARRAY);
 	EXTENSION_FUNCTION(METACALL_STRING, inspect);
-	EXTENSION_FUNCTION(METACALL_INT, clear, METACALL_STRING, METACALL_STRING);
+	EXTENSION_FUNCTION(METACALL_INT, eval, METACALL_STRING, METACALL_STRING);
 	EXTENSION_FUNCTION(METACALL_PTR, call, METACALL_STRING);
 	EXTENSION_FUNCTION(METACALL_PTR, await, METACALL_STRING);
-	EXTENSION_FUNCTION(METACALL_INT, eval, METACALL_STRING, METACALL_STRING);
-	EXTENSION_FUNCTION(METACALL_INT, load, METACALL_STRING, METACALL_ARRAY);
+	EXTENSION_FUNCTION(METACALL_INT, clear, METACALL_STRING, METACALL_STRING);
 
 	return 0;
 }

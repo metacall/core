@@ -42,6 +42,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 	void *handle = NULL;
 	EXPECT_EQ((int)0, (int)metacall_load_from_configuration(CLI_CORE_PLUGIN_PATH, &handle, allocator));
 
+	/* Test load */
 	{
 		void *args[2];
 
@@ -61,6 +62,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[1]);
 	}
 
+	/* Test load */
 	{
 		void *args[2];
 		args[0] = metacall_value_create_string("node", 4);
@@ -79,6 +81,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[1]);
 	}
 
+	/* Test eval */
 	{
 		void *args[2];
 
@@ -97,6 +100,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[1]);
 	}
 
+	/* Test call */
 	{
 		char func_call[] = "multiply(7, 3)";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
@@ -122,6 +126,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[0]);
 	}
 
+	/* Test await */
 	{
 		char func_call[] = "hello_boy_await(2, 2)";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
@@ -135,6 +140,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[0]);
 	}
 
+	/* Test await */
 	{
 		char func_call[] = "return_await()";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
@@ -148,6 +154,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[0]);
 	}
 
+	/* Test clear */
 	{
 		void *args[2];
 
@@ -166,6 +173,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[1]);
 	}
 
+	/* Test inspect */
 	{
 		void *ret = metacallhv_s(handle, "inspect", metacall_null_args, 0);
 
