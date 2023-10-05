@@ -35,10 +35,10 @@ extern "C" {
 	#include <windows.h>
 typedef CRITICAL_SECTION threading_mutex_impl_type;
 #elif (defined(linux) || defined(__linux) || defined(__linux__) || defined(__gnu_linux) || defined(__gnu_linux__) || defined(__TOS_LINUX__)) || \
-	defined(__FreeBSD__) ||                                                                                                                     \
-	defined(__NetBSD__) ||                                                                                                                      \
-	defined(__OpenBSD__) ||                                                                                                                     \
-	(defined(bsdi) || defined(__bsdi__)) ||                                                                                                     \
+	defined(__FreeBSD__) || \
+	defined(__NetBSD__) || \
+	defined(__OpenBSD__) || \
+	(defined(bsdi) || defined(__bsdi__)) || \
 	defined(__DragonFly__)
 	#include <pthread.h>
 typedef pthread_mutex_t threading_mutex_impl_type;

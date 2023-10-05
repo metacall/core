@@ -5,7 +5,7 @@ AlignAfterOpenBracket: DontAlign
 AlignConsecutiveBitFields: true
 # AlignConsecutiveDeclarations: false
 AlignConsecutiveMacros: true
-# AlignEscapedNewlines: Right
+AlignEscapedNewlines: DontAlign
 # AlignOperands:   true
 AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: false

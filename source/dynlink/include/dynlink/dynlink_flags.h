@@ -58,9 +58,9 @@ extern "C" {
 *
 */
 #define DYNLINK_FLAGS_SET(flags, flag) \
-	do                                 \
-	{                                  \
-		flags = (flag);                \
+	do \
+	{ \
+		flags = (flag); \
 	} while (0)
 
 /**
@@ -83,9 +83,9 @@ extern "C" {
 *
 */
 #define DYNLINK_FLAGS_ADD(flags, flag) \
-	do                                 \
-	{                                  \
-		flags |= (flag);               \
+	do \
+	{ \
+		flags |= (flag); \
 	} while (0)
 
 /**

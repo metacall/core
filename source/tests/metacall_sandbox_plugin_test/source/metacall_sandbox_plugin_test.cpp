@@ -45,7 +45,7 @@ TEST_F(metacall_sandbox_plugin_test, DefaultConstructor)
 
 	/* Initialize sandboxing */
 	{
-		void *args[1] = { metacall_value_create_bool(0L) };
+		void *args[1] = { metacall_value_create_bool(1L) /* Allow */ };
 
 		sandbox_ctx = metacallhv_s(handle, "sandbox_initialize", args, 1);
 
@@ -57,7 +57,7 @@ TEST_F(metacall_sandbox_plugin_test, DefaultConstructor)
 
 	/* Disable uname syscall */
 	{
-		void *args[2] = { sandbox_ctx, metacall_value_create_bool(0L) };
+		void *args[2] = { sandbox_ctx, metacall_value_create_bool(0L) /* Kill */ };
 
 		void *ret = metacallhv_s(handle, "sandbox_uname", args, 2);
 

@@ -20,7 +20,7 @@
 
 #include <cli_core_plugin/cli_core_plugin.h>
 
-#include <plugin/plugin_interface.h>
+#include <plugin/plugin_interface.hpp>
 
 #include <string.h>
 

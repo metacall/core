@@ -149,9 +149,9 @@ namespace node
 extern bool linux_at_secure;
 }
 
-#define NODE_GET_EVENT_LOOP                                         \
-	(NAPI_VERSION >= 2) &&                                          \
-		((NODE_MAJOR_VERSION == 8 && NODE_MINOR_VERSION >= 10) ||   \
+#define NODE_GET_EVENT_LOOP \
+	(NAPI_VERSION >= 2) && \
+		((NODE_MAJOR_VERSION == 8 && NODE_MINOR_VERSION >= 10) || \
 			(NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3) || \
 			(NODE_MAJOR_VERSION >= 10))
 

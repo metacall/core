@@ -796,26 +796,25 @@ napi_value node_loader_port_metacall_logs(napi_env env, napi_callback_info)
 // This functions sets the necessary js functions that could be called in NodeJs
 void node_loader_port_exports(napi_env env, napi_value exports)
 {
-#define NODE_LOADER_PORT_DECL_FUNC(name)                                                                                                                                                                                      \
-	do                                                                                                                                                                                                                        \
-	{                                                                                                                                                                                                                         \
-		const char PREPROCESSOR_CONCAT(function_str_, name)[] = PREPROCESSOR_STRINGIFY(name);                                                                                                                                 \
-		napi_value PREPROCESSOR_CONCAT(function_, name);                                                                                                                                                                      \
+#define NODE_LOADER_PORT_DECL_FUNC(name) \
+	do \
+	{ \
+		const char PREPROCESSOR_CONCAT(function_str_, name)[] = PREPROCESSOR_STRINGIFY(name); \
+		napi_value PREPROCESSOR_CONCAT(function_, name); \
 		napi_create_function(env, PREPROCESSOR_CONCAT(function_str_, name), sizeof(PREPROCESSOR_CONCAT(function_str_, name)) - 1, PREPROCESSOR_CONCAT(node_loader_port_, name), NULL, &PREPROCESSOR_CONCAT(function_, name)); \
-		napi_set_named_property(env, exports, PREPROCESSOR_CONCAT(function_str_, name), PREPROCESSOR_CONCAT(function_, name));                                                                                                \
-                                                                                                                                                                                                                              \
+		napi_set_named_property(env, exports, PREPROCESSOR_CONCAT(function_str_, name), PREPROCESSOR_CONCAT(function_, name)); \
 	} while (0)
 
-#define NODE_LOADER_PORT_DECL_X_MACRO(x)        \
-	x(metacall);                                \
-	x(metacall_await);                          \
-	x(metacall_load_from_file);                 \
-	x(metacall_load_from_file_export);          \
-	x(metacall_load_from_memory);               \
-	x(metacall_load_from_memory_export);        \
-	x(metacall_load_from_configuration);        \
+#define NODE_LOADER_PORT_DECL_X_MACRO(x) \
+	x(metacall); \
+	x(metacall_await); \
+	x(metacall_load_from_file); \
+	x(metacall_load_from_file_export); \
+	x(metacall_load_from_memory); \
+	x(metacall_load_from_memory_export); \
+	x(metacall_load_from_configuration); \
 	x(metacall_load_from_configuration_export); \
-	x(metacall_inspect);                        \
+	x(metacall_inspect); \
 	x(metacall_logs);
 
 	/* Declare all the functions */

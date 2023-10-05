@@ -36,9 +36,9 @@ extern "C" {
 
 /* -- Macros -- */
 
-#define DYNLINK_SYMBOL_EXPORT(name)                                                 \
+#define DYNLINK_SYMBOL_EXPORT(name) \
 	DYNLINK_API struct dynlink_symbol_addr_macos_type DYNLINK_SYMBOL_NAME(name) = { \
-		(dynlink_symbol_addr_macos_impl)&name                                       \
+		(dynlink_symbol_addr_macos_impl)&name \
 	}
 
 #define DYNLINK_SYMBOL_GET(name) \

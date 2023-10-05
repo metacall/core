@@ -68,7 +68,7 @@ static int portability_library_path_phdr_callback(struct dl_phdr_info *info, siz
 	return 0;
 }
 
-#elif defined(WIN32) || defined(_WIN32) ||          \
+#elif defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
@@ -118,7 +118,7 @@ int portability_library_path(const char name[], portability_library_path_str pat
 
 	return 0;
 
-#elif defined(WIN32) || defined(_WIN32) ||          \
+#elif defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 

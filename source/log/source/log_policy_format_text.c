@@ -32,10 +32,10 @@
 		#define va_copy(dest, src) __va_copy((dest), (src))
 	#elif defined(__builtin_va_copy)
 		#define va_copy(dest, src) __builtin_va_copy((dest), (src))
-	#elif defined(_WIN32) || defined(_WIN64) ||                                                 \
-		defined(_ARCH_PPC) || defined(_POWER) || defined(powerpc) || defined(__powerpc) ||      \
+	#elif defined(_WIN32) || defined(_WIN64) || \
+		defined(_ARCH_PPC) || defined(_POWER) || defined(powerpc) || defined(__powerpc) || \
 		defined(__powerpc__) || defined(__PowerPC__) || defined(__POWERPC__) || defined(PPC) || \
-		defined(__ppc__) || defined(__PPC) || defined(__PPC__) ||                               \
+		defined(__ppc__) || defined(__PPC) || defined(__PPC__) || \
 		defined(_ARCH_PPC64) || defined(__powerpc64__) || defined(__ppc64) || defined(__ppc64__) || defined(__PPC64__)
 	/* Works for Microsoft x86, x64 and PowerPC-based platforms */
 		#define va_copy(dest, src) ((void)memcpy(&(dest), &(src), sizeof(va_list)))

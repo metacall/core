@@ -36,10 +36,10 @@
 	#endif
 
 	#include <windows.h>
-#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
-	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	#include <unistd.h>
 #endif
@@ -79,10 +79,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		ASSERT_NE((DWORD)0, (DWORD)GetCurrentDirectory(length, cwd));
 
-	#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
 		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
-		defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
+		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+		defined(__MINGW32__) || defined(__MINGW64__) || \
 		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
 		char cwd[PATH_MAX];

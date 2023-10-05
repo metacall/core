@@ -29,8 +29,8 @@ struct visibility_string_length_type
 };
 
 #define CLASS_VISIBILITY_STRUCT(name, str, id) \
-	{                                          \
-		str, sizeof(str) - 1                   \
+	{ \
+		str, sizeof(str) - 1 \
 	}
 
 static struct visibility_string_length_type visibility_array[] = {

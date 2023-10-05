@@ -35,13 +35,12 @@ extern "C" {
 /* -- Macros -- */
 
 /* This is a temporary solution for safe strings, it can be improved in the future */
-#define string_copy(dest, src, dest_size)                          \
-	do                                                             \
-	{                                                              \
+#define string_copy(dest, src, dest_size) \
+	do \
+	{ \
 		size_t __string_copy_length = strnlen(src, dest_size - 1); \
-		memcpy(dest, src, __string_copy_length);                   \
-		dest[__string_copy_length] = '\0';                         \
-                                                                   \
+		memcpy(dest, src, __string_copy_length); \
+		dest[__string_copy_length] = '\0'; \
 	} while (0)
 
 #ifdef __cplusplus

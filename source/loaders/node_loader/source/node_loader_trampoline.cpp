@@ -12,8 +12,8 @@
 #include <stdio.h> /* TODO: Improve this trick */
 
 #define NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD(name, func) \
-	{                                                          \
-		name, 0, func, 0, 0, 0, napi_default, 0                \
+	{ \
+		name, 0, func, 0, 0, 0, napi_default, 0 \
 	}
 
 typedef void *(*future_resolve_callback)(void *, void *);

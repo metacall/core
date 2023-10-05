@@ -28,7 +28,7 @@
 /* -- Definitions -- */
 
 /* Path limits */
-#if defined(WIN32) || defined(_WIN32) ||            \
+#if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
@@ -42,7 +42,7 @@
 
 	#include <windows.h>
 	#define PORTABILITY_PATH_SIZE MAX_PATH
-#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__NetBSD__) || defined(__DragonFly__)
 
@@ -73,17 +73,17 @@
 #endif
 
 /* Path separator */
-#if defined(WIN32) || defined(_WIN32) ||            \
+#if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
 	#define PORTABILITY_PATH_SEPARATOR(chr) (chr == '\\' || chr == '/')
 	#define PORTABILITY_PATH_SEPARATOR_C	'/'
 
-#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) ||                 \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
 	defined(__HAIKU__) || defined(__BEOS__)
 	#define PORTABILITY_PATH_SEPARATOR(chr) (chr == '/')
 	#define PORTABILITY_PATH_SEPARATOR_C	'/'
@@ -93,7 +93,7 @@
 #endif
 
 /* Path delimiter */
-#if defined(WIN32) || defined(_WIN32) ||            \
+#if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 

@@ -35,7 +35,7 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	/* Reset the path */
 	memset(path, 0, path_max_length);
 
-#if defined(WIN32) || defined(_WIN32) ||            \
+#if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 	*length = GetModuleFileName(NULL, path, (DWORD)path_max_length);

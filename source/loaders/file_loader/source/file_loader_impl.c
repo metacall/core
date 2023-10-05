@@ -53,10 +53,10 @@ typedef struct _stat file_stat_type;
 
 	#define file_stat _stat
 
-#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
-	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
 	#include <sys/stat.h>
@@ -68,10 +68,10 @@ typedef struct stat file_stat_type;
 #endif
 
 /* Support for glob, only in POSIX for now (TODO: Implement Windows support) */
-#if !defined(_WIN32) &&                                                                     \
-	(defined(unix) || defined(__unix__) || defined(__unix) ||                               \
+#if !defined(_WIN32) && \
+	(defined(unix) || defined(__unix__) || defined(__unix) || \
 		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__))
 
 	#include <unistd.h>

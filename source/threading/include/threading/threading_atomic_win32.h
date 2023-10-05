@@ -183,29 +183,29 @@ static inline void atomic_store_explicit64(LONG64 volatile *obj, LONG64 desired,
 #define atomic_store(obj, desired) \
 	atomic_store_explicit(obj, desired, memory_order_seq_cst)
 
-#define atomic_store_explicit(obj, desired, order)                                       \
-	do                                                                                   \
-	{                                                                                    \
-		if (sizeof *(obj) == 1)                                                          \
-		{                                                                                \
-			atomic_store_explicit8((CHAR volatile *)(obj), (CHAR)(desired), order);      \
-		}                                                                                \
-		else if (sizeof *(obj) == 2)                                                     \
-		{                                                                                \
-			atomic_store_explicit16((SHORT volatile *)(obj), (SHORT)(desired), order);   \
-		}                                                                                \
-		else if (sizeof *(obj) == 4)                                                     \
-		{                                                                                \
-			atomic_store_explicit32((LONG volatile *)(obj), (LONG)(desired), order);     \
-		}                                                                                \
-		else if (sizeof *(obj) == 8)                                                     \
-		{                                                                                \
+#define atomic_store_explicit(obj, desired, order) \
+	do \
+	{ \
+		if (sizeof *(obj) == 1) \
+		{ \
+			atomic_store_explicit8((CHAR volatile *)(obj), (CHAR)(desired), order); \
+		} \
+		else if (sizeof *(obj) == 2) \
+		{ \
+			atomic_store_explicit16((SHORT volatile *)(obj), (SHORT)(desired), order); \
+		} \
+		else if (sizeof *(obj) == 4) \
+		{ \
+			atomic_store_explicit32((LONG volatile *)(obj), (LONG)(desired), order); \
+		} \
+		else if (sizeof *(obj) == 8) \
+		{ \
 			atomic_store_explicit64((LONG64 volatile *)(obj), (LONG64)(desired), order); \
-		}                                                                                \
-		else                                                                             \
-		{                                                                                \
-			abort();                                                                     \
-		}                                                                                \
+		} \
+		else \
+		{ \
+			abort(); \
+		} \
 	} while (0)
 
 #define atomic_load(obj) \
@@ -217,10 +217,10 @@ static inline void atomic_store_explicit64(LONG64 volatile *obj, LONG64 desired,
 #define atomic_exchange(obj, desired) \
 	atomic_exchange_explicit(obj, desired, memory_order_seq_cst)
 
-#define atomic_exchange_explicit(obj, desired, order)                                            \
-	((sizeof *(obj) == 1)	 ? _InterlockedExchange8((CHAR volatile *)obj, (CHAR)desired) :      \
-		(sizeof *(obj) == 2) ? _InterlockedExchange16((SHORT volatile *)obj, (SHORT)desired) :   \
-		(sizeof *(obj) == 4) ? _InterlockedExchange((LONG volatile *)obj, (LONG)desired) :       \
+#define atomic_exchange_explicit(obj, desired, order) \
+	((sizeof *(obj) == 1)	 ? _InterlockedExchange8((CHAR volatile *)obj, (CHAR)desired) : \
+		(sizeof *(obj) == 2) ? _InterlockedExchange16((SHORT volatile *)obj, (SHORT)desired) : \
+		(sizeof *(obj) == 4) ? _InterlockedExchange((LONG volatile *)obj, (LONG)desired) : \
 		(sizeof *(obj) == 8) ? _InterlockedExchange64((LONG64 volatile *)obj, (LONG64)desired) : \
 								 (abort(), 0))
 
@@ -276,10 +276,10 @@ static inline bool atomic_compare_exchange64(LONG64 volatile *obj, LONG64 *expec
 	return result;
 }
 
-#define atomic_compare_exchange_strong_explicit(obj, expected, desired, succ, fail)                                           \
-	((sizeof *(obj) == 1)	 ? atomic_compare_exchange8((CHAR volatile *)(obj), (CHAR *)(expected), (CHAR)(desired)) :        \
-		(sizeof *(obj) == 2) ? atomic_compare_exchange16((SHORT volatile *)(obj), (SHORT *)(expected), (SHORT)(desired)) :    \
-		(sizeof *(obj) == 4) ? atomic_compare_exchange32((LONG volatile *)(obj), (LONG *)(expected), (LONG)(desired)) :       \
+#define atomic_compare_exchange_strong_explicit(obj, expected, desired, succ, fail) \
+	((sizeof *(obj) == 1)	 ? atomic_compare_exchange8((CHAR volatile *)(obj), (CHAR *)(expected), (CHAR)(desired)) : \
+		(sizeof *(obj) == 2) ? atomic_compare_exchange16((SHORT volatile *)(obj), (SHORT *)(expected), (SHORT)(desired)) : \
+		(sizeof *(obj) == 4) ? atomic_compare_exchange32((LONG volatile *)(obj), (LONG *)(expected), (LONG)(desired)) : \
 		(sizeof *(obj) == 8) ? atomic_compare_exchange64((LONG64 volatile *)(obj), (LONG64 *)(expected), (LONG64)(desired)) : \
 								 (abort(), false))
 
@@ -294,10 +294,10 @@ static inline bool atomic_compare_exchange64(LONG64 volatile *obj, LONG64 *expec
 #define atomic_fetch_add(obj, arg) \
 	atomic_fetch_add_explicit(obj, arg, memory_order_seq_cst)
 
-#define atomic_fetch_add_explicit(obj, arg, order)                                                \
-	((sizeof *(obj) == 1)	 ? _InterlockedExchangeAdd8((char volatile *)obj, (char)(arg)) :      \
-		(sizeof *(obj) == 2) ? _InterlockedExchangeAdd16((SHORT volatile *)obj, (SHORT)(arg)) :   \
-		(sizeof *(obj) == 4) ? _InterlockedExchangeAdd((LONG volatile *)obj, (LONG)(arg)) :       \
+#define atomic_fetch_add_explicit(obj, arg, order) \
+	((sizeof *(obj) == 1)	 ? _InterlockedExchangeAdd8((char volatile *)obj, (char)(arg)) : \
+		(sizeof *(obj) == 2) ? _InterlockedExchangeAdd16((SHORT volatile *)obj, (SHORT)(arg)) : \
+		(sizeof *(obj) == 4) ? _InterlockedExchangeAdd((LONG volatile *)obj, (LONG)(arg)) : \
 		(sizeof *(obj) == 8) ? _InterlockedExchangeAdd64((LONG64 volatile *)obj, (LONG64)(arg)) : \
 								 (abort(), 0))
 
@@ -310,40 +310,40 @@ static inline bool atomic_compare_exchange64(LONG64 volatile *obj, LONG64 *expec
 #define atomic_fetch_or(obj, arg) \
 	atomic_fetch_or_explicit(obj, arg, memory_order_seq_cst)
 
-#define atomic_fetch_or_explicit(obj, arg, order)                                        \
-	((sizeof *(obj) == 1)	 ? _InterlockedOr8((char volatile *)obj, (char)(arg)) :      \
-		(sizeof *(obj) == 2) ? _InterlockedOr16((SHORT volatile *)obj, (SHORT)(arg)) :   \
-		(sizeof *(obj) == 4) ? _InterlockedOr((LONG volatile *)obj, (LONG)(arg)) :       \
+#define atomic_fetch_or_explicit(obj, arg, order) \
+	((sizeof *(obj) == 1)	 ? _InterlockedOr8((char volatile *)obj, (char)(arg)) : \
+		(sizeof *(obj) == 2) ? _InterlockedOr16((SHORT volatile *)obj, (SHORT)(arg)) : \
+		(sizeof *(obj) == 4) ? _InterlockedOr((LONG volatile *)obj, (LONG)(arg)) : \
 		(sizeof *(obj) == 8) ? _InterlockedOr64((LONG64 volatile *)obj, (LONG64)(arg)) : \
 								 (abort(), 0))
 
 #define atomic_fetch_xor(obj, arg) \
 	atomic_fetch_xor_explicit(obj, arg, memory_order_seq_cst)
 
-#define atomic_fetch_xor_explicit(obj, arg, order)                                        \
-	((sizeof *(obj) == 1)	 ? _InterlockedXor8((char volatile *)obj, (char)(arg)) :      \
-		(sizeof *(obj) == 2) ? _InterlockedXor16((SHORT volatile *)obj, (SHORT)(arg)) :   \
-		(sizeof *(obj) == 4) ? _InterlockedXor((LONG volatile *)obj, (LONG)(arg)) :       \
+#define atomic_fetch_xor_explicit(obj, arg, order) \
+	((sizeof *(obj) == 1)	 ? _InterlockedXor8((char volatile *)obj, (char)(arg)) : \
+		(sizeof *(obj) == 2) ? _InterlockedXor16((SHORT volatile *)obj, (SHORT)(arg)) : \
+		(sizeof *(obj) == 4) ? _InterlockedXor((LONG volatile *)obj, (LONG)(arg)) : \
 		(sizeof *(obj) == 8) ? _InterlockedXor64((LONG64 volatile *)obj, (LONG64)(arg)) : \
 								 (abort(), 0))
 
 #define atomic_fetch_and(obj, arg) \
 	atomic_fetch_and_explicit(obj, arg, memory_order_seq_cst)
 
-#define atomic_fetch_and_explicit(obj, arg, order)                                        \
-	((sizeof *(obj) == 1)	 ? _InterlockedAnd8((char volatile *)obj, (char)(arg)) :      \
-		(sizeof *(obj) == 2) ? _InterlockedAnd16((SHORT volatile *)obj, (SHORT)(arg)) :   \
-		(sizeof *(obj) == 4) ? _InterlockedAnd((LONG volatile *)obj, (LONG)(arg)) :       \
+#define atomic_fetch_and_explicit(obj, arg, order) \
+	((sizeof *(obj) == 1)	 ? _InterlockedAnd8((char volatile *)obj, (char)(arg)) : \
+		(sizeof *(obj) == 2) ? _InterlockedAnd16((SHORT volatile *)obj, (SHORT)(arg)) : \
+		(sizeof *(obj) == 4) ? _InterlockedAnd((LONG volatile *)obj, (LONG)(arg)) : \
 		(sizeof *(obj) == 8) ? _InterlockedAnd64((LONG64 volatile *)obj, (LONG64)(arg)) : \
 								 (abort(), 0))
 
-#define __atomic_compiler_barrier(order)  \
-	do                                    \
-	{                                     \
+#define __atomic_compiler_barrier(order) \
+	do \
+	{ \
 		if (order > memory_order_consume) \
-		{                                 \
-			_ReadWriteBarrier();          \
-		}                                 \
+		{ \
+			_ReadWriteBarrier(); \
+		} \
 	} while (0)
 
 static inline void atomic_thread_fence(memory_order order)

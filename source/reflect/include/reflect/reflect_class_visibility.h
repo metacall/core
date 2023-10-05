@@ -31,8 +31,8 @@
 extern "C" {
 #endif
 
-#define CLASS_VISIBILITY_X(X)         \
-	X(PUBLIC, "public", 0),           \
+#define CLASS_VISIBILITY_X(X) \
+	X(PUBLIC, "public", 0), \
 		X(PROTECTED, "protected", 1), \
 		X(PRIVATE, "private", 2)
 

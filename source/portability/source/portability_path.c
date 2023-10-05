@@ -250,10 +250,10 @@ int portability_path_is_absolute(const char *path, size_t size)
 	return !((path[0] != '\0' && (path[0] >= 'A' && path[0] <= 'Z')) &&
 			 (path[1] != '\0' && path[1] == ':') &&
 			 (path[2] != '\0' && PORTABILITY_PATH_SEPARATOR(path[2])));
-#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) ||                 \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
 	defined(__HAIKU__) || defined(__BEOS__)
 
 	if (size < 1)

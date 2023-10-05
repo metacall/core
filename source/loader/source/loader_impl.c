@@ -49,7 +49,7 @@
 #define LOADER_IMPL_FUNCTION_INIT "__metacall_initialize__"
 #define LOADER_IMPL_FUNCTION_FINI "__metacall_finalize__"
 
-#if defined(WIN32) || defined(_WIN32) ||            \
+#if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 

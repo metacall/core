@@ -205,13 +205,11 @@ typedef struct vector_type *vector;
 *  @param[in] type_name
 *    Type of element to be modified
 */
-#define vector_set_const(v, position, constant, type_name)        \
-	do                                                            \
-	{                                                             \
-		type_name macro_vector_type_const_to_var = constant;      \
-                                                                  \
+#define vector_set_const(v, position, constant, type_name) \
+	do \
+	{ \
+		type_name macro_vector_type_const_to_var = constant; \
 		vector_set(v, position, &macro_vector_type_const_to_var); \
-                                                                  \
 	} while (0)
 
 /**
@@ -228,13 +226,11 @@ typedef struct vector_type *vector;
 *  @param[in] type_name
 *    Type of element to be inserted
 */
-#define vector_push_back_const(v, constant, type_name)        \
-	do                                                        \
-	{                                                         \
-		type_name macro_vector_type_const_to_var = constant;  \
-                                                              \
+#define vector_push_back_const(v, constant, type_name) \
+	do \
+	{ \
+		type_name macro_vector_type_const_to_var = constant; \
 		vector_push_back(v, &macro_vector_type_const_to_var); \
-                                                              \
 	} while (0)
 
 /**
@@ -251,13 +247,11 @@ typedef struct vector_type *vector;
 *  @param[in] type_name
 *    Type of element to be inserted
 */
-#define vector_push_front_const(v, constant, type_name)        \
-	do                                                         \
-	{                                                          \
-		type_name macro_vector_type_const_to_var = constant;   \
-                                                               \
+#define vector_push_front_const(v, constant, type_name) \
+	do \
+	{ \
+		type_name macro_vector_type_const_to_var = constant; \
 		vector_push_front(v, &macro_vector_type_const_to_var); \
-                                                               \
 	} while (0)
 
 /**
@@ -279,13 +273,11 @@ typedef struct vector_type *vector;
 *  @param[in] type_name
 *    Type of element to be inserted
 */
-#define vector_insert_const(v, position, constant, type_name)        \
-	do                                                               \
-	{                                                                \
-		type_name macro_vector_type_const_to_var = constant;         \
-                                                                     \
+#define vector_insert_const(v, position, constant, type_name) \
+	do \
+	{ \
+		type_name macro_vector_type_const_to_var = constant; \
 		vector_insert(v, position, &macro_vector_type_const_to_var); \
-                                                                     \
 	} while (0)
 
 /* -- Methods -- */

@@ -67,14 +67,14 @@
 	#define rb_fiber_resume_kw(o, c, v, kw)					 rb_fiber_resume(o, c, v)
 	#define rb_fiber_yield_kw(c, v, kw)						 rb_fiber_yield(c, v)
 	#define rb_enumeratorize_with_size_kw(o, m, c, v, f, kw) rb_enumeratorize_with_size(o, m, c, v, f)
-	#define SIZED_ENUMERATOR_KW(obj, argc, argv, size_fn, kw_splat)     \
+	#define SIZED_ENUMERATOR_KW(obj, argc, argv, size_fn, kw_splat) \
 		rb_enumeratorize_with_size((obj), ID2SYM(rb_frame_this_func()), \
 			(argc), (argv), (size_fn))
 	#define RETURN_SIZED_ENUMERATOR_KW(obj, argc, argv, size_fn, kw_splat) \
-		do                                                                 \
-		{                                                                  \
-			if (!rb_block_given_p())                                       \
-				return SIZED_ENUMERATOR(obj, argc, argv, size_fn);         \
+		do \
+		{ \
+			if (!rb_block_given_p()) \
+				return SIZED_ENUMERATOR(obj, argc, argv, size_fn); \
 		} while (0)
 	#define RETURN_ENUMERATOR_KW(obj, argc, argv, kw_splat) RETURN_SIZED_ENUMERATOR(obj, argc, argv, 0)
 	#define rb_check_funcall_kw(o, m, c, v, kw)				rb_check_funcall(o, m, c, v)
@@ -378,20 +378,20 @@ static VALUE rb_loader_impl_funcallv_kw_protect(VALUE args)
 }
 
 /* TODO: Convert this into a return exception */
-#define rb_loader_impl_print_last_exception()                                                            \
-	do                                                                                                   \
-	{                                                                                                    \
-		VALUE e = rb_errinfo();                                                                          \
-		if (e != Qnil)                                                                                   \
-		{                                                                                                \
-			VALUE error;                                                                                 \
-			VALUE bt = rb_funcall(e, rb_intern("backtrace"), 0);                                         \
-			VALUE msg = rb_funcall(e, rb_intern("message"), 0);                                          \
-			bt = rb_ary_entry(bt, 0);                                                                    \
-			error = rb_sprintf("%" PRIsVALUE ": %" PRIsVALUE " (%s)\n", bt, msg, rb_obj_classname(e));   \
+#define rb_loader_impl_print_last_exception() \
+	do \
+	{ \
+		VALUE e = rb_errinfo(); \
+		if (e != Qnil) \
+		{ \
+			VALUE error; \
+			VALUE bt = rb_funcall(e, rb_intern("backtrace"), 0); \
+			VALUE msg = rb_funcall(e, rb_intern("message"), 0); \
+			bt = rb_ary_entry(bt, 0); \
+			error = rb_sprintf("%" PRIsVALUE ": %" PRIsVALUE " (%s)\n", bt, msg, rb_obj_classname(e)); \
 			log_write("metacall", LOG_LEVEL_ERROR, "Exception raised in Ruby '%s'", RSTRING_PTR(error)); \
-			rb_backtrace();                                                                              \
-		}                                                                                                \
+			rb_backtrace(); \
+		} \
 	} while (0)
 
 function_return function_rb_interface_invoke(function func, function_impl impl, function_args args, size_t size)

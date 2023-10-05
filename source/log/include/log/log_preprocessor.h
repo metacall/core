@@ -43,13 +43,13 @@ extern "C" {
 
 #if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
 	(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
-	#define log_write(name, level, ...)                                                                       \
-		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__),                                                 \
+	#define log_write(name, level, ...) \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
 			log_write_impl(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, __VA_ARGS__), \
 			log_write_impl_va(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, __VA_ARGS__))
 #else
-	#define log_write(name, level, message, ...)                                                          \
-		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__),                                             \
+	#define log_write(name, level, message, ...) \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
 			log_write_impl(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, message), \
 			log_write_impl_va(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, message, __VA_ARGS__))
 #endif

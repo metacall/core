@@ -26,7 +26,7 @@
 		#include <share.h>
 	#endif
 #elif defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__) ||                                                               \
+	defined(__FreeBSD__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	#include <syslog.h>
 #endif
@@ -55,7 +55,7 @@ struct log_policy_stream_syslog_data_type
 #if defined(_WIN32)
 	HANDLE handle;
 #elif defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__) ||                                                               \
+	defined(__FreeBSD__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	/* ... */
 #endif
@@ -105,7 +105,7 @@ static int log_policy_stream_syslog_create(log_policy policy, const log_policy_c
 #if defined(_WIN32)
 	syslog_data->handle = RegisterEventSource(NULL, syslog_data->name);
 #elif defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__) ||                                                               \
+	defined(__FreeBSD__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	openlog(syslog_data->name, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_USER);
 #endif
@@ -133,7 +133,7 @@ static int log_policy_stream_syslog_write(log_policy policy, const void *buffer,
 		LOG_POLICY_STREAM_SYSLOG_WIN_MSG,
 		NULL, 1, 0, (LPTSTR *)lpt_str, NULL);
 #elif defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__) ||                                                               \
+	defined(__FreeBSD__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	(void)syslog_data;
 
@@ -162,7 +162,7 @@ static int log_policy_stream_syslog_destroy(log_policy policy)
 			DeregisterEventSource(syslog_data->handle);
 		}
 #elif defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__) ||                                                               \
+	defined(__FreeBSD__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 		closelog();
 #endif
