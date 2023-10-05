@@ -42,7 +42,7 @@ extern "C" {
 			PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL_II(__VA_ARGS__),          \
 			"")
 #else
-	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(expr) #expr
+	#define PREPROCESSOR_STRINGIFY_OR_EMPTY_IMPL(...) #__VA_ARGS__
 #endif
 
 #if defined(__MWERKS__)
