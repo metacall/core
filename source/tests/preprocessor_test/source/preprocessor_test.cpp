@@ -114,7 +114,7 @@ TEST_F(preprocessor_test, empty)
 {
 	const char empty_str[] = "";
 
-	EXPECT_EQ((int)0, (int)strcmp(empty_str, PREPROCESSOR_STRINGIFY(PREPROCESSOR_EMPTY_SYMBOL())));
+	EXPECT_EQ((int)0, (int)strcmp(empty_str, PREPROCESSOR_STRINGIFY_OR_EMPTY(PREPROCESSOR_EMPTY_SYMBOL())));
 
 	PREPROCESSOR_EMPTY_EXPANSION(this must compile)
 
