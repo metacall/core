@@ -42,22 +42,22 @@
  */
 #define PREPROCESSOR_FOR_EVAL(expr) expr
 
-#define PREPROCESSOR_FOR_IMPL_0(expr, context, ...)
-#define PREPROCESSOR_FOR_IMPL_1(expr, context, element, ...) expr(context, 0, element)
+#define PREPROCESSOR_FOR_IMPL_0(expr, context, iterator, ...)
+#define PREPROCESSOR_FOR_IMPL_1(expr, context, iterator, element, ...) expr(context, iterator, element)
 #if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
 	(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
-#	define PREPROCESSOR_FOR_IMPL_2(expr, context, element, ...) \
-	expr(context, 1, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_1(expr, context, __VA_ARGS__, ~))
+#	define PREPROCESSOR_FOR_IMPL_2(expr, context, iterator, element, ...) \
+	expr(context, iterator, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_1(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__, ~))
 #else
-#	define PREPROCESSOR_FOR_IMPL_2(expr, context, element, ...) \
-	expr(context, 1, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_1(expr, context, __VA_ARGS__))
+#	define PREPROCESSOR_FOR_IMPL_2(expr, context, iterator, element, ...) \
+	expr(context, iterator, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_1(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__))
 #endif
 @PREPROCESSOR_FOR_IMPL_BODY@
 #if defined(__GNUC__) || defined(__clang__)
 #	define PREPROCESSOR_FOR(expr, context, ...) \
 		PREPROCESSOR_ARGS_N_IMPL(__VA_ARGS__, \
 		@PREPROCESSOR_FOR_IMPL_GNUC_BODY@\
-		PREPROCESSOR_FOR_IMPL_0)(expr, context, __VA_ARGS__)
+		PREPROCESSOR_FOR_IMPL_0)(expr, context, 0, __VA_ARGS__)
 #elif defined(_MSC_VER) && !defined(__clang__)
 #	define PREPROCESSOR_FOR_IMPL_COUNT(count) \
 		PREPROCESSOR_CONCAT(PREPROCESSOR_FOR_IMPL_, count)
@@ -65,7 +65,7 @@
 		PREPROCESSOR_FOR_IMPL_COUNT(PREPROCESSOR_ARGS_COUNT(__VA_ARGS__))
 #	define PREPROCESSOR_FOR_EXPAND(expr, args) expr ## args
 #	define PREPROCESSOR_FOR(expr, context, ...) \
-		PREPROCESSOR_FOR_EXPAND(PREPROCESSOR_FOR_IMPL_EXPR(__VA_ARGS__), (expr, context, __VA_ARGS__))
+		PREPROCESSOR_FOR_EXPAND(PREPROCESSOR_FOR_IMPL_EXPR(__VA_ARGS__), (expr, context, 0, __VA_ARGS__))
 #else
 #	error "Unkwnown preprocessor implementation for for."
 #endif

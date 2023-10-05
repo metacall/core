@@ -83,5 +83,28 @@ TEST_F(metacall_sandbox_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[0]);
 	}
 
+	/* Testing invalid number of parameters */
+	{
+		void *ret = metacallhv_s(handle, "sandbox_destroy", metacall_null_args, 0);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+	}
+
+	/* Testing correct number of parameters but invalid type */
+	{
+		void *args[1] = { metacall_value_create_long(2343) };
+
+		void *ret = metacallhv_s(handle, "sandbox_destroy", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

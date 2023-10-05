@@ -74,7 +74,7 @@
 	if (metacall_value_id(args[iterator]) != value) \
 	{ \
 		std::stringstream ss; \
-		ss << error ". The parameter number " PREPROCESSOR_STRINGIFY(PREPROCESSOR_ARGS_COUNT(iterator)) " requires a value of type " metacall_value_id_name(value) ", received: " << metacall_value_type_name(args[iterator]); \
+		ss << error ". The parameter number " PREPROCESSOR_STRINGIFY(PREPROCESSOR_ARGS_COUNT(iterator)) " requires a value of type " << metacall_value_id_name(value) << ", received: " << metacall_value_type_name(args[iterator]); \
 		std::string error_msg = ss.str(); \
 		EXTENSION_FUNCTION_THROW(error_msg.c_str()); \
 	}

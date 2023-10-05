@@ -81,9 +81,9 @@ function(preprocessor_for_generate _for_size)
 
 		math(EXPR prev "${iterator} - 1")
 
-		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY}#define PREPROCESSOR_FOR_IMPL_${iterator}(expr, context, element, ...) expr(context, ${prev}, element)")
+		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY}#define PREPROCESSOR_FOR_IMPL_${iterator}(expr, context, iterator, element, ...) expr(context, iterator, element)")
 
-		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY} PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_${prev}(expr, context, __VA_ARGS__))\n")
+		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY} PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_${prev}(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__))\n")
 
 	endforeach()
 
