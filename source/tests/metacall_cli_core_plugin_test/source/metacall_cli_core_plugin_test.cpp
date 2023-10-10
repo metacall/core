@@ -114,6 +114,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[0]);
 	}
 
+	/* Test call without args */
 	{
 		char func_call[] = "hello()";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
@@ -121,6 +122,132 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		void *ret = metacallhv_s(handle, "call", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without last parenthesis */
+	{
+		char func_call[] = "multiply(7, 3";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without last parenthesis but another character instead */
+	{
+		char func_call[] = "multiply(7, 3-";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call super tricky multiply("()", "eee"- */
+	{
+		char func_call[] = "multiply(\"()\", \"eee\"~";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call with only first parenthesis */
+	{
+		char func_call[] = "multiply(";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without any parenthesis */
+	{
+		char func_call[] = "multiply";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without name */
+	{
+		char func_call[] = "()";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without name and with only one parenthesis */
+	{
+		char func_call[] = "(";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without name and with only one parenthesis (the oposite) */
+	{
+		char func_call[] = ")";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call completely empty */
+	{
+		char func_call[] = "";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "call", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
 
 		metacall_value_destroy(ret);
 		metacall_value_destroy(args[0]);
@@ -140,7 +267,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		metacall_value_destroy(args[0]);
 	}
 
-	/* Test await */
+	/* Test await without args */
 	{
 		char func_call[] = "return_await()";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
@@ -148,7 +275,49 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		void *ret = metacallhv_s(handle, "await", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
-		std::cout << metacall_value_to_string(ret) << '\n';
+		EXPECT_STREQ((const char *)metacall_value_to_string(ret), (const char *)"Hello World");
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without last parenthesis */
+	{
+		char func_call[] = "hello_boy_await(2, 2";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "await", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call with only first parenthesis */
+	{
+		char func_call[] = "hello_boy_await(";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "await", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+	}
+
+	/* Test malformed call without any parenthesis */
+	{
+		char func_call[] = "hello_boy_await";
+		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
+
+		void *ret = metacallhv_s(handle, "await", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_THROWABLE);
 
 		metacall_value_destroy(ret);
 		metacall_value_destroy(args[0]);
@@ -178,7 +347,24 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		void *ret = metacallhv_s(handle, "inspect", metacall_null_args, 0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
-		std::cout << metacall_value_to_string(ret) << '\n';
+		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
+
+		metacall_value_destroy(ret);
+	}
+
+	/* Test debug */
+	{
+		void *args[] = { metacall_value_create_array(NULL, 3) };
+		void **array = metacall_value_to_array(args[0]);
+
+		array[0] = metacall_value_create_string("abc", sizeof("abc") - 1);
+		array[1] = metacall_value_create_string("cbd", sizeof("cbd") - 1);
+		array[2] = metacall_value_create_string("thc", sizeof("thc") - 1);
+
+		void *ret = metacallhv_s(handle, "debug", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_STREQ((const char *)"{\n\t[0]: abc\n\t[1]: cbd\n\t[2]: thc\n}", (const char *)metacall_value_to_string(ret));
 
 		metacall_value_destroy(ret);
 	}
@@ -200,5 +386,10 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 
 	metacall_allocator_destroy(allocator);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	/* Test destroy */
+	{
+		void *ret = metacallhv_s(handle, "exit", metacall_null_args, 0);
+
+		EXPECT_EQ((void *)NULL, (void *)ret);
+	}
 }

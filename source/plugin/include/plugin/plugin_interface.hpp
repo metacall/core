@@ -61,10 +61,11 @@
 		EXTENSION_FUNCTION_IMPL_VOID(ret, name), \
 		EXTENSION_FUNCTION_IMPL(ret, name, __VA_ARGS__))
 
+/* TODO: Move the log_write outside into the CLI or similar */
 #define EXTENSION_FUNCTION_THROW(error) \
 	do \
 	{ \
-		log_write("metacall", LOG_LEVEL_ERROR, error); \
+		/* log_write("metacall", LOG_LEVEL_ERROR, error); */ \
 		exception ex = exception_create_const(error, "PluginException", 0, ""); \
 		throwable th = throwable_create(value_create_exception(ex)); \
 		return value_create_throwable(th); \

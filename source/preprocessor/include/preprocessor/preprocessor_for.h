@@ -27,6 +27,7 @@
 
 #include <preprocessor/preprocessor_arguments.h>
 #include <preprocessor/preprocessor_tuple.h>
+#include <preprocessor/preprocessor_empty.h>
 
 #ifdef __cplusplus
 extern "C" {
