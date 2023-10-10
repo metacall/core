@@ -80,4 +80,6 @@ inline void *node_loader_hook_import_address_table(const char *module_name, cons
 			}
 		}
 	}
+
+	return NULL;
 }
