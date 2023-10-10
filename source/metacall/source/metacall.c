@@ -280,6 +280,11 @@ int metacall_argc(void)
 
 int metacall_is_initialized(const char *tag)
 {
+	if (tag == NULL)
+	{
+		return metacall_initialize_flag;
+	}
+
 	return loader_is_initialized(tag);
 }
 
@@ -2162,6 +2167,11 @@ char *metacall_inspect(size_t *size, void *allocator)
 	value_type_destroy(v);
 
 	return str;
+}
+
+void *metacall_inspect_value(void)
+{
+	return loader_metadata();
 }
 
 char *metacall_serialize(const char *name, void *v, size_t *size, void *allocator)

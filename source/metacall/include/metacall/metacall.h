@@ -173,7 +173,7 @@ METACALL_API char **metacall_argv(void);
 *    Check if script context is loaded by @tag
 *
 *  @param[in] tag
-*    Extension of the script
+*    Extension of the script (if tag is NULL, it returns the status of the whole MetaCall instance)
 *
 *  @return
 *    Zero if context is initialized, different from zero otherwise
@@ -1341,6 +1341,15 @@ METACALL_API void *metacall_throwable_value(void *th);
 *    String containing introspection information
 */
 METACALL_API char *metacall_inspect(size_t *size, void *allocator);
+
+/**
+*  @brief
+*    Provide information about all loaded objects as a value
+*
+*  @return
+*    Value containing introspection information
+*/
+METACALL_API void *metacall_inspect_value(void);
 
 /**
 *  @brief
