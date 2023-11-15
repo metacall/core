@@ -33,7 +33,8 @@ void invalid_syscall(void)
 	printf("%s\n", data.sysname);
 }
 
-void invalid_io_syscall(void *sandbox_ctx, void *handle) {
+void invalid_io_syscall(void *sandbox_ctx, void *handle)
+{
 	/* Disable io syscall */
 	{
 		void *args[2] = { sandbox_ctx, metacall_value_create_bool(0L) /* Kill */ };
@@ -52,43 +53,49 @@ void invalid_io_syscall(void *sandbox_ctx, void *handle) {
 
 #include <sys/socket.h>
 
-void invalid_sockets_syscall() {
-  int fd = socket(AF_INET, SOCK_STREAM, 0);
-  close(fd);
+void invalid_sockets_syscall()
+{
+	int fd = socket(AF_INET, SOCK_STREAM, 0);
+	close(fd);
 }
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-void invalid_ipc_syscall() {
+void invalid_ipc_syscall()
+{
 	// Create a shared memory segment
 	int shm_id = shmget(1234, 1024, IPC_CREAT | 0666);
-	if (shm_id == -1) {
+	if (shm_id == -1)
+	{
 		perror("shmget");
 		exit(EXIT_FAILURE);
 	}
 
 	// Attach the shared memory segment to the process's address space
-	void* shm_addr = shmat(shm_id, NULL, 0);
-	if (shm_addr == (void*)-1) {
+	void *shm_addr = shmat(shm_id, NULL, 0);
+	if (shm_addr == (void *)-1)
+	{
 		perror("shmat");
 		exit(EXIT_FAILURE);
 	}
 
 	// Write data to shared memory
-	const char* message = "Hello, Shared Memory!";
-	strncpy((char*)shm_addr, message, 1024);
+	const char *message = "Hello, Shared Memory!";
+	strncpy((char *)shm_addr, message, 1024);
 
-	printf("Data written to shared memory: %s\n", (char*)shm_addr);
+	printf("Data written to shared memory: %s\n", (char *)shm_addr);
 
 	// Detach the shared memory segment
-	if (shmdt(shm_addr) == -1) {
+	if (shmdt(shm_addr) == -1)
+	{
 		perror("shmdt");
 		exit(EXIT_FAILURE);
 	}
 
 	// Remove the shared memory segment
-	if (shmctl(shm_id, IPC_RMID, NULL) == -1) {
+	if (shmctl(shm_id, IPC_RMID, NULL) == -1)
+	{
 		perror("shmctl");
 		exit(EXIT_FAILURE);
 	}
@@ -97,7 +104,8 @@ void invalid_ipc_syscall() {
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void invalid_process_syscall(void *sandbox_ctx, void *handle) {
+void invalid_process_syscall(void *sandbox_ctx, void *handle)
+{
 	/* Disable process syscall */
 	{
 		void *args[2] = { sandbox_ctx, metacall_value_create_bool(0L) /* Kill */ };
@@ -113,18 +121,23 @@ void invalid_process_syscall(void *sandbox_ctx, void *handle) {
 
 	pid_t pid = fork();
 
-	if (pid < 0) {
+	if (pid < 0)
+	{
 		perror("fork");
 		exit(EXIT_FAILURE);
 	}
 
-	if (pid == 0) {
+	if (pid == 0)
+	{
 		// Child process
 		exit(EXIT_SUCCESS); // Exit immediately
-	} else {
+	}
+	else
+	{
 		// Parent process
 		int status;
-		if (waitpid(pid, &status, 0) == -1) {
+		if (waitpid(pid, &status, 0) == -1)
+		{
 			perror("waitpid");
 			exit(EXIT_FAILURE);
 		}
@@ -134,7 +147,8 @@ void invalid_process_syscall(void *sandbox_ctx, void *handle) {
 #include <fcntl.h>
 #include <unistd.h>
 
-void invalid_filesystems_syscall(void *sandbox_ctx, void *handle) {
+void invalid_filesystems_syscall(void *sandbox_ctx, void *handle)
+{
 	/* Disable filesystems syscall */
 	{
 		void *args[2] = { sandbox_ctx, metacall_value_create_bool(0L) /* Kill */ };
@@ -149,7 +163,8 @@ void invalid_filesystems_syscall(void *sandbox_ctx, void *handle) {
 	}
 
 	int fd = open("/tmp/testfile", O_RDONLY);
-	if (fd == -1) {
+	if (fd == -1)
+	{
 		perror("open");
 		exit(EXIT_FAILURE);
 	}
@@ -159,13 +174,15 @@ void invalid_filesystems_syscall(void *sandbox_ctx, void *handle) {
 
 #include <time.h>
 
-void invalid_time_syscall() {
+void invalid_time_syscall()
+{
 	sleep(1);
 }
 
 #include <sys/mman.h>
 
-void invalid_memory_syscall(void *sandbox_ctx, void *handle) {
+void invalid_memory_syscall(void *sandbox_ctx, void *handle)
+{
 	/* Disable memory syscall */
 	{
 		void *args[2] = { sandbox_ctx, metacall_value_create_bool(0L) /* Kill */ };
@@ -179,8 +196,9 @@ void invalid_memory_syscall(void *sandbox_ctx, void *handle) {
 		metacall_value_destroy(args[1]);
 	}
 
-	void* addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (addr == MAP_FAILED) {
+	void *addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if (addr == MAP_FAILED)
+	{
 		perror("mmap");
 		exit(EXIT_FAILURE);
 	}
@@ -189,8 +207,10 @@ void invalid_memory_syscall(void *sandbox_ctx, void *handle) {
 
 #include <signal.h>
 
-void invalid_signals_syscall() {
-	if (signal(SIGINT, SIG_IGN) == SIG_ERR) {
+void invalid_signals_syscall()
+{
+	if (signal(SIGINT, SIG_IGN) == SIG_ERR)
+	{
 		perror("signal");
 		exit(EXIT_FAILURE);
 	}

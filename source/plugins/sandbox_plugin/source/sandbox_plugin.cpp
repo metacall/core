@@ -30,20 +30,22 @@
 	metacall_value_to_bool(value) == 0L ? SCMP_ACT_KILL : SCMP_ACT_ALLOW
 
 /* Error messages */
-#define SANDBOX_INITIALIZE_ERROR "Sandbox plugin failed to initialize a context"
-#define SANDBOX_UNAME_ERROR		 "Sandbox plugin failed to set uname syscall permissions"
-#define SANDBOX_IO_ERROR		 "Sandbox plugin failed to set io syscalls permissions"
-#define SANDBOX_SOCKETS_ERROR		 "Sandbox plugin failed to set sockets syscalls permissions"
-#define SANDBOX_IPC_ERROR		 "Sandbox plugin failed to set IPC syscalls permissions"
-#define SANDBOX_PROCESS_ERROR		 "Sandbox plugin failed to set process syscalls permissions"
-#define SANDBOX_FILESYSTEMS_ERROR		 "Sandbox plugin failed to set filesystems syscalls permissions"
-#define SANDBOX_TIME_ERROR		 "Sandbox plugin failed to set time syscalls permissions"
-#define SANDBOX_MEMORY_ERROR		 "Sandbox plugin failed to set memory syscalls permissions"
-#define SANDBOX_SIGNALS_ERROR		 "Sandbox plugin failed to set signals syscalls permissions"
-#define SANDBOX_DESTROY_ERROR	 "Sandbox plugin failed to destroy a context"
+#define SANDBOX_INITIALIZE_ERROR  "Sandbox plugin failed to initialize a context"
+#define SANDBOX_UNAME_ERROR		  "Sandbox plugin failed to set uname syscall permissions"
+#define SANDBOX_IO_ERROR		  "Sandbox plugin failed to set io syscalls permissions"
+#define SANDBOX_SOCKETS_ERROR	  "Sandbox plugin failed to set sockets syscalls permissions"
+#define SANDBOX_IPC_ERROR		  "Sandbox plugin failed to set IPC syscalls permissions"
+#define SANDBOX_PROCESS_ERROR	  "Sandbox plugin failed to set process syscalls permissions"
+#define SANDBOX_FILESYSTEMS_ERROR "Sandbox plugin failed to set filesystems syscalls permissions"
+#define SANDBOX_TIME_ERROR		  "Sandbox plugin failed to set time syscalls permissions"
+#define SANDBOX_MEMORY_ERROR	  "Sandbox plugin failed to set memory syscalls permissions"
+#define SANDBOX_SIGNALS_ERROR	  "Sandbox plugin failed to set signals syscalls permissions"
+#define SANDBOX_DESTROY_ERROR	  "Sandbox plugin failed to destroy a context"
 
-void add_syscalls_to_seccomp(scmp_filter_ctx ctx, const int* syscalls, const int action, size_t num_syscalls) {
-	for (long unsigned int i = 0; i < num_syscalls; i++) {
+void add_syscalls_to_seccomp(scmp_filter_ctx ctx, const int *syscalls, const int action, size_t num_syscalls)
+{
+	for (long unsigned int i = 0; i < num_syscalls; i++)
+	{
 		seccomp_rule_add(ctx, action, syscalls[i], 0);
 	}
 }
@@ -128,7 +130,6 @@ void *sandbox_io(size_t argc, void *args[], void *data)
 
 void *sandbox_sockets(size_t argc, void *args[], void *data)
 {
-
 	scmp_filter_ctx ctx;
 
 	/* Validate function parameters */
@@ -137,23 +138,23 @@ void *sandbox_sockets(size_t argc, void *args[], void *data)
 	ctx = metacall_value_to_ptr(args[0]);
 
 	const int syscalls[] = {
-		SCMP_SYS(socket),					// It is primarily associated to networking
-		SCMP_SYS(bind),						// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(listen),					// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(accept),					// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(connect),				// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(send),						// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(recv),						// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(sendto),					// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(recvfrom),				// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
-		SCMP_SYS(shutdown),				// It is primarily associated to networking
-		SCMP_SYS(getpeername),		// It is primarily associated to networking
-		SCMP_SYS(socketpair),			// It is primarily associated to networking
-		SCMP_SYS(setsockopt)			// It is primarily associated to networking
-		// SCMP_SYS(select),			// Shouldn't be needed because it is used for file descriptors too
-		// SCMP_SYS(poll),				// Shouldn't be needed because it is used for file descriptors too
-		// SCMP_SYS(fcntl),				// Shouldn't be needed because it is used for file descriptors too
-		// SCMP_SYS(ioctl)				// Shouldn't be needed because it is used for file descriptors too
+		SCMP_SYS(socket),	   // It is primarily associated to networking
+		SCMP_SYS(bind),		   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(listen),	   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(accept),	   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(connect),	   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(send),		   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(recv),		   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(sendto),	   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(recvfrom),	   // TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(shutdown),	   // It is primarily associated to networking
+		SCMP_SYS(getpeername), // It is primarily associated to networking
+		SCMP_SYS(socketpair),  // It is primarily associated to networking
+		SCMP_SYS(setsockopt)   // It is primarily associated to networking
+							   // SCMP_SYS(select),			// Shouldn't be needed because it is used for file descriptors too
+							   // SCMP_SYS(poll),				// Shouldn't be needed because it is used for file descriptors too
+							   // SCMP_SYS(fcntl),				// Shouldn't be needed because it is used for file descriptors too
+							   // SCMP_SYS(ioctl)				// Shouldn't be needed because it is used for file descriptors too
 	};
 
 	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
@@ -165,7 +166,6 @@ void *sandbox_sockets(size_t argc, void *args[], void *data)
 
 void *sandbox_ipc(size_t argc, void *args[], void *data)
 {
-
 	scmp_filter_ctx ctx;
 
 	/* Validate function parameters */
@@ -196,7 +196,6 @@ void *sandbox_ipc(size_t argc, void *args[], void *data)
 
 void *sandbox_process(size_t argc, void *args[], void *data)
 {
-
 	scmp_filter_ctx ctx;
 
 	/* Validate function parameters */
@@ -205,26 +204,26 @@ void *sandbox_process(size_t argc, void *args[], void *data)
 	ctx = metacall_value_to_ptr(args[0]);
 
 	const int syscalls[] = {
-    SCMP_SYS(fork),
-    SCMP_SYS(vfork),
-    SCMP_SYS(clone),
-    SCMP_SYS(execve),
-    SCMP_SYS(wait4),
-    SCMP_SYS(waitpid),
-    SCMP_SYS(waitid),
-    SCMP_SYS(exit),
-    SCMP_SYS(exit_group),
-    SCMP_SYS(kill),
-    SCMP_SYS(getpid),
-    SCMP_SYS(getppid),
-    SCMP_SYS(setsid),
-    SCMP_SYS(setpgid),
-    SCMP_SYS(nice),
-    SCMP_SYS(sched_yield),
-    SCMP_SYS(setpriority),
-    SCMP_SYS(getpriority),
-    SCMP_SYS(getpgid),
-    SCMP_SYS(setsid)
+		SCMP_SYS(fork),
+		SCMP_SYS(vfork),
+		SCMP_SYS(clone),
+		SCMP_SYS(execve),
+		SCMP_SYS(wait4),
+		SCMP_SYS(waitpid),
+		SCMP_SYS(waitid),
+		SCMP_SYS(exit),
+		SCMP_SYS(exit_group),
+		SCMP_SYS(kill),
+		SCMP_SYS(getpid),
+		SCMP_SYS(getppid),
+		SCMP_SYS(setsid),
+		SCMP_SYS(setpgid),
+		SCMP_SYS(nice),
+		SCMP_SYS(sched_yield),
+		SCMP_SYS(setpriority),
+		SCMP_SYS(getpriority),
+		SCMP_SYS(getpgid),
+		SCMP_SYS(setsid)
 	};
 
 	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
@@ -236,7 +235,6 @@ void *sandbox_process(size_t argc, void *args[], void *data)
 
 void *sandbox_filesystems(size_t argc, void *args[], void *data)
 {
-
 	scmp_filter_ctx ctx;
 
 	/* Validate function parameters */
@@ -245,7 +243,7 @@ void *sandbox_filesystems(size_t argc, void *args[], void *data)
 	ctx = metacall_value_to_ptr(args[0]);
 
 	const int syscalls[] = {
-    SCMP_SYS(access),
+		SCMP_SYS(access),
 		SCMP_SYS(faccessat),
 		SCMP_SYS(chdir),
 		SCMP_SYS(fchdir),
@@ -296,7 +294,6 @@ void *sandbox_filesystems(size_t argc, void *args[], void *data)
 
 void *sandbox_time(size_t argc, void *args[], void *data)
 {
-
 	scmp_filter_ctx ctx;
 
 	/* Validate function parameters */
@@ -305,15 +302,15 @@ void *sandbox_time(size_t argc, void *args[], void *data)
 	ctx = metacall_value_to_ptr(args[0]);
 
 	const int syscalls[] = {
-    SCMP_SYS(time),
-    SCMP_SYS(gettimeofday),
-    SCMP_SYS(settimeofday),
-    SCMP_SYS(clock_gettime),
-    SCMP_SYS(clock_settime),
-    SCMP_SYS(clock_getres),
-    SCMP_SYS(clock_nanosleep),
-    SCMP_SYS(nanosleep),
-    SCMP_SYS(stime),
+		SCMP_SYS(time),
+		SCMP_SYS(gettimeofday),
+		SCMP_SYS(settimeofday),
+		SCMP_SYS(clock_gettime),
+		SCMP_SYS(clock_settime),
+		SCMP_SYS(clock_getres),
+		SCMP_SYS(clock_nanosleep),
+		SCMP_SYS(nanosleep),
+		SCMP_SYS(stime),
 		SCMP_SYS(adjtimex),
 		SCMP_SYS(timer_create),
 		SCMP_SYS(timer_settime),
@@ -334,7 +331,6 @@ void *sandbox_time(size_t argc, void *args[], void *data)
 
 void *sandbox_memory(size_t argc, void *args[], void *data)
 {
-
 	scmp_filter_ctx ctx;
 
 	/* Validate function parameters */
@@ -367,7 +363,6 @@ void *sandbox_memory(size_t argc, void *args[], void *data)
 
 void *sandbox_signals(size_t argc, void *args[], void *data)
 {
-
 	scmp_filter_ctx ctx;
 
 	/* Validate function parameters */
@@ -376,22 +371,22 @@ void *sandbox_signals(size_t argc, void *args[], void *data)
 	ctx = metacall_value_to_ptr(args[0]);
 
 	const int syscalls[] = {
-    SCMP_SYS(kill),
-    SCMP_SYS(tgkill),
-    SCMP_SYS(tkill),
-    SCMP_SYS(sigaction),
-    SCMP_SYS(sigprocmask),
-    SCMP_SYS(sigpending),
-    SCMP_SYS(sigsuspend),
-    SCMP_SYS(sigreturn),
-    SCMP_SYS(rt_sigaction),
-    SCMP_SYS(rt_sigprocmask),
-    SCMP_SYS(rt_sigpending),
-    SCMP_SYS(rt_sigsuspend),
-    SCMP_SYS(rt_sigreturn),
-    SCMP_SYS(rt_tgsigqueueinfo),
-    SCMP_SYS(rt_sigtimedwait),
-    SCMP_SYS(rt_sigqueueinfo)
+		SCMP_SYS(kill),
+		SCMP_SYS(tgkill),
+		SCMP_SYS(tkill),
+		SCMP_SYS(sigaction),
+		SCMP_SYS(sigprocmask),
+		SCMP_SYS(sigpending),
+		SCMP_SYS(sigsuspend),
+		SCMP_SYS(sigreturn),
+		SCMP_SYS(rt_sigaction),
+		SCMP_SYS(rt_sigprocmask),
+		SCMP_SYS(rt_sigpending),
+		SCMP_SYS(rt_sigsuspend),
+		SCMP_SYS(rt_sigreturn),
+		SCMP_SYS(rt_tgsigqueueinfo),
+		SCMP_SYS(rt_sigtimedwait),
+		SCMP_SYS(rt_sigqueueinfo)
 	};
 
 	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
