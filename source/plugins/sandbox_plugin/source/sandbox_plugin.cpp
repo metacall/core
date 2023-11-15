@@ -34,10 +34,16 @@
 #define SANDBOX_UNAME_ERROR		 "Sandbox plugin failed to set uname syscall permissions"
 #define SANDBOX_IO_ERROR		 "Sandbox plugin failed to set io syscalls permissions"
 #define SANDBOX_SOCKETS_ERROR		 "Sandbox plugin failed to set sockets syscalls permissions"
+#define SANDBOX_IPC_ERROR		 "Sandbox plugin failed to set IPC syscalls permissions"
+#define SANDBOX_PROCESS_ERROR		 "Sandbox plugin failed to set process syscalls permissions"
+#define SANDBOX_FILESYSTEMS_ERROR		 "Sandbox plugin failed to set filesystems syscalls permissions"
+#define SANDBOX_TIME_ERROR		 "Sandbox plugin failed to set time syscalls permissions"
+#define SANDBOX_MEMORY_ERROR		 "Sandbox plugin failed to set memory syscalls permissions"
+#define SANDBOX_SIGNALS_ERROR		 "Sandbox plugin failed to set signals syscalls permissions"
 #define SANDBOX_DESTROY_ERROR	 "Sandbox plugin failed to destroy a context"
 
 void add_syscalls_to_seccomp(scmp_filter_ctx ctx, const int* syscalls, const int action, size_t num_syscalls) {
-	for (int i = 0; i < num_syscalls; i++) {
+	for (long unsigned int i = 0; i < num_syscalls; i++) {
 		seccomp_rule_add(ctx, action, syscalls[i], 0);
 	}
 }
@@ -88,29 +94,29 @@ void *sandbox_io(size_t argc, void *args[], void *data)
 
 	const int syscalls[] = {
 		SCMP_SYS(brk),
-		// SCMP_SYS(read),
-		// SCMP_SYS(write),
-		// SCMP_SYS(open),
-		// SCMP_SYS(close),
-		// SCMP_SYS(lseek),
-		// SCMP_SYS(dup),
-		// SCMP_SYS(dup2),
-		// SCMP_SYS(dup3),
-		// SCMP_SYS(pipe),
-		// SCMP_SYS(select),
-		// SCMP_SYS(poll),
-		// SCMP_SYS(fcntl),
-		// SCMP_SYS(ioctl),
-		// SCMP_SYS(readv),
-		// SCMP_SYS(writev),
-		// SCMP_SYS(send),
-		// SCMP_SYS(recv),
-		// SCMP_SYS(sendto),
-		// SCMP_SYS(recvfrom),
-		// SCMP_SYS(sendmsg),
-		// SCMP_SYS(recvmsg),
-		// SCMP_SYS(fsync),
-		// SCMP_SYS(fdatasync)
+		SCMP_SYS(read),
+		SCMP_SYS(write),
+		SCMP_SYS(open),
+		SCMP_SYS(close),
+		SCMP_SYS(lseek),
+		SCMP_SYS(dup),
+		SCMP_SYS(dup2),
+		SCMP_SYS(dup3),
+		SCMP_SYS(pipe),
+		SCMP_SYS(select),
+		SCMP_SYS(poll),
+		SCMP_SYS(fcntl),
+		SCMP_SYS(ioctl),
+		SCMP_SYS(readv),
+		SCMP_SYS(writev),
+		SCMP_SYS(send),
+		SCMP_SYS(recv),
+		SCMP_SYS(sendto),
+		SCMP_SYS(recvfrom),
+		SCMP_SYS(sendmsg),
+		SCMP_SYS(recvmsg),
+		SCMP_SYS(fsync),
+		SCMP_SYS(fdatasync)
 	};
 
 	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
@@ -131,23 +137,261 @@ void *sandbox_sockets(size_t argc, void *args[], void *data)
 	ctx = metacall_value_to_ptr(args[0]);
 
 	const int syscalls[] = {
-		SCMP_SYS(socket),
-		SCMP_SYS(bind),
-		SCMP_SYS(listen),
-		SCMP_SYS(accept),
-		SCMP_SYS(connect),
-		SCMP_SYS(send),
-		SCMP_SYS(recv),
-		SCMP_SYS(sendto),
-		SCMP_SYS(recvfrom),
-		SCMP_SYS(shutdown),
-		SCMP_SYS(getpeername),
-		SCMP_SYS(socketpair),
-		SCMP_SYS(setsockopt),
-		SCMP_SYS(select),
-		SCMP_SYS(poll),
+		SCMP_SYS(socket),					// It is primarily associated to networking
+		SCMP_SYS(bind),						// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(listen),					// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(accept),					// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(connect),				// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(send),						// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(recv),						// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(sendto),					// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(recvfrom),				// TODO: Check if this is needed, because it is also used for unix sockets (IPC)
+		SCMP_SYS(shutdown),				// It is primarily associated to networking
+		SCMP_SYS(getpeername),		// It is primarily associated to networking
+		SCMP_SYS(socketpair),			// It is primarily associated to networking
+		SCMP_SYS(setsockopt)			// It is primarily associated to networking
+		// SCMP_SYS(select),			// Shouldn't be needed because it is used for file descriptors too
+		// SCMP_SYS(poll),				// Shouldn't be needed because it is used for file descriptors too
+		// SCMP_SYS(fcntl),				// Shouldn't be needed because it is used for file descriptors too
+		// SCMP_SYS(ioctl)				// Shouldn't be needed because it is used for file descriptors too
+	};
+
+	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
+
+	seccomp_load(ctx);
+
+	return metacall_value_create_int(0);
+}
+
+void *sandbox_ipc(size_t argc, void *args[], void *data)
+{
+
+	scmp_filter_ctx ctx;
+
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_IPC_ERROR, METACALL_PTR, METACALL_BOOL);
+
+	ctx = metacall_value_to_ptr(args[0]);
+
+	const int syscalls[] = {
+		SCMP_SYS(shmget),
+		SCMP_SYS(shmat),
+		SCMP_SYS(shmdt),
+		SCMP_SYS(shmctl),
+		SCMP_SYS(msgget),
+		SCMP_SYS(msgsnd),
+		SCMP_SYS(msgrcv),
+		SCMP_SYS(msgctl),
+		SCMP_SYS(semget),
+		SCMP_SYS(semop),
+		SCMP_SYS(semctl)
+	};
+
+	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
+
+	seccomp_load(ctx);
+
+	return metacall_value_create_int(0);
+}
+
+void *sandbox_process(size_t argc, void *args[], void *data)
+{
+
+	scmp_filter_ctx ctx;
+
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_PROCESS_ERROR, METACALL_PTR, METACALL_BOOL);
+
+	ctx = metacall_value_to_ptr(args[0]);
+
+	const int syscalls[] = {
+    SCMP_SYS(fork),
+    SCMP_SYS(vfork),
+    SCMP_SYS(clone),
+    SCMP_SYS(execve),
+    SCMP_SYS(wait4),
+    SCMP_SYS(waitpid),
+    SCMP_SYS(waitid),
+    SCMP_SYS(exit),
+    SCMP_SYS(exit_group),
+    SCMP_SYS(kill),
+    SCMP_SYS(getpid),
+    SCMP_SYS(getppid),
+    SCMP_SYS(setsid),
+    SCMP_SYS(setpgid),
+    SCMP_SYS(nice),
+    SCMP_SYS(sched_yield),
+    SCMP_SYS(setpriority),
+    SCMP_SYS(getpriority),
+    SCMP_SYS(getpgid),
+    SCMP_SYS(setsid)
+	};
+
+	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
+
+	seccomp_load(ctx);
+
+	return metacall_value_create_int(0);
+}
+
+void *sandbox_filesystems(size_t argc, void *args[], void *data)
+{
+
+	scmp_filter_ctx ctx;
+
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_FILESYSTEMS_ERROR, METACALL_PTR, METACALL_BOOL);
+
+	ctx = metacall_value_to_ptr(args[0]);
+
+	const int syscalls[] = {
+    SCMP_SYS(access),
+		SCMP_SYS(faccessat),
+		SCMP_SYS(chdir),
+		SCMP_SYS(fchdir),
+		SCMP_SYS(chroot),
+		SCMP_SYS(fchmod),
+		SCMP_SYS(fchmodat),
+		SCMP_SYS(chown),
+		SCMP_SYS(fchown),
+		SCMP_SYS(fchownat),
+		SCMP_SYS(lchown),
 		SCMP_SYS(fcntl),
-		SCMP_SYS(ioctl)
+		SCMP_SYS(ioctl),
+		SCMP_SYS(link),
+		SCMP_SYS(linkat),
+		SCMP_SYS(unlink),
+		SCMP_SYS(unlinkat),
+		SCMP_SYS(mkdir),
+		SCMP_SYS(mkdirat),
+		SCMP_SYS(rmdir),
+		SCMP_SYS(rename),
+		SCMP_SYS(renameat),
+		SCMP_SYS(symlink),
+		SCMP_SYS(symlinkat),
+		SCMP_SYS(readlink),
+		SCMP_SYS(readlinkat),
+		SCMP_SYS(truncate),
+		SCMP_SYS(ftruncate),
+		SCMP_SYS(stat),
+		SCMP_SYS(lstat),
+		SCMP_SYS(fstat),
+		SCMP_SYS(statfs),
+		SCMP_SYS(statfs64),
+		SCMP_SYS(fstatfs),
+		SCMP_SYS(fstatfs64),
+		SCMP_SYS(umount),
+		SCMP_SYS(umount2),
+		SCMP_SYS(mount),
+		SCMP_SYS(mount),
+		SCMP_SYS(mount)
+	};
+
+	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
+
+	seccomp_load(ctx);
+
+	return metacall_value_create_int(0);
+}
+
+void *sandbox_time(size_t argc, void *args[], void *data)
+{
+
+	scmp_filter_ctx ctx;
+
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_TIME_ERROR, METACALL_PTR, METACALL_BOOL);
+
+	ctx = metacall_value_to_ptr(args[0]);
+
+	const int syscalls[] = {
+    SCMP_SYS(time),
+    SCMP_SYS(gettimeofday),
+    SCMP_SYS(settimeofday),
+    SCMP_SYS(clock_gettime),
+    SCMP_SYS(clock_settime),
+    SCMP_SYS(clock_getres),
+    SCMP_SYS(clock_nanosleep),
+    SCMP_SYS(nanosleep),
+    SCMP_SYS(stime),
+		SCMP_SYS(adjtimex),
+		SCMP_SYS(timer_create),
+		SCMP_SYS(timer_settime),
+		SCMP_SYS(timer_gettime),
+		SCMP_SYS(timer_getoverrun),
+		SCMP_SYS(timer_delete),
+		SCMP_SYS(timerfd_create),
+		SCMP_SYS(timerfd_settime),
+		SCMP_SYS(timerfd_gettime)
+	};
+
+	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
+
+	seccomp_load(ctx);
+
+	return metacall_value_create_int(0);
+}
+
+void *sandbox_memory(size_t argc, void *args[], void *data)
+{
+
+	scmp_filter_ctx ctx;
+
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_MEMORY_ERROR, METACALL_PTR, METACALL_BOOL);
+
+	ctx = metacall_value_to_ptr(args[0]);
+
+	const int syscalls[] = {
+		SCMP_SYS(mmap),
+		SCMP_SYS(munmap),
+		SCMP_SYS(mprotect),
+		SCMP_SYS(brk),
+		SCMP_SYS(mincore),
+		SCMP_SYS(madvise),
+		SCMP_SYS(mlock),
+		SCMP_SYS(munlock),
+		SCMP_SYS(mlockall),
+		SCMP_SYS(munlockall),
+		SCMP_SYS(getrlimit),
+		SCMP_SYS(setrlimit),
+		SCMP_SYS(getrusage)
+	};
+
+	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
+
+	seccomp_load(ctx);
+
+	return metacall_value_create_int(0);
+}
+
+void *sandbox_signals(size_t argc, void *args[], void *data)
+{
+
+	scmp_filter_ctx ctx;
+
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK(SANDBOX_SIGNALS_ERROR, METACALL_PTR, METACALL_BOOL);
+
+	ctx = metacall_value_to_ptr(args[0]);
+
+	const int syscalls[] = {
+    SCMP_SYS(kill),
+    SCMP_SYS(tgkill),
+    SCMP_SYS(tkill),
+    SCMP_SYS(sigaction),
+    SCMP_SYS(sigprocmask),
+    SCMP_SYS(sigpending),
+    SCMP_SYS(sigsuspend),
+    SCMP_SYS(sigreturn),
+    SCMP_SYS(rt_sigaction),
+    SCMP_SYS(rt_sigprocmask),
+    SCMP_SYS(rt_sigpending),
+    SCMP_SYS(rt_sigsuspend),
+    SCMP_SYS(rt_sigreturn),
+    SCMP_SYS(rt_tgsigqueueinfo),
+    SCMP_SYS(rt_sigtimedwait),
+    SCMP_SYS(rt_sigqueueinfo)
 	};
 
 	add_syscalls_to_seccomp(ctx, syscalls, SANDBOX_ACTION(args[1]), sizeof(syscalls) / sizeof(syscalls[0]));
@@ -197,6 +441,12 @@ int sandbox_plugin(void *loader, void *handle, void *context)
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_uname, METACALL_PTR, METACALL_BOOL);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_io, METACALL_PTR, METACALL_BOOL);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_sockets, METACALL_PTR, METACALL_BOOL);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_ipc, METACALL_PTR, METACALL_BOOL);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_process, METACALL_PTR, METACALL_BOOL);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_filesystems, METACALL_PTR, METACALL_BOOL);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_time, METACALL_PTR, METACALL_BOOL);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_memory, METACALL_PTR, METACALL_BOOL);
+	EXTENSION_FUNCTION(METACALL_INT, sandbox_signals, METACALL_PTR, METACALL_BOOL);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_destroy, METACALL_PTR);
 
 #if 0 /* TODO: Fork safety */
