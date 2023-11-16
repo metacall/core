@@ -293,41 +293,41 @@ TEST_F(metacall_sandbox_plugin_test, DefaultConstructor)
 }
 
 /* [Note] This test blocks all the gtest context, so you should comment it to allow testing for other test cases */
-// TEST_F(metacall_sandbox_plugin_test, SANDBOX_IO_DISABLE_TEST)
-// {
-// 	ASSERT_EQ((int)0, (int)metacall_initialize());
+TEST_F(metacall_sandbox_plugin_test, SANDBOX_IO_DISABLE_TEST)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-// 	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_extension();
 
-// 	/* Initialize sandboxing */
-// 	{
-// 		void *args[1] = { metacall_value_create_bool(1L) /* Allow */ };
+	/* Initialize sandboxing */
+	{
+		void *args[1] = { metacall_value_create_bool(1L) /* Allow */ };
 
-// 		sandbox_ctx = metacallhv_s(handle, "sandbox_initialize", args, 1);
+		sandbox_ctx = metacallhv_s(handle, "sandbox_initialize", args, 1);
 
-// 		EXPECT_NE((void *)NULL, (void *)sandbox_ctx);
-// 		EXPECT_NE((void *)metacall_value_to_ptr(sandbox_ctx), (void *)NULL);
+		EXPECT_NE((void *)NULL, (void *)sandbox_ctx);
+		EXPECT_NE((void *)metacall_value_to_ptr(sandbox_ctx), (void *)NULL);
 
-// 		metacall_value_destroy(args[0]);
-// 	}
+		metacall_value_destroy(args[0]);
+	}
 
-// 	/* Generate a syscall exception when trying to execute fopen */
-// 	ASSERT_EXIT({ invalid_io_syscall(sandbox_ctx, handle); }, testing::KilledBySignal(SIGSYS), "");
+	/* Generate a syscall exception when trying to execute fopen */
+	ASSERT_EXIT({ invalid_io_syscall(sandbox_ctx, handle); }, testing::KilledBySignal(SIGSYS), "");
 
-// 	/* Destroy sandboxing */
-// 	{
-// 		void *args[1] = { sandbox_ctx };
+	/* Destroy sandboxing */
+	{
+		void *args[1] = { sandbox_ctx };
 
-// 		void *ret = metacallhv_s(handle, "sandbox_destroy", args, 1);
+		void *ret = metacallhv_s(handle, "sandbox_destroy", args, 1);
 
-// 		EXPECT_NE((void *)NULL, (void *)ret);
-// 		EXPECT_EQ((int)metacall_value_to_int(ret), (int)0);
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((int)metacall_value_to_int(ret), (int)0);
 
-// 		metacall_value_destroy(args[0]);
-// 	}
+		metacall_value_destroy(args[0]);
+	}
 
-// 	EXPECT_EQ((int)0, (int)metacall_destroy());
-// }
+	EXPECT_EQ((int)0, (int)metacall_destroy());
+}
 
 TEST_F(metacall_sandbox_plugin_test, SANDBOX_SOCKETS_DISABLE_TEST)
 {

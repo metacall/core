@@ -12,6 +12,11 @@ endif()
 
 # Thread Sanitizer deadlocks with ASSERT_EXIT (TODO: Review this when fork safety is implemented in sandbox_plugin)
 if(OPTION_BUILD_THREAD_SANITIZER)
+  return()
+endif()
+
+# TODO: Test if we can make it run properly with use_sigaltstack=1 (https://groups.google.com/a/chromium.org/g/chromium-reviews/c/xX4xDy21714/m/1yKX1JLE620J)
+if(OPTION_BUILD_ADDRESS_SANITIZER)
 	return()
 endif()
 
