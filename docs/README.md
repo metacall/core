@@ -229,7 +229,7 @@ The environment variables are optional, in case you want to modify default paths
 
 #### 5.1.1 Design Decisions
 
-- To provide an high level API with a simple UX and to be easy to understand.
+- To provide a high level API with a simple UX and to be easy to understand.
 
 - To work in high performance environments.
 
@@ -255,13 +255,13 @@ The environment variables are optional, in case you want to modify default paths
 
 - [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **METACALL**.
 
-- [`environment`](/source/environment) implements an standard way to deal with environment variables. **METACALL** uses environment variables to define custom paths for plugins and scripts.
+- [`environment`](/source/environment) implements a standard way to deal with environment variables. **METACALL** uses environment variables to define custom paths for plugins and scripts.
 
 - [`examples`](/source/examples) ...
 
 - [`filesystem`](/source/filesystem) provides an abstraction for operative system file system.
 
-- [`format`](/source/format) provides an standard way for printing to standard input output for old C versions that does not support newest constructions.
+- [`format`](/source/format) provides a standard way for printing to standard input output for old C versions that does not support newest constructions.
 
 - [`loader`](/source/loader) ...
 
@@ -293,7 +293,7 @@ The environment variables are optional, in case you want to modify default paths
 
 The module that holds the representation of types, values and functions is called [`reflect`](/source/reflect) and it handles the abstraction of code loaded into **METACALL**.
 
-**METACALL** uses reflection and introspection techniques to inspect the code loaded by the [`loaders`](/source/loaders) in order to interpret it and provide an higher abstraction of it. With this higher abstraction **METACALL** can easily inter-operate between languages transparently.
+**METACALL** uses reflection and introspection techniques to inspect the code loaded by the [`loaders`](/source/loaders) in order to interpret it and provide a higher abstraction of it. With this higher abstraction **METACALL** can easily inter-operate between languages transparently.
 
 #### 5.2.1 Type System
 
@@ -321,7 +321,7 @@ The module that holds the representation of types, values and functions is calle
 |  Class   | Defines properties and methods that are common to all objects                  |
 |  Object  | An instance of Class                                                           |
 
-- Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to a integer value in the memory layout.
+- Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to an integer value in the memory layout.
 
 - Integer and Floating Point values provide a complete abstraction to numerical types. Type sizes are preserved and the correct type is used when using any number. This depends on the internal implementation of the value by the run-time. Although there can be problems related to this. A `bignum` type from Ruby may overflow if it is too big when trying to convert it to a `float` type in C#.
 
@@ -329,9 +329,9 @@ The module that holds the representation of types, values and functions is calle
 
 - Buffer represents a blob of raw memory (i.e. an array of bytes). This can be used to represent files as images or any other resources into memory.
 
-- Array is implemented by means of array of values, which you can think it should be called _list_ instead. But as the memory layout is stored into a contiguous memory block of references to values, it is considered an array.
+- Array is implemented using an array of values, which might lead one to ponder that it should be called _list_ instead. But as the memory layout is stored into a contiguous memory block of references to values, it is considered an array.
 
-- Map implements an associative key value pair container. A map is implemented with an array of two sized elements array. Each element of the map is an array of size two, where the first element of it is always an String and the second element is a value of any type.
+- Map implements an associative key value pair container. A map is implemented with an array of two sized elements array. Each element of the map is an array of size two, where the first element of it is always a String and the second element is a value of any type.
 
 - Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others do not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
 
@@ -347,7 +347,7 @@ When converting values between different types, if any potential number overflow
 
 The value model is implemented by means of object pool. Each value is a reference to a memory block allocated from a memory pool (which can be injected into **METACALL**). The references can be passed by value, this means **METACALL** copies the reference value instead of the data which this reference is pointing to, like most run-times do when managing their own values.
 
-Each created value must be destroyed manually, otherwise it will lead to a memory leak. This only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
+Each created value must be destroyed manually, otherwise it will lead to a memory leak. This only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in a higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
 
 The value memory layout is described in the following form.
 
@@ -555,7 +555,7 @@ Usually the developer is the same who does the fork, but it may be possible that
 
 ### 5.8 Threading Model
 
-The threading model is still experimental. We are discovering the best ways of designing and implementing it, so it may vary over time. In another hand, at the moment of writing (check the commit history), there are some concerns that are already known and parts of the design that we have achieved thanks to NodeJS event loop nature.
+The threading model is still experimental. We are discovering the best ways of designing and implementing it, so it may vary over time. At the moment of writing (check the commit history), there are some concerns that are already known and parts of the design already achieved thanks to the NodeJS event loop nature.
 
 The Node Loader is designed in a way in which the V8 instance is created in a new thread, and from there the event loop "blocks" that thread until the execution. Recent versions of N-API (since NodeJS 14.x) allow you to have control and reimplement your own event loop thanks to the new embedder API. But when this project started and NodeJS loader was implemented, only NodeJS 8.x exist. So the only option (without reimplementing part of NodeJS, because it goes against one design decisions of the project) was to use `node::Start`, a call that blocks your thread while executing the event loop. This also produces a lot of problems, because of lack of control over NodeJS, but they are not directly related to the thread model.
 
@@ -746,7 +746,7 @@ Click the button below. A workspace with all required environments will be creat
 
 ## 7. Platform Support
 
-The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
+The following platforms and architectures have been tested and are known work correctly with all plugins of **METACALL**.
 
 | Operative System |    Architecture     |  Compiler   |
 | :--------------: | :-----------------: | :---------: |
