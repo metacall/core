@@ -746,7 +746,7 @@ Click the button below. A workspace with all required environments will be creat
 
 ## 7. Platform Support
 
-The following platforms and architectures have been tested and are known work correctly with all plugins of **METACALL**.
+The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
 
 | Operative System |    Architecture     |  Compiler   |
 | :--------------: | :-----------------: | :---------: |
