@@ -93,7 +93,7 @@ The **METACALL** project started a long time ago when I was coding a [Game Engin
 
 ## 2. Language Support
 
-This section describes all programming languages that **METACALL** supports. **METACALL** is offered through a C API. This means you can use it as a library to embed different runtimes into C. The **[Loaders](#21-loaders-backends)** are the ones that allow to call different functions from C. They are plugins (libraries) which **METACALL** loads and they have a common interface. They usually implement JITs, VMs or interpreters. On the other hand we have the **[Ports](#22-ports-frontends)** which are wrappers to the **METACALL** C API that expose the API to other languages. With the Python Loader we can execute calls to Python from C. With the Python Port we can install **METACALL** via `pip` and use it to call other languages from Python. The combination of both provides the opportunity for complete interoperability between virtually any two languages.
+This section describes all programming languages that **METACALL** supports. **METACALL** is offered through a C API. This means you can use it as a library to embed different runtimes into C. The **[Loaders](#21-loaders-backends)** are the ones that allow to call different functions from C. They are plugins (libraries) that **METACALL** loads and they have a common interface. They usually implement JITs, VMs or interpreters. On the other hand we have the **[Ports](#22-ports-frontends)** which are wrappers to the **METACALL** C API that expose the API to other languages. With the Python Loader we can execute calls to Python from C. With the Python Port we can install **METACALL** via `pip` and use it to call other languages from Python. The combination of both provides the opportunity for complete interoperability between virtually any two languages.
 
 ### 2.1 Loaders (Backends)
 
@@ -156,17 +156,17 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 
 **METACALL** can be used in the following cases:
 
-- Interconnect different technologies in the same project. It allows heterogeneous teams of developers to work on the same project in an isolated way and using different programming languages at the same time.
+- Interconnect different technologies in the same project. It allows heterogeneous teams of developers to work on the same project in an isolated way and use different programming languages at the same time.
 
-- Embedding programming languages in existing software. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher level programming languages (aka scripting).
+- Embedding programming languages in existing software. Game Engines and 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher level programming languages (aka scripting).
 
 - Function as a Service. **METACALL** can be used to implement efficient FaaS architectures. We are using it to implement our own FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern and high performance function scalability thanks to this library.
 
-- Source code migrations. **METACALL** can wrap large and legacy codebases, and provide an agnostic way to work with the codebase in a new programming language. Eventually the code can be migrated in parts, without needing to create a new project or stop the production environment. Incremental changes can be done, solving the migration easily and with less time and effort.
+- Source code migrations. **METACALL** can wrap large and legacy codebases, and provide an agnostic way to work with the codebase in a new programming language. Eventually the code can be migrated in parts, without needing to create a new project or stop the production environment. Incremental changes can be made, solving the migration easily and with less time and effort.
 
 - Porting low level libraries to high level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call low level libraries directly from your high level languages without making a wrapper in C or C++ for it.
 
-As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
+As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
 ## 3.1 Known Projects Using MetaCall
 
@@ -178,13 +178,13 @@ As you can see, there are plenty of uses. **METACALL** introduces a new model of
 
 ## 4.1 Installation
 
-Prior to trying any of the examples, you must have **METACALL** installed in your system. To install **METACALL** you have the following options:
+Before trying any of the examples, you must have **METACALL** installed in your system. To install **METACALL** you have the following options:
 
 - [Install precompiled tarball via shell script (downloads the tarball generated by Guix)](https://github.com/metacall/install).
 - [Build and install it manually](#6-build-system).
 - [Pull it from DockerHub](https://hub.docker.com/r/metacall/core).
 - [Install via Guix package manager](https://github.com/metacall/distributable/blob/master/source/metacall.scm) (needs to fix the commit of [Guix channels](https://github.com/metacall/distributable/blob/master/channels/channels.scm)).
-- [Download precompiled tarball from Guix via Distributable Releases Assests](https://github.com/metacall/distributable/releases).
+- [Download the precompiled tarball from Guix via Distributable Releases Assets](https://github.com/metacall/distributable/releases).
 - [ArchLinux AUR](https://github.com/metacall/aur).
 - [Homebrew](https://github.com/metacall/homebrew).
 - [Download precompiled tarball (.tar.gz) or Debian (.deb) / RPM (.rpm) installers via Core Releases Assets](https://github.com/metacall/core/releases).
@@ -235,11 +235,11 @@ The environment variables are optional, in case you want to modify default paths
 
 - To be as cross-platform as possible.
 
-- To avoid to modify run-times directly or use the code inside **METACALL** in order to avoid maintaining them, or propagating security flaws or licenses into **METACALL**.
+- To avoid modifying run-times directly or using the code inside **METACALL** to avoid maintaining them, or propagating security flaws or licenses into **METACALL**.
 
-- To provide support for any embeddable programming language and to provide support for **METACALL** to be used form any programming language.
+- To provide support for any embeddable programming language and to provide support for **METACALL** to be used from any programming language.
 
-- All external code used into **METACALL** must be introduced by inversion of control in the plugin system, so that the core must not remain aware from what software is using.
+- All external code used in **METACALL** must be introduced by inversion of control in the plugin system so that the core must not remain aware of what software is used.
 
 - All code developed in **METACALL** must be implemented in standalone libraries that can work by themselves in an isolated way (aka modules).
 
@@ -297,7 +297,7 @@ The module that holds the representation of types, values and functions is calle
 
 #### 5.2.1 Type System
 
-**METACALL** implements an abstract type system which is a binary representation of the types supported by it. This means that **METACALL** can convert any type of a language to its own type system and back. Each loader is responsible of doing this conversions.
+**METACALL** implements an abstract type system which is a binary representation of the types supported by it. This means that **METACALL** can convert any type of a language to its own type system and back. Each loader is responsible of doing these conversions.
 
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
