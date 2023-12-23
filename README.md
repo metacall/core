@@ -41,7 +41,7 @@ sum(3, 4); // 7
 metacall main.js
 ```
 
-**MetaCall** is a extensible, embeddable and interoperable cross-platform polyglot runtime. It supports NodeJS, Vanilla JavaScript, TypeScript, Python, Ruby, C#, Java, WASM, Go, C, C++, Rust, D, Cobol [and more](https://github.com/metacall/core/blob/develop/docs/README.md#2-language-support).
+**MetaCall** is an extensible, embeddable, and interoperable cross-platform polyglot runtime. It supports NodeJS, Vanilla JavaScript, TypeScript, Python, Ruby, C#, Java, WASM, Go, C, C++, Rust, D, Cobol [and more](https://github.com/metacall/core/blob/develop/docs/README.md#2-language-support).
 
 ## Install
 
