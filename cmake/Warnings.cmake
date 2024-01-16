@@ -40,7 +40,7 @@ if(WARNINGS_ENABLED)
 	# Test against a valid compiler
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "" AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "")
 		message(WARNING "Unknown compiler warning level support (skipping warning module)")
-		set(WARNINGS_AVAILABLE 0)
+		set(WARNINGS_AVAILABLE NULL)
 		return()
 	endif()
 
