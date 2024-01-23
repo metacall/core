@@ -86,43 +86,47 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 
 	if (global == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall could not find the global configuration, "
-											   "either use a relative path configuration '" CONFIGURATION_DEFAULT_PATH "' or define the environment "
-											   "variable '" CONFIGURATION_PATH "'");
+		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall could not find the global configuration, "
+												 "either use a relative path configuration '" CONFIGURATION_DEFAULT_PATH "' or define the environment "
+												 "variable '" CONFIGURATION_PATH "', MetaCall will use a default configuration");
 
-		configuration_destroy();
+		global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, NULL, NULL);
 
-		return 1;
+		if (global == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Default global configuration failed to initialize");
+
+			goto configuration_error;
+		}
 	}
 
 	if (configuration_singleton_initialize(global) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration singleton initialization");
 
-		configuration_destroy();
-
-		return 1;
+		goto configuration_error;
 	}
 
 	if (configuration_impl_initialize(reader) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation initialization");
 
-		configuration_destroy();
-
-		return 1;
+		goto configuration_error;
 	}
 
 	if (configuration_impl_load(global, allocator) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load <%p>", global);
 
-		configuration_destroy();
-
-		return 1;
+		goto configuration_error;
 	}
 
 	return 0;
+
+configuration_error:
+	configuration_destroy();
+
+	return 1;
 }
 
 configuration configuration_create(const char *scope, const char *path, const char *parent, void *allocator)
