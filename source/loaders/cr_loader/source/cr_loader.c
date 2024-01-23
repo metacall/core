@@ -2,7 +2,7 @@
  *	Loader Library by Parra Studios
  *	A plugin for loading crystal code at run-time into a process.
  *
- *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ const char *cr_loader_print_info(void)
 {
 	static const char cr_loader_info[] =
 		"Crystal Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 #ifdef CR_LOADER_STATIC_DEFINE
 		"Compiled as static library type\n"

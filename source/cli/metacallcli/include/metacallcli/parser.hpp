@@ -1,6 +1,6 @@
 /*
  *	MetaCall Command Line Interface by Parra Studios
- *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A command line interface example as metacall wrapper.
  *

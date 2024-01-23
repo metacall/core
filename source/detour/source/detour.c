@@ -1,6 +1,6 @@
 /*
  *	Detour Library by Parra Studios
- *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A cross-platform library providing detours, function hooks and trampolines.
  *
@@ -164,7 +164,7 @@ const char *detour_print_info(void)
 {
 	static const char detour_info[] =
 		"Detour Library " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 #ifdef DETOUR_STATIC_DEFINE
 		"Compiled as static library type"

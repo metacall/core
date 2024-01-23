@@ -2,7 +2,7 @@
  *	Loader Library by Parra Studios
  *	A plugin for loading javascript code at run-time into a process.
  *
- *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ const char *jsm_loader_print_info(void)
 {
 	static const char jsm_loader_info[] =
 		"Javascript Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 #ifdef JSM_LOADER_STATIC_DEFINE
 		"Compiled as static library type\n"

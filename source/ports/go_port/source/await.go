@@ -2,7 +2,7 @@
  *	MetaCall Go Port by Parra Studios
  *	A frontend for Go language bindings in MetaCall.
  *
- *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
