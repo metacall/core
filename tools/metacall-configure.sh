@@ -51,13 +51,25 @@ BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
 
+# Operative System detection
+case "$(uname -s)" in
+	Linux*)		OPERATIVE_SYSTEM=Linux;;
+	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
+	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
+	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	*)			OPERATIVE_SYSTEM="Unknown"
+esac
+
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
 	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces
 	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
+	LINUX_VERSION_ID=$(cat /etc/os-release | grep "^VERSION_ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '"')
 else
 	# TODO: Implement more distros or better detection
 	LINUX_DISTRO=unknown
+	LINUX_VERSION_ID=unknown
 fi
 
 sub_options() {
@@ -212,6 +224,12 @@ sub_configure() {
 	# Python
 	if [ $BUILD_PYTHON = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_PY=On"
+
+		# Patch for Darwin Python headers
+		if [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+			BUILD_STRING="$BUILD_STRING -DPython3_INCLUDE_DIR=$(python3 -c \"import sysconfig; print(sysconfig.get_path('include'))\")"
+			# BUILD_STRING="$BUILD_STRING -DPython3_LIBRARY=$(python3 -c \"import sysconfig; print(sysconfig.get_config_var('LIBDIR'))\")"
+		fi
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_PY=On"
