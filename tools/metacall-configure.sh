@@ -227,8 +227,8 @@ sub_configure() {
 
 		# Patch for Darwin Python headers
 		if [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-			BUILD_STRING="$BUILD_STRING -DPython3_INCLUDE_DIR=$(python3 -c \"import sysconfig; print(sysconfig.get_path('include'))\")"
-			# BUILD_STRING="$BUILD_STRING -DPython3_LIBRARY=$(python3 -c \"import sysconfig; print(sysconfig.get_config_var('LIBDIR'))\")"
+			BUILD_STRING="$BUILD_STRING -DPython3_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_path('include'))")"
+			# BUILD_STRING="$BUILD_STRING -DPython3_LIBRARY=$(python3 -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")"
 		fi
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
