@@ -39,7 +39,7 @@ function node_loader_trampoline_initialize(loader_library_path) {
 		}
 	}
 
-	console.log('NodeJS Warning: MetaCall could not be preloaded');
+	// console.log('NodeJS Warning: MetaCall could not be preloaded');
 }
 
 function node_loader_trampoline_is_callable(value) {

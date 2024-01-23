@@ -41,10 +41,6 @@ class application;
 class application
 {
 public:
-	/* -- Public Type Definitions -- */
-
-	typedef bool (*command_callback)(application &, tokenizer &);
-
 	/* -- Public Methods -- */
 
 	/**
@@ -67,51 +63,6 @@ public:
 
 	/**
 	*  @brief
-	*    Application script loader
-	*
-	*  @param[in] tag
-	*    Loader tag reference
-	*
-	*  @param[in] script
-	*    Reference to script name
-	*
-	*  @return
-	*    Return true on success, false otherwhise
-	*/
-	bool load(const std::string &tag, const std::string &script);
-
-	/**
-	*  @brief
-	*    Application script loader from memory
-	*
-	*  @param[in] tag
-	*    Loader tag reference
-	*
-	*  @param[in] script
-	*    Script code
-	*
-	*  @return
-	*    Return true on success, false otherwhise
-	*/
-	bool load_from_memory(const std::string &tag, const std::string &script);
-
-	/**
-	*  @brief
-	*    Application script clearer
-	*
-	*  @param[in] tag
-	*    Loader tag reference
-	*
-	*  @param[in] script
-	*    Reference to script name
-	*
-	*  @return
-	*    Return true on success, false otherwhise
-	*/
-	bool clear(const std::string &tag, const std::string &script);
-
-	/**
-	*  @brief
 	*    Application main entry point
 	*/
 	void run(void);
@@ -121,36 +72,6 @@ public:
 	*    Shutdown main application loop
 	*/
 	void shutdown(void);
-
-	/**
-	*  @brief
-	*    Debug command line string
-	*
-	*  @param[in] key
-	*    Name of the command line option
-	*
-	*  @param[in] t
-	*    Tokenizer wrapper of input command
-	*/
-	void command_debug(const std::string &key, const tokenizer &t);
-
-	/**
-	*  @brief
-	*    Show inspect information
-	*
-	*  @param[in] str
-	*    Serialized inspect data
-	*
-	*  @param[in] size
-	*    Size in bytes of str string
-	*
-	*  @param[in] size
-	*    Size in bytes of str string
-	*
-	*  @param[in] allocator
-	*    Pointer to the allocator to be used in deserialization
-	*/
-	void command_inspect(const char *str, size_t size, void *allocator);
 
 	/**
 	*  @brief
@@ -164,94 +85,61 @@ public:
 	*/
 	void *argument_parse(parser_parameter &p);
 
-	/**
-	*  @brief
-	*    Adapts metacallv from string @name and vector @args
-	*
-	*  @param[in] name
-	*    String object of function name
-	*
-	*  @param[in] args
-	*    Vector pointing to arguments
-	*
-	*  @return
-	*    Return a new value instanced if argument was correct with the result of the call
-	*/
-	void *metacallv_adaptor(const std::string &name, const std::vector<void *> &args);
-
-	/**
-	*  @brief
-	*    Adapts metacallfs from string @name and array string @args
-	*
-	*  @param[in] name
-	*    String object of function name
-	*
-	*  @param[in] args
-	*    String representing an array to be deserialized
-	*
-	*  @param[in] allocator
-	*    Pointer to the allocator to be used in deserialization
-	*
-	*  @return
-	*    Return a new value instanced if argument was correct with the result of the call
-	*/
-	void *metacallfs_adaptor(const std::string &name, const std::string &args, void *allocator);
-
-	/**
-	*  @brief
-	*    Adapts metacallfs_await from string @name and array string @args
-	*
-	*  @param[in] name
-	*    String object of function name
-	*
-	*  @param[in] args
-	*    String representing an array to be deserialized
-	*
-	*  @param[in] allocator
-	*    Pointer to the allocator to be used in deserialization
-	*
-	*  @return
-	*    Return a new value instanced if argument was correct with the result of the call
-	*/
-	void *metacallfs_await_adaptor(const std::string &name, const std::string &args, void *allocator);
-
 protected:
-	/* -- Protected Definitions -- */
-
-	static const size_t arguments_str_size;
-
 	/* -- Protected Methods -- */
+
+	/**
+	*  @brief
+	*    Load all plugins from a subfolder @path
+	*
+	*  @param[in] path
+	*    Subpath where the plugins are located
+	*
+	*  @param[out] handle
+	*    Pointer to the handle containing of the loaded scripts
+	*
+	*  @return
+	*    Return true if the load was successful, false otherwise
+	*
+	*/
+	bool load_path(const char *path, void **handle);
+
+	/**
+	*  @brief
+	*    Print a value @v in a readable form on error (throwable)
+	*
+	*  @param[in] v
+	*    Value to be printed
+	*
+	*/
+	void print(void *v);
+
+	/**
+	*  @brief
+	*    Invoke a function and print the result on error
+	*
+	*  @param[in] func
+	*    Command name matching the function registered from the plugins
+	*
+	*  @param[in] args
+	*    Function arguments as values
+	*
+	*  @param[in] size
+	*    Size of arguments
+	*
+	*/
+	void invoke(const char *func, void *args[], size_t size);
 
 	/**
 	*  @brief
 	*    Execute a command with string parameters
 	*
-	*  @param[in out] t
+	*  @param[inout] t
 	*    Tokenizer wrapper of input command
 	*/
 	void execute(tokenizer &t);
 
-	/**
-	*  @brief
-	*    Defines a new command with a callback handler
-	*
-	*  @param[in] key
-	*    Name of the command line option
-	*
-	*  @param[in] command_cb
-	*    Handler will be raised on @key command entered
-	*/
-	void define(const char *key, command_callback command_cb);
-
 private:
-	/* -- Private Type Definitions -- */
-
-	typedef std::vector<std::string> arg_list;
-
-	typedef std::vector<std::string> script_list;
-
-	typedef std::unordered_map<std::string, command_callback> command_table;
-
 	/* -- Private Class Definition -- */
 
 	class parameter_iterator
@@ -300,13 +188,9 @@ private:
 
 	/* -- Private Member Data -- */
 
-	bool exit_condition;				/**< Condition for main loop */
-	void *plugin_cli_handle;			/**< Handle containing all loaded plugins */
-	arg_list arguments;					/**< Vector containing a list of arguments */
-	script_list scripts;				/**< Vector containing a list of script names */
-	command_table commands;				/**< Hash table from command strings to command handlers */
-	std::mutex await_mutex;				/**< Mutex for blocking the REPL until await is resolved */
-	std::condition_variable await_cond; /**< Condition to be fired once await method is resolved or rejected */
+	void *plugin_cli_handle;			/**< Handle containing all loaded plugins for CLI */
+	void *plugin_repl_handle;			/**< Handle containing all loaded plugins for REPL */
+	std::vector<std::string> arguments; /**< Vector containing a list of arguments */
 };
 
 } /* namespace metacallcli */

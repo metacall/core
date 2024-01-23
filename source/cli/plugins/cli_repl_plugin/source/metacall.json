@@ -1,0 +1,7 @@
+{
+	"language_id": "node",
+	"path": ".",
+	"scripts": [
+		"cli_repl_plugin.js"
+	]
+}

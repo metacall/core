@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-BACKTRACE_PLUGIN_API int backtrace_plugin(void *loader, void *handle, void *context);
+BACKTRACE_PLUGIN_API int backtrace_plugin(void *loader, void *handle);
 
 DYNLINK_SYMBOL_EXPORT(backtrace_plugin);
 

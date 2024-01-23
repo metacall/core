@@ -23,12 +23,12 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_python_test : public testing::Test
+class metacall_python_without_env_vars_test : public testing::Test
 {
 protected:
 };
 
-TEST_F(metacall_python_test, DefaultConstructor)
+TEST_F(metacall_python_without_env_vars_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -37,17 +37,6 @@ TEST_F(metacall_python_test, DefaultConstructor)
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char *py_scripts[] = {
-			"example.py",						 // Classic load
-			"helloworld.py",					 // Classic load
-			"json",								 // Module load
-			"os.path",							 // Submodule load
-			PY_LOADER_TEST_SCRIPT_ABSOLUTE_PATH, // Absolute load
-			"./s2.py"							 // Relative load
-		};
-
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
-
 		const char *py_scripts_fail[] = {
 			"thismoduledoesnotexistaaaa", // Non-existent Module load
 		};
@@ -55,27 +44,6 @@ TEST_F(metacall_python_test, DefaultConstructor)
 		EXPECT_EQ((int)1, (int)metacall_load_from_file("py", py_scripts_fail, sizeof(py_scripts_fail) / sizeof(py_scripts_fail[0]), NULL));
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
-
-	/* Print inspect information */
-	{
-		size_t size = 0;
-
-		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-
-		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
-		char *inspect_str = metacall_inspect(&size, allocator);
-
-		EXPECT_NE((char *)NULL, (char *)inspect_str);
-
-		EXPECT_GT((size_t)size, (size_t)0);
-
-		std::cout << inspect_str << std::endl;
-
-		metacall_allocator_free(allocator, inspect_str);
-
-		metacall_allocator_destroy(allocator);
-	}
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -20,8 +20,7 @@
 
 #include <plugin_extension/plugin_extension.h>
 
-#include <log/log.h>
-#include <metacall/metacall.h>
+#include <plugin/plugin_interface.hpp>
 
 #if defined __has_include
 	#if __has_include(<filesystem>)
@@ -123,9 +122,10 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 	return metacall_value_create_int(0);
 }
 
-int plugin_extension(void *loader, void *handle, void *context)
+int plugin_extension(void *loader, void *handle)
 {
-	enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_PTR };
-	(void)handle;
-	return metacall_register_loaderv(loader, context, "plugin_load_from_path", plugin_load_from_path, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types);
+	/* Register function */
+	EXTENSION_FUNCTION(METACALL_INT, plugin_load_from_path, METACALL_STRING, METACALL_PTR);
+
+	return 0;
 }

@@ -173,6 +173,11 @@ add_loader_dependencies(${target}
 	ts_loader
 )
 
+add_dependencies(${target}
+	cli_repl_plugin
+	cli_core_plugin
+)
+
 #
 # Deployment
 #

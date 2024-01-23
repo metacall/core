@@ -1,6 +1,6 @@
 /*
- *	Sandbox Plugin by Parra Studios
- *	A plugin implementing sandboxing functionality for MetaCall Core.
+ *	Loader Library by Parra Studios
+ *	A plugin for loading python code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,23 +18,11 @@
  *
  */
 
-#ifndef SANDBOX_PLUGIN_H
-#define SANDBOX_PLUGIN_H 1
+#include <gtest/gtest.h>
 
-#include <sandbox_plugin/sandbox_plugin_api.h>
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
 
-#include <dynlink/dynlink.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-SANDBOX_PLUGIN_API int sandbox_plugin(void *loader, void *handle);
-
-DYNLINK_SYMBOL_EXPORT(sandbox_plugin);
-
-#ifdef __cplusplus
+	return RUN_ALL_TESTS();
 }
-#endif
-
-#endif /* SANDBOX_PLUGIN_H */
