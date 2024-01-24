@@ -4,7 +4,7 @@
 #	MetaCall Build Shell Script by Parra Studios
 #	Build and install shell script utility for MetaCall.
 #
-#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ BUILD_C=0
 BUILD_COBOL=0
 BUILD_GO=0
 BUILD_RUST=0
+BUILD_ZIG=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_TESTS=0
@@ -154,6 +155,10 @@ sub_options() {
 		if [ "$option" = 'rust' ]; then
 			echo "Build with rust support"
 			BUILD_RUST=1
+		fi
+		if [ "$option" = 'zig' ]; then
+			echo "Build with zig support"
+			BUILD_ZIG=1
 		fi
 		if [ "$option" = 'scripts' ]; then
 			echo "Build all scripts"
@@ -437,6 +442,20 @@ sub_configure() {
 		fi
 	fi
 
+	# Zig
+	if [ $BUILD_ZIG = 1 ]; then
+		# TODO
+		# BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_ZIG=On"
+
+		# if [ $BUILD_SCRIPTS = 1 ]; then
+		# 	BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_ZIG=On"
+		# fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_ZIG=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
@@ -537,6 +556,7 @@ sub_help() {
 	echo "	cobol: build with cobol support"
 	echo "	go: build with go support"
 	echo "	rust: build with rust support"
+	echo "	zig: build with zig support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
 	echo "	tests: build and run all tests"

@@ -29,6 +29,7 @@ $Global:BUILD_V8 =                0
 $Global:BUILD_NODEJS =            0
 $Global:BUILD_TYPESCRIPT =        0
 $Global:BUILD_RUST =              0
+$Global:BUILD_ZIG =               0
 $Global:BUILD_FILE =              0
 $Global:BUILD_RPC =               0
 $Global:BUILD_WASM =              0
@@ -98,6 +99,10 @@ function sub-options {
 		if ("$option" -eq 'rust') {
 			echo "Build with rust support"
 			$Global:BUILD_RUST = 1
+		}
+		if ("$option" -eq 'zig') {
+			echo "Build with zig support"
+			$Global:BUILD_ZIG = 1
 		}
 		if ("$option" -eq 'file') {
 			echo "Build with file support"
@@ -297,6 +302,20 @@ function sub-configure {
 		}
 	}
 
+	# Zig
+	if ($BUILD_ZIG -eq 1) {
+ 		# TODO
+		# $Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_ZIG=On"
+
+		# if ($BUILD_SCRIPTS -eq 1) {
+		# 	$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_ZIG=On"
+		# }
+
+		if ($BUILD_PORTS -eq 1) {
+			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS_ZIG=On"
+		}
+	}
+
 	# File
 	if ($BUILD_FILE -eq 1) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_FILE=On"
@@ -437,6 +456,8 @@ function sub-help {
 	echo "	v8: build with v8 support"
 	echo "	nodejs: build with nodejs support"
 	echo "	typescript: build with typescript support"
+	echo "	rust: build with rust support"
+	echo "	zig: build with zig support"
 	echo "	file: build with file support"
 	echo "	rpc: build with rpc support"
 	echo "	wasm: build with wasm support"
