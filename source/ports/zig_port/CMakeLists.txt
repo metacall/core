@@ -20,6 +20,12 @@ set(target zig_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
+# Generate bindings
+add_custom_target(TARGET ${target}
+	COMMAND ${Zig_COMPILER_EXECUTABLE} translate-c metacall.h > metacall-bindings.zig -lc -I ${CMAKE_SOURCE_DIR}/source/metacall/include -I ${CMAKE_BINARY_DIR}/source/metacall/include -I ${CMAKE_BINARY_DIR}/source/include
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 #
 # Define test
 #
