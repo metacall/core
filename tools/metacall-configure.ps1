@@ -297,6 +297,19 @@ function sub-configure {
 		}
 	}
 
+	# Zig
+	if ($BUILD_RUST -eq 1) {
+		# $Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_ZIG=On"
+
+		# if ($BUILD_SCRIPTS -eq 1) {
+		# 	$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_ZIG=On"
+		# }
+
+		if ($BUILD_PORTS -eq 1) {
+			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS_ZIG=On"
+		}
+	}
+
 	# File
 	if ($BUILD_FILE -eq 1) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_FILE=On"

@@ -437,6 +437,19 @@ sub_configure() {
 		fi
 	fi
 
+	# Zig
+	if [ $BUILD_ZIG = 1 ]; then
+		# BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_ZIG=On"
+
+		# if [ $BUILD_SCRIPTS = 1 ]; then
+		# 	BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_ZIG=On"
+		# fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_ZIG=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"

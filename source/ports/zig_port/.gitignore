@@ -1,0 +1,6 @@
+# Zig cache and binary directories
+zig-cache
+zig-out
+
+# Python loader cache in testings
+src/tests/__pycache__
