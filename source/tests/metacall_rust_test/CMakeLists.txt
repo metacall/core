@@ -145,7 +145,7 @@ test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 
-	# Enable  backtrace and logs for better debugging
+	# Enable Rust backtrace and logs for better debugging
 	RUST_BACKTRACE=1
 	RUST_LOG=INFO
 )
