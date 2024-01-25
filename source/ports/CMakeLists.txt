@@ -42,6 +42,7 @@ option(OPTION_BUILD_PORTS_R		"Build R port."					OFF)
 option(OPTION_BUILD_PORTS_RB	"Build Ruby port."				ON)
 option(OPTION_BUILD_PORTS_RS	"Build Rust port."				OFF)
 option(OPTION_BUILD_PORTS_TS	"Build TypeScript port."		OFF)
+option(OPTION_BUILD_PORTS_ZIG	"Build Zig port."				OFF)
 
 #
 # Port languages (Standalone)
@@ -52,6 +53,7 @@ add_subdirectory(node_port)
 add_subdirectory(py_port)
 add_subdirectory(go_port)
 add_subdirectory(rs_port)
+add_subdirectory(zig_port)
 
 #
 # External dependencies
