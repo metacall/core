@@ -104,3 +104,12 @@
 	fun:_ZZN4node23WorkerThreadsTaskRunner20DelayedTaskScheduler5StartEvENUlPvE_4_FUNES2_
 	...
 }
+{
+	<node_inspector_thread_tls>
+	Memcheck:Leak
+	...
+	fun:allocate_dtv
+	fun:_dl_allocate_tls
+	fun:allocate_stack
+	...
+}
