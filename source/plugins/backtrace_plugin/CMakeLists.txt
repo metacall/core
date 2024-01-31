@@ -21,6 +21,10 @@ FetchContent_GetProperties(BackwardCpp
 	POPULATED BackwardCpp_POPULATED
 )
 
+if(NOT BackwardCpp_POPULATED)
+	FetchContent_Populate(backward-cpp)
+endif()
+
 if(NOT BackwardCpp_POPULATED OR NOT BackwardCpp_SOURCE)
 	message(STATUS "BackwardCpp could not be installed, trying to find it on the system")
 	return()
@@ -35,6 +39,8 @@ if(NOT BACKWARD_FOUND)
 	message(WARNING "BackwardCpp could not be found, skipping backtrace plugin compilation")
 	return()
 endif()
+
+include(${BackwardCpp_SOURCE_DIR}/BackwardConfig.cmake)
 
 #
 # Plugin name and options
