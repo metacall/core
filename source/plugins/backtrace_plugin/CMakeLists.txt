@@ -40,7 +40,7 @@ if(NOT BACKWARD_FOUND)
 	return()
 endif()
 
-include(${BackwardCpp_SOURCE_DIR}/BackwardConfig.cmake)
+include(${BackwardCpp_SOURCE}/BackwardConfig.cmake)
 
 #
 # Plugin name and options
