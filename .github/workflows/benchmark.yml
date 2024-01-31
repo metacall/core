@@ -66,14 +66,6 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
-      # Download previous benchmark result from cache (if exists)
-      - name: Download previous benchmark data
-        uses: actions/cache@v1
-        if: ${{ github.event_name != 'pull_request' }}
-        with:
-          path: ./cache
-          key: ${{ matrix.os }}-benchmark
-
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         if: ${{ github.event_name != 'pull_request' }}
@@ -82,24 +74,23 @@ jobs:
             tool: 'googlecpp'
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
-            github-token: ""
+            github-token: ${{ secrets.BENCHMARKS_PUSH_TOKEN }}
             # Disable push and deploy GitHub pages branch automatically
             auto-push: false
-            skip-fetch-gh-pages: true
+            # Github Pages repository name
+            gh-repository: github.com/metacall/core-benchmarks
             # Github Pages branch name
-            gh-pages-branch: ${{ github.head_ref || github.ref_name }}
+            gh-pages-branch: main
             # Output directory
-            benchmark-data-dir-path: bench/${{ matrix.os }}
-            # Where the previous data file is stored
-            external-data-json-path: ./cache/metacall-benchmarks.json
+            benchmark-data-dir-path: ./${{ matrix.os }}
 
-      # Upload benchmark artifacts
-      - name: Upload benchmark artifact
-        uses: actions/upload-artifact@master
+      - name:  Push benchmark result
         if: ${{ github.event_name != 'pull_request' }}
-        with:
-          name: ${{ matrix.os }}-benchmark
-          path: ./bench/
+        run: |
+          cd  benchmark-data-repository
+          git push https://$REPO_KEY@github.com/metacall/core-benchmarks.git
+        env:
+          REPO_KEY: ${{secrets.BENCHMARKS_PUSH_TOKEN}}
 
   benchmark-windows:
     runs-on: ${{ matrix.os }}
@@ -150,14 +141,6 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
-      # Download previous benchmark result from cache (if exists)
-      - name: Download previous benchmark data
-        uses: actions/cache@v1
-        if: ${{ github.event_name != 'pull_request' }}
-        with:
-          path: ./cache
-          key: ${{ matrix.os }}-benchmark
-
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         if: ${{ github.event_name != 'pull_request' }}
@@ -166,70 +149,20 @@ jobs:
             tool: 'googlecpp'
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
-            github-token: ""
+            github-token: ${{ secrets.BENCHMARKS_PUSH_TOKEN }}
             # Disable push and deploy GitHub pages branch automatically
             auto-push: false
-            skip-fetch-gh-pages: true
+            # Github Pages repository name
+            gh-repository: github.com/metacall/core-benchmarks
             # Github Pages branch name
-            gh-pages-branch: ${{ github.head_ref || github.ref_name }}
+            gh-pages-branch: main
             # Output directory
-            benchmark-data-dir-path: bench/${{ matrix.os }}
-            # Where the previous data file is stored
-            external-data-json-path: ./cache/metacall-benchmarks.json
+            benchmark-data-dir-path: ./${{ matrix.os }}
 
-      # Upload benchmark artifacts
-      - name: Upload benchmark artifact
-        uses: actions/upload-artifact@master
+      - name:  Push benchmark result
         if: ${{ github.event_name != 'pull_request' }}
-        with:
-          name: ${{ matrix.os }}-benchmark
-          path: ./bench/
-
-  # This job will merge all benchmarks into one artifact
-  benchmark-upload:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' }}
-    needs: [benchmark-unix, benchmark-windows]
-    steps:
-      # Ubuntu
-      - uses: actions/download-artifact@master
-        with:
-          name: ubuntu-latest-benchmark
-          path: ./bench/
-
-      # MacOS
-      - uses: actions/download-artifact@master
-        with:
-          name: macos-latest-benchmark
-          path: ./bench/
-
-      # Windows
-      - uses: actions/download-artifact@master
-        with:
-          name: windows-2019-benchmark
-          path: ./bench/
-
-      # Upload benchmark website artifacts
-      - name: Upload benchmark artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: ./bench/
-          name: benchmarks
-
-  benchmark-deploy:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' }}
-    needs: [benchmark-upload]
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v2
-        with:
-          artifact_name: benchmarks
+        run: |     
+          cd  benchmark-data-repository
+          git push https://${REPO_KEY}@github.com/metacall/core-benchmarks.git
+        env:
+          REPO_KEY: ${{secrets.BENCHMARKS_PUSH_TOKEN}}
