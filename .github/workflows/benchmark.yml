@@ -163,6 +163,6 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |     
           cd  benchmark-data-repository
-          git push https://${REPO_KEY}@github.com/ahmedihabb2/benchmarks.git
+          git push https://${REPO_KEY}@github.com/metacall/core-benchmarks.git
         env:
           REPO_KEY: ${{secrets.PUSH_TOKEN}}
