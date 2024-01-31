@@ -74,11 +74,11 @@ jobs:
             tool: 'googlecpp'
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
-            github-token: ${{ secrets.PUSH_TOKEN }}
+            github-token: ${{ secrets.BENCHMARKS_PUSH_TOKEN }}
             # Disable push and deploy GitHub pages branch automatically
             auto-push: false
             # Github Pages repository name
-            gh-repository: github.com/ahmedihabb2/benchmarks
+            gh-repository: github.com/metacall/core-benchmarks
             # Github Pages branch name
             gh-pages-branch: main
             # Output directory
@@ -88,9 +88,9 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           cd  benchmark-data-repository
-          git push https://$REPO_KEY@github.com/ahmedihabb2/benchmarks.git
+          git push https://$REPO_KEY@github.com/metacall/core-benchmarks.git
         env:
-          REPO_KEY: ${{secrets.PUSH_TOKEN}}
+          REPO_KEY: ${{secrets.BENCHMARKS_PUSH_TOKEN}}
 
   benchmark-windows:
     runs-on: ${{ matrix.os }}
@@ -149,11 +149,11 @@ jobs:
             tool: 'googlecpp'
             output-file-path: ./build/benchmarks/metacall-benchmarks.json
             # Access token to deploy GitHub Pages branch
-            github-token: ${{ secrets.PUSH_TOKEN }}
+            github-token: ${{ secrets.BENCHMARKS_PUSH_TOKEN }}
             # Disable push and deploy GitHub pages branch automatically
             auto-push: false
             # Github Pages repository name
-            gh-repository: github.com/ahmedihabb2/benchmarks
+            gh-repository: github.com/metacall/core-benchmarks
             # Github Pages branch name
             gh-pages-branch: main
             # Output directory
@@ -165,4 +165,4 @@ jobs:
           cd  benchmark-data-repository
           git push https://${REPO_KEY}@github.com/metacall/core-benchmarks.git
         env:
-          REPO_KEY: ${{secrets.PUSH_TOKEN}}
+          REPO_KEY: ${{secrets.BENCHMARKS_PUSH_TOKEN}}
