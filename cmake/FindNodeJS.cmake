@@ -490,8 +490,6 @@ if(NOT NodeJS_LIBRARY)
 				# Copy library to MetaCall output path
 				execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
 				file(COPY "${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME}" DESTINATION ${PROJECT_OUTPUT_DIR})
-
-				message(STATUS "Install NodeJS shared library")
 			endif()
 		else()
 			message(STATUS "Configure NodeJS shared library")
@@ -553,10 +551,6 @@ if(NOT NodeJS_LIBRARY)
 			else()
 				execute_process(COMMAND sh -c "make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
 			endif()
-
-			message(STATUS "Install NodeJS shared library")
-
-			execute_process(COMMAND sh -c "make install" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
 		endif()
 	endif()
 
@@ -576,6 +570,8 @@ if(NOT NodeJS_LIBRARY)
 
 	if(NOT NodeJS_LIBRARY)
 		message(FATAL_ERROR "NodeJS library not found and it could not be built from source")
+	else()
+		set(NodeJS_BUILD_FROM_SOURCE TRUE)
 	endif()
 endif()
 
