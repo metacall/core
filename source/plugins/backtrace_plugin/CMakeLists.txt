@@ -152,6 +152,8 @@ target_include_directories(${target}
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
 
+	${BACKWARD_INCLUDE_DIR} # Backward-cpp includes
+
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
