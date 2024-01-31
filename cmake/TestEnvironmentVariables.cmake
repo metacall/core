@@ -2,7 +2,7 @@
 #	Test Environment Variables by Parra Studios
 #	Utility for defining cross-platform environment variables in tests.
 #
-#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.
