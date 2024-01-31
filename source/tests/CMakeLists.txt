@@ -74,9 +74,14 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUI
 	#		- metacall-inspect-test
 	#		- metacall-integration-test
 
+	include(ProcessorCount)
+
+	ProcessorCount(N)
+
 	add_custom_target(memcheck
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_CTEST_COMMAND}
+			-j${N}
 			--label-exclude MEMCHECK_IGNORE
 			--force-new-ctest-process
 			--test-action memcheck
