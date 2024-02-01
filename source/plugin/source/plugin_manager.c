@@ -30,6 +30,10 @@
 
 #include <string.h>
 
+#if defined(WIN32) || defined(_WIN32)
+	#include <winbase.h>
+#endif
+
 /* -- Declarations -- */
 
 struct plugin_manager_iterate_cb_type
@@ -135,6 +139,15 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 			return 1;
 		}
 	}
+
+	/* On Windows, pass the library path to the loader so it can find the dependencies of the plugins */
+	/* For more information: https://github.com/metacall/core/issues/479 */
+#if defined(WIN32) || defined(_WIN32)
+	if (SetDllDirectoryA(manager->library_path) == FALSE)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to register the DLL directory %s; plugins with other dependant DLLs may fail to load", manager->library_path);
+	}
+#endif
 
 	/* Initialize the plugin loader */
 	if (manager->l == NULL)

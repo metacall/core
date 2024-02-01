@@ -64,6 +64,32 @@
 	obj:*libnode*
 }
 {
+	<uv_poll_tcp_connect>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	fun:realloc
+	...
+	fun:uv__tcp_connect
+	fun:uv_tcp_connect
+	...
+	fun:uv__async_io
+	fun:uv__io_poll
+	...
+}
+{
+	<uv_poll_tcp_listen>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	fun:realloc
+	...
+	fun:uv__tcp_listen
+	fun:uv_listen
+	...
+	fun:uv__async_io
+	fun:uv__io_poll
+	...
+}
+{
 	<frame_ptr_ne>
 	Memcheck:Cond
 	...
@@ -102,5 +128,342 @@
 	fun:uv_loop_close
 	fun:_ZN4node18CheckedUvLoopCloseEP9uv_loop_s
 	fun:_ZZN4node23WorkerThreadsTaskRunner20DelayedTaskScheduler5StartEvENUlPvE_4_FUNES2_
+	...
+}
+{
+	<node_inspector_thread_stack_tls>
+	Memcheck:Leak
+	match-leak-kinds: possible
+	...
+	fun:allocate_dtv
+	fun:_dl_allocate_tls
+	fun:allocate_stack
+	...
+}
+{
+	<node_tracing_observer>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN2v87tracing23TracingCategoryObserver5SetUpEv
+	fun:_ZN4node24InitializeOncePerProcessEiPPc
+	fun:_ZN4node5StartEiPPc
+	...
+}
+{
+	<node_code_range_allocator>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN2v88internal20CodeRangeAddressHint20NotifyFreedCodeRangeEmm
+	fun:_ZN2v88internal15MemoryAllocator8TearDownEv
+	fun:_ZN2v88internal4Heap8TearDownEv
+	fun:_ZN2v88internal7Isolate6DeinitEv
+	fun:_ZN2v88internal7Isolate6DeleteEPS1_
+	fun:_ZN4node16NodeMainInstanceD1Ev
+	...
+}
+{
+	<node_intl_versions>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN4node8Metadata8Versions22InitializeIntlVersionsEv
+	...
+}
+{
+	<node_flush_foreground_tasks>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN4node22PerIsolatePlatformData28FlushForegroundTasksInternalEv
+	...
+}
+{
+	<node_memory_reducer_schedule_timer>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN2v88internal13MemoryReducer13ScheduleTimerEd
+	...
+}
+{
+	<uv_loop_data>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:uv_loop_init
+	fun:uv_default_loop
+	...
+}
+{
+	<node_isolate_shutdown_data>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN4node22PerIsolatePlatformData8ShutdownEv
+	fun:_ZN4node12NodePlatform17UnregisterIsolateEPN2v87IsolateE
+	fun:_ZN4node16NodeMainInstanceD1Ev
+	fun:_ZN4node5StartEiPPc
+	...
+}
+{
+	<node_per_isolate_platform_data>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN4node22PerIsolatePlatformDataC1EPN2v87IsolateEP9uv_loop_s
+	fun:_ZN4node12NodePlatform15RegisterIsolateEPN2v87IsolateEP9uv_loop_s
+	...
+}
+{
+	<node_register_isolate>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN4node12NodePlatform15RegisterIsolateEPN2v87IsolateEP9uv_loop_s
+	...
+}
+{
+	<node_compiler_type_cache_allocator>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN2v88internal14AllocWithRetryEm
+	fun:_ZN2v88internal19AccountingAllocator15AllocateSegmentEm
+	fun:_ZN2v88internal4Zone9NewExpandEm
+	fun:_ZN2v88internal8compiler4Type5RangeEddPNS0_4ZoneE
+	fun:_ZN2v88internal8compiler9TypeCacheC1Ev
+	fun:_ZN2v88internal8compiler9TypeCache3GetEv
+	fun:_ZN2v88internal8compiler29JSNativeContextSpecializationC1EPNS1_15AdvancedReducer6EditorEPNS1_7JSGraphEPNS1_12JSHeapBrokerENS_4base5FlagsINS2_4FlagEiEEPNS1_23CompilationDependenciesEPNS0_4ZoneESH_
+	fun:_ZN2v88internal8compiler12PipelineImpl11CreateGraphEv
+	fun:_ZN2v88internal8compiler22PipelineCompilationJob14PrepareJobImplEPNS0_7IsolateE
+	fun:_ZN2v88internal23OptimizedCompilationJob10PrepareJobEPNS0_7IsolateE
+	...
+}
+{
+	<node_loader_module_register>
+	Memcheck:Leak
+	...
+	fun:napi_module_register
+	...
+}
+{
+	<node_async_hooks_uninitialized_jump>
+	Memcheck:Cond
+	fun:_ZNK4node11Environment16can_call_into_jsEv
+	fun:_ZN4node10AsyncHooks20clear_async_id_stackEv
+	fun:_ZN4node10AsyncHooksC1EPN2v87IsolateEPKNS0_13SerializeInfoE
+	...
+	fun:_ZN4node16NodeMainInstance21CreateMainEnvironmentEPi
+	fun:_ZN4node16NodeMainInstance3RunEv
+	...
+}
+{
+	<node_isolate_heap>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN2v88internal4HeapD1Ev
+	fun:_ZN2v88internal7IsolateD1Ev
+	fun:_ZN2v88internal7Isolate6DeleteEPS1_
+	fun:_ZN4node16NodeMainInstanceD1Ev
+	fun:_ZN4node22LoadSnapshotDataAndRunEPPKNS_12SnapshotDataEPKNS_20InitializationResultE
+	fun:_ZN4node5StartEiPPc
+	...
+}
+{
+	<node_locale_icu>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN6icu_7227locale_set_default_internalEPKcR10UErrorCode
+	fun:_ZN6icu_726Locale10getDefaultEv
+	fun:_ZN6icu_726Locale4initEPKca
+	fun:_ZN6icu_726LocaleC1Ev
+	...
+}
+{
+	<node_timers_memory_reducer>
+	Memcheck:Leak
+	match-leak-kinds: possible
+	...
+	fun:make_unique<v8::internal::MemoryReducer::TimerTask, v8::internal::MemoryReducer*>
+	fun:ScheduleTimer
+	fun:_ZN2v88internal13MemoryReducer13ScheduleTimerEd
+	fun:_ZN2v88internal13MemoryReducer11NotifyTimerERKNS1_5EventE
+	fun:_ZN2v88internal13MemoryReducer9TimerTask11RunInternalEv
+	fun:_ZN4node22PerIsolatePlatformData17RunForegroundTaskESt10unique_ptrIN2v84TaskESt14default_deleteIS3_EE
+	fun:_ZN4node22PerIsolatePlatformData17RunForegroundTaskEP10uv_timer_s
+	fun:uv__run_timers
+	fun:uv_run
+	fun:_ZN4node13SpinEventLoopEPNS_11EnvironmentE
+	fun:_ZN4node16NodeMainInstance3RunEPiPNS_11EnvironmentE
+	fun:_ZN4node16NodeMainInstance3RunEv
+	fun:_ZN4node22LoadSnapshotDataAndRunEPPKNS_12SnapshotDataEPKNS_20InitializationResultE
+	fun:_ZN4node5StartEiPPc
+	...
+}
+{
+	<node_timers_memory_reducer_scheduler>
+	Memcheck:Leak
+	match-leak-kinds: possible
+	...
+	fun:_ZN4node22PerIsolatePlatformData15PostDelayedTaskESt10unique_ptrIN2v84TaskESt14default_deleteIS3_EEd
+	fun:ScheduleTimer
+	fun:_ZN2v88internal13MemoryReducer13ScheduleTimerEd
+	fun:_ZN2v88internal13MemoryReducer11NotifyTimerERKNS1_5EventE
+	fun:_ZN2v88internal13MemoryReducer9TimerTask11RunInternalEv
+	fun:_ZN4node22PerIsolatePlatformData17RunForegroundTaskESt10unique_ptrIN2v84TaskESt14default_deleteIS3_EE
+	fun:_ZN4node22PerIsolatePlatformData17RunForegroundTaskEP10uv_timer_s
+	fun:uv__run_timers
+	fun:uv_run
+	fun:_ZN4node13SpinEventLoopEPNS_11EnvironmentE
+	fun:_ZN4node16NodeMainInstance3RunEPiPNS_11EnvironmentE
+	fun:_ZN4node16NodeMainInstance3RunEv
+	...
+}
+{
+	<node_delayed_tasks>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN4node9TaskQueueINS_11DelayedTaskEE6PopAllEv
+	fun:_ZN4node22PerIsolatePlatformData8ShutdownEv
+	fun:_ZN4node12NodePlatform17UnregisterIsolateEPN2v87IsolateE
+	fun:_ZN4node16NodeMainInstanceD1Ev
+	fun:_ZN4node22LoadSnapshotDataAndRunEPPKNS_12SnapshotDataEPKNS_20InitializationResultE
+	...
+}
+{
+	<node_task_queue_pop_all>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN4node9TaskQueueIN2v84TaskEE6PopAllEv
+	fun:_ZN4node22PerIsolatePlatformData8ShutdownEv
+	fun:_ZN4node12NodePlatform17UnregisterIsolateEPN2v87IsolateE
+	fun:_ZN4node16NodeMainInstanceD1Ev
+	...
+}
+{
+	<node_internal_heap_global>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN2v88internal12_GLOBAL__N_133InitializeSharedReadOnlyArtifactsEv
+	fun:_ZN2v88internal12ReadOnlyHeap5SetUpEPNS0_7IsolateEPNS0_12SnapshotDataEb
+	fun:_ZN2v88internal7Isolate4InitEPNS0_12SnapshotDataES3_S3_b
+	fun:Initialize
+	fun:_ZN2v88internal8Snapshot10InitializeEPNS0_7IsolateE
+	fun:_ZN2v87Isolate10InitializeEPS0_RKNS0_12CreateParamsE
+	...
+}
+{
+	<node_icu_72_uprv_malloc>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:uprv_realloc_72
+	fun:_ZN6icu_7210UnicodeSet7compactEv
+	fun:_ZN6icu_7210UnicodeSet6freezeEv
+	...
+}
+{
+	<node_icu_72_uprv_realloc>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:uprv_malloc_72
+	fun:_ZN6icu_727UMemorynwEm
+	fun:_ZN6icu_7210UnicodeSet6freezeEv
+	...
+}
+{
+	<node_worker_compiler>
+	Memcheck:Leak
+	match-leak-kinds: reachable
+	...
+	fun:_ZN2v88internal14AllocWithRetryEmPFPvmE
+	fun:_ZN2v88internal19AccountingAllocator15AllocateSegmentEmb
+	fun:_ZN2v88internal4Zone9NewExpandEm
+	fun:Allocate<v8::internal::compiler::RangeType>
+	fun:New<v8::internal::compiler::RangeType, long unsigned int&, v8::internal::compiler::RangeType::Limits&>
+	fun:New
+	fun:New
+	fun:_ZN2v88internal8compiler4Type5RangeEddPNS0_4ZoneE
+	fun:CreateRange
+	fun:CreateRange<signed char>
+	fun:_ZN2v88internal8compiler9TypeCacheC1Ev
+	fun:LeakyObject<>
+	fun:_ZN2v88internal8compiler9TypeCache3GetEv
+	fun:_ZN2v88internal8compiler29JSNativeContextSpecializationC1EPNS1_15AdvancedReducer6EditorEPNS1_7JSGraphEPNS1_12JSHeapBrokerENS_4base5FlagsINS2_4FlagEiEEPNS1_23CompilationDependenciesEPNS0_4ZoneESH_
+	fun:_ZN2v88internal8compiler13InliningPhase3RunEPNS1_12PipelineDataEPNS0_4ZoneE.isra.0
+	fun:Run<v8::internal::compiler::InliningPhase>
+	fun:_ZN2v88internal8compiler12PipelineImpl11CreateGraphEv
+	fun:_ZN2v88internal8compiler22PipelineCompilationJob14ExecuteJobImplEPNS0_16RuntimeCallStatsEPNS0_12LocalIsolateE
+	fun:_ZN2v88internal23OptimizedCompilationJob10ExecuteJobEPNS0_16RuntimeCallStatsEPNS0_12LocalIsolateE
+	fun:_ZN2v88internal27OptimizingCompileDispatcher11CompileNextEPNS0_22TurbofanCompilationJobEPNS0_12LocalIsolateE
+	fun:_ZThn32_N2v88internal14CancelableTask3RunEv
+	fun:_ZN4node12_GLOBAL__N_1L20PlatformWorkerThreadEPv
+	...
+}
+{
+	<node_atomic_tracing_controller>
+	Helgrind:Race
+	...
+	fun:store
+	fun:atomic_store_explicit<long int>
+	fun:Release_Store
+	fun:GetCategoryGroupEnabled
+	fun:_ZN2v88platform7tracing17TracingController23GetCategoryGroupEnabledEPKc
+	...
+}
+{
+	<node_task_runner_loop_close>
+	Helgrind:Race
+	...
+	fun:uv_loop_close
+	fun:_ZN4node18CheckedUvLoopCloseEP9uv_loop_s
+	fun:_ZN4node23WorkerThreadsTaskRunner20DelayedTaskScheduler3RunEv
+	fun:_ZZN4node23WorkerThreadsTaskRunner20DelayedTaskScheduler5StartEvENKUlPvE_clES2_
+	fun:_ZZN4node23WorkerThreadsTaskRunner20DelayedTaskScheduler5StartEvENUlPvE_4_FUNES2_
+	...
+}
+{
+	<node_builtin_compiler>
+	Memcheck:Leak
+	match-leak-kinds: possible
+	...
+	fun:ScheduleTimer
+	fun:_ZN2v88internal13MemoryReducer13ScheduleTimerEd
+	fun:_ZN2v88internal4Heap28NotifyOldGenerationExpansionENS0_15AllocationSpaceEPNS0_11MemoryChunkE
+	fun:_ZN2v88internal10PagedSpace9TryExpandEiNS0_16AllocationOriginE
+	fun:_ZN2v88internal10PagedSpace16RawRefillLabMainEiNS0_16AllocationOriginE
+	fun:_ZN2v88internal10PagedSpace13RefillLabMainEiNS0_16AllocationOriginE
+	fun:_ZN2v88internal19SpaceWithLinearArea20AllocateRawUnalignedEiNS0_16AllocationOriginE
+	fun:AllocateRawSlow
+	fun:AllocateRaw
+	fun:_ZN2v88internal13HeapAllocator11AllocateRawILNS0_14AllocationTypeE1EEENS0_16AllocationResultEiNS0_16AllocationOriginENS0_19AllocationAlignmentE
+	fun:AllocateRawWith<(v8::internal::HeapAllocator::AllocationRetryMode)1>
+	fun:_ZN2v88internal7Factory11AllocateRawEiNS0_14AllocationTypeENS0_19AllocationAlignmentE
+	fun:_ZN2v88internal11FactoryBaseINS0_7FactoryEE26AllocateRawWithImmortalMapEiNS0_14AllocationTypeENS0_3MapENS0_19AllocationAlignmentE
+	fun:_ZN2v88internal11FactoryBaseINS0_7FactoryEE21NewSharedFunctionInfoEv
+	fun:_ZN2v88internal11FactoryBaseINS0_7FactoryEE21NewSharedFunctionInfoENS0_11MaybeHandleINS0_6StringEEENS4_INS0_10HeapObjectEEENS0_7BuiltinENS0_12FunctionKindE
+	fun:_ZN2v88internal11FactoryBaseINS0_7FactoryEE31NewSharedFunctionInfoForLiteralEPNS0_15FunctionLiteralENS0_6HandleINS0_6ScriptEEEb
+	fun:_ZN2v88internal11interpreter17BytecodeGenerator25AllocateDeferredConstantsINS0_7IsolateEEEvPT_NS0_6HandleINS0_6ScriptEEE
+	fun:_ZN2v88internal11interpreter17BytecodeGenerator16FinalizeBytecodeINS0_7IsolateEEENS0_6HandleINS0_13BytecodeArrayEEEPT_NS5_INS0_6ScriptEEE
+	fun:_ZN2v88internal11interpreter25InterpreterCompilationJob17DoFinalizeJobImplINS0_7IsolateEEENS0_14CompilationJob6StatusENS0_6HandleINS0_18SharedFunctionInfoEEEPT_
+	fun:_ZN2v88internal11interpreter25InterpreterCompilationJob15FinalizeJobImplENS0_6HandleINS0_18SharedFunctionInfoEEEPNS0_7IsolateE
+	fun:_ZN2v88internal25UnoptimizedCompilationJob11FinalizeJobENS0_6HandleINS0_18SharedFunctionInfoEEEPNS0_7IsolateE
+	fun:_ZN2v88internal12_GLOBAL__N_139FinalizeSingleUnoptimizedCompilationJobINS0_7IsolateEEENS0_14CompilationJob6StatusEPNS0_25UnoptimizedCompilationJobENS0_6HandleINS0_18SharedFunctionInfoEEEPT_PSt6vectorINS0_34FinalizeUnoptimizedCompilationDataESaISE_EE
+	fun:_ZN2v88internal12_GLOBAL__N_155IterativelyExecuteAndFinalizeUnoptimizedCompilationJobsINS0_7IsolateEEEbPT_NS0_6HandleINS0_18SharedFunctionInfoEEENS6_INS0_6ScriptEEEPNS0_9ParseInfoEPNS0_19AccountingAllocatorEPNS0_15IsCompiledScopeEPSt6vectorINS0_34FinalizeUnoptimizedCompilationDataESaISI_EEPSH_INS0_27DeferredFinalizationJobDataESaISM_EE.constprop.0
+	fun:_ZN2v88internal12_GLOBAL__N_115CompileToplevelEPNS0_9ParseInfoENS0_6HandleINS0_6ScriptEEENS0_11MaybeHandleINS0_9ScopeInfoEEEPNS0_7IsolateEPNS0_15IsCompiledScopeE
+	fun:_ZN2v88internal8Compiler18GetWrappedFunctionENS0_6HandleINS0_6StringEEENS2_INS0_10FixedArrayEEENS2_INS0_7ContextEEERKNS0_13ScriptDetailsEPNS0_17AlignedCachedDataENS_14ScriptCompiler14CompileOptionsENSE_13NoCacheReasonE
+	fun:_ZN2v814ScriptCompiler23CompileFunctionInternalENS_5LocalINS_7ContextEEEPNS0_6SourceEmPNS1_INS_6StringEEEmPNS1_INS_6ObjectEEENS0_14CompileOptionsENS0_13NoCacheReasonEPNS1_INS_14ScriptOrModuleEEE
+	fun:_ZN2v814ScriptCompiler15CompileFunctionENS_5LocalINS_7ContextEEEPNS0_6SourceEmPNS1_INS_6StringEEEmPNS1_INS_6ObjectEEENS0_14CompileOptionsENS0_13NoCacheReasonE
+	fun:_ZN4node8builtins13BuiltinLoader24LookupAndCompileInternalEN2v85LocalINS2_7ContextEEEPKcPSt6vectorINS3_INS2_6StringEEESaISA_EEPNS1_6ResultE
+	fun:_ZN4node8builtins13BuiltinLoader16LookupAndCompileEN2v85LocalINS2_7ContextEEEPKcPNS_11EnvironmentE
+	fun:_ZN4node8builtins13BuiltinLoader15CompileFunctionERKN2v820FunctionCallbackInfoINS2_5ValueEEE
 	...
 }

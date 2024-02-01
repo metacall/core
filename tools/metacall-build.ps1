@@ -2,7 +2,7 @@
 #	MetaCall Build PowerShell Script by Parra Studios
 #	Build and install powershell script utility for MetaCall.
 #
-#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ function Sub-Build {
 	# Tests (coverage needs to run the tests)
 	if (($BUILD_TESTS -eq 1) -or ($BUILD_BENCHMARKS -eq 1) -or ($BUILD_COVERAGE -eq 1)) {
 		echo "Running the tests..."
-		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 5400 --output-on-failure -C $BUILD_TYPE
+		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 7200 --output-on-failure -C $BUILD_TYPE
 
 		if (-not $?) {
 			$RecentExitCode = $LASTEXITCODE

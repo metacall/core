@@ -102,6 +102,7 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 				if (metacall_load_from_configuration(dir_path.c_str(), handle_ptr, config_allocator) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load plugin: %s", dir_path.c_str());
+					metacall_allocator_destroy(config_allocator);
 					return metacall_value_create_int(4);
 				}
 

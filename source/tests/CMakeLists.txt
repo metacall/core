@@ -49,7 +49,7 @@ option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
 
 
 if(OPTION_TEST_MEMORYCHECK AND (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
-	message(WARNING "OPTION_TEST_MEMORYCHECK and OPTION_BUILD_ADDRESS_SANITIZER are not compatible, disabling memcheck tests.")
+	message(WARNING "OPTION_TEST_MEMORYCHECK and OPTION_BUILD_{ADDRESS,THREAD,MEMORY}_SANITIZER are not compatible, disabling memcheck tests.")
 endif()
 
 if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
@@ -58,7 +58,7 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUI
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --trace-children=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-reachable=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-origins=yes")
-	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=50")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=100")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all-non-file") # for JITs
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-dl.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-python.supp")
@@ -74,13 +74,18 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUI
 	#		- metacall-inspect-test
 	#		- metacall-integration-test
 
+	include(ProcessorCount)
+
+	ProcessorCount(N)
+
 	add_custom_target(memcheck
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_CTEST_COMMAND}
+			-j${N}
 			--label-exclude MEMCHECK_IGNORE
 			--force-new-ctest-process
 			--test-action memcheck
-			--timeout 5400
+			--timeout 7200
 		COMMAND ${CMAKE_COMMAND} -E cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
 	)
 endif()
@@ -130,6 +135,7 @@ add_subdirectory(metacall_node_event_loop_signal_test)
 add_subdirectory(metacall_node_call_test)
 add_subdirectory(metacall_node_inline_test)
 add_subdirectory(metacall_node_async_test)
+add_subdirectory(metacall_node_async_multiple_test)
 add_subdirectory(metacall_node_reentrant_test)
 add_subdirectory(metacall_node_port_test)
 add_subdirectory(metacall_node_port_await_test)

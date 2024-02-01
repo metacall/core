@@ -2219,7 +2219,6 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 			if (trampoline != NULL)
 			{
-				napi_ref trampoline_ref;
 				size_t args_size;
 				value *args;
 				loader_impl_node_function node_func;
@@ -2278,7 +2277,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 				node_loader_impl_exception(env, status);
 
-				status = napi_wrap(env, argv[2], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, &trampoline_ref);
+				status = napi_wrap(env, argv[2], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, NULL);
 
 				node_loader_impl_exception(env, status);
 
@@ -2290,11 +2289,6 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 				node_loader_impl_exception(env, status);
 
 				status = napi_call_function(env, global, function_await, 3, argv, &await_return);
-
-				node_loader_impl_exception(env, status);
-
-				/* Delete references to wrapped objects */
-				status = napi_delete_reference(env, trampoline_ref);
 
 				node_loader_impl_exception(env, status);
 
@@ -2457,8 +2451,6 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 
 			if (trampoline != NULL)
 			{
-				napi_ref trampoline_ref;
-
 				/* Get function reference */
 				status = napi_get_reference_value(env, future_await_safe->node_future->promise_ref, &argv[0]);
 
@@ -2477,7 +2469,7 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 
 				node_loader_impl_exception(env, status);
 
-				status = napi_wrap(env, argv[1], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, &trampoline_ref);
+				status = napi_wrap(env, argv[1], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, NULL);
 
 				node_loader_impl_exception(env, status);
 
@@ -2489,11 +2481,6 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 				node_loader_impl_exception(env, status);
 
 				status = napi_call_function(env, global, future_await, 2, argv, &await_return);
-
-				node_loader_impl_exception(env, status);
-
-				/* Delete references references to wrapped objects */
-				status = napi_delete_reference(env, trampoline_ref);
 
 				node_loader_impl_exception(env, status);
 

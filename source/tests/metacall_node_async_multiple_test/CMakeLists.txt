@@ -1,11 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_PLUGINS_BACKTRACE)
-	return()
-endif()
-
-include(Portability)
-
-if(NOT PROJECT_OS_FAMILY STREQUAL unix)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_NODE)
 	return()
 endif()
 
@@ -14,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-backtrace-plugin-test)
+set(target metacall-node-async-multiple-test)
 message(STATUS "Test ${target}")
 
 #
@@ -38,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_backtrace_plugin_test.cpp
+	${source_path}/metacall_node_async_multiple_test.cpp
 )
 
 # Group source files
@@ -101,8 +95,6 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
-
-	BACKTRACE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/backtrace_plugin/metacall.json"
 )
 
 #
@@ -136,8 +128,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	ext_loader
-	backtrace_plugin
+	node_loader
 )
 
 #
@@ -145,8 +136,7 @@ add_dependencies(${target}
 #
 
 set_property(TEST ${target}
-	# Disable valgrind when testing backtracing for segfaults
-	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+	PROPERTY LABELS ${target}
 )
 
 include(TestEnvironmentVariables)

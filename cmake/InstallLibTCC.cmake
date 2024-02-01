@@ -2,7 +2,7 @@
 #	CMake Install Tiny C Compiler by Parra Studios
 #	CMake script to install TCC library.
 #
-#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ if(PROJECT_OS_FAMILY STREQUAL unix)
 	if(OPTION_BUILD_MUSL)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --config-musl)
 	else()
-		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --with-libgcc --with-selinux)
+		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --with-selinux)
 	endif()
 elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	# TODO: --disable-static is not working on MacOS, this should be reported or further investigated
@@ -87,7 +87,7 @@ elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --enable-cross) # --disable-static
 elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
-		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static --with-libgcc --with-selinux)
+		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static)
 	else()
 		set(LIBTCC_CONFIGURE "")
 	endif()
