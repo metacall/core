@@ -51,3 +51,26 @@ set_target_properties(${target}
 add_dependencies(${target}
 	plugin_extension
 )
+
+#
+# Define test
+#
+
+# Check if tests are enabled
+if(NOT OPTION_BUILD_TESTS)
+	return()
+endif()
+
+set(NodeJS_EXECUTABLE_ONLY ON)
+
+find_package(NodeJS)
+
+if(NOT NodeJS_FOUND)
+	message(SEND_ERROR "NodeJS libraries not found")
+	return()
+endif()
+
+add_test(NAME ${target}
+	COMMAND ${NodeJS_EXECUTABLE} test.js
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/source
+)

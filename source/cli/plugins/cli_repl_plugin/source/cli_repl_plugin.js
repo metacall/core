@@ -1,9 +1,15 @@
 const vm = require('vm');
 const r = require('repl');
-const { command_register, command_parse, command_complete } = require('./parser')
+const { command_register, command_register_map, command_parse, command_complete } = require('./parser');
+const { cli_core_command_map } = require('./cli_core_command');
 
-// Method for generating a continuous chain of promises for allowing the repl
-// evaluation to be resolved from outside (in the CLI main loop)
+/* Register CLI Core command map into the parser */
+command_register_map(cli_core_command_map);
+
+/*
+ * Method for generating a continuous chain of promises for allowing the repl
+ * evaluation to be resolved from outside (in the CLI main loop)
+ */
 const new_repl_promise = () => {
 	let promise_resolve = null;
 	let promise_reject = null;
@@ -13,10 +19,10 @@ const new_repl_promise = () => {
 	});
 
 	const wait = async () => {
-		// Await to the REPL promise to be resolved from the evaluator
+		/* Await to the REPL promise to be resolved from the evaluator */
 		const p = await promise;
 
-		// Reset the global promise from the REPL
+		/* Reset the global promise from the REPL */
 		repl_promise = new_repl_promise();
 		return p
 	};
@@ -26,10 +32,10 @@ const new_repl_promise = () => {
 
 let repl_promise = new_repl_promise();
 
-// Show welcome message
+/* Show welcome message */
 console.log('Welcome to Tijuana, tequila, sexo & marijuana.');
 
-// Start REPL
+/* Start REPL */
 const repl = r.start({
 	prompt: '\u03BB ',
 	useGlobal: false,
@@ -39,26 +45,31 @@ const repl = r.start({
 });
 
 function evaluator(cmd, context, file, cb) {
-	// TODO: Implement parser for cmd
-	repl_promise.resolve([command_parse(cmd.trim()), cb]);
+	try {
+		const result = command_parse(cmd.trim());
+		repl_promise.resolve([result, cb]);
+	} catch (e) {
+		console.error(e.message);
+		repl_promise.reject();
+	}
 }
 
-// Complete function (hook it in order to allow inline autocompletion)
+/* Complete function (hook it in order to allow inline autocompletion) */
 const _completer = repl.completer.bind(repl);
 repl.completer = function(line, cb) {
-	// Hook the completer callback in order to inject our own completion results
+	/* Hook the completer callback in order to inject our own completion results */
 	const wrap = (err, result) => {
-		// TODO: Generate autocompletion array
+		/* TODO: Generate autocompletion array (command_complete) */
 		cb(err, [['call'], line]);
 	};
 	_completer(line, wrap);
 }
 
-// Clear context and commands
+/* Clear context and commands */
 repl.context = vm.createContext({});
 repl.commands = {};
 
-// On close event reject the repl promise
+/* On close event reject the repl promise */
 repl.on('close', () => {
 	repl_promise.reject();
 });
@@ -67,10 +78,32 @@ module.exports = {
 	evaluate: async () => {
 		return await repl_promise.wait();
 	},
+	/* This function is exported so it can be called from other plugins:
+	 *
+	 * void *repl_handle = metacall_handle("ext", "cli_repl_plugin");
+	 * void *args[] = {
+	 * 	metacall_value_create_string("example", sizeof("example") - 1),
+	 * 	metacall_value_create_array(NULL, 1),
+	 * 	metacall_value_create_array(NULL, 1)
+	 * };
+	 *
+	 * void *regexes = metacall_value_to_array(args[1]);
+	 * regexes[0] = metacall_value_create_string("[a-zA-Z0-9_]", sizeof("[a-zA-Z0-9_]") - 1);
+	 *
+	 * void *types = metacall_value_to_array(args[2]);
+	 * types[0] = metacall_value_create_string("METACALL_STRING", sizeof("METACALL_STRING") - 1);
+	 *
+	 * void *ret = metacallhv_s(repl_handle, "command_register", args, sizeof(args) / sizeof(args[0]));
+	 *
+	 * metacall_value_destroy(args[0]);
+	 * metacall_value_destroy(args[1]);
+	 * metacall_value_destroy(args[2]);
+	 *
+	 * metacall_value_destroy(ret);
+	 */
 	command_register,
+
 	close: () => {
 		repl.close();
 	}
-}
-
-setTimeout(() => repl.close(), 5000);
+};

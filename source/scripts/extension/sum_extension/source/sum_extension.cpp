@@ -21,13 +21,15 @@
 #include <metacall/metacall.h>
 #include <sum_extension/sum_extension.h>
 
+#include <plugin/plugin_interface.hpp>
+
 void *sum(size_t argc, void *args[], void *data)
 {
+	/* Validate function parameters */
+	EXTENSION_FUNCTION_CHECK("Failed to sum", METACALL_LONG, METACALL_LONG);
+
 	long left = metacall_value_to_long(args[0]), right = metacall_value_to_long(args[1]);
 	long result = left + right;
-
-	(void)argc;
-	(void)data;
 
 	printf("%ld + %ld = %ld\n", left, right, result);
 

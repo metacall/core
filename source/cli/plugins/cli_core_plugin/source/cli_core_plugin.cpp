@@ -671,11 +671,6 @@ void *debug(size_t argc, void *args[], void *data)
 
 int cli_core_plugin(void *loader, void *handle)
 {
-	// TODO: Eliminar array en load, usar siempre string
-	// TODO: Eliminar comando debug
-
-	// Hacer esto ^, o encontrar una forma de tokenizar mejor acorde a los tipos (no creo q valga la pena)
-
 	EXTENSION_FUNCTION(METACALL_INT, load, METACALL_STRING, METACALL_ARRAY);
 	EXTENSION_FUNCTION(METACALL_INT, inspect);
 	EXTENSION_FUNCTION(METACALL_INT, eval, METACALL_STRING, METACALL_STRING);
