@@ -314,12 +314,17 @@ void application::run()
 				args[1] = metacall_value_copy(results[0]);
 			}
 
-			/* Invoke next iteration of the REPL */
-			void *ret = metacallfv_s(metacall_value_to_function(results[1]), args, 2);
+			if (metacall_value_id(args[1]) != METACALL_INVALID)
+			{
+				/* Invoke next iteration of the REPL */
+				void *ret = metacallfv_s(metacall_value_to_function(results[1]), args, 2);
+
+				/* TODO: Do something with ret? */
+				metacall_value_destroy(ret);
+			}
 
 			metacall_value_destroy(args[0]);
 			metacall_value_destroy(args[1]);
-			metacall_value_destroy(ret);
 		}
 
 		metacall_value_destroy(await_data.v);

@@ -23,7 +23,9 @@ const new_repl_promise = () => {
 		const p = await promise;
 
 		/* Reset the global promise from the REPL */
-		repl_promise = new_repl_promise();
+		if (repl_promise !== null) {
+			repl_promise = new_repl_promise();
+		}
 		return p
 	};
 
@@ -70,7 +72,9 @@ repl.commands = {};
 
 /* On close event reject the repl promise */
 repl.on('close', () => {
-	repl_promise.reject();
+	if (repl_promise !== null) {
+		repl_promise.reject();
+	}
 });
 
 /* Usage:
@@ -114,6 +118,7 @@ module.exports = {
 	command_register,
 
 	close: () => {
+		repl_promise = null;
 		repl.close();
 	}
 };
