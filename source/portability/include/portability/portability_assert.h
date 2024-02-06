@@ -31,6 +31,8 @@ extern "C" {
 
 /* -- Headers -- */
 
+#include <assert.h>
+
 #include <preprocessor/preprocessor_concatenation.h>
 
 /* -- Macros -- */
@@ -66,11 +68,10 @@ extern "C" {
 			if (!(condition)) \
 			{ \
 				__sanitizer_print_stack_trace(); \
-				abort(); \
+				assert(condition); \
 			} \
 		} while (0)
 #else
-	#include <assert.h>
 	#define portability_assert(condition) assert(condition)
 #endif
 

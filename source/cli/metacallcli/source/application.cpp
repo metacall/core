@@ -300,28 +300,26 @@ void application::run()
 		else
 		{
 			void **results = metacall_value_to_array(await_data.v);
-
-			/* Execute command */
-			void *command_result = execute(results[0]);
 			void *args[2];
 
 			args[0] = metacall_value_create_null();
 
-			if (metacall_value_id(command_result) == METACALL_THROWABLE)
+			/* Execute command */
+			if (metacall_value_id(results[0]) == METACALL_ARRAY)
 			{
-				args[1] = metacall_throwable_value(metacall_value_to_throwable(command_result));
+				args[1] = execute(results[0]);
 			}
 			else
 			{
-				args[1] = command_result;
+				args[1] = metacall_value_copy(results[0]);
 			}
 
 			/* Invoke next iteration of the REPL */
 			void *ret = metacallfv_s(metacall_value_to_function(results[1]), args, 2);
 
 			metacall_value_destroy(args[0]);
+			metacall_value_destroy(args[1]);
 			metacall_value_destroy(ret);
-			metacall_value_destroy(command_result);
 		}
 
 		metacall_value_destroy(await_data.v);
@@ -399,10 +397,18 @@ void application::invoke(const char *func, void *args[], size_t size)
 void *application::execute(void *tokens)
 {
 	size_t size = metacall_value_count(tokens);
-	void **tokens_array = metacall_value_to_array(tokens);
-	void *key = tokens_array[0];
 
-	return metacallhv_s(plugin_cli_handle, metacall_value_to_string(key), &tokens_array[1], size - 1);
+	if (size == 0)
+	{
+		return metacall_value_create_null();
+	}
+	else
+	{
+		void **tokens_array = metacall_value_to_array(tokens);
+		void *key = tokens_array[0];
+
+		return metacallhv_s(plugin_cli_handle, metacall_value_to_string(key), &tokens_array[1], size - 1);
+	}
 }
 
 void *application::argument_parse(parser_parameter &p)

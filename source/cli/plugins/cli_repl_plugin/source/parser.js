@@ -9,10 +9,15 @@ function command_parse(cmd) {
 	}
 
 	const key = command_str.substring(0, current_position);
+
+	if (key === '') {
+		return [];
+	}
+
 	const command = command_parser_map[key];
 
 	if (!command) {
-		throw new Error(`Command ${key} not defined`);
+		throw new Error(`Command '${key}' not valid, use 'help' for more information`);
 	}
 
 	const tokens = [];
