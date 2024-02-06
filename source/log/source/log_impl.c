@@ -121,11 +121,13 @@ void log_impl_verbosity(log_impl impl, enum log_level_id level)
 int log_impl_write(log_impl impl, const log_record_ctor record_ctor)
 {
 	log_aspect stream = log_impl_aspect(impl, LOG_ASPECT_STREAM);
+
 	log_aspect_stream_impl stream_impl = log_aspect_derived(stream);
+
 	int result = stream_impl->write(stream, record_ctor);
 
 #if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
-	if (record_ctor->level >= LOG_LEVEL_WARNING /* TODO: Check if stream is stdout */)
+	if (record_ctor->level >= LOG_LEVEL_WARNING /* TODO: Also check if stream is stdout */)
 	{
 		__sanitizer_print_stack_trace();
 	}
