@@ -125,11 +125,9 @@ function node_loader_trampoline_import(method, p) {
 				}
 			}
 		}
-	}
 
-	const e = Error(`Cannot find module '${p}'`);
-	e.code = 'MODULE_NOT_FOUND';
-	throw e;
+		throw ex;
+	}
 }
 
 function node_loader_trampoline_load_from_file(paths) {
