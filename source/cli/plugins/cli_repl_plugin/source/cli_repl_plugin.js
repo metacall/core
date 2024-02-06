@@ -49,8 +49,7 @@ function evaluator(cmd, context, file, cb) {
 		const result = command_parse(cmd.trim());
 		repl_promise.resolve([result, cb]);
 	} catch (e) {
-		console.error(e.message);
-		repl_promise.reject();
+		repl_promise.resolve([e, cb]);
 	}
 }
 
@@ -74,10 +73,21 @@ repl.on('close', () => {
 	repl_promise.reject();
 });
 
+/* Usage:
+ * evaluate().then(data => {
+ * 	console.log(data);
+ * 	data[1](null, 'result of data execution');
+ * }).catch(e => {
+ * 	console.error(e);
+ * });
+*/
+const evaluate = async () => {
+	const result = await repl_promise.wait();
+	return result;
+};
+
 module.exports = {
-	evaluate: async () => {
-		return await repl_promise.wait();
-	},
+	evaluate,
 	/* This function is exported so it can be called from other plugins:
 	 *
 	 * void *repl_handle = metacall_handle("ext", "cli_repl_plugin");

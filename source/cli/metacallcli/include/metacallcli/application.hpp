@@ -134,10 +134,13 @@ protected:
 	*  @brief
 	*    Execute a command with string parameters
 	*
-	*  @param[inout] t
-	*    Tokenizer wrapper of input command
+	*  @param[inout] tokens
+	*    Array of values containing all the tokens of the input command
+	*
+	*  @return
+	*    Return result of the command execution
 	*/
-	void execute(tokenizer &t);
+	void *execute(void *tokens);
 
 private:
 	/* -- Private Class Definition -- */

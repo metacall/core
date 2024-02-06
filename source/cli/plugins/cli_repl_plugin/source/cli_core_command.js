@@ -44,6 +44,10 @@ const cli_core_command_map = {
 	debug: {
 		regexes: [all_except_whitespaces],
 		types: ['METACALL_ARRAY'],
+	},
+	exit: {
+		regexes: [],
+		types: [],
 	}
 };
 

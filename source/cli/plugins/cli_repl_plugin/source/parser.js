@@ -72,10 +72,7 @@ function command_parse(cmd) {
 		current_regex.lastIndex = 0;
 	}
 
-	return {
-		command: key,
-		parameters: tokens
-	}
+	return [key, ...tokens]
 }
 
 const command_register = (cmd, regexes, types) => {

@@ -33,6 +33,8 @@ add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall.json ${PLUGIN_OUTPUT_DIRECTORY}/metacall.json
 	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/cli_repl_plugin.js ${PLUGIN_OUTPUT_DIRECTORY}/cli_repl_plugin.js
+	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/parser.js ${PLUGIN_OUTPUT_DIRECTORY}/parser.js
+	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/cli_core_command.js ${PLUGIN_OUTPUT_DIRECTORY}/cli_core_command.js
 )
 
 #

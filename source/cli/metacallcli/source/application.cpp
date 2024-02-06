@@ -10,7 +10,6 @@
 
 #include <metacallcli/application.hpp>
 #include <metacallcli/parser.hpp>
-#include <metacallcli/tokenizer.hpp>
 
 #if defined __has_include
 	#if __has_include(<filesystem>)
@@ -302,24 +301,27 @@ void application::run()
 		{
 			void **results = metacall_value_to_array(await_data.v);
 
-			// TODO: Execute command
+			/* Execute command */
+			void *command_result = execute(results[0]);
+			void *args[2];
 
-			/* Print the data */
-			// print(results[0]);
+			args[0] = metacall_value_create_null();
 
-			// if result => exception; then use first parameter
-			// otherwise use second parameter
-			void *args[2] = {
-				metacall_value_create_null(),
-				metacall_value_create_int(3)
-			};
+			if (metacall_value_id(command_result) == METACALL_THROWABLE)
+			{
+				args[1] = metacall_throwable_value(metacall_value_to_throwable(command_result));
+			}
+			else
+			{
+				args[1] = command_result;
+			}
 
 			/* Invoke next iteration of the REPL */
 			void *ret = metacallfv_s(metacall_value_to_function(results[1]), args, 2);
 
 			metacall_value_destroy(args[0]);
-			metacall_value_destroy(args[1]);
 			metacall_value_destroy(ret);
+			metacall_value_destroy(command_result);
 		}
 
 		metacall_value_destroy(await_data.v);
@@ -394,37 +396,13 @@ void application::invoke(const char *func, void *args[], size_t size)
 	}
 }
 
-void application::execute(tokenizer &t)
+void *application::execute(void *tokens)
 {
-	tokenizer::iterator it = t.begin();
-	const std::string func = *it;
+	size_t size = metacall_value_count(tokens);
+	void **tokens_array = metacall_value_to_array(tokens);
+	void *key = tokens_array[0];
 
-	// TODO
-	/*
-	command_callback cb = commands[*it];
-
-	if (cb == nullptr)
-	{
-		std::cout << "[WARNING]: Invalid command" << std::endl;
-
-		command_debug(*it, t);
-
-		std::cout << "See `help` for list of available commands" << std::endl;
-
-		return;
-	}
-
-	if (cb(*this, t) == false)
-	{
-		std::cout << "[WARNING]: Invalid command execution" << std::endl;
-
-		command_debug(*it, t);
-
-		std::cout << "See `help` for correct usage" << std::endl;
-
-		return;
-	}
-	*/
+	return metacallhv_s(plugin_cli_handle, metacall_value_to_string(key), &tokens_array[1], size - 1);
 }
 
 void *application::argument_parse(parser_parameter &p)
