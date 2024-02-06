@@ -31,8 +31,6 @@ extern "C" {
 
 /* -- Headers -- */
 
-#include <assert.h>
-
 #include <preprocessor/preprocessor_concatenation.h>
 
 /* -- Macros -- */
@@ -58,6 +56,22 @@ extern "C" {
 	#define portability_static_assert_impl(macro, predicate) portability_static_assert_impl_line(macro, predicate, portability_static_assert_)
 
 	#define portability_static_assert(predicate, message) portability_static_assert_impl(portability_static_assert_impl_expr, predicate)
+#endif
+
+#if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	#include <sanitizer/common_interface_defs.h>
+	#define portability_assert(condition) \
+		do \
+		{ \
+			if (!(condition)) \
+			{ \
+				__sanitizer_print_stack_trace(); \
+				abort(); \
+			} \
+		} while (0)
+#else
+	#include <assert.h>
+	#define portability_assert(condition) assert(condition)
 #endif
 
 #ifdef __cplusplus
