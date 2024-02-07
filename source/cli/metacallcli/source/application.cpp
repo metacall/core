@@ -9,7 +9,6 @@
 /* -- Headers -- */
 
 #include <metacallcli/application.hpp>
-#include <metacallcli/parser.hpp>
 
 #if defined __has_include
 	#if __has_include(<filesystem>)
@@ -33,87 +32,134 @@ namespace fs = std::experimental::filesystem;
 
 using namespace metacallcli;
 
+/* -- Private Data -- */
+
 static bool exit_condition = true;
 
 /* -- Methods -- */
 
-application::parameter_iterator::parameter_iterator(application &app) :
-	app(app)
-{
-	// TODO: Implement a new plugin for parsing command line options
-}
+// void application::print(void *v)
+// {
+// 	/* TODO: Delete this, implement command line arguments parser in js */
+// 	if (v == NULL)
+// 	{
+// 		std::cout << "null" << std::endl;
+// 	}
+// 	else
+// 	{
+// 		if (metacall_value_id(v) == METACALL_THROWABLE)
+// 		{
+// 			std::cout << "TODO: Throwable" << std::endl;
+// 		}
+// 		else
+// 		{
+// 			size_t size = 0;
+// 			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+// 			void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+// 			char *value_str = metacall_serialize(metacall_serial(), v, &size, allocator);
 
-application::parameter_iterator::~parameter_iterator()
-{
-	// TODO: Implement a new plugin for parsing command line options
-}
+// 			std::cout << value_str << std::endl;
 
-void application::parameter_iterator::operator()(const char *parameter)
-{
-	// TODO: Implement a new plugin for parsing command line options
+// 			metacall_allocator_free(allocator, value_str);
+// 		}
 
-	std::string script(parameter);
+// 		metacall_value_destroy(v);
+// 	}
+// }
 
-	/* List of file extensions mapped into loader tags */
-	static std::unordered_map<std::string, std::string> extension_to_tag = {
-		/* Mock Loader */
-		{ "mock", "mock" },
-		/* Python Loader */
-		{ "py", "py" },
-		/* Ruby Loader */
-		{ "rb", "rb" },
-		/* C# Loader */
-		{ "cs", "cs" },
-		{ "dll", "cs" },
-		{ "vb", "cs" },
-		/* Cobol Loader */
-		{ "cob", "cob" },
-		{ "cbl", "cob" },
-		{ "cpy", "cob" },
-		/* NodeJS Loader */
-		{ "js", "node" },
-		{ "node", "node" },
-		/* TypeScript Loader */
-		{ "ts", "ts" },
-		{ "jsx", "ts" },
-		{ "tsx", "ts" },
-		/* WASM Loader */
-		{ "wasm", "wasm" },
-		{ "wat", "wasm" },
-		/* Rust Loader */
-		{ "rs", "rs" },
-		/* C Loader */
-		{ "c", "c" },
-		{ "h", "c" },
-		/* Java Loader */
-		{ "java", "java" },
-		{ "jar", "java" },
-		/* RPC Loader */
-		{ "rpc", "rpc" }
+// void application::invoke(const char *func, void *args[], size_t size)
+// {
+// 	/* TODO: Delete this, implement command line arguments parser in js */
+// 	void *ret = metacallhv_s(plugin_cli_handle, func, args, size);
 
-		// TODO: Implement handling of duplicated extensions, load the file with all loaders (trial and error)
+// 	if (metacall_value_id(ret) == METACALL_INT)
+// 	{
+// 		int result = metacall_value_to_int(ret);
 
-		// /* Extension Loader */
-		// { "so", "ext" },
-		// { "dylib", "ext" },
-		// { "dll", "ext" },
+// 		if (result != 0)
+// 		{
+// 			std::cout << "Failed to execute '" << func << "' command, return code: " << result;
+// 		}
 
-		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
-		/* Probably in the future we can differenciate between them, but it is not trivial */
-	};
+// 		metacall_value_destroy(ret);
+// 	}
+// 	else
+// 	{
+// 		print(ret);
+// 	}
 
-	const std::string tag = extension_to_tag[script.substr(script.find_last_of(".") + 1)];
-	const std::string safe_tag = tag != "" ? tag : "file"; /* Use File Loader if the tag is not found */
+// 	for (size_t it = 0; it < size; ++it)
+// 	{
+// 		metacall_value_destroy(args[it]);
+// 	}
+// }
 
-	/* Load the script */
-	void *args[2] = {
-		metacall_value_create_string(safe_tag.c_str(), safe_tag.length()),
-		metacall_value_create_string(script.c_str(), script.length())
-	};
+// void application::parameter_iterator::operator()(const char *parameter)
+// {
+// 	// TODO: Implement a new plugin for parsing command line options
 
-	app.invoke("load", args, 2);
-	exit_condition = true;
-}
+// 	std::string script(parameter);
+
+// 	/* List of file extensions mapped into loader tags */
+// 	static std::unordered_map<std::string, std::string> extension_to_tag = {
+// 		/* Mock Loader */
+// 		{ "mock", "mock" },
+// 		/* Python Loader */
+// 		{ "py", "py" },
+// 		/* Ruby Loader */
+// 		{ "rb", "rb" },
+// 		/* C# Loader */
+// 		{ "cs", "cs" },
+// 		{ "dll", "cs" },
+// 		{ "vb", "cs" },
+// 		/* Cobol Loader */
+// 		{ "cob", "cob" },
+// 		{ "cbl", "cob" },
+// 		{ "cpy", "cob" },
+// 		/* NodeJS Loader */
+// 		{ "js", "node" },
+// 		{ "node", "node" },
+// 		/* TypeScript Loader */
+// 		{ "ts", "ts" },
+// 		{ "jsx", "ts" },
+// 		{ "tsx", "ts" },
+// 		/* WASM Loader */
+// 		{ "wasm", "wasm" },
+// 		{ "wat", "wasm" },
+// 		/* Rust Loader */
+// 		{ "rs", "rs" },
+// 		/* C Loader */
+// 		{ "c", "c" },
+// 		{ "h", "c" },
+// 		/* Java Loader */
+// 		{ "java", "java" },
+// 		{ "jar", "java" },
+// 		/* RPC Loader */
+// 		{ "rpc", "rpc" }
+
+// 		// TODO: Implement handling of duplicated extensions, load the file with all loaders (trial and error)
+
+// 		// /* Extension Loader */
+// 		// { "so", "ext" },
+// 		// { "dylib", "ext" },
+// 		// { "dll", "ext" },
+
+// 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
+// 		/* Probably in the future we can differenciate between them, but it is not trivial */
+// 	};
+
+// 	const std::string tag = extension_to_tag[script.substr(script.find_last_of(".") + 1)];
+// 	const std::string safe_tag = tag != "" ? tag : "file"; /* Use File Loader if the tag is not found */
+
+// 	/* Load the script */
+// 	void *args[2] = {
+// 		metacall_value_create_string(safe_tag.c_str(), safe_tag.length()),
+// 		metacall_value_create_string(script.c_str(), script.length())
+// 	};
+
+// 	app.invoke("load", args, 2);
+// 	exit_condition = true;
+// }
 
 application::application(int argc, char *argv[]) :
 	plugin_cli_handle(NULL), plugin_repl_handle(NULL)
@@ -135,20 +181,20 @@ application::application(int argc, char *argv[]) :
 	// TODO: Implement a new plugin for parsing command line options
 	// TODO: Implement a new plugin for parsing command line options
 
-	/* TODO: This has been updated, review it: */
-	/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
-	if (argc > 1)
-	{
-		parameter_iterator param_it(*this);
+	// /* TODO: This has been updated, review it: */
+	// /* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
+	// if (argc > 1)
+	// {
+	// 	parameter_iterator param_it(*this);
 
-		/* TODO: This has been refactored in order to pass the arguments to the runtimes */
-		/* Using argv + 2 by now, but this should be deleted in a near future or review the implementation */
+	// 	/* TODO: This has been refactored in order to pass the arguments to the runtimes */
+	// 	/* Using argv + 2 by now, but this should be deleted in a near future or review the implementation */
 
-		/* Parse program parameters */
-		std::for_each(&argv[1], argv + /*argc*/ 2, param_it);
+	// 	/* Parse program parameters */
+	// 	std::for_each(&argv[1], argv + /*argc*/ 2, param_it);
 
-		return;
-	}
+	// 	return;
+	// }
 
 	/* Initialize REPL plugins */
 	if (!load_path("repl", &plugin_repl_handle))
@@ -301,7 +347,7 @@ void application::run()
 		/* Check if the loop was rejected */
 		if (await_data.exit_condition)
 		{
-			exit_condition = await_data.exit_condition;
+			exit_condition = true;
 		}
 		else
 		{
@@ -356,62 +402,6 @@ void application::run()
 	}
 }
 
-void application::print(void *v)
-{
-	/* TODO: Delete this, implement command line arguments parser in js */
-	if (v == NULL)
-	{
-		std::cout << "null" << std::endl;
-	}
-	else
-	{
-		if (metacall_value_id(v) == METACALL_THROWABLE)
-		{
-			std::cout << "TODO: Throwable" << std::endl;
-		}
-		else
-		{
-			size_t size = 0;
-			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-			void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-			char *value_str = metacall_serialize(metacall_serial(), v, &size, allocator);
-
-			std::cout << value_str << std::endl;
-
-			metacall_allocator_free(allocator, value_str);
-		}
-
-		metacall_value_destroy(v);
-	}
-}
-
-void application::invoke(const char *func, void *args[], size_t size)
-{
-	/* TODO: Delete this, implement command line arguments parser in js */
-	void *ret = metacallhv_s(plugin_cli_handle, func, args, size);
-
-	if (metacall_value_id(ret) == METACALL_INT)
-	{
-		int result = metacall_value_to_int(ret);
-
-		if (result != 0)
-		{
-			std::cout << "Failed to execute '" << func << "' command, return code: " << result;
-		}
-
-		metacall_value_destroy(ret);
-	}
-	else
-	{
-		print(ret);
-	}
-
-	for (size_t it = 0; it < size; ++it)
-	{
-		metacall_value_destroy(args[it]);
-	}
-}
-
 void *application::execute(void *tokens)
 {
 	size_t size = metacall_value_count(tokens);
@@ -427,61 +417,4 @@ void *application::execute(void *tokens)
 
 		return metacallhv_s(plugin_cli_handle, metacall_value_to_string(key), &tokens_array[1], size - 1);
 	}
-}
-
-void *application::argument_parse(parser_parameter &p)
-{
-	/* TODO: Delete this */
-	if (p.is<bool>())
-	{
-		bool b = p.to<bool>();
-
-		boolean bo = static_cast<boolean>(b);
-
-		return metacall_value_create_bool(bo);
-	}
-	else if (p.is<char>())
-	{
-		char c = p.to<char>();
-
-		return metacall_value_create_char(c);
-	}
-	else if (p.is<int>())
-	{
-		int i = p.to<int>();
-
-		return metacall_value_create_int(i);
-	}
-	else if (p.is<long>())
-	{
-		long l = p.to<long>();
-
-		return metacall_value_create_long(l);
-	}
-	else if (p.is<float>())
-	{
-		float f = p.to<float>();
-
-		return metacall_value_create_float(f);
-	}
-	else if (p.is<double>())
-	{
-		double d = p.to<double>();
-
-		return metacall_value_create_double(d);
-	}
-	else if (p.is<void *>())
-	{
-		void *ptr = p.to<void *>();
-
-		return metacall_value_create_ptr(ptr);
-	}
-	else if (p.is<std::string>())
-	{
-		std::string str = p.to<std::string>();
-
-		return metacall_value_create_string(str.c_str(), str.length());
-	}
-
-	return NULL;
 }

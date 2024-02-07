@@ -25,22 +25,13 @@ include(SecurityFlags)
 #
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/${target}")
 set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/tokenizer.hpp
-	${include_path}/parser.hpp
 	${include_path}/application.hpp
 )
 
-set(inline
-	${inline_path}/parser.inl
-)
-
 set(sources
-	${source_path}/tokenizer.cpp
-	${source_path}/parser.cpp
 	${source_path}/application.cpp
 	${source_path}/main.cpp
 )
@@ -97,9 +88,6 @@ target_include_directories(${target}
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
-	${PROJECT_BINARY_DIR}/source/inline
-	${CMAKE_CURRENT_SOURCE_DIR}/inline
-	${CMAKE_CURRENT_BINARY_DIR}/inline
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
 	PUBLIC

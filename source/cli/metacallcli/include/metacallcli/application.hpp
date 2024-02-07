@@ -23,15 +23,6 @@
 
 namespace metacallcli
 {
-/* -- Forward Declarations -- */
-
-class tokenizer;
-
-class parser;
-class parser_parameter;
-
-class application;
-
 /* -- Class Definition -- */
 
 /**
@@ -67,18 +58,6 @@ public:
 	*/
 	void run(void);
 
-	/**
-	*  @brief
-	*    Create a new value from arguments with parser @p
-	*
-	*  @param[in] p
-	*    Parser which points to the current iterator of the string
-	*
-	*  @return
-	*    Return a new value instanced if argument was correct
-	*/
-	void *argument_parse(parser_parameter &p);
-
 protected:
 	/* -- Protected Methods -- */
 
@@ -100,36 +79,10 @@ protected:
 
 	/**
 	*  @brief
-	*    Print a value @v in a readable form on error (throwable)
-	*
-	*  @param[in] v
-	*    Value to be printed
-	*
-	*/
-	void print(void *v);
-
-	/**
-	*  @brief
-	*    Invoke a function and print the result on error
-	*
-	*  @param[in] func
-	*    Command name matching the function registered from the plugins
-	*
-	*  @param[in] args
-	*    Function arguments as values
-	*
-	*  @param[in] size
-	*    Size of arguments
-	*
-	*/
-	void invoke(const char *func, void *args[], size_t size);
-
-	/**
-	*  @brief
 	*    Execute a command with string parameters
 	*
 	*  @param[inout] tokens
-	*    Array of values containing all the tokens of the input command
+	*    Value of type array containing all the tokens of the input command
 	*
 	*  @return
 	*    Return result of the command execution
@@ -137,52 +90,6 @@ protected:
 	void *execute(void *tokens);
 
 private:
-	/* -- Private Class Definition -- */
-
-	class parameter_iterator
-	{
-	public:
-		/* -- Public Methods -- */
-
-		/**
-		*  @brief
-		*    Initialize parameter iterator
-		*
-		*  @param[in] app
-		*    Reference to the application
-		*/
-		parameter_iterator(application &app);
-
-		/**
-		*  @brief
-		*    Parameter iterator class destructor
-		*/
-		~parameter_iterator();
-
-		/**
-		*  @brief
-		*    Operator callback for iteration
-		*
-		*  @param[in] parameter
-		*    Current parameter being iterated
-		*/
-		void operator()(const char *parameter);
-
-		/**
-		*  @brief
-		*    Assignement operator for parameter iterator
-		*
-		*  @return
-		*    Returns a reference to itself
-		*/
-		parameter_iterator &operator=(const parameter_iterator &) = delete;
-
-	private:
-		/* -- Private Member Data -- */
-
-		application &app; /**< Reference to the application */
-	};
-
 	/* -- Private Member Data -- */
 
 	void *plugin_cli_handle;			/**< Handle containing all loaded plugins for CLI */
