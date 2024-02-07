@@ -21,18 +21,13 @@ const new_repl_promise = () => {
 	const wait = async () => {
 		/* Await to the REPL promise to be resolved from the evaluator */
 		const p = await promise;
-
-		/* Reset the global promise from the REPL */
-		if (repl_promise !== null) {
-			repl_promise = new_repl_promise();
-		}
-		return p
+		return p;
 	};
 
 	return { resolve: promise_resolve, reject: promise_reject, wait };
 }
 
-let repl_promise = new_repl_promise();
+let repl_promise = [new_repl_promise()];
 
 /* Show welcome message */
 console.log('Welcome to Tijuana, tequila, sexo & marijuana.');
@@ -43,16 +38,28 @@ const repl = r.start({
 	useGlobal: false,
 	ignoreUndefined: true,
 	preview: true,
-	eval: evaluator,
+	eval: evaluator
 });
 
 function evaluator(cmd, context, file, cb) {
+	if (repl_promise === null) {
+		cb(new Error('Invalid REPL Promise'), null);
+	}
+
+	if (repl_promise.length === 0) {
+		repl_promise.push(new_repl_promise());
+	}
+
+	const promise = repl_promise[repl_promise.length - 1];
+
 	try {
 		const result = command_parse(cmd.trim());
-		repl_promise.resolve([result, cb]);
+		promise.resolve([result, cb]);
 	} catch (e) {
-		repl_promise.resolve([e, cb]);
+		promise.resolve([e, cb]);
 	}
+
+	repl_promise.push(new_repl_promise());
 }
 
 /* Complete function (hook it in order to allow inline autocompletion) */
@@ -73,7 +80,11 @@ repl.commands = {};
 /* On close event reject the repl promise */
 repl.on('close', () => {
 	if (repl_promise !== null) {
-		repl_promise.reject();
+		if (repl_promise.length === 1) {
+			repl_promise[0].reject();
+		}
+
+		repl_promise.pop();
 	}
 });
 
@@ -86,8 +97,16 @@ repl.on('close', () => {
  * });
 */
 const evaluate = async () => {
-	const result = await repl_promise.wait();
-	return result;
+	if (repl_promise !== null) {
+		const promise = repl_promise.shift();
+
+		if (promise) {
+			const result = await promise.wait();
+			return result;
+		}
+	}
+
+	return [ new Error('Invalid REPL Promise'), () => {} ];
 };
 
 module.exports = {

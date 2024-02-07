@@ -40,14 +40,18 @@ static bool exit_condition = true;
 application::parameter_iterator::parameter_iterator(application &app) :
 	app(app)
 {
+	// TODO: Implement a new plugin for parsing command line options
 }
 
 application::parameter_iterator::~parameter_iterator()
 {
+	// TODO: Implement a new plugin for parsing command line options
 }
 
 void application::parameter_iterator::operator()(const char *parameter)
 {
+	// TODO: Implement a new plugin for parsing command line options
+
 	std::string script(parameter);
 
 	/* List of file extensions mapped into loader tags */
@@ -108,7 +112,7 @@ void application::parameter_iterator::operator()(const char *parameter)
 	};
 
 	app.invoke("load", args, 2);
-	app.shutdown();
+	exit_condition = true;
 }
 
 application::application(int argc, char *argv[]) :
@@ -127,6 +131,8 @@ application::application(int argc, char *argv[]) :
 	/* Print MetaCall information */
 	metacall_print_info();
 
+	// TODO: Implement a new plugin for parsing command line options
+	// TODO: Implement a new plugin for parsing command line options
 	// TODO: Implement a new plugin for parsing command line options
 
 	/* TODO: This has been updated, review it: */
@@ -302,26 +308,37 @@ void application::run()
 			void **results = metacall_value_to_array(await_data.v);
 			void *args[2];
 
-			args[0] = metacall_value_create_null();
-
-			/* Execute command */
-			if (metacall_value_id(results[0]) == METACALL_ARRAY)
+			if (metacall_value_id(results[0]) == METACALL_EXCEPTION || metacall_value_id(results[0]) == METACALL_THROWABLE)
 			{
-				args[1] = execute(results[0]);
+				args[0] = metacall_value_copy(results[0]);
+				args[1] = metacall_value_create_null();
 			}
 			else
 			{
-				args[1] = metacall_value_copy(results[0]);
+				args[0] = metacall_value_create_null();
+
+				/* Execute command */
+				if (metacall_value_id(results[0]) == METACALL_ARRAY)
+				{
+					args[1] = execute(results[0]);
+				}
+				else
+				{
+					args[1] = metacall_value_copy(results[0]);
+				}
+
+				if (metacall_value_id(args[1]) == METACALL_INVALID)
+				{
+					metacall_value_destroy(args[1]);
+					args[1] = metacall_value_create_null();
+				}
 			}
 
-			if (metacall_value_id(args[1]) != METACALL_INVALID)
-			{
-				/* Invoke next iteration of the REPL */
-				void *ret = metacallfv_s(metacall_value_to_function(results[1]), args, 2);
+			/* Invoke next iteration of the REPL */
+			void *ret = metacallfv_s(metacall_value_to_function(results[1]), args, 2);
 
-				/* TODO: Do something with ret? */
-				metacall_value_destroy(ret);
-			}
+			/* TODO: Do something with ret? */
+			metacall_value_destroy(ret);
 
 			metacall_value_destroy(args[0]);
 			metacall_value_destroy(args[1]);
@@ -339,13 +356,9 @@ void application::run()
 	}
 }
 
-void application::shutdown()
-{
-	exit_condition = true;
-}
-
 void application::print(void *v)
 {
+	/* TODO: Delete this, implement command line arguments parser in js */
 	if (v == NULL)
 	{
 		std::cout << "null" << std::endl;
@@ -354,7 +367,6 @@ void application::print(void *v)
 	{
 		if (metacall_value_id(v) == METACALL_THROWABLE)
 		{
-			// TODO: Implement print for throwable
 			std::cout << "TODO: Throwable" << std::endl;
 		}
 		else
@@ -375,6 +387,7 @@ void application::print(void *v)
 
 void application::invoke(const char *func, void *args[], size_t size)
 {
+	/* TODO: Delete this, implement command line arguments parser in js */
 	void *ret = metacallhv_s(plugin_cli_handle, func, args, size);
 
 	if (metacall_value_id(ret) == METACALL_INT)
@@ -418,6 +431,7 @@ void *application::execute(void *tokens)
 
 void *application::argument_parse(parser_parameter &p)
 {
+	/* TODO: Delete this */
 	if (p.is<bool>())
 	{
 		bool b = p.to<bool>();

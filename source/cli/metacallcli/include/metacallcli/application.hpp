@@ -69,12 +69,6 @@ public:
 
 	/**
 	*  @brief
-	*    Shutdown main application loop
-	*/
-	void shutdown(void);
-
-	/**
-	*  @brief
 	*    Create a new value from arguments with parser @p
 	*
 	*  @param[in] p
