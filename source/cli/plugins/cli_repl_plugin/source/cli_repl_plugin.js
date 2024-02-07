@@ -98,12 +98,15 @@ repl.on('close', () => {
 */
 const evaluate = async () => {
 	if (repl_promise !== null) {
-		const promise = repl_promise.shift();
-
-		if (promise) {
-			const result = await promise.wait();
-			return result;
+		if (repl_promise.length === 0) {
+			repl_promise.push(new_repl_promise());
 		}
+
+		const result = await repl_promise[0].wait();
+
+		repl_promise.shift();
+
+		return result;
 	}
 
 	return [ new Error('Invalid REPL Promise'), () => {} ];
