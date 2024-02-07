@@ -95,6 +95,6 @@ module.exports = {
 	command_register_map: (map) => {
 		Object.keys(map).forEach(key => command_register(key, map[key].regexes, map[key].types));
 	},
-	command_complete: () => {},
+	command_completer: () => Object.keys(command_parser_map),
 	command_parse,
 };

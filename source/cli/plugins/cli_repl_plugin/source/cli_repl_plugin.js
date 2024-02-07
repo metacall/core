@@ -1,6 +1,6 @@
 const vm = require('vm');
 const r = require('repl');
-const { command_register, command_register_map, command_parse, command_complete } = require('./parser');
+const { command_register, command_register_map, command_parse, command_completer } = require('./parser');
 const { cli_core_command_map } = require('./cli_core_command');
 
 /* Register CLI Core command map into the parser */
@@ -38,7 +38,8 @@ const repl = r.start({
 	useGlobal: false,
 	ignoreUndefined: true,
 	preview: true,
-	eval: evaluator
+	eval: evaluator,
+	completer: completer
 });
 
 function evaluator(cmd, context, file, cb) {
@@ -62,15 +63,10 @@ function evaluator(cmd, context, file, cb) {
 	repl_promise.push(new_repl_promise());
 }
 
-/* Complete function (hook it in order to allow inline autocompletion) */
-const _completer = repl.completer.bind(repl);
-repl.completer = function(line, cb) {
-	/* Hook the completer callback in order to inject our own completion results */
-	const wrap = (err, result) => {
-		/* TODO: Generate autocompletion array (command_complete) */
-		cb(err, [['call'], line]);
-	};
-	_completer(line, wrap);
+function completer(line) {
+	const completions = command_completer();
+	const hits = completions.filter(c => c.startsWith(line));
+	return [hits.length ? hits : completions, line];
 }
 
 /* Clear context and commands */

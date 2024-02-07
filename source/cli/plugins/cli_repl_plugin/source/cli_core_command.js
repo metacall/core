@@ -29,6 +29,10 @@ const cli_core_command_map = {
 		regexes: [func], /* Match any function call like: func_abc_3423("asd", 3434, 0.2) */
 		types: ['METACALL_STRING'],
 	},
+	await: {
+		regexes: [func], /* Match any function call like: func_abc_3423("asd", 3434, 0.2) */
+		types: ['METACALL_STRING'],
+	},
 	clear: {
 		regexes: [loaders, all_except_whitespaces], /* Match everything except whitespaces, paths with whitespaces are not supported */
 		types: ['METACALL_STRING', 'METACALL_STRING'],
