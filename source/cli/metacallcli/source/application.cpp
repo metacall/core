@@ -38,72 +38,51 @@ static bool exit_condition = true;
 
 /* -- Methods -- */
 
-// void application::parameter_iterator::operator()(const char *parameter)
-// {
-// 	// TODO: Implement a new plugin for parsing command line options
+void application::repl()
+{
+	/* Initialize CLI plugin */
+	if (!load_path("cli", &plugin_cli_handle))
+	{
+		/* Do not enter into the main loop */
+		exit_condition = true;
+		return;
+	}
 
-// 	std::string script(parameter);
+	/* Register exit function */
+	auto exit = [](size_t argc, void *args[], void *data) -> void * {
+		(void)args;
+		(void)data;
 
-// 	/* List of file extensions mapped into loader tags */
-// 	static std::unordered_map<std::string, std::string> extension_to_tag = {
-// 		/* Mock Loader */
-// 		{ "mock", "mock" },
-// 		/* Python Loader */
-// 		{ "py", "py" },
-// 		/* Ruby Loader */
-// 		{ "rb", "rb" },
-// 		/* C# Loader */
-// 		{ "cs", "cs" },
-// 		{ "dll", "cs" },
-// 		{ "vb", "cs" },
-// 		/* Cobol Loader */
-// 		{ "cob", "cob" },
-// 		{ "cbl", "cob" },
-// 		{ "cpy", "cob" },
-// 		/* NodeJS Loader */
-// 		{ "js", "node" },
-// 		{ "node", "node" },
-// 		/* TypeScript Loader */
-// 		{ "ts", "ts" },
-// 		{ "jsx", "ts" },
-// 		{ "tsx", "ts" },
-// 		/* WASM Loader */
-// 		{ "wasm", "wasm" },
-// 		{ "wat", "wasm" },
-// 		/* Rust Loader */
-// 		{ "rs", "rs" },
-// 		/* C Loader */
-// 		{ "c", "c" },
-// 		{ "h", "c" },
-// 		/* Java Loader */
-// 		{ "java", "java" },
-// 		{ "jar", "java" },
-// 		/* RPC Loader */
-// 		{ "rpc", "rpc" }
+		/* Validate function parameters */
+		if (argc != 0)
+		{
+			std::cout << "Invalid number of arguments passed to exit, expected 0, received: " << argc << std::endl;
+		}
 
-// 		// TODO: Implement handling of duplicated extensions, load the file with all loaders (trial and error)
+		std::cout << "Exiting ..." << std::endl;
 
-// 		// /* Extension Loader */
-// 		// { "so", "ext" },
-// 		// { "dylib", "ext" },
-// 		// { "dll", "ext" },
+		/* Exit from main loop */
+		exit_condition = true;
 
-// 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
-// 		/* Probably in the future we can differenciate between them, but it is not trivial */
-// 	};
+		return NULL;
+	};
 
-// 	const std::string tag = extension_to_tag[script.substr(script.find_last_of(".") + 1)];
-// 	const std::string safe_tag = tag != "" ? tag : "file"; /* Use File Loader if the tag is not found */
+	int result = metacall_register_loaderv(metacall_loader("ext"), plugin_cli_handle, "exit", exit, METACALL_INVALID, 0, NULL);
 
-// 	/* Load the script */
-// 	void *args[2] = {
-// 		metacall_value_create_string(safe_tag.c_str(), safe_tag.length()),
-// 		metacall_value_create_string(script.c_str(), script.length())
-// 	};
+	if (result != 0)
+	{
+		std::cout << "Exit function was not registered properly, return code: " << result << std::endl;
+	}
+	else
+	{
+		/* Start the main loop */
+		exit_condition = false;
+	}
 
-// 	app.invoke("load", args, 2);
-// 	exit_condition = true;
-// }
+	void *ret = metacallhv_s(plugin_repl_handle, "initialize", metacall_null_args, 0);
+
+	check_for_exception(ret);
+}
 
 application::application(int argc, char *argv[]) :
 	plugin_cli_handle(NULL), plugin_repl_handle(NULL)
@@ -121,20 +100,18 @@ application::application(int argc, char *argv[]) :
 	/* Print MetaCall information */
 	metacall_print_info();
 
-	/* Initialize REPL plugins */
+	/* Initialize REPL plugin */
 	if (!load_path("repl", &plugin_repl_handle))
 	{
 		/* Do not enter into the main loop */
 		exit_condition = true;
-		plugin_repl_handle = NULL;
 		return;
 	}
 
 	if (argc == 1)
 	{
-		void *ret = metacallhv_s(plugin_repl_handle, "initialize", metacall_null_args, 0);
-
-		check_for_exception(ret);
+		/* Launch the REPL */
+		repl();
 	}
 	else
 	{
@@ -142,55 +119,36 @@ application::application(int argc, char *argv[]) :
 
 		if (arguments_parse_func == NULL)
 		{
+			std::cout << "Warning: CLI Arguments Parser was not loaded, "
+						 "using fallback argument parser with positional arguments only. "
+					  << std::endl
+					  << "Any command line option like '--help' will result into error. "
+						 "Only files are allowed: $ metacall a.py b.js c.rb"
+					  << std::endl;
+
 			/* Use fallback parser, it can execute files but does not support command line arguments as options (i.e: -h, --help) */
 			/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
+			std::vector<std::string> arguments(argv + 1, argv + argc);
 
-			// TODO
-			exit_condition = true;
-			return;
+			arguments_parse_fallback(arguments);
 		}
 		else
 		{
 			/* TODO: Implement a new plugin for parsing command line options */
 			std::cout << "TODO: CLI Arguments Parser Plugin is not implemented yet" << std::endl;
-			exit_condition = true;
-			return;
+
+			/* Note: If it has zero positional arguments, we should also run the repl, for example:
+			*  $ metacall --some-option --another-option --yeet
+			*/
+			// TODO:
+			// if (positional_arguments_size == 0)
+			// {
+			// 	/* Initialize the REPL */
+			// 	repl();
+			// }
 		}
-	}
 
-	/* Initialize CLI plugins */
-	if (load_path("cli", &plugin_cli_handle))
-	{
-		/* Register exit function */
-		auto exit = [](size_t argc, void *args[], void *data) -> void * {
-			(void)args;
-			(void)data;
-
-			/* Validate function parameters */
-			if (argc != 0)
-			{
-				std::cout << "Invalid number of arguments passed to exit, expected 0, received: " << argc << std::endl;
-			}
-
-			std::cout << "Exiting ..." << std::endl;
-
-			/* Exit from main loop */
-			exit_condition = true;
-
-			return NULL;
-		};
-
-		int result = metacall_register_loaderv(metacall_loader("ext"), plugin_cli_handle, "exit", exit, METACALL_INVALID, 0, NULL);
-
-		if (result != 0)
-		{
-			std::cout << "Exit function was not registered properly, return code: " << result << std::endl;
-		}
-		else
-		{
-			/* Start the main loop */
-			exit_condition = false;
-		}
+		exit_condition = true;
 	}
 }
 
@@ -201,6 +159,74 @@ application::~application()
 	if (result != 0)
 	{
 		std::cout << "Error while destroying MetaCall, exit code: " << result << std::endl;
+	}
+}
+
+void application::arguments_parse_fallback(std::vector<std::string> &arguments)
+{
+	/* List of file extensions mapped into loader tags */
+	static std::unordered_map<std::string, std::string> extension_to_tag = {
+		/* Mock Loader */
+		{ "mock", "mock" },
+		/* Python Loader */
+		{ "py", "py" },
+		/* Ruby Loader */
+		{ "rb", "rb" },
+		/* C# Loader */
+		{ "cs", "cs" },
+		{ "dll", "cs" },
+		{ "vb", "cs" },
+		/* Cobol Loader */
+		{ "cob", "cob" },
+		{ "cbl", "cob" },
+		{ "cpy", "cob" },
+		/* NodeJS Loader */
+		{ "js", "node" },
+		{ "node", "node" },
+		/* TypeScript Loader */
+		{ "ts", "ts" },
+		{ "jsx", "ts" },
+		{ "tsx", "ts" },
+		/* WASM Loader */
+		{ "wasm", "wasm" },
+		{ "wat", "wasm" },
+		/* Rust Loader */
+		{ "rs", "rs" },
+		/* C Loader */
+		{ "c", "c" },
+		{ "h", "c" },
+		/* Java Loader */
+		{ "java", "java" },
+		{ "jar", "java" },
+		/* RPC Loader */
+		{ "rpc", "rpc" }
+
+		// TODO: Implement handling of duplicated extensions, load the file with all loaders (trial and error)
+
+		// /* Extension Loader */
+		// { "so", "ext" },
+		// { "dylib", "ext" },
+		// { "dll", "ext" },
+
+		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
+		/* Probably in the future we can differenciate between them, but it is not trivial */
+	};
+
+	for (std::string script : arguments)
+	{
+		const std::string tag = extension_to_tag[script.substr(script.find_last_of(".") + 1)];
+		const std::string safe_tag = tag != "" ? tag : "file"; /* Use File Loader if the tag is not found */
+
+		/* Load the script */
+		const char *scripts[1] = {
+			script.c_str()
+		};
+
+		if (metacall_load_from_file(safe_tag.c_str(), scripts, 1, NULL) != 0)
+		{
+			/* Stop loading more scripts */
+			return;
+		}
 	}
 }
 

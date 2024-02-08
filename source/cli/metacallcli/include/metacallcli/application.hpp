@@ -63,6 +63,22 @@ protected:
 
 	/**
 	*  @brief
+	*    Initialize the REPL
+	*/
+	void repl();
+
+	/**
+	*  @brief
+	*    Fallback argument parser
+	*
+	*  @param[in] arguments
+	*    Vector of strings containing all the arguments from argv
+	*
+	*/
+	void arguments_parse_fallback(std::vector<std::string> &arguments);
+
+	/**
+	*  @brief
 	*    Load all plugins from a subfolder @path
 	*
 	*  @param[in] path
