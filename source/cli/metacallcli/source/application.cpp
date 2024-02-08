@@ -225,6 +225,7 @@ void application::arguments_parse_fallback(std::vector<std::string> &arguments)
 		if (metacall_load_from_file(safe_tag.c_str(), scripts, 1, NULL) != 0)
 		{
 			/* Stop loading more scripts */
+			std::cout << "Error: Failed to load script '" << script << "' with loader '" << safe_tag << "'" << std::endl;
 			return;
 		}
 	}

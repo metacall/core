@@ -1,6 +1,6 @@
 const loaders = '^(mock|py|node|rb|cs|cob|ts|js|file|wasm|rs|c|rpc|ext|java)';
 const all_except_whitespaces = '^[^ \r\n\t\f\v]+';
-const func = '^[a-zA-Z0-9_]+\\(.*\\)$';
+const func = '^[a-zA-Z0-9_\.]+\\(.*\\)$';
 const anychar = '.+';
 
 /*
