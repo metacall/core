@@ -27,62 +27,67 @@ const new_repl_promise = () => {
 	return { resolve: promise_resolve, reject: promise_reject, wait };
 }
 
-let repl_promise = [new_repl_promise()];
+let repl_promise = null;
+let repl = null;
 
-/* Show welcome message */
-console.log('Welcome to Tijuana, tequila, sexo & marijuana.');
+function initialize() {
+	repl_promise = [new_repl_promise()];
 
-/* Start REPL */
-const repl = r.start({
-	prompt: '\u03BB ',
-	useGlobal: false,
-	ignoreUndefined: true,
-	preview: true,
-	eval: evaluator,
-	completer: completer
-});
+	/* Show welcome message */
+	console.log('Welcome to Tijuana, tequila, sexo & marijuana.');
 
-function evaluator(cmd, context, file, cb) {
-	if (repl_promise === null) {
-		cb(new Error('Invalid REPL Promise'), null);
-	}
+	/* Start REPL */
+	repl = r.start({
+		prompt: '\u03BB ',
+		useGlobal: false,
+		ignoreUndefined: true,
+		preview: true,
+		eval: evaluator,
+		completer: completer
+	});
 
-	if (repl_promise.length === 0) {
+	function evaluator(cmd, context, file, cb) {
+		if (repl_promise === null) {
+			cb(new Error('Invalid REPL Promise'), null);
+		}
+
+		if (repl_promise.length === 0) {
+			repl_promise.push(new_repl_promise());
+		}
+
+		const promise = repl_promise[repl_promise.length - 1];
+
+		try {
+			const result = command_parse(cmd.trim());
+			promise.resolve([result, cb]);
+		} catch (e) {
+			promise.resolve([e, cb]);
+		}
+
 		repl_promise.push(new_repl_promise());
 	}
 
-	const promise = repl_promise[repl_promise.length - 1];
-
-	try {
-		const result = command_parse(cmd.trim());
-		promise.resolve([result, cb]);
-	} catch (e) {
-		promise.resolve([e, cb]);
+	function completer(line) {
+		const completions = command_completer();
+		const hits = completions.filter(c => c.startsWith(line));
+		return [hits.length ? hits : completions, line];
 	}
 
-	repl_promise.push(new_repl_promise());
-}
+	/* Clear context and commands */
+	repl.context = vm.createContext({});
+	repl.commands = {};
 
-function completer(line) {
-	const completions = command_completer();
-	const hits = completions.filter(c => c.startsWith(line));
-	return [hits.length ? hits : completions, line];
-}
+	/* On close event reject the repl promise */
+	repl.on('close', () => {
+		if (repl_promise !== null) {
+			if (repl_promise.length === 1) {
+				repl_promise[0].reject();
+			}
 
-/* Clear context and commands */
-repl.context = vm.createContext({});
-repl.commands = {};
-
-/* On close event reject the repl promise */
-repl.on('close', () => {
-	if (repl_promise !== null) {
-		if (repl_promise.length === 1) {
-			repl_promise[0].reject();
+			repl_promise.pop();
 		}
-
-		repl_promise.pop();
-	}
-});
+	});
+}
 
 /* Usage:
  * evaluate().then(data => {
@@ -109,6 +114,7 @@ const evaluate = async () => {
 };
 
 module.exports = {
+	initialize,
 	evaluate,
 	/* This function is exported so it can be called from other plugins:
 	 *
@@ -136,7 +142,10 @@ module.exports = {
 	command_register,
 
 	close: () => {
+		if (repl) {
+			repl.close();
+			repl = null;
+		}
 		repl_promise = null;
-		repl.close();
 	}
 };

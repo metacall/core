@@ -89,6 +89,16 @@ protected:
 	*/
 	void *execute(void *tokens);
 
+	/**
+	*  @brief
+	*    Check if a value is an exception or throwable, then prints it.
+	*    The method always destroys the value @v
+	*
+	*  @param[inout] v
+	*    Value to be checked against and destroyed
+	*/
+	void check_for_exception(void *v);
+
 private:
 	/* -- Private Member Data -- */
 

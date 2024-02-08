@@ -38,62 +38,6 @@ static bool exit_condition = true;
 
 /* -- Methods -- */
 
-// void application::print(void *v)
-// {
-// 	/* TODO: Delete this, implement command line arguments parser in js */
-// 	if (v == NULL)
-// 	{
-// 		std::cout << "null" << std::endl;
-// 	}
-// 	else
-// 	{
-// 		if (metacall_value_id(v) == METACALL_THROWABLE)
-// 		{
-// 			std::cout << "TODO: Throwable" << std::endl;
-// 		}
-// 		else
-// 		{
-// 			size_t size = 0;
-// 			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-// 			void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-// 			char *value_str = metacall_serialize(metacall_serial(), v, &size, allocator);
-
-// 			std::cout << value_str << std::endl;
-
-// 			metacall_allocator_free(allocator, value_str);
-// 		}
-
-// 		metacall_value_destroy(v);
-// 	}
-// }
-
-// void application::invoke(const char *func, void *args[], size_t size)
-// {
-// 	/* TODO: Delete this, implement command line arguments parser in js */
-// 	void *ret = metacallhv_s(plugin_cli_handle, func, args, size);
-
-// 	if (metacall_value_id(ret) == METACALL_INT)
-// 	{
-// 		int result = metacall_value_to_int(ret);
-
-// 		if (result != 0)
-// 		{
-// 			std::cout << "Failed to execute '" << func << "' command, return code: " << result;
-// 		}
-
-// 		metacall_value_destroy(ret);
-// 	}
-// 	else
-// 	{
-// 		print(ret);
-// 	}
-
-// 	for (size_t it = 0; it < size; ++it)
-// 	{
-// 		metacall_value_destroy(args[it]);
-// 	}
-// }
-
 // void application::parameter_iterator::operator()(const char *parameter)
 // {
 // 	// TODO: Implement a new plugin for parsing command line options
@@ -177,25 +121,6 @@ application::application(int argc, char *argv[]) :
 	/* Print MetaCall information */
 	metacall_print_info();
 
-	// TODO: Implement a new plugin for parsing command line options
-	// TODO: Implement a new plugin for parsing command line options
-	// TODO: Implement a new plugin for parsing command line options
-
-	// /* TODO: This has been updated, review it: */
-	// /* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
-	// if (argc > 1)
-	// {
-	// 	parameter_iterator param_it(*this);
-
-	// 	/* TODO: This has been refactored in order to pass the arguments to the runtimes */
-	// 	/* Using argv + 2 by now, but this should be deleted in a near future or review the implementation */
-
-	// 	/* Parse program parameters */
-	// 	std::for_each(&argv[1], argv + /*argc*/ 2, param_it);
-
-	// 	return;
-	// }
-
 	/* Initialize REPL plugins */
 	if (!load_path("repl", &plugin_repl_handle))
 	{
@@ -203,6 +128,34 @@ application::application(int argc, char *argv[]) :
 		exit_condition = true;
 		plugin_repl_handle = NULL;
 		return;
+	}
+
+	if (argc == 1)
+	{
+		void *ret = metacallhv_s(plugin_repl_handle, "initialize", metacall_null_args, 0);
+
+		check_for_exception(ret);
+	}
+	else
+	{
+		void *arguments_parse_func = metacall_handle_function(plugin_repl_handle, "arguments_parse");
+
+		if (arguments_parse_func == NULL)
+		{
+			/* Use fallback parser, it can execute files but does not support command line arguments as options (i.e: -h, --help) */
+			/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
+
+			// TODO
+			exit_condition = true;
+			return;
+		}
+		else
+		{
+			/* TODO: Implement a new plugin for parsing command line options */
+			std::cout << "TODO: CLI Arguments Parser Plugin is not implemented yet" << std::endl;
+			exit_condition = true;
+			return;
+		}
 	}
 
 	/* Initialize CLI plugins */
@@ -383,8 +336,7 @@ void application::run()
 			/* Invoke next iteration of the REPL */
 			void *ret = metacallfv_s(metacall_value_to_function(results[1]), args, 2);
 
-			/* TODO: Do something with ret? */
-			metacall_value_destroy(ret);
+			check_for_exception(ret);
 
 			metacall_value_destroy(args[0]);
 			metacall_value_destroy(args[1]);
@@ -398,7 +350,7 @@ void application::run()
 	{
 		void *ret = metacallhv_s(plugin_repl_handle, "close", metacall_null_args, 0);
 
-		metacall_value_destroy(ret);
+		check_for_exception(ret);
 	}
 }
 
@@ -417,4 +369,17 @@ void *application::execute(void *tokens)
 
 		return metacallhv_s(plugin_cli_handle, metacall_value_to_string(key), &tokens_array[1], size - 1);
 	}
+}
+
+void application::check_for_exception(void *v)
+{
+	struct metacall_exception_type ex;
+
+	if (metacall_error_from_value(v, &ex) == 0)
+	{
+		std::cout << "Exception: " << ex.message << std::endl
+				  << ex.stacktrace << std::endl;
+	}
+
+	metacall_value_destroy(v);
 }
