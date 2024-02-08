@@ -227,8 +227,8 @@ sub_c(){
 
 	case ${LINUX_DISTRO} in
 		debian)
-			if [ "${VERSION:-}" == "unstable" ] || [ "${VERSION:-}" == "testing" ] || [[ "${VERSION_CODENAME}" == "trixie" ]]; then
-				# TODO: For now, trixie == sid, change when trixie is released
+			if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
+				# TODO: For now, bookworm || trixie == sid, change when bookworm || trixie is released
 				CODENAME="unstable"
 				LINKNAME=""
 			else
