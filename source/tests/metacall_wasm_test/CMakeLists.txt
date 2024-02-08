@@ -116,19 +116,24 @@ target_link_libraries(${target}
 )
 
 #
-# Define test
-#
-
-add_test(NAME ${target}
-	COMMAND $<TARGET_FILE:${target}>
-)
-
-#
 # Define dependencies
 #
 
 add_dependencies(${target}
 	wasm_loader
+)
+
+#
+# Define test
+#
+
+if(WIN32 AND OPTION_BUILD_ADDRESS_SANITIZER)
+	# TODO: This test segfaults in windows when run with addres sanitizer without any output
+	return()
+endif()
+
+add_test(NAME ${target}
+	COMMAND $<TARGET_FILE:${target}>
 )
 
 #
@@ -138,11 +143,6 @@ add_dependencies(${target}
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
-
-if(WIN32 AND OPTION_BUILD_ADDRESS_SANITIZER)
-	# TODO: This test segfaults in windows when run with addres sanitizer without any output
-	return()
-endif()
 
 if(OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with thread sanitizer:
