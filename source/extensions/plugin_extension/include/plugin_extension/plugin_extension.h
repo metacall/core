@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-PLUGIN_EXTENSION_API int plugin_extension(void *loader, void *handle, void *context);
+PLUGIN_EXTENSION_API int plugin_extension(void *loader, void *handle);
 
 DYNLINK_SYMBOL_EXPORT(plugin_extension);
 

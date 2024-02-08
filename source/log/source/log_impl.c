@@ -29,6 +29,10 @@
 
 #include <stdlib.h>
 
+#if (defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)) && !(defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1932))
+	#include <sanitizer/common_interface_defs.h>
+#endif
+
 /* -- Member Data -- */
 
 struct log_impl_type
@@ -120,7 +124,16 @@ int log_impl_write(log_impl impl, const log_record_ctor record_ctor)
 
 	log_aspect_stream_impl stream_impl = log_aspect_derived(stream);
 
-	if (stream_impl->write(stream, record_ctor) != 0)
+	int result = stream_impl->write(stream, record_ctor);
+
+#if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	if (record_ctor->level >= LOG_LEVEL_WARNING /* TODO: Also check if stream is stdout */)
+	{
+		__sanitizer_print_stack_trace();
+	}
+#endif
+
+	if (result != 0)
 	{
 		return 1;
 	}

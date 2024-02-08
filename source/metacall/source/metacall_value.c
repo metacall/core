@@ -230,133 +230,133 @@ void metacall_value_move(void *src, void *dst)
 
 boolean metacall_value_to_bool(void *v)
 {
-	assert(value_type_id(v) == TYPE_BOOL);
+	portability_assert(value_type_id(v) == TYPE_BOOL);
 
 	return value_to_bool(v);
 }
 
 char metacall_value_to_char(void *v)
 {
-	assert(value_type_id(v) == TYPE_CHAR);
+	portability_assert(value_type_id(v) == TYPE_CHAR);
 
 	return value_to_char(v);
 }
 
 short metacall_value_to_short(void *v)
 {
-	assert(value_type_id(v) == TYPE_SHORT);
+	portability_assert(value_type_id(v) == TYPE_SHORT);
 
 	return value_to_short(v);
 }
 
 int metacall_value_to_int(void *v)
 {
-	assert(value_type_id(v) == TYPE_INT);
+	portability_assert(value_type_id(v) == TYPE_INT);
 
 	return value_to_int(v);
 }
 
 long metacall_value_to_long(void *v)
 {
-	assert(value_type_id(v) == TYPE_LONG);
+	portability_assert(value_type_id(v) == TYPE_LONG);
 
 	return value_to_long(v);
 }
 
 float metacall_value_to_float(void *v)
 {
-	assert(value_type_id(v) == TYPE_FLOAT);
+	portability_assert(value_type_id(v) == TYPE_FLOAT);
 
 	return value_to_float(v);
 }
 
 double metacall_value_to_double(void *v)
 {
-	assert(value_type_id(v) == TYPE_DOUBLE);
+	portability_assert(value_type_id(v) == TYPE_DOUBLE);
 
 	return value_to_double(v);
 }
 
 char *metacall_value_to_string(void *v)
 {
-	assert(value_type_id(v) == TYPE_STRING);
+	portability_assert(value_type_id(v) == TYPE_STRING);
 
 	return value_to_string(v);
 }
 
 void *metacall_value_to_buffer(void *v)
 {
-	assert(value_type_id(v) == TYPE_BUFFER);
+	portability_assert(value_type_id(v) == TYPE_BUFFER);
 
 	return value_to_buffer(v);
 }
 
 void **metacall_value_to_array(void *v)
 {
-	assert(value_type_id(v) == TYPE_ARRAY);
+	portability_assert(value_type_id(v) == TYPE_ARRAY);
 
 	return value_to_array(v);
 }
 
 void **metacall_value_to_map(void *v)
 {
-	assert(value_type_id(v) == TYPE_MAP);
+	portability_assert(value_type_id(v) == TYPE_MAP);
 
 	return value_to_map(v);
 }
 
 void *metacall_value_to_ptr(void *v)
 {
-	assert(value_type_id(v) == TYPE_PTR);
+	portability_assert(value_type_id(v) == TYPE_PTR);
 
 	return value_to_ptr(v);
 }
 
 void *metacall_value_to_future(void *v)
 {
-	assert(value_type_id(v) == TYPE_FUTURE);
+	portability_assert(value_type_id(v) == TYPE_FUTURE);
 
 	return value_to_future(v);
 }
 
 void *metacall_value_to_function(void *v)
 {
-	assert(value_type_id(v) == TYPE_FUNCTION);
+	portability_assert(value_type_id(v) == TYPE_FUNCTION);
 
 	return value_to_function(v);
 }
 
 void *metacall_value_to_null(void *v)
 {
-	assert(value_type_id(v) == TYPE_NULL);
+	portability_assert(value_type_id(v) == TYPE_NULL);
 
 	return value_to_null(v);
 }
 
 void *metacall_value_to_class(void *v)
 {
-	assert(value_type_id(v) == TYPE_CLASS);
+	portability_assert(value_type_id(v) == TYPE_CLASS);
 
 	return value_to_class(v);
 }
 
 void *metacall_value_to_object(void *v)
 {
-	assert(value_type_id(v) == TYPE_OBJECT);
+	portability_assert(value_type_id(v) == TYPE_OBJECT);
 
 	return value_to_object(v);
 }
 
 void *metacall_value_to_exception(void *v)
 {
-	assert(value_type_id(v) == TYPE_EXCEPTION);
+	portability_assert(value_type_id(v) == TYPE_EXCEPTION);
 
 	return value_to_exception(v);
 }
 
 void *metacall_value_to_throwable(void *v)
 {
-	assert(value_type_id(v) == TYPE_THROWABLE);
+	portability_assert(value_type_id(v) == TYPE_THROWABLE);
 
 	return value_to_throwable(v);
 }

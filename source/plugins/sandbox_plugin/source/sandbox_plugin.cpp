@@ -428,10 +428,8 @@ static int sandbox_plugin_post_fork_callback(metacall_pid id, void *data)
 	#endif /* METACALL_FORK_SAFE */
 #endif
 
-int sandbox_plugin(void *loader, void *handle, void *context)
+int sandbox_plugin(void *loader, void *handle)
 {
-	(void)handle;
-
 	EXTENSION_FUNCTION(METACALL_PTR, sandbox_initialize);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_uname, METACALL_PTR, METACALL_BOOL);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_io, METACALL_PTR, METACALL_BOOL);

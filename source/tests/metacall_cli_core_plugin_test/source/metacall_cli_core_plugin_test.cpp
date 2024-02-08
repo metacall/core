@@ -386,10 +386,5 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 
 	metacall_allocator_destroy(allocator);
 
-	/* Test destroy */
-	{
-		void *ret = metacallhv_s(handle, "exit", metacall_null_args, 0);
-
-		EXPECT_EQ((void *)NULL, (void *)ret);
-	}
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

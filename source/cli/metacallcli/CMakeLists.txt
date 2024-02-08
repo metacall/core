@@ -25,22 +25,13 @@ include(SecurityFlags)
 #
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/${target}")
 set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/tokenizer.hpp
-	${include_path}/parser.hpp
 	${include_path}/application.hpp
 )
 
-set(inline
-	${inline_path}/parser.inl
-)
-
 set(sources
-	${source_path}/tokenizer.cpp
-	${source_path}/parser.cpp
 	${source_path}/application.cpp
 	${source_path}/main.cpp
 )
@@ -97,9 +88,6 @@ target_include_directories(${target}
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
-	${PROJECT_BINARY_DIR}/source/inline
-	${CMAKE_CURRENT_SOURCE_DIR}/inline
-	${CMAKE_CURRENT_BINARY_DIR}/inline
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
 	PUBLIC
@@ -173,6 +161,11 @@ add_loader_dependencies(${target}
 	ts_loader
 )
 
+add_dependencies(${target}
+	cli_repl_plugin
+	cli_core_plugin
+)
+
 #
 # Deployment
 #
@@ -234,7 +227,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		PROPERTY LABELS ${target}-node
 	)
 	set_tests_properties(${target}-node PROPERTIES
-		PASS_REGULAR_EXPRESSION "700.0"
+		PASS_REGULAR_EXPRESSION "4001534"
 	)
 	test_environment_variables(${target}-node
 		""
@@ -374,7 +367,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS A
 		PROPERTY LABELS ${target}-file-fail
 	)
 	set_tests_properties(${target}-file-fail PROPERTIES
-		PASS_REGULAR_EXPRESSION "Script \\(this-does-not-exist\\) load error in loader \\(file\\)"
+		PASS_REGULAR_EXPRESSION "Error: Failed to load script 'this-does-not-exist' with loader 'file'"
 	)
 	test_environment_variables(${target}-file-fail
 		""
@@ -450,7 +443,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		PROPERTY LABELS ${target}-ts
 	)
 	set_tests_properties(${target}-ts PROPERTIES
-		PASS_REGULAR_EXPRESSION "9.0"
+		PASS_REGULAR_EXPRESSION "51354"
 	)
 	test_environment_variables(${target}-ts
 		""

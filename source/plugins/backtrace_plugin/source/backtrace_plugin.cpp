@@ -26,11 +26,10 @@
 
 static backward::SignalHandling signal_handling;
 
-int backtrace_plugin(void *loader, void *handle, void *context)
+int backtrace_plugin(void *loader, void *handle)
 {
 	(void)loader;
 	(void)handle;
-	(void)context;
 
 	if (signal_handling.loaded() == false)
 	{

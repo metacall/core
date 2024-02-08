@@ -220,9 +220,9 @@ int loader_register(const char *name, loader_register_invoke invoke, function *f
 	return loader_host_register(plugin_impl_type(manager_impl->host, loader_impl), NULL, name, invoke, func, return_type, arg_size, args_type_id);
 }
 
-int loader_register_impl(void *impl, void *ctx, const char *name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[])
+int loader_register_impl(void *impl, void *handle, const char *name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[])
 {
-	return loader_host_register((loader_impl)impl, (context)ctx, name, invoke, NULL, return_type, arg_size, args_type_id);
+	return loader_host_register((loader_impl)impl, loader_impl_handle_context(handle), name, invoke, NULL, return_type, arg_size, args_type_id);
 }
 
 plugin loader_get_impl_plugin(const loader_tag tag)

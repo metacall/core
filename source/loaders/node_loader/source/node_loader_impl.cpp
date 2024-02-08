@@ -5049,6 +5049,8 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
 	int64_t extra_active_handles = node_impl->extra_active_handles.load();
 
+	/* TODO: Uncomment for debugging handles */
+	/*
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	int64_t closing = node_loader_impl_async_closing_handles_count(node_impl);
 
@@ -5060,16 +5062,22 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 		(int64_t)node_impl->thread_loop->active_reqs.count,
 		closing);
 #endif
+*/
 
 	return active_handles - node_impl->base_active_handles - extra_active_handles;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
 {
+	(void)node_impl;
+
+	/* TODO: Uncomment for debugging handles */
+	/*
 	printf("Number of active handles: %" PRId64 "\n", node_loader_impl_async_handles_count(node_impl));
 	printf("Number of user active handles: %" PRId64 "\n", node_loader_impl_user_async_handles_count(node_impl));
 	uv_print_active_handles(node_impl->thread_loop, stdout);
 	fflush(stdout);
+	*/
 }
 
 napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)

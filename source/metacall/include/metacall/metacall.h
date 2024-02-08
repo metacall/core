@@ -743,31 +743,43 @@ METACALL_API void *metacallfms(void *func, const char *buffer, size_t size, void
 METACALL_API int metacall_register(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, ...);
 
 /**
+ *  @brief
+ *    Register a function by name @name and arguments @types
+ *
+ *  @param[in] name
+ *    Name of the function (if it is NULL, function is not registered into host scope)
+ *
+ *  @param[in] invoke
+ *    Pointer to function invoke interface (argc, argv, data)
+ *
+ *  @param[out] func
+ *    Will set the pointer to the function if the parameter is not null
+ *
+ *  @param[in] return_type
+ *    Type of return value
+ *
+ *  @param[in] size
+ *    Number of function arguments
+ *
+ *  @param[in] types
+ *    List of parameter types
+ *
+ *  @return
+ *    Pointer to value containing the result of the call
+ */
+METACALL_API int metacall_registerv(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[]);
+
+/**
 *  @brief
-*    Register a function by name @name and arguments @types
+*    Obtain the loader instance by @tag
 *
-*  @param[in] name
-*    Name of the function (if it is NULL, function is not registered into host scope)
-*
-*  @param[in] invoke
-*    Pointer to function invoke interface (argc, argv, data)
-*
-*  @param[out] func
-*    Will set the pointer to the function if the parameter is not null
-*
-*  @param[in] return_type
-*    Type of return value
-*
-*  @param[in] size
-*    Number of function arguments
-*
-*  @param[in] types
-*    List of parameter types
+*  @param[in] tag
+*    Tag in which the loader is identified, normally it is the extension of the script
 *
 *  @return
-*    Pointer to value containing the result of the call
+*    Pointer the loader by @tag
 */
-METACALL_API int metacall_registerv(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[]);
+METACALL_API void *metacall_loader(const char *tag);
 
 /**
 *  @brief
@@ -776,8 +788,8 @@ METACALL_API int metacall_registerv(const char *name, void *(*invoke)(size_t, vo
 *  @param[in] loader
 *    Opaque pointer to the loader in which you want to register the function (this allows to register the function into a different loader than the host)
 *
-*  @param[in] context
-*    Opaque pointer to the context in which you want to register the function (if it is NULL, it will be defined on the global scope of the loader)
+*  @param[in] handle
+*    Opaque pointer to the handle in which you want to register the function (if it is NULL, it will be defined on the global scope of the loader)
 *
 *  @param[in] name
 *    Name of the function (if it is NULL, function is not registered into host scope)
@@ -795,9 +807,9 @@ METACALL_API int metacall_registerv(const char *name, void *(*invoke)(size_t, vo
 *    List of parameter types
 *
 *  @return
-*    Pointer to value containing the result of the call
+*    Zero if the function was registered properly, distinct from zero otherwise
 */
-METACALL_API int metacall_register_loaderv(void *loader, void *context, const char *name, void *(*invoke)(size_t, void *[], void *), enum metacall_value_id return_type, size_t size, enum metacall_value_id types[]);
+METACALL_API int metacall_register_loaderv(void *loader, void *handle, const char *name, void *(*invoke)(size_t, void *[], void *), enum metacall_value_id return_type, size_t size, enum metacall_value_id types[]);
 
 /**
 *  @brief

@@ -1,4 +1,4 @@
 load node nod.js
 inspect
-call hello_boy(300, 400)
+call hello_boy(300, 4001234)
 exit

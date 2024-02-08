@@ -42,7 +42,6 @@
 #define COPYRIGHT_ERROR "Failed to show the copyright"
 #define HELP_ERROR		"Failed to show the help"
 #define DEBUG_ERROR		"Failed to debug the command"
-#define EXIT_ERROR		"Failed to destroy MetaCall"
 
 #define COPYRIGHT_PRINT() \
 	do \
@@ -670,27 +669,8 @@ void *debug(size_t argc, void *args[], void *data)
 	return metacall_value_create_string(result.c_str(), result.length());
 }
 
-void *exit(size_t argc, void *args[], void *data)
+int cli_core_plugin(void *loader, void *handle)
 {
-	/* Validate function parameters */
-	EXTENSION_FUNCTION_CHECK(EXIT_ERROR);
-
-	std::cout << "Exiting ..." << std::endl;
-
-	int result = metacall_destroy();
-
-	if (result != 0)
-	{
-		std::cout << EXIT_ERROR " with error: " << result << std::endl;
-	}
-
-	return NULL;
-}
-
-int cli_core_plugin(void *loader, void *handle, void *context)
-{
-	(void)handle;
-
 	EXTENSION_FUNCTION(METACALL_INT, load, METACALL_STRING, METACALL_ARRAY);
 	EXTENSION_FUNCTION(METACALL_INT, inspect);
 	EXTENSION_FUNCTION(METACALL_INT, eval, METACALL_STRING, METACALL_STRING);
@@ -700,7 +680,6 @@ int cli_core_plugin(void *loader, void *handle, void *context)
 	EXTENSION_FUNCTION(METACALL_INT, copyright);
 	EXTENSION_FUNCTION(METACALL_INT, help);
 	EXTENSION_FUNCTION(METACALL_STRING, debug, METACALL_ARRAY);
-	EXTENSION_FUNCTION(METACALL_INVALID, exit);
 
 	return 0;
 }

@@ -77,7 +77,7 @@ typedef struct loader_impl_ext_handle_type
 union loader_impl_function_cast
 {
 	void *ptr;
-	int (*fn)(void *, void *, void *);
+	int (*fn)(void *, void *);
 };
 
 static dynlink ext_loader_impl_load_from_file_dynlink(const char *path, const char *library_name);
@@ -339,13 +339,15 @@ int ext_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 {
 	loader_impl_ext_handle ext_handle = static_cast<loader_impl_ext_handle>(handle);
 
+	(void)ctx; /* We have opted by pass the handle instead of the context of the handle */
+
 	for (auto ext : ext_handle->extensions)
 	{
 		loader_impl_function_cast function_cast;
 
 		function_cast.ptr = static_cast<void *>(ext.addr);
 
-		if (function_cast.fn(impl, loader_impl_handle_container_of(impl, handle), ctx) != 0)
+		if (function_cast.fn(impl, loader_impl_handle_container_of(impl, handle)) != 0)
 		{
 			return 1;
 		}

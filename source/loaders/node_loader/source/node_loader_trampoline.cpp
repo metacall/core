@@ -169,7 +169,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	/* Unwrap trampoline pointer */
 	void *result;
 
-	status = napi_unwrap(env, args[0], &result);
+	status = napi_remove_wrap(env, args[0], &result);
 
 	node_loader_impl_exception(env, status);
 
@@ -226,7 +226,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	/* Unwrap trampoline pointer */
 	void *result;
 
-	status = napi_unwrap(env, args[0], &result);
+	status = napi_remove_wrap(env, args[0], &result);
 
 	node_loader_impl_exception(env, status);
 
