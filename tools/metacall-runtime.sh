@@ -218,41 +218,50 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 
-	LLVM_VERSION_STRING=11
-	UBUNTU_CODENAME=""
-	CODENAME_FROM_ARGUMENTS=""
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		LLVM_VERSION_STRING=11
 
-	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-	. /etc/os-release
+		if [ "${LINUX_DISTRO}" = "debian" ]; then
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
 
-	case ${LINUX_DISTRO} in
-		debian)
-			if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-				# TODO: For now, bookworm || trixie == sid, change when bookworm || trixie is released
-				CODENAME="unstable"
-				LINKNAME=""
-			else
-				# "stable" Debian release
-				CODENAME="${VERSION_CODENAME}"
-				LINKNAME="-${CODENAME}"
-			fi
-			;;
-		*)
-			# ubuntu and its derivatives
-			if [ -n "${UBUNTU_CODENAME}" ]; then
-				CODENAME="${UBUNTU_CODENAME}"
-				if [ -n "${CODENAME}" ]; then
-					LINKNAME="-${CODENAME}"
-				fi
-			fi
-			;;
-	esac
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
 
-	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-	$SUDO_CMD apt-get update
-	sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
+						# TODO: For now, bookworm || trixie == sid, change when bookworm || trixie is released
+						CODENAME="unstable"
+						LINKNAME=""
+					else
+						# "stable" Debian release
+						CODENAME="${VERSION_CODENAME}"
+						LINKNAME="-${CODENAME}"
+					fi
+					;;
+				*)
+					# ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+						if [ -n "${CODENAME}" ]; then
+							LINKNAME="-${CODENAME}"
+						fi
+					fi
+					;;
+			esac
+
+			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+			$SUDO_CMD apt-get update
+			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# LLVM 11 is available on Ubuntu
+			LLVM_VERSION_STRING=11
+			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+		fi
+	fi
 }
 
 # Cobol
