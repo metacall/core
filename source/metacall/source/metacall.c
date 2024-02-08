@@ -212,7 +212,7 @@ int metacall_initialize(void)
 				}
 				else
 				{
-					log_write("metacall", LOG_LEVEL_INFO, "Set MetaCall log level to %s", level_str);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Set MetaCall log level to %s", level_str);
 				}
 			}
 		}
