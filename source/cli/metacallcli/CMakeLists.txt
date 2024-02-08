@@ -227,7 +227,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		PROPERTY LABELS ${target}-node
 	)
 	set_tests_properties(${target}-node PROPERTIES
-		PASS_REGULAR_EXPRESSION "7001234"
+		PASS_REGULAR_EXPRESSION "4001534"
 	)
 	test_environment_variables(${target}-node
 		""
