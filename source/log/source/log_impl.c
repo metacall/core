@@ -29,7 +29,7 @@
 
 #include <stdlib.h>
 
-#if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+#if (defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)) && !(defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1932))
 	#include <sanitizer/common_interface_defs.h>
 #endif
 
