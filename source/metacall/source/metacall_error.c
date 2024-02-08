@@ -32,7 +32,6 @@ int metacall_error_from_value(void *v, metacall_exception ex)
 {
 	if (v == NULL || ex == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Trying to retrieve an exception from a value with wrong null parameters");
 		return 1;
 	}
 
@@ -43,9 +42,6 @@ int metacall_error_from_value(void *v, metacall_exception ex)
 
 	if (type_id_exception(value_type_id(v)) != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Passed a wrong value to metacall_error_from_value,"
-											   " either a value of type exception or a value of type throwable containing an exception must be passed");
-
 		return 1;
 	}
 
