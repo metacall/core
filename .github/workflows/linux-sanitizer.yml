@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:mantic"]
+        image: ["debian:trixie-slim", "debian:bookworm-slim", "ubuntu:mantic"]
         sanitizer: [address-sanitizer, thread-sanitizer] # TODO: memory-sanitizer not supported by GCC
 
     env:

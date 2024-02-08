@@ -585,7 +585,7 @@ sub_c(){
 	echo "configure c"
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${LINUX_DISTRO}" = "debian" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			LLVM_VERSION_STRING=11
 			UBUNTU_CODENAME=""
 			CODENAME_FROM_ARGUMENTS=""
@@ -620,10 +620,6 @@ sub_c(){
 			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
-		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# LLVM 11 is available on Ubuntu
-			LLVM_VERSION_STRING=11
 			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
