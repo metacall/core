@@ -132,45 +132,27 @@ TEST_F(metacall_wasm_test, CallFunctions)
 {
 	const char *functions_module_filename = "functions.wat";
 
-	std::cout << "DEBUG: functions.wat" << std::endl;
-	std::cout.flush();
-
 	ASSERT_EQ((int)0, (int)metacall_load_from_file("wasm", &functions_module_filename, 1, NULL));
-
-	std::cout << "DEBUG: none_ret_none" << std::endl;
-	std::cout.flush();
 
 	void *ret = metacall("none_ret_none");
 	ASSERT_NE((void *)NULL, (void *)ret);
 	ASSERT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 	metacall_value_destroy(ret);
 
-	std::cout << "DEBUG: i64_ret_none" << std::endl;
-	std::cout.flush();
-
 	ret = metacall("i64_ret_none", 0L);
 	ASSERT_NE((void *)NULL, (void *)ret);
 	ASSERT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 	metacall_value_destroy(ret);
-
-	std::cout << "DEBUG: i32_f32_i64_f64_ret_none" << std::endl;
-	std::cout.flush();
 
 	ret = metacall("i32_f32_i64_f64_ret_none", 0, 0.0f, 0L, 0.0);
 	ASSERT_NE((void *)NULL, (void *)ret);
 	ASSERT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 	metacall_value_destroy(ret);
 
-	std::cout << "DEBUG: none_ret_i32" << std::endl;
-	std::cout.flush();
-
 	ret = metacall("none_ret_i32");
 	ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
 	ASSERT_EQ((int)1, (int)metacall_value_to_int(ret));
 	metacall_value_destroy(ret);
-
-	std::cout << "DEBUG: none_ret_i32_f32_i64_f64" << std::endl;
-	std::cout.flush();
 
 	ret = metacall("none_ret_i32_f32_i64_f64");
 	ASSERT_EQ((enum metacall_value_id)METACALL_ARRAY, (enum metacall_value_id)metacall_value_id(ret));
@@ -186,9 +168,6 @@ TEST_F(metacall_wasm_test, CallFunctions)
 	ASSERT_EQ((double)4.0, (double)metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
-	std::cout << "DEBUG: i32_f32_i64_f64_ret_i32_f32_i64_f64" << std::endl;
-	std::cout.flush();
-
 	ret = metacall("i32_f32_i64_f64_ret_i32_f32_i64_f64", 0, 0, 0, 0);
 	ASSERT_EQ((enum metacall_value_id)METACALL_ARRAY, (enum metacall_value_id)metacall_value_id(ret));
 
@@ -203,17 +182,11 @@ TEST_F(metacall_wasm_test, CallFunctions)
 	ASSERT_EQ((double)4.0, (double)metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
-	std::cout << "DEBUG: trap" << std::endl;
-	std::cout.flush();
-
 	// It should exit with illegal instruction
 	#if defined(unix) || defined(__unix__) || defined(__unix) || \
 		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
 	ASSERT_EXIT((metacall("trap"), exit(0)), ::testing::KilledBySignal(SIGILL), ".*");
 	#endif
-
-	std::cout << "DEBUG: end" << std::endl;
-	std::cout.flush();
 }
 
 TEST_F(metacall_wasm_test, LinkModules)
