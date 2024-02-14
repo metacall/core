@@ -127,8 +127,9 @@ add_dependencies(${target}
 # Define test
 #
 
-if(WIN32 AND OPTION_BUILD_ADDRESS_SANITIZER)
-	# TODO: This test segfaults in windows when run with addres sanitizer without any output
+if(OPTION_BUILD_ADDRESS_SANITIZER)
+	# TODO: Address sanitizer seems to break with WASM loading,
+	# we should either review this or instrument properly wasmtime library
 	return()
 endif()
 
