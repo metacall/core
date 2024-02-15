@@ -53,7 +53,10 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 			"function h() {\n"
 			"\treturn new Promise((resolve) => resolve(34));\n"
 			"}\n"
-			"module.exports = { f, g, h };\n";
+			"async function i() {\n"
+			"\tthrow Error('Hi there!');\n"
+			"}\n"
+			"module.exports = { f, g, h, i };\n";
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
@@ -70,29 +73,35 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 		/* Test resolve */
 		void *future = metacall_await(
-			"f", args, [](void *result, void *data) -> void * {
-			EXPECT_NE((void *) NULL, (void *) result);
+			"f",
+			args,
+			[](void *result, void *data) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
 
-			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
 
-			EXPECT_EQ((double) 10.0, (double) metacall_value_to_double(result));
+				EXPECT_EQ((double)10.0, (double)metacall_value_to_double(result));
 
-			EXPECT_NE((void *) NULL, (void *) data);
+				EXPECT_NE((void *)NULL, (void *)data);
 
-			struct async_context * ctx = static_cast<struct async_context *>(data);
+				struct async_context *ctx = static_cast<struct async_context *>(data);
 
-			EXPECT_EQ((int) 234, (int) ctx->value);
+				EXPECT_EQ((int)234, (int)ctx->value);
 
-			printf("Resolve C Callback\n");
+				printf("Resolve C Callback\n");
 
-			return metacall_value_create_double(15.0); }, [](void *, void *) -> void * {
-			int this_should_never_be_executed = 0;
+				return metacall_value_create_double(15.0);
+			},
+			[](void *, void *) -> void * {
+				int this_should_never_be_executed = 0;
 
-			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+				EXPECT_EQ((int)1, (int)this_should_never_be_executed);
 
-			printf("Reject C Callback\n");
+				printf("Reject C Callback\n");
 
-			return NULL; }, static_cast<void *>(&ctx));
+				return NULL;
+			},
+			static_cast<void *>(&ctx));
 
 		EXPECT_NE((void *)NULL, (void *)future);
 
@@ -102,31 +111,37 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 		/* Test reject */
 		future = metacall_await(
-			"g", args, [](void *, void *) -> void * {
-			int this_should_never_be_executed = 0;
+			"g",
+			args,
+			[](void *, void *) -> void * {
+				int this_should_never_be_executed = 0;
 
-			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+				EXPECT_EQ((int)1, (int)this_should_never_be_executed);
 
-			printf("Resolve C Callback\n");
+				printf("Resolve C Callback\n");
 
-			return NULL; }, [](void *result, void *data) -> void * {
-			EXPECT_NE((void *) NULL, (void *) result);
+				return NULL;
+			},
+			[](void *result, void *data) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
 
-			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
 
-			EXPECT_EQ((double) 10.0, (double) metacall_value_to_double(result));
+				EXPECT_EQ((double)10.0, (double)metacall_value_to_double(result));
 
-			EXPECT_NE((void *) NULL, (void *) data);
+				EXPECT_NE((void *)NULL, (void *)data);
 
-			struct async_context * ctx = static_cast<struct async_context *>(data);
+				struct async_context *ctx = static_cast<struct async_context *>(data);
 
-			EXPECT_EQ((int) 234, (int) ctx->value);
+				EXPECT_EQ((int)234, (int)ctx->value);
 
-			printf("Reject C Callback\n");
+				printf("Reject C Callback\n");
 
-			++success_callbacks;
+				++success_callbacks;
 
-			return metacall_value_create_double(15.0); }, static_cast<void *>(&ctx));
+				return metacall_value_create_double(15.0);
+			},
+			static_cast<void *>(&ctx));
 
 		EXPECT_NE((void *)NULL, (void *)future);
 
@@ -144,21 +159,26 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 		EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
 
 		void *ret = metacall_await_future(
-			metacall_value_to_future(future), [](void *result, void *) -> void * {
-			EXPECT_NE((void *) NULL, (void *) result);
+			metacall_value_to_future(future),
+			[](void *result, void *) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
 
-			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
 
-			EXPECT_EQ((double) 34.0, (double) metacall_value_to_double(result));
+				EXPECT_EQ((double)34.0, (double)metacall_value_to_double(result));
 
-			++success_callbacks;
+				++success_callbacks;
 
-			return metacall_value_create_double(155.0); }, [](void *, void *) -> void * {
-			int this_should_never_be_executed = 0;
+				return metacall_value_create_double(155.0);
+			},
+			[](void *, void *) -> void * {
+				int this_should_never_be_executed = 0;
 
-			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+				EXPECT_EQ((int)1, (int)this_should_never_be_executed);
 
-			return NULL; }, NULL);
+				return NULL;
+			},
+			NULL);
 
 		metacall_value_destroy(future);
 
@@ -167,25 +187,68 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_FUTURE);
 
 		void *last = metacall_await_future(
-			metacall_value_to_future(ret), [](void *result, void *) -> void * {
-			EXPECT_NE((void *) NULL, (void *) result);
+			metacall_value_to_future(ret),
+			[](void *result, void *) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
 
-			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
 
-			EXPECT_EQ((double) 155.0, (double) metacall_value_to_double(result));
+				EXPECT_EQ((double)155.0, (double)metacall_value_to_double(result));
 
-			++success_callbacks;
+				++success_callbacks;
 
-			return NULL; }, [](void *, void *) -> void * {
-			int this_should_never_be_executed = 0;
+				return NULL;
+			},
+			[](void *, void *) -> void * {
+				int this_should_never_be_executed = 0;
 
-			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+				EXPECT_EQ((int)1, (int)this_should_never_be_executed);
 
-			return NULL; }, NULL);
+				return NULL;
+			},
+			NULL);
 
 		metacall_value_destroy(last);
 
 		metacall_value_destroy(ret);
+
+		/* Test throw exception inside async function */
+		future = metacall_await(
+			"i",
+			metacall_null_args,
+			[](void *, void *) -> void * {
+				int this_should_never_be_executed = 0;
+
+				EXPECT_EQ((int)1, (int)this_should_never_be_executed);
+
+				printf("Resolve C Callback\n");
+
+				return NULL;
+			},
+			[](void *result, void *data) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
+
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_EXCEPTION);
+
+				EXPECT_NE((void *)NULL, (void *)data);
+
+				struct async_context *ctx = static_cast<struct async_context *>(data);
+
+				EXPECT_EQ((int)234, (int)ctx->value);
+
+				printf("Reject C Callback\n");
+
+				++success_callbacks;
+
+				return metacall_value_create_double(15.0);
+			},
+			static_cast<void *>(&ctx));
+
+		EXPECT_NE((void *)NULL, (void *)future);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
+
+		metacall_value_destroy(future);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
@@ -194,8 +257,8 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		/* Total amount of successful callbacks must be 3 */
-		EXPECT_EQ((int)success_callbacks, (int)3);
+		/* Total amount of successful callbacks must be 4 */
+		EXPECT_EQ((int)success_callbacks, (int)4);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 }
