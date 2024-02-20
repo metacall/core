@@ -195,7 +195,7 @@ if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" OR "${CMAKE_INSTALL_PREFIX}" STREQU
 endif()
 
 # Installation paths
-if(UNIX AND SYSTEM_DIR_INSTALL)
+if(UNIX AND SYSTEM_DIR_INSTALL OR OPTION_BUILD_GUIX)
 	# Install into the system (/usr/bin or /usr/local/bin)
 	set(INSTALL_ROOT		"share/${project}")			# /usr/[local]/share/<project>
 	set(INSTALL_CMAKE		"share/${project}/cmake")	# /usr/[local]/share/<project>/cmake
