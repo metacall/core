@@ -3153,6 +3153,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	loader_impl_py_handle py_handle = py_loader_impl_handle_create(size);
 	int run_main = 1;
 	size_t iterator;
+	PyObject *exception = NULL;
 
 	if (py_handle == NULL)
 	{
@@ -3180,7 +3181,6 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		int result = 1;
-		PyObject *exception = NULL;
 
 		/* We assume it is a path so we load from path */
 		if (portability_path_is_absolute(paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1) == 0)
@@ -3253,6 +3253,7 @@ error_import_module:
 		py_loader_impl_error_print(py_impl);
 		PyErr_Clear();
 	}
+	Py_XDECREF(exception);
 error_recursive_call:
 	PyGILState_Release(gstate);
 	PyEval_RestoreThread(tstate);
