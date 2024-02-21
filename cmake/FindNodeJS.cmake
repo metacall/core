@@ -556,13 +556,13 @@ if(NOT NodeJS_LIBRARY)
 
 	# Set up the compile path in case of prefix is specified
 	if(NOT WIN32 AND NOT MSVC AND NodeJS_INSTALL_PREFIX)
-		set(NodeJS_COMPILE_PATH "${NodeJS_INSTALL_PREFIX}/lib")
+		set(NodeJS_COMPILE_PREFIX_PATH "${NodeJS_INSTALL_PREFIX}/lib")
 	endif()
 
 	# Find compiled library
 	find_library(NodeJS_LIBRARY
 		NAMES ${NodeJS_LIBRARY_NAMES}
-		PATHS ${NodeJS_COMPILE_PATH}
+		PATHS ${NodeJS_COMPILE_PATH} ${NodeJS_COMPILE_PREFIX_PATH}
 		DOC "NodeJS JavaScript Runtime Library"
 		NO_CMAKE_SYSTEM_PATH
 		NO_SYSTEM_ENVIRONMENT_PATH
