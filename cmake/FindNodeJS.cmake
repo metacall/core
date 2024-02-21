@@ -542,14 +542,17 @@ if(NOT NodeJS_LIBRARY)
 
 			message(STATUS "Build NodeJS shared library")
 
+			# Create build output directory
+			execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${NodeJS_OUTPUT_PATH}/out)
+
 			include(ProcessorCount)
 
 			ProcessorCount(N)
 
-			if(NOT N EQUAL 0)
-				execute_process(COMMAND sh -c "make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+			if(N GREATER 1)
+				execute_process(COMMAND sh -c "make -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
 			else()
-				execute_process(COMMAND sh -c "make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+				execute_process(COMMAND sh -c "make -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
 			endif()
 		endif()
 	endif()
