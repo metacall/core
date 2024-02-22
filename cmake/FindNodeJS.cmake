@@ -512,6 +512,17 @@ if(NOT NodeJS_LIBRARY)
 					set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip")
 				endif()
 
+				# Workaround for configure bug: ERROR: Could not load deps/icu/source/common/unicode/uvernum.h - is ICU installed?
+				if("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "18")
+					set(NodeJS_ICU_DOWNLOAD_FILE "${NodeJS_BASE_PATH}/icu4c-src.zip")
+					file(DOWNLOAD ${ICU_URL} "${NodeJS_ICU_DOWNLOAD_FILE}")
+					execute_process(
+						WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}/deps"
+						COMMAND ${CMAKE_COMMAND} -E tar xzf "${NodeJS_ICU_DOWNLOAD_FILE}"
+					)
+					set(ICU_URL "${NodeJS_OUTPUT_PATH}/deps/icu")
+				endif()
+
 				# Workaround for OpenSSL bug: https://github.com/metacall/core/issues/223
 				if(APPLE)
 					set(ICU_ENV_VAR ${CMAKE_COMMAND} -E env PYTHONHTTPSVERIFY=0)
@@ -538,7 +549,10 @@ if(NOT NodeJS_LIBRARY)
 				set(BUILD_DEBUG)
 			endif()
 
-			execute_process(COMMAND ${ICU_ENV_VAR} sh -c "./configure ${NodeJS_PREFIX} ${BUILD_ICU_FLAGS} --shared ${BUILD_DEBUG}" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+			execute_process(
+				WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
+				COMMAND ${ICU_ENV_VAR} ./configure ${NodeJS_PREFIX} ${BUILD_ICU_FLAGS} --shared ${BUILD_DEBUG}
+			)
 
 			message(STATUS "Build NodeJS shared library")
 
@@ -550,9 +564,15 @@ if(NOT NodeJS_LIBRARY)
 			ProcessorCount(N)
 
 			if(N GREATER 1)
-				execute_process(COMMAND sh -c "make -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+				execute_process(
+					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
+					COMMAND make -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
+				)
 			else()
-				execute_process(COMMAND sh -c "make -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+				execute_process(
+					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
+					COMMAND make -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
+				)
 			endif()
 		endif()
 	endif()
