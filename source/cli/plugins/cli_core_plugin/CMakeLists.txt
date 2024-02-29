@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_LOADERS_NODE)
 	return()
 endif()
 
@@ -45,13 +45,20 @@ set(sources
 	${source_path}/cli_core_plugin.cpp
 )
 
+set(scripts
+	${source_path}/cli_core_plugin_repl.js
+)
+
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
+set(script_group "Script Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 	${header_group} ${headers})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 	${source_group} ${sources})
+source_group_by_path(${source_path}  "\\\\.js$"
+	${source_group} ${scripts})
 
 #
 # Create library
@@ -79,7 +86,7 @@ generate_export_header(${target}
 # Project options
 #
 
-set(PLUGIN_OUTPUT_DIRECTORY "${PROJECT_OUTPUT_DIR}/plugins/cli/${target}")
+set(PLUGIN_OUTPUT_DIRECTORY "${PROJECT_OUTPUT_DIR}/plugins/cli/repl/${target}")
 
 set_target_properties(${target}
 	PROPERTIES
@@ -182,6 +189,11 @@ target_link_libraries(${target}
 	INTERFACE
 )
 
+add_dependencies(${target}
+	plugin_extension
+	cli_repl_plugin
+)
+
 #
 # Define dependencies
 #
@@ -191,14 +203,10 @@ add_custom_target(${target}_config ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${PLUGIN_OUTPUT_DIRECTORY}
 	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall.json ${PLUGIN_OUTPUT_DIRECTORY}/metacall.json
+	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/cli_core_plugin_repl.js ${PLUGIN_OUTPUT_DIRECTORY}/cli_core_plugin_repl.js
 )
 
 set_target_properties(${target}_config
 	PROPERTIES
 	FOLDER "${IDE_FOLDER}"
-)
-
-add_dependencies(${target}
-	${target}_config
-	plugin_extension
 )

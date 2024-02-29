@@ -3,16 +3,7 @@ const all_except_whitespaces = '^[^ \r\n\t\f\v]+';
 const func = '^[a-zA-Z0-9_\.]+\\(.*\\)$';
 const anychar = '.+';
 
-/*
- * Normally this will be registered in the target plugin, check
- * the cli_repl_plugin.js exports to check out how to register commands
- * from the plugin initializer (for example, inside cli_core_plugin.cpp in
- * the cli_core_plugin function). But we consider this is a necesary plugin
- * of the CLI, which implements basic core functionalities for the CLI. In
- * that case we can assume this dependency and register from here the REPL
- * commands of an external plugin. 
- */
-const cli_core_command_map = {
+module.exports = {
 	load: {
 		regexes: [loaders, all_except_whitespaces], /* Match everything except whitespaces, paths with whitespaces are not supported */
 		types: ['METACALL_STRING', 'METACALL_ARRAY'],
@@ -54,5 +45,3 @@ const cli_core_command_map = {
 		types: [],
 	}
 };
-
-module.exports = { cli_core_command_map };

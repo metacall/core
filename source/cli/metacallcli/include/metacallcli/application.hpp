@@ -69,6 +69,18 @@ protected:
 
 	/**
 	*  @brief
+	*    Initialize the CMD
+	*
+	*  @param[in] arguments
+	*    Vector of strings containing all the arguments from argv
+	*
+	*  @return
+	*    Return true if the load was successful, false otherwise
+	*/
+	bool cmd(std::vector<std::string> &arguments);
+
+	/**
+	*  @brief
 	*    Fallback argument parser
 	*
 	*  @param[in] arguments
@@ -118,9 +130,9 @@ protected:
 private:
 	/* -- Private Member Data -- */
 
-	void *plugin_cli_handle;			/**< Handle containing all loaded plugins for CLI */
-	void *plugin_repl_handle;			/**< Handle containing all loaded plugins for REPL */
-	std::vector<std::string> arguments; /**< Vector containing a list of arguments */
+	void *plugin_cli_handle;  /**< Handle containing all loaded plugins for CLI */
+	void *plugin_repl_handle; /**< Handle containing all loaded plugins for REPL */
+	void *plugin_cmd_handle;  /**< Handle containing all loaded plugins for CMD */
 };
 
 } /* namespace metacallcli */

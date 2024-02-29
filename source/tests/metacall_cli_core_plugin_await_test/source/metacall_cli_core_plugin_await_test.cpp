@@ -23,20 +23,6 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-#if defined __has_include
-	#if __has_include(<filesystem>)
-		#include <filesystem>
-namespace fs = std::filesystem;
-	#elif __has_include(<experimental/filesystem>)
-		#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-	#else
-		#error "Missing the <filesystem> header."
-	#endif
-#else
-	#error "C++ standard too old for compiling this file."
-#endif
-
 class metacall_cli_core_plugin_await_test : public testing::Test
 {
 public:
@@ -49,16 +35,17 @@ TEST_F(metacall_cli_core_plugin_await_test, DefaultConstructor)
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	/* Extension */
-	void *handle = metacall_plugin_extension();
+	void *plugin_extension_handle = metacall_plugin_extension();
+	void *cli_plugin_handle = NULL;
 
-	ASSERT_NE((void *)NULL, (void *)handle);
+	ASSERT_NE((void *)NULL, (void *)plugin_extension_handle);
 
 	void *args[] = {
 		metacall_value_create_string(METACALL_PLUGIN_PATH, sizeof(METACALL_PLUGIN_PATH) - 1),
-		metacall_value_create_ptr(&handle)
+		metacall_value_create_ptr(&cli_plugin_handle)
 	};
 
-	void *result = metacallhv_s(handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
+	void *result = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
 
 	ASSERT_NE((void *)NULL, (void *)result);
 
@@ -68,34 +55,6 @@ TEST_F(metacall_cli_core_plugin_await_test, DefaultConstructor)
 
 	metacall_value_destroy(args[0]);
 	metacall_value_destroy(args[1]);
-	metacall_value_destroy(result);
-
-	/* Get core plugin path and handle in order to load cli plugins */
-	const char *plugin_path = metacall_plugin_path();
-	void *plugin_extension_handle = metacall_plugin_extension();
-	void *cli_plugin_handle = NULL;
-
-	ASSERT_NE((const char *)plugin_path, (const char *)NULL);
-	ASSERT_NE((void *)plugin_extension_handle, (void *)NULL);
-
-	/* Define the cli plugin path as string (core plugin path plus cli) */
-	fs::path plugin_cli_path(plugin_path);
-	plugin_cli_path /= "cli";
-	std::string plugin_cli_path_str(plugin_cli_path.string());
-
-	/* Load cli plugins into plugin cli handle */
-	void *args_cli[] = {
-		metacall_value_create_string(plugin_cli_path_str.c_str(), plugin_cli_path_str.length()),
-		metacall_value_create_ptr(&cli_plugin_handle)
-	};
-
-	result = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args_cli, sizeof(args_cli) / sizeof(args_cli[0]));
-
-	ASSERT_NE((void *)result, (void *)NULL);
-	ASSERT_EQ((int)0, (int)metacall_value_to_int(result));
-
-	metacall_value_destroy(args_cli[0]);
-	metacall_value_destroy(args_cli[1]);
 	metacall_value_destroy(result);
 
 	/* Test eval */
@@ -132,7 +91,7 @@ TEST_F(metacall_cli_core_plugin_await_test, DefaultConstructor)
 		metacall_value_create_function(func)
 	};
 
-	result = metacallhv_s(handle, "await__test", args_test, sizeof(args_test) / sizeof(args_test[0]));
+	result = metacallhv_s(cli_plugin_handle, "await__test", args_test, sizeof(args_test) / sizeof(args_test[0]));
 
 	EXPECT_NE((void *)NULL, (void *)result);
 

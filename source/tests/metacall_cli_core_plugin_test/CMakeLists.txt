@@ -96,7 +96,7 @@ target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	CLI_CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/cli/cli_core_plugin/metacall.json"
+	CLI_CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/cli/repl/cli_core_plugin/metacall.json"
 )
 
 #

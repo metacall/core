@@ -11,4 +11,4 @@ function await__test(await_cb) {
 	return 22;
 }
 
-module.exports = await__test
+module.exports = await__test;

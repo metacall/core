@@ -1,6 +1,6 @@
-const command_parser_map = {};
+const repl_parser_map = {};
 
-function command_parse(cmd) {
+function repl_parse(cmd) {
 	const command_str = cmd.toString();
 	let current_position = command_str.indexOf(' ');
 
@@ -14,7 +14,7 @@ function command_parse(cmd) {
 		return [];
 	}
 
-	const command = command_parser_map[key];
+	const command = repl_parser_map[key];
 
 	if (!command) {
 		throw new Error(`Command '${key}' not valid, use 'help' for more information`);
@@ -80,21 +80,29 @@ function command_parse(cmd) {
 	return [key, ...tokens]
 }
 
-const command_register = (cmd, regexes, types) => {
+function repl_register(cmd, regexes, types) {
 	if (regexes.length !== types.length) {
 		throw new Error('Number of Regexes and Types do not match')
 	}
-	command_parser_map[cmd] = {
+	repl_parser_map[cmd] = {
 		regexes: regexes.map(re => new RegExp(re, 'g')),
 		types
 	}
 }
 
+function repl_register_map(map) {
+	Object.keys(map).forEach(key => repl_register(key, map[key].regexes, map[key].types));
+};
+
+function repl_register_from_file(file) {
+	const map = require(file);
+	repl_register_map(map);
+}
+
 module.exports = {
-	command_register,
-	command_register_map: (map) => {
-		Object.keys(map).forEach(key => command_register(key, map[key].regexes, map[key].types));
-	},
-	command_completer: () => Object.keys(command_parser_map),
-	command_parse,
+	repl_register,
+	repl_register_map,
+	repl_register_from_file,
+	repl_completer: () => Object.keys(repl_parser_map),
+	repl_parse,
 };
