@@ -579,7 +579,7 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 				log_write("metacall", LOG_LEVEL_ERROR, "Error when calling destructor from handle impl: %p (%s)", (void *)handle_impl, func_fini_name);
 			}
 
-			if (handle_impl->iface->clear(handle_impl->impl, handle_impl->module) != 0)
+			if (handle_impl->module != NULL && handle_impl->iface->clear(handle_impl->impl, handle_impl->module) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Error when clearing handle impl: %p", (void *)handle_impl);
 			}
@@ -1166,6 +1166,81 @@ void *loader_impl_get_options(loader_impl impl)
 	}
 
 	return NULL;
+}
+
+int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr)
+{
+	if (impl != NULL)
+	{
+		loader_impl_interface iface = loader_iface(p);
+
+		if (iface != NULL)
+		{
+			loader_path path;
+			size_t init_order;
+
+			if (loader_impl_initialize(manager, p, impl) != 0)
+			{
+				return 1;
+			}
+
+			if (loader_impl_handle_name(manager, name, path) > 1 && loader_impl_get_handle(impl, path) != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Initialize handle failed, handle with name %s already loaded", path);
+
+				return 1;
+			}
+
+			init_order = vector_size(impl->handle_impl_init_order);
+
+			vector_push_back_empty(impl->handle_impl_init_order);
+
+			loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, NULL, path, LOADER_PATH_SIZE);
+
+			if (handle_impl != NULL)
+			{
+				handle_impl->populated = 1;
+
+				if (set_insert(impl->handle_impl_path_map, handle_impl->path, handle_impl) == 0)
+				{
+					if (loader_impl_handle_register(manager, impl, path, handle_impl, handle_ptr) == 0)
+					{
+						vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+
+						return 0;
+					}
+
+					set_remove(impl->handle_impl_path_map, handle_impl->path);
+				}
+
+				{
+					size_t iterator;
+
+					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+					{
+						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+						loader_impl_destroy_handle(iterator_handle_impl);
+					}
+
+					vector_pop_back(impl->handle_impl_init_order);
+				}
+
+				log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", path);
+
+				loader_impl_destroy_handle(handle_impl);
+			}
+		}
+	}
+
+	return 1;
+}
+
+vector loader_impl_handle_populated(void *handle)
+{
+	loader_handle_impl handle_impl = handle;
+
+	return handle_impl->populated_handles;
 }
 
 const char *loader_impl_handle_id(void *handle)

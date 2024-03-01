@@ -38,6 +38,8 @@ namespace fs = std::experimental::filesystem;
 
 #include <string>
 
+static void *extension_loader = NULL;
+
 void *plugin_load_from_path(size_t argc, void *args[], void *data)
 {
 	/* TODO: Improve return values with throwable in the future */
@@ -70,6 +72,15 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 	if (argc == 2)
 	{
 		handle_ptr = static_cast<void **>(metacall_value_to_ptr(args[1]));
+
+		/* Initialize the handle in case it is null for the first iteration */
+		if (*handle_ptr == NULL)
+		{
+			if (metacall_handle_initialize(extension_loader, ext_path.c_str(), handle_ptr) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to initialize handle with plugin: %s", ext_path.c_str());
+			}
+		}
 	}
 
 	static std::string m_begins = "metacall-";
@@ -96,17 +107,30 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 					config.substr(config.size() - m_ends.size()) == m_ends))
 			{
 				std::string dir_path = dir.path().string();
+				void *current_handle = NULL;
+				void **current_handle_ptr = (handle_ptr != NULL && *handle_ptr != NULL) ? &current_handle : NULL;
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Loading plugin: %s", dir_path.c_str());
 
-				if (metacall_load_from_configuration(dir_path.c_str(), handle_ptr, config_allocator) != 0)
+				/* On each iteration, pass a new handle to metacall_load_from_configuration */
+				if (metacall_load_from_configuration(dir_path.c_str(), current_handle_ptr, config_allocator) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load plugin: %s", dir_path.c_str());
 					metacall_allocator_destroy(config_allocator);
 					return metacall_value_create_int(4);
 				}
 
+				/* Populate the current handle into the handle_ptr */
+				if (handle_ptr != NULL && *handle_ptr != NULL)
+				{
+					if (metacall_handle_populate(*handle_ptr, current_handle) != 0)
+					{
+						log_write("metacall", LOG_LEVEL_ERROR, "Failed to populate handle in plugin: %s", dir_path.c_str());
+					}
+				}
+
 				i++;
+
 				if (i != fs::end(i) && i.depth() == 1)
 				{
 					i.pop();
@@ -127,6 +151,9 @@ int plugin_extension(void *loader, void *handle)
 {
 	/* Register function */
 	EXTENSION_FUNCTION(METACALL_INT, plugin_load_from_path, METACALL_STRING, METACALL_PTR);
+
+	/* Store the loader reference for later on */
+	extension_loader = loader;
 
 	return 0;
 }

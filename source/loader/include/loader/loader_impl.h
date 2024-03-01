@@ -69,6 +69,10 @@ LOADER_API void loader_impl_set_options(loader_impl impl, void *options);
 
 LOADER_API void *loader_impl_get_options(loader_impl impl);
 
+LOADER_API int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr);
+
+LOADER_API vector loader_impl_handle_populated(void *handle);
+
 LOADER_API const char *loader_impl_handle_id(void *handle);
 
 LOADER_API value loader_impl_handle_export(void *handle);
