@@ -554,6 +554,39 @@ void *loader_get_options(const loader_tag tag)
 	return loader_impl_get_options(plugin_impl_type(p, loader_impl));
 }
 
+int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr)
+{
+	if (loader_initialize() == 1)
+	{
+		return 1;
+	}
+
+	plugin p = loader_impl_plugin(impl);
+
+	return loader_impl_handle_initialize(&loader_manager, p, impl, name, handle_ptr);
+}
+
+int loader_handle_populate(void *handle_dest, void *handle_src)
+{
+	context ctx_dest = loader_impl_handle_context(handle_dest);
+	context ctx_src = loader_impl_handle_context(handle_src);
+	char *duplicated_key;
+
+	if (context_contains(ctx_src, ctx_dest, &duplicated_key) == 0 && duplicated_key != NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope", duplicated_key);
+		return 1;
+	}
+	else if (context_append(ctx_dest, ctx_src) == 0)
+	{
+		vector_push_back_var(loader_impl_handle_populated(handle_src), handle_dest);
+
+		return 0;
+	}
+
+	return 1;
+}
+
 const char *loader_handle_id(void *handle)
 {
 	return loader_impl_handle_id(handle);

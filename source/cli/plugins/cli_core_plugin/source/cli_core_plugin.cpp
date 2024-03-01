@@ -671,6 +671,7 @@ void *debug(size_t argc, void *args[], void *data)
 
 int cli_core_plugin(void *loader, void *handle)
 {
+	/* Register functions */
 	EXTENSION_FUNCTION(METACALL_INT, load, METACALL_STRING, METACALL_ARRAY);
 	EXTENSION_FUNCTION(METACALL_INT, inspect);
 	EXTENSION_FUNCTION(METACALL_INT, eval, METACALL_STRING, METACALL_STRING);

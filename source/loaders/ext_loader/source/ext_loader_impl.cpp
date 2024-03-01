@@ -194,6 +194,7 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path)
 {
 	auto iterator = ext_impl->destroy_list.find(path);
+
 	if (iterator != ext_impl->destroy_list.end())
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "Unloading handle: %s <%p>", iterator->second.name.c_str(), iterator->second.handle);

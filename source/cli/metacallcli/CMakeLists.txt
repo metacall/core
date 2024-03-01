@@ -1,3 +1,9 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_LOADERS_NODE)
+	message(WARNING "The Extension and NodeJS loaders are a dependency of the CLI, in order to compile the CLI, enable them with -DOPTION_BUILD_LOADERS_EXT=ON -DOPTION_BUILD_LOADERS_NODE=ON")
+	return()
+endif()
+
 #
 # Executable name and options
 #
@@ -149,22 +155,32 @@ target_link_libraries(${target}
 #
 
 add_loader_dependencies(${target}
-	node_loader
+	c_loader
+	cob_loader
+	cs_loader
+	ext_loader
+	file_loader
+	java_loader
+	mock_loader
 	py_loader
 	rb_loader
-	cs_loader
-	jsm_loader
-	js_loader
-	mock_loader
-	c_loader
-	file_loader
+	rs_loader
+	rpc_loader
 	ts_loader
+	wasm_loader
 )
 
 add_dependencies(${target}
+	node_loader
 	cli_repl_plugin
 	cli_core_plugin
 )
+
+if(TARGET cli_cmd_plugin)
+	add_dependencies(${target}
+		cli_cmd_plugin
+	)
+endif()
 
 #
 # Deployment

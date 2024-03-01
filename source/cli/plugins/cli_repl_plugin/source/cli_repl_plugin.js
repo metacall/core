@@ -1,10 +1,8 @@
 const vm = require('vm');
 const r = require('repl');
-const { command_register, command_register_map, command_parse, command_completer } = require('./parser');
-const { cli_core_command_map } = require('./cli_core_command');
-
-/* Register CLI Core command map into the parser */
-command_register_map(cli_core_command_map);
+const fs = require('fs');
+const path = require('path');
+const { repl_register, repl_register_from_file, repl_parse, repl_completer } = require('./parser');
 
 /*
  * Method for generating a continuous chain of promises for allowing the repl
@@ -30,8 +28,30 @@ const new_repl_promise = () => {
 let repl_promise = null;
 let repl = null;
 
-function initialize() {
+function repl_initialize(plugin_path) {
 	repl_promise = [new_repl_promise()];
+
+	/* Initialize all REPL descriptors
+	*  This will load all plugin descriptors like:
+	*  plugins/cli/repl/${plugin_name}/${plugin_name}_repl.js
+	*/
+	const repl_path = path.join(plugin_path, 'cli', 'repl');
+	const files = fs.readdirSync(repl_path);
+
+	for (const file of files) {
+		const file_path = path.join(repl_path, file);
+		const file_stat = fs.statSync(file_path);
+
+		if (file_stat.isDirectory()) {
+			const descriptor_path = path.join(file_path, `${file}_repl.js`);
+			const descriptor_stat = fs.statSync(descriptor_path);
+
+			if (descriptor_stat.isFile()) {
+				repl_register_from_file(descriptor_path);
+			}
+		}
+
+	}
 
 	/* Show welcome message */
 	console.log('Welcome to Tijuana, tequila, sexo & marijuana.');
@@ -58,7 +78,7 @@ function initialize() {
 		const promise = repl_promise[repl_promise.length - 1];
 
 		try {
-			const result = command_parse(cmd.trim());
+			const result = repl_parse(cmd.trim());
 			promise.resolve([result, cb]);
 		} catch (e) {
 			promise.resolve([e, cb]);
@@ -68,7 +88,7 @@ function initialize() {
 	}
 
 	function completer(line) {
-		const completions = command_completer();
+		const completions = repl_completer();
 		const hits = completions.filter(c => c.startsWith(line));
 		return [hits.length ? hits : completions, line];
 	}
@@ -97,7 +117,7 @@ function initialize() {
  * 	console.error(e);
  * });
 */
-const evaluate = async () => {
+const repl_evaluate = async () => {
 	if (repl_promise !== null) {
 		if (repl_promise.length === 0) {
 			repl_promise.push(new_repl_promise());
@@ -114,8 +134,8 @@ const evaluate = async () => {
 };
 
 module.exports = {
-	initialize,
-	evaluate,
+	repl_initialize,
+	repl_evaluate,
 	/* This function is exported so it can be called from other plugins:
 	 *
 	 * void *repl_handle = metacall_handle("ext", "cli_repl_plugin");
@@ -131,7 +151,7 @@ module.exports = {
 	 * void *types = metacall_value_to_array(args[2]);
 	 * types[0] = metacall_value_create_string("METACALL_STRING", sizeof("METACALL_STRING") - 1);
 	 *
-	 * void *ret = metacallhv_s(repl_handle, "command_register", args, sizeof(args) / sizeof(args[0]));
+	 * void *ret = metacallhv_s(repl_handle, "repl_register", args, sizeof(args) / sizeof(args[0]));
 	 *
 	 * metacall_value_destroy(args[0]);
 	 * metacall_value_destroy(args[1]);
@@ -139,9 +159,23 @@ module.exports = {
 	 *
 	 * metacall_value_destroy(ret);
 	 */
-	command_register,
+	repl_register,
 
-	close: () => {
+	/* This function is exported so it can be called from other plugins:
+	 *
+	 * void *repl_handle = metacall_handle("ext", "cli_repl_plugin");
+	 * void *args[] = {
+	 * 	metacall_value_create_string("./cli_core_plugin_repl.js", sizeof("./cli_core_plugin_repl.js") - 1),
+	 * };
+	 *
+	 * void *ret = metacallhv_s(repl_handle, "repl_register_from_file", args, sizeof(args) / sizeof(args[0]));
+	 *
+	 * metacall_value_destroy(args[0]);
+	 * metacall_value_destroy(ret);
+	 */
+	repl_register_from_file,
+
+	repl_close: () => {
 		if (repl) {
 			repl.close();
 			repl = null;

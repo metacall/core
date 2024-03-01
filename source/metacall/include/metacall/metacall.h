@@ -500,6 +500,39 @@ METACALL_API void *metacall_function(const char *name);
 
 /**
 *  @brief
+*    Create an empty handler into a loader with name @name
+*
+*  @param[in] loader
+*    Pointer to the loader which the handle belongs to
+*
+*  @param[in] name
+*    Name of the handle
+*
+*  @param[out] handle_ptr
+*    On success, returns the pointer to the handle created, otherwise NULL
+*
+*  @return
+*    Return zero on success, different from zero on error
+*/
+METACALL_API int metacall_handle_initialize(void *loader, const char *name, void **handle_ptr);
+
+/**
+*  @brief
+*    Populate the objects of @handle_src into @handle_dest
+*
+*  @param[inout] handle_dest
+*    Handle where the objects from @handle_src will be stored
+*
+*  @param[in] handle_src
+*    Handle from where the objects will be copied
+*
+*  @return
+*    Return zero on success, different from zero on error
+*/
+METACALL_API int metacall_handle_populate(void *handle_dest, void *handle_src);
+
+/**
+*  @brief
 *    Get the function by @name from @handle
 *
 *  @param[in] handle
@@ -1425,6 +1458,15 @@ METACALL_API int metacall_clear(void *handle);
 *    Pointer to the extension handle, or null if it failed to load
 */
 METACALL_API void *metacall_plugin_extension(void);
+
+/**
+*  @brief
+*    Get the handle containing all the functionality of the plugins from core
+*
+*  @return
+*    Pointer to the core plugin handle, or null if it failed to load
+*/
+METACALL_API void *metacall_plugin_core(void);
 
 /**
 *  @brief

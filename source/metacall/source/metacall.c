@@ -59,6 +59,7 @@ static int metacall_config_flags = 0;
 static int metacall_initialize_argc = 0;
 static char **metacall_initialize_argv = NULL;
 static void *plugin_extension_handle = NULL;
+static void *plugin_core_handle = NULL;
 static loader_path plugin_path = { 0 };
 
 /* -- Private Methods -- */
@@ -109,7 +110,7 @@ int metacall_plugin_extension_load(void)
 
 	/* Load core plugins into plugin extension handle */
 	args[0] = metacall_value_create_string(plugin_path, plugin_path_size - 1);
-	args[1] = metacall_value_create_ptr(&plugin_extension_handle);
+	args[1] = metacall_value_create_ptr(&plugin_core_handle);
 	ret = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
 
 	if (ret == NULL)
@@ -860,6 +861,26 @@ void *metacall_function(const char *name)
 	}
 
 	return f;
+}
+
+int metacall_handle_initialize(void *loader, const char *name, void **handle_ptr)
+{
+	if (loader == NULL)
+	{
+		return 1;
+	}
+
+	return loader_handle_initialize(loader, name, handle_ptr);
+}
+
+int metacall_handle_populate(void *handle_dest, void *handle_src)
+{
+	if (handle_dest == NULL || handle_src == NULL)
+	{
+		return 1;
+	}
+
+	return loader_handle_populate(handle_dest, handle_src);
 }
 
 void *metacall_handle_function(void *handle, const char *name)
@@ -2210,6 +2231,11 @@ void *metacall_plugin_extension(void)
 	return plugin_extension_handle;
 }
 
+void *metacall_plugin_core(void)
+{
+	return plugin_core_handle;
+}
+
 const char *metacall_plugin_path(void)
 {
 	if (plugin_extension_handle == NULL)
@@ -2235,8 +2261,9 @@ int metacall_destroy(void)
 		/* Print stats from functions, classes, objects and exceptions */
 		reflect_memory_tracker_debug();
 
-		/* Set to null the plugin extension */
+		/* Set to null the plugin extension and core plugin handles */
 		plugin_extension_handle = NULL;
+		plugin_core_handle = NULL;
 	}
 
 	return 0;

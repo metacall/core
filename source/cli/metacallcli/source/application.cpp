@@ -40,8 +40,8 @@ static bool exit_condition = true;
 
 void application::repl()
 {
-	/* Initialize CLI plugin */
-	if (!load_path("cli", &plugin_cli_handle))
+	/* Initialize REPL plugins */
+	if (!load_path("repl", &plugin_repl_handle))
 	{
 		/* Do not enter into the main loop */
 		exit_condition = true;
@@ -67,7 +67,7 @@ void application::repl()
 		return NULL;
 	};
 
-	int result = metacall_register_loaderv(metacall_loader("ext"), plugin_cli_handle, "exit", exit, METACALL_INVALID, 0, NULL);
+	int result = metacall_register_loaderv(metacall_loader("ext"), plugin_repl_handle, "exit", exit, METACALL_INVALID, 0, NULL);
 
 	if (result != 0)
 	{
@@ -79,13 +79,86 @@ void application::repl()
 		exit_condition = false;
 	}
 
-	void *ret = metacallhv_s(plugin_repl_handle, "initialize", metacall_null_args, 0);
+	std::string plugin_path(metacall_plugin_path());
+
+	void *args[] = {
+		metacall_value_create_string(plugin_path.c_str(), plugin_path.length())
+	};
+
+	void *ret = metacallhv_s(plugin_cli_handle, "repl_initialize", args, sizeof(args) / sizeof(args[0]));
+
+	metacall_value_destroy(args[0]);
 
 	check_for_exception(ret);
 }
 
+bool application::cmd(std::vector<std::string> &arguments)
+{
+	/* Get the command parsing function */
+	void *command_parse_func = metacall_handle_function(plugin_cli_handle, "command_parse");
+
+	if (command_parse_func == NULL)
+	{
+		return false;
+	}
+
+	/* Initialize CMD plugins */
+	if (!load_path("cmd", &plugin_cmd_handle))
+	{
+		return false;
+	}
+
+	/* Convert all arguments into metacall value strings */
+	std::vector<void *> arguments_values;
+	arguments_values.reserve(arguments.size());
+
+	for (const std::string &str_argument : arguments)
+	{
+		arguments_values.push_back(metacall_value_create_string(str_argument.c_str(), str_argument.length()));
+	}
+
+	/* Parse the arguments with the CMD plugin command parse function */
+	void *ret = metacallhv_s(plugin_cmd_handle, "command_parse", arguments_values.data(), arguments_values.size());
+
+	/* Destroy all the command parse values */
+	for (void *value_argument : arguments_values)
+	{
+		metacall_value_destroy(value_argument);
+	}
+
+	/* Check for correct result of command parse */
+	if (metacall_value_id(ret) != METACALL_ARRAY)
+	{
+		check_for_exception(ret);
+		return false;
+	}
+
+	/* Get the argument map and the positional array */
+	void **ret_array = metacall_value_to_array(ret);
+	void **command_map = metacall_value_to_map(ret_array[0]);
+	size_t command_size = metacall_value_count(ret_array[0]);
+	void **positional_array = metacall_value_to_map(ret_array[1]);
+	size_t positional_size = metacall_value_count(ret_array[1]);
+
+	/* Execute the positional arguments */
+	/* TODO: ... */
+
+	/* Note: If it has zero positional arguments, we should also run the repl, for example:
+	*  $ metacall --some-option --another-option
+	*/
+	if (positional_size == 0)
+	{
+		/* Initialize the REPL */
+		repl();
+	}
+
+	metacall_value_destroy(ret);
+
+	return true;
+}
+
 application::application(int argc, char *argv[]) :
-	plugin_cli_handle(NULL), plugin_repl_handle(NULL)
+	plugin_cli_handle(NULL), plugin_repl_handle(NULL), plugin_cmd_handle(NULL)
 {
 	/* Initialize MetaCall */
 	if (metacall_initialize() != 0)
@@ -100,8 +173,8 @@ application::application(int argc, char *argv[]) :
 	/* Print MetaCall information */
 	metacall_print_info();
 
-	/* Initialize REPL plugin */
-	if (!load_path("repl", &plugin_repl_handle))
+	/* Initialize CLI internal plugins */
+	if (!load_path("internal", &plugin_cli_handle))
 	{
 		/* Do not enter into the main loop */
 		exit_condition = true;
@@ -115,9 +188,10 @@ application::application(int argc, char *argv[]) :
 	}
 	else
 	{
-		void *arguments_parse_func = metacall_handle_function(plugin_repl_handle, "arguments_parse");
+		std::vector<std::string> arguments(argv + 1, argv + argc);
 
-		if (arguments_parse_func == NULL)
+		/* Launch the CMD (parse arguments) */
+		if (!cmd(arguments))
 		{
 			std::cout << "Warning: CLI Arguments Parser was not loaded, "
 						 "using fallback argument parser with positional arguments only. "
@@ -128,24 +202,7 @@ application::application(int argc, char *argv[]) :
 
 			/* Use fallback parser, it can execute files but does not support command line arguments as options (i.e: -h, --help) */
 			/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
-			std::vector<std::string> arguments(argv + 1, argv + argc);
-
 			arguments_parse_fallback(arguments);
-		}
-		else
-		{
-			/* TODO: Implement a new plugin for parsing command line options */
-			std::cout << "TODO: CLI Arguments Parser Plugin is not implemented yet" << std::endl;
-
-			/* Note: If it has zero positional arguments, we should also run the repl, for example:
-			*  $ metacall --some-option --another-option --yeet
-			*/
-			// TODO:
-			// if (positional_arguments_size == 0)
-			// {
-			// 	/* Initialize the REPL */
-			// 	repl();
-			// }
 		}
 
 		exit_condition = true;
@@ -244,6 +301,7 @@ bool application::load_path(const char *path, void **handle)
 
 	/* Define the cli plugin path as string (core plugin path plus the subpath) */
 	fs::path plugin_cli_path(plugin_path);
+	plugin_cli_path /= "cli";
 	plugin_cli_path /= path;
 	std::string plugin_cli_path_str(plugin_cli_path.string());
 
@@ -275,12 +333,13 @@ bool application::load_path(const char *path, void **handle)
 	}
 
 	metacall_value_destroy(ret);
+
 	return true;
 }
 
 void application::run()
 {
-	void *evaluate_func = metacall_handle_function(plugin_repl_handle, "evaluate");
+	void *evaluate_func = metacall_handle_function(plugin_cli_handle, "repl_evaluate");
 
 	while (exit_condition != true)
 	{
@@ -373,9 +432,9 @@ void application::run()
 	}
 
 	/* Close REPL */
-	if (plugin_repl_handle != NULL)
+	if (plugin_cli_handle != NULL)
 	{
-		void *ret = metacallhv_s(plugin_repl_handle, "close", metacall_null_args, 0);
+		void *ret = metacallhv_s(plugin_cli_handle, "repl_close", metacall_null_args, 0);
 
 		check_for_exception(ret);
 	}
@@ -394,7 +453,7 @@ void *application::execute(void *tokens)
 		void **tokens_array = metacall_value_to_array(tokens);
 		void *key = tokens_array[0];
 
-		return metacallhv_s(plugin_cli_handle, metacall_value_to_string(key), &tokens_array[1], size - 1);
+		return metacallhv_s(plugin_repl_handle, metacall_value_to_string(key), &tokens_array[1], size - 1);
 	}
 }
 

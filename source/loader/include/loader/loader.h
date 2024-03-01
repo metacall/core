@@ -83,11 +83,15 @@ LOADER_API void loader_set_options(const loader_tag tag, void *options);
 
 LOADER_API void *loader_get_options(const loader_tag tag);
 
+LOADER_API int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr);
+
 LOADER_API const char *loader_handle_id(void *handle);
 
 LOADER_API void *loader_handle_export(void *handle);
 
 LOADER_API loader_data loader_handle_get(void *handle, const char *name);
+
+LOADER_API int loader_handle_populate(void *handle_dest, void *handle_src);
 
 LOADER_API value loader_metadata(void);
 

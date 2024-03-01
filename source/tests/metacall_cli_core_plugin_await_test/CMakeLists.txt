@@ -92,12 +92,22 @@ target_link_libraries(${target}
 # Compile definitions
 #
 
+set(METACALL_PLUGIN_PATH "${PROJECT_OUTPUT_DIR}/metacall_cli_core_plugin_await_test")
+
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
 	# Plugin path
-	METACALL_PLUGIN_PATH="${CMAKE_CURRENT_SOURCE_DIR}/plugins"
+	METACALL_PLUGIN_PATH="${METACALL_PLUGIN_PATH}"
+)
+
+# Isolate the plugin into a different directory in order to make it fully reproducible
+add_custom_command(TARGET ${target} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${METACALL_PLUGIN_PATH}"
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${METACALL_PLUGIN_PATH}/cli_core_plugin"
+	COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_OUTPUT_DIR}/plugins/cli/repl/cli_core_plugin" "${METACALL_PLUGIN_PATH}/cli_core_plugin"
+	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/plugins/await_test" "${METACALL_PLUGIN_PATH}/await_test"
 )
 
 #
@@ -107,14 +117,6 @@ target_compile_definitions(${target}
 target_compile_options(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_OPTIONS}
-)
-#
-# Compile features
-#
-
-target_compile_features(${target}
-	PRIVATE
-	cxx_std_17 # Required for filesystem
 )
 
 #
