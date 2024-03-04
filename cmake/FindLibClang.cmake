@@ -34,7 +34,7 @@ option(LibClang_CMAKE_DEBUG "Print paths for debugging LibClang dependencies." O
 if(LibClang_FIND_VERSION)
 	set(LibClang_VERSION_LIST ${LibClang_FIND_VERSION})
 else()
-	set(LibClang_VERSION_LIST 13 12 11 10 9 8 7 6.0 5.0 4.0 3.9 3.8)
+	set(LibClang_VERSION_LIST 17 16 15 14 13 12 11 10 9 8 7 6.0 5.0 4.0 3.9 3.8)
 endif()
 
 macro(_libclang_generate_search_paths template result)
