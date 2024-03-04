@@ -41,7 +41,7 @@ called_from_lib:libwasmtime*
 # C
 #
 mutex:clang_install_aborting_llvm_fatal_error_handler
-mutex:libclang-11*
+mutex:libclang-*
 #
 # Rust
 #
