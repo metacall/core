@@ -224,7 +224,9 @@ TEST_F(metacall_sandbox_plugin_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -297,7 +299,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_IO_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -333,7 +337,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_SOCKETS_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -382,7 +388,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_IPC_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -431,7 +439,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_PROCESS_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -467,7 +477,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_FILESYSTEMS_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -503,7 +515,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_TIME_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -552,7 +566,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_MEMORY_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
@@ -588,7 +604,9 @@ TEST_F(metacall_sandbox_plugin_test, SANDBOX_SIGNALS_DISABLE_TEST)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	void *sandbox_ctx, *handle = metacall_plugin_extension();
+	void *sandbox_ctx, *handle = metacall_plugin_core();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
 
 	/* Initialize sandboxing */
 	{
