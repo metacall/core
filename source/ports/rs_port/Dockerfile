@@ -6,7 +6,7 @@ FROM metacall/core:dev AS develop
 # Install dependencies
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
-		clang libclang-dev libtcc-dev valgrind libdw-dev libbfd-dev libdwarf-dev libffi-dev \
+		clang-14 libclang-14-dev libtcc-dev valgrind libdw-dev libbfd-dev libdwarf-dev libffi-dev \
 	&& curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 	&& . "/root/.cargo/env" \
 	&& rustup component add rustfmt \
