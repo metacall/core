@@ -42,11 +42,11 @@
 #define SANDBOX_SIGNALS_ERROR	  "Sandbox plugin failed to set signals syscalls permissions"
 #define SANDBOX_DESTROY_ERROR	  "Sandbox plugin failed to destroy a context"
 
-void add_syscalls_to_seccomp(scmp_filter_ctx ctx, const int *syscalls, const int action, size_t num_syscalls)
+void add_syscalls_to_seccomp(scmp_filter_ctx ctx, const int *syscalls, const int action, size_t size)
 {
-	for (long unsigned int i = 0; i < num_syscalls; i++)
+	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		seccomp_rule_add(ctx, action, syscalls[i], 0);
+		seccomp_rule_add(ctx, action, syscalls[iterator], 0);
 	}
 }
 
