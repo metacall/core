@@ -50,7 +50,6 @@ function repl_initialize(plugin_path) {
 				repl_register_from_file(descriptor_path);
 			}
 		}
-
 	}
 
 	/* Show welcome message */

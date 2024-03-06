@@ -79,6 +79,7 @@ void application::repl()
 		exit_condition = false;
 	}
 
+	/* Initialize REPL descriptors */
 	std::string plugin_path(metacall_plugin_path());
 
 	void *args[] = {
@@ -108,6 +109,17 @@ bool application::cmd(std::vector<std::string> &arguments)
 		return false;
 	}
 
+	/* Initialize CMD descriptors */
+	std::string plugin_path(metacall_plugin_path());
+
+	void *args[] = {
+		metacall_value_create_string(plugin_path.c_str(), plugin_path.length())
+	};
+
+	void *command_initialize_ret = metacallhv_s(plugin_cli_handle, "command_initialize", args, sizeof(args) / sizeof(args[0]));
+
+	check_for_exception(command_initialize_ret);
+
 	/* Convert all arguments into metacall value strings */
 	std::vector<void *> arguments_values;
 	arguments_values.reserve(arguments.size());
@@ -118,7 +130,7 @@ bool application::cmd(std::vector<std::string> &arguments)
 	}
 
 	/* Parse the arguments with the CMD plugin command parse function */
-	void *ret = metacallhv_s(plugin_cmd_handle, "command_parse", arguments_values.data(), arguments_values.size());
+	void *ret = metacallfv_s(command_parse_func, arguments_values.data(), arguments_values.size());
 
 	/* Destroy all the command parse values */
 	for (void *value_argument : arguments_values)
@@ -140,8 +152,23 @@ bool application::cmd(std::vector<std::string> &arguments)
 	void **positional_array = metacall_value_to_map(ret_array[1]);
 	size_t positional_size = metacall_value_count(ret_array[1]);
 
-	/* Execute the positional arguments */
-	/* TODO: ... */
+	/* Execute arguments */
+	for (size_t iterator = 0; iterator < command_size; ++iterator)
+	{
+		void **command_pair = metacall_value_to_array(command_map[iterator]);
+		const char *command_str = metacall_value_to_string(command_pair[0]);
+		void *command_func = metacall_handle_function(plugin_cmd_handle, command_str);
+
+		if (command_func == NULL)
+		{
+			std::cout << "Error: Command line option '" << command_str << "' unrecognized" << std::endl;
+			return false;
+		}
+
+		void *command_ret = metacallfv_s(command_func, &command_pair[1], 1);
+
+		check_for_exception(command_ret);
+	}
 
 	/* Note: If it has zero positional arguments, we should also run the repl, for example:
 	*  $ metacall --some-option --another-option
@@ -150,6 +177,19 @@ bool application::cmd(std::vector<std::string> &arguments)
 	{
 		/* Initialize the REPL */
 		repl();
+	}
+	else
+	{
+		/* Execute the positional arguments */
+		std::vector<std::string> positional_arguments;
+		positional_arguments.reserve(positional_size);
+
+		for (size_t iterator = 0; iterator < positional_size; ++iterator)
+		{
+			positional_arguments.push_back(metacall_value_to_string(positional_array[iterator]));
+		}
+
+		arguments_parse(arguments);
 	}
 
 	metacall_value_destroy(ret);
@@ -202,7 +242,7 @@ application::application(int argc, char *argv[]) :
 
 			/* Use fallback parser, it can execute files but does not support command line arguments as options (i.e: -h, --help) */
 			/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
-			arguments_parse_fallback(arguments);
+			arguments_parse(arguments);
 		}
 
 		exit_condition = true;
@@ -219,7 +259,7 @@ application::~application()
 	}
 }
 
-void application::arguments_parse_fallback(std::vector<std::string> &arguments)
+void application::arguments_parse(std::vector<std::string> &arguments)
 {
 	/* List of file extensions mapped into loader tags */
 	static std::unordered_map<std::string, std::string> extension_to_tag = {
@@ -258,7 +298,8 @@ void application::arguments_parse_fallback(std::vector<std::string> &arguments)
 		/* RPC Loader */
 		{ "rpc", "rpc" }
 
-		// TODO: Implement handling of duplicated extensions, load the file with all loaders (trial and error)
+		// TODO: Implement handling of duplicated extensions,
+		// load the file with all loaders of each duplicated extension (trial and error)
 
 		// /* Extension Loader */
 		// { "so", "ext" },

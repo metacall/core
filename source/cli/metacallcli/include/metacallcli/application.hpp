@@ -87,7 +87,7 @@ protected:
 	*    Vector of strings containing all the arguments from argv
 	*
 	*/
-	void arguments_parse_fallback(std::vector<std::string> &arguments);
+	void arguments_parse(std::vector<std::string> &arguments);
 
 	/**
 	*  @brief

@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_LOADERS_NODE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT TARGET sandbox_plugin)
 	return()
 endif()
 
@@ -50,4 +50,5 @@ set_target_properties(${target}
 add_dependencies(${target}
 	plugin_extension
 	node_loader
+	sandbox_plugin
 )
