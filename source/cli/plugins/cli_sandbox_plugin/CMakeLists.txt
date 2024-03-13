@@ -31,6 +31,7 @@ set(PLUGIN_OUTPUT_DIRECTORY "${PROJECT_OUTPUT_DIR}/plugins/cli/cmd/${target}")
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall.json ${PLUGIN_OUTPUT_DIRECTORY}/metacall.json
 	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/cli_sandbox_plugin_cmd.js ${PLUGIN_OUTPUT_DIRECTORY}/cli_sandbox_plugin_cmd.js
 )
 

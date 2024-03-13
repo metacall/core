@@ -7,7 +7,7 @@ function command_initialize(plugin_path) {
 	*  This will load all plugin descriptors like:
 	*  plugins/cli/cmd/${plugin_name}/${plugin_name}_cmd.js
 	*/
-	const cmd_path = path.join(plugin_path, 'cli', 'cmd');
+	const cmd_path = path.join(plugin_path, 'cli', 'cmd', 'sandbox');
 	const files = fs.readdirSync(cmd_path);
 
 	for (const file of files) {
