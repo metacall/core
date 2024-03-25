@@ -3,6 +3,10 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_
 	return()
 endif()
 
+if(NOT TARGET cli_core_plugin)
+	return()
+endif()
+
 #
 # Executable name and options
 #
