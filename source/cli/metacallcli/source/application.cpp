@@ -95,6 +95,19 @@ void application::repl()
 
 bool application::cmd(std::vector<std::string> &arguments)
 {
+	/* Get the command initializing function for sandbox plugin */
+	void *cli_sandbox_plugin_cmd_initialize_func = metacall_handle_function(plugin_sandbox_handle, "cli_sandbox_plugin_cmd_initialize");
+
+	if (cli_sandbox_plugin_cmd_initialize_func == NULL)
+	{
+		return false;
+	}
+
+	/* Initialize CLI sandbox plugin */
+	void *cli_sandbox_plugin_cmd_initialize_ret = metacallfv_s(cli_sandbox_plugin_cmd_initialize_func, metacall_null_args, 0);
+
+	check_for_exception(cli_sandbox_plugin_cmd_initialize_ret);
+
 	/* Get the command parsing function */
 	void *command_parse_func = metacall_handle_function(plugin_cli_handle, "command_parse");
 
@@ -198,7 +211,7 @@ bool application::cmd(std::vector<std::string> &arguments)
 }
 
 application::application(int argc, char *argv[]) :
-	plugin_cli_handle(NULL), plugin_repl_handle(NULL), plugin_cmd_handle(NULL)
+	plugin_cli_handle(NULL), plugin_repl_handle(NULL), plugin_cmd_handle(NULL), plugin_sandbox_handle(NULL)
 {
 	/* Initialize MetaCall */
 	if (metacall_initialize() != 0)
@@ -215,6 +228,14 @@ application::application(int argc, char *argv[]) :
 
 	/* Initialize CLI internal plugins */
 	if (!load_path("internal", &plugin_cli_handle))
+	{
+		/* Do not enter into the main loop */
+		exit_condition = true;
+		return;
+	}
+
+	/* Initialize CLI sandbox plugin */
+	if (!load_path("sandbox", &plugin_sandbox_handle))
 	{
 		/* Do not enter into the main loop */
 		exit_condition = true;

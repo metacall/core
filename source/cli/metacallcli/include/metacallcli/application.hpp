@@ -130,9 +130,10 @@ protected:
 private:
 	/* -- Private Member Data -- */
 
-	void *plugin_cli_handle;  /**< Handle containing all loaded plugins for CLI */
-	void *plugin_repl_handle; /**< Handle containing all loaded plugins for REPL */
-	void *plugin_cmd_handle;  /**< Handle containing all loaded plugins for CMD */
+	void *plugin_cli_handle;	 /**< Handle containing all loaded plugins for CLI */
+	void *plugin_repl_handle;	 /**< Handle containing all loaded plugins for REPL */
+	void *plugin_cmd_handle;	 /**< Handle containing all loaded plugins for CMD */
+	void *plugin_sandbox_handle; /**< Handle containing all loaded plugins for sandbox */
 };
 
 } /* namespace metacallcli */
