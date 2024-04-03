@@ -32,6 +32,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Export XCode SDK Root
+        if: matrix.os == 'macos-latest'
+        run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+
       # TODO: Add support for NetCore Bench
       - name: Set up the environment
         run: |

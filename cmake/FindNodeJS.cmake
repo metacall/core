@@ -541,19 +541,20 @@ if(NOT NodeJS_LIBRARY)
 				set(NodeJS_PREFIX)
 			endif()
 
+			set(BUILD_DEBUG)
+			set(BUILD_DEBUG_ASAN)
+
 			if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-				set(BUILD_DEBUG "--debug")
+				set(BUILD_DEBUG --debug)
 
 				if(OPTION_BUILD_ADDRESS_SANITIZER)
-					set(BUILD_DEBUG "${BUILD_DEBUG} --enable-asan")
+					set(BUILD_DEBUG_ASAN --enable-asan)
 				endif()
-			else()
-				set(BUILD_DEBUG)
 			endif()
 
 			execute_process(
 				WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-				COMMAND ${ICU_ENV_VAR} ./configure ${NodeJS_PREFIX} ${BUILD_ICU_FLAGS} --shared ${BUILD_DEBUG}
+				COMMAND ${ICU_ENV_VAR} ./configure ${NodeJS_PREFIX} ${BUILD_ICU_FLAGS} --shared ${BUILD_DEBUG} ${BUILD_DEBUG_ASAN}
 			)
 
 			message(STATUS "Build NodeJS shared library")
