@@ -27,6 +27,16 @@ export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 export PROGRESS_NO_TRUNC=1
 
+# Check if docker compose command is available
+if [ -x "`command -v docker-compose &> /dev/null`" ]; then
+	DOCKER_COMPOSE=docker-compose
+elif [ -x "`command -v docker compose &> /dev/null`" ]; then
+	DOCKER_COMPOSE="docker compose"
+else
+	echo "Docker Compose not installed, install it and re-run the script"
+	exit 1
+fi
+
 # Pull MetaCall Docker Compose
 sub_pull() {
 	if [ -z "$IMAGE_NAME" ]; then
@@ -46,31 +56,31 @@ sub_pull() {
 # Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
 	ln -sf tools/deps/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm deps
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm dev
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
 
 	ln -sf tools/runtime/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm runtime
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm cli
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm cli
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
 sub_rebuild() {
 	ln -sf tools/deps/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm --no-cache deps
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm --no-cache dev
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache dev
 
 	ln -sf tools/runtime/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm --no-cache runtime
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm --no-cache cli
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache cli
 }
 
 # Build MetaCall Docker Compose for testing (link manually dockerignore files)
@@ -88,10 +98,10 @@ sub_test() {
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
 	ln -sf tools/deps/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
@@ -109,14 +119,14 @@ sub_test_sanitizer() {
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
 	ln -sf tools/deps/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
 
 	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
-		docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 	else
-		docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output
 
 		# Retrieve all the summaries
 		SUMMARY=$(grep "SUMMARY:" /tmp/metacall-test-output)
@@ -163,10 +173,10 @@ sub_coverage() {
 	export METACALL_BUILD_TYPE=debug
 
 	ln -sf tools/deps/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -177,16 +187,16 @@ sub_cache() {
 	fi
 
 	ln -sf tools/deps/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build deps
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build dev
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build dev
 
 	ln -sf tools/runtime/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build runtime
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build cli
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build cli
 }
 
 # Push MetaCall Docker Compose
