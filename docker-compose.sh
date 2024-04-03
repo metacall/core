@@ -28,9 +28,9 @@ export BUILDKIT_PROGRESS=plain
 export PROGRESS_NO_TRUNC=1
 
 # Check if docker compose command is available
-if [ -x "`command -v docker-compose &> /dev/null`" ]; then
-	DOCKER_COMPOSE=docker-compose
-elif [ -x "`command -v docker compose &> /dev/null`" ]; then
+if [ -x "$(command -v docker-compose)" ]; then
+	DOCKER_COMPOSE="docker-compose"
+elif $(docker compose &>/dev/null) && [ $? -eq 0 ]; then
 	DOCKER_COMPOSE="docker compose"
 else
 	echo "Docker Compose not installed, install it and re-run the script"
