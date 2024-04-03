@@ -42,7 +42,6 @@ extern "C" {
 	#define ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR "\\"
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
 	defined(__HAIKU__) || defined(__BEOS__)
 	#define ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C	'/'

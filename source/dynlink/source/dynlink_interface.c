@@ -18,25 +18,13 @@
  *
  */
 
-#ifndef DYNLINK_IMPL_NAME_H
-#define DYNLINK_IMPL_NAME_H 1
-
 /* -- Headers -- */
 
-#include <dynlink/dynlink_api.h>
+#include <dynlink/dynlink_interface.h>
 
-#include <portability/portability_path.h>
+/* -- Methods -- */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* -- Type definitions -- */
-
-typedef char dynlink_name_impl[PORTABILITY_PATH_SIZE]; /**< Allocated copy of dynamically linked shared object name */
-
-#ifdef __cplusplus
+dynlink_impl_interface_singleton_ptr dynlink_interface(void)
+{
+	return &dynlink_impl_interface_singleton;
 }
-#endif
-
-#endif /* DYNLINK_IMPL_NAME_H */

@@ -81,6 +81,9 @@ sub_test() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
+
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
@@ -98,6 +101,9 @@ sub_test_sanitizer() {
 
 	# Enable build with sanitizer
 	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
 
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
@@ -140,6 +146,27 @@ sub_test_sanitizer() {
 
 		rm /tmp/metacall-test-output
 	fi
+}
+
+# Build MetaCall Docker Compose for coverage (link manually dockerignore files)
+sub_coverage() {
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
+
+	# Disable build with sanitizer
+	export METACALL_BUILD_SANITIZER=
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=coverage
+
+	# Define build type
+	export METACALL_BUILD_TYPE=debug
+
+	ln -sf tools/deps/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -260,6 +287,7 @@ sub_help() {
 	echo "	test-address-sanitizer"
 	echo "	test-thread-sanitizer"
 	echo "	test-memory-sanitizer"
+	echo "	coverage"
 	echo "	cache"
 	echo "	push"
 	echo "	pack"
@@ -290,6 +318,9 @@ case "$1" in
 	test-memory-sanitizer)
 		export METACALL_BUILD_SANITIZER="memory-sanitizer"
 		sub_test_sanitizer
+		;;
+	coverage)
+		sub_coverage
 		;;
 	cache)
 		sub_cache

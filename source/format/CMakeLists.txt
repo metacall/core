@@ -40,7 +40,6 @@ set(headers
 
 set(sources
 	${source_path}/format.c
-	${source_path}/format_print.c
 )
 
 # Group source files

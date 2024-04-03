@@ -48,7 +48,7 @@ typedef struct dynlink_impl_interface_type *dynlink_impl_interface;
 *  @return
 *    A pointer to the dynamically linked shared object implementation singleton
 */
-DYNLINK_API dynlink_impl_interface dynlink_impl_interface_singleton_unix(void);
+DYNLINK_API dynlink_impl_interface dynlink_impl_interface_singleton(void);
 
 #ifdef __cplusplus
 }

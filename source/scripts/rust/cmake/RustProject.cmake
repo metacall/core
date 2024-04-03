@@ -82,7 +82,7 @@ function(rust_package target version script)
 	)
 
 	# Compile scripts
-	add_custom_command(TARGET ${custom_target} PRE_BUILD
+	add_custom_command(TARGET ${custom_target} POST_BUILD
 		# Fix the version of rustc
 		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
 		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=lib ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
@@ -127,7 +127,7 @@ function(cargo_package target version)
 	)
 
 	# Compile project
-	add_custom_command(TARGET ${custom_target} PRE_BUILD
+	add_custom_command(TARGET ${custom_target} POST_BUILD
 		# Fix the version of rustc
 		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
 		COMMAND ${Rust_CARGO_EXECUTABLE} build --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml --target-dir ${PROJECT_OUTPUT_DIR}

@@ -49,10 +49,6 @@ function Sub-Options {
 			echo "Build and run all benchmarks"
 			$Global:BUILD_BENCHMARKS = 1
 		}
-		if ("$option" -eq "coverage") {
-			echo "Build coverage reports"
-			$Global:BUILD_COVERAGE = 1
-		}
 		if ("$option" -eq "install") {
 			echo "Install all libraries"
 			$Global:BUILD_INSTALL = 1
@@ -75,7 +71,7 @@ function Sub-Build {
 		Exit $ExitCode
 	}
 
-	# Tests (coverage needs to run the tests)
+	# Tests
 	if (($BUILD_TESTS -eq 1) -or ($BUILD_BENCHMARKS -eq 1) -or ($BUILD_COVERAGE -eq 1)) {
 		echo "Running the tests..."
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 7200 --output-on-failure -C $BUILD_TYPE
@@ -88,23 +84,6 @@ function Sub-Build {
 			Exit $ExitCode
 		}
 	}
-
-	# TODO: Coverage
-	<# if ($BUILD_COVERAGE = 1) {
-		# TODO (copied): Remove -k, solve coverage issues
-		# TODO: Migrate to Windows
-		echo "Reporting coverage..."
-		make -k gcov
-		make -k lcov
-		make -k lcov-genhtml
-
-		if (-not $?) {
-			$RecentExitCode = $LASTEXITCODE
-			echo "Failure in coverage with exit code: $RecentExitCode"
-
-			$Global:ExitCode = $RecentExitCode
-		}
-	} #>
 
 	# Install
 	if ($BUILD_INSTALL -eq 1) {
@@ -128,7 +107,6 @@ function Sub-Help {
 	echo "Options:"
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	tests: build and run all tests"
-	echo "	coverage: build coverage reports"
 	echo "	install: install all libraries"
 	echo ""
 }

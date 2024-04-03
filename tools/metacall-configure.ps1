@@ -41,7 +41,6 @@ $Global:BUILD_EXAMPLES =          0
 $Global:BUILD_TESTS =             0
 $Global:BUILD_BENCHMARKS =        0
 $Global:BUILD_PORTS =             0
-$Global:BUILD_COVERAGE =          0
 $Global:BUILD_ADDRESS_SANITIZER = 0
 $Global:BUILD_THREAD_SANITIZER =  0
 $Global:BUILD_MEMORY_SANITIZER =  0
@@ -147,10 +146,6 @@ function sub-options {
 		if ("$option" -eq 'ports') {
 			echo "Build all ports"
 			$Global:BUILD_PORTS = 1
-		}
-		if ("$option" -eq 'coverage') {
-			echo "Build all coverage reports"
-			$Global:BUILD_COVERAGE = 1
 		}
 		if ("$option" -eq 'address-sanitizer') {
 			echo "Build with address sanitizers"
@@ -398,13 +393,6 @@ function sub-configure {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS=Off"
 	}
 
-	# Coverage
-	if ($BUILD_COVERAGE -eq 1) {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_COVERAGE=On"
-	} else {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_COVERAGE=Off"
-	}
-
 	# Address Sanitizer
 	if ($BUILD_ADDRESS_SANITIZER -eq 1) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_ADDRESS_SANITIZER=On"
@@ -471,7 +459,6 @@ function sub-help {
 	echo "	install: install all libraries"
 	echo "	static: build as static libraries"
 	echo "	ports: build all ports"
-	echo "	coverage: build all coverage reports"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
 	echo "	memory-sanitizer: build with memory sanitizer"

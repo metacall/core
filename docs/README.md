@@ -679,27 +679,19 @@ Be aware that this target won't exist if clang-format was not installed when cma
 
 ### 6.2 Coverage
 
-In order to run code coverage and obtain html reports use the following commands. Note, test must be run before executing code coverage.
+In order to run code coverage and obtain html reports use the following commands (assuming you just clonned the repository):
 
 ```sh
-make
-make test
-make -k gcov
-make -k lcov
-make -k lcov-genhtml
+git clone https://github.com/metacall/core.git
+mkdir core/build && cd core/build
+cmake -DCMAKE_BUILD_TYPE=Debug -DOPTION_COVERAGE=On ..
+make -j$(NPROC)
+ctest
+ctest -T Coverage
+gcovr -r ../source/ . --html-details coverage.html
 ```
 
-The output reports will be generated in `${CMAKE_BINARY_DIR}/lcov/html/selected_targets` in html format.
-
-To obtain a report of a single `target` do:
-
-```sh
-make
-make test
-make <target>-gcov
-make <target>-geninfo
-make <target>-genhtml
-```
+The output reports will be generated in `${CMAKE_BINARY_DIR}/coverage.html` in html format.
 
 ### 6.3 Debugging
 

@@ -24,10 +24,10 @@ services:
     image: metacall/core:deps
     build:
       args:
-        METACALL_INSTALL_OPTIONS: base python ruby netcore7 nodejs typescript file rpc wasm java c cobol go rust rapidjson funchook swig pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: base python ruby netcore7 nodejs typescript file rpc wasm java c cobol go rust rapidjson funchook swig pack backtrace sandbox ${METACALL_BUILD_COVERAGE} # clangformat v8rep51
   dev:
     image: metacall/core:dev
     build:
       args:
         METACALL_BUILD_TYPE: ${METACALL_BUILD_TYPE}
-        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} python ruby netcore7 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks # v8 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} python ruby netcore7 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks ${METACALL_BUILD_COVERAGE} # v8

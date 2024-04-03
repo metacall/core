@@ -25,13 +25,30 @@
 
 #include <dynlink/dynlink_api.h>
 
-#include <dynlink/dynlink_impl_type.h>
-#include <dynlink/dynlink_impl_symbol_@DYNLINK_IMPL_INTERFACE_NAME@.h>
-#include <dynlink/dynlink_impl_@DYNLINK_IMPL_INTERFACE_NAME@.h>
+#include <dynlink/dynlink_type.h>
+
+#if defined(WIN32) || defined(_WIN32)
+	#include <dynlink/dynlink_impl_symbol_win32.h>
+	#include <dynlink/dynlink_impl_win32.h>
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	(((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) && (defined(MAC_OS_X_VERSION_10_15) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15)))
+	#include <dynlink/dynlink_impl_symbol_unix.h>
+	#include <dynlink/dynlink_impl_unix.h>
+#elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	#include <dynlink/dynlink_impl_symbol_macos.h>
+	#include <dynlink/dynlink_impl_macos.h>
+#elif defined(__HAIKU__) || defined(__BEOS__)
+	#include <dynlink/dynlink_impl_symbol_beos.h>
+	#include <dynlink/dynlink_impl_beos.h>
+#else
+	#error "Unsupported platform for dynlink"
+#endif
+
 #include <dynlink/dynlink_impl.h>
 
-#include <preprocessor/preprocessor_stringify.h>
 #include <preprocessor/preprocessor_concatenation.h>
+#include <preprocessor/preprocessor_stringify.h>
 
 #include <stdlib.h>
 
@@ -51,7 +68,8 @@ extern "C" {
 	PREPROCESSOR_STRINGIFY(DYNLINK_SYMBOL_NAME(name))
 
 #define DYNLINK_SYMBOL_STR(name) \
-	DYNLINK_SYMBOL_PREFIX_STR() name
+	DYNLINK_SYMBOL_PREFIX_STR() \
+	name
 
 /* -- Type definitions -- */
 
@@ -72,7 +90,7 @@ struct dynlink_impl_interface_type
 	dynlink_impl_interface_unload unload;
 };
 
-typedef dynlink_impl_interface (*dynlink_impl_interface_singleton)(void);
+typedef dynlink_impl_interface (*dynlink_impl_interface_singleton_ptr)(void);
 
 /* -- Methods -- */
 
@@ -83,7 +101,7 @@ typedef dynlink_impl_interface (*dynlink_impl_interface_singleton)(void);
 *  @return
 *    A constant pointer to the platform singleton
 */
-DYNLINK_API dynlink_impl_interface_singleton dynlink_interface(void);
+DYNLINK_API dynlink_impl_interface_singleton_ptr dynlink_interface(void);
 
 #ifdef __cplusplus
 }

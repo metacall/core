@@ -30,7 +30,7 @@
 
 const char *dynlink_impl_extension(void)
 {
-	dynlink_impl_interface_singleton singleton = dynlink_interface();
+	dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
 
 	return singleton()->extension();
 }
@@ -39,7 +39,7 @@ void dynlink_impl_get_name(dynlink_name name, dynlink_name_impl name_impl, size_
 {
 	if (name != NULL && name_impl != NULL && size > 1)
 	{
-		dynlink_impl_interface_singleton singleton = dynlink_interface();
+		dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
 
 		singleton()->get_name(name, name_impl, size);
 	}
@@ -47,7 +47,7 @@ void dynlink_impl_get_name(dynlink_name name, dynlink_name_impl name_impl, size_
 
 dynlink_impl dynlink_impl_load(dynlink handle)
 {
-	dynlink_impl_interface_singleton singleton = dynlink_interface();
+	dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
 
 	return singleton()->load(handle);
 }
@@ -56,7 +56,7 @@ int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_symbol_name s
 {
 	if (impl != NULL)
 	{
-		dynlink_impl_interface_singleton singleton = dynlink_interface();
+		dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
 
 		return singleton()->symbol(handle, impl, symbol_name, symbol_address);
 	}
@@ -68,7 +68,7 @@ void dynlink_impl_unload(dynlink handle, dynlink_impl impl)
 {
 	if (impl != NULL)
 	{
-		dynlink_impl_interface_singleton singleton = dynlink_interface();
+		dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
 
 		singleton()->unload(handle, impl);
 	}

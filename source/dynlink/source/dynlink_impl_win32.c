@@ -88,7 +88,7 @@ int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 	return (FreeLibrary(impl) == FALSE);
 }
 
-dynlink_impl_interface dynlink_impl_interface_singleton_win32(void)
+dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_win32 = {
 		&dynlink_impl_interface_extension_win32,

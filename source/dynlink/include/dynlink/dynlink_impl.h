@@ -27,8 +27,6 @@
 
 #include <dynlink/dynlink_type.h>
 
-#include <dynlink/dynlink_impl_name.h>
-#include <dynlink/dynlink_impl_type.h>
 #include <dynlink/dynlink_interface.h>
 
 #ifdef __cplusplus

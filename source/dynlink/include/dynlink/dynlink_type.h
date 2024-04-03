@@ -42,6 +42,8 @@ typedef const char *dynlink_path;							   /**< Dynamically linked shared object
 typedef const char *dynlink_name;							   /**< Dynamically linked shared object name */
 typedef const char *dynlink_symbol_name;					   /**< Dynamically linked shared object symbol name */
 typedef portability_library_path_str dynlink_library_path_str; /**< Dynamically linked shared object symbol name */
+typedef void *dynlink_impl;									   /**< Dynamically linked shared object implementation */
+typedef char dynlink_name_impl[PORTABILITY_PATH_SIZE];		   /**< Allocated copy of dynamically linked shared object name */
 
 #ifdef __cplusplus
 }

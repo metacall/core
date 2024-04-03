@@ -173,12 +173,12 @@ include(CompileOptions)
 #
 
 if(OPTION_COVERAGE)
-	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/coverage")
-
-	set(ENABLE_COVERAGE ON CACHE BOOL "Enable coverage build." FORCE)
-	set(ENABLE_COVERAGE_ALL ON CACHE BOOL "Enable coverage build for all targets." FORCE)
-
-	find_package(codecov)
+	if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+		message(WARNING "OPTION_COVERAGE requires to be build with -DCMAKE_BUILD_TYPE=Debug, skipping coverage")
+		set(OPTION_COVERAGE OFF)
+	else()
+		include(Coverage)
+	endif()
 endif()
 
 #
@@ -256,14 +256,6 @@ endif()
 add_subdirectory(source)
 add_subdirectory(docs)
 add_subdirectory(deploy)
-
-#
-# Coverage evaluation (must run after all targets)
-#
-
-if(OPTION_COVERAGE)
-	coverage_evaluate()
-endif()
 
 #
 # Project configuration generation

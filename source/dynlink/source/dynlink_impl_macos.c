@@ -148,7 +148,7 @@ int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
 	return NSUnLinkModule(impl, 0) == TRUE ? 0 : 1;
 }
 
-dynlink_impl_interface dynlink_impl_interface_singleton_macos(void)
+dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_macos = {
 		&dynlink_impl_interface_extension_macos,

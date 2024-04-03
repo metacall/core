@@ -350,9 +350,6 @@ function Configure {
 		if ("$var" -eq 'pack') {
 			Write-Output "pack selected"
 		}
-		if ("$var" -eq 'coverage') {
-			Write-Output "coverage selected"
-		}
 		if ("$var" -eq 'clangformat') {
 			Write-Output "clangformat selected"
 		}
@@ -387,7 +384,6 @@ function Help {
 	Write-Output "	swig"
 	Write-Output "	metacall"
 	Write-Output "	pack"
-	Write-Output "	coverage"
 	Write-Output "	clangformat"
 	Write-Output ""
 }

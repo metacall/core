@@ -103,7 +103,7 @@ int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
 #endif
 }
 
-dynlink_impl_interface dynlink_impl_interface_singleton_beos(void)
+dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_beos = {
 		&dynlink_impl_interface_extension_beos,

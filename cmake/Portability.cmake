@@ -202,19 +202,6 @@ if(NOT PROJECT_ARCH_32BIT AND NOT PROJECT_ARCH_64BIT)
 	endif()
 endif()
 
-# Set the library directory suffix accordingly
-#if(PROJECT_PROC_64BIT)
-#	# Set the install path to lib64
-#	set(PROJECT_LIB_DIR "lib64")
-#	set(PROJECT_PLUGIN_DIR "lib64/${PROJECT_NAME}-${META_VERSION}")
-#else(PROJECT_PROC_64BIT)
-#	set(PROJECT_LIB_DIR "lib")
-#	set(PROJECT_PLUGIN_DIR "lib/${PROJECT_NAME}-${META_VERSION}")
-#endif()
-
-#message(STATUS "Installing Libraries to ${CMAKE_INSTALL_PREFIX}/${PROJECT_LIB_DIR}")
-#message(STATUS "Installing Plugins to ${CMAKE_INSTALL_PREFIX}/${PROJECT_PLUGIN_DIR}")
-
 #
 # Define the library path environment variable name
 #

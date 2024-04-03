@@ -741,10 +741,14 @@ sub_coverage(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends lcov
+			$SUDO_CMD apt-get install -y --no-install-recommends lcov python3 python3-pip
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			$SUDO_CMD apk add --no-cache lcov
+			$SUDO_CMD apk add --no-cache lcov python3 py3-pip
 		fi
+
+		PIP_BREAK_SYSTEM_PACKAGES=`python3 -c 'import sys; sys.version_info.major >= 3 and sys.version_info.minor >= 11 and print("--break-system-packages", end="")'`
+
+		pip3 install ${PIP_BREAK_SYSTEM_PACKAGES} gcovr==7.2
 	fi
 }
 

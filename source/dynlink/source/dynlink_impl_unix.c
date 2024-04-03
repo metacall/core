@@ -123,7 +123,7 @@ int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 #endif
 }
 
-dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
+dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_unix = {
 		&dynlink_impl_interface_extension_unix,

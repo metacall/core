@@ -71,7 +71,7 @@ sub_options() {
 sub_build() {
 
 	# Build the project
-	make -k -j$(getconf _NPROCESSORS_ONLN)
+	make -j$(getconf _NPROCESSORS_ONLN)
 
 	# Tests (coverage needs to run the tests)
 	if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS=1 ] || [ $BUILD_COVERAGE = 1 ]; then
@@ -80,10 +80,8 @@ sub_build() {
 
 	# Coverage
 	if [ $BUILD_COVERAGE = 1 ]; then
-		# TODO: Remove -k, solve coverage issues
-		make -k gcov
-		make -k lcov
-		make -k lcov-genhtml
+		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 7200 -T Coverage
+		gcovr -r ../source/ . --html-details coverage.html
 	fi
 
 	# Install
