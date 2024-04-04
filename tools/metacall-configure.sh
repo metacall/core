@@ -63,8 +63,8 @@ esac
 
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
-	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces
-	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
+	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '"')
 	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
 	LINUX_VERSION_ID=$(cat /etc/os-release | grep "^VERSION_ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '"')
 else

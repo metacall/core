@@ -48,8 +48,9 @@ WORKDIR $METACALL_PATH
 COPY tools/metacall-environment.sh tools/nobuildtest.patch $METACALL_TOOLS_PATH/
 
 # Install MetaCall and runtimes then build
+ARG METACALL_BUILD_TYPE
 ARG METACALL_INSTALL_OPTIONS
 
 RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh \
-	&& $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_INSTALL_OPTIONS} \
+	&& $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_BUILD_TYPE} ${METACALL_INSTALL_OPTIONS} \
 	&& rm -rf $METACALL_PATH

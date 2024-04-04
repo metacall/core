@@ -25,6 +25,7 @@ ROOT_DIR=$(pwd)
 
 APT_CACHE=0
 APT_CACHE_CMD=""
+BUILD_TYPE=Release
 INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
@@ -78,8 +79,8 @@ fi
 
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
-	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces
-	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
+	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '"')
 	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
 	LINUX_VERSION_ID=$(cat /etc/os-release | grep "^VERSION_ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '"')
 else
@@ -146,7 +147,13 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 python3-dev python3-pip
+			if [ "${BUILD_TYPE}" = "Debug" ]; then
+				PYTHON3_PKG=python3-dbg
+			else
+				PYTHON3_PKG=python3
+			fi
+
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends $PYTHON3_PKG python3-dev python3-pip
 
 			# Python test dependencies
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
@@ -926,136 +933,144 @@ sub_install(){
 
 # Configuration
 sub_options(){
-	for var in "$@"
+	for option in "$@"
 	do
-		if [ "$var" = 'cache' ]; then
+		if [ "$option" = 'cache' ]; then
 			if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 				echo "apt caching selected"
 				APT_CACHE=1
 			fi
 		fi
-		if [ "$var" = 'base' ]; then
+		if [ "$option" = 'debug' ]; then
+			echo "Install dependencies in debug mode"
+			BUILD_TYPE=Debug
+		fi
+		if [ "$option" = 'release' ] || [ "$option" = 'relwithdebinfo' ]; then
+			echo "Install dependencies release mode"
+			BUILD_TYPE=Release
+		fi
+		if [ "$option" = 'base' ]; then
 			echo "apt selected"
 			INSTALL_BASE=1
 		fi
-		if [ "$var" = 'python' ]; then
+		if [ "$option" = 'python' ]; then
 			echo "python selected"
 			INSTALL_PYTHON=1
 		fi
-		if [ "$var" = 'ruby' ]; then
+		if [ "$option" = 'ruby' ]; then
 			echo "ruby selected"
 			INSTALL_RUBY=1
 		fi
-		if [ "$var" = 'netcore' ]; then
+		if [ "$option" = 'netcore' ]; then
 			echo "netcore selected"
 			INSTALL_NETCORE=1
 		fi
-		if [ "$var" = 'netcore2' ]; then
+		if [ "$option" = 'netcore2' ]; then
 			echo "netcore 2 selected"
 			INSTALL_NETCORE2=1
 		fi
-		if [ "$var" = 'netcore5' ]; then
+		if [ "$option" = 'netcore5' ]; then
 			echo "netcore 5 selected"
 			INSTALL_NETCORE5=1
 		fi
-		if [ "$var" = 'netcore7' ]; then
+		if [ "$option" = 'netcore7' ]; then
 			echo "netcore 7 selected"
 			INSTALL_NETCORE7=1
 		fi
-		if [ "$var" = 'rapidjson' ]; then
+		if [ "$option" = 'rapidjson' ]; then
 			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
 		fi
-		if [ "$var" = 'funchook' ]; then
+		if [ "$option" = 'funchook' ]; then
 			echo "funchook selected"
 			INSTALL_FUNCHOOK=1
 		fi
-		if [ "$var" = 'v8' ] || [ "$var" = 'v8rep54' ]; then
+		if [ "$option" = 'v8' ] || [ "$option" = 'v8rep54' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO54=1
 		fi
-		if [ "$var" = 'v8rep57' ]; then
+		if [ "$option" = 'v8rep57' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO57=1
 		fi
-		if [ "$var" = 'v8rep58' ]; then
+		if [ "$option" = 'v8rep58' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO58=1
 		fi
-		if [ "$var" = 'v8rep52' ]; then
+		if [ "$option" = 'v8rep52' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO52=1
 		fi
-		if [ "$var" = 'v8rep51' ]; then
+		if [ "$option" = 'v8rep51' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO51=1
 		fi
-		if [ "$var" = 'nodejs' ]; then
+		if [ "$option" = 'nodejs' ]; then
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
-		if [ "$var" = 'typescript' ]; then
+		if [ "$option" = 'typescript' ]; then
 			echo "typescript selected"
 			INSTALL_TYPESCRIPT=1
 		fi
-		if [ "$var" = 'file' ]; then
+		if [ "$option" = 'file' ]; then
 			echo "file selected"
 			INSTALL_FILE=1
 		fi
-		if [ "$var" = 'rpc' ]; then
+		if [ "$option" = 'rpc' ]; then
 			echo "rpc selected"
 			INSTALL_RPC=1
 		fi
-		if [ "$var" = 'wasm' ]; then
+		if [ "$option" = 'wasm' ]; then
 			echo "wasm selected"
 			INSTALL_WASM=1
 		fi
-		if [ "$var" = 'java' ]; then
+		if [ "$option" = 'java' ]; then
 			echo "java selected"
 			INSTALL_JAVA=1
 		fi
-		if [ "$var" = 'c' ]; then
+		if [ "$option" = 'c' ]; then
 			echo "c selected"
 			INSTALL_C=1
 		fi
-		if [ "$var" = 'cobol' ]; then
+		if [ "$option" = 'cobol' ]; then
 			echo "cobol selected"
 			INSTALL_COBOL=1
 		fi
-		if [ "$var" = 'go' ]; then
+		if [ "$option" = 'go' ]; then
 			echo "go selected"
 			INSTALL_GO=1
 		fi
-		if [ "$var" = 'rust' ]; then
+		if [ "$option" = 'rust' ]; then
 			echo "rust selected"
 			INSTALL_RUST=1
 		fi
-		if [ "$var" = 'swig' ]; then
+		if [ "$option" = 'swig' ]; then
 			echo "swig selected"
 			INSTALL_SWIG=1
 		fi
-		if [ "$var" = 'pack' ]; then
+		if [ "$option" = 'pack' ]; then
 			echo "pack selected"
 			INSTALL_PACK=1
 		fi
-		if [ "$var" = 'coverage' ]; then
+		if [ "$option" = 'coverage' ]; then
 			echo "coverage selected"
 			INSTALL_COVERAGE=1
 		fi
-		if [ "$var" = 'clangformat' ]; then
+		if [ "$option" = 'clangformat' ]; then
 			echo "clangformat selected"
 			INSTALL_CLANGFORMAT=1
 		fi
-		if [ "$var" = 'backtrace' ]; then
+		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
 		fi
-		if [ "$var" = 'sandbox' ]; then
+		if [ "$option" = 'sandbox' ]; then
 			echo "sandbox selected"
 			INSTALL_SANDBOX=1
 		fi
@@ -1066,6 +1081,7 @@ sub_options(){
 sub_help() {
 	echo "Usage: `basename "$0"` list of component"
 	echo "Components:"
+	echo "	debug | release | relwithdebinfo"
 	echo "	cache"
 	echo "	base"
 	echo "	python"

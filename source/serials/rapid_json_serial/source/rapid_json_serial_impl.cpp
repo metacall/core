@@ -12,6 +12,9 @@
 
 #include <log/log.h>
 
+// TODO: RapidJSON seems to be outdated, but we use it meanwhile there's a better solution.
+// Here's a patch for some of the bugs in the library: https://github.com/Tencent/rapidjson/issues/1928
+
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>

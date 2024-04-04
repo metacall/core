@@ -23,6 +23,7 @@ set -euxo
 
 ROOT_DIR=$(pwd)
 
+BUILD_TYPE=Release
 INSTALL_APT=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
@@ -63,8 +64,8 @@ fi
 
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
-	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces
-	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
+	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '"')
 	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
 	LINUX_VERSION_ID=$(cat /etc/os-release | grep "^VERSION_ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr -d '"')
 else
@@ -90,7 +91,12 @@ sub_apt(){
 sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
-	sub_apt_install_hold python3 libpython3.11
+
+	if [ "${BUILD_TYPE}" = "Debug" ]; then
+		sub_apt_install_hold python3-dbg libpython3-dbg
+	else
+		sub_apt_install_hold python3 libpython3
+	fi
 }
 
 # Ruby
@@ -99,7 +105,7 @@ sub_ruby(){
 	cd $ROOT_DIR
 
 	$SUDO_CMD apt-get update
-	sub_apt_install_hold ruby3.1 libruby3.1
+	sub_apt_install_hold ruby libruby
 }
 
 # NetCore
@@ -108,7 +114,6 @@ sub_netcore(){
 	cd $ROOT_DIR
 
 	# Debian Stretch
-
 	sub_apt_install_hold libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 \
 		liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g ca-certificates
 
@@ -176,7 +181,7 @@ sub_nodejs(){
 	echo "configure node"
 
 	# Install NodeJS library
-	sub_apt_install_hold libnode108
+	sub_apt_install_hold libnode-dev
 }
 
 # TypeScript
@@ -392,81 +397,89 @@ sub_clean(){
 
 # Configuration
 sub_options(){
-	for var in "$@"
+	for option in "$@"
 	do
-		if [ "$var" = 'base' ]; then
+		if [ "$option" = 'debug' ]; then
+			echo "debug mode selected"
+			BUILD_TYPE=Debug
+		fi
+		if [ "$option" = 'release' ] || [ "$option" = 'relwithdebinfo' ]; then
+			echo "release mode selected"
+			BUILD_TYPE=Release
+		fi
+		if [ "$option" = 'base' ]; then
 			echo "apt selected"
 			INSTALL_APT=1
 		fi
-		if [ "$var" = 'python' ]; then
+		if [ "$option" = 'python' ]; then
 			echo "python selected"
 			INSTALL_PYTHON=1
 		fi
-		if [ "$var" = 'ruby' ]; then
+		if [ "$option" = 'ruby' ]; then
 			echo "ruby selected"
 			INSTALL_RUBY=1
 		fi
-		if [ "$var" = 'netcore' ]; then
+		if [ "$option" = 'netcore' ]; then
 			echo "netcore selected"
 			INSTALL_NETCORE=1
 		fi
-		if [ "$var" = 'netcore2' ]; then
+		if [ "$option" = 'netcore2' ]; then
 			echo "netcore 2 selected"
 			INSTALL_NETCORE2=1
 		fi
-		if [ "$var" = 'netcore5' ]; then
+		if [ "$option" = 'netcore5' ]; then
 			echo "netcore 5 selected"
 			INSTALL_NETCORE5=1
 		fi
-		if [ "$var" = 'v8' ]; then
+		if [ "$option" = 'v8' ]; then
 			echo "v8 selected"
 			INSTALL_V8=1
 		fi
-		if [ "$var" = 'nodejs' ]; then
+		if [ "$option" = 'nodejs' ]; then
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
-		if [ "$var" = 'typescript' ]; then
+		if [ "$option" = 'typescript' ]; then
 			echo "typescript selected"
 			INSTALL_TYPESCRIPT=1
 		fi
-		if [ "$var" = 'file' ]; then
+		if [ "$option" = 'file' ]; then
 			echo "file selected"
 			INSTALL_FILE=1
 		fi
-		if [ "$var" = 'rpc' ]; then
+		if [ "$option" = 'rpc' ]; then
 			echo "rpc selected"
 			INSTALL_RPC=1
 		fi
-		if [ "$var" = 'wasm' ]; then
+		if [ "$option" = 'wasm' ]; then
 			echo "wasm selected"
 			INSTALL_WASM=1
 		fi
-		if [ "$var" = 'java' ]; then
+		if [ "$option" = 'java' ]; then
 			echo "java selected"
 			INSTALL_JAVA=1
 		fi
-		if [ "$var" = 'c' ]; then
+		if [ "$option" = 'c' ]; then
 			echo "c selected"
 			INSTALL_C=1
 		fi
-		if [ "$var" = 'cobol' ]; then
+		if [ "$option" = 'cobol' ]; then
 			echo "cobol selected"
 			INSTALL_COBOL=1
 		fi
-		if [ "$var" = 'backtrace' ]; then
+		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
 		fi
-		if [ "$var" = 'sandbox' ]; then
+		if [ "$option" = 'sandbox' ]; then
 			echo "sandbox selected"
 			INSTALL_SANDBOX=1
 		fi
-		if [ "$var" = 'ports' ]; then
+		if [ "$option" = 'ports' ]; then
 			echo "ports selected"
 			INSTALL_PORTS=1
 		fi
-		if [ "$var" = 'clean' ]; then
+		if [ "$option" = 'clean' ]; then
 			echo "clean selected"
 			INSTALL_CLEAN=1
 		fi
@@ -477,6 +490,7 @@ sub_options(){
 sub_help() {
 	echo "Usage: `basename "$0"` list of component"
 	echo "Components:"
+	echo "	debug | release | relwithdebinfo"
 	echo "	base"
 	echo "	python"
 	echo "	ruby"

@@ -115,6 +115,26 @@ target_link_libraries(${target}
 	${DEFAULT_LINKER_OPTIONS}
 )
 
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
+	# TODO: This test leaks and I am not sure if it is a false positive or not:
+	#
+	# Direct leak of 18682 byte(s) in 12 object(s) allocated from:
+	#     #0 0x7fa978386bd7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+	#     #1 0x7fa9734ddbb1 in _PyMem_RawMalloc ../Objects/obmalloc.c:101
+
+	# Indirect leak of 2775 byte(s) in 2 object(s) allocated from:
+	#     #0 0x7fa978386bd7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+	#     #1 0x7fa9734ddbb1 in _PyMem_RawMalloc ../Objects/obmalloc.c:101
+
+	# SUMMARY: AddressSanitizer: 21457 byte(s) leaked in 14 allocation(s).
+	#
+	# Valgrind does not show anything:
+	# valgrind --tool=memcheck --leak-check=full --show-leak-kinds=possibly --track-origins=yes --num-callers=500 --suppressions=../source/tests/memcheck/valgrind-python.supp ./metacall-python-without-env-vars-testd
+	# For checking all the leaks (and including false positives), check:
+	# valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --num-callers=500 --suppressions=../source/tests/memcheck/valgrind-python.supp ./metacall-python-without-env-vars-testd
+	return()
+endif()
+
 #
 # Define test
 #

@@ -337,7 +337,7 @@ bool application::load_path(const char *path, void **handle)
 
 	if (plugin_path == NULL || plugin_extension_handle == NULL)
 	{
-		return NULL;
+		return false;
 	}
 
 	/* Define the cli plugin path as string (core plugin path plus the subpath) */
