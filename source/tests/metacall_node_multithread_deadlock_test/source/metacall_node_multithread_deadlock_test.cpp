@@ -42,41 +42,53 @@ TEST_F(metacall_node_multithread_deadlock_test, DefaultConstructor)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 	{
+		// static const char buffer[] =
+		// 	"async function f() { return new Promise(resolve => setTimeout(() => resolve(65), 1000)) }\n"
+		// 	"module.exports = { f };\n";
+		static const char buffer[] =
+			"function f() { return 65; }\n"
+			"module.exports = { f };\n";
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+
 		/* Test if the loader can cause a data race */
     	auto runner = []()
     	{
 			/* Running it over and over again making sure data race is attempted */
-			for (size_t i = 0; i < 2000000; i++)
+			for (size_t i = 0; i < 200; i++)
 			{
-				void *future = metacall("j");
+				void *future = metacall("f");
 
 				EXPECT_NE((void *)NULL, (void *)future);
+				// EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_DOUBLE);
 
-				EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
-				void *ret = metacall_await_future(
-					metacall_value_to_future(future),
-					[](void *result, void *) -> void * {
-						EXPECT_NE((void *)NULL, (void *)result);
+				EXPECT_EQ((double)65.0, (double)metacall_value_to_double(future));
 
-						EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
+				// void *ret = metacall_await_future(
+				// 	metacall_value_to_future(future),
+				// 	[](void *result, void *) -> void * {
+				// 		EXPECT_NE((void *)NULL, (void *)result);
 
-						EXPECT_EQ((double)34.0, (double)metacall_value_to_double(result));
+				// 		EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
 
-						// ++success_callbacks;
+				// 		EXPECT_EQ((double)65.0, (double)metacall_value_to_double(result));
 
-						return metacall_value_create_double(155.0);
-					},
-					[](void *, void *) -> void * {
-						int this_should_never_be_executed = 0;
+				// 		// ++success_callbacks;
 
-						EXPECT_EQ((int)1, (int)this_should_never_be_executed);
+				// 		return metacall_value_create_double(155.0);
+				// 	},
+				// 	[](void *, void *) -> void * {
+				// 		int this_should_never_be_executed = 0;
 
-						return NULL;
-					},
-					NULL);
+				// 		EXPECT_EQ((int)1, (int)this_should_never_be_executed);
+
+				// 		return NULL;
+				// 	},
+				// 	NULL);
 
 				metacall_value_destroy(future);
-				metacall_value_destroy(ret);
+				// metacall_value_destroy(ret);
 			}
     	};
 

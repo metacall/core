@@ -1379,6 +1379,8 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		node_impl->func_call_safe->recv = NULL;
 		node_impl->func_call_safe->ret = NULL;
 
+RETRY_LOCK:
+
 		/* Check if we are in the JavaScript thread */
 		if (node_impl->js_thread_id == std::this_thread::get_id())
 		{
@@ -1430,7 +1432,8 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		}
 		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_invoke, the call has not been executed in order to avoid the deadlock");
+			// log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_invoke, the call has not been executed in order to avoid the deadlock");
+			goto RETRY_LOCK;
 		}
 
 		return ret;
