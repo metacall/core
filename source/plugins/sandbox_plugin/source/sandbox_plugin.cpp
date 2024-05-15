@@ -24,10 +24,8 @@
 
 #include <seccomp.h>
 
-/* TODO: Use SCMP_ACT_KILL_PROCESS instead of SCMP_ACT_KILL for catching the signal and showing the stack trace? */
-/* TODO: We can disable bool (true/false) for string ("allow"/"kill") */
 #define SANDBOX_ACTION(value) \
-	metacall_value_to_bool(value) == 0L ? SCMP_ACT_KILL : SCMP_ACT_ALLOW
+	metacall_value_to_bool(value) == 0L ? SCMP_ACT_KILL_PROCESS : SCMP_ACT_ALLOW
 
 /* Error messages */
 #define SANDBOX_INITIALIZE_ERROR  "Sandbox plugin failed to initialize a context"
@@ -430,7 +428,7 @@ static int sandbox_plugin_post_fork_callback(metacall_pid id, void *data)
 
 int sandbox_plugin(void *loader, void *handle)
 {
-	EXTENSION_FUNCTION(METACALL_PTR, sandbox_initialize);
+	EXTENSION_FUNCTION(METACALL_PTR, sandbox_initialize, METACALL_BOOL);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_uname, METACALL_PTR, METACALL_BOOL);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_io, METACALL_PTR, METACALL_BOOL);
 	EXTENSION_FUNCTION(METACALL_INT, sandbox_sockets, METACALL_PTR, METACALL_BOOL);

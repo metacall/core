@@ -3,6 +3,12 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_RS)
 	return()
 endif()
 
+# TODO: Update support for new rustc compiler, the current version 1.59.0 does not work
+# error: package `cc v1.0.95` cannot be built because it requires rustc 1.63 or newer, while the currently active rustc version is 1.59.0-nightly
+message(WARNING "Rust loader is out of date, needs to be updated in order to work")
+set(OPTION_BUILD_LOADERS_RS OFF CACHE BOOL "" FORCE)
+return()
+
 if(OPTION_BUILD_MUSL)
 	# TODO: Implement musl support and remove this
 	message(WARNING "Rust Loader is not implemented yet for musl toolchain, turning off Rust Loader build")

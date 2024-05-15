@@ -1,0 +1,7 @@
+{
+	"language_id": "ext",
+	"path": ".",
+	"scripts": [
+		"cli_sandbox_plugin"
+	]
+}

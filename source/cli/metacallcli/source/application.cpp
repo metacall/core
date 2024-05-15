@@ -98,7 +98,29 @@ bool application::cmd(std::vector<std::string> &arguments)
 	/* Get the command parsing function */
 	void *command_parse_func = metacall_handle_function(plugin_cli_handle, "command_parse");
 
+	/* By default, when executing the cmd, it will exit of the REPL */
+	exit_condition = true;
+
 	if (command_parse_func == NULL)
+	{
+		std::cout << "Warning: CLI Arguments Parser was not loaded, "
+					 "using fallback argument parser with positional arguments only. "
+				  << std::endl
+				  << "Any command line option like '--help' will result into error. "
+					 "Only files are allowed: $ metacall a.py b.js c.rb"
+				  << std::endl;
+
+		/* Use fallback parser, it can execute files but does not support command line arguments as options (i.e: -h, --help) */
+		/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
+		arguments_parse(arguments);
+
+		return true;
+	}
+
+	/* Check first if the command function is registered */
+	void *command_function_func = metacall_handle_function(plugin_cli_handle, "command_function");
+
+	if (command_function_func == NULL)
 	{
 		return false;
 	}
@@ -149,15 +171,51 @@ bool application::cmd(std::vector<std::string> &arguments)
 	void **ret_array = metacall_value_to_array(ret);
 	void **command_map = metacall_value_to_map(ret_array[0]);
 	size_t command_size = metacall_value_count(ret_array[0]);
-	void **positional_array = metacall_value_to_map(ret_array[1]);
+	void **positional_array = metacall_value_to_array(ret_array[1]);
 	size_t positional_size = metacall_value_count(ret_array[1]);
 
 	/* Execute arguments */
 	for (size_t iterator = 0; iterator < command_size; ++iterator)
 	{
 		void **command_pair = metacall_value_to_array(command_map[iterator]);
+
+		void *args[] = {
+			command_pair[0]
+		};
+
+		void *command_func = metacallfv_s(command_function_func, args, sizeof(args) / sizeof(args[0]));
+
+		if (metacall_value_id(command_func) == METACALL_FUNCTION)
+		{
+			/* Execute the function */
+			void *command_ret = metacallfv_s(command_func, &command_pair[1], 1);
+			metacall_value_destroy(command_func);
+			check_for_exception(command_ret);
+			continue;
+		}
+		else if (metacall_value_id(command_func) == METACALL_DOUBLE)
+		{
+			static const double COMMAND_NOT_REGISTERED = 0.0;
+
+			/* The command is not registered, skip it */
+			if (metacall_value_to_double(command_func) == COMMAND_NOT_REGISTERED)
+			{
+				metacall_value_destroy(command_func);
+				continue;
+			}
+
+			/* If the function is undefined, try to match the command with a function in the handle scope */
+			metacall_value_destroy(command_func);
+		}
+		else
+		{
+			check_for_exception(command_func);
+			return false;
+		}
+
+		/* Otherwise use the cmd handle scope for obtaining the function */
 		const char *command_str = metacall_value_to_string(command_pair[0]);
-		void *command_func = metacall_handle_function(plugin_cmd_handle, command_str);
+		command_func = metacall_handle_function(plugin_cmd_handle, command_str);
 
 		if (command_func == NULL)
 		{
@@ -177,6 +235,7 @@ bool application::cmd(std::vector<std::string> &arguments)
 	{
 		/* Initialize the REPL */
 		repl();
+		exit_condition = false;
 	}
 	else
 	{
@@ -189,7 +248,7 @@ bool application::cmd(std::vector<std::string> &arguments)
 			positional_arguments.push_back(metacall_value_to_string(positional_array[iterator]));
 		}
 
-		arguments_parse(arguments);
+		arguments_parse(positional_arguments);
 	}
 
 	metacall_value_destroy(ret);
@@ -233,19 +292,8 @@ application::application(int argc, char *argv[]) :
 		/* Launch the CMD (parse arguments) */
 		if (!cmd(arguments))
 		{
-			std::cout << "Warning: CLI Arguments Parser was not loaded, "
-						 "using fallback argument parser with positional arguments only. "
-					  << std::endl
-					  << "Any command line option like '--help' will result into error. "
-						 "Only files are allowed: $ metacall a.py b.js c.rb"
-					  << std::endl;
-
-			/* Use fallback parser, it can execute files but does not support command line arguments as options (i.e: -h, --help) */
-			/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
-			arguments_parse(arguments);
+			/* TODO: Report something? */
 		}
-
-		exit_condition = true;
 	}
 }
 
@@ -472,12 +520,24 @@ void application::run()
 		metacall_value_destroy(await_data.v);
 	}
 
-	/* Close REPL */
 	if (plugin_cli_handle != NULL)
 	{
+		/* Close REPL */
 		void *ret = metacallhv_s(plugin_cli_handle, "repl_close", metacall_null_args, 0);
 
 		check_for_exception(ret);
+
+		/* Get the command destroy function */
+		void *command_destroy_func = metacall_handle_function(plugin_cli_handle, "command_destroy");
+
+		/* Destroy the commands */
+		if (command_destroy_func != NULL)
+		{
+			/* Parse the arguments with the CMD plugin command parse function */
+			ret = metacallfv_s(command_destroy_func, metacall_null_args, 0);
+
+			check_for_exception(ret);
+		}
 	}
 }
 

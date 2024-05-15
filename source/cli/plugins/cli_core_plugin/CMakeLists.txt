@@ -189,16 +189,19 @@ target_link_libraries(${target}
 	INTERFACE
 )
 
+#
+# Dependencies
+#
+
 add_dependencies(${target}
 	plugin_extension
 	cli_repl_plugin
 )
 
 #
-# Define dependencies
+# Configuration
 #
 
-# Copy metacall.json
 add_custom_target(${target}_config ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${PLUGIN_OUTPUT_DIRECTORY}

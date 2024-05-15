@@ -211,10 +211,8 @@ add_test(NAME ${target}
 	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}.txt" -P ${TEST_COMMAND_RUNNER}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
-set_property(TEST ${target}
-	PROPERTY LABELS ${target}
-)
 set_tests_properties(${target} PROPERTIES
+	LABELS ${target}
 	PASS_REGULAR_EXPRESSION "function three_str\\(a_str, b_str, c_str\\)"
 )
 test_environment_variables(${target}
@@ -239,10 +237,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-node.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-node
-		PROPERTY LABELS ${target}-node
-	)
 	set_tests_properties(${target}-node PROPERTIES
+		LABELS ${target}-node
 		PASS_REGULAR_EXPRESSION "4001534"
 	)
 	test_environment_variables(${target}-node
@@ -254,10 +250,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-node-port-py.txt" -P ${TEST_COMMAND_RUNNER}
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		)
-		set_property(TEST ${target}-node-port-py
-			PROPERTY LABELS ${target}-node-port-py
-		)
 		set_tests_properties(${target}-node-port-py PROPERTIES
+			LABELS ${target}-node-port-py
 			PASS_REGULAR_EXPRESSION "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		)
 		test_environment_variables(${target}-node-port-py
@@ -284,10 +278,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-node-null.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-node-null
-		PROPERTY LABELS ${target}-node-null
-	)
 	set_tests_properties(${target}-node-null PROPERTIES
+		LABELS ${target}-node-null
 		PASS_REGULAR_EXPRESSION "Hello 342521512461246!"
 	)
 	test_environment_variables(${target}-node-null
@@ -299,10 +291,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-node-null-empty.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-node-null-empty
-		PROPERTY LABELS ${target}-node-null-empty
-	)
 	set_tests_properties(${target}-node-null-empty PROPERTIES
+		LABELS ${target}-node-null-empty
 		PASS_REGULAR_EXPRESSION "Hello 342521512461246!"
 	)
 	test_environment_variables(${target}-node-null-empty
@@ -314,10 +304,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-node-null-undefined.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-node-null-undefined
-		PROPERTY LABELS ${target}-node-null-undefined
-	)
 	set_tests_properties(${target}-node-null-undefined PROPERTIES
+		LABELS ${target}-node-null-undefined
 		PASS_REGULAR_EXPRESSION "(null)"
 	)
 	test_environment_variables(${target}-node-null-undefined
@@ -330,10 +318,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-py-port.txt" -P ${TEST_COMMAND_RUNNER}
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		)
-		set_property(TEST ${target}-py-port
-			PROPERTY LABELS ${target}-py-port
-		)
 		set_tests_properties(${target}-py-port PROPERTIES
+			LABELS ${target}-py-port
 			PASS_REGULAR_EXPRESSION "1234"
 		)
 		test_environment_variables(${target}-py-port
@@ -346,10 +332,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 				COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-py-port-rb.txt" -P ${TEST_COMMAND_RUNNER}
 				WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			)
-			set_property(TEST ${target}-py-port-rb
-				PROPERTY LABELS ${target}-py-port-rb
-			)
 			set_tests_properties(${target}-py-port-rb PROPERTIES
+				LABELS ${target}-py-port-rb
 				PASS_REGULAR_EXPRESSION "0123456789ABCDEFasd"
 			)
 			test_environment_variables(${target}-py-port-rb
@@ -365,10 +349,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS A
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-file.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-file
-		PROPERTY LABELS ${target}-file
-	)
 	set_tests_properties(${target}-file PROPERTIES
+		LABELS ${target}-file
 		PASS_REGULAR_EXPRESSION "${LOADER_SCRIPT_PATH}/template.html"
 	)
 	test_environment_variables(${target}-file
@@ -379,10 +361,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS A
 		COMMAND $<TARGET_FILE:${target}> this-does-not-exist
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-file-fail
-		PROPERTY LABELS ${target}-file-fail
-	)
 	set_tests_properties(${target}-file-fail PROPERTIES
+		LABELS ${target}-file-fail
 		PASS_REGULAR_EXPRESSION "Error: Failed to load script 'this-does-not-exist' with loader 'file'"
 	)
 	test_environment_variables(${target}-file-fail
@@ -396,10 +376,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		COMMAND $<TARGET_FILE:${target}> test.py
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-py-naming
-		PROPERTY LABELS ${target}-py-naming
-	)
 	set_tests_properties(${target}-py-naming PROPERTIES
+		LABELS ${target}-py-naming
 		PASS_REGULAR_EXPRESSION "Test: 66673332"
 	)
 	test_environment_variables(${target}-py-naming
@@ -410,10 +388,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		COMMAND $<TARGET_FILE:${target}> cli-test-argv.py
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-py-argv
-		PROPERTY LABELS ${target}-py-argv
-	)
 	set_tests_properties(${target}-py-argv PROPERTIES
+		LABELS ${target}-py-argv
 		PASS_REGULAR_EXPRESSION "Test: cli-test-argv.py"
 	)
 	test_environment_variables(${target}-py-argv
@@ -424,10 +400,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		COMMAND $<TARGET_FILE:${target}> cli-test-main.py
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-py-main
-		PROPERTY LABELS ${target}-py-main
-	)
 	set_tests_properties(${target}-py-main PROPERTIES
+		LABELS ${target}-py-main
 		PASS_REGULAR_EXPRESSION "Test: 1234567890abcd"
 	)
 	test_environment_variables(${target}-py-main
@@ -438,10 +412,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-py-exception.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	set_property(TEST ${target}-py-exception
-		PROPERTY LABELS ${target}-py-exception
-	)
 	set_tests_properties(${target}-py-exception PROPERTIES
+		LABELS ${target}-py-exception
 		PASS_REGULAR_EXPRESSION "66"
 	)
 	test_environment_variables(${target}-py-exception
@@ -455,10 +427,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-ts.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 	)
-	set_property(TEST ${target}-ts
-		PROPERTY LABELS ${target}-ts
-	)
 	set_tests_properties(${target}-ts PROPERTIES
+		LABELS ${target}-ts
 		PASS_REGULAR_EXPRESSION "51354"
 	)
 	test_environment_variables(${target}-ts
@@ -469,10 +439,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-tsx-templating.txt" -P ${TEST_COMMAND_RUNNER}
 		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/templating
 	)
-	set_property(TEST ${target}-tsx-templating
-		PROPERTY LABELS ${target}-tsx-templating
-	)
 	set_tests_properties(${target}-tsx-templating PROPERTIES
+		LABELS ${target}-tsx-templating
 		PASS_REGULAR_EXPRESSION "Hello metaprogrammer"
 	)
 	test_environment_variables(${target}-tsx-templating
@@ -506,10 +474,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 			COMMAND $<TARGET_FILE:${target}> loopfail.tsx
 			WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/loopfail
 		)
-		set_property(TEST ${target}-tsx-loop-fail
-			PROPERTY LABELS ${target}-tsx-loop-fail
-		)
 		set_tests_properties(${target}-tsx-loop-fail PROPERTIES
+			LABELS ${target}-tsx-loop-fail
 			PASS_REGULAR_EXPRESSION "Error: Cannot find module 'yeet-oof/whatever'"
 		)
 		test_environment_variables(${target}-tsx-loop-fail
@@ -523,10 +489,8 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 			COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-py-tsx.txt" -P ${TEST_COMMAND_RUNNER}
 			WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/templating
 		)
-		set_property(TEST ${target}-py-tsx
-			PROPERTY LABELS ${target}-py-tsx
-		)
 		set_tests_properties(${target}-py-tsx PROPERTIES
+			LABELS ${target}-py-tsx
 			PASS_REGULAR_EXPRESSION "Hello World"
 		)
 		test_environment_variables(${target}-py-tsx
@@ -536,6 +500,23 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 			# Note: Here we have to set up the LOADER_SCRIPT_PATH to the CWD as a difference to ${target}-tsx-templating test
 			# which does not require this apparently (due to NodeJS resolve system), probably this has to be reviewed
 			LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH}/templating
+		)
+	endif()
+endif()
+
+if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_EXT AND OPTION_BUILD_EXTENSIONS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_LOADERS_PY AND OPTION_BUILD_PLUGINS_SANDBOX AND PROJECT_OS_FAMILY STREQUAL unix)
+	if(NOT OPTION_BUILD_THREAD_SANITIZER AND NOT OPTION_BUILD_ADDRESS_SANITIZER)
+		add_test(NAME ${target}-cmd-sandboxing
+			COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:${target}> --sandboxing --disable_time time.py
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
+		set_tests_properties(${target}-cmd-sandboxing PROPERTIES
+			LABELS ${target}-cmd-sandboxing
+			WILL_FAIL TRUE
+		)
+		test_environment_variables(${target}-cmd-sandboxing
+			""
+			${TESTS_ENVIRONMENT_VARIABLES}
 		)
 	endif()
 endif()

@@ -46,7 +46,7 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 WORKDIR $LOADER_SCRIPT_PATH
 
 # Copy cli from builder
-COPY --from=builder /usr/local/bin/metacallcli* /usr/local/bin/metacall
+COPY --from=builder /usr/local/bin/metacallcli /usr/local/bin/metacallcli
 
 # Define entry point
-ENTRYPOINT [ "metacall" ]
+ENTRYPOINT [ "metacallcli" ]

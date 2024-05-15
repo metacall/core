@@ -44,10 +44,14 @@ function repl_initialize(plugin_path) {
 
 		if (file_stat.isDirectory()) {
 			const descriptor_path = path.join(file_path, `${file}_repl.js`);
-			const descriptor_stat = fs.statSync(descriptor_path);
+			try {
+				const descriptor_stat = fs.statSync(descriptor_path);
 
-			if (descriptor_stat.isFile()) {
-				repl_register_from_file(descriptor_path);
+				if (descriptor_stat.isFile()) {
+					repl_register_from_file(descriptor_path);
+				}
+			} catch (e) {
+				/* Skip */
 			}
 		}
 	}

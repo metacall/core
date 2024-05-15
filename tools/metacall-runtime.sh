@@ -95,7 +95,7 @@ sub_python(){
 	if [ "${BUILD_TYPE}" = "Debug" ]; then
 		sub_apt_install_hold python3-dbg libpython3-dbg
 	else
-		sub_apt_install_hold python3 libpython3
+		sub_apt_install_hold python3
 	fi
 }
 
