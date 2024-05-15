@@ -499,7 +499,12 @@ sub_nodejs(){
 		brew install node@20
 		# Make node 20 the default
 		brew link node@20 --force --overwrite
+		# Execute post install scripts
+		brew postinstall node@20
+		# Define node location
 		NODE_PREFIX=$(brew --prefix node@20)
+
+		# Configure NodeJS paths
 		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		echo "-DNodeJS_EXECUTABLE=$NODE_PREFIX/bin/node" >> $CMAKE_CONFIG_PATH
