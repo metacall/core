@@ -503,6 +503,8 @@ sub_nodejs(){
 		brew postinstall node@20
 		# Define node location
 		NODE_PREFIX=$(brew --prefix node@20)
+		# Include binaries into PATH
+		export PATH="$NODE_PREFIX/bin:$PATH"
 
 		# Configure NodeJS paths
 		mkdir -p build
