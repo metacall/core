@@ -159,45 +159,6 @@ extern bool linux_at_secure;
 	#error "NodeJS version not supported"
 #endif
 
-struct loader_impl_async_initialize_safe_type;
-typedef struct loader_impl_async_initialize_safe_type *loader_impl_async_initialize_safe;
-
-struct loader_impl_async_execution_path_safe_type;
-typedef struct loader_impl_async_execution_path_safe_type *loader_impl_async_execution_path_safe;
-
-struct loader_impl_async_load_from_file_safe_type;
-typedef struct loader_impl_async_load_from_file_safe_type *loader_impl_async_load_from_file_safe;
-
-struct loader_impl_async_load_from_memory_safe_type;
-typedef struct loader_impl_async_load_from_memory_safe_type *loader_impl_async_load_from_memory_safe;
-
-struct loader_impl_async_clear_safe_type;
-typedef struct loader_impl_async_clear_safe_type *loader_impl_async_clear_safe;
-
-struct loader_impl_async_discover_function_safe_type;
-typedef struct loader_impl_async_discover_function_safe_type *loader_impl_async_discover_function_safe;
-
-struct loader_impl_async_discover_safe_type;
-typedef struct loader_impl_async_discover_safe_type *loader_impl_async_discover_safe;
-
-struct loader_impl_async_func_call_safe_type;
-typedef struct loader_impl_async_func_call_safe_type *loader_impl_async_func_call_safe;
-
-struct loader_impl_async_func_await_safe_type;
-typedef struct loader_impl_async_func_await_safe_type *loader_impl_async_func_await_safe;
-
-struct loader_impl_async_func_destroy_safe_type;
-typedef struct loader_impl_async_func_destroy_safe_type *loader_impl_async_func_destroy_safe;
-
-struct loader_impl_async_future_await_safe_type;
-typedef struct loader_impl_async_future_await_safe_type *loader_impl_async_future_await_safe;
-
-struct loader_impl_async_future_delete_safe_type;
-typedef struct loader_impl_async_future_delete_safe_type *loader_impl_async_future_delete_safe;
-
-struct loader_impl_async_destroy_safe_type;
-typedef struct loader_impl_async_destroy_safe_type *loader_impl_async_destroy_safe;
-
 template <typename T>
 union loader_impl_async_safe_cast
 {
@@ -304,7 +265,7 @@ void node_loader_impl_func_call_js_safe(napi_env env, napi_value js_callback, vo
 {
 	(void)js_callback;
 
-	if (env == NULL || js_callback == NULL || context == NULL || data == NULL)
+	if (env == nullptr || js_callback == nullptr || context == nullptr || data == nullptr)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid arguments passed to js thread safe function");
 	}
@@ -320,7 +281,7 @@ void node_loader_impl_func_call_js_safe(napi_env env, napi_value js_callback, vo
 	safe_cast.func_ptr(env, &async_safe->args);
 
 	/* Clear environment */
-	// async_safe->args->node_impl->env = NULL;
+	// async_safe->args->node_impl->env = nullptr;
 }
 
 static napi_value node_loader_impl_async_threadsafe_empty(napi_env, napi_callback_info)
@@ -421,12 +382,18 @@ struct loader_impl_async_initialize_safe_type
 	loader_impl_node node_impl;
 	char *loader_library_path;
 	int result;
+
+	loader_impl_async_initialize_safe_type(loader_impl_node node_impl, char *loader_library_path) :
+		node_impl(node_impl), loader_library_path(loader_library_path), result(0) {}
 };
 
 struct loader_impl_async_execution_path_safe_type
 {
 	loader_impl_node node_impl;
-	char *path;
+	const char *path;
+
+	loader_impl_async_execution_path_safe_type(loader_impl_node node_impl, const char *path) :
+		node_impl(node_impl), path(path) {}
 };
 
 struct loader_impl_async_load_from_file_safe_type
@@ -435,6 +402,9 @@ struct loader_impl_async_load_from_file_safe_type
 	const loader_path *paths;
 	size_t size;
 	napi_ref handle_ref;
+
+	loader_impl_async_load_from_file_safe_type(loader_impl_node node_impl, const loader_path *paths, size_t size) :
+		node_impl(node_impl), paths(paths), size(size), handle_ref(nullptr) {}
 };
 
 struct loader_impl_async_load_from_memory_safe_type
@@ -444,18 +414,27 @@ struct loader_impl_async_load_from_memory_safe_type
 	const char *buffer;
 	size_t size;
 	napi_ref handle_ref;
+
+	loader_impl_async_load_from_memory_safe_type(loader_impl_node node_impl, const char *name, const char *buffer, size_t size) :
+		node_impl(node_impl), name(name), buffer(buffer), size(size), handle_ref(nullptr) {}
 };
 
 struct loader_impl_async_clear_safe_type
 {
 	loader_impl_node node_impl;
 	napi_ref handle_ref;
+
+	loader_impl_async_clear_safe_type(loader_impl_node node_impl, napi_ref handle_ref) :
+		node_impl(node_impl), handle_ref(handle_ref) {}
 };
 
 struct loader_impl_async_discover_function_safe_type
 {
 	loader_impl_node node_impl;
 	napi_value func;
+
+	loader_impl_async_discover_function_safe_type(loader_impl_node node_impl, napi_value func) :
+		node_impl(node_impl), func(func) {}
 };
 
 struct loader_impl_async_discover_safe_type
@@ -464,6 +443,9 @@ struct loader_impl_async_discover_safe_type
 	napi_ref handle_ref;
 	context ctx;
 	int result;
+
+	loader_impl_async_discover_safe_type(loader_impl_node node_impl, napi_ref handle_ref, context ctx) :
+		node_impl(node_impl), handle_ref(handle_ref), ctx(ctx), result(0) {}
 };
 
 struct loader_impl_async_func_call_safe_type
@@ -477,11 +459,7 @@ struct loader_impl_async_func_call_safe_type
 	function_return ret;
 
 	loader_impl_async_func_call_safe_type(loader_impl_node node_impl, function func, loader_impl_node_function node_func, function_args args, size_t size) :
-		node_impl(node_impl), func(func), node_func(node_func), args(static_cast<void **>(args)), size(size), recv(NULL), ret(NULL)
-	{
-	}
-
-	~loader_impl_async_func_call_safe_type() {}
+		node_impl(node_impl), func(func), node_func(node_func), args(static_cast<void **>(args)), size(size), recv(nullptr), ret(NULL) {}
 };
 
 struct loader_impl_async_func_await_safe_type
@@ -496,6 +474,9 @@ struct loader_impl_async_func_await_safe_type
 	void *context;
 	napi_value recv;
 	function_return ret;
+
+	loader_impl_async_func_await_safe_type(loader_impl_node node_impl, function func, loader_impl_node_function node_func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context) :
+		node_impl(node_impl), func(func), node_func(node_func), args(static_cast<void **>(args)), size(size), resolve_callback(resolve_callback), reject_callback(reject_callback), context(context), recv(nullptr), ret(NULL) {}
 };
 
 struct loader_impl_async_future_await_safe_type
@@ -508,6 +489,37 @@ struct loader_impl_async_future_await_safe_type
 	void *context;
 	napi_value recv;
 	future_return ret;
+
+	loader_impl_async_future_await_safe_type(loader_impl_node node_impl, future f, loader_impl_node_future node_future, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context) :
+		node_impl(node_impl), f(f), node_future(node_future), resolve_callback(resolve_callback), reject_callback(reject_callback), context(context), recv(nullptr), ret(NULL) {}
+};
+
+struct loader_impl_async_func_destroy_safe_type
+{
+	loader_impl_node node_impl;
+	loader_impl_node_function node_func;
+
+	loader_impl_async_func_destroy_safe_type(loader_impl_node node_impl, loader_impl_node_function node_func) :
+		node_impl(node_impl), node_func(node_func) {}
+};
+
+struct loader_impl_async_future_delete_safe_type
+{
+	loader_impl_node node_impl;
+	future f;
+	loader_impl_node_future node_future;
+
+	loader_impl_async_future_delete_safe_type(loader_impl_node node_impl, future f, loader_impl_node_future node_future) :
+		node_impl(node_impl), f(f), node_future(node_future) {}
+};
+
+struct loader_impl_async_destroy_safe_type
+{
+	loader_impl_node node_impl;
+	bool has_finished;
+
+	loader_impl_async_destroy_safe_type(loader_impl_node node_impl) :
+		node_impl(node_impl), has_finished(false) {}
 };
 
 struct loader_impl_node_type
@@ -517,64 +529,24 @@ struct loader_impl_node_type
 	napi_ref global_ref;				/* Store global reference */
 	napi_ref function_table_object_ref; /* Store function table reference registered by the trampoline */
 
-	/* TODO: Remove all napi_value and arguments from here -> */
-	napi_value initialize_safe_ptr;
-	loader_impl_async_initialize_safe initialize_safe;
-	napi_threadsafe_function threadsafe_initialize;
-
-	napi_value execution_path_safe_ptr;
-	loader_impl_async_execution_path_safe execution_path_safe;
-	napi_threadsafe_function threadsafe_execution_path;
-
-	napi_value load_from_file_safe_ptr;
-	loader_impl_async_load_from_file_safe load_from_file_safe;
-	napi_threadsafe_function threadsafe_load_from_file;
-
-	napi_value load_from_memory_safe_ptr;
-	loader_impl_async_load_from_memory_safe load_from_memory_safe;
-	napi_threadsafe_function threadsafe_load_from_memory;
-
-	napi_value clear_safe_ptr;
-	loader_impl_async_clear_safe clear_safe;
-	napi_threadsafe_function threadsafe_clear;
-
-	napi_value discover_safe_ptr;
-	loader_impl_async_discover_safe discover_safe;
-	napi_threadsafe_function threadsafe_discover;
-
-	// napi_value func_call_safe_ptr;
-	// loader_impl_async_func_call_safe func_call_safe;
-	// napi_threadsafe_function threadsafe_func_call;
+	loader_impl_threadsafe_type<loader_impl_async_initialize_safe_type> threadsafe_initialize;
+	loader_impl_threadsafe_type<loader_impl_async_execution_path_safe_type> threadsafe_execution_path;
+	loader_impl_threadsafe_type<loader_impl_async_load_from_file_safe_type> threadsafe_load_from_file;
+	loader_impl_threadsafe_type<loader_impl_async_load_from_memory_safe_type> threadsafe_load_from_memory;
+	loader_impl_threadsafe_type<loader_impl_async_clear_safe_type> threadsafe_clear;
+	loader_impl_threadsafe_type<loader_impl_async_discover_safe_type> threadsafe_discover;
 	loader_impl_threadsafe_type<loader_impl_async_func_call_safe_type> threadsafe_func_call;
-
-	napi_value func_await_safe_ptr;
-	loader_impl_async_func_await_safe func_await_safe;
-	napi_threadsafe_function threadsafe_func_await;
-
-	napi_value func_destroy_safe_ptr;
-	loader_impl_async_func_destroy_safe func_destroy_safe;
-	napi_threadsafe_function threadsafe_func_destroy;
-
-	napi_value future_await_safe_ptr;
-	loader_impl_async_future_await_safe future_await_safe;
-	napi_threadsafe_function threadsafe_future_await;
-
-	napi_value future_delete_safe_ptr;
-	loader_impl_async_future_delete_safe future_delete_safe;
-	napi_threadsafe_function threadsafe_future_delete;
-
-	napi_value destroy_safe_ptr;
-	loader_impl_async_destroy_safe destroy_safe;
-	napi_threadsafe_function threadsafe_destroy;
-	/* TODO: -> To here*/
+	loader_impl_threadsafe_type<loader_impl_async_func_await_safe_type> threadsafe_func_await;
+	loader_impl_threadsafe_type<loader_impl_async_func_destroy_safe_type> threadsafe_func_destroy;
+	loader_impl_threadsafe_type<loader_impl_async_future_await_safe_type> threadsafe_future_await;
+	loader_impl_threadsafe_type<loader_impl_async_future_delete_safe_type> threadsafe_future_delete;
+	loader_impl_threadsafe_type<loader_impl_async_destroy_safe_type> threadsafe_destroy;
 
 	uv_thread_t thread;
 	uv_loop_t *thread_loop;
 
-	/* TODO: Delete mutex and condition */
 	uv_mutex_t mutex;
 	uv_cond_t cond;
-	std::atomic_bool locked;
 
 	int stdin_copy;
 	int stdout_copy;
@@ -612,24 +584,6 @@ typedef struct loader_impl_async_func_await_trampoline_type
 	void *context;
 
 } * loader_impl_async_func_await_trampoline;
-
-struct loader_impl_async_func_destroy_safe_type
-{
-	loader_impl_node node_impl;
-	loader_impl_node_function node_func;
-};
-
-struct loader_impl_async_future_delete_safe_type
-{
-	loader_impl_node node_impl;
-	future f;
-	loader_impl_node_future node_future;
-};
-
-struct loader_impl_async_destroy_safe_type
-{
-	loader_impl_node node_impl;
-};
 
 typedef struct loader_impl_thread_type
 {
@@ -669,53 +623,31 @@ static void future_node_interface_destroy(future f, future_impl impl);
 static future_interface future_node_singleton(void);
 
 /* JavaScript Thread Safe */
-static void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe initialize_safe);
+static void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe_type *initialize_safe);
 
-static napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_info info);
+static void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execution_path_safe_type *execution_path_safe);
 
-static void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execution_path_safe execution_path_safe);
+static void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe_type *func_call_safe);
 
-static napi_value node_loader_impl_async_execution_path_safe(napi_env env, napi_callback_info info);
+static void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe_type *func_await_safe);
 
-static void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe func_call_safe);
+static void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe_type *func_destroy_safe);
 
-static void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe func_await_safe);
+static void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_await_safe_type *future_await_safe);
 
-static napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_info info);
+static void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe_type *future_delete_safe);
 
-static void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe func_destroy_safe);
+static void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_from_file_safe_type *load_from_file_safe);
 
-static napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_info info);
+static void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load_from_memory_safe_type *load_from_memory_safe);
 
-static void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_await_safe future_await_safe);
+static void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type *clear_safe);
 
-static napi_value node_loader_impl_async_future_await_safe(napi_env env, napi_callback_info info);
+static value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe_type *discover_function_safe);
 
-static void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe future_delete_safe);
+static void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe_type *discover_safe);
 
-static napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback_info info);
-
-static void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_from_file_safe load_from_file_safe);
-
-static napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callback_info info);
-
-static void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load_from_memory_safe load_from_memory_safe);
-
-static napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callback_info info);
-
-static void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe clear_safe);
-
-static napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info);
-
-static value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe discover_function_safe);
-
-static void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe);
-
-static napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info);
-
-static void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe destroy_safe);
-
-static napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info);
+static void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe_type *destroy_safe);
 
 static char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const char *prop);
 
@@ -752,7 +684,7 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 	{
 		if (status != napi_pending_exception)
 		{
-			const napi_extended_error_info *error_info = NULL;
+			const napi_extended_error_info *error_info = nullptr;
 
 			bool pending;
 
@@ -760,14 +692,14 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 
 			napi_is_exception_pending(env, &pending);
 
-			const char *message = (error_info != NULL && error_info->error_message != NULL) ? error_info->error_message : "Error message not available";
+			const char *message = (error_info != nullptr && error_info->error_message != nullptr) ? error_info->error_message : "Error message not available";
 
 			/* TODO: Notify MetaCall error handling system when it is implemented */
 			/* ... */
 
 			if (pending)
 			{
-				napi_throw_error(env, NULL, message);
+				napi_throw_error(env, nullptr, message);
 			}
 		}
 		else
@@ -775,8 +707,6 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 			napi_value error, message;
 			bool result;
 			napi_valuetype valuetype;
-			size_t length;
-			char *str;
 
 			status = napi_get_and_clear_last_exception(env, &error);
 
@@ -806,13 +736,15 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 				return;
 			}
 
-			status = napi_get_value_string_utf8(env, message, NULL, 0, &length);
+			size_t length;
+
+			status = napi_get_value_string_utf8(env, message, nullptr, 0, &length);
 
 			node_loader_impl_exception(env, status);
 
-			str = static_cast<char *>(malloc(sizeof(char) * (length + 1)));
+			char *str = new char[length + 1];
 
-			if (str == NULL)
+			if (str == nullptr)
 			{
 				/* TODO: Notify MetaCall error handling system when it is implemented */
 				return;
@@ -832,7 +764,7 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 
 			node_loader_impl_exception(env, status);
 
-			free(str);
+			delete[] str;
 		}
 	}
 }
@@ -845,7 +777,7 @@ value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env,
 	{
 		if (status != napi_pending_exception)
 		{
-			const napi_extended_error_info *error_info = NULL;
+			const napi_extended_error_info *error_info = nullptr;
 
 			bool pending;
 
@@ -853,9 +785,9 @@ value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env,
 
 			napi_is_exception_pending(env, &pending);
 
-			const char *message = (error_info != NULL && error_info->error_message != NULL) ? error_info->error_message : "Error message not available";
+			const char *message = (error_info != nullptr && error_info->error_message != nullptr) ? error_info->error_message : "Error message not available";
 
-			exception ex = exception_create_const(message, "ExceptionPending", (int64_t)(error_info != NULL ? error_info->error_code : status), "");
+			exception ex = exception_create_const(message, "ExceptionPending", (int64_t)(error_info != nullptr ? error_info->error_code : status), "");
 
 			throwable th = throwable_create(value_create_exception(ex));
 
@@ -863,7 +795,7 @@ value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env,
 
 			if (pending)
 			{
-				napi_throw_error(env, NULL, message);
+				napi_throw_error(env, nullptr, message);
 			}
 		}
 		else
@@ -992,7 +924,7 @@ char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const 
 {
 	napi_value prop_value = node_loader_impl_get_property_as_string(env, obj, prop);
 	size_t length;
-	napi_status status = napi_get_value_string_utf8(env, prop_value, NULL, 0, &length);
+	napi_status status = napi_get_value_string_utf8(env, prop_value, nullptr, 0, &length);
 
 	node_loader_impl_exception(env, status);
 
@@ -1050,7 +982,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	{
 		size_t length;
 
-		status = napi_get_value_string_utf8(env, v, NULL, 0, &length);
+		status = napi_get_value_string_utf8(env, v, nullptr, 0, &length);
 
 		node_loader_impl_exception(env, status);
 
@@ -1068,7 +1000,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	else if (valuetype == napi_symbol)
 	{
 		/* TODO */
-		napi_throw_error(env, NULL, "NodeJS Loader symbol is not implemented");
+		napi_throw_error(env, nullptr, "NodeJS Loader symbol is not implemented");
 	}
 	else if (valuetype == napi_object)
 	{
@@ -1103,7 +1035,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 		else if (napi_is_buffer(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
-			napi_throw_error(env, NULL, "NodeJS Loader buffer is not implemented");
+			napi_throw_error(env, nullptr, "NodeJS Loader buffer is not implemented");
 		}
 		else if (napi_is_error(env, v, &result) == napi_ok && result == true)
 		{
@@ -1118,20 +1050,20 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 		else if (napi_is_typedarray(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
-			napi_throw_error(env, NULL, "NodeJS Loader typed array is not implemented");
+			napi_throw_error(env, nullptr, "NodeJS Loader typed array is not implemented");
 		}
 		else if (napi_is_dataview(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
-			napi_throw_error(env, NULL, "NodeJS Loader data view is not implemented");
+			napi_throw_error(env, nullptr, "NodeJS Loader data view is not implemented");
 		}
 		else if (napi_is_promise(env, v, &result) == napi_ok && result == true)
 		{
-			loader_impl_node_future node_future = static_cast<loader_impl_node_future>(malloc(sizeof(struct loader_impl_node_future_type)));
+			loader_impl_node_future node_future = new loader_impl_node_future_type();
 
 			future f;
 
-			if (node_future == NULL)
+			if (node_future == nullptr)
 			{
 				return static_cast<function_return>(NULL);
 			}
@@ -1140,7 +1072,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 			if (f == NULL)
 			{
-				free(node_future);
+				delete node_future;
 
 				return static_cast<function_return>(NULL);
 			}
@@ -1199,7 +1131,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 				node_loader_impl_exception(env, status);
 
 				/* Set key string in the tupla */
-				status = napi_get_value_string_utf8(env, key, NULL, 0, &key_length);
+				status = napi_get_value_string_utf8(env, key, nullptr, 0, &key_length);
 
 				node_loader_impl_exception(env, status);
 
@@ -1238,7 +1170,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	else if (valuetype == napi_external)
 	{
 		/* Returns the previously allocated copy */
-		void *c = NULL;
+		void *c = nullptr;
 
 		status = napi_get_value_external(env, v, &c);
 
@@ -1254,12 +1186,12 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 {
 	size_t iterator, argc = 0;
 
-	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
+	napi_get_cb_info(env, info, &argc, nullptr, nullptr, nullptr);
 
 	napi_value *argv = new napi_value[argc];
 	void **args = new void *[argc];
 	napi_value recv;
-	loader_impl_async_safe_cast<loader_impl_napi_to_value_callback_closure> closure_cast = { NULL };
+	loader_impl_async_safe_cast<loader_impl_napi_to_value_callback_closure> closure_cast = { nullptr };
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, &closure_cast.ptr);
 
@@ -1288,7 +1220,7 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	value_type_destroy(ret);
 
 	/* Reset environment */
-	// closure_cast.safe->node_impl->env = NULL;
+	// closure_cast.safe->node_impl->env = nullptr;
 
 	delete[] argv;
 	delete[] args;
@@ -1442,7 +1374,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	else if (id == TYPE_FUTURE)
 	{
 		/* TODO: Implement promise properly for await */
-		napi_throw_error(env, NULL, "NodeJS Loader future is not implemented");
+		napi_throw_error(env, nullptr, "NodeJS Loader future is not implemented");
 	}
 	else if (id == TYPE_FUNCTION)
 	{
@@ -1451,7 +1383,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 		closure->func = value_type_copy(arg_value);
 		closure->node_impl = node_impl;
 
-		status = napi_create_function(env, NULL, 0, node_loader_impl_napi_to_value_callback, closure, &v);
+		status = napi_create_function(env, nullptr, 0, node_loader_impl_napi_to_value_callback, closure, &v);
 
 		node_loader_impl_exception(env, status);
 
@@ -1466,7 +1398,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	else if (id == TYPE_CLASS)
 	{
 		/* TODO */
-		/* napi_throw_error(env, NULL, "NodeJS Loader class is not implemented"); */
+		/* napi_throw_error(env, nullptr, "NodeJS Loader class is not implemented"); */
 
 		/*
 		klass cls = value_to_class(arg_value);
@@ -1477,7 +1409,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	else if (id == TYPE_OBJECT)
 	{
 		/* TODO */
-		napi_throw_error(env, NULL, "NodeJS Loader object is not implemented");
+		napi_throw_error(env, nullptr, "NodeJS Loader object is not implemented");
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -1533,7 +1465,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 		error_str += type_id_name(id);
 		error_str += "' to N-API";
 
-		napi_throw_error(env, NULL, error_str.c_str());
+		napi_throw_error(env, nullptr, error_str.c_str());
 	}
 
 	return v;
@@ -1546,15 +1478,15 @@ void node_loader_impl_env(loader_impl_node node_impl, napi_env env)
 
 int function_node_interface_create(function func, function_impl impl)
 {
-	loader_impl_node_function node_func = (loader_impl_node_function)impl;
+	loader_impl_node_function node_func = static_cast<loader_impl_node_function>(impl);
 
 	signature s = function_signature(func);
 
 	const size_t args_size = signature_count(s);
 
-	node_func->argv = static_cast<napi_value *>(malloc(sizeof(napi_value) * args_size));
+	node_func->argv = new napi_value[args_size];
 
-	return (node_func->argv == NULL);
+	return (node_func->argv == nullptr);
 }
 
 template <typename T>
@@ -1579,7 +1511,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 {
 	loader_impl_node_function node_func = static_cast<loader_impl_node_function>(impl);
 
-	if (node_func == NULL)
+	if (node_func == nullptr)
 	{
 		return NULL;
 	}
@@ -1604,158 +1536,62 @@ function_return function_node_interface_invoke(function func, function_impl impl
 
 function_return function_node_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
-	loader_impl_node_function node_func = (loader_impl_node_function)impl;
+	loader_impl_node_function node_func = static_cast<loader_impl_node_function>(impl);
 
-	if (node_func != NULL)
+	if (node_func == nullptr)
 	{
-		loader_impl_node node_impl = node_func->node_impl;
-		function_return ret = NULL;
-		napi_status status;
-
-		/* Set up await safe arguments */
-		node_impl->func_await_safe->node_impl = node_impl;
-		node_impl->func_await_safe->func = func;
-		node_impl->func_await_safe->node_func = node_func;
-		node_impl->func_await_safe->args = static_cast<void **>(args);
-		node_impl->func_await_safe->size = size;
-		node_impl->func_await_safe->resolve_callback = resolve_callback;
-		node_impl->func_await_safe->reject_callback = reject_callback;
-		node_impl->func_await_safe->context = context;
-		node_impl->func_await_safe->recv = NULL;
-		node_impl->func_await_safe->ret = NULL;
-
-		/* Check if we are in the JavaScript thread */
-		if (node_impl->js_thread_id == std::this_thread::get_id())
-		{
-			/* We are already in the V8 thread, we can call safely */
-			node_loader_impl_func_await_safe(node_impl->env, node_impl->func_await_safe);
-
-			/* Set up return of the function call */
-			ret = node_impl->func_await_safe->ret;
-		}
-		/* Lock the mutex and set the parameters */
-		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-		{
-			node_impl->locked.store(true);
-
-			/* Acquire the thread safe function in order to do the call */
-			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_await);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function await function in NodeJS loader");
-			}
-
-			/* Execute the thread safe call in a nonblocking manner */
-			status = napi_call_threadsafe_function(node_impl->threadsafe_func_await, nullptr, napi_tsfn_nonblocking);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function await function in NodeJS loader");
-			}
-
-			/* Release call safe function */
-			status = napi_release_threadsafe_function(node_impl->threadsafe_func_await, napi_tsfn_release);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function await function in NodeJS loader");
-			}
-
-			/* Wait for the execution of the safe call */
-			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-			/* Set up return of the function call */
-			ret = node_impl->func_await_safe->ret;
-
-			node_impl->locked.store(false);
-
-			/* Unlock call safe mutex */
-			uv_mutex_unlock(&node_impl->mutex);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_await, the call has not been executed in order to avoid the deadlock");
-		}
-
-		return ret;
+		return NULL;
 	}
 
-	return NULL;
+	loader_impl_node node_impl = node_func->node_impl;
+	loader_impl_async_func_await_safe_type func_await_safe(node_impl, func, node_func, args, size, resolve_callback, reject_callback, context);
+
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_func_await_safe(node_impl->env, &func_await_safe);
+
+		return func_await_safe.ret;
+	}
+
+	/* Submit the task to the async queue */
+	loader_impl_threadsafe_invoke_type<loader_impl_async_func_await_safe_type> invoke(node_impl->threadsafe_func_await, func_await_safe);
+
+	return func_await_safe.ret;
 }
 
 void function_node_interface_destroy(function func, function_impl impl)
 {
-	loader_impl_node_function node_func = (loader_impl_node_function)impl;
+	loader_impl_node_function node_func = static_cast<loader_impl_node_function>(impl);
 
 	(void)func;
 
-	if (node_func != NULL)
+	if (node_func == nullptr)
 	{
-		if (loader_is_destroyed(node_func->impl) != 0)
-		{
-			loader_impl_node node_impl = node_func->node_impl;
-			napi_status status;
-
-			/* Set up function destroy safe arguments */
-			node_impl->func_destroy_safe->node_impl = node_impl;
-			node_impl->func_destroy_safe->node_func = node_func;
-
-			/* Check if we are in the JavaScript thread */
-			if (node_impl->js_thread_id == std::this_thread::get_id())
-			{
-				/* We are already in the V8 thread, we can call safely */
-				node_loader_impl_func_destroy_safe(node_impl->env, node_impl->func_destroy_safe);
-			}
-			/* Lock the mutex and set the parameters */
-			else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-			{
-				node_impl->locked.store(true);
-
-				/* Acquire the thread safe function in order to do the call */
-				status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_destroy);
-
-				if (status != napi_ok)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function destroy function in NodeJS loader");
-				}
-
-				/* Execute the thread safe call in a nonblocking manner */
-				status = napi_call_threadsafe_function(node_impl->threadsafe_func_destroy, nullptr, napi_tsfn_nonblocking);
-
-				if (status != napi_ok)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function destroy function in NodeJS loader");
-				}
-
-				/* Release call safe function */
-				status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_release);
-
-				if (status != napi_ok)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function destroy function in NodeJS loader");
-				}
-
-				/* Wait for the execution of the safe call */
-				uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-				node_impl->locked.store(false);
-
-				/* Unlock call safe mutex */
-				uv_mutex_unlock(&node_impl->mutex);
-			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
-			}
-		}
-
-		/* Free node function arguments */
-		free(node_func->argv);
-
-		/* Free node function */
-		free(node_func);
+		return;
 	}
+
+	loader_impl_node node_impl = node_func->node_impl;
+	loader_impl_async_func_destroy_safe_type func_destroy_safe(node_impl, node_func);
+
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_func_destroy_safe(node_impl->env, &func_destroy_safe);
+	}
+	else
+	{
+		/* Submit the task to the async queue */
+		loader_impl_threadsafe_invoke_type<loader_impl_async_func_destroy_safe_type> invoke(node_impl->threadsafe_func_destroy, func_destroy_safe);
+	}
+
+	/* Free node function arguments */
+	delete[] node_func->argv;
+
+	/* Free node function */
+	delete node_func;
 }
 
 function_interface function_node_singleton()
@@ -1780,152 +1616,60 @@ int future_node_interface_create(future f, future_impl impl)
 
 future_return future_node_interface_await(future f, future_impl impl, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void *context)
 {
-	loader_impl_node_future node_future = (loader_impl_node_future)impl;
+	loader_impl_node_future node_future = static_cast<loader_impl_node_future>(impl);
 
-	if (node_future != NULL)
+	if (node_future == nullptr)
+	{
+		return NULL;
+	}
+
+	loader_impl_node node_impl = node_future->node_impl;
+	loader_impl_async_future_await_safe_type future_await_safe(node_impl, f, node_future, resolve_callback, reject_callback, context);
+
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_future_await_safe(node_impl->env, &future_await_safe);
+
+		return future_await_safe.ret;
+	}
+
+	/* Submit the task to the async queue */
+	loader_impl_threadsafe_invoke_type<loader_impl_async_future_await_safe_type> invoke(node_impl->threadsafe_future_await, future_await_safe);
+
+	return future_await_safe.ret;
+}
+
+void future_node_interface_destroy(future f, future_impl impl)
+{
+	loader_impl_node_future node_future = static_cast<loader_impl_node_future>(impl);
+
+	if (node_future == nullptr)
+	{
+		return;
+	}
+
+	if (loader_is_destroyed(node_future->node_impl->impl) != 0)
 	{
 		loader_impl_node node_impl = node_future->node_impl;
-		function_return ret = NULL;
-		napi_status status;
-
-		/* Set up await safe arguments */
-		node_impl->future_await_safe->node_impl = node_impl;
-		node_impl->future_await_safe->f = f;
-		node_impl->future_await_safe->node_future = node_future;
-		node_impl->future_await_safe->resolve_callback = resolve_callback;
-		node_impl->future_await_safe->reject_callback = reject_callback;
-		node_impl->future_await_safe->context = context;
-		node_impl->future_await_safe->recv = NULL;
-		node_impl->future_await_safe->ret = NULL;
+		loader_impl_async_future_delete_safe_type future_delete_safe(node_impl, f, node_future);
 
 		/* Check if we are in the JavaScript thread */
 		if (node_impl->js_thread_id == std::this_thread::get_id())
 		{
 			/* We are already in the V8 thread, we can call safely */
-			node_loader_impl_future_await_safe(node_impl->env, node_impl->future_await_safe);
-
-			/* Set up return of the function call */
-			ret = node_impl->future_await_safe->ret;
-		}
-		/* Lock the mutex and set the parameters */
-		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-		{
-			node_impl->locked.store(true);
-
-			/* Acquire the thread safe function in order to do the call */
-			status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_await);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function await future in NodeJS loader");
-			}
-
-			/* Execute the thread safe call in a nonblocking manner */
-			status = napi_call_threadsafe_function(node_impl->threadsafe_future_await, nullptr, napi_tsfn_nonblocking);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function await future in NodeJS loader");
-			}
-
-			/* Release call safe function */
-			status = napi_release_threadsafe_function(node_impl->threadsafe_future_await, napi_tsfn_release);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function await future in NodeJS loader");
-			}
-
-			/* Wait for the execution of the safe call */
-			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-			/* Set up return of the function call */
-			ret = node_impl->future_await_safe->ret;
-
-			node_impl->locked.store(false);
-
-			/* Unlock call safe mutex */
-			uv_mutex_unlock(&node_impl->mutex);
+			node_loader_impl_future_delete_safe(node_impl->env, &future_delete_safe);
 		}
 		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in future_node_interface_await, the call has not been executed in order to avoid the deadlock");
+			/* Submit the task to the async queue */
+			loader_impl_threadsafe_invoke_type<loader_impl_async_future_delete_safe_type> invoke(node_impl->threadsafe_future_delete, future_delete_safe);
 		}
-
-		return ret;
 	}
 
-	return NULL;
-}
-
-void future_node_interface_destroy(future f, future_impl impl)
-{
-	loader_impl_node_future node_future = (loader_impl_node_future)impl;
-
-	if (node_future != NULL)
-	{
-		if (loader_is_destroyed(node_future->node_impl->impl) != 0)
-		{
-			loader_impl_node node_impl = node_future->node_impl;
-			napi_status status;
-
-			/* Set up future delete safe arguments */
-			node_impl->future_delete_safe->node_impl = node_impl;
-			node_impl->future_delete_safe->node_future = node_future;
-			node_impl->future_delete_safe->f = f;
-
-			/* Check if we are in the JavaScript thread */
-			if (node_impl->js_thread_id == std::this_thread::get_id())
-			{
-				/* We are already in the V8 thread, we can call safely */
-				node_loader_impl_future_delete_safe(node_impl->env, node_impl->future_delete_safe);
-			}
-			/* Lock the mutex and set the parameters */
-			else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-			{
-				node_impl->locked.store(true);
-
-				/* Acquire the thread safe function in order to do the call */
-				status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_delete);
-
-				if (status != napi_ok)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe future destroy function in NodeJS loader");
-				}
-
-				/* Execute the thread safe call in a nonblocking manner */
-				status = napi_call_threadsafe_function(node_impl->threadsafe_future_delete, nullptr, napi_tsfn_nonblocking);
-
-				if (status != napi_ok)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe future destroy function in NodeJS loader");
-				}
-
-				/* Release call safe function */
-				status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_release);
-
-				if (status != napi_ok)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe future destroy function in NodeJS loader");
-				}
-
-				/* Wait for the execution of the safe call */
-				uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-				node_impl->locked.store(false);
-
-				/* Unlock call safe mutex */
-				uv_mutex_unlock(&node_impl->mutex);
-			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in future_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
-			}
-		}
-
-		/* Free node future */
-		free(node_future);
-	}
+	/* Free node future */
+	delete node_future;
 }
 
 future_interface future_node_singleton()
@@ -1939,7 +1683,7 @@ future_interface future_node_singleton()
 	return &node_future_interface;
 }
 
-void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe initialize_safe)
+void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe_type *initialize_safe)
 {
 	static const char initialize_str[] = "initialize";
 	napi_value function_table_object;
@@ -2010,35 +1754,7 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_initialize_safe> initialize_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &initialize_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&initialize_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	initialize_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_initialize_safe(env, initialize_cast.safe);
-
-	/* Clear environment */
-	// initialize_cast.safe->node_impl->env = NULL;
-
-	/* Signal start condition */
-	uv_cond_signal(&initialize_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&initialize_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execution_path_safe execution_path_safe)
+void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execution_path_safe_type *execution_path_safe)
 {
 	static const char execution_path_str[] = "execution_path";
 	napi_value function_table_object;
@@ -2109,35 +1825,7 @@ void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execut
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_execution_path_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_execution_path_safe> execution_path_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &execution_path_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&execution_path_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	execution_path_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_execution_path_safe(env, execution_path_cast.safe);
-
-	/* Clear environment */
-	// execution_path_cast.safe->node_impl->env = NULL;
-
-	/* Signal start condition */
-	uv_cond_signal(&execution_path_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&execution_path_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe func_call_safe)
+void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe_type *func_call_safe)
 {
 	napi_handle_scope handle_scope;
 	size_t args_size;
@@ -2154,7 +1842,7 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 	args = func_call_safe->args;
 
 	/* Allocate dynamically more space for values in case of variable arguments */
-	argv = args_size > signature_args_size ? static_cast<napi_value *>(malloc(sizeof(napi_value) * args_size)) : node_func->argv;
+	argv = args_size > signature_args_size ? new napi_value[args_size] : node_func->argv;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2202,7 +1890,7 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 
 	if (args_size > signature_args_size)
 	{
-		free(argv);
+		delete[] argv;
 	}
 }
 
@@ -2210,7 +1898,7 @@ void node_loader_impl_async_func_await_finalize(napi_env, void *finalize_data, v
 {
 	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(finalize_data);
 
-	free(trampoline);
+	delete trampoline;
 }
 
 napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_env env, function_resolve_callback resolve, napi_value recv, napi_value v, void *context)
@@ -2218,7 +1906,7 @@ napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_
 	napi_value result;
 	value arg, ret;
 
-	if (node_impl == NULL || resolve == NULL)
+	if (node_impl == nullptr || resolve == NULL)
 	{
 		return nullptr;
 	}
@@ -2260,7 +1948,7 @@ napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_e
 	napi_value result;
 	value arg, ret;
 
-	if (node_impl == NULL || reject == NULL)
+	if (node_impl == nullptr || reject == NULL)
 	{
 		return nullptr;
 	}
@@ -2297,7 +1985,7 @@ napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_e
 	return result;
 }
 
-void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe func_await_safe)
+void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe_type *func_await_safe)
 {
 	static const char await_str[] = "await_function";
 	napi_value await_str_value;
@@ -2345,9 +2033,9 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 		else
 		{
 			/* Allocate trampoline object */
-			loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(malloc(sizeof(struct loader_impl_async_func_await_trampoline_type)));
+			loader_impl_async_func_await_trampoline trampoline = new loader_impl_async_func_await_trampoline_type();
 
-			if (trampoline != NULL)
+			if (trampoline != nullptr)
 			{
 				size_t args_size;
 				value *args;
@@ -2380,7 +2068,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 				node_func = func_await_safe->node_func;
 
 				/* Allocate dynamically more space for values in case of variable arguments */
-				func_argv = args_size > signature_args_size ? static_cast<napi_value *>(malloc(sizeof(napi_value) * args_size)) : node_func->argv;
+				func_argv = args_size > signature_args_size ? new napi_value[args_size] : node_func->argv;
 
 				/* Build parameters */
 				for (args_count = 0; args_count < args_size; ++args_count)
@@ -2427,7 +2115,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 				if (args_size > signature_args_size)
 				{
-					free(func_argv);
+					delete[](func_argv);
 				}
 			}
 		}
@@ -2439,39 +2127,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_info info)
-{
-	napi_value recv;
-	loader_impl_async_safe_cast<loader_impl_async_func_await_safe> func_await_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, &func_await_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&func_await_cast.safe->node_impl->mutex);
-
-	/* Store function recv for reentrant calls */
-	func_await_cast.safe->recv = recv;
-
-	/* Store environment for reentrant calls */
-	func_await_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_func_await_safe(env, func_await_cast.safe);
-
-	/* Clear environment */
-	// func_await_cast.safe->node_impl->env = NULL;
-
-	/* Signal function await condition */
-	uv_cond_signal(&func_await_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&func_await_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe func_destroy_safe)
+void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe_type *func_destroy_safe)
 {
 	uint32_t ref_count = 0;
 	napi_handle_scope handle_scope;
@@ -2501,35 +2157,7 @@ void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_des
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_func_destroy_safe> func_destroy_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &func_destroy_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&func_destroy_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	func_destroy_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_func_destroy_safe(env, func_destroy_cast.safe);
-
-	/* Clear environment */
-	// func_destroy_cast.safe->node_impl->env = NULL;
-
-	/* Signal function destroy condition */
-	uv_cond_signal(&func_destroy_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&func_destroy_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_await_safe future_await_safe)
+void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_await_safe_type *future_await_safe)
 {
 	static const char await_str[] = "await_future";
 	napi_value await_str_value;
@@ -2577,9 +2205,9 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 		else
 		{
 			/* Allocate trampoline object */
-			loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(malloc(sizeof(struct loader_impl_async_func_await_trampoline_type)));
+			loader_impl_async_func_await_trampoline trampoline = new loader_impl_async_func_await_trampoline_type();
 
-			if (trampoline != NULL)
+			if (trampoline != nullptr)
 			{
 				/* Get function reference */
 				status = napi_get_reference_value(env, future_await_safe->node_future->promise_ref, &argv[0]);
@@ -2599,7 +2227,7 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 
 				node_loader_impl_exception(env, status);
 
-				status = napi_wrap(env, argv[1], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, NULL);
+				status = napi_wrap(env, argv[1], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, nullptr, nullptr);
 
 				node_loader_impl_exception(env, status);
 
@@ -2626,39 +2254,7 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_future_await_safe(napi_env env, napi_callback_info info)
-{
-	napi_value recv;
-	loader_impl_async_safe_cast<loader_impl_async_future_await_safe> future_await_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, &future_await_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&future_await_cast.safe->node_impl->mutex);
-
-	/* Store function recv for reentrant calls */
-	future_await_cast.safe->recv = recv;
-
-	/* Store environment for reentrant calls */
-	future_await_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_future_await_safe(env, future_await_cast.safe);
-
-	/* Clear environment */
-	// future_await_cast.safe->node_impl->env = NULL;
-
-	/* Signal function await condition */
-	uv_cond_signal(&future_await_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&future_await_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe future_delete_safe)
+void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe_type *future_delete_safe)
 {
 	uint32_t ref_count = 0;
 	napi_handle_scope handle_scope;
@@ -2688,35 +2284,7 @@ void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_future_delete_safe> future_delete_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &future_delete_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&future_delete_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	future_delete_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_future_delete_safe(env, future_delete_cast.safe);
-
-	/* Clear environment */
-	// future_delete_cast.safe->node_impl->env = NULL;
-
-	/* Signal future delete condition */
-	uv_cond_signal(&future_delete_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&future_delete_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_from_file_safe load_from_file_safe)
+void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_from_file_safe_type *load_from_file_safe)
 {
 	static const char load_from_file_str[] = "load_from_file";
 	napi_value function_table_object;
@@ -2816,35 +2384,7 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_load_from_file_safe> load_from_file_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &load_from_file_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&load_from_file_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	load_from_file_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_load_from_file_safe(env, load_from_file_cast.safe);
-
-	/* Clear environment */
-	// load_from_file_cast.safe->node_impl->env = NULL;
-
-	/* Signal load from file condition */
-	uv_cond_signal(&load_from_file_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&load_from_file_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load_from_memory_safe load_from_memory_safe)
+void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load_from_memory_safe_type *load_from_memory_safe)
 {
 	static const char load_from_memory_str[] = "load_from_memory";
 	napi_value function_table_object;
@@ -2937,35 +2477,7 @@ void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_load_from_memory_safe> load_from_memory_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &load_from_memory_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&load_from_memory_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	load_from_memory_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_load_from_memory_safe(env, load_from_memory_cast.safe);
-
-	/* Clear environment */
-	// load_from_memory_cast.safe->node_impl->env = NULL;
-
-	/* Signal load from memory condition */
-	uv_cond_signal(&load_from_memory_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&load_from_memory_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe clear_safe)
+void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type *clear_safe)
 {
 	static const char clear_str[] = "clear";
 	napi_value function_table_object;
@@ -3049,35 +2561,7 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe clea
 	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_clear_safe> clear_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &clear_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&clear_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	clear_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_clear_safe(env, clear_cast.safe);
-
-	/* Clear environment */
-	// clear_cast.safe->node_impl->env = NULL;
-
-	/* Signal clear condition */
-	uv_cond_signal(&clear_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&clear_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe discover_function_safe)
+value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe_type *discover_function_safe)
 {
 	static const char discover_function_str[] = "discover_function";
 	napi_value discover_function_str_value;
@@ -3141,7 +2625,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 
 		/* Convert return value (discover object) to context */
 		napi_value func_name;
-		char *func_name_str = NULL;
+		char *func_name_str = nullptr;
 		bool has_name = false;
 
 		status = napi_has_named_property(env, function_descriptor, "name", &has_name);
@@ -3157,13 +2641,13 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 
 			node_loader_impl_exception(env, status);
 
-			status = napi_get_value_string_utf8(env, func_name, NULL, 0, &func_name_length);
+			status = napi_get_value_string_utf8(env, func_name, nullptr, 0, &func_name_length);
 
 			node_loader_impl_exception(env, status);
 
 			if (func_name_length > 0)
 			{
-				func_name_str = static_cast<char *>(malloc(sizeof(char) * (func_name_length + 1)));
+				func_name_str = new char[func_name_length + 1];
 			}
 
 			/* Get function name */
@@ -3265,7 +2749,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 		}
 
 		/* Create node function */
-		loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
+		loader_impl_node_function node_func = new loader_impl_node_function_type();
 
 		/* Create reference to function pointer */
 		status = napi_create_reference(env, discover_function_safe->func, 1, &node_func->func_ref);
@@ -3294,19 +2778,19 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 			if (has_ret)
 			{
 				size_t return_type_length;
-				char *return_type_str = NULL;
+				char *return_type_str = nullptr;
 
 				/* Get return value string length */
-				status = napi_get_value_string_utf8(env, function_ret, NULL, 0, &return_type_length);
+				status = napi_get_value_string_utf8(env, function_ret, nullptr, 0, &return_type_length);
 
 				node_loader_impl_exception(env, status);
 
 				if (return_type_length > 0)
 				{
-					return_type_str = static_cast<char *>(malloc(sizeof(char) * (return_type_length + 1)));
+					return_type_str = new char[return_type_length + 1];
 				}
 
-				if (return_type_str != NULL)
+				if (return_type_str != nullptr)
 				{
 					/* Get parameter name string */
 					status = napi_get_value_string_utf8(env, function_ret, return_type_str, return_type_length + 1, &return_type_length);
@@ -3316,7 +2800,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 					/* TODO: Implement return type with impl (may need an important refactor) */
 					signature_set_return(s, /*loader_impl_type(discover_function_safe->impl, return_type_str)*/ NULL);
 
-					free(return_type_str);
+					delete[] return_type_str;
 				}
 			}
 
@@ -3325,7 +2809,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 			{
 				napi_value parameter_name;
 				size_t parameter_name_length;
-				char *parameter_name_str = NULL;
+				char *parameter_name_str = nullptr;
 
 				/* Get signature parameter name */
 				status = napi_get_element(env, function_sig, arg_index, &parameter_name);
@@ -3333,13 +2817,13 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 				node_loader_impl_exception(env, status);
 
 				/* Get parameter name string length */
-				status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
+				status = napi_get_value_string_utf8(env, parameter_name, nullptr, 0, &parameter_name_length);
 
 				node_loader_impl_exception(env, status);
 
 				if (parameter_name_length > 0)
 				{
-					parameter_name_str = static_cast<char *>(malloc(sizeof(char) * (parameter_name_length + 1)));
+					parameter_name_str = new char[parameter_name_length + 1];
 				}
 
 				/* Get parameter name string */
@@ -3352,7 +2836,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 				{
 					napi_value parameter_type;
 					size_t parameter_type_length;
-					char *parameter_type_str = NULL;
+					char *parameter_type_str = nullptr;
 
 					/* Get signature parameter type */
 					status = napi_get_element(env, function_types, arg_index, &parameter_type);
@@ -3360,13 +2844,13 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 					node_loader_impl_exception(env, status);
 
 					/* Get parameter type string length */
-					status = napi_get_value_string_utf8(env, parameter_type, NULL, 0, &parameter_type_length);
+					status = napi_get_value_string_utf8(env, parameter_type, nullptr, 0, &parameter_type_length);
 
 					node_loader_impl_exception(env, status);
 
 					if (parameter_type_length > 0)
 					{
-						parameter_type_str = static_cast<char *>(malloc(sizeof(char) * (parameter_type_length + 1)));
+						parameter_type_str = new char[parameter_type_length + 1];
 					}
 
 					/* Get parameter type string */
@@ -3375,21 +2859,21 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 					node_loader_impl_exception(env, status);
 
 					/* TODO: Implement parameter type with impl (may need an important refactor) */
-					signature_set(s, (size_t)arg_index, parameter_name_str, /*loader_impl_type(discover_function_safe->impl, parameter_type_str)*/ NULL);
+					signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, /*loader_impl_type(discover_function_safe->impl, parameter_type_str)*/ NULL);
 
-					if (parameter_type_str != NULL)
+					if (parameter_type_str != nullptr)
 					{
-						free(parameter_type_str);
+						delete[] parameter_type_str;
 					}
 				}
 				else
 				{
-					signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
+					signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, NULL);
 				}
 
-				if (parameter_name_str != NULL)
+				if (parameter_name_str != nullptr)
 				{
-					free(parameter_name_str);
+					delete[] parameter_name_str;
 				}
 			}
 
@@ -3398,12 +2882,12 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 		}
 		else
 		{
-			free(node_func);
+			delete node_func;
 		}
 
-		if (func_name_str != NULL)
+		if (func_name_str != nullptr)
 		{
-			free(func_name_str);
+			delete[] func_name_str;
 		}
 	}
 
@@ -3415,7 +2899,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 	return function_value;
 }
 
-void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe)
+void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe_type *discover_safe)
 {
 	static const char discover_str[] = "discover";
 	napi_value function_table_object;
@@ -3494,22 +2978,22 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 		{
 			napi_value func_name;
 			size_t func_name_length;
-			char *func_name_str = NULL;
+			char *func_name_str = nullptr;
 
 			status = napi_get_element(env, func_names, index, &func_name);
 
 			node_loader_impl_exception(env, status);
 
-			status = napi_get_value_string_utf8(env, func_name, NULL, 0, &func_name_length);
+			status = napi_get_value_string_utf8(env, func_name, nullptr, 0, &func_name_length);
 
 			node_loader_impl_exception(env, status);
 
 			if (func_name_length > 0)
 			{
-				func_name_str = static_cast<char *>(malloc(sizeof(char) * (func_name_length + 1)));
+				func_name_str = new char[func_name_length + 1];
 			}
 
-			if (func_name_str != NULL)
+			if (func_name_str != nullptr)
 			{
 				napi_value function_descriptor;
 				napi_value function_ptr;
@@ -3630,7 +3114,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 				}
 
 				/* Create node function */
-				loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
+				loader_impl_node_function node_func = new loader_impl_node_function_type();
 
 				/* Create reference to function pointer */
 				status = napi_create_reference(env, function_ptr, 1, &node_func->func_ref);
@@ -3660,19 +3144,19 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					if (has_ret)
 					{
 						size_t return_type_length;
-						char *return_type_str = NULL;
+						char *return_type_str = nullptr;
 
 						/* Get return value string length */
-						status = napi_get_value_string_utf8(env, function_ret, NULL, 0, &return_type_length);
+						status = napi_get_value_string_utf8(env, function_ret, nullptr, 0, &return_type_length);
 
 						node_loader_impl_exception(env, status);
 
 						if (return_type_length > 0)
 						{
-							return_type_str = static_cast<char *>(malloc(sizeof(char) * (return_type_length + 1)));
+							return_type_str = new char[return_type_length + 1];
 						}
 
-						if (return_type_str != NULL)
+						if (return_type_str != nullptr)
 						{
 							/* Get parameter name string */
 							status = napi_get_value_string_utf8(env, function_ret, return_type_str, return_type_length + 1, &return_type_length);
@@ -3681,7 +3165,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 							signature_set_return(s, loader_impl_type(discover_safe->node_impl->impl, return_type_str));
 
-							free(return_type_str);
+							delete[] return_type_str;
 						}
 					}
 
@@ -3690,7 +3174,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					{
 						napi_value parameter_name;
 						size_t parameter_name_length;
-						char *parameter_name_str = NULL;
+						char *parameter_name_str = nullptr;
 
 						/* Get signature parameter name */
 						status = napi_get_element(env, function_sig, arg_index, &parameter_name);
@@ -3698,13 +3182,13 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 						node_loader_impl_exception(env, status);
 
 						/* Get parameter name string length */
-						status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
+						status = napi_get_value_string_utf8(env, parameter_name, nullptr, 0, &parameter_name_length);
 
 						node_loader_impl_exception(env, status);
 
 						if (parameter_name_length > 0)
 						{
-							parameter_name_str = static_cast<char *>(malloc(sizeof(char) * (parameter_name_length + 1)));
+							parameter_name_str = new char[parameter_name_length + 1];
 						}
 
 						/* Get parameter name string */
@@ -3717,7 +3201,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 						{
 							napi_value parameter_type;
 							size_t parameter_type_length;
-							char *parameter_type_str = NULL;
+							char *parameter_type_str = nullptr;
 
 							/* Get signature parameter type */
 							status = napi_get_element(env, function_types, arg_index, &parameter_type);
@@ -3725,13 +3209,13 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 							node_loader_impl_exception(env, status);
 
 							/* Get parameter type string length */
-							status = napi_get_value_string_utf8(env, parameter_type, NULL, 0, &parameter_type_length);
+							status = napi_get_value_string_utf8(env, parameter_type, nullptr, 0, &parameter_type_length);
 
 							node_loader_impl_exception(env, status);
 
 							if (parameter_type_length > 0)
 							{
-								parameter_type_str = static_cast<char *>(malloc(sizeof(char) * (parameter_type_length + 1)));
+								parameter_type_str = new char[parameter_type_length + 1];
 							}
 
 							/* Get parameter type string */
@@ -3739,21 +3223,21 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 							node_loader_impl_exception(env, status);
 
-							signature_set(s, (size_t)arg_index, parameter_name_str, loader_impl_type(discover_safe->node_impl->impl, parameter_type_str));
+							signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, loader_impl_type(discover_safe->node_impl->impl, parameter_type_str));
 
-							if (parameter_type_str != NULL)
+							if (parameter_type_str != nullptr)
 							{
-								free(parameter_type_str);
+								delete[] parameter_type_str;
 							}
 						}
 						else
 						{
-							signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
+							signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, NULL);
 						}
 
-						if (parameter_name_str != NULL)
+						if (parameter_name_str != nullptr)
 						{
-							free(parameter_name_str);
+							delete[] parameter_name_str;
 						}
 					}
 
@@ -3768,81 +3252,18 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 				}
 				else
 				{
-					free(node_func);
+					delete node_func;
 					discover_safe->result = 1;
 					break;
 				}
 
-				free(func_name_str);
+				delete[] func_name_str;
 			}
 		}
 	}
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
-
-	node_loader_impl_exception(env, status);
-}
-
-napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_async_safe_cast<loader_impl_async_discover_safe> discover_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &discover_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&discover_cast.safe->node_impl->mutex);
-
-	/* Store environment for reentrant calls */
-	discover_cast.safe->node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_discover_safe(env, discover_cast.safe);
-
-	/* Clear environment */
-	// discover_cast.safe->node_impl->env = NULL;
-
-	/* Signal discover condition */
-	uv_cond_signal(&discover_cast.safe->node_impl->cond);
-
-	uv_mutex_unlock(&discover_cast.safe->node_impl->mutex);
-
-	return nullptr;
-}
-
-template <typename T>
-void node_loader_impl_thread_safe_function_initialize(napi_env env,
-	const char name[], size_t size, napi_value (*callback)(napi_env, napi_callback_info), T **data,
-	napi_value *ptr, napi_threadsafe_function *threadsafe_function)
-{
-	napi_status status;
-
-	/* Create func call function */
-	*data = new T();
-
-	/* Initialize call safe function with context */
-	status = napi_create_function(env, NULL, 0, callback, static_cast<void *>(*data), ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Create call safe function */
-	napi_value threadsafe_func_name;
-
-	status = napi_create_string_utf8(env, name, size, &threadsafe_func_name);
-
-	node_loader_impl_exception(env, status);
-
-	// TODO: Does this number must be equivalent to the number of the threads of NodeJS?
-	unsigned int processor_count = std::thread::hardware_concurrency();
-
-	status = napi_create_threadsafe_function(env, *ptr,
-		nullptr, threadsafe_func_name,
-		0, processor_count,
-		nullptr, nullptr,
-		nullptr, nullptr,
-		threadsafe_function);
 
 	node_loader_impl_exception(env, status);
 }
@@ -3926,199 +3347,18 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 	/* Initialize thread safe functions */
 	{
-		/* Safe initialize */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_initialize_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_initialize_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_initialize_safe,
-				(loader_impl_async_initialize_safe_type **)(&node_impl->initialize_safe),
-				&node_impl->initialize_safe_ptr,
-				&node_impl->threadsafe_initialize);
-		}
-
-		/* Safe execution path */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_execution_path_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_execution_path_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_execution_path_safe,
-				(loader_impl_async_execution_path_safe_type **)(&node_impl->execution_path_safe),
-				&node_impl->execution_path_safe_ptr,
-				&node_impl->threadsafe_execution_path);
-		}
-
-		/* Safe load from file */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_load_from_file_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_load_from_file_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_load_from_file_safe,
-				(loader_impl_async_load_from_file_safe_type **)(&node_impl->load_from_file_safe),
-				&node_impl->load_from_file_safe_ptr,
-				&node_impl->threadsafe_load_from_file);
-		}
-
-		/* Safe load from memory */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_load_from_memory_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_load_from_memory_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_load_from_memory_safe,
-				(loader_impl_async_load_from_memory_safe_type **)(&node_impl->load_from_memory_safe),
-				&node_impl->load_from_memory_safe_ptr,
-				&node_impl->threadsafe_load_from_memory);
-		}
-
-		/* Safe clear */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_clear_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_clear_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_clear_safe,
-				(loader_impl_async_clear_safe_type **)(&node_impl->clear_safe),
-				&node_impl->clear_safe_ptr,
-				&node_impl->threadsafe_clear);
-		}
-
-		/* Safe discover */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_discover_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_discover_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_discover_safe,
-				(loader_impl_async_discover_safe_type **)(&node_impl->discover_safe),
-				&node_impl->discover_safe_ptr,
-				&node_impl->threadsafe_discover);
-		}
-
-		/* Safe function call */
-		{
-			/* TODO: Refactor this */
-
-			// static const char threadsafe_func_name_str[] = "node_loader_impl_async_func_call_safe";
-
-			/*
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_func_call_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_func_call_safe,
-				(loader_impl_async_func_call_safe_type **)(&node_impl->func_call_safe),
-				&node_impl->func_call_safe_ptr,
-				&node_impl->threadsafe_func_call);
-			*/
-
-			/*
-			void node_loader_impl_thread_safe_function_initialize(napi_env env,
-				const char name[], size_t size, napi_value (*callback)(napi_env, napi_callback_info), T **data,
-				napi_value *ptr, napi_threadsafe_function *threadsafe_function)
-			*/
-
-			// napi_value func_call_safe_ptr;
-
-			// /* Initialize call safe function with context */
-			// status = napi_create_function(env, nullptr, 0, &node_loader_impl_async_threadsafe_empty, nullptr, &func_call_safe_ptr);
-
-			// node_loader_impl_exception(env, status);
-
-			// /* Create call safe function */
-			// napi_value threadsafe_func_name;
-
-			// status = napi_create_string_utf8(env, threadsafe_func_name_str, sizeof(threadsafe_func_name_str), &threadsafe_func_name);
-
-			// node_loader_impl_exception(env, status);
-
-			// // TODO: Does this number must be equivalent to the number of the threads of NodeJS?
-			// unsigned int processor_count = std::thread::hardware_concurrency();
-
-			// status = napi_create_threadsafe_function(env, func_call_safe_ptr,
-			// 	nullptr, threadsafe_func_name,
-			// 	0, processor_count,
-			// 	nullptr, nullptr,
-			// 	nullptr, &node_loader_impl_function_call_js_func_call_safe,
-			// 	&node_impl->threadsafe_func_call);
-
-			// node_loader_impl_exception(env, status);
-
-			node_impl->threadsafe_func_call.initialize(env, "node_loader_impl_async_func_call_safe", &node_loader_impl_func_call_safe);
-		}
-
-		/* Safe function await */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_func_await_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_func_await_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_func_await_safe,
-				(loader_impl_async_func_await_safe_type **)(&node_impl->func_await_safe),
-				&node_impl->func_await_safe_ptr,
-				&node_impl->threadsafe_func_await);
-		}
-
-		/* Safe function destroy */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_func_destroy_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_func_destroy_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_func_destroy_safe,
-				(loader_impl_async_func_destroy_safe_type **)(&node_impl->func_destroy_safe),
-				&node_impl->func_destroy_safe_ptr,
-				&node_impl->threadsafe_func_destroy);
-		}
-
-		/* Safe future await */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_future_await_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_future_await_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_future_await_safe,
-				(loader_impl_async_future_await_safe_type **)(&node_impl->future_await_safe),
-				&node_impl->future_await_safe_ptr,
-				&node_impl->threadsafe_future_await);
-		}
-
-		/* Safe future delete */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_future_delete_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_future_delete_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_future_delete_safe,
-				(loader_impl_async_future_delete_safe_type **)(&node_impl->future_delete_safe),
-				&node_impl->future_delete_safe_ptr,
-				&node_impl->threadsafe_future_delete);
-		}
-
-		/* Safe destroy */
-		{
-			static const char threadsafe_func_name_str[] = "node_loader_impl_async_destroy_safe";
-
-			node_loader_impl_thread_safe_function_initialize<loader_impl_async_destroy_safe_type>(
-				env,
-				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
-				&node_loader_impl_async_destroy_safe,
-				(loader_impl_async_destroy_safe_type **)(&node_impl->destroy_safe),
-				&node_impl->destroy_safe_ptr,
-				&node_impl->threadsafe_destroy);
-		}
+		node_impl->threadsafe_initialize.initialize(env, "node_loader_impl_async_initialize_safe", &node_loader_impl_initialize_safe);
+		node_impl->threadsafe_execution_path.initialize(env, "node_loader_impl_async_execution_path_safe", &node_loader_impl_execution_path_safe);
+		node_impl->threadsafe_load_from_file.initialize(env, "node_loader_impl_async_load_from_file_safe", &node_loader_impl_load_from_file_safe);
+		node_impl->threadsafe_load_from_memory.initialize(env, "node_loader_impl_async_load_from_memory_safe", &node_loader_impl_load_from_memory_safe);
+		node_impl->threadsafe_clear.initialize(env, "node_loader_impl_async_clear_safe", &node_loader_impl_clear_safe);
+		node_impl->threadsafe_discover.initialize(env, "node_loader_impl_async_discover_safe", &node_loader_impl_discover_safe);
+		node_impl->threadsafe_func_call.initialize(env, "node_loader_impl_async_func_call_safe", &node_loader_impl_func_call_safe);
+		node_impl->threadsafe_func_await.initialize(env, "node_loader_impl_async_func_await_safe", &node_loader_impl_func_await_safe);
+		node_impl->threadsafe_func_destroy.initialize(env, "node_loader_impl_async_func_destroy_safe", &node_loader_impl_func_destroy_safe);
+		node_impl->threadsafe_future_await.initialize(env, "node_loader_impl_async_future_await_safe", &node_loader_impl_future_await_safe);
+		node_impl->threadsafe_future_delete.initialize(env, "node_loader_impl_async_future_delete_safe", &node_loader_impl_future_delete_safe);
+		node_impl->threadsafe_destroy.initialize(env, "node_loader_impl_async_destroy_safe", &node_loader_impl_destroy_safe);
 	}
 
 /* Run test function, this one can be called without thread safe mechanism */
@@ -4276,11 +3516,10 @@ void node_loader_impl_thread(void *data)
 		return;
 	}
 
-	node_impl_ptr_str_size = (size_t)node_impl_ptr_length + 1;
+	node_impl_ptr_str_size = static_cast<size_t>(node_impl_ptr_length + 1);
+	node_impl_ptr_str = new char[node_impl_ptr_str_size];
 
-	node_impl_ptr_str = static_cast<char *>(malloc(sizeof(char) * node_impl_ptr_str_size));
-
-	if (node_impl_ptr_str == NULL)
+	if (node_impl_ptr_str == nullptr)
 	{
 		/* Report error (TODO: Implement it with thread safe logs) */
 		node_impl->error_message = "Invalid node impl pointer initialization in NodeJS thread";
@@ -4299,7 +3538,6 @@ void node_loader_impl_thread(void *data)
 	/* Get register pointer */
 	char *register_ptr_str;
 	size_t register_ptr_str_size;
-
 	ssize_t register_ptr_length = snprintf(NULL, 0, "%p", (void *)&node_loader_impl_register);
 
 	if (register_ptr_length <= 0)
@@ -4316,13 +3554,12 @@ void node_loader_impl_thread(void *data)
 		return;
 	}
 
-	register_ptr_str_size = (size_t)register_ptr_length + 1;
+	register_ptr_str_size = static_cast<size_t>(register_ptr_length + 1);
+	register_ptr_str = new char[register_ptr_str_size];
 
-	register_ptr_str = static_cast<char *>(malloc(sizeof(char) * register_ptr_str_size));
-
-	if (register_ptr_str == NULL)
+	if (register_ptr_str == nullptr)
 	{
-		free(node_impl_ptr_str);
+		delete[] node_impl_ptr_str;
 
 		/* Report error (TODO: Implement it with thread safe logs) */
 		node_impl->error_message = "Invalid register pointer initialization in NodeJS thread";
@@ -4340,12 +3577,12 @@ void node_loader_impl_thread(void *data)
 
 	/* Define argv_str contigously allocated with: executable name, bootstrap file, node impl pointer and register pointer */
 	size_t argv_str_size = exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size + register_ptr_str_size;
-	char *argv_str = static_cast<char *>(malloc(sizeof(char) * argv_str_size));
+	char *argv_str = new char[argv_str_size];
 
-	if (argv_str == NULL)
+	if (argv_str == nullptr)
 	{
-		free(node_impl_ptr_str);
-		free(register_ptr_str);
+		delete[] node_impl_ptr_str;
+		delete[] register_ptr_str;
 
 		/* Report error (TODO: Implement it with thread safe logs) */
 		node_impl->error_message = "Invalid argv initialization in NodeJS thread";
@@ -4367,8 +3604,8 @@ void node_loader_impl_thread(void *data)
 	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size], node_impl_ptr_str, node_impl_ptr_str_size);
 	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size], register_ptr_str, register_ptr_str_size);
 
-	free(node_impl_ptr_str);
-	free(register_ptr_str);
+	delete[] node_impl_ptr_str;
+	delete[] register_ptr_str;
 
 	/* Define argv */
 	char *argv[] = {
@@ -4428,7 +3665,7 @@ void node_loader_impl_thread(void *data)
 	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->result = result;
-	free(argv_str);
+	delete[] argv_str;
 
 	/* Unlock node implementation mutex */
 	uv_mutex_unlock(&node_impl->mutex);
@@ -4508,7 +3745,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	}
 
 	/* Initialize environment for reentrant calls */
-	node_impl->env = NULL;
+	node_impl->env = nullptr;
 
 	/* TODO: On error, delete dup, condition and mutex */
 
@@ -4552,9 +3789,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 		return NULL;
 	}
-
-	/* Initialize lock info */
-	node_impl->locked.store(false);
 
 	/* Initialize execution result */
 	node_impl->result = 1;
@@ -4615,66 +3849,25 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	/* Call initialize function with thread safe */
 	{
-		napi_status status;
+		loader_impl_async_initialize_safe_type initialize_safe(node_impl, value_to_string(configuration_value(config, "loader_library_path")));
 		int result = 1;
-
-		/* Set up initialize safe arguments */
-		node_impl->initialize_safe->node_impl = node_impl;
-		node_impl->initialize_safe->loader_library_path = value_to_string(configuration_value(config, "loader_library_path"));
-		node_impl->initialize_safe->result = 0;
 
 		/* Check if we are in the JavaScript thread */
 		if (node_impl->js_thread_id == std::this_thread::get_id())
 		{
 			/* We are already in the V8 thread, we can call safely */
-			node_loader_impl_initialize_safe(node_impl->env, node_impl->initialize_safe);
+			node_loader_impl_initialize_safe(node_impl->env, &initialize_safe);
 
 			/* Set up return of the function call */
-			result = node_impl->initialize_safe->result;
-		}
-		/* Lock the mutex and set the parameters */
-		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-		{
-			node_impl->locked.store(true);
-
-			/* Acquire the thread safe function in order to do the call */
-			status = napi_acquire_threadsafe_function(node_impl->threadsafe_initialize);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe initialize function in NodeJS loader");
-			}
-
-			/* Execute the thread safe call in a nonblocking manner */
-			status = napi_call_threadsafe_function(node_impl->threadsafe_initialize, nullptr, napi_tsfn_nonblocking);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe initialize function in NodeJS loader");
-			}
-
-			/* Release initialize safe function */
-			status = napi_release_threadsafe_function(node_impl->threadsafe_initialize, napi_tsfn_release);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe initialize function in NodeJS loader");
-			}
-
-			/* Wait for the execution of the safe call */
-			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-			/* Set up return of the function call */
-			result = node_impl->initialize_safe->result;
-
-			node_impl->locked.store(false);
-
-			/* Unlock the mutex */
-			uv_mutex_unlock(&node_impl->mutex);
+			result = initialize_safe.result;
 		}
 		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_initialize, the call has not been executed in order to avoid the deadlock");
+			/* Submit the task to the async queue */
+			loader_impl_threadsafe_invoke_type<loader_impl_async_initialize_safe_type> invoke(node_impl->threadsafe_initialize, initialize_safe);
+
+			/* Set up return of the function call */
+			result = initialize_safe.result;
 		}
 
 		if (result != 0)
@@ -4695,63 +3888,24 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 int node_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
-	napi_status status;
 
-	if (node_impl == NULL)
+	if (node_impl == nullptr)
 	{
 		return 1;
 	}
 
-	/* Set up load from file safe arguments */
-	node_impl->execution_path_safe->node_impl = node_impl;
-	node_impl->execution_path_safe->path = (char *)path;
+	loader_impl_async_execution_path_safe_type execution_path_safe(node_impl, static_cast<const char *>(path));
 
 	/* Check if we are in the JavaScript thread */
 	if (node_impl->js_thread_id == std::this_thread::get_id())
 	{
 		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_execution_path_safe(node_impl->env, node_impl->execution_path_safe);
-	}
-	/* Lock the mutex and set the parameters */
-	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-	{
-		node_impl->locked.store(true);
-
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_execution_path);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from file function in NodeJS loader");
-		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_execution_path, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from file function in NodeJS loader");
-		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_execution_path, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from file function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		node_impl->locked.store(false);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
+		node_loader_impl_execution_path_safe(node_impl->env, &execution_path_safe);
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_execution_path, the call has not been executed in order to avoid the deadlock");
+		/* Submit the task to the async queue */
+		loader_impl_threadsafe_invoke_type<loader_impl_async_execution_path_safe_type> invoke(node_impl->threadsafe_execution_path, execution_path_safe);
 	}
 
 	return 0;
@@ -4760,150 +3914,53 @@ int node_loader_impl_execution_path(loader_impl impl, const loader_path path)
 loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
-	napi_ref handle_ref = NULL;
-	napi_status status;
 
-	if (node_impl == NULL || size == 0)
+	if (node_impl == nullptr || size == 0)
 	{
 		return NULL;
 	}
 
-	/* Set up load from file safe arguments */
-	node_impl->load_from_file_safe->node_impl = node_impl;
-	node_impl->load_from_file_safe->paths = paths;
-	node_impl->load_from_file_safe->size = size;
-	node_impl->load_from_file_safe->handle_ref = NULL;
+	loader_impl_async_load_from_file_safe_type load_from_file_safe(node_impl, paths, size);
 
 	/* Check if we are in the JavaScript thread */
 	if (node_impl->js_thread_id == std::this_thread::get_id())
 	{
 		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_load_from_file_safe(node_impl->env, node_impl->load_from_file_safe);
+		node_loader_impl_load_from_file_safe(node_impl->env, &load_from_file_safe);
 
-		/* Retreive the result handle */
-		handle_ref = node_impl->load_from_file_safe->handle_ref;
-	}
-	/* Lock the mutex and set the parameters */
-	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-	{
-		node_impl->locked.store(true);
-
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_file);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from file function in NodeJS loader");
-		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_load_from_file, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from file function in NodeJS loader");
-		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_file, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from file function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Retreive the result handle */
-		handle_ref = node_impl->load_from_file_safe->handle_ref;
-
-		node_impl->locked.store(false);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_load_from_file, the call has not been executed in order to avoid the deadlock");
+		return static_cast<loader_handle>(load_from_file_safe.handle_ref);
 	}
 
-	return static_cast<loader_handle>(handle_ref);
+	/* Submit the task to the async queue */
+	loader_impl_threadsafe_invoke_type<loader_impl_async_load_from_file_safe_type> invoke(node_impl->threadsafe_load_from_file, load_from_file_safe);
+
+	return static_cast<loader_handle>(load_from_file_safe.handle_ref);
 }
 
 loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
-	napi_ref handle_ref = NULL;
-	napi_status status;
 
-	if (node_impl == NULL || buffer == NULL || size == 0)
+	if (node_impl == nullptr || buffer == NULL || size == 0)
 	{
 		return NULL;
 	}
 
-	/* Set up load from memory safe arguments */
-	node_impl->load_from_memory_safe->node_impl = node_impl;
-	node_impl->load_from_memory_safe->name = name;
-	node_impl->load_from_memory_safe->buffer = buffer;
-	node_impl->load_from_memory_safe->size = size;
-	node_impl->load_from_memory_safe->handle_ref = NULL;
+	loader_impl_async_load_from_memory_safe_type load_from_memory_safe(node_impl, name, buffer, size);
 
 	/* Check if we are in the JavaScript thread */
 	if (node_impl->js_thread_id == std::this_thread::get_id())
 	{
 		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_load_from_memory_safe(node_impl->env, node_impl->load_from_memory_safe);
+		node_loader_impl_load_from_memory_safe(node_impl->env, &load_from_memory_safe);
 
-		/* Retreive the result handle */
-		handle_ref = node_impl->load_from_memory_safe->handle_ref;
-	}
-	/* Lock the mutex and set the parameters */
-	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-	{
-		node_impl->locked.store(true);
-
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_memory);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from memory function in NodeJS loader");
-		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_load_from_memory, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from memory function in NodeJS loader");
-		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_memory, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from memory function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Retreive the result handle */
-		handle_ref = node_impl->load_from_memory_safe->handle_ref;
-
-		node_impl->locked.store(false);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_load_from_memory, the call has not been executed in order to avoid the deadlock");
+		return static_cast<loader_handle>(load_from_memory_safe.handle_ref);
 	}
 
-	return static_cast<loader_handle>(handle_ref);
+	/* Submit the task to the async queue */
+	loader_impl_threadsafe_invoke_type<loader_impl_async_load_from_memory_safe_type> invoke(node_impl->threadsafe_load_from_memory, load_from_memory_safe);
+
+	return static_cast<loader_handle>(load_from_memory_safe.handle_ref);
 }
 
 loader_handle node_loader_impl_load_from_package(loader_impl impl, const loader_path path)
@@ -4920,63 +3977,24 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 	napi_ref handle_ref = static_cast<napi_ref>(handle);
-	napi_status status;
 
 	if (node_impl == NULL || handle_ref == NULL)
 	{
 		return 1;
 	}
 
-	/* Set up clear safe arguments */
-	node_impl->clear_safe->node_impl = node_impl;
-	node_impl->clear_safe->handle_ref = handle_ref;
+	loader_impl_async_clear_safe_type clear_safe(node_impl, handle_ref);
 
 	/* Check if we are in the JavaScript thread */
 	if (node_impl->js_thread_id == std::this_thread::get_id())
 	{
 		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_clear_safe(node_impl->env, node_impl->clear_safe);
-	}
-	/* Lock the mutex and set the parameters */
-	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-	{
-		node_impl->locked.store(true);
-
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_clear);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe clear function in NodeJS loader");
-		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_clear, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe clear function in NodeJS loader");
-		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_clear, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe clear function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		node_impl->locked.store(false);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
+		node_loader_impl_clear_safe(node_impl->env, &clear_safe);
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_clear, the call has not been executed in order to avoid the deadlock");
+		/* Submit the task to the async queue */
+		loader_impl_threadsafe_invoke_type<loader_impl_async_clear_safe_type> invoke(node_impl->threadsafe_clear, clear_safe);
 	}
 
 	return 0;
@@ -4986,68 +4004,27 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 	napi_ref handle_ref = static_cast<napi_ref>(handle);
-	napi_status status;
 
-	if (node_impl == NULL || handle == NULL || ctx == NULL)
+	if (node_impl == nullptr || handle == nullptr || ctx == NULL)
 	{
 		return 1;
 	}
 
-	/* Set up discover safe arguments */
-	node_impl->discover_safe->node_impl = node_impl;
-	node_impl->discover_safe->handle_ref = handle_ref;
-	node_impl->discover_safe->ctx = ctx;
-	node_impl->discover_safe->result = 0;
+	loader_impl_async_discover_safe_type discover_safe(node_impl, handle_ref, ctx);
 
 	/* Check if we are in the JavaScript thread */
 	if (node_impl->js_thread_id == std::this_thread::get_id())
 	{
 		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_discover_safe(node_impl->env, node_impl->discover_safe);
-	}
-	/* Lock the mutex and set the parameters */
-	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-	{
-		node_impl->locked.store(true);
+		node_loader_impl_discover_safe(node_impl->env, &discover_safe);
 
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_discover);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe discover function in NodeJS loader");
-		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_discover, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe discover function in NodeJS loader");
-		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_discover, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe discover function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		node_impl->locked.store(false);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_discover, the call has not been executed in order to avoid the deadlock");
+		return discover_safe.result;
 	}
 
-	return node_impl->discover_safe->result;
+	/* Submit the task to the async queue */
+	loader_impl_threadsafe_invoke_type<loader_impl_async_discover_safe_type> invoke(node_impl->threadsafe_discover, discover_safe);
+
+	return discover_safe.result;
 }
 
 #define container_of(ptr, type, member) \
@@ -5112,7 +4089,7 @@ static void node_loader_impl_destroy_check_cb(uv_check_t *handle)
 	node_loader_impl_destroy_cb(node_impl);
 }
 
-void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe destroy_safe)
+void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe_type *destroy_safe)
 {
 	napi_status status;
 	napi_handle_scope handle_scope;
@@ -5128,6 +4105,7 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	if (node_loader_impl_user_async_handles_count(node_impl) <= 0 || node_impl->event_loop_empty.load() == true)
 	{
 		node_loader_impl_destroy_safe_impl(node_impl, env);
+		destroy_safe->has_finished = true;
 	}
 	else
 	{
@@ -5248,38 +4226,6 @@ void node_loader_impl_print_handles(loader_impl_node node_impl)
 	*/
 }
 
-napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
-{
-	loader_impl_node node_impl;
-	loader_impl_async_safe_cast<loader_impl_async_destroy_safe> destroy_cast = { NULL };
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &destroy_cast.ptr);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock the call safe mutex and get the parameters */
-	uv_mutex_lock(&destroy_cast.safe->node_impl->mutex);
-
-	/* Store node impl reference because destroy_safe gets deteled after calling node_loader_impl_destroy_safe */
-	node_impl = destroy_cast.safe->node_impl;
-
-	/* Store environment for reentrant calls */
-	node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_destroy_safe(env, destroy_cast.safe);
-
-	/* Clear environment */
-	// node_impl->env = NULL;
-
-	/* Signal destroy condition */
-	uv_cond_signal(&node_impl->cond);
-
-	uv_mutex_unlock(&node_impl->mutex);
-
-	return nullptr;
-}
-
 #if 0
 void node_loader_impl_walk(uv_handle_t *handle, void *arg)
 {
@@ -5308,89 +4254,19 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	/* Destroy children loaders */
 	loader_unload_children(node_impl->impl);
 
-	/* Clear thread safe functions */
+	/* Clear thread safe functions except by destroy one */
 	{
-		/* Safe initialize */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_initialize, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe execution path */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_execution_path, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe load from file */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_file, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe load from memory */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_memory, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe clear */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_clear, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe discover */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_discover, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe function call */
-		{
-			node_impl->threadsafe_func_call.abort(env);
-		}
-
-		/* Safe function await */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_func_await, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe function destroy */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe future await */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_future_await, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe future delete */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
-
-		/* Safe destroy */
-		{
-			status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_abort);
-
-			node_loader_impl_exception(env, status);
-		}
+		node_impl->threadsafe_initialize.abort(env);
+		node_impl->threadsafe_execution_path.abort(env);
+		node_impl->threadsafe_load_from_file.abort(env);
+		node_impl->threadsafe_load_from_memory.abort(env);
+		node_impl->threadsafe_clear.abort(env);
+		node_impl->threadsafe_discover.abort(env);
+		node_impl->threadsafe_func_call.abort(env);
+		node_impl->threadsafe_func_await.abort(env);
+		node_impl->threadsafe_func_destroy.abort(env);
+		node_impl->threadsafe_future_await.abort(env);
+		node_impl->threadsafe_future_delete.abort(env);
 	}
 
 	/* Clear persistent references */
@@ -5473,57 +4349,23 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 
 void node_loader_impl_try_destroy(loader_impl_node node_impl)
 {
-	napi_status status;
-
-	/* Set up destroy safe arguments */
-	node_impl->destroy_safe->node_impl = node_impl;
+	loader_impl_async_destroy_safe_type destroy_safe(node_impl);
 
 	/* Check if we are in the JavaScript thread */
 	if (node_impl->js_thread_id == std::this_thread::get_id())
 	{
 		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_destroy_safe(node_impl->env, node_impl->destroy_safe);
-	}
-	/* Lock the mutex and set the parameters */
-	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-	{
-		node_impl->locked.store(true);
-
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_destroy);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe destroy function in NodeJS loader");
-		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_destroy, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe destroy function in NodeJS loader");
-		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe destroy function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		node_impl->locked.store(false);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
+		node_loader_impl_destroy_safe(node_impl->env, &destroy_safe);
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_destroy, the call has not been executed in order to avoid the deadlock");
+		/* Submit the task to the async queue */
+		loader_impl_threadsafe_invoke_type<loader_impl_async_destroy_safe_type> invoke(node_impl->threadsafe_destroy, destroy_safe);
+	}
+
+	if (destroy_safe.has_finished)
+	{
+		node_impl->threadsafe_destroy.abort(node_impl->env);
 	}
 }
 
@@ -5547,20 +4389,6 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	/* Clear mutex syncronization object */
 	uv_mutex_destroy(&node_impl->mutex);
-
-	/* Delete all safe pointers for the queues */
-	delete node_impl->initialize_safe;
-	delete node_impl->execution_path_safe;
-	delete node_impl->load_from_file_safe;
-	delete node_impl->load_from_memory_safe;
-	delete node_impl->clear_safe;
-	delete node_impl->discover_safe;
-	// delete node_impl->func_call_safe;
-	delete node_impl->func_await_safe;
-	delete node_impl->func_destroy_safe;
-	delete node_impl->future_await_safe;
-	delete node_impl->future_delete_safe;
-	delete node_impl->destroy_safe;
 
 #ifdef __ANDROID__
 	/* Close file descriptors */
