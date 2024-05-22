@@ -36,7 +36,7 @@ add_subdirectory(cli_core_plugin)
 # NodeJS added util.parseArgs([config]) in versions v18.3.0, v16.17.0
 # Check for compatibility, otherwise use fallback command parser in the CLI
 if(NOT (NodeJS_VERSION VERSION_GREATER_EQUAL "18.3.0" OR (NodeJS_VERSION_MAJOR LESS 18 AND NodeJS_VERSION VERSION_GREATER_EQUAL "16.17.0")))
-	message(WARNING "NodeJS version ${NodeJS_VERSION} does not support ${target}, at least v18.3.0 or v16.17.0 are required, using fallback command parser")
+	message(WARNING "NodeJS version ${NodeJS_VERSION} does not support CLI command line plugins, at least v18.3.0 or v16.17.0 are required, using fallback command parser")
 	return()
 endif()
 
