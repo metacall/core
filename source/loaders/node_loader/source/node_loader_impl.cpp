@@ -1572,19 +1572,22 @@ void function_node_interface_destroy(function func, function_impl impl)
 		return;
 	}
 
-	loader_impl_node node_impl = node_func->node_impl;
-	loader_impl_async_func_destroy_safe_type func_destroy_safe(node_impl, node_func);
+	if (loader_is_destroyed(node_func->node_impl->impl) != 0)
+	{
+		loader_impl_node node_impl = node_func->node_impl;
+		loader_impl_async_func_destroy_safe_type func_destroy_safe(node_impl, node_func);
 
-	/* Check if we are in the JavaScript thread */
-	if (node_impl->js_thread_id == std::this_thread::get_id())
-	{
-		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_func_destroy_safe(node_impl->env, &func_destroy_safe);
-	}
-	else
-	{
-		/* Submit the task to the async queue */
-		loader_impl_threadsafe_invoke_type<loader_impl_async_func_destroy_safe_type> invoke(node_impl->threadsafe_func_destroy, func_destroy_safe);
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_func_destroy_safe(node_impl->env, &func_destroy_safe);
+		}
+		else
+		{
+			/* Submit the task to the async queue */
+			loader_impl_threadsafe_invoke_type<loader_impl_async_func_destroy_safe_type> invoke(node_impl->threadsafe_func_destroy, func_destroy_safe);
+		}
 	}
 
 	/* Free node function arguments */
