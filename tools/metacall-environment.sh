@@ -512,6 +512,9 @@ sub_nodejs(){
 		echo "-DNodeJS_EXECUTABLE=$NODE_PREFIX/bin/node" >> $CMAKE_CONFIG_PATH
 		# echo "-DNodeJS_INCLUDE_DIR=$NODE_PREFIX/include/node" >> $CMAKE_CONFIG_PATH
 		# echo "-DNodeJS_LIBRARY=$NODE_PREFIX/lib/libnode.93.dylib" >> $CMAKE_CONFIG_PATH
+
+		# Configure NPM path
+		echo "-DNPM_ROOT=$NODE_PREFIX/bin" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
