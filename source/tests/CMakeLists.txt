@@ -159,6 +159,7 @@ add_subdirectory(metacall_node_python_deadlock_test)
 # add_subdirectory(metacall_node_signal_handler_test) # Note: Not used anymore but leaving it here for reference to solve this: https://github.com/metacall/core/issues/121
 add_subdirectory(metacall_node_native_code_test)
 add_subdirectory(metacall_node_extension_test)
+add_subdirectory(metacall_node_multithread_deadlock_test)
 add_subdirectory(metacall_distributable_test)
 add_subdirectory(metacall_cast_test)
 add_subdirectory(metacall_init_fini_test)

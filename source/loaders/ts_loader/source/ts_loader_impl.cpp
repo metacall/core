@@ -402,13 +402,10 @@ static void *ts_loader_impl_destroy_unload_children_cb(size_t size, void *args[]
 	else
 	{
 		loader_impl impl = static_cast<loader_impl>(metacall_value_to_ptr(args[0]));
-		/* TODO: Should we let Node Loader destroy our handle? */
-		/*void *ts_impl = static_cast<void *>(loader_impl_get(impl));*/
 
 		loader_unload_children(impl);
 
-		/* TODO: Should we let Node Loader destroy our handle? */
-		return metacall_value_create_bool(/*metacall_clear(ts_impl)*/ 1L);
+		return metacall_value_create_bool(1L);
 	}
 }
 

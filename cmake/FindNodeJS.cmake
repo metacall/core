@@ -289,9 +289,16 @@ if(NodeJS_INCLUDE_DIR)
 	# Get node module version
 	find_file(NodeJS_VERSION_FILE_PATH node_version.h
 		PATHS ${NodeJS_INCLUDE_DIR}
-		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
 		DOC "NodeJS JavaScript Version Header"
 	)
+
+	if(NOT NodeJS_VERSION_FILE_PATH)
+		find_file(NodeJS_VERSION_FILE_PATH node_version.h
+			PATHS ${NodeJS_INCLUDE_DIR}
+			PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+			DOC "NodeJS JavaScript Version Header"
+		)
+	endif()
 
 	if(NodeJS_VERSION_FILE_PATH)
 		file(READ ${NodeJS_VERSION_FILE_PATH} NodeJS_VERSION_FILE)
@@ -367,20 +374,29 @@ if(NodeJS_MODULE_VERSION)
 	if(NOT NodeJS_BUILD_FROM_SOURCE)
 		message(STATUS "Searching NodeJS library version ${NodeJS_MODULE_VERSION}")
 
-		if(WIN32)
-			set(NodeJS_LIBRARY_PATH "C:/Program Files/nodejs")
-		else()
-			set(NodeJS_LIBRARY_PATH "/usr/local/lib")
-		endif()
-
-		set(NodeJS_SYSTEM_LIBRARY_PATH "/lib/x86_64-linux-gnu" "/usr/lib/x86_64-linux-gnu") # TODO: Add others
-
 		# Find library
 		find_library(NodeJS_LIBRARY
 			NAMES ${NodeJS_LIBRARY_NAMES}
-			PATHS ${NodeJS_LIBRARY_PATH} ${NodeJS_SYSTEM_LIBRARY_PATH}
+			HINTS ${NodeJS_PATHS}
+			PATH_SUFFIXES lib
 			DOC "NodeJS JavaScript Runtime Library"
 		)
+
+		if(NOT NodeJS_LIBRARY)
+			if(WIN32)
+				set(NodeJS_LIBRARY_PATH "C:/Program Files/nodejs")
+			else()
+				set(NodeJS_LIBRARY_PATH "/usr/local/lib" "/usr/lib")
+			endif()
+
+			set(NodeJS_SYSTEM_LIBRARY_PATH "/lib/x86_64-linux-gnu" "/usr/lib/x86_64-linux-gnu") # TODO: Add others
+
+			find_library(NodeJS_LIBRARY
+				NAMES ${NodeJS_LIBRARY_NAMES}
+				PATHS ${NodeJS_LIBRARY_PATH} ${NodeJS_SYSTEM_LIBRARY_PATH}
+				DOC "NodeJS JavaScript Runtime Library"
+			)
+		endif()
 
 		if(NodeJS_LIBRARY)
 			message(STATUS "NodeJS Library Found")
