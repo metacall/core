@@ -21,6 +21,26 @@ race:v8::platform::DefaultJobState::~DefaultJobState
 race:v8::internal::ScavengerCollector::JobTask::~JobTask
 race:heap::base::Worklist<std::pair<v8::internal::HeapObject, int>, (unsigned short)256>::Local::Pop(std::pair<v8::internal::HeapObject, int>*)
 #
+# After version 108, NodeJS has started to fail without stack trace, for example:
+#
+# WARNING: ThreadSanitizer: data race (pid=5179)
+#   Write of size 8 at 0x723000007538 by thread T4:
+#     #0 operator delete(void*, unsigned long) ../../../../src/libsanitizer/tsan/tsan_new_delete.cpp:150 (libtsan.so.2+0x9b42b) (BuildId: f23ac1bd2939198f3fef776fd2a1312e536dcf1b)
+#     #1 <null> <null> (libnode.so.109+0xdb8fa9) (BuildId: fa61d14d9def07b0f94f901c16a182f9e3a944ae)
+#
+# Now if we use addr2line:
+#
+# addr2line -f -e /lib/x86_64-linux-gnu/libnode.so.109 0xdb8fa9
+# _ZN2v88platform16DefaultJobWorkerD0Ev
+# ??:?
+#
+# The symbols are exactly the same of the well known suppressions already listed before
+# I have tried compiling NodeJS with thread sanitizer support and also using llvm-symbolizer
+# but I had no luck making those symbols work in the last stack traces, so for now.. I am going
+# to suppress all data races from NodeJS in order to avoid false positives.
+#
+race:libnode*
+#
 # Ruby
 #
 #called_from_lib:libruby*
