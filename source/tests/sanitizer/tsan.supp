@@ -13,6 +13,10 @@
 #
 #called_from_lib:libpython*
 #
+# Suppress race condition from Python 10 async io: https://github.com/python/cpython/issues/116912
+race:sock_close
+race:sock_send_impl
+#
 # NodeJS
 #
 race:v8::platform::tracing::TracingController::GetCategoryGroupEnabled
