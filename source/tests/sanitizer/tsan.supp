@@ -14,6 +14,8 @@
 #called_from_lib:libpython*
 #
 # Suppress race condition from Python 10 async io: https://github.com/python/cpython/issues/116912
+race:socketpair
+race:socket_socketpair
 race:sock_close
 race:sock_send_impl
 #
