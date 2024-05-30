@@ -513,6 +513,18 @@ struct loader_impl_async_future_delete_safe_type
 		node_impl(node_impl), f(f), node_future(node_future) {}
 };
 
+struct loader_impl_async_handle_promise_safe_type
+{
+	loader_impl_node node_impl;
+	napi_deferred deferred;
+	void *result;
+	napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value);
+	const char *error_str;
+
+	loader_impl_async_handle_promise_safe_type(loader_impl_node node_impl, napi_deferred deferred, void *result, napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value), const char error_str[]) :
+		node_impl(node_impl), deferred(deferred), result(result), deferred_fn(deferred_fn), error_str(error_str) {}
+};
+
 struct loader_impl_async_destroy_safe_type
 {
 	loader_impl_node node_impl;
@@ -540,6 +552,7 @@ struct loader_impl_node_type
 	loader_impl_threadsafe_type<loader_impl_async_func_destroy_safe_type> threadsafe_func_destroy;
 	loader_impl_threadsafe_type<loader_impl_async_future_await_safe_type> threadsafe_future_await;
 	loader_impl_threadsafe_type<loader_impl_async_future_delete_safe_type> threadsafe_future_delete;
+	loader_impl_threadsafe_type<loader_impl_async_handle_promise_safe_type> threadsafe_handle_promise;
 	loader_impl_threadsafe_type<loader_impl_async_destroy_safe_type> threadsafe_destroy;
 
 	uv_thread_t thread;
@@ -646,6 +659,8 @@ static void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_sa
 static value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe_type *discover_function_safe);
 
 static void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe_type *discover_safe);
+
+static void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async_handle_promise_safe_type *handle_promise_safe);
 
 static void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe_type *destroy_safe);
 
@@ -2493,6 +2508,7 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
+
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, clear_safe->node_impl->function_table_object_ref, &function_table_object);
 
@@ -3271,6 +3287,30 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 	node_loader_impl_exception(env, status);
 }
 
+void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async_handle_promise_safe_type *handle_promise_safe)
+{
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Convert MetaCall value to napi value and call resolve or reject of NodeJS */
+	napi_value js_result = node_loader_impl_value_to_napi(handle_promise_safe->node_impl, env, handle_promise_safe->result);
+	status = handle_promise_safe->deferred_fn(env, handle_promise_safe->deferred, js_result);
+
+	if (status != napi_ok)
+	{
+		napi_throw_error(env, nullptr, handle_promise_safe->error_str);
+	}
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+}
+
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
 /* TODO: _Ret_maybenull_ HMODULE WINAPI GetModuleHandleW(_In_opt_ LPCWSTR lpModuleName); */
 _Ret_maybenull_ HMODULE WINAPI get_module_handle_a_hook(_In_opt_ LPCSTR lpModuleName)
@@ -3361,6 +3401,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		node_impl->threadsafe_func_destroy.initialize(env, "node_loader_impl_async_func_destroy_safe", &node_loader_impl_func_destroy_safe);
 		node_impl->threadsafe_future_await.initialize(env, "node_loader_impl_async_future_await_safe", &node_loader_impl_future_await_safe);
 		node_impl->threadsafe_future_delete.initialize(env, "node_loader_impl_async_future_delete_safe", &node_loader_impl_future_delete_safe);
+		node_impl->threadsafe_handle_promise.initialize(env, "node_loader_impl_async_handle_promise_safe", &node_loader_impl_handle_promise_safe);
 		node_impl->threadsafe_destroy.initialize(env, "node_loader_impl_async_destroy_safe", &node_loader_impl_destroy_safe);
 	}
 
@@ -4030,6 +4071,23 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	return discover_safe.result;
 }
 
+void node_loader_impl_handle_promise(loader_impl_node node_impl, napi_env env, napi_deferred deferred, void *result, napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value), const char error_str[])
+{
+	loader_impl_async_handle_promise_safe_type handle_promise_safe(node_impl, deferred, result, deferred_fn, error_str);
+
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_handle_promise_safe(env, &handle_promise_safe);
+	}
+	else
+	{
+		/* Submit the task to the async queue */
+		loader_impl_threadsafe_invoke_type<loader_impl_async_handle_promise_safe_type> invoke(node_impl->threadsafe_handle_promise, handle_promise_safe);
+	}
+}
+
 #define container_of(ptr, type, member) \
 	(type *)((char *)(ptr) - (char *)&((type *)0)->member)
 
@@ -4270,6 +4328,7 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 		node_impl->threadsafe_func_destroy.abort(env);
 		node_impl->threadsafe_future_await.abort(env);
 		node_impl->threadsafe_future_delete.abort(env);
+		node_impl->threadsafe_handle_promise.abort(env);
 	}
 
 	/* Clear persistent references */

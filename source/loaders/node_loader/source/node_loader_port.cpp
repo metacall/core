@@ -198,14 +198,11 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 	ctx->env = env;
 
 	auto resolve = [](void *result, void *data) -> void * {
-		promise_context_type *ctx = static_cast<promise_context_type *>(data);
-		napi_value js_result = node_loader_impl_value_to_napi(ctx->node_impl, ctx->env, result);
-		napi_status status = napi_resolve_deferred(ctx->env, ctx->deferred, js_result);
+		static const char promise_error_str[] = "Failed to resolve the promise";
 
-		if (status != napi_ok)
-		{
-			napi_throw_error(ctx->env, nullptr, "Failed to resolve the promise");
-		}
+		promise_context_type *ctx = static_cast<promise_context_type *>(data);
+
+		node_loader_impl_handle_promise(ctx->node_impl, ctx->env, ctx->deferred, result, &napi_resolve_deferred, promise_error_str);
 
 		delete ctx;
 
@@ -213,14 +210,11 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 	};
 
 	auto reject = [](void *result, void *data) -> void * {
-		promise_context_type *ctx = static_cast<promise_context_type *>(data);
-		napi_value js_result = node_loader_impl_value_to_napi(ctx->node_impl, ctx->env, result);
-		napi_status status = napi_reject_deferred(ctx->env, ctx->deferred, js_result);
+		static const char promise_error_str[] = "Failed to reject the promise";
 
-		if (status != napi_ok)
-		{
-			napi_throw_error(ctx->env, nullptr, "Failed to reject the promise");
-		}
+		promise_context_type *ctx = static_cast<promise_context_type *>(data);
+
+		node_loader_impl_handle_promise(ctx->node_impl, ctx->env, ctx->deferred, result, &napi_reject_deferred, promise_error_str);
 
 		delete ctx;
 
@@ -230,15 +224,12 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 	/* Await to the function */
 	void *ret = metacall_await_s(name, args, argc - 1, resolve, reject, ctx);
 
-	/* TODO: Is this needed? */
-	/*
 	if (metacall_value_id(ret) == METACALL_THROWABLE)
 	{
 		napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
 
 		napi_throw(env, result);
 	}
-	*/
 
 	/* Release current reference of the environment */
 	// node_loader_impl_env(node_impl, nullptr);
