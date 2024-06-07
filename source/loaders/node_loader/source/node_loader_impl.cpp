@@ -284,12 +284,37 @@ void node_loader_impl_func_call_js_safe(napi_env env, napi_value js_callback, vo
 	// async_safe->args->node_impl->env = nullptr;
 }
 
+template <typename T>
+void node_loader_impl_func_call_js_async_safe(napi_env env, napi_value js_callback, void *context, void *data)
+{
+	(void)js_callback;
+
+	if (env == nullptr || context == nullptr || data == nullptr)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid arguments passed to js thread async safe function");
+		return;
+	}
+
+	T *args = static_cast<T *>(data);
+	node_loader_impl_func_call_js_safe_cast<T> safe_cast(context);
+
+	/* Store environment for reentrant calls */
+	args->node_impl->env = env;
+
+	/* Call to the implementation function */
+	safe_cast.func_ptr(env, args);
+
+	/* Clear environment */
+	// async_safe->args->node_impl->env = nullptr;
+}
+
 static napi_value node_loader_impl_async_threadsafe_empty(napi_env, napi_callback_info)
 {
 	/* This is a dirty hack in order to make the threadsafe API work properly,
 	* as soon as possible it will be good to return to the old method we used in NodeJS 8,
 	* it was better than this API
 	*/
+
 	return nullptr;
 }
 
@@ -513,18 +538,6 @@ struct loader_impl_async_future_delete_safe_type
 		node_impl(node_impl), f(f), node_future(node_future) {}
 };
 
-struct loader_impl_async_handle_promise_safe_type
-{
-	loader_impl_node node_impl;
-	napi_deferred deferred;
-	void *result;
-	napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value);
-	const char *error_str;
-
-	loader_impl_async_handle_promise_safe_type(loader_impl_node node_impl, napi_deferred deferred, void *result, napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value), const char error_str[]) :
-		node_impl(node_impl), deferred(deferred), result(result), deferred_fn(deferred_fn), error_str(error_str) {}
-};
-
 struct loader_impl_async_destroy_safe_type
 {
 	loader_impl_node node_impl;
@@ -552,7 +565,6 @@ struct loader_impl_node_type
 	loader_impl_threadsafe_type<loader_impl_async_func_destroy_safe_type> threadsafe_func_destroy;
 	loader_impl_threadsafe_type<loader_impl_async_future_await_safe_type> threadsafe_future_await;
 	loader_impl_threadsafe_type<loader_impl_async_future_delete_safe_type> threadsafe_future_delete;
-	loader_impl_threadsafe_type<loader_impl_async_handle_promise_safe_type> threadsafe_handle_promise;
 	loader_impl_threadsafe_type<loader_impl_async_destroy_safe_type> threadsafe_destroy;
 
 	uv_thread_t thread;
@@ -582,6 +594,73 @@ struct loader_impl_node_type
 	uv_check_t destroy_check;
 	std::atomic_bool event_loop_empty;
 	loader_impl impl;
+};
+
+template <typename T>
+struct loader_impl_threadsafe_async_type
+{
+	uv_async_t async_handle;
+	bool initialized;
+
+	int initialize(loader_impl_node node_impl, void (*async_cb)(uv_async_t *))
+	{
+		int result = uv_async_init(node_impl->thread_loop, &async_handle, async_cb);
+
+		initialized = (result == 0);
+
+		return result;
+	}
+
+	void invoke(T *data)
+	{
+		if (initialized)
+		{
+			async_handle.data = static_cast<T *>(data);
+			uv_async_send(&async_handle);
+		}
+	}
+
+	void close(void (*close_cb)(uv_handle_t *handle))
+	{
+		if (initialized)
+		{
+			union
+			{
+				uv_handle_t *handle;
+				uv_async_t *async;
+			} handle_cast;
+
+			handle_cast.async = &async_handle;
+
+			uv_close(handle_cast.handle, close_cb);
+		}
+	}
+};
+
+struct loader_impl_async_handle_promise_safe_type
+{
+	loader_impl_node node_impl;
+	napi_env env;
+	napi_deferred deferred;
+	void *result;
+	napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value);
+	const char *error_str;
+	loader_impl_threadsafe_async_type<loader_impl_async_handle_promise_safe_type> threadsafe_async;
+
+	loader_impl_async_handle_promise_safe_type(loader_impl_node node_impl, napi_env env) :
+		node_impl(node_impl), env(env), result(NULL) {}
+
+	~loader_impl_async_handle_promise_safe_type()
+	{
+		threadsafe_async.close([](uv_handle_t *handle) {
+			loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
+
+			if (handle_promise_safe->result != NULL)
+			{
+				metacall_value_destroy(handle_promise_safe->result);
+			}
+		});
+	}
 };
 
 typedef napi_value (*function_resolve_trampoline)(loader_impl_node, napi_env, function_resolve_callback, napi_value, napi_value, void *);
@@ -3305,6 +3384,9 @@ void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async_handle
 		napi_throw_error(env, nullptr, handle_promise_safe->error_str);
 	}
 
+	/* Close the handle */
+	delete handle_promise_safe;
+
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
@@ -3401,7 +3483,6 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		node_impl->threadsafe_func_destroy.initialize(env, "node_loader_impl_async_func_destroy_safe", &node_loader_impl_func_destroy_safe);
 		node_impl->threadsafe_future_await.initialize(env, "node_loader_impl_async_future_await_safe", &node_loader_impl_future_await_safe);
 		node_impl->threadsafe_future_delete.initialize(env, "node_loader_impl_async_future_delete_safe", &node_loader_impl_future_delete_safe);
-		node_impl->threadsafe_handle_promise.initialize(env, "node_loader_impl_async_handle_promise_safe", &node_loader_impl_handle_promise_safe);
 		node_impl->threadsafe_destroy.initialize(env, "node_loader_impl_async_destroy_safe", &node_loader_impl_destroy_safe);
 	}
 
@@ -4071,21 +4152,93 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	return discover_safe.result;
 }
 
-void node_loader_impl_handle_promise(loader_impl_node node_impl, napi_env env, napi_deferred deferred, void *result, napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value), const char error_str[])
+void node_loader_impl_handle_promise(loader_impl_async_handle_promise_safe_type *handle_promise_safe, void *result, napi_status (*deferred_fn)(napi_env, napi_deferred, napi_value), const char error_str[])
 {
-	loader_impl_async_handle_promise_safe_type handle_promise_safe(node_impl, deferred, result, deferred_fn, error_str);
+	handle_promise_safe->result = metacall_value_copy(result);
+	handle_promise_safe->deferred_fn = deferred_fn;
+	handle_promise_safe->error_str = error_str;
 
 	/* Check if we are in the JavaScript thread */
-	if (node_impl->js_thread_id == std::this_thread::get_id())
+	if (handle_promise_safe->node_impl->js_thread_id == std::this_thread::get_id())
 	{
 		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_handle_promise_safe(env, &handle_promise_safe);
+		node_loader_impl_handle_promise_safe(handle_promise_safe->env, handle_promise_safe);
 	}
 	else
 	{
 		/* Submit the task to the async queue */
-		loader_impl_threadsafe_invoke_type<loader_impl_async_handle_promise_safe_type> invoke(node_impl->threadsafe_handle_promise, handle_promise_safe);
+		if (handle_promise_safe->threadsafe_async.initialize(handle_promise_safe->node_impl, [](uv_async_t *handle) {
+				loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
+				node_loader_impl_handle_promise_safe(handle_promise_safe->env, handle_promise_safe);
+			}) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Filed to initialize promise safe async handle");
+		}
+		else
+		{
+			handle_promise_safe->threadsafe_async.invoke(handle_promise_safe);
+		}
 	}
+}
+
+napi_value node_loader_impl_promise_await(loader_impl_node node_impl, napi_env env, const char *name, value *args, size_t size)
+{
+	loader_impl_async_handle_promise_safe_type *handle_promise_safe = new loader_impl_async_handle_promise_safe_type(node_impl, env);
+
+	if (handle_promise_safe == nullptr)
+	{
+		napi_throw_error(env, nullptr, "Failed to allocate the promise context");
+
+		return nullptr;
+	}
+
+	napi_value promise;
+
+	/* Create the promise */
+	napi_status status = napi_create_promise(env, &handle_promise_safe->deferred, &promise);
+
+	if (status != napi_ok)
+	{
+		napi_throw_error(env, nullptr, "Failed to create the promise");
+
+		delete handle_promise_safe;
+
+		return nullptr;
+	}
+
+	auto resolve = [](void *result, void *data) -> void * {
+		static const char promise_error_str[] = "Failed to resolve the promise";
+
+		loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(data);
+
+		node_loader_impl_handle_promise(handle_promise_safe, result, &napi_resolve_deferred, promise_error_str);
+
+		return NULL;
+	};
+
+	auto reject = [](void *result, void *data) -> void * {
+		static const char promise_error_str[] = "Failed to reject the promise";
+
+		loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(data);
+
+		node_loader_impl_handle_promise(handle_promise_safe, result, &napi_reject_deferred, promise_error_str);
+
+		return NULL;
+	};
+
+	/* Await to the function */
+	void *ret = metacall_await_s(name, args, size, resolve, reject, handle_promise_safe);
+
+	if (metacall_value_id(ret) == METACALL_THROWABLE)
+	{
+		napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+		napi_throw(env, result);
+	}
+
+	node_loader_impl_finalizer(env, promise, ret);
+
+	return promise;
 }
 
 #define container_of(ptr, type, member) \
@@ -4311,9 +4464,15 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 {
 	uint32_t ref_count = 0;
 	napi_status status;
+	napi_handle_scope handle_scope;
 
 	/* Destroy children loaders */
 	loader_unload_children(node_impl->impl);
+
+	/* Create scope */
+	status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
 
 	/* Clear thread safe functions except by destroy one */
 	{
@@ -4328,7 +4487,6 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 		node_impl->threadsafe_func_destroy.abort(env);
 		node_impl->threadsafe_future_await.abort(env);
 		node_impl->threadsafe_future_delete.abort(env);
-		node_impl->threadsafe_handle_promise.abort(env);
 	}
 
 	/* Clear persistent references */
@@ -4358,48 +4516,10 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 
 	node_loader_impl_exception(env, status);
 
-	/* Clear event loop */
-	{
-		/* Stop event loop */
-		uv_stop(node_impl->thread_loop);
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
 
-		/* Clear event loop */
-		/* uv_walk(node_impl->thread_loop, node_loader_impl_walk, NULL); */
-
-#if 0
-		/* TODO: For some reason, this deadlocks in NodeJS benchmark when mixing sync and async calls.
-		* It should be reviewed carefully and detect if NodeJS is finalizing properly on multiple cases.
-		* Disable it for now in order to make tests pass.
-		*/
-		while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0)
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		{
-			node_loader_impl_print_handles(node_impl);
-		}
-	#else
-			;
-	#endif
-
-		/* Destroy node loop */
-		if (uv_loop_alive(node_impl->thread_loop) != 0)
-		{
-			/* TODO: Make logs thread safe */
-			/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive"); */
-			printf("NodeJS Loader Error: NodeJS event loop should not be alive\n");
-			fflush(stdout);
-		}
-#endif
-
-		/* This evaluates to true always due to stdin and stdout handles,
-		which are closed anyway on thread join. So it is removed by now. */
-		if (uv_loop_close(node_impl->thread_loop) != UV_EBUSY)
-		{
-			/* TODO: Make logs thread safe */
-			/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy"); */
-			printf("NodeJS Loader Error: NodeJS event loop should be busy\n");
-			fflush(stdout);
-		}
-	}
+	node_loader_impl_exception(env, status);
 
 	/* NodeJS Loader needs to register that it is destroyed, because after this step
 	* some destructors can be still triggered, before the node_loader->destroy() has
