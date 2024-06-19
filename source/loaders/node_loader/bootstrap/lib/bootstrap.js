@@ -6,26 +6,29 @@ const path = require('path');
 const util = require('util');
 const fs = require('fs');
 
-/* Require the JavaScript parser */
+// Require the JavaScript parser
 const espree = require(path.join(__dirname, 'node_modules', 'espree'));
 
 const node_require = Module.prototype.require;
 const node_resolve = require.resolve;
 const node_cache = require.cache;
 
-/* Store in the module prototype the original functions for future use in derived loaders like TypeScript */
+// Store in the module prototype the original functions for future use in derived loaders like TypeScript
 Module.prototype.node_require = node_require;
 Module.prototype.node_resolve = node_resolve;
 Module.prototype.node_cache = node_cache;
 
 function node_loader_trampoline_initialize(loader_library_path) {
+	// Restore the argv (this is used for tricking node::Start method)
+	process.argv = [ process.argv[0] ];
+
 	// Add current execution directory to the execution paths
 	node_loader_trampoline_execution_path(process.cwd());
 
 	const paths = [
-		/* Local version of MetaCall NodeJS Port */
+		// Local version of MetaCall NodeJS Port
 		'metacall',
-		/* Optionally, use loader library path for global installed NodeJS Port */
+		// Optionally, use loader library path for global installed NodeJS Port
 		...loader_library_path ? [ path.join(loader_library_path, 'node_modules', 'metacall', 'index.js') ] : [],
 	];
 
@@ -333,7 +336,7 @@ function node_loader_trampoline_discover(handle) {
 }
 
 function node_loader_trampoline_test(obj) {
-	/* Imporant: never trigger an async resource in this function */
+	// Imporant: never trigger an async resource in this function
 	if (obj !== undefined) {
 		fs.writeSync(process.stdout.fd, `${util.inspect(obj, false, null, true)}\n`);
 	}
@@ -411,7 +414,7 @@ module.exports = ((impl, ptr) => {
 			throw new Error('Process arguments (process.argv[2], process.argv[3]) not defined.');
 		}
 
-		/* Get trampoline from list of linked bindings */
+		// Get trampoline from list of linked bindings
 		const trampoline = process._linkedBinding('node_loader_trampoline_module');
 
 		const node_loader_ptr = trampoline.register(impl, ptr, {

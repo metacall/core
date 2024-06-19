@@ -55,6 +55,8 @@ NODE_LOADER_NO_EXPORT void node_loader_impl_exception(napi_env env, napi_status 
 
 NODE_LOADER_NO_EXPORT void node_loader_impl_finalizer(napi_env env, napi_value v, void *data);
 
+NODE_LOADER_NO_EXPORT napi_value node_loader_impl_promise_await(loader_impl_node node_impl, napi_env env, const char *name, value *args, size_t size);
+
 NODE_LOADER_NO_EXPORT value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v);
 
 NODE_LOADER_NO_EXPORT napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg);

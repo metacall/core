@@ -36,13 +36,6 @@
 
 #include <node_api.h>
 
-struct promise_context_type
-{
-	loader_impl_node node_impl;
-	napi_env env;
-	napi_deferred deferred;
-};
-
 static const loader_tag node_loader_tag = "node";
 
 napi_value node_loader_port_metacall(napi_env env, napi_callback_info info)
@@ -171,74 +164,8 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 		args[args_count - 1] = node_loader_impl_napi_to_value(node_impl, env, recv, argv[args_count]);
 	}
 
-	promise_context_type *ctx = new promise_context_type();
-
-	if (ctx == nullptr)
-	{
-		napi_throw_error(env, nullptr, "Failed to allocate the promise context");
-
-		return nullptr;
-	}
-
-	napi_value promise;
-
-	/* Create the promise */
-	status = napi_create_promise(env, &ctx->deferred, &promise);
-
-	if (status != napi_ok)
-	{
-		napi_throw_error(env, nullptr, "Failed to create the promise");
-
-		delete ctx;
-
-		return nullptr;
-	}
-
-	ctx->node_impl = node_impl;
-	ctx->env = env;
-
-	auto resolve = [](void *result, void *data) -> void * {
-		promise_context_type *ctx = static_cast<promise_context_type *>(data);
-		napi_value js_result = node_loader_impl_value_to_napi(ctx->node_impl, ctx->env, result);
-		napi_status status = napi_resolve_deferred(ctx->env, ctx->deferred, js_result);
-
-		if (status != napi_ok)
-		{
-			napi_throw_error(ctx->env, nullptr, "Failed to resolve the promise");
-		}
-
-		delete ctx;
-
-		return NULL;
-	};
-
-	auto reject = [](void *result, void *data) -> void * {
-		promise_context_type *ctx = static_cast<promise_context_type *>(data);
-		napi_value js_result = node_loader_impl_value_to_napi(ctx->node_impl, ctx->env, result);
-		napi_status status = napi_reject_deferred(ctx->env, ctx->deferred, js_result);
-
-		if (status != napi_ok)
-		{
-			napi_throw_error(ctx->env, nullptr, "Failed to reject the promise");
-		}
-
-		delete ctx;
-
-		return NULL;
-	};
-
-	/* Await to the function */
-	void *ret = metacall_await_s(name, args, argc - 1, resolve, reject, ctx);
-
-	/* TODO: Is this needed? */
-	/*
-	if (metacall_value_id(ret) == METACALL_THROWABLE)
-	{
-		napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
-
-		napi_throw(env, result);
-	}
-	*/
+	/* Call to metacall await and wrap the promise into NodeJS land */
+	napi_value promise = node_loader_impl_promise_await(node_impl, env, name, args, argc - 1);
 
 	/* Release current reference of the environment */
 	// node_loader_impl_env(node_impl, nullptr);
@@ -247,8 +174,6 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 	{
 		metacall_value_destroy(args[args_count]);
 	}
-
-	node_loader_impl_finalizer(env, promise, ret);
 
 	delete[] argv;
 	delete[] args;

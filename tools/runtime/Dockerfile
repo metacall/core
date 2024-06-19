@@ -91,7 +91,7 @@ COPY --from=builder /usr/local/lib/plugins /usr/local/lib/plugins
 COPY --from=builder /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
 
 # Copy python dependencies (and port) from builder
-COPY --from=builder /usr/local/lib/python3.11/dist-packages/metacall/ /usr/local/lib/python3.11/dist-packages/metacall/
+COPY --from=builder /usr/local/lib/python3.*/dist-packages/metacall/ /usr/local/lib/python3.*/dist-packages/metacall/
 
 # Copy headers from builder
 COPY --from=builder /usr/local/include/metacall /usr/local/include/metacall

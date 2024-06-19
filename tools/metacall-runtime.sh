@@ -202,7 +202,37 @@ sub_file(){
 sub_rpc(){
 	echo "configure rpc"
 
-	sub_apt_install_hold libcurl4
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
+
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
+
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ]; then
+						CODENAME="unstable"
+					else
+						CODENAME="${VERSION_CODENAME}"
+					fi
+					;;
+				*)
+					# Ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+					fi
+					;;
+			esac
+
+			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "unstable" ]; then
+				sub_apt_install_hold libcurl4t64
+			else
+				sub_apt_install_hold libcurl4
+			fi
+		fi
+	fi
 }
 
 # WebAssembly
@@ -235,8 +265,8 @@ sub_c(){
 
 			case ${LINUX_DISTRO} in
 				debian)
+					# For now bookworm || trixie == sid, change when trixie is released
 					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						# TODO: For now, bookworm || trixie == sid, change when bookworm || trixie is released
 						CODENAME="unstable"
 						LINKNAME=""
 					else
@@ -293,7 +323,33 @@ sub_backtrace(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			sub_apt_install_hold libdw1
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
+
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
+
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ]; then
+						CODENAME="unstable"
+					else
+						CODENAME="${VERSION_CODENAME}"
+					fi
+					;;
+				*)
+					# Ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+					fi
+					;;
+			esac
+
+			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "unstable" ]; then
+				sub_apt_install_hold libdw1t64 libelf1t64
+			else
+				sub_apt_install_hold libdw1
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache binutils
 		fi
