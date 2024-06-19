@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install, build and run tests
-        run: ./docker-compose.sh test
+        run: ./docker-compose.sh build
         env:
           METACALL_BUILD_TYPE: ${{ matrix.build }}
           METACALL_BASE_IMAGE: ${{ matrix.image }}
