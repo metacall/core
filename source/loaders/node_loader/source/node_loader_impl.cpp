@@ -638,7 +638,10 @@ struct loader_impl_threadsafe_async_type
 
 			handle_cast.async = &async_handle;
 
-			uv_close(handle_cast.handle, close_cb);
+			if (uv_is_active(handle_cast.handle))
+			{
+				uv_close(handle_cast.handle, close_cb);
+			}
 		}
 	}
 };
