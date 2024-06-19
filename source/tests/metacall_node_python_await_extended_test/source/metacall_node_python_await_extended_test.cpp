@@ -46,8 +46,11 @@ TEST_F(metacall_node_python_await_extended_test, DefaultConstructor)
 			/* Python */
 			"import sys\n"
 			"import threading\n"
+			"counter = 0\n"
 			"async def python_simple(n):\n"
-			"\tprint('inside python_simple', threading.current_thread().ident, ':', n)\n"
+			"\tglobal counter\n"
+			"\tprint('inside python_simple', threading.current_thread().ident, counter, ':', n)\n"
+			"\tcounter = counter + 1\n"
 			"\tsys.stdout.flush()\n"
 			"\treturn n\n"
 			// "import asyncio\n"

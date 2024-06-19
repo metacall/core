@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - master
+      - develop
     tags:
       - 'v*.*.*'
 
@@ -44,9 +45,6 @@ jobs:
             bash ./docker-compose.sh push
           elif [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
             bash ./docker-compose.sh version
-          else
-            echo "Failed to push the docker images"
-            exit 1
           fi
 
       - name: Logout from DockerHub

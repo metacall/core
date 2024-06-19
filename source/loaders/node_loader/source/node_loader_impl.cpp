@@ -99,8 +99,14 @@ extern char **environ;
 	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
-#include <node.h>
+/* NodeJS Includes */
 #include <node_api.h>
+
+#ifdef NAPI_VERSION
+	#undef NAPI_VERSION
+#endif
+
+#include <node.h>
 
 #include <v8.h> /* version: 6.2.414.50 */
 
@@ -650,7 +656,7 @@ struct loader_impl_async_handle_promise_safe_type
 	loader_impl_async_handle_promise_safe_type(loader_impl_node node_impl, napi_env env) :
 		node_impl(node_impl), env(env), result(NULL) {}
 
-	~loader_impl_async_handle_promise_safe_type()
+	void destroy()
 	{
 		threadsafe_async.close([](uv_handle_t *handle) {
 			loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
@@ -659,6 +665,8 @@ struct loader_impl_async_handle_promise_safe_type
 			{
 				metacall_value_destroy(handle_promise_safe->result);
 			}
+
+			delete handle_promise_safe;
 		});
 	}
 };
@@ -771,6 +779,40 @@ static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Impl
 #endif
 
 /* -- Methods -- */
+
+#if 1 // NODE_MAJOR_VERSION < 18
+	#if NODE_MAJOR_VERSION >= 12
+		#define node_loader_impl_register_module_id node::ModuleFlags::kLinked
+	#else
+		#define node_loader_impl_register_module_id 0x02 /* NM_F_LINKED */
+	#endif
+
+	#define node_loader_impl_register_module(name, fn) \
+		do \
+		{ \
+			static napi_module node_loader_module = { \
+				NAPI_MODULE_VERSION, \
+				node_loader_impl_register_module_id, \
+				__FILE__, \
+				fn, \
+				name, \
+				NULL, \
+				{ 0 } \
+			}; \
+			napi_module_register(&node_loader_module); \
+		} while (0)
+
+void node_loader_impl_register_linked_bindings()
+{
+	/* Initialize Node Loader Trampoline */
+	node_loader_impl_register_module("node_loader_trampoline_module", node_loader_trampoline_initialize);
+
+	/* Initialize Node Loader Port */
+	node_loader_impl_register_module("node_loader_port_module", node_loader_port_initialize);
+}
+#else
+// TODO: New register implementation
+#endif
 
 void node_loader_impl_exception(napi_env env, napi_status status)
 {
@@ -3385,7 +3427,7 @@ void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async_handle
 	}
 
 	/* Close the handle */
-	delete handle_promise_safe;
+	handle_promise_safe->destroy();
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
@@ -3445,6 +3487,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	napi_value function_table_object;
 	napi_value global;
 	napi_status status;
+	napi_handle_scope handle_scope;
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
@@ -3455,6 +3498,11 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	/* Obtain environment and function table */
 	env = static_cast<napi_env>(env_ptr);
 	function_table_object = static_cast<napi_value>(function_table_object_ptr);
+
+	/* Create scope */
+	status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
 
 	/* Make global object persistent */
 	status = napi_get_global(env, &global);
@@ -3547,6 +3595,11 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	node_loader_node_dll_handle = GetModuleHandle(NODEJS_LIBRARY_NAME);
 	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table("kernel32.dll", "GetModuleHandleA", &get_module_handle_a_hook);
 #endif
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
 
 	/* Signal start condition */
 	uv_cond_signal(&node_impl->cond);
@@ -3780,8 +3833,14 @@ void node_loader_impl_thread(void *data)
 	#endif
 	*/
 
+	// #if NODE_MAJOR_VERSION < 18
+	node_loader_impl_register_linked_bindings();
+	// #endif
+
 	/* Unlock node implementation mutex */
 	uv_mutex_unlock(&node_impl->mutex);
+
+	/* Register bindings for versions older than 18 */
 
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
@@ -3823,44 +3882,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	loader_impl_node node_impl;
 
 	(void)impl;
-
-	/* Initialize Node Loader Trampoline */
-	{
-		static napi_module node_loader_trampoline_module = {
-			NAPI_MODULE_VERSION,
-#if NODE_MAJOR_VERSION >= 12
-			node::ModuleFlags::kLinked,
-#else
-			0x02, /* NM_F_LINKED */
-#endif
-			__FILE__,
-			node_loader_trampoline_initialize,
-			"node_loader_trampoline_module",
-			NULL,
-			{ 0 }
-		};
-
-		napi_module_register(&node_loader_trampoline_module);
-	}
-
-	/* Initialize Node Loader Port */
-	{
-		static napi_module node_loader_port_module = {
-			NAPI_MODULE_VERSION,
-#if NODE_MAJOR_VERSION >= 12
-			node::ModuleFlags::kLinked,
-#else
-			0x02, /* NM_F_LINKED */
-#endif
-			__FILE__,
-			node_loader_port_initialize,
-			"node_loader_port_module",
-			NULL,
-			{ 0 }
-		};
-
-		napi_module_register(&node_loader_port_module);
-	}
 
 	node_impl = new loader_impl_node_type();
 
