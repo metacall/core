@@ -608,6 +608,9 @@ struct loader_impl_threadsafe_async_type
 	uv_async_t async_handle;
 	bool initialized;
 
+	loader_impl_threadsafe_async_type() :
+		initialized(false) {}
+
 	int initialize(loader_impl_node node_impl, void (*async_cb)(uv_async_t *))
 	{
 		int result = uv_async_init(node_impl->thread_loop, &async_handle, async_cb);
@@ -638,10 +641,7 @@ struct loader_impl_threadsafe_async_type
 
 			handle_cast.async = &async_handle;
 
-			if (uv_is_active(handle_cast.handle))
-			{
-				uv_close(handle_cast.handle, close_cb);
-			}
+			uv_close(handle_cast.handle, close_cb);
 		}
 	}
 };
