@@ -46,4 +46,4 @@ jobs:
           token: ${{ secrets.ACCESS_TOKEN }}
           repository: metacall/distributable-linux
           event-type: test-trigger
-          ref: ${{ github.ref }}
+          client-payload: '{"ref": "${{ github.ref }}"}'

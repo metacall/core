@@ -76,4 +76,4 @@ jobs:
           token: ${{ secrets.ACCESS_TOKEN }}
           repository: metacall/distributable-windows
           event-type: test-trigger
-          ref: ${{ github.ref }}
+          client-payload: '{"ref": "${{ github.ref }}"}'
