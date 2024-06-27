@@ -785,9 +785,9 @@ static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Impl
 
 #if 1 // NODE_MAJOR_VERSION < 18
 	#if NODE_MAJOR_VERSION >= 12
-		#define node_loader_impl_register_module_id node::ModuleFlags::kLinked
+		#define node_loader_impl_register_module_id node::ModuleFlags::kLinked | 0x08 /* NM_F_DELETEME */
 	#else
-		#define node_loader_impl_register_module_id 0x02 /* NM_F_LINKED */
+		#define node_loader_impl_register_module_id 0x02 | 0x08 /* NM_F_LINKED | NM_F_DELETEME */
 	#endif
 
 	#define node_loader_impl_register_module(name, fn) \
@@ -2271,7 +2271,6 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe_type *func_destroy_safe)
 {
-	uint32_t ref_count = 0;
 	napi_handle_scope handle_scope;
 
 	/* Create scope */
@@ -2280,15 +2279,6 @@ void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_des
 	node_loader_impl_exception(env, status);
 
 	/* Clear function persistent reference */
-	status = napi_reference_unref(env, func_destroy_safe->node_func->func_ref, &ref_count);
-
-	node_loader_impl_exception(env, status);
-
-	if (ref_count != 0)
-	{
-		/* TODO: Error handling */
-	}
-
 	status = napi_delete_reference(env, func_destroy_safe->node_func->func_ref);
 
 	node_loader_impl_exception(env, status);
@@ -2398,7 +2388,6 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 
 void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe_type *future_delete_safe)
 {
-	uint32_t ref_count = 0;
 	napi_handle_scope handle_scope;
 
 	/* Create scope */
@@ -2407,15 +2396,6 @@ void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_
 	node_loader_impl_exception(env, status);
 
 	/* Clear promise reference */
-	status = napi_reference_unref(env, future_delete_safe->node_future->promise_ref, &ref_count);
-
-	node_loader_impl_exception(env, status);
-
-	if (ref_count != 0)
-	{
-		/* TODO: Error handling */
-	}
-
 	status = napi_delete_reference(env, future_delete_safe->node_future->promise_ref);
 
 	node_loader_impl_exception(env, status);
@@ -2626,7 +2606,6 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type
 	napi_value clear_str_value;
 	bool result = false;
 	napi_handle_scope handle_scope;
-	uint32_t ref_count = 0;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2685,15 +2664,6 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type
 	}
 
 	/* Clear handle persistent reference */
-	status = napi_reference_unref(env, clear_safe->handle_ref, &ref_count);
-
-	node_loader_impl_exception(env, status);
-
-	if (ref_count != 0)
-	{
-		/* TODO: Error handling */
-	}
-
 	status = napi_delete_reference(env, clear_safe->handle_ref);
 
 	node_loader_impl_exception(env, status);
@@ -4486,7 +4456,6 @@ void node_loader_impl_walk(uv_handle_t *handle, void *arg)
 
 void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env)
 {
-	uint32_t ref_count = 0;
 	napi_status status;
 	napi_handle_scope handle_scope;
 
@@ -4514,27 +4483,9 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	}
 
 	/* Clear persistent references */
-	status = napi_reference_unref(env, node_impl->global_ref, &ref_count);
-
-	node_loader_impl_exception(env, status);
-
-	if (ref_count != 0)
-	{
-		/* TODO: Error handling */
-	}
-
 	status = napi_delete_reference(env, node_impl->global_ref);
 
 	node_loader_impl_exception(env, status);
-
-	status = napi_reference_unref(env, node_impl->function_table_object_ref, &ref_count);
-
-	node_loader_impl_exception(env, status);
-
-	if (ref_count != 0)
-	{
-		/* TODO: Error handling */
-	}
 
 	status = napi_delete_reference(env, node_impl->function_table_object_ref);
 
