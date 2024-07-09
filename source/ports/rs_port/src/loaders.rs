@@ -82,7 +82,7 @@ pub fn from_memory(tag: impl ToString, script: impl ToString) -> Result<(), Meta
         metacall_load_from_memory(
             c_tag.as_ptr(),
             c_script.as_ptr(),
-            script.len(),
+            script.len() + 1,
             ptr::null_mut(),
         )
     } != 0
