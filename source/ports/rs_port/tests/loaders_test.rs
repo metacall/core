@@ -8,9 +8,9 @@ use std::{
 
 // Two different names to avoid conflicts when testing both load_from_memory and load_from_files
 // in a single test.
-const SCRIPT1: &str = "function greet1() { return 'hi there!' } \nmodule.exports = { greet1 };";
+const SCRIPT1: &str = "function greet1() { return 'hi there!' } \nmodule.exports = { greet1 }";
 const SCRIPT2: &str = "function greet2() { return 'hi there!' } \nmodule.exports = { greet2 };";
-
+const SCRIPT3: &str = "console.log('Hello world')";
 fn call_greet(test: &str, num: u32) {
     let out = metacall_no_arg::<String>(format!("greet{}", num)).unwrap();
     if out.as_str() == "hi there!" {
@@ -25,8 +25,9 @@ fn call_greet(test: &str, num: u32) {
 
 fn load_from_memory_test() {
     loaders::from_memory("node", SCRIPT1).unwrap();
-
     call_greet("load_from_memory", 1);
+
+    loaders::from_memory("node", SCRIPT3).unwrap();
 }
 
 fn load_from_file_test() {
@@ -51,7 +52,6 @@ fn load_from_file_test() {
 #[test]
 fn loaders() {
     let _d = switch::initialize().unwrap();
-
     // Testing load_from_memory
     load_from_memory_test();
 
