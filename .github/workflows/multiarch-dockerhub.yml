@@ -66,7 +66,7 @@ jobs:
         run: bash ./docker-compose.sh build
 
       - name: Build and Push Multi-Architecture Images
-        uses: docker/build-push-action@v4
+        uses: bash ./docker-compose.sh build-multiarch
         with:
           context: .
           platforms: ${{ matrix.platform }}
