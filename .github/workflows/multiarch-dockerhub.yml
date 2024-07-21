@@ -1,14 +1,10 @@
 name: Build and Push Docker Image
 
 on:
-  # To enable manual triggering of this workflow
   workflow_dispatch:
-
-  # Trigger for pushes to master and tags
   push:
     branches:
       - master
-      - multiPlatform-Feature
     tags:
       - 'v*.*'
 
@@ -64,13 +60,13 @@ jobs:
         run: bash ./docker-compose.sh pull
         
       - name: Build and Push Multi-Architecture Images
-        uses: bash ./docker-compose.sh build-multiarch
-        with:
-          context: .
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
-          labels: ${{ steps.meta.outputs.labels }}
+        run: |
+          bash ./docker-compose.sh build-multiarch \
+            --context . \
+            --platforms ${{ matrix.platform }} \
+            --push \
+            --tags ${{ env.IMAGE_NAME }}:latest \
+            --labels ${{ steps.meta.outputs.labels }}
 
       - name: Export digest
         id: export_digest
@@ -104,8 +100,7 @@ jobs:
             ${{ env.IMAGE_NAME }}@sha256:${{ env.DIGEST }}
 
       - name: Inspect image
-        run: |
-          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
+        run: docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
 
       - name: Logout from DockerHub
-        run: docker logout 
+        run: docker logout
