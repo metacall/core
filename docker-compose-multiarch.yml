@@ -1,13 +1,38 @@
 version: '3.8'
 
 services:
-  multiarch-build:
-    image: ${IMAGE_NAME}
+  deps:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: tools/deps/Dockerfile
       platforms:
         - linux/amd64
-        - linux/arm/v6
-        - linux/arm/v7
         - linux/arm64
+    image: metacall/core:deps
+
+  dev:
+    build:
+      context: .
+      dockerfile: tools/dev/Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: metacall/core:dev
+
+  runtime:
+    build:
+      context: .
+      dockerfile: tools/runtime/Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: metacall/core:runtime
+
+  cli:
+    build:
+      context: .
+      dockerfile: tools/cli/Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: metacall/core:cli
