@@ -61,10 +61,7 @@ jobs:
 
       - name: Pull MetaCall Docker Images
         run: bash ./docker-compose.sh pull
-
-      - name: Build MetaCall Docker Images
-        run: bash ./docker-compose.sh build
-
+        
       - name: Build and Push Multi-Architecture Images
         uses: bash ./docker-compose.sh build-multiarch
         with:
@@ -108,10 +105,6 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
-
-      - name: Cleanup Docker images
-        run: |
-          docker image prune -af
 
       - name: Logout from DockerHub
         run: docker logout
