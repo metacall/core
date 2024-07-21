@@ -58,11 +58,12 @@ jobs:
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
       - name: Pull MetaCall Docker Images
         run: bash ./docker-compose.sh pull
 
       - name: Build and Push Multi-Architecture Images
-        uses: bash ./docker-compose.sh build-multiarch
+        run: bash ./docker-compose.sh build-multiarch
         with:
           context: .
           platforms: ${{ matrix.platform }}
@@ -75,6 +76,7 @@ jobs:
         run: |
           digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.IMAGE_NAME }}:latest)
           echo "DIGEST=${digest#*:}" >> $GITHUB_ENV
+
       - name: Logout from DockerHub
         run: docker logout
 
@@ -99,6 +101,7 @@ jobs:
           docker buildx imagetools create --tag ${{ env.IMAGE_NAME }}:latest \
             --tag ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} \
             ${{ env.IMAGE_NAME }}@sha256:${{ env.DIGEST }}
+
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
