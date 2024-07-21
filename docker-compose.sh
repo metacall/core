@@ -66,6 +66,15 @@ sub_build() {
 
 	ln -sf tools/cli/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm cli
+
+	# Multi-architecture build setup
+	docker buildx create --use --name multiarch-builder
+    	docker buildx inspect --bootstrap
+
+    	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build
+    	$DOCKER_COMPOSE -f docker-compose-multiarch.yml push
+
+    	docker buildx rm multiarch-builder
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
