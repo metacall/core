@@ -83,24 +83,22 @@ sub_rebuild() {
 	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache cli
 }
 
-# Build MetaCall Docker Compose (multi-architecture) using Buildx
 sub_build_multiarch() {
   if [ -z "$IMAGE_NAME" ]; then
     echo "Error: IMAGE_NAME variable not defined"
     exit 1
   fi
 
-  # Create a new builder instance
-  docker buildx create --use
+  # Create a new builder instance and give it a name
+  docker buildx create --name mybuilder --use
 
   # Build multi-architecture images using Buildx
-  docker buildx build --file Dockerfile --platform linux/amd64,linux/arm64 \
-    --tag $IMAGE_NAME:latest \
+  docker buildx build --file Dockerfile --platform linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 \
     --tag $IMAGE_NAME:latest \
     --push .
 
   # Optionally, remove the builder instance after use
-  docker buildx rm
+  docker buildx rm mybuilder
 }
 
 # Build MetaCall Docker Compose for testing (link manually dockerignore files)
