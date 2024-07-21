@@ -36,3 +36,4 @@ services:
         - linux/amd64
         - linux/arm64
     image: metacall/core:cli
+    
