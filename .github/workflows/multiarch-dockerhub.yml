@@ -107,4 +107,4 @@ jobs:
           docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
 
       - name: Logout from DockerHub
-        run: docker logout
+        run: docker logout 
