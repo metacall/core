@@ -63,13 +63,9 @@ jobs:
         run: bash ./docker-compose.sh pull
 
       - name: Build and Push Multi-Architecture Images
-        run: bash ./docker-compose.sh build-multiarch
-        with:
-          context: .
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
-          labels: ${{ steps.meta.outputs.labels }}
+        run: |
+          chmod +x ./docker-compose.sh
+          ./docker-compose.sh sub_build_multiarch
 
       - name: Export digest
         id: export_digest
@@ -105,6 +101,6 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
-          
+
       - name: Logout from DockerHub
         run: docker logout
