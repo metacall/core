@@ -83,6 +83,17 @@ sub_rebuild() {
 	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache cli
 }
 
+# Build MetaCall Docker Compose (multi-architecture)
+sub_build_multiarch() {
+  if [ -z "$IMAGE_NAME" ]; then
+    echo "Error: IMAGE_NAME variable not defined"
+    exit 1
+  fi
+
+  # Build multi-architecture images using docker-compose-multiarch.yml
+  $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm
+}
+
 # Build MetaCall Docker Compose for testing (link manually dockerignore files)
 sub_test() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
@@ -314,6 +325,9 @@ case "$1" in
 	rebuild)
 		sub_rebuild
 		;;
+  	build-multiarch)
+    	sub_build_multiarch
+    		;;
 	test)
 		sub_test
 		;;
