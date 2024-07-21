@@ -76,7 +76,7 @@ jobs:
       - name: Logout from DockerHub
         run: docker logout
 
-  push:
+  push_manifest:
     runs-on: ubuntu-latest
     needs: build
     steps:
