@@ -86,10 +86,17 @@ sub_build_multiarch() {
     docker buildx inspect --bootstrap
 
     # Build multi-architecture images using Buildx
-    docker buildx build --platform linux/amd64,linux/arm64 -t metacall/core:deps -f tools/deps/Dockerfile . --push
-    docker buildx build --platform linux/amd64,linux/arm64 -t metacall/core:dev -f tools/dev/Dockerfile . --push
-    docker buildx build --platform linux/amd64,linux/arm64 -t metacall/core:runtime -f tools/runtime/Dockerfile . --push
-    docker buildx build --platform linux/amd64,linux/arm64 -t metacall/core:cli -f tools/cli/Dockerfile . --push
+    ln -sf tools/deps/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm deps
+
+    ln -sf tools/dev/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm dev
+
+    ln -sf tools/runtime/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm runtime
+
+    ln -sf tools/cli/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm cli
 
     # Optionally, remove the builder instance after use
     docker buildx rm mybuilder
