@@ -87,13 +87,13 @@ sub_build_multiarch() {
 
   # Build multi-architecture images using Buildx
   ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm dev
 
 	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
