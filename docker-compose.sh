@@ -16,7 +16,7 @@
 #	distributed under the License is distributed on an "AS IS" BASIS,
 #	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #	See the License for the specific language governing permissions and
-#	limitations under the License. 
+#	limitations under the License.
 #
 
 set -euxo pipefail
@@ -66,6 +66,9 @@ sub_build() {
 
 	ln -sf tools/cli/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm cli
+
+ 	ln -sf tools/cli/.dockerignore .dockerignore
+  	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
@@ -81,24 +84,6 @@ sub_rebuild() {
 
 	ln -sf tools/cli/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache cli
-}
-
-sub_build_multiarch() {
-  if [ -z "$IMAGE_NAME" ]; then
-    echo "Error: IMAGE_NAME variable not defined"
-    exit 1
-  fi
-
-  # Create a new builder instance and give it a name
-  docker buildx create --name mybuilder --use
-
-  # Build multi-architecture images using Buildx
-  docker buildx build --file Dockerfile --platform linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 \
-    --tag $IMAGE_NAME:latest \
-    --push .
-
-  # Optionally, remove the builder instance after use
-  docker buildx rm mybuilder
 }
 
 # Build MetaCall Docker Compose for testing (link manually dockerignore files)
@@ -332,9 +317,6 @@ case "$1" in
 	rebuild)
 		sub_rebuild
 		;;
-  	build-multiarch)
-    	sub_build_multiarch
-    		;;
 	test)
 		sub_test
 		;;
