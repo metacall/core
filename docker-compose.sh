@@ -26,8 +26,6 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 export PROGRESS_NO_TRUNC=1
-export DOCKER_BUILDKIT=1
-export COMPOSE_DOCKER_CLI_BUILD=1
 
 # Check if docker compose command is available
 if [ -x "$(command -v docker-compose)" ]; then
@@ -71,18 +69,37 @@ sub_build() {
 }
 
 sub_build_multiarch() {
-  # Build multi-architecture images using Buildx
-  	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml --force-rm dev
+    # Enable BuildKit and set Docker CLI build for Compose
+    export DOCKER_BUILDKIT=1
+    export COMPOSE_DOCKER_CLI_BUILD=1
 
-	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml --force-rm runtime
+    if [ -z "$IMAGE_NAME" ]; then
+        echo "Error: IMAGE_NAME variable not defined"
+        exit 1
+    fi
 
-	ln -sf tools/cli/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml --force-rm cli
+    # Create a new builder instance and use it
+    docker buildx create --name mybuilder --use
+
+    # Inspect the builder instance to ensure it's correctly set up
+    docker buildx inspect --bootstrap
+
+    # Build multi-architecture images using Buildx
+    ln -sf tools/deps/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml build --force-rm deps
+
+    ln -sf tools/dev/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml build --force-rm dev
+
+    ln -sf tools/runtime/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml build --force-rm runtime
+
+    ln -sf tools/cli/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml build --force-rm cli
+
+    # Optionally, remove the builder instance after use
+    docker buildx rm mybuilder
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
@@ -328,12 +345,12 @@ case "$1" in
 	build)
 		sub_build
 		;;
+  	build-multiarch)
+    	sub_build_multiarch
+    		;;
 	rebuild)
 		sub_rebuild
 		;;
- 	build-multiarch)
-    	sub_build_multiarch
-    		;;
 	test)
 		sub_test
 		;;
