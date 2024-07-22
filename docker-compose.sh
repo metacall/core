@@ -87,20 +87,17 @@ sub_build_multiarch() {
 
   # Build multi-architecture images using Buildx
   ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm deps
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build-multiarch --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm dev
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build-multiarch --force-rm dev
 
 	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm runtime
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build-multiarch --force-rm runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
-    --tag $IMAGE_NAME:latest \
-    --push \
-    --progress plain
-
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+ 
   # Optionally, remove the builder instance after use
   docker buildx rm mybuilder
 }
