@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - multiPlatform-Feature
     tags:
       - 'v*.*'
 
@@ -58,12 +59,11 @@ jobs:
 
       - name: Pull MetaCall Docker Images
         run: bash ./docker-compose.sh pull
-
+        
       - name: Build and Push Multi-Architecture Images
         run: |
-          chmod +x ./docker-compose.sh
-          ./docker-compose.sh sub_build_multiarch
-
+          bash ./docker-compose.sh build-multiarch
+      
       - name: Export digest
         id: export_digest
         run: |
@@ -73,7 +73,7 @@ jobs:
       - name: Logout from DockerHub
         run: docker logout
 
-  push_manifest:
+  create-manifest:
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -96,8 +96,7 @@ jobs:
             ${{ env.IMAGE_NAME }}@sha256:${{ env.DIGEST }}
 
       - name: Inspect image
-        run: |
-          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
+        run: docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
 
       - name: Logout from DockerHub
         run: docker logout
