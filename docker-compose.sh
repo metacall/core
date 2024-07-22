@@ -26,6 +26,8 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 export PROGRESS_NO_TRUNC=1
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 
 # Check if docker compose command is available
 if [ -x "$(command -v docker-compose)" ]; then
@@ -69,13 +71,8 @@ sub_build() {
 }
 
 sub_build_multiarch() {
-
-  # Enable BuildKit and set Docker CLI build for Compose
-  export DOCKER_BUILDKIT=1
-  export COMPOSE_DOCKER_CLI_BUILD=1
-  
   # Build multi-architecture images using Buildx
-  ln -sf tools/deps/.dockerignore .dockerignore
+  	ln -sf tools/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.multiarch.yml --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
