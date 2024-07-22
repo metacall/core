@@ -1858,7 +1858,7 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 	{
 		napi_value function_trampoline_initialize;
 		napi_valuetype valuetype;
-		napi_value argv[1];
+		napi_value argv[2];
 
 		status = napi_get_named_property(env, function_table_object, initialize_str, &function_trampoline_initialize);
 
@@ -1874,11 +1874,32 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 		}
 
 		/* Create parameters */
-		status = napi_create_string_utf8(env, initialize_safe->loader_library_path, strlen(initialize_safe->loader_library_path), &argv[0]);
+		int argc = metacall_argc();
+		size_t length = argc >= 0 ? static_cast<size_t>(argc) : 0;
+		char **main_argv = metacall_argv();
+
+		status = napi_create_array_with_length(env, length, &argv[0]);
 
 		node_loader_impl_exception(env, status);
 
-		/* Call to load from file function */
+		for (uint32_t arg = 0; arg < length; ++arg)
+		{
+			napi_value element;
+
+			status = napi_create_string_utf8(env, main_argv[arg], strlen(main_argv[arg]), &element);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_set_element(env, argv[0], arg, element);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		status = napi_create_string_utf8(env, initialize_safe->loader_library_path, strlen(initialize_safe->loader_library_path), &argv[1]);
+
+		node_loader_impl_exception(env, status);
+
+		/* Call to initialize function */
 		napi_value global, return_value;
 
 		status = napi_get_reference_value(env, node_impl->global_ref, &global);

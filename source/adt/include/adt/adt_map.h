@@ -63,6 +63,10 @@ ADT_API int map_insert_array(map m, map_key keys[], map_value values[], size_t s
 
 ADT_API vector map_get(map m, map_key key);
 
+ADT_API vector map_get_keys(map m);
+
+ADT_API vector map_get_values(map m);
+
 ADT_API int map_contains(map m, map_key key);
 
 ADT_API int map_contains_any(map dest, map src);

@@ -95,6 +95,8 @@ REFLECT_API method object_method(object obj, const char *key, type_id ret, type_
 
 REFLECT_API const char *object_name(object obj);
 
+REFLECT_API klass object_class(object obj);
+
 REFLECT_API value object_metadata(object obj);
 
 REFLECT_API int object_delete(object obj);

@@ -588,7 +588,7 @@ constructor class_default_constructor(klass cls)
 		return NULL;
 	}
 
-	return (constructor)vector_at(cls->constructors, 0);
+	return vector_at_type(cls->constructors, 0, constructor);
 }
 
 constructor class_constructor(klass cls, type_id args[], size_t size)
@@ -680,6 +680,16 @@ method class_method(klass cls, const char *key, type_id ret, type_id args[], siz
 	return class_get_method_type_safe(class_methods(cls, key), ret, args, size);
 }
 
+vector class_get_methods(klass cls)
+{
+	return map_get_values(cls->methods);
+}
+
+vector class_get_static_methods(klass cls)
+{
+	return map_get_values(cls->static_methods);
+}
+
 attribute class_static_attribute(klass cls, const char *key)
 {
 	if (cls == NULL || key == NULL)
@@ -698,6 +708,16 @@ attribute class_attribute(klass cls, const char *key)
 	}
 
 	return set_get(cls->attributes, (set_key)key);
+}
+
+vector class_get_attributes(klass cls)
+{
+	return set_get_values(cls->attributes);
+}
+
+vector class_get_static_attributes(klass cls)
+{
+	return set_get_values(cls->static_attributes);
 }
 
 int class_register_constructor(klass cls, constructor ctor)
