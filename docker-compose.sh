@@ -66,9 +66,43 @@ sub_build() {
 
 	ln -sf tools/cli/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm cli
+}
 
- 	ln -sf tools/cli/.dockerignore .dockerignore
-  	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+sub_build_multiarch() {
+
+  # Enable BuildKit and set Docker CLI build for Compose
+  export DOCKER_BUILDKIT=1
+  export COMPOSE_DOCKER_CLI_BUILD=1
+
+  if [ -z "$IMAGE_NAME" ]; then
+    echo "Error: IMAGE_NAME variable not defined"
+    exit 1
+  fi
+
+  # Create a new builder instance and use it
+  docker buildx create --name mybuilder --use
+
+  # Inspect the builder instance to ensure it's correctly set up
+  docker buildx inspect --bootstrap
+
+  # Build multi-architecture images using Buildx
+  ln -sf tools/deps/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+
+	ln -sf tools/runtime/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+
+	ln -sf tools/cli/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose-multiarch.yml build-multiarch --force-rm cli
+    --tag $IMAGE_NAME:latest \
+    --push \
+    --progress plain
+
+  # Optionally, remove the builder instance after use
+  docker buildx rm mybuilder
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
@@ -317,6 +351,9 @@ case "$1" in
 	rebuild)
 		sub_rebuild
 		;;
+ 	build-multiarch)
+    	sub_build_multiarch
+    		;;
 	test)
 		sub_test
 		;;
