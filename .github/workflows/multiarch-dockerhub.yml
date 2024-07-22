@@ -63,6 +63,7 @@ jobs:
       - name: Build and Push Multi-Architecture Images
         run: |
           bash ./docker-compose.sh sub_build_multiarch
+          docker pull ${{ env.IMAGE_NAME }}:latest
       
       - name: Export digest
         id: export_digest
