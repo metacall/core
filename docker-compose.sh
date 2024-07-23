@@ -86,7 +86,7 @@ sub_build_multiarch() {
     docker buildx inspect --bootstrap
 
     # Build multi-architecture images using Buildx and push to the registry
-    docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:deps -f tools/deps/Dockerfile .
+    docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:deps \ --build-arg METACALL_BASE_IMAGE=ubuntu:20.04 \ -f tools/deps/Dockerfile .
     docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:dev -f tools/dev/Dockerfile .
     docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:runtime -f tools/runtime/Dockerfile .
     docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:cli -f tools/cli/Dockerfile .
