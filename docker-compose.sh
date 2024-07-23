@@ -89,14 +89,14 @@ sub_build_multiarch() {
     # Create a new builder instance if it doesn't already exist
     if ! docker buildx inspect mybuilder &>/dev/null; then
         echo "Creating a new builder instance 'mybuilder'..."
-        docker buildx create --name mybuilder --use
+        docker buildx create --name mybuilder --use || { echo "Failed to create builder"; exit 1; }
     else
         echo "Using existing builder instance 'mybuilder'."
     fi
 
     # Inspect the builder instance to ensure it's correctly set up
     echo "Inspecting and bootstrapping the builder instance..."
-    docker buildx inspect --bootstrap
+    docker buildx inspect --bootstrap || { echo "Failed to inspect and bootstrap builder"; exit 1; }
 
     # Build and push multi-architecture images
     for image in "${!images[@]}"; do
@@ -104,12 +104,12 @@ sub_build_multiarch() {
         docker buildx build --platform linux/amd64,linux/arm64 --push \
             -t metacall/core:$image \
             --build-arg METACALL_BASE_IMAGE=ubuntu:20.04 \
-            -f ${images[$image]} .
+            -f ${images[$image]} . || { echo "Failed to build and push image: metacall/core:$image"; exit 1; }
     done
 
     # Optionally, remove the builder instance after use
     echo "Removing builder instance 'mybuilder'..."
-    docker buildx rm mybuilder || true
+    docker buildx rm mybuilder || { echo "Failed to remove builder"; exit 1; }
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
