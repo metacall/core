@@ -98,8 +98,6 @@ sub_build_multiarch() {
     ln -sf tools/cli/.dockerignore .dockerignore
     $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm cli
 
-    # Optionally, remove the builder instance after use
-    docker buildx rm mybuilder
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
