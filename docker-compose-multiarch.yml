@@ -2,13 +2,37 @@ version: '3.9'
 
 services:
   deps:
+    build:
+      context: .
+      dockerfile: tools/deps/Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     image: metacall/core:deps
 
   dev:
+    build:
+      context: .
+      dockerfile: tools/dev/Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     image: metacall/core:dev
 
   runtime:
+    build:
+      context: .
+      dockerfile: tools/runtime/Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     image: metacall/core:runtime
 
   cli:
+    build:
+      context: .
+      dockerfile: tools/cli/Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     image: metacall/core:cli
