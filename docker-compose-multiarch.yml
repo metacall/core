@@ -2,29 +2,29 @@ version: '2.4'
 
 services:
   deps:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: tools/deps/Dockerfile
-      platform: linux/amd64
     image: metacall/core:deps
 
   dev:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: tools/dev/Dockerfile
-      platform: linux/amd64
     image: metacall/core:dev
 
   runtime:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: tools/runtime/Dockerfile
-      platform: linux/amd64
     image: metacall/core:runtime
 
   cli:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: tools/cli/Dockerfile
-      platform: linux/amd64
     image: metacall/core:cli
