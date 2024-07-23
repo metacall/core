@@ -69,6 +69,8 @@ sub_build() {
 }
 
 sub_build_multiarch() {
+
+    # Enable BuildKit and set Docker CLI build for Compose
     export DOCKER_BUILDKIT=1
     export COMPOSE_DOCKER_CLI_BUILD=1
 
@@ -77,28 +79,27 @@ sub_build_multiarch() {
         exit 1
     fi
 
-    declare -A images=(
-        ["deps"]="tools/deps/Dockerfile"
-        ["dev"]="tools/dev/Dockerfile"
-        ["runtime"]="tools/runtime/Dockerfile"
-        ["cli"]="tools/cli/Dockerfile"
-    )
+    # Create a new builder instance and use it
+    docker buildx create --name mybuilder --use
 
-    if ! docker buildx inspect mybuilder &>/dev/null; then
-        docker buildx create --name mybuilder --use || exit 1
-    fi
+    # Inspect the builder instance to ensure it's correctly set up
+    docker buildx inspect --bootstrap
 
-    docker buildx inspect --bootstrap || exit 1
+    # Build multi-architecture images using Buildx
+    ln -sf tools/deps/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm deps
 
-    platforms="linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64"
-    for image in "${!images[@]}"; do
-        docker buildx build --platform $platforms --push \
-            -t metacall/core:$image \
-            --build-arg METACALL_BASE_IMAGE=ubuntu:20.04 \
-            -f ${images[$image]} . || exit 1
-    done
+    ln -sf tools/dev/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm dev
 
-    docker buildx rm mybuilder || echo "Failed to remove builder instance"
+    ln -sf tools/runtime/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm runtime
+
+    ln -sf tools/cli/.dockerignore .dockerignore
+    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm cli
+
+    # Optionally, remove the builder instance after use
+    docker buildx rm mybuilder
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
