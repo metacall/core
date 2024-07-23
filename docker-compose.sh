@@ -79,27 +79,20 @@ sub_build_multiarch() {
         exit 1
     fi
 
-    # Create a new builder instance and use it
-    docker buildx create --name mybuilder --use
+    # Create a new builder instance if it doesn't already exist
+    docker buildx create --name mybuilder --use || true
 
     # Inspect the builder instance to ensure it's correctly set up
     docker buildx inspect --bootstrap
 
-    # Build multi-architecture images using Buildx
-    ln -sf tools/deps/.dockerignore .dockerignore
-    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm deps
-
-    ln -sf tools/dev/.dockerignore .dockerignore
-    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm dev
-
-    ln -sf tools/runtime/.dockerignore .dockerignore
-    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm runtime
-
-    ln -sf tools/cli/.dockerignore .dockerignore
-    $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose-multiarch.yml build --force-rm cli
+    # Build multi-architecture images using Buildx and push to the registry
+    docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:deps -f tools/deps/Dockerfile .
+    docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:dev -f tools/dev/Dockerfile .
+    docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:runtime -f tools/runtime/Dockerfile .
+    docker buildx build --platform linux/amd64,linux/arm64 --push -t metacall/core:cli -f tools/cli/Dockerfile .
 
     # Optionally, remove the builder instance after use
-    docker buildx rm mybuilder
+    docker buildx rm mybuilder || true
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
