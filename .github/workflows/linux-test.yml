@@ -35,6 +35,7 @@ jobs:
         env:
           METACALL_BUILD_TYPE: ${{ matrix.build }}
           METACALL_BASE_IMAGE: ${{ matrix.image }}
+
   trigger_dist_linux:
     needs: linux-test
     if: ${{ success() }}
