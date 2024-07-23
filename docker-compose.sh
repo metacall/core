@@ -69,7 +69,6 @@ sub_build() {
 }
 
 sub_build_multiarch() {
-    # Enable BuildKit and set Docker CLI build for Compose
     export DOCKER_BUILDKIT=1
     export COMPOSE_DOCKER_CLI_BUILD=1
 
@@ -78,7 +77,6 @@ sub_build_multiarch() {
         exit 1
     fi
 
-    # Define image names and Dockerfiles
     declare -A images=(
         ["deps"]="tools/deps/Dockerfile"
         ["dev"]="tools/dev/Dockerfile"
@@ -86,35 +84,20 @@ sub_build_multiarch() {
         ["cli"]="tools/cli/Dockerfile"
     )
 
-    # Check Docker login status
-    if ! docker info | grep -q 'Username'; then
-        echo "Error: Docker login required"
-        exit 1
-    fi
-
-    # Create a new builder instance if it doesn't already exist
     if ! docker buildx inspect mybuilder &>/dev/null; then
-        echo "Creating a new builder instance 'mybuilder'..."
-        docker buildx create --name mybuilder --use || { echo "Failed to create builder"; exit 1; }
-    else
-        echo "Using existing builder instance 'mybuilder'."
+        docker buildx create --name mybuilder --use || exit 1
     fi
 
-    # Inspect the builder instance to ensure it's correctly set up
-    echo "Inspecting and bootstrapping the builder instance..."
-    docker buildx inspect --bootstrap || { echo "Failed to bootstrap builder"; exit 1; }
+    docker buildx inspect --bootstrap || exit 1
 
-    # Build and push multi-architecture images
+    platforms="linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64"
     for image in "${!images[@]}"; do
-        echo "Building and pushing image: metacall/core:$image"
-        docker buildx build --platform linux/amd64,linux/arm64 --push \
+        docker buildx build --platform $platforms --push \
             -t metacall/core:$image \
             --build-arg METACALL_BASE_IMAGE=ubuntu:20.04 \
-            -f ${images[$image]} . || { echo "Failed to build or push image: metacall/core:$image"; exit 1; }
+            -f ${images[$image]} . || exit 1
     done
 
-    # Optionally, remove the builder instance after use
-    echo "Removing builder instance 'mybuilder'..."
     docker buildx rm mybuilder || echo "Failed to remove builder instance"
 }
 
