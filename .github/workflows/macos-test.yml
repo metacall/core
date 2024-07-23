@@ -95,6 +95,7 @@ jobs:
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+
   trigger_dist_macos:
     needs: mac-test
     if: ${{ success() }}
