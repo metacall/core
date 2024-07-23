@@ -73,7 +73,7 @@ jobs:
       - name: Windows Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.ACCESS_TOKEN }}
+          token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
           repository: metacall/distributable-windows
           event-type: test-trigger
           client-payload: '{"ref": "${{ github.ref }}"}'
