@@ -64,16 +64,3 @@ jobs:
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
-  
-  trigger_dist_windows:
-    needs: windows-test
-    if: ${{ success() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Windows Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
-          repository: metacall/distributable-windows
-          event-type: test-trigger
-          client-payload: '{"ref": "${{ github.ref }}"}'

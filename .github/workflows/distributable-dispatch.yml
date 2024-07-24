@@ -1,0 +1,58 @@
+name: Distributable Dispatch
+
+on:
+  workflow_run:
+    workflows: ["Windows Test", "MacOS Test", "Linux Test", "Linux Sanitizer Test"]
+    types:
+      - completed
+    branches: ['v*.*.*', 'master']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-distributable:
+    name: Windows Distributable Dispatch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Windows Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: distributable-windows
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: ci.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}
+
+  macos-distributable:
+    name: MacOS Distributable Dispatch
+    runs-on: ubuntu-latest
+    steps:
+      - name: MacOS Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: distributable-macos
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: ci.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}
+
+  linux-distributable:
+    name: Linux Distributable Dispatch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Linux Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: distributable-linux
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: ci.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}

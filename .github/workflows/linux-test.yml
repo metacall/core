@@ -35,16 +35,3 @@ jobs:
         env:
           METACALL_BUILD_TYPE: ${{ matrix.build }}
           METACALL_BASE_IMAGE: ${{ matrix.image }}
-
-  trigger_dist_linux:
-    needs: linux-test
-    if: ${{ success() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Linux Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
-          repository: metacall/distributable-linux
-          event-type: test-trigger
-          client-payload: '{"ref": "${{ github.ref }}"}'
