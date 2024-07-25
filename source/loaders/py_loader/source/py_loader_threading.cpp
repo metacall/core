@@ -25,9 +25,6 @@
 #include <Python.h>
 
 #include <atomic>
-#include <map>
-#include <mutex>
-#include <string>
 #include <thread>
 
 struct py_thread_state
@@ -44,11 +41,10 @@ struct py_thread_state
 	}
 };
 
-static std::map<uint64_t, py_thread_state *> thread_states;
-static std::mutex thread_states_mutex;
 static PyThreadState *main_thread_state = NULL;
 static uint64_t main_thread_id = 0;
 static std::atomic_uintmax_t main_thread_ref_count;
+thread_local py_thread_state *current_thread_state = NULL;
 
 void py_loader_thread_initialize()
 {
@@ -75,24 +71,13 @@ void py_loader_thread_acquire()
 	}
 	else
 	{
-		thread_states_mutex.lock();
-		auto iterator = thread_states.find(current_thread_id);
-
-		if (iterator == thread_states.end())
+		if (current_thread_state == NULL)
 		{
-			thread_states_mutex.unlock();
-
-			py_thread_state *thread_state = new py_thread_state();
-
-			thread_states_mutex.lock();
-			thread_states[current_thread_id] = thread_state;
-			thread_states_mutex.unlock();
+			current_thread_state = new py_thread_state();
 		}
 		else
 		{
-			py_thread_state *thread_state = iterator->second;
-			++thread_state->ref_count;
-			thread_states_mutex.unlock();
+			++current_thread_state->ref_count;
 		}
 	}
 }
@@ -117,28 +102,16 @@ void py_loader_thread_release()
 	}
 	else
 	{
-		thread_states_mutex.lock();
-		auto iterator = thread_states.find(current_thread_id);
-
-		if (iterator == thread_states.end())
+		if (current_thread_state != NULL)
 		{
-			thread_states_mutex.unlock();
-		}
-		else
-		{
-			py_thread_state *thread_state = iterator->second;
-
-			if (thread_state->ref_count <= 1)
+			if (current_thread_state->ref_count <= 1)
 			{
-				thread_states.erase(iterator);
-				thread_states_mutex.unlock();
-
-				delete thread_state;
+				delete current_thread_state;
+				current_thread_state = NULL;
 			}
 			else
 			{
-				--thread_state->ref_count;
-				thread_states_mutex.unlock();
+				--current_thread_state->ref_count;
 			}
 		}
 	}
