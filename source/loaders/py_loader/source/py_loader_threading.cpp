@@ -48,7 +48,6 @@ thread_local py_thread_state *current_thread_state = NULL;
 
 void py_loader_thread_initialize()
 {
-	main_thread_state = PyEval_SaveThread();
 	main_thread_id = thread_id_get_current();
 	main_thread_ref_count = 0;
 }
@@ -93,11 +92,11 @@ void py_loader_thread_release()
 		if (ref_count > 0)
 		{
 			ref_count = --main_thread_ref_count;
+		}
 
-			if (ref_count == 0)
-			{
-				main_thread_state = PyEval_SaveThread();
-			}
+		if (ref_count == 0)
+		{
+			main_thread_state = PyEval_SaveThread();
 		}
 	}
 	else
