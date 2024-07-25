@@ -22,6 +22,7 @@
 
 #include <py_loader/py_loader_impl.h>
 #include <py_loader/py_loader_port.h>
+#include <py_loader/py_loader_threading.h>
 
 #include <loader/loader.h>
 
@@ -186,8 +187,12 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 		}
 	}
 
+	py_loader_thread_release();
+
 	/* Execute the load from file call */
 	int ret = metacall_load_from_file(tag_str, (const char **)paths_str, paths_size, handle);
+
+	py_loader_thread_acquire();
 
 	if (ret != 0)
 	{
@@ -326,8 +331,12 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 		return py_loader_port_false();
 	}
 
+	py_loader_thread_release();
+
 	/* Execute the load from package call */
 	int ret = metacall_load_from_package(tag_str, path_str, handle);
+
+	py_loader_thread_acquire();
 
 	if (ret != 0)
 	{
@@ -453,7 +462,11 @@ static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 
 	/* Execute the load from memory call */
 	{
+		py_loader_thread_release();
+
 		int ret = metacall_load_from_memory(tag_str, (const char *)buffer_str, buffer_length + 1, NULL);
+
+		py_loader_thread_acquire();
 
 		if (ret != 0)
 		{
@@ -541,6 +554,8 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 	{
 		void *ret;
 
+		py_loader_thread_release();
+
 		if (value_args != NULL)
 		{
 			ret = metacallv_s(name_str, value_args, args_size);
@@ -550,6 +565,8 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 			ret = metacallv_s(name_str, metacall_null_args, 0);
 		}
 
+		py_loader_thread_acquire();
+
 		if (ret == NULL)
 		{
 			result = py_loader_port_none();
@@ -558,7 +575,9 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 
 		result = py_loader_impl_value_to_capi(impl, value_type_id(ret), ret);
 
+		py_loader_thread_release();
 		value_type_destroy(ret);
+		py_loader_thread_acquire();
 
 		if (result == NULL)
 		{
@@ -570,10 +589,14 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 clear:
 	if (value_args != NULL)
 	{
+		py_loader_thread_release();
+
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
 			value_type_destroy(value_args[args_count]);
 		}
+
+		py_loader_thread_acquire();
 
 		free(value_args);
 	}
@@ -660,6 +683,8 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 	{
 		void *ret;
 
+		py_loader_thread_release();
+
 		/* TODO: */
 		/*
 		if (value_args != NULL)
@@ -671,6 +696,8 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 			ret = metacallv_s(name_str, metacall_null_args, 0);
 		}
 		*/
+
+		py_loader_thread_acquire();
 
 		if (ret == NULL)
 		{
@@ -717,8 +744,12 @@ static PyObject *py_loader_port_inspect(PyObject *self, PyObject *args)
 	(void)self;
 	(void)args;
 
+	py_loader_thread_release();
+
 	/* Retrieve inspect data */
 	result_str = inspect_str = metacall_inspect(&size, allocator);
+
+	py_loader_thread_acquire();
 
 	if (inspect_str == NULL || size == 0)
 	{

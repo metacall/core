@@ -87,12 +87,14 @@ set(headers
 	${include_path}/py_loader.h
 	${include_path}/py_loader_impl.h
 	${include_path}/py_loader_port.h
+	${include_path}/py_loader_threading.h
 )
 
 set(sources
 	${source_path}/py_loader.c
 	${source_path}/py_loader_impl.c
 	${source_path}/py_loader_port.c
+	${source_path}/py_loader_threading.cpp
 )
 
 # Group source files
