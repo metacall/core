@@ -8,7 +8,7 @@ endif()
 # External dependencies
 #
 
-find_package(RapidJSON 1.1.0)
+find_package(RapidJSON)
 
 if(NOT RAPIDJSON_FOUND)
 	include(InstallRapidJSON)

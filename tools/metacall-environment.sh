@@ -254,7 +254,7 @@ sub_rapidjson(){
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		git clone https://github.com/miloyip/rapidjson.git
 		cd rapidjson
-		git checkout v1.1.0
+		git checkout ab1842a2dae061284c0a62dca1cc6d5e7e37e346
 		mkdir build
 		cd build
 		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
