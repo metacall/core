@@ -19,7 +19,7 @@ add_custom_target(typescript-templating-depends
 set_target_properties(typescript-templating-depends
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}"
+	FOLDER "${IDE_FOLDER}/TypeScript"
 )
 
 #

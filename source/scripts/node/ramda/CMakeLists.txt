@@ -19,7 +19,7 @@ add_custom_target(nodejs-ramda-depends
 set_target_properties(nodejs-ramda-depends
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}"
+	FOLDER "${IDE_FOLDER}/NodeJS"
 )
 
 #

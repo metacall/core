@@ -7,4 +7,4 @@ endif()
 # Sub-projects
 #
 
-add_subdirectory(sum_extension)
+add_subdirectory(sum)

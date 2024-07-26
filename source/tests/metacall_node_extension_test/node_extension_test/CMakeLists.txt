@@ -93,7 +93,7 @@ generate_export_header(${target}
 set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "Scripts" # Put it on scripts even if it is on tests folder
+	FOLDER "${IDE_FOLDER}"
 	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
 
 	# Set NodeJS extension properies

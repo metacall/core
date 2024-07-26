@@ -82,7 +82,7 @@ generate_export_header(${target}
 set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}"
+	FOLDER "${IDE_FOLDER}/Extension"
 	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
 )
 
