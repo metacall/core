@@ -37,7 +37,7 @@ jobs:
           owner: metacall
           repo: homebrew
           github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
-          workflow_file_name: ci.yml
+          workflow_file_name: test.yml
           wait_workflow: true
           client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
           ref: ${{ github.head_ref || github.ref_name }}
