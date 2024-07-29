@@ -31,6 +31,16 @@ jobs:
     name: MacOS Distributable Dispatch
     runs-on: ubuntu-latest
     steps:
+      - name: Homebrew Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: homebrew
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: ci.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}
       - name: MacOS Workflow Dispatch
         uses: convictional/trigger-workflow-and-wait@v1.6.1
         with:
