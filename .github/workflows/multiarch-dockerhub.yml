@@ -91,9 +91,7 @@ jobs:
 
       - name: Create manifest list and push
         run: |
-          run: |
-            docker buildx imagetools create \
-            --tag ${{ env.IMAGE_NAME }}:latest \
+          docker buildx imagetools create --tag ${{ env.IMAGE_NAME }}:latest \
             --tag ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} \
             ${{ env.IMAGE_NAME }}@sha256:${{ env.DIGEST }}
 
