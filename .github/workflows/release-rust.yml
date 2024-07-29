@@ -1,0 +1,29 @@
+name: Release Rust Crates
+
+on:
+  push:
+    branches: [ master, develop ]
+    paths:
+      - 'source/ports/rs_port/Cargo.toml'
+      - 'source/ports/rs_port/inline/Cargo.toml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+jobs:
+  release:
+    name: Release Rust Port
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Release the port
+        run: |
+          cd source/ports/rs_port
+          bash ./upload.sh

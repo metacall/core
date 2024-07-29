@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #
 #	MetaCall Rust Port Deploy Script by Parra Studios
@@ -19,11 +19,19 @@
 #	limitations under the License.
 #
 
-# TODO: Automate for CD/CI
+function publish() {
+    local crate_version=`cargo search --quiet $1 | grep "$1" | head -n 1 | awk '{ print $3 }'`
+    local project_version=`cargo metadata --format-version=1 --no-deps | jq '.packages[0].version'`
+
+    # Check if versions do not match, and if so, publish them
+    if [ ! "${crate_version}" = "${project_version}" ]; then
+        echo "Publishing ${crate_version} -> ${project_version}"
+        cargo publish --verbose --locked --token ${CARGO_REGISTRY_TOKEN}
+    fi
+}
 
 # Publish
-cargo login $TOKEN
 cd inline
-cargo publish
+publish metacall-inline
 cd ..
-cargo publish
+publish metacall
