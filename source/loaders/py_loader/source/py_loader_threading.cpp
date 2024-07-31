@@ -24,7 +24,6 @@
 
 #include <Python.h>
 
-#include <atomic>
 #include <thread>
 
 struct py_thread_state
@@ -43,24 +42,22 @@ struct py_thread_state
 
 static PyThreadState *main_thread_state = NULL;
 static uint64_t main_thread_id = 0;
-static std::atomic_uintmax_t main_thread_ref_count;
+static uint64_t main_thread_ref_count = 0;
 thread_local py_thread_state *current_thread_state = NULL;
+thread_local uint64_t current_thread_id = thread_id_get_current();
 
 void py_loader_thread_initialize()
 {
 	main_thread_id = thread_id_get_current();
-	main_thread_ref_count = 0;
 }
 
 void py_loader_thread_acquire()
 {
-	uint64_t current_thread_id = thread_id_get_current();
-
 	if (main_thread_id == current_thread_id)
 	{
 		if (main_thread_state != NULL)
 		{
-			uintmax_t ref_count = main_thread_ref_count++;
+			uint64_t ref_count = main_thread_ref_count++;
 
 			if (ref_count == 0)
 			{
@@ -83,11 +80,9 @@ void py_loader_thread_acquire()
 
 void py_loader_thread_release()
 {
-	uint64_t current_thread_id = thread_id_get_current();
-
 	if (main_thread_id == current_thread_id)
 	{
-		uint64_t ref_count = main_thread_ref_count.load();
+		uint64_t ref_count = main_thread_ref_count;
 
 		if (ref_count > 0)
 		{
