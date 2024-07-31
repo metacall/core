@@ -2034,6 +2034,8 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 		value_args[args_count] = py_loader_impl_capi_to_value(invoke_state->impl, arg, id);
 	}
 
+	py_loader_thread_release();
+
 	/* Execute the callback */
 	value ret = (value)function_call(value_to_function(invoke_state->callback), value_args, args_size);
 
@@ -2048,11 +2050,15 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 		free(value_args);
 	}
 
+	py_loader_thread_acquire();
+
 	/* Transform the return value into a python value */
 	if (ret != NULL)
 	{
 		PyObject *py_ret = py_loader_impl_value_to_capi(invoke_state->impl, value_type_id(ret), ret);
+		py_loader_thread_release();
 		value_type_destroy(ret);
+		py_loader_thread_acquire();
 		return py_ret;
 	}
 
