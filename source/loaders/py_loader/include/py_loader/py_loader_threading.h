@@ -29,6 +29,8 @@ extern "C" {
 
 PY_LOADER_NO_EXPORT void py_loader_thread_initialize(void);
 
+PY_LOADER_NO_EXPORT int py_loader_thread_is_main(void);
+
 PY_LOADER_NO_EXPORT void py_loader_thread_acquire(void);
 
 PY_LOADER_NO_EXPORT void py_loader_thread_release(void);

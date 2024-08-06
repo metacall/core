@@ -2008,11 +2008,14 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 {
 	static void *null_args[1] = { NULL };
 
+	py_loader_thread_acquire();
+
 	loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(self, NULL);
 
 	if (invoke_state == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error when invoking a function, state cannot be recovered, avoiding the function call");
+		py_loader_thread_release();
 		Py_RETURN_NONE;
 	}
 
@@ -2023,6 +2026,7 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 	if (value_args == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid allocation of arguments for callback");
+		py_loader_thread_release();
 		Py_RETURN_NONE;
 	}
 
@@ -2035,6 +2039,13 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 	}
 
 	py_loader_thread_release();
+
+	int thread_state_saved = py_loader_thread_is_main() && PyGILState_Check();
+
+	if (thread_state_saved)
+	{
+		py_loader_thread_release();
+	}
 
 	/* Execute the callback */
 	value ret = (value)function_call(value_to_function(invoke_state->callback), value_args, args_size);
@@ -2050,15 +2061,18 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 		free(value_args);
 	}
 
-	py_loader_thread_acquire();
+	if (thread_state_saved)
+	{
+		py_loader_thread_acquire();
+	}
 
 	/* Transform the return value into a python value */
 	if (ret != NULL)
 	{
+		py_loader_thread_acquire();
 		PyObject *py_ret = py_loader_impl_value_to_capi(invoke_state->impl, value_type_id(ret), ret);
 		py_loader_thread_release();
 		value_type_destroy(ret);
-		py_loader_thread_acquire();
 		return py_ret;
 	}
 

@@ -51,6 +51,11 @@ void py_loader_thread_initialize()
 	main_thread_id = thread_id_get_current();
 }
 
+int py_loader_thread_is_main()
+{
+	return (int)(main_thread_id == current_thread_id);
+}
+
 void py_loader_thread_acquire()
 {
 	if (main_thread_id == current_thread_id)
