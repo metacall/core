@@ -32,18 +32,36 @@ struct py_thread_state
 	PyGILState_STATE gstate;
 
 	py_thread_state() :
-		ref_count(1), gstate(PyGILState_Ensure()) {}
+		ref_count(0) {}
 
-	~py_thread_state()
+	void ensure()
 	{
-		PyGILState_Release(gstate);
+		if (ref_count == 0)
+		{
+			gstate = PyGILState_Ensure();
+		}
+
+		++ref_count;
+	}
+
+	void release()
+	{
+		if (ref_count > 0)
+		{
+			--ref_count;
+
+			if (ref_count == 0)
+			{
+				PyGILState_Release(gstate);
+			}
+		}
 	}
 };
 
 static PyThreadState *main_thread_state = NULL;
 static uint64_t main_thread_id = 0;
 static uint64_t main_thread_ref_count = 0;
-thread_local py_thread_state *current_thread_state = NULL;
+thread_local py_thread_state current_thread_state;
 thread_local uint64_t current_thread_id = thread_id_get_current();
 
 void py_loader_thread_initialize()
@@ -72,14 +90,7 @@ void py_loader_thread_acquire()
 	}
 	else
 	{
-		if (current_thread_state == NULL)
-		{
-			current_thread_state = new py_thread_state();
-		}
-		else
-		{
-			++current_thread_state->ref_count;
-		}
+		current_thread_state.ensure();
 	}
 }
 
@@ -101,17 +112,6 @@ void py_loader_thread_release()
 	}
 	else
 	{
-		if (current_thread_state != NULL)
-		{
-			if (current_thread_state->ref_count <= 1)
-			{
-				delete current_thread_state;
-				current_thread_state = NULL;
-			}
-			else
-			{
-				--current_thread_state->ref_count;
-			}
-		}
+		current_thread_state.release();
 	}
 }
