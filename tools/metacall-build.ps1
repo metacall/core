@@ -74,7 +74,7 @@ function Sub-Build {
 	# Tests
 	if (($BUILD_TESTS -eq 1) -or ($BUILD_BENCHMARKS -eq 1) -or ($BUILD_COVERAGE -eq 1)) {
 		echo "Running the tests..."
-		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 7200 --output-on-failure -C $BUILD_TYPE
+		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 3600 --output-on-failure -C $BUILD_TYPE
 
 		if (-not $?) {
 			$RecentExitCode = $LASTEXITCODE

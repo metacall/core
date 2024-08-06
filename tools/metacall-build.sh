@@ -75,12 +75,12 @@ sub_build() {
 
 	# Tests (coverage needs to run the tests)
 	if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS=1 ] || [ $BUILD_COVERAGE = 1 ]; then
-		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 7200 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
+		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 3600 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
 	fi
 
 	# Coverage
 	if [ $BUILD_COVERAGE = 1 ]; then
-		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 7200 -T Coverage
+		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 3600 -T Coverage
 		gcovr -r ../source/ . --html-details coverage.html
 	fi
 
