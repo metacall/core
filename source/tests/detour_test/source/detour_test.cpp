@@ -35,22 +35,26 @@ static detour_handle handle;
 
 int hook_function(int x)
 {
-	EXPECT_EQ((int)2, (int)x);
+	EXPECT_EQ((int)128, (int)x);
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Hook function %d", x);
 
 	int (*target_function_ptr)(int) = (int (*)(int))detour_trampoline(handle);
 
-	return target_function_ptr(x + 4) + 2;
+	int result = target_function_ptr(x + 2) + 2;
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Hook function result %d", result);
+
+	return result;
 }
 
 int target_function(int x)
 {
-	EXPECT_EQ((int)6, (int)x);
+	EXPECT_EQ((int)130, (int)x);
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Target function %d", x);
 
-	return 4;
+	return x;
 }
 
 TEST_F(detour_test, DefaultConstructor)
@@ -80,7 +84,7 @@ TEST_F(detour_test, DefaultConstructor)
 	EXPECT_NE((detour_handle)NULL, (detour_handle)handle);
 
 	/* Call detour, it should call hooked function */
-	EXPECT_EQ((int)6, (int)target_function(2));
+	EXPECT_EQ((int)132, (int)target_function(128));
 
 	/* Uninstall detour */
 	EXPECT_EQ((int)0, (int)detour_uninstall(d, handle));

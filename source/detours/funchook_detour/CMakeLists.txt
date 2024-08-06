@@ -14,7 +14,7 @@ set(target_depends funchook_detour_depends)
 
 include(ExternalProject)
 
-set(FUNCHOOK_VERSION 1.1.1)
+set(FUNCHOOK_VERSION 1.1.3)
 
 if(WIN32)
 	set(FUNCHOOK_LIBRARY_PREFIX "")
