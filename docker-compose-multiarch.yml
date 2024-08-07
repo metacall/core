@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  deps:
+    platform:
+      - ${METACALL_PLATFORM}
+    build:
+      context: .
+      dockerfile: tools/deps/Dockerfile
+    image: metacall/core:deps
+
+  dev:
+    platform:
+      - ${METACALL_PLATFORM}
+    build:
+      context: .
+      dockerfile: tools/dev/Dockerfile
+    image: metacall/core:dev
+
+  runtime:
+    platform:
+      - ${METACALL_PLATFORM}
+    build:
+      context: .
+      dockerfile: tools/runtime/Dockerfile
+    image: metacall/core:runtime
+
+  cli:
+    platform:
+      - ${METACALL_PLATFORM}
+    build:
+      context: .
+      dockerfile: tools/cli/Dockerfile
+    image: metacall/core:cli
