@@ -59,11 +59,11 @@ jobs:
         run: |
           bash ./docker-compose.sh build-multiarch
 
-      - name: Export digest
-        id: export_digest
-        run: |
-          digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.IMAGE_NAME }}:latest)
-          echo "DIGEST=${digest#*:}" >> $GITHUB_ENV
+     # - name: Export digest
+     #   id: export_digest
+     #   run: |
+      #    digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.IMAGE_NAME }}:latest)
+       #   echo "DIGEST=${digest#*:}" >> $GITHUB_ENV
 
       - name: Logout from DockerHub
         run: docker logout
