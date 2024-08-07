@@ -1,7 +1,7 @@
 name: Build and Push Docker Image
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering of the workflow
   push:
     branches:
       - master
@@ -9,7 +9,7 @@ on:
       - 'v*.*'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -53,8 +53,7 @@ jobs:
 
       - name: Prepare
         run: |
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          echo "PLATFORM_PAIR=${{ matrix.platform //\//- }}" >> $GITHUB_ENV
 
       - name: Pull MetaCall Docker Images
         run: bash ./docker-compose.sh pull
@@ -62,8 +61,9 @@ jobs:
       - name: Build and Push Multi-Architecture Images
         run: |
           bash ./docker-compose.sh build-multiarch
-           docker pull ${{ env.IMAGE_NAME }}:latest
-      
+          # Pull the latest image to ensure it is updated
+          docker pull ${{ env.IMAGE_NAME }}:latest
+
       - name: Export digest
         id: export_digest
         run: |
@@ -86,8 +86,8 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-           username: ${{ secrets.DOCKER_HUB_USERNAME }}
-           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Create manifest list and push
         run: |
