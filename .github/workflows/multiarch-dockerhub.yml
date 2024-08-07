@@ -52,14 +52,18 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
 
       - name: Prepare
-        run: echo "PLATFORM_PAIR=${{ matrix.platform//\//- }}" >> $GITHUB_ENV
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
       - name: Pull MetaCall Docker Images
         run: bash ./docker-compose.sh pull
         
       - name: Build and Push Multi-Architecture Images
-        run: bash ./docker-compose.sh build-multiarch
-
+        run: |
+          bash ./docker-compose.sh build-multiarch
+           docker pull ${{ env.IMAGE_NAME }}:latest
+      
       - name: Export digest
         id: export_digest
         run: |
