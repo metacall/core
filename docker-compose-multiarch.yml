@@ -2,28 +2,44 @@ version: '2.4'
 
 services:
   deps:
-    platform: linux/amd64
+    platform:
+      - linux/amd64
+      - linux/arm/v6
+      - linux/arm/v7
+      - linux/arm64
     build:
       context: .
       dockerfile: tools/deps/Dockerfile
     image: metacall/core:deps
 
   dev:
-    platform: linux/amd64
+    platform:
+      - linux/amd64
+      - linux/arm/v6
+      - linux/arm/v7
+      - linux/arm64
     build:
       context: .
       dockerfile: tools/dev/Dockerfile
     image: metacall/core:dev
 
   runtime:
-    platform: linux/amd64
+    platform:
+      - linux/amd64
+      - linux/arm/v6
+      - linux/arm/v7
+      - linux/arm64
     build:
       context: .
       dockerfile: tools/runtime/Dockerfile
     image: metacall/core:runtime
 
   cli:
-    platform: linux/amd64
+    platform:
+      - linux/amd64
+      - linux/arm/v6
+      - linux/arm/v7
+      - linux/arm64
     build:
       context: .
       dockerfile: tools/cli/Dockerfile
