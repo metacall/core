@@ -22,20 +22,16 @@ version: "3.7"
 services:
   deps:
     image: metacall/core:deps
-    platform:
-      - ${METACALL_PLATFORM}
+    platform: ${METACALL_PLATFORM}
 
   dev:
     image: metacall/core:dev
-    platform:
-      - ${METACALL_PLATFORM}
+    platform: ${METACALL_PLATFORM}
 
   runtime:
     image: metacall/core:runtime
-    platform:
-      - ${METACALL_PLATFORM}
+    platform: ${METACALL_PLATFORM}
 
   cli:
     image: metacall/core:cli
-    platform:
-      - ${METACALL_PLATFORM}
+    platform: ${METACALL_PLATFORM}

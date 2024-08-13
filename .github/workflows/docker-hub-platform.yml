@@ -1,4 +1,4 @@
-name: Build and Push Docker Image for Multiple Platforms
+name: Build and Push Docker Image for Multiple Architectures
 
 on:
   # To enable manual triggering of this workflow
@@ -37,10 +37,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Define Platform Pair
+      - name: Define Platform
         run: |
-          platform=${{ matrix.platform }}
-          echo "METACALL_PLATFORM=${platform//\//-}" >> $GITHUB_ENV
+          PLATFORM=${{ matrix.platform }}
+          echo "METACALL_PLATFORM=${PLATFORM}" >> $GITHUB_ENV
+          echo "METACALL_PLATFORM_PAIR=${PLATFORM//\//-}" >> $GITHUB_ENV
       
       - name: Docker Metadata
         id: meta
@@ -84,7 +85,7 @@ jobs:
       # - name: Upload Digest
       #   uses: actions/upload-artifact@v4
       #   with:
-      #     name: digests-${{ env.METACALL_PLATFORM }}
+      #     name: digests-${{ env.METACALL_PLATFORM_PAIR }}
       #     path: /tmp/digests/*
       #     if-no-files-found: error
       #     retention-days: 1
