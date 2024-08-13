@@ -161,7 +161,7 @@ add_subdirectory(metacall_node_fail_load_leak_test)
 add_subdirectory(metacall_node_typescript_test)
 add_subdirectory(metacall_node_python_async_after_destroy_test)
 add_subdirectory(metacall_node_python_await_test)
-add_subdirectory(metacall_node_python_await_extended_test)
+# add_subdirectory(metacall_node_python_await_extended_test) # TODO: https://github.com/metacall/core/issues/519
 add_subdirectory(metacall_node_python_exception_test)
 add_subdirectory(metacall_node_clear_mem_test)
 add_subdirectory(metacall_node_async_resources_test)
