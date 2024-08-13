@@ -8,7 +8,7 @@ on:
   push:
     branches:
       - master
-      - develop
+      - develop # TODO: Remove this
     tags:
       - 'v*.*.*'
 
@@ -40,7 +40,7 @@ jobs:
       - name: Define Platform Pair
         run: |
           platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV          
+          echo "METACALL_PLATFORM=${platform//\//-}" >> $GITHUB_ENV
       
       - name: Docker Metadata
         id: meta
@@ -84,7 +84,7 @@ jobs:
       # - name: Upload Digest
       #   uses: actions/upload-artifact@v4
       #   with:
-      #     name: digests-${{ env.PLATFORM_PAIR }}
+      #     name: digests-${{ env.METACALL_PLATFORM }}
       #     path: /tmp/digests/*
       #     if-no-files-found: error
       #     retention-days: 1
