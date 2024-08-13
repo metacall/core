@@ -199,8 +199,28 @@ sub_cache() {
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build cli
 }
 
+# Build MetaCall Docker Compose with multi-platform specifier (link manually dockerignore files)
+sub_platform() {
+	if [ -z "$METACALL_PLATFORM" ]; then
+		echo "Error: METACALL_PLATFORM variable not defined"
+		exit 1
+	fi
+
+	ln -sf tools/deps/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build dev
+
+	ln -sf tools/runtime/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build runtime
+
+	ln -sf tools/cli/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build cli
+}
+
 # Push MetaCall Docker Compose
-sub_push(){
+sub_push() {
 	if [ -z "$IMAGE_NAME" ]; then
 		echo "Error: IMAGE_NAME variable not defined"
 		exit 1
@@ -228,7 +248,7 @@ sub_push(){
 }
 
 # Version MetaCall Docker Compose
-sub_version(){
+sub_version() {
 	if [ -z "$IMAGE_NAME" ]; then
 		echo "Error: IMAGE_NAME variable not defined"
 		exit 1
@@ -258,7 +278,7 @@ sub_version(){
 }
 
 # Pack MetaCall Docker Compose
-sub_pack(){
+sub_pack() {
 	if [ -z "$ARTIFACTS_PATH" ]; then
 		echo "Error: ARTIFACTS_PATH variable not defined"
 		exit 1
@@ -299,6 +319,7 @@ sub_help() {
 	echo "	test-memory-sanitizer"
 	echo "	coverage"
 	echo "	cache"
+	echo "	platform"
 	echo "	push"
 	echo "	pack"
 	echo ""
@@ -334,6 +355,9 @@ case "$1" in
 		;;
 	cache)
 		sub_cache
+		;;
+	platform)
+		sub_platform
 		;;
 	push)
 		sub_push
