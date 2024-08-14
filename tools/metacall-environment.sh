@@ -362,6 +362,33 @@ sub_netcore7(){
 			$SUDO_CMD apt-get update
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
+
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
+
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ]; then
+						CODENAME="unstable"
+					else
+						CODENAME="${VERSION_CODENAME}"
+					fi
+					;;
+				*)
+					# Ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+					fi
+					;;
+			esac
+
+			if [ "${CODENAME}" = "noble" ]; then
+				$SUDO_CMD apt-get install -y --no-install-recommends software-properties-common
+				$SUDO_CMD add-apt-repository ppa:dotnet/backports
+			fi
+
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache dotnet7-sdk
