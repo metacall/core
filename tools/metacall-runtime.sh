@@ -226,7 +226,7 @@ sub_rpc(){
 					;;
 			esac
 
-			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "unstable" ]; then
+			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
 				sub_apt_install_hold libcurl4t64
 			else
 				sub_apt_install_hold libcurl4
@@ -345,7 +345,7 @@ sub_backtrace(){
 					;;
 			esac
 
-			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "unstable" ]; then
+			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
 				sub_apt_install_hold libdw1t64 libelf1t64
 			else
 				sub_apt_install_hold libdw1
