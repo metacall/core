@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         build: [debug, release]
-        image: ["debian:trixie-slim", "debian:bookworm-slim", "ubuntu:jammy", "ubuntu:mantic"] # TODO: "alpine:3.17"
+        image: ["debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:jammy"] # TODO: "alpine:3.17"
 
     steps:
       - name: Check out the repository
