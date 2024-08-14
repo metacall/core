@@ -82,6 +82,18 @@ const metacall = (name, ...args) => {
 	return addon.metacall(name, ...args);
 };
 
+const metacallfms = (name, buffer) => {
+	if (Object.prototype.toString.call(name) !== '[object String]') {
+		throw Error('Function name should be of string type.');
+	}
+
+	if (Object.prototype.toString.call(buffer) !== '[object String]') {
+		throw Error('Buffer should be of string type.');
+	}
+
+	return addon.metacallfms(name, buffer);
+};
+
 const metacall_await = (name, ...args) => {
 	if (Object.prototype.toString.call(name) !== '[object String]') {
 		throw Error('Function name should be of string type.');
@@ -172,7 +184,7 @@ const metacall_handle = (tag, name) => {
 	// TODO: This can be implemented with metacall_handle C API, meanwhile we use this trick
 	const inspect = metacall_inspect();
 
-	if (inspect === {} || inspect === undefined) {
+	if (inspect === undefined) {
 		return null;
 	}
 
@@ -192,6 +204,7 @@ const metacall_require = (tag, name) => {
 /* Module exports */
 const module_exports = {
 	metacall,
+	metacallfms,
 	metacall_await,
 	metacall_inspect,
 	metacall_load_from_file,

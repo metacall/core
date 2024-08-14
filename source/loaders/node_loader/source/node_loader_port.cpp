@@ -47,7 +47,6 @@ napi_value node_loader_port_metacall(napi_env env, napi_callback_info info)
 	if (argc == 0)
 	{
 		napi_throw_error(env, nullptr, "Invalid number of arguments");
-
 		return nullptr;
 	}
 
@@ -65,7 +64,8 @@ napi_value node_loader_port_metacall(napi_env env, napi_callback_info info)
 	if (name == nullptr)
 	{
 		napi_throw_error(env, nullptr, "Invalid function name allocation");
-
+		delete[] argv;
+		delete[] args;
 		return nullptr;
 	}
 
@@ -114,6 +114,105 @@ napi_value node_loader_port_metacall(napi_env env, napi_callback_info info)
 	return result;
 }
 
+napi_value node_loader_port_metacallfms(napi_env env, napi_callback_info info)
+{
+	size_t argc = 0;
+
+	napi_get_cb_info(env, info, &argc, nullptr, nullptr, nullptr);
+
+	if (argc != 2)
+	{
+		napi_throw_error(env, nullptr, "Invalid number of arguments");
+		return nullptr;
+	}
+
+	napi_value *argv = new napi_value[argc];
+	napi_value recv;
+
+	napi_get_cb_info(env, info, &argc, argv, &recv, nullptr);
+
+	size_t name_length;
+	napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &name_length);
+
+	char *name = new char[name_length + 1];
+
+	if (name == nullptr)
+	{
+		napi_throw_error(env, nullptr, "Invalid function name allocation");
+		delete[] argv;
+		return nullptr;
+	}
+
+	status = napi_get_value_string_utf8(env, argv[0], name, name_length + 1, &name_length);
+
+	name[name_length] = '\0';
+
+	node_loader_impl_exception(env, status);
+
+	void *func = metacall_function(name);
+
+	if (func == NULL)
+	{
+		napi_throw_error(env, nullptr, "The function does not exist");
+		delete[] argv;
+		delete[] name;
+		return nullptr;
+	}
+
+	size_t buffer_length;
+	status = napi_get_value_string_utf8(env, argv[1], nullptr, 0, &buffer_length);
+
+	char *buffer = new char[buffer_length + 1];
+
+	if (buffer == nullptr)
+	{
+		napi_throw_error(env, nullptr, "Invalid function buffer allocation");
+		delete[] argv;
+		delete[] name;
+		return nullptr;
+	}
+
+	status = napi_get_value_string_utf8(env, argv[1], buffer, buffer_length + 1, &buffer_length);
+
+	buffer[buffer_length] = '\0';
+
+	node_loader_impl_exception(env, status);
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl(node_loader_tag);
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	/* Call to the function */
+	void *ret = metacallfms(func, buffer, buffer_length + 1, allocator);
+
+	metacall_allocator_destroy(allocator);
+
+	napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+	if (metacall_value_id(ret) == METACALL_THROWABLE)
+	{
+		napi_throw(env, result);
+	}
+
+	/* Release current reference of the environment */
+	// node_loader_impl_env(node_impl, nullptr);
+
+	metacall_value_destroy(ret);
+
+	delete[] argv;
+	delete[] name;
+	delete[] buffer;
+
+	return result;
+}
+
 napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
@@ -123,7 +222,6 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 	if (argc == 0)
 	{
 		napi_throw_error(env, nullptr, "Invalid number of arguments");
-
 		return nullptr;
 	}
 
@@ -142,7 +240,8 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 	if (name == nullptr)
 	{
 		napi_throw_error(env, nullptr, "Invalid function name allocation");
-
+		delete[] argv;
+		delete[] args;
 		return nullptr;
 	}
 
@@ -414,8 +513,8 @@ napi_value node_loader_port_metacall_load_from_memory(napi_env env, napi_callbac
 
 	if (script == nullptr)
 	{
-		delete[] tag;
 		napi_throw_error(env, nullptr, "MetaCall could not load from memory, script allocation failed");
+		delete[] tag;
 		return nullptr;
 	}
 
@@ -489,8 +588,8 @@ napi_value node_loader_port_metacall_load_from_memory_export(napi_env env, napi_
 
 	if (script == nullptr)
 	{
-		delete[] tag;
 		napi_throw_error(env, nullptr, "MetaCall could not load from memory, script allocation failed");
+		delete[] tag;
 		return nullptr;
 	}
 
@@ -715,6 +814,7 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 
 #define NODE_LOADER_PORT_DECL_X_MACRO(x) \
 	x(metacall); \
+	x(metacallfms); \
 	x(metacall_await); \
 	x(metacall_load_from_file); \
 	x(metacall_load_from_file_export); \

@@ -1,5 +1,6 @@
 declare module 'metacall' {
 	export function metacall(name: string, ...args: any): any;
+	export function metacallfms(name: string, buffer: string): any;
 	export function metacall_load_from_file(tag: string, paths: string[]): number;
 	export function metacall_load_from_file_export(tag: string, paths: string[]): any;
 	export function metacall_load_from_memory(tag: string, code: string): number;

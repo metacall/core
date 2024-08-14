@@ -26,7 +26,7 @@ const mocha = new Mocha();
 const testDir = path.resolve(__dirname, 'test');
 
 fs.readdirSync(testDir).filter((file) => {
-	return file.substr(-3) === '.js';
+	return path.extname(file) === '.js';
 }).forEach((file) => {
 	mocha.addFile(
 		path.join(testDir, file)

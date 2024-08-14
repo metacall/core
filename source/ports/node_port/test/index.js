@@ -24,6 +24,7 @@ const assert = require('assert');
 
 const {
 	metacall,
+	metacallfms,
 	metacall_load_from_file,
 	metacall_load_from_file_export,
 	metacall_load_from_memory,
@@ -37,6 +38,7 @@ describe('metacall', () => {
 	describe('defined', () => {
 		it('functions metacall and metacall_load_from_file must be defined', () => {
 			assert.notStrictEqual(metacall, undefined);
+			assert.notStrictEqual(metacallfms, undefined);
 			assert.notStrictEqual(metacall_load_from_memory, undefined);
 			assert.notStrictEqual(metacall_load_from_file, undefined);
 			assert.notStrictEqual(metacall_load_from_memory_export, undefined);
@@ -278,6 +280,13 @@ describe('metacall', () => {
 				assert.strictEqual(metacall('add', 5, 12), 17);
 			});
 		}
+	});
+
+	describe('call by map', () => {
+		it('metacallfms (py)', () => {
+			assert.strictEqual(metacallfms('s_sum', '{"left":2,"right":2}'), 4);
+			assert.strictEqual(metacallfms('s_sum', '{"right":2,"left":2}'), 4);
+		});
 	});
 
 	describe('callback', () => {
