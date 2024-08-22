@@ -76,4 +76,4 @@ jobs:
           workflow_file_name: ci.yml
           wait_workflow: true
           client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: master
