@@ -50,7 +50,7 @@ TEST_F(metacall_plugin_extension_invalid_path_test, DefaultConstructor)
 
 	EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(result));
 
-	EXPECT_EQ((int)4, (int)metacall_value_to_int(result));
+	EXPECT_EQ((int)0, (int)metacall_value_to_int(result));
 
 	metacall_value_destroy(args[0]);
 	metacall_value_destroy(args[1]);

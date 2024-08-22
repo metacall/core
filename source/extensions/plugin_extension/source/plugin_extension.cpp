@@ -70,8 +70,8 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 
 	if (fs::is_directory(fs::path(ext_path)) == false)
 	{
-		log_write("metacall", LOG_LEVEL_WARNING, "Folder %s not found, plugins will not be loaded", ext_path.c_str());
-		return metacall_value_create_int(4);
+		/* If the directory does not exist, we do nothing */
+		return metacall_value_create_int(0);
 	}
 
 	void **handle_ptr = NULL;
