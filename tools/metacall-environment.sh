@@ -114,27 +114,16 @@ sub_swig(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends g++ libpcre3-dev tar
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends swig
 
 			# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3-setuptools
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			$SUDO_CMD apk add --no-cache g++ pcre-dev tar
+			$SUDO_CMD apk add --no-cache swig
 
 			# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
 			$SUDO_CMD apk add --no-cache py3-setuptools
 		fi
-
-		wget http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz
-
-		tar -xzf swig-4.0.1.tar.gz
-		cd swig-4.0.1
-		./configure --prefix=/usr/local
-		make -j$(getconf _NPROCESSORS_ONLN)
-		$SUDO_CMD make install
-		cd ..
-		rm -rf swig-4.0.1
-
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install swig
 	fi
