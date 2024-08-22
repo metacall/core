@@ -64,3 +64,20 @@ jobs:
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+
+  windows-distributable:
+    name: Windows Distributable Dispatch
+    needs: windows-test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master'
+    steps:
+      - name: Windows Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: distributable-windows
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: ci.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}

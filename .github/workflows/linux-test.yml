@@ -35,3 +35,45 @@ jobs:
         env:
           METACALL_BUILD_TYPE: ${{ matrix.build }}
           METACALL_BASE_IMAGE: ${{ matrix.image }}
+
+  linux-sanitizer-test:
+    name: Linux GCC Sanitizer Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:jammy"]
+        sanitizer: [address-sanitizer, thread-sanitizer] # TODO: memory-sanitizer not supported by GCC
+
+    env:
+      SANITIZER_SKIP_SUMMARY: 1
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install, build and run thread sanitizer tests
+        run: ./docker-compose.sh test-${{ matrix.sanitizer }}
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
+  linux-distributable:
+    name: Linux Distributable Dispatch
+    needs: [linux-test, linux-sanitizer-test]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master'
+    steps:
+      - name: Linux Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: distributable-linux
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: ci.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}

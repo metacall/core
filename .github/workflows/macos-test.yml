@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  mac-test:
+  macos-test:
     name: MacOS Clang Test
     runs-on: macos-latest
 
@@ -95,3 +95,30 @@ jobs:
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+
+  macos-distributable:
+    name: MacOS Distributable Dispatch
+    needs: macos-test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master'
+    steps:
+      - name: Homebrew Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: homebrew
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: test.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}
+      - name: MacOS Workflow Dispatch
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: metacall
+          repo: distributable-macos
+          github_token: ${{ secrets.G_PERSONAL_ACCESS_TOKEN }}
+          workflow_file_name: ci.yml
+          wait_workflow: true
+          client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
+          ref: ${{ github.head_ref || github.ref_name }}
