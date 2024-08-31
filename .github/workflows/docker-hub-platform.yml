@@ -1,24 +1,17 @@
 name: Build and Push Docker Image for Multiple Architectures
-
 on:
-  # To enable manual triggering of this workflow
   workflow_dispatch:
-
-  # Trigger for pushes to master and tags
   push:
     branches:
       - master
       - develop # TODO: Remove this
     tags:
       - 'v*.*.*'
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-
 env:
   IMAGE_NAME: index.docker.io/metacall/core
-
 jobs:
   build:
     name: Build
@@ -36,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      
       - name: Define Platform
         run: |
           PLATFORM=${{ matrix.platform }}
@@ -54,78 +47,86 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
+      
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Build MetaCall Docker Images
-        run: bash ./docker-compose.sh platform
-
-      # # TODO: Build with alpine and provide multiple tags (debian & alpine) once all tests pass
-      # - name: Push MetaCall Docker Image to DockerHub
-      #   run: |
-      #     if [[ "${{ github.ref == 'refs/heads/master' }}" = true ]]; then
-      #       bash ./docker-compose.sh push
-      #     elif [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
-      #       bash ./docker-compose.sh version
-      #     else
-      #       echo "Failed to push the docker images"
-      #       exit 1
-      #     fi
-
-      # - name: Export Digest
-      #   run: |
-      #     mkdir -p /tmp/digests
-      #     digest="${{ steps.build.outputs.digest }}"
-      #     touch "/tmp/digests/${digest#sha256:}"          
       
-      # - name: Upload Digest
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: digests-${{ env.METACALL_PLATFORM_PAIR }}
-      #     path: /tmp/digests/*
-      #     if-no-files-found: error
-      #     retention-days: 1
-
+      - name: Build and Push MetaCall Docker Images
+        id: build_and_push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Export Digest
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build_and_push.outputs.digest }}"
+          touch "/tmp/digests/${METACALL_PLATFORM_PAIR}_${digest#sha256:}"
+      
+      - name: Upload Digest
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+      
       - name: Logout from DockerHub
+        if: always()
         run: docker logout
 
-  # merge:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - build
-  #   steps:
-  #     - name: Download Digests
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         path: /tmp/digests
-  #         pattern: digests-*
-  #         merge-multiple: true
+  merge:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Digests
+        uses: actions/download-artifact@v4
+        with:
+          name: digests
+          path: /tmp/digests
       
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-  #     - name: Docker Metadata
-  #       id: meta
-  #       uses: docker/metadata-action@v5
-  #       with:
-  #         images: ${{ env.IMAGE_NAME }}
+      - name: Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
       
-  #     - name: Login to DockerHub
-  #       uses: docker/login-action@v3
-  #       with:
-  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       
-  #     - name: Create manifest list and push
-  #       working-directory: /tmp/digests
-  #       run: |
-  #         docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-  #           $(printf '${{ env.IMAGE_NAME }}@sha256:%s ' *)
+      - name: Create and Push Manifest List
+        run: |
+          platforms=("linux-amd64" "linux-arm64" "linux-arm-v6" "linux-arm-v7")
+          manifests=""
+          for platform in "${platforms[@]}"; do
+            digest=$(cat /tmp/digests/${platform}_*)
+            manifests="${manifests} ${IMAGE_NAME}@${digest}"
+          done
+          docker buildx imagetools create -t ${IMAGE_NAME}:${{ steps.meta.outputs.version }} ${manifests}
+          docker buildx imagetools create -t ${IMAGE_NAME}:latest ${manifests}
       
-  #     - name: Inspect image
-  #       run: |
-  #         docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+      - name: Inspect Image
+        run: |
+          docker buildx imagetools inspect ${IMAGE_NAME}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${IMAGE_NAME}:latest
+      
+      - name: Logout from DockerHub
+        if: always()
+        run: docker logout
