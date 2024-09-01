@@ -37,6 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Define Platform
+        id: define-platform
         run: |
           PLATFORM=${{ matrix.platform }}
           PLATFORM_SAFE=${PLATFORM//\//-} # Replace slashes with dashes
@@ -73,7 +74,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.platform //\//- }} # Replaced slashes with dashes
+          name: digests-${{ steps.define-platform.outputs.platform_safe }} # Using output from Define Platform step
           path: /tmp/digests/*
           retention-days: 1
 
