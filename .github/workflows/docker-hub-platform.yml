@@ -80,7 +80,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ github.run_id }}-${{ github.job }} # Ensure unique artifact name
+          name: digests-${{ github.run_id }}-${{ github.job }}-${{ github.run_attempt }}-${{ runner.os }}-${{ matrix.platform }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
