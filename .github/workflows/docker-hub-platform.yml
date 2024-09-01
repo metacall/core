@@ -72,7 +72,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.platform }}
+          name: digests-${{ matrix.platform //\//- }} # Replaced slashes with dashes
           path: /tmp/digests/*
           retention-days: 1
 
@@ -83,7 +83,7 @@ jobs:
       - name: Download all digests
         uses: actions/download-artifact@v4
         with:
-          name: digests-*
+          name: digests-linux-amd64 # Update this for each platform as needed
           path: /tmp/digests
 
       - name: Set up Docker Buildx
@@ -94,12 +94,6 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
-
-      # - name: Login to DockerHub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
-      #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Create Manifest List (without pushing)
         run: |
