@@ -74,7 +74,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ steps.define-platform.outputs.platform_safe }} # Using output from Define Platform step
+          name: digests-${{ steps.define-platform.outputs.platform_safe }}-${{ github.run_id }}  # Adding run_id for uniqueness
           path: /tmp/digests/*
           retention-days: 1
 
@@ -85,7 +85,7 @@ jobs:
       - name: Download all digests
         uses: actions/download-artifact@v4
         with:
-          name: digests-linux-amd64 # Adjust as needed for each platform
+          name: digests-${{ github.run_id }}  # Use run_id here as well for consistency
           path: /tmp/digests
 
       - name: Set up Docker Buildx
