@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - develop # TODO: Remove this
+      - feature/**
     tags:
       - 'v*.*.*'
 concurrency:
