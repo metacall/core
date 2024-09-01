@@ -6,7 +6,7 @@ on:
     branches:
       - master
       - develop
-      - feature/** # Added to run on feature branches
+      - feature/**
     tags:
       - 'v*.*.*'
 
@@ -29,7 +29,6 @@ jobs:
           - linux/arm64
           - linux/arm/v6
           - linux/arm/v7
-
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -74,7 +73,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ steps.define-platform.outputs.platform_safe }}-${{ github.run_id }}  # Adding run_id for uniqueness
+          name: digests-${{ env.METACALL_PLATFORM_PAIR }}
           path: /tmp/digests/*
           retention-days: 1
 
@@ -85,8 +84,9 @@ jobs:
       - name: Download all digests
         uses: actions/download-artifact@v4
         with:
-          name: digests-${{ github.run_id }}  # Use run_id here as well for consistency
+          pattern: digests-*
           path: /tmp/digests
+          merge-multiple: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
