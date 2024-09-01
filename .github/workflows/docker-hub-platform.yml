@@ -1,4 +1,5 @@
 name: Build and Push Docker Image for Multiple Architectures
+
 on:
   workflow_dispatch:
   push:
@@ -8,11 +9,14 @@ on:
       - feature/** # Added to run on feature branches
     tags:
       - 'v*.*.*'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
 env:
   IMAGE_NAME: index.docker.io/metacall/core
+
 jobs:
   build:
     name: Build
@@ -25,36 +29,46 @@ jobs:
           - linux/arm64
           - linux/arm/v6
           - linux/arm/v7
+
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Define Platform
         run: |
           PLATFORM=${{ matrix.platform }}
           echo "METACALL_PLATFORM=${PLATFORM}" >> $GITHUB_ENV
           echo "METACALL_PLATFORM_PAIR=${PLATFORM//\//-}" >> $GITHUB_ENV
-      
+
       - name: Docker Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
-      
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
+      # Uncomment this section if you plan to log in to DockerHub
       # - name: Login to DockerHub
       #   uses: docker/login-action@v3
       #   with:
       #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build MetaCall Docker Images
         id: build_image
         uses: docker/build-push-action@v5
@@ -65,21 +79,24 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
       - name: Export Digest
         run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build_image.outputs.digest }}"
           touch "/tmp/digests/${METACALL_PLATFORM_PAIR}_${digest#sha256:}"
-      
+
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests
+          name: digests-${{ github.run_id }}-${{ github.job }} # Ensure unique artifact name
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
-      
+
+      # Uncomment this section if you plan to log out from DockerHub
       # - name: Logout from DockerHub
       #   if: always()
       #   run: docker logout
@@ -91,25 +108,26 @@ jobs:
       - name: Download Digests
         uses: actions/download-artifact@v4
         with:
-          name: digests
+          name: digests-${{ github.run_id }}-${{ github.job }} # Match the uploaded artifact name
           path: /tmp/digests
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Docker Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
-      
+
+      # Uncomment this section if you plan to log in to DockerHub
       # - name: Login to DockerHub
       #   uses: docker/login-action@v3
       #   with:
       #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      
-      - name: Create Manifest List (without pushing)
+
+      - name: Create and Push Manifest List
         run: |
           platforms=("linux-amd64" "linux-arm64" "linux-arm-v6" "linux-arm-v7")
           manifests=""
@@ -117,14 +135,16 @@ jobs:
             digest=$(cat /tmp/digests/${platform}_*)
             manifests="${manifests} ${IMAGE_NAME}@${digest}"
           done
-          echo "Would create manifest list with: ${manifests}"
-          echo "Would tag as: ${IMAGE_NAME}:${{ steps.meta.outputs.version }} and ${IMAGE_NAME}:latest"
-      
-      - name: Simulate Image Inspection
+          docker manifest create ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} ${manifests}
+          docker manifest push ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          docker manifest push ${{ env.IMAGE_NAME }}:latest
+
+      - name: Inspect Images
         run: |
-          echo "Would inspect: ${IMAGE_NAME}:${{ steps.meta.outputs.version }}"
-          echo "Would inspect: ${IMAGE_NAME}:latest"
-      
+          docker manifest inspect ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          docker manifest inspect ${{ env.IMAGE_NAME }}:latest
+
+      # Uncomment this section if you plan to log out from DockerHub
       # - name: Logout from DockerHub
       #   if: always()
       #   run: docker logout
