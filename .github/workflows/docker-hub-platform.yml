@@ -39,8 +39,9 @@ jobs:
       - name: Define Platform
         run: |
           PLATFORM=${{ matrix.platform }}
+          PLATFORM_SAFE=${PLATFORM//\//-} # Replace slashes with dashes
           echo "METACALL_PLATFORM=${PLATFORM}" >> $GITHUB_ENV
-          echo "METACALL_PLATFORM_PAIR=${PLATFORM//\//-}" >> $GITHUB_ENV
+          echo "METACALL_PLATFORM_PAIR=${PLATFORM_SAFE}" >> $GITHUB_ENV
 
       - name: Docker Metadata
         id: meta
@@ -72,7 +73,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.platform }}
+          name: digests-${{ matrix.platform //\//- }} # Replaced slashes with dashes
           path: /tmp/digests/*
           retention-days: 1
 
@@ -83,7 +84,7 @@ jobs:
       - name: Download all digests
         uses: actions/download-artifact@v4
         with:
-          name: digests-linux-amd64 # Example for one platform; you might need to handle this for all platforms
+          name: digests-linux-amd64 # Adjust as needed for each platform
           path: /tmp/digests
 
       - name: Set up Docker Buildx
