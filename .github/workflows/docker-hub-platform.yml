@@ -54,20 +54,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Uncomment this section if you plan to log in to DockerHub
       # - name: Login to DockerHub
       #   uses: docker/login-action@v3
       #   with:
       #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
       - name: Build MetaCall Docker Images
         id: build_image
@@ -79,8 +70,6 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
 
       - name: Export Digest
         run: |
@@ -96,7 +85,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      # Uncomment this section if you plan to log out from DockerHub
       # - name: Logout from DockerHub
       #   if: always()
       #   run: docker logout
@@ -120,14 +108,13 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
 
-      # Uncomment this section if you plan to log in to DockerHub
       # - name: Login to DockerHub
       #   uses: docker/login-action@v3
       #   with:
       #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Create and Push Manifest List
+      - name: Create Manifest List (without pushing)
         run: |
           platforms=("linux-amd64" "linux-arm64" "linux-arm-v6" "linux-arm-v7")
           manifests=""
@@ -135,16 +122,14 @@ jobs:
             digest=$(cat /tmp/digests/${platform}_*)
             manifests="${manifests} ${IMAGE_NAME}@${digest}"
           done
-          docker manifest create ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} ${manifests}
-          docker manifest push ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-          docker manifest push ${{ env.IMAGE_NAME }}:latest
+          echo "Would create manifest list with: ${manifests}"
+          echo "Would tag as: ${IMAGE_NAME}:${{ steps.meta.outputs.version }} and ${IMAGE_NAME}:latest"
 
-      - name: Inspect Images
+      - name: Simulate Image Inspection
         run: |
-          docker manifest inspect ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-          docker manifest inspect ${{ env.IMAGE_NAME }}:latest
+          echo "Would inspect: ${IMAGE_NAME}:${{ steps.meta.outputs.version }}"
+          echo "Would inspect: ${IMAGE_NAME}:latest"
 
-      # Uncomment this section if you plan to log out from DockerHub
       # - name: Logout from DockerHub
       #   if: always()
       #   run: docker logout
