@@ -61,15 +61,7 @@ jobs:
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build MetaCall Docker Images
-        id: build_image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: ${{ matrix.platform }}
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+        run: bash ./docker-compose.sh platform
 
       - name: Export Digest
         run: |
@@ -80,7 +72,7 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ github.run_id }}-${{ github.job }}-${{ github.run_attempt }}-${{ runner.os }}-${{ matrix.platform//\//- }}
+          name: digests
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
