@@ -72,23 +72,18 @@ jobs:
       - name: Upload Digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests
+          name: digests-${{ matrix.platform }}
           path: /tmp/digests/*
-          if-no-files-found: error
           retention-days: 1
-
-      # - name: Logout from DockerHub
-      #   if: always()
-      #   run: docker logout
 
   merge:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download Digests
+      - name: Download all digests
         uses: actions/download-artifact@v4
         with:
-          name: digests-${{ github.run_id }}-${{ github.job }} # Match the uploaded artifact name
+          name: digests-*
           path: /tmp/digests
 
       - name: Set up Docker Buildx
