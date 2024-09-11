@@ -82,16 +82,20 @@ RUN mkdir -p /usr/local/scripts \
 	&& rm -rf $METACALL_PATH/metacall-runtime.sh
 
 # Copy libraries from builder
-COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.ts /usr/local/lib/*.node /usr/local/lib/
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
 
-# Copy plugins from builder
-COPY --from=builder /usr/local/lib/plugins /usr/local/lib/plugins
-
-# Copy node dependencies (and port) from builder
-COPY --from=builder /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
-
-# Copy python dependencies (and port) from builder
-COPY --from=builder /usr/local/lib/python3.*/dist-packages/metacall/ /usr/local/lib/python3.*/dist-packages/metacall/
+# Delete unwanted files from libraries
+RUN ls /usr/local/lib/ \
+	| grep -v '.*\.so$' \
+	| grep -v '.*\.so.*' \
+	| grep -v '.*\.dll$' \
+	| grep -v '.*\.js$' \
+	| grep -v '.*\.ts$' \
+	| grep -v '.*\.node$' \
+	| grep -v '^plugins$' \
+	| grep -v '^node_modules$' \
+	| grep -v '^python3\..*' \
+	| xargs rm -rf
 
 # Copy headers from builder
 COPY --from=builder /usr/local/include/metacall /usr/local/include/metacall
