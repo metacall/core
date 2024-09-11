@@ -16,20 +16,40 @@ use std::{
 pub type MetacallFutureHandler = fn(Box<dyn MetacallValue>, Box<dyn MetacallValue>);
 
 /// Represents MetacallFuture. Keep in mind that it's not supported to pass a future as an argument.
-/// Usage example: ...
+/// 
+/// ## **Usage example:**
+/// 
+/// **Javascript Code:**
+/// ```javascript
+/// function doubleValueAfterTime(value, delay) {
+///     return new Promise((resolve, reject) => {
+///         setTimeout(() => {
+///             if (typeof value === 'number') {
+///                 resolve(value * 2); // Resolves if the value is a number
+///             } else {
+///                 reject('Error: The provided value is not a number.'); // Rejects if the value is not a number
+///             }
+///         }, delay);
+///     });
+/// }
 /// ```
+/// 
+/// **Calling Example:**
+/// ```rust
 /// use metacall::{MetacallValue, MetacallFuture, metacall};
-///
-/// fn resolve(result: impl MetacallValue, data: impl MetacallValue) {
-///     println!("Resolve:: result: {:#?}, data: {:#?}", result, data);
+/// fn runner(x: i32) {
+/// 
+///     fn resolve(result: impl MetacallValue, data: impl MetacallValue) {
+///         println!("Resolve:: result: {:#?}, data: {:#?}", result, data); // 
+///     }
+/// 
+///     fn reject(error: impl MetacallValue, data: impl MetacallValue) {
+///         println!("Reject:: error: {:#?}, data: {:#?}", error, data);
+///     }
+/// 
+///     let future = metacall::<MetacallFuture>("doubleValueAfterTime", [1, 2000]).unwrap();
+///     future.then(resolve).catch(reject).await_fut();
 /// }
-///
-/// fn reject(result: impl MetacallValue, data: impl MetacallValue) {
-///     println!("Reject:: result: {:#?}, data: {:#?}", result, data);
-/// }
-///
-/// let future = metacall::<MetacallFuture>("async_function", [1]).unwrap();
-/// future.then(resolve).catch(reject).await_fut();
 /// ```
 #[repr(C)]
 pub struct MetacallFuture {
@@ -141,20 +161,88 @@ impl MetacallFuture {
     }
 
     /// Adds a resolve callback.
+    /// 
+    /// ## **Usage example:**
+    /// 
+    /// 
+    /// ```javascript
+    /// // Javascript script
+    /// 
+    /// function func_always_rejects(value, delay) {
+    ///     return new Promise((resolve) => {
+    ///         resolve('Resolve message.'); 
+    ///     });
+    /// }
+    /// ```
+    /// **Calling Example:**
+    /// 
+    /// ```rust
+    /// use metacall::{MetacallValue, MetacallFuture, metacall_no_args};
+    /// fn calling() {
+    ///     fn reject(result: impl MetacallValue, _: impl MetacallValue) {
+    ///         println!("Resolve:: {:#?}", result); // Resolve:: "Resolve message"
+    ///     }
+    /// 
+    ///     let future = metacall_no_args::<MetacallFuture>("func_always_resolve").unwrap();
+    ///     future.then(resolve).catch(reject).await_fut();
+    /// }
+    /// ```
     pub fn then(mut self, resolve: MetacallFutureHandler) -> Self {
         self.resolve = Some(resolve);
-
+        
         self
     }
-
+    
     /// Adds a reject callback.
+    /// 
+    /// ## **Usage example:**
+    /// 
+    /// ```javascript
+    /// // Javascript script
+    /// function func_always_rejects(value, delay) {
+    ///     return new Promise((_, reject) => {
+    ///         reject('Error: Reject message.'); 
+    ///     });
+    /// }
+    /// ```
+    /// **Calling Example:**
+    /// ```rust
+    /// use metacall::{MetacallValue, MetacallFuture, metacall_no_args};
+    /// fn calling() {
+    ///     fn reject(error: impl MetacallValue, _: impl MetacallValue) {
+    ///         println!("Reject:: error: {:#?}", error); // Reject:: error: "Error: Reject message"
+    ///     }
+    /// 
+    ///     let future = metacall_no_args::<MetacallFuture>("func_always_rejects").unwrap();
+    ///     future.then(resolve).catch(reject).await_fut();
+    /// }
+    /// ```
     pub fn catch(mut self, reject: MetacallFutureHandler) -> Self {
         self.reject = Some(reject);
 
         self
     }
 
-    /// Adds data.
+    /// Adds data to use it inside the `resolver` and `reject`.
+    /// 
+    /// Example:
+    /// ```rust
+    /// use metacall::{MetacallValue, MetacallFuture, metacall};
+    /// 
+    /// fn run() {
+    ///   let x = 10;
+    ///   fn resolve(result: impl MetacallValue, data: impl MetacallValue) {
+    ///       println!("X = {data}");
+    ///   }
+    ///    
+    ///   fn reject(result: impl MetacallValue, data: impl MetacallValue) {
+    ///       println!("X = {data}");
+    ///   }
+    ///     
+    ///   let future = metacall::<MetacallFuture>("async_function", [1]).unwrap();
+    ///   future.then(resolve).catch(reject),data(x).await_fut();
+    /// }
+    /// ```
     pub fn data(mut self, data: impl MetacallValue) -> Self {
         unsafe { drop(Box::from_raw(self.data)) };
 
