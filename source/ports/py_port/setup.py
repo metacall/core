@@ -114,7 +114,7 @@ options = {
 }
 
 # Exclude base packages
-exclude_packages =  ['contrib', 'docs', 'tests', 'CMakeLists.txt']
+exclude_packages =  ['contrib', 'docs', 'test', 'CMakeLists.txt']
 
 # TODO: Review helper
 # # Detect if metacall port is already installed
