@@ -93,9 +93,9 @@ sub_python(){
 	cd $ROOT_DIR
 
 	if [ "${BUILD_TYPE}" = "Debug" ]; then
-		sub_apt_install_hold python3-dbg libpython3-dbg
+		sub_apt_install_hold libpython3-dbg
 	else
-		sub_apt_install_hold python3
+		sub_apt_install_hold libpython3-dev
 	fi
 }
 
