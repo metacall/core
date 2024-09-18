@@ -180,7 +180,7 @@ sub_python(){
 		pyenv install 3.11.1
 		pyenv global 3.11.1
 		pyenv rehash
-		mkdir -p build
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		ENV_FILE="$ROOT_DIR/build/.env"
 
@@ -224,7 +224,7 @@ sub_ruby(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install ruby@3.2
 		brew link ruby@3.2 --force --overwrite
-		mkdir -p build
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		RUBY_PREFIX="$(brew --prefix ruby@3.2)"
 		RUBY_VERSION="$(ruby -e 'puts RUBY_VERSION')"
@@ -512,6 +512,29 @@ sub_nodejs(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		# TODO: Fork  https://github.com/puerts/backend-nodejs or let metacall build system compile NodeJS library itself
+		# if [ -z "${NodeJS_BUILD_FROM_SOURCE:-}" ]; then
+		# 	# Define node location
+		# 	NODE_PREFIX="$ROOT_DIR/build"
+		# 	# Include binaries into PATH
+		# 	export PATH="$NODE_PREFIX:$PATH"
+
+		# 	# Create install path
+		# 	mkdir -p "$NODE_PREFIX"
+		# 	# Install NodeJS (TODO: Implement arm64 or amd64 detection into ${arch})
+		# 	wget -qO- https://github.com/metacall/libnode/releases/download/v22.6.0/libnode-${arch}-macos.tar.xz | tar xvJ -C $NODE_PREFIX
+		# 	# Install NPM
+		# 	wget -qO- https://registry.npmjs.org/npm/-/npm-10.8.2.tgz | tar xvz -C $NODE_PREFIX
+
+		# 	# Configure NodeJS paths
+		# 	mkdir -p "$ROOT_DIR/build"
+		# 	CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		# 	echo "-DNodeJS_EXECUTABLE=$NODE_PREFIX/node" >> $CMAKE_CONFIG_PATH
+		# 	echo "-DNodeJS_LIBRARY=$NODE_PREFIX/libnode.127.dylib" >> $CMAKE_CONFIG_PATH
+
+		# 	# Configure NPM path
+		# 	echo "-DNPM_ROOT=$NODE_PREFIX" >> $CMAKE_CONFIG_PATH
+		# else
+
 		brew install node@20
 		# Make node 20 the default
 		brew link node@20 --force --overwrite
@@ -523,7 +546,7 @@ sub_nodejs(){
 		export PATH="$NODE_PREFIX/bin:$PATH"
 
 		# Configure NodeJS paths
-		mkdir -p build
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		echo "-DNodeJS_EXECUTABLE=$NODE_PREFIX/bin/node" >> $CMAKE_CONFIG_PATH
 		# echo "-DNodeJS_INCLUDE_DIR=$NODE_PREFIX/include/node" >> $CMAKE_CONFIG_PATH
@@ -531,6 +554,8 @@ sub_nodejs(){
 
 		# Configure NPM path
 		echo "-DNPM_ROOT=$NODE_PREFIX/bin" >> $CMAKE_CONFIG_PATH
+
+		# fi
 	fi
 }
 
@@ -598,7 +623,7 @@ sub_java(){
 		brew install openjdk@17
 		sudo ln -sfn $(brew --prefix openjdk@17)/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
 		JAVA_PREFIX=$(/usr/libexec/java_home -v 17)
-		mkdir -p build
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		echo "-DJAVA_HOME=$JAVA_PREFIX" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
@@ -660,7 +685,7 @@ sub_c(){
 		brew install libffi
 		brew install llvm@$LLVM_VERSION_STRING
 		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
-		mkdir -p build
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
@@ -704,7 +729,7 @@ sub_cobol(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install gnucobol
-		mkdir -p build
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		COBOL_PREFIX=$(brew --prefix gnucobol)
 		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
@@ -842,7 +867,7 @@ sub_backtrace(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install dwarfutils
 		brew install libelf
-		mkdir -p build
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		LIBDWARD_PREFIX=$(brew --prefix dwarfutils)
 		LIBELF_PREFIX=$(brew --prefix libelf)
