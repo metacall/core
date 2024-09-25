@@ -24,10 +24,10 @@ fn main() {
         // When building from Cargo
         let profile = env::var("PROFILE").unwrap();
         match profile.as_str() {
-            "debug" => {
-                println!("cargo:rustc-link-lib=dylib=metacalld");
-            }
-            "release" => {
+            // "debug" => {
+            //     println!("cargo:rustc-link-lib=dylib=metacalld");
+            // }
+            "debug" | "release" => {
                 println!("cargo:rustc-link-lib=dylib=metacall")
             }
             _ => {
