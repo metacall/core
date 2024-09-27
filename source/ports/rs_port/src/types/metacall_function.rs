@@ -60,12 +60,12 @@ impl MetacallFunction {
         &self,
         args: impl IntoIterator<Item = T>,
     ) -> Box<dyn MetacallValue> {
-        parsers::raw_to_metacallobj_untyped(self.call_inner(args))
+        parsers::raw_to_metacallobj_untyped::<T>(self.call_inner(args))
     }
     /// Calls the function without passing arguments and witout type
     /// casting([MetacallValue](MetacallValue)).
     pub fn call_untyped_no_arg<T: MetacallValue>(&self) -> Box<dyn MetacallValue> {
-        parsers::raw_to_metacallobj_untyped(self.call_inner([] as [MetacallNull; 0]))
+        parsers::raw_to_metacallobj_untyped::<T>(self.call_inner([] as [MetacallNull; 0]))
     }
     /// Calls the function with arguments.
     pub fn call<T: MetacallValue, U: MetacallValue>(

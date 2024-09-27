@@ -115,11 +115,11 @@ impl MetacallClass {
         Ok(unsafe { metacall_class_static_get(self.value_to_class(), c_name.as_ptr()) })
     }
     /// Gets static attribute from a class without type casting([MetacallValue](MetacallValue)).
-    pub fn get_attribute_untyped(
+    pub fn get_attribute_untyped<T: 'static>(
         &self,
         name: impl ToString,
     ) -> Result<Box<dyn MetacallValue>, MetacallGetAttributeError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+        Ok(parsers::raw_to_metacallobj_untyped::<T>(
             self.get_attribute_inner(name)?,
         ))
     }
@@ -180,7 +180,7 @@ impl MetacallClass {
         name: impl ToString,
         args: impl IntoIterator<Item = T>,
     ) -> Result<Box<dyn MetacallValue>, MetacallError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+        Ok(parsers::raw_to_metacallobj_untyped::<T>(
             self.call_method_inner::<T>(name, args)?,
         ))
     }
@@ -190,7 +190,7 @@ impl MetacallClass {
         &self,
         name: impl ToString,
     ) -> Result<Box<dyn MetacallValue>, MetacallError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+        Ok(parsers::raw_to_metacallobj_untyped::<T>(
             self.call_method_inner::<T>(name, [])?,
         ))
     }

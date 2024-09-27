@@ -178,7 +178,7 @@ fn test_future() {
         }
     }
 
-    generate_test_custom_validation::<MetacallFuture>(
+    generate_test_custom_validation::<MetacallFuture<_>>(
         "test_future_resolve",
         "future",
         MetacallNull(),
@@ -190,7 +190,7 @@ fn test_future() {
             future.then(resolve).data(String::from("data")).await_fut();
         },
     );
-    generate_test_custom_validation::<MetacallFuture>(
+    generate_test_custom_validation::<MetacallFuture<_>>(
         "test_future_reject",
         "future",
         MetacallNull(),

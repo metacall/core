@@ -38,11 +38,11 @@ fn metacall_inner(
 /// ```
 /// let sum = metacall::metacall_untyped("sum", [1, 2]).unwrap();
 /// ```
-pub fn metacall_untyped(
+pub fn metacall_untyped<T:'static>(
     func: impl ToString,
     args: impl IntoIterator<Item = impl MetacallValue>,
 ) -> Result<Box<dyn MetacallValue>, MetacallError> {
-    Ok(parsers::raw_to_metacallobj_untyped(metacall_inner(
+    Ok(parsers::raw_to_metacallobj_untyped::<T>(metacall_inner(
         func, args,
     )?))
 }
@@ -50,10 +50,10 @@ pub fn metacall_untyped(
 /// ```
 /// let greet = metacall::metacall_untyped_no_arg("sum").unwrap();
 /// ```
-pub fn metacall_untyped_no_arg(
+pub fn metacall_untyped_no_arg<T: 'static>(
     func: impl ToString,
 ) -> Result<Box<dyn MetacallValue>, MetacallError> {
-    metacall_untyped(func, [] as [MetacallNull; 0])
+    metacall_untyped::<T>(func, [] as [MetacallNull; 0])
 }
 /// Calls a function with arguments. The generic parameter is the return type of the function
 /// you're calling. Checkout [MetacallValue](MetacallValue) for possible types.

@@ -266,7 +266,7 @@ impl<T: MetacallValue + Clone> MetacallValue for HashMap<String, T> {
                 slice::from_raw_parts(metacall_value_to_map(v), metacall_value_count(v)).iter()
             {
                 let m_pair = slice::from_raw_parts(metacall_value_to_array(*map_value), 2);
-                let key = match_metacall_value!(parsers::raw_to_metacallobj_untyped_leak(m_pair[0]), {
+                let key = match_metacall_value!(parsers::raw_to_metacallobj_untyped_leak::<T>(m_pair[0]), {
                     str: String => str,
                     num: i16 => num.to_string(),
                     num: i32 => num.to_string(),
@@ -323,7 +323,7 @@ impl MetacallValue for MetacallPointer {
     }
 }
 /// Equivalent to Metacall future type.
-impl MetacallValue for MetacallFuture {
+impl<T: 'static> MetacallValue for MetacallFuture<T> {
     fn get_metacall_id() -> u32 {
         12
     }

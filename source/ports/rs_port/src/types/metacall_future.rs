@@ -13,12 +13,12 @@ use std::{
 /// and the second argument is the data that you may want to access when the function gets called.
 /// Checkout [MetacallFuture resolve](MetacallFuture#method.then) or
 /// [MetacallFuture reject](MetacallFuture#method.catch) for usage.
-pub type MetacallFutureHandler = fn(Box<dyn MetacallValue>, Box<dyn MetacallValue>);
+pub type MetacallFutureHandler<T> = fn(Box<dyn MetacallValue>, T);
 
 /// Represents MetacallFuture. Keep in mind that it's not supported to pass a future as an argument.
-/// 
+///
 /// ## **Usage example:**
-/// 
+///
 /// **Javascript Code:**
 /// ```javascript
 /// function doubleValueAfterTime(value, delay) {
@@ -33,35 +33,35 @@ pub type MetacallFutureHandler = fn(Box<dyn MetacallValue>, Box<dyn MetacallValu
 ///     });
 /// }
 /// ```
-/// 
+///
 /// **Calling Example:**
 /// ```rust
 /// use metacall::{MetacallValue, MetacallFuture, metacall};
 /// fn runner(x: i32) {
-/// 
+///
 ///     fn resolve(result: impl MetacallValue, data: impl MetacallValue) {
-///         println!("Resolve:: result: {:#?}, data: {:#?}", result, data); // 
+///         println!("Resolve:: result: {:#?}, data: {:#?}", result, data); //
 ///     }
-/// 
+///
 ///     fn reject(error: impl MetacallValue, data: impl MetacallValue) {
 ///         println!("Reject:: error: {:#?}, data: {:#?}", error, data);
 ///     }
-/// 
+///
 ///     let future = metacall::<MetacallFuture>("doubleValueAfterTime", [1, 2000]).unwrap();
 ///     future.then(resolve).catch(reject).await_fut();
 /// }
 /// ```
 #[repr(C)]
-pub struct MetacallFuture {
+pub struct MetacallFuture<T> {
     data: *mut dyn MetacallValue,
     leak: bool,
-    reject: Option<MetacallFutureHandler>,
-    resolve: Option<MetacallFutureHandler>,
+    reject: Option<MetacallFutureHandler<T>>,
+    resolve: Option<MetacallFutureHandler<T>>,
     value: *mut c_void,
 }
-unsafe impl Send for MetacallFuture {}
-unsafe impl Sync for MetacallFuture {}
-impl Clone for MetacallFuture {
+unsafe impl<T> Send for MetacallFuture<T> {}
+unsafe impl<T> Sync for MetacallFuture<T> {}
+impl<T> Clone for MetacallFuture<T> {
     fn clone(&self) -> Self {
         Self {
             data: self.data,
@@ -72,7 +72,7 @@ impl Clone for MetacallFuture {
         }
     }
 }
-impl Debug for MetacallFuture {
+impl<T> Debug for MetacallFuture<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let boxed_data = unsafe { Box::from_raw(self.data) };
         let data = if boxed_data.is::<MetacallNull>() {
@@ -101,39 +101,45 @@ impl Debug for MetacallFuture {
     }
 }
 
-type MetacallFutureFFIData = (
+type MetacallFutureFFIData<T> = (
     // Resolve
-    Option<MetacallFutureHandler>,
+    Option<MetacallFutureHandler<T>>,
     // Reject
-    Option<MetacallFutureHandler>,
+    Option<MetacallFutureHandler<T>>,
     // User data
-    *mut dyn MetacallValue,
+    *mut T,
 );
 
-unsafe extern "C" fn resolver(resolve_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
-    let (resolve, _, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData);
+unsafe extern "C" fn resolver<T: 'static>(
+    resolve_data: *mut c_void,
+    upper_data: *mut c_void,
+) -> *mut c_void {
+    let (resolve, _, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData<T>);
     let user_data = Box::from_raw(data);
 
     (resolve.unwrap())(
-        parsers::raw_to_metacallobj_untyped_leak(resolve_data),
-        user_data,
+        parsers::raw_to_metacallobj_untyped_leak::<T>(resolve_data),
+        *user_data,
     );
 
     ptr::null_mut()
 }
-unsafe extern "C" fn rejecter(reject_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
-    let (_, reject, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData);
+unsafe extern "C" fn rejecter<T: 'static>(
+    reject_data: *mut c_void,
+    upper_data: *mut c_void,
+) -> *mut c_void {
+    let (_, reject, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData<T>);
     let user_data = Box::from_raw(data);
 
     (reject.unwrap())(
-        parsers::raw_to_metacallobj_untyped_leak(reject_data),
-        user_data,
+        parsers::raw_to_metacallobj_untyped_leak::<T>(reject_data),
+        *user_data,
     );
 
     ptr::null_mut()
 }
 
-impl MetacallFuture {
+impl<T: 'static> MetacallFuture<T> {
     fn create_null_data() -> *mut dyn MetacallValue {
         Box::into_raw(helpers::metacall_implementer_to_traitobj(MetacallNull()))
     }
@@ -161,47 +167,47 @@ impl MetacallFuture {
     }
 
     /// Adds a resolve callback.
-    /// 
+    ///
     /// ## **Usage example:**
-    /// 
-    /// 
+    ///
+    ///
     /// ```javascript
     /// // Javascript script
-    /// 
+    ///
     /// function func_always_rejects(value, delay) {
     ///     return new Promise((resolve) => {
-    ///         resolve('Resolve message.'); 
+    ///         resolve('Resolve message.');
     ///     });
     /// }
     /// ```
     /// **Calling Example:**
-    /// 
+    ///
     /// ```rust
     /// use metacall::{MetacallValue, MetacallFuture, metacall_no_args};
     /// fn calling() {
     ///     fn reject(result: impl MetacallValue, _: impl MetacallValue) {
     ///         println!("Resolve:: {:#?}", result); // Resolve:: "Resolve message"
     ///     }
-    /// 
-    ///     let future = metacall_no_args::<MetacallFuture>("func_always_resolve").unwrap();
+    ///
+    ///     let future = metacall_no_args::<MetacallFuture<_>>("func_always_resolve").unwrap();
     ///     future.then(resolve).catch(reject).await_fut();
     /// }
     /// ```
-    pub fn then(mut self, resolve: MetacallFutureHandler) -> Self {
+    pub fn then(mut self, resolve: MetacallFutureHandler<T>) -> Self {
         self.resolve = Some(resolve);
-        
+
         self
     }
-    
+
     /// Adds a reject callback.
-    /// 
+    ///
     /// ## **Usage example:**
-    /// 
+    ///
     /// ```javascript
     /// // Javascript script
     /// function func_always_rejects(value, delay) {
     ///     return new Promise((_, reject) => {
-    ///         reject('Error: Reject message.'); 
+    ///         reject('Error: Reject message.');
     ///     });
     /// }
     /// ```
@@ -212,23 +218,23 @@ impl MetacallFuture {
     ///     fn reject(error: impl MetacallValue, _: impl MetacallValue) {
     ///         println!("Reject:: error: {:#?}", error); // Reject:: error: "Error: Reject message"
     ///     }
-    /// 
+    ///
     ///     let future = metacall_no_args::<MetacallFuture>("func_always_rejects").unwrap();
     ///     future.then(resolve).catch(reject).await_fut();
     /// }
     /// ```
-    pub fn catch(mut self, reject: MetacallFutureHandler) -> Self {
+    pub fn catch(mut self, reject: MetacallFutureHandler<T>) -> Self {
         self.reject = Some(reject);
 
         self
     }
 
     /// Adds data to use it inside the `resolver` and `reject`.
-    /// 
+    ///
     /// Example:
     /// ```rust
     /// use metacall::{MetacallValue, MetacallFuture, metacall};
-    /// 
+    ///
     /// fn run() {
     ///   let x = 10;
     ///   fn resolve(result: impl MetacallValue, data: impl MetacallValue) {
@@ -260,11 +266,15 @@ impl MetacallFuture {
             metacall_value_destroy(metacall_await_future(
                 metacall_value_to_future(self.value),
                 if resolve_is_some {
-                    Some(resolver)
+                    Some(resolver::<T>)
                 } else {
                     None
                 },
-                if reject_is_some { Some(rejecter) } else { None },
+                if reject_is_some {
+                    Some(rejecter::<T>)
+                } else {
+                    None
+                },
                 // TODO: Solve the memory leak that happens here
                 // For reproducing the error, use the following commands:
                 // cargo test --no-run
@@ -302,7 +312,7 @@ impl MetacallFuture {
     }
 }
 
-impl Drop for MetacallFuture {
+impl<T> Drop for MetacallFuture<T> {
     fn drop(&mut self) {
         if !self.leak {
             unsafe { metacall_value_destroy(self.value) };

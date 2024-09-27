@@ -30,7 +30,7 @@ pub fn raw_to_metacallobj<T: MetacallValue>(ret: *mut c_void) -> Result<T, Box<d
     if unsafe { metacall_value_id(ret) } == T::get_metacall_id() {
         <T>::from_metacall_raw(ret)
     } else {
-        Err(raw_to_metacallobj_untyped(ret))
+        Err(raw_to_metacallobj_untyped::<T>(ret))
     }
 }
 pub fn raw_to_metacallobj_leak<T: MetacallValue>(
@@ -49,11 +49,11 @@ pub fn raw_to_metacallobj_leak<T: MetacallValue>(
     if unsafe { metacall_value_id(ret) } == T::get_metacall_id() {
         <T>::from_metacall_raw_leak(ret)
     } else {
-        Err(raw_to_metacallobj_untyped_leak(ret))
+        Err(raw_to_metacallobj_untyped_leak::<T>(ret))
     }
 }
 
-pub fn raw_to_metacallobj_untyped(ret: *mut c_void) -> Box<dyn MetacallValue> {
+pub fn raw_to_metacallobj_untyped<T: 'static>(ret: *mut c_void) -> Box<dyn MetacallValue> {
     match (ret.is_null(), unsafe { metacall_value_id(ret) }) {
         (true, _) => metacallobj_result_wrap(MetacallNull::from_metacall_raw(ret)),
         (_, 0) => metacallobj_result_wrap(bool::from_metacall_raw(ret)),
@@ -68,7 +68,9 @@ pub fn raw_to_metacallobj_untyped(ret: *mut c_void) -> Box<dyn MetacallValue> {
         (_, 9) => metacallobj_result_wrap(<Vec<MetacallNull>>::from_metacall_raw(ret)),
         (_, 10) => metacallobj_result_wrap(<HashMap<String, MetacallNull>>::from_metacall_raw(ret)),
         (_, 11) => metacallobj_result_wrap(<MetacallPointer>::from_metacall_raw(ret)),
-        (_, 12) => metacallobj_result_wrap(MetacallFuture::from_metacall_raw(ret)),
+        (_, 12) => {
+            metacallobj_result_wrap::<MetacallFuture<T>>(MetacallFuture::from_metacall_raw(ret))
+        }
         (_, 13) => metacallobj_result_wrap(MetacallFunction::from_metacall_raw(ret)),
         (_, 14) => metacallobj_result_wrap(MetacallNull::from_metacall_raw(ret)),
         (_, 15) => metacallobj_result_wrap(MetacallClass::from_metacall_raw(ret)),
@@ -78,7 +80,7 @@ pub fn raw_to_metacallobj_untyped(ret: *mut c_void) -> Box<dyn MetacallValue> {
         _ => metacallobj_result_wrap(MetacallNull::from_metacall_raw(ret)),
     }
 }
-pub fn raw_to_metacallobj_untyped_leak(ret: *mut c_void) -> Box<dyn MetacallValue> {
+pub fn raw_to_metacallobj_untyped_leak<T: 'static>(ret: *mut c_void) -> Box<dyn MetacallValue> {
     match (ret.is_null(), unsafe { metacall_value_id(ret) }) {
         (true, _) => metacallobj_result_wrap(MetacallNull::from_metacall_raw_leak(ret)),
         (_, 0) => metacallobj_result_wrap(bool::from_metacall_raw_leak(ret)),
@@ -95,7 +97,9 @@ pub fn raw_to_metacallobj_untyped_leak(ret: *mut c_void) -> Box<dyn MetacallValu
             metacallobj_result_wrap(<HashMap<String, MetacallNull>>::from_metacall_raw_leak(ret))
         }
         (_, 11) => metacallobj_result_wrap(<MetacallPointer>::from_metacall_raw_leak(ret)),
-        (_, 12) => metacallobj_result_wrap(MetacallFuture::from_metacall_raw_leak(ret)),
+        (_, 12) => metacallobj_result_wrap::<MetacallFuture<T>>(
+            MetacallFuture::from_metacall_raw_leak(ret),
+        ),
         (_, 13) => metacallobj_result_wrap(MetacallFunction::from_metacall_raw_leak(ret)),
         (_, 14) => metacallobj_result_wrap(MetacallNull::from_metacall_raw_leak(ret)),
         (_, 15) => metacallobj_result_wrap(MetacallClass::from_metacall_raw_leak(ret)),
