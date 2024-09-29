@@ -323,7 +323,7 @@ impl MetacallValue for MetacallPointer {
     }
 }
 /// Equivalent to Metacall future type.
-impl<T: 'static> MetacallValue for MetacallFuture<T> {
+impl<T: 'static + Debug> MetacallValue for MetacallFuture<T> {
     fn get_metacall_id() -> u32 {
         12
     }

@@ -62,7 +62,7 @@ pub type MetacallFutureHandler<T> = fn(Box<dyn MetacallValue>, T);
 /// ```
 #[repr(C)]
 pub struct MetacallFuture<T> {
-    data: *mut dyn MetacallValue,
+    data: *mut Option<T>,
     leak: bool,
     reject: Option<MetacallFutureHandler<T>>,
     resolve: Option<MetacallFutureHandler<T>>,
@@ -81,21 +81,21 @@ impl<T> Clone for MetacallFuture<T> {
         }
     }
 }
-impl<T> Debug for MetacallFuture<T> {
+impl<T: Debug> Debug for MetacallFuture<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let boxed_data = unsafe { Box::from_raw(self.data) };
-        let data = if boxed_data.is::<MetacallNull>() {
-            None
-        } else {
-            Some(format!("{:#?}", boxed_data))
+
+        let data = match Box::into(boxed_data) {
+            Some(data) => Some(format!("{data:#?}")),
+            None => None,
         };
-        Box::leak(boxed_data);
 
         let resolve = if self.resolve.is_none() {
             "None"
         } else {
             "Some"
         };
+
         let reject = if self.reject.is_none() {
             "None"
         } else {
@@ -119,38 +119,36 @@ type MetacallFutureFFIData<T> = (
     *mut T,
 );
 
-unsafe extern "C" fn resolver<T: 'static>(
+unsafe extern "C" fn resolver<T: 'static + Debug>(
     resolve_data: *mut c_void,
     upper_data: *mut c_void,
 ) -> *mut c_void {
     let (resolve, _, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData<T>);
-    let user_data = Box::from_raw(data);
-
-    (resolve.unwrap())(
+    let user_data = std::ptr::read_unaligned(data);
         parsers::raw_to_metacallobj_untyped_leak::<T>(resolve_data),
         *user_data,
     );
 
     ptr::null_mut()
 }
-unsafe extern "C" fn rejecter<T: 'static>(
+unsafe extern "C" fn rejecter<T: 'static + Debug>(
     reject_data: *mut c_void,
     upper_data: *mut c_void,
 ) -> *mut c_void {
     let (_, reject, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData<T>);
-    let user_data = Box::from_raw(data);
+    let user_data = std::ptr::read_unaligned(data);
 
-    (reject.unwrap())(
+    let result = (reject.unwrap())(
         parsers::raw_to_metacallobj_untyped_leak::<T>(reject_data),
-        *user_data,
+        user_data,
     );
 
-    ptr::null_mut()
+    Box::into_raw(result) as *mut c_void
 }
 
-impl<T: 'static> MetacallFuture<T> {
-    fn create_null_data() -> *mut dyn MetacallValue {
-        Box::into_raw(helpers::metacall_implementer_to_traitobj(MetacallNull()))
+impl<T: 'static + Debug> MetacallFuture<T> {
+    fn create_null_data() -> *mut Option<T> {
+        Box::into_raw(Box::new(None))
     }
 
     #[doc(hidden)]
@@ -280,8 +278,10 @@ impl<T: 'static> MetacallFuture<T> {
     ///     .await_fut();
     ///}
     /// ```
+    pub fn data(mut self, data: T) -> Self {
     pub fn data(mut self, data: impl MetacallValue) -> Self {
         unsafe { drop(Box::from_raw(self.data)) };
+        self.data = Box::into_raw(Box::new(Some(data)));
 
         self.data = Box::into_raw(Box::new(data) as Box<dyn MetacallValue>);
 
@@ -328,18 +328,22 @@ impl<T: 'static> MetacallFuture<T> {
                 // ==20664==    by 0x166EBE: test::__rust_begin_short_backtrace (lib.rs:655)
                 // ==20664==    by 0x13456B: {closure#1} (lib.rs:646)
                 // ==20664==    by 0x13456B: core::ops::function::FnOnce::call_once{{vtable-shim}} (function.rs:250)
-                Box::into_raw(Box::new((self.resolve, self.reject, self.data))) as *mut c_void,
+                self.into_raw(),
             ))
         };
     }
 
     #[doc(hidden)]
     pub fn into_raw(self) -> *mut c_void {
-        // TODO:
-        // It's not implemented in any loader as the time of writing this block of code.
-        // Feel free to implement as any loader adopted accepting Future as an argument.
-
-        panic!("Passing MetacallFuture as an argument is not supported!");
+        unsafe {
+            match std::ptr::read_unaligned(self.data) {
+                Some(data) => {
+                    Box::into_raw(Box::new((self.resolve, self.reject, data))) as *mut c_void
+                }
+                None => Box::into_raw(Box::new((self.resolve, self.reject, MetacallNull)))
+                    as *mut c_void,
+            }
+        }
     }
 }
 
@@ -382,21 +386,21 @@ module.exports = {
         fn resolve<T: PartialEq<i16> + Debug>(result: Box<dyn MetacallValue>, data: T) {
             let result = result.downcast::<f64>().unwrap();
 
-            assert_eq!(
+                assert_eq!(
                 result, 2.0,
-                "the result should be double of the passed value"
-            );
-            assert_eq!(data, 100, "data should be passed without change");
-        }
+                    "the result should be double of the passed value"
+                );
+                assert_eq!(data, 100, "data should be passed without change");
+            }
         fn reject<T>(_: Box<dyn MetacallValue>, _: T) {
-            panic!("It shouldnt be rejected");
-        }
+                panic!("It shouldnt be rejected");
+            }
         let future = metacall::<MetacallFuture<i16>>("doubleValueAfterTime", [1, 2000]).unwrap();
-        future
+            future
             .then(resolve::<i16>)
             .catch(reject::<i16>)
-            .data(100)
-            .await_fut();
+                .data(100)
+                .await_fut();
     }
 
     #[test]
@@ -417,17 +421,17 @@ module.exports = {
         loaders::from_memory("node", script).unwrap();
 
         fn resolve<T: PartialEq<String> + Debug>(_: Box<dyn MetacallValue>, data: T) {
-            assert_eq!(
-                data,
-                String::from("USER_DATA"),
-                "data should be passed without change"
-            );
-        }
+                assert_eq!(
+                    data,
+                    String::from("USER_DATA"),
+                    "data should be passed without change"
+                );
+            }
 
-        let future = metacall_no_arg::<MetacallFuture<String>>("func").unwrap();
-        future
-            .then(resolve::<String>)
-            .data(String::from("USER_DATA"))
-            .await_fut();
+            let future = metacall_no_arg::<MetacallFuture<String>>("func").unwrap();
+            future
+                .then(resolve::<String>)
+                .data(String::from("USER_DATA"))
+                .await_fut();
     }
 }

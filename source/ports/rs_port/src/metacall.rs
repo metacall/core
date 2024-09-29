@@ -3,7 +3,7 @@ use crate::{
     cstring_enum, parsers,
     types::{MetacallError, MetacallNull, MetacallValue},
 };
-use std::ffi::c_void;
+use std::{ffi::c_void, fmt::Debug};
 
 // Used for documentation.
 #[allow(unused_imports)]
@@ -38,7 +38,7 @@ fn metacall_inner(
 /// ```
 /// let sum = metacall::metacall_untyped("sum", [1, 2]).unwrap();
 /// ```
-pub fn metacall_untyped<T:'static>(
+pub fn metacall_untyped<T: 'static + Debug>(
     func: impl ToString,
     args: impl IntoIterator<Item = impl MetacallValue>,
 ) -> Result<Box<dyn MetacallValue>, MetacallError> {
@@ -50,7 +50,7 @@ pub fn metacall_untyped<T:'static>(
 /// ```
 /// let greet = metacall::metacall_untyped_no_arg("sum").unwrap();
 /// ```
-pub fn metacall_untyped_no_arg<T: 'static>(
+pub fn metacall_untyped_no_arg<T: 'static + Debug>(
     func: impl ToString,
 ) -> Result<Box<dyn MetacallValue>, MetacallError> {
     metacall_untyped::<T>(func, [] as [MetacallNull; 0])

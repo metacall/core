@@ -60,7 +60,7 @@ impl MetacallObject {
         Ok(unsafe { metacall_object_get(metacall_value_to_object(self.value), c_name.as_ptr()) })
     }
     /// Gets attribute from an object without type casting([MetacallValue](MetacallValue)).
-    pub fn get_attribute_untyped<T: 'static>(
+    pub fn get_attribute_untyped<T: 'static + Debug>(
         &self,
         name: impl ToString,
     ) -> Result<Box<dyn MetacallValue>, MetacallGetAttributeError> {

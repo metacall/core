@@ -5,7 +5,7 @@ use crate::{
         MetacallObject, MetacallPointer, MetacallThrowable, MetacallValue,
     },
 };
-use std::{collections::HashMap, ffi::c_void};
+use std::{collections::HashMap, ffi::c_void, fmt::Debug};
 
 fn metacallobj_result_wrap<T: MetacallValue>(
     v: Result<T, Box<dyn MetacallValue>>,
@@ -53,7 +53,7 @@ pub fn raw_to_metacallobj_leak<T: MetacallValue>(
     }
 }
 
-pub fn raw_to_metacallobj_untyped<T: 'static>(ret: *mut c_void) -> Box<dyn MetacallValue> {
+pub fn raw_to_metacallobj_untyped<T: Debug + 'static>(ret: *mut c_void) -> Box<dyn MetacallValue> {
     match (ret.is_null(), unsafe { metacall_value_id(ret) }) {
         (true, _) => metacallobj_result_wrap(MetacallNull::from_metacall_raw(ret)),
         (_, 0) => metacallobj_result_wrap(bool::from_metacall_raw(ret)),
@@ -80,7 +80,9 @@ pub fn raw_to_metacallobj_untyped<T: 'static>(ret: *mut c_void) -> Box<dyn Metac
         _ => metacallobj_result_wrap(MetacallNull::from_metacall_raw(ret)),
     }
 }
-pub fn raw_to_metacallobj_untyped_leak<T: 'static>(ret: *mut c_void) -> Box<dyn MetacallValue> {
+pub fn raw_to_metacallobj_untyped_leak<T: Debug + 'static>(
+    ret: *mut c_void,
+) -> Box<dyn MetacallValue> {
     match (ret.is_null(), unsafe { metacall_value_id(ret) }) {
         (true, _) => metacallobj_result_wrap(MetacallNull::from_metacall_raw_leak(ret)),
         (_, 0) => metacallobj_result_wrap(bool::from_metacall_raw_leak(ret)),

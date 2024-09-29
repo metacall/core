@@ -183,8 +183,8 @@ fn test_future() {
         "future",
         MetacallNull(),
         move |future| {
-            fn resolve(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
-                validate(result, data);
+            fn resolve<T: MetacallValue + 'static>(result: Box<dyn MetacallValue>, data: T) {
+                validate(result, Box::new(data));
             }
 
             future.then(resolve).data(String::from("data")).await_fut();
@@ -195,8 +195,8 @@ fn test_future() {
         "future",
         MetacallNull(),
         move |future| {
-            fn reject(result: Box<dyn MetacallValue>, data: Box<dyn MetacallValue>) {
-                validate(result, data);
+            fn reject<T: 'static + MetacallValue>(result: Box<dyn MetacallValue>, data: T) {
+                validate(result, Box::new(data));
             }
 
             future.catch(reject).data(String::from("data")).await_fut();
