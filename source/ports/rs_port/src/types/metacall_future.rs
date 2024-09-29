@@ -18,9 +18,9 @@ pub type MetacallFutureHandler<T> = fn(Box<dyn MetacallValue>, T);
 /// Represents MetacallFuture. Keep in mind that it's not supported to pass a future as an argument.
 ///
 /// ## **Usage example:**
-///
-/// **Javascript Code:**
-/// ```javascript
+/// ```rust
+/// use metacall::{loaders, metacall, switch, MetacallFuture, MetacallValue};
+/// let script = r#"
 /// function doubleValueAfterTime(value, delay) {
 ///     return new Promise((resolve, reject) => {
 ///         setTimeout(() => {
@@ -32,24 +32,33 @@ pub type MetacallFutureHandler<T> = fn(Box<dyn MetacallValue>, T);
 ///         }, delay);
 ///     });
 /// }
-/// ```
 ///
-/// **Calling Example:**
-/// ```rust
-/// use metacall::{MetacallValue, MetacallFuture, metacall};
-/// fn runner(x: i32) {
-///
-///     fn resolve(result: impl MetacallValue, data: impl MetacallValue) {
-///         println!("Resolve:: result: {:#?}, data: {:#?}", result, data); //
-///     }
-///
-///     fn reject(error: impl MetacallValue, data: impl MetacallValue) {
-///         println!("Reject:: error: {:#?}, data: {:#?}", error, data);
-///     }
-///
-///     let future = metacall::<MetacallFuture>("doubleValueAfterTime", [1, 2000]).unwrap();
-///     future.then(resolve).catch(reject).await_fut();
+/// module.exports = {
+///     doubleValueAfterTime
 /// }
+/// "#;
+///
+/// let _metacall = switch::initialize().unwrap();
+/// loaders::from_memory("node", script).unwrap();
+///
+/// fn resolve<T: PartialEq<i16> + Debug>(result: Box<dyn MetacallValue>, data: T) {
+///     let result = result.downcast::<f64>().unwrap();
+///
+///     assert_eq!(
+///         result, 2.0,
+///         "the result should be double of the passed value"
+///     );
+///     assert_eq!(data, 100, "data should be passed without change");
+/// }
+/// fn reject<T>(_: Box<dyn MetacallValue>, _: T) {
+///     panic!("It shouldnt be rejected");
+/// }
+/// let future = metacall::<MetacallFuture<i16>>("doubleValueAfterTime", [1, 2000]).unwrap();
+/// future
+///     .then(resolve::<i16>)
+///     .catch(reject::<i16>)
+///     .data(100)
+///     .await_fut();
 /// ```
 #[repr(C)]
 pub struct MetacallFuture<T> {
@@ -168,30 +177,33 @@ impl<T: 'static> MetacallFuture<T> {
 
     /// Adds a resolve callback.
     ///
-    /// ## **Usage example:**
     ///
-    ///
-    /// ```javascript
-    /// // Javascript script
-    ///
-    /// function func_always_rejects(value, delay) {
+    /// **Usage example:**
+    /// ```rust
+    /// use metacall::{loaders, metacall_no_arg, switch, MetacallFuture, MetacallValue};
+    /// let script = r#"
+    /// function func_always_resolve(value, delay) {
     ///     return new Promise((resolve) => {
-    ///         resolve('Resolve message.');
+    ///         resolve(0);
     ///     });
     /// }
-    /// ```
-    /// **Calling Example:**
     ///
-    /// ```rust
-    /// use metacall::{MetacallValue, MetacallFuture, metacall_no_args};
-    /// fn calling() {
-    ///     fn reject(result: impl MetacallValue, _: impl MetacallValue) {
-    ///         println!("Resolve:: {:#?}", result); // Resolve:: "Resolve message"
-    ///     }
-    ///
-    ///     let future = metacall_no_args::<MetacallFuture<_>>("func_always_resolve").unwrap();
-    ///     future.then(resolve).catch(reject).await_fut();
+    /// module.exports = {
+    ///     func_always_resolve
     /// }
+    ///
+    /// "#;
+    /// let _metacall = switch::initialize().unwrap();
+    /// loaders::from_memory("node", script).unwrap();
+    ///
+    /// fn resolve<T>(message: Box<dyn MetacallValue>, _: T) {
+    ///     println!("[RESOLVE] {message?}")       
+    /// }
+    ///
+    /// let future = metacall_no_arg::<MetacallFuture<()>>("func_always_resolve").unwrap();
+    /// future
+    ///     .then(resolve::<()>)
+    ///     .await_fut();
     /// ```
     pub fn then(mut self, resolve: MetacallFutureHandler<T>) -> Self {
         self.resolve = Some(resolve);
@@ -201,27 +213,32 @@ impl<T: 'static> MetacallFuture<T> {
 
     /// Adds a reject callback.
     ///
-    /// ## **Usage example:**
-    ///
-    /// ```javascript
-    /// // Javascript script
-    /// function func_always_rejects(value, delay) {
+    /// **Usage example:**
+    /// ```rust
+    /// use metacall::{loaders, metacall_no_arg, switch, MetacallFuture, MetacallValue};
+    /// let script = r#"
+    /// function func_always_reject(value, delay) {
     ///     return new Promise((_, reject) => {
-    ///         reject('Error: Reject message.');
+    ///         reject(0);
     ///     });
     /// }
-    /// ```
-    /// **Calling Example:**
-    /// ```rust
-    /// use metacall::{MetacallValue, MetacallFuture, metacall_no_args};
-    /// fn calling() {
-    ///     fn reject(error: impl MetacallValue, _: impl MetacallValue) {
-    ///         println!("Reject:: error: {:#?}", error); // Reject:: error: "Error: Reject message"
-    ///     }
     ///
-    ///     let future = metacall_no_args::<MetacallFuture>("func_always_rejects").unwrap();
-    ///     future.then(resolve).catch(reject).await_fut();
+    /// module.exports = {
+    ///     func_always_reject
     /// }
+    ///
+    /// "#;
+    /// let _metacall = switch::initialize().unwrap();
+    /// loaders::from_memory("node", script).unwrap();
+    ///
+    /// fn reject<T>(message: Box<dyn MetacallValue>, _: T) {
+    ///     println!("[REJECT] {message?}")       
+    /// }
+    ///
+    /// let future = metacall_no_arg::<MetacallFuture<()>>("func_always_reject").unwrap();
+    /// future
+    ///     .catch(reject::<()>)
+    ///     .await_fut();
     /// ```
     pub fn catch(mut self, reject: MetacallFutureHandler<T>) -> Self {
         self.reject = Some(reject);
@@ -230,24 +247,38 @@ impl<T: 'static> MetacallFuture<T> {
     }
 
     /// Adds data to use it inside the `resolver` and `reject`.
-    ///
-    /// Example:
     /// ```rust
-    /// use metacall::{MetacallValue, MetacallFuture, metacall};
-    ///
-    /// fn run() {
-    ///   let x = 10;
-    ///   fn resolve(result: impl MetacallValue, data: impl MetacallValue) {
-    ///       println!("X = {data}");
-    ///   }
-    ///    
-    ///   fn reject(result: impl MetacallValue, data: impl MetacallValue) {
-    ///       println!("X = {data}");
-    ///   }
-    ///     
-    ///   let future = metacall::<MetacallFuture>("async_function", [1]).unwrap();
-    ///   future.then(resolve).catch(reject),data(x).await_fut();
+    /// // Nodejs Script
+    /// let script = r#"
+    /// function func(value, delay) {
+    ///     return new Promise((resolve) => {
+    ///         resolve(0);
+    ///     });
     /// }
+    ///
+    /// module.exports = {
+    ///     func
+    /// }
+    ///
+    /// "#;
+    ///
+    /// let _metacall = switch::initialize().unwrap();
+    /// loaders::from_memory("node", script).unwrap();
+    ///
+    /// fn resolve<T: PartialEq<String> + Debug>(_: Box<dyn MetacallValue>, data: T) {
+    ///     assert_eq!(
+    ///         data,
+    ///         String::from("USER_DATA"),
+    ///         "data should be passed without change"
+    ///     );
+    /// }
+    ///
+    /// let future = metacall_no_arg::<MetacallFuture<String>>("func").unwrap();
+    /// future
+    ///     .then(resolve::<String>)
+    ///     .data(String::from("USER_DATA"))
+    ///     .await_fut();
+    ///}
     /// ```
     pub fn data(mut self, data: impl MetacallValue) -> Self {
         unsafe { drop(Box::from_raw(self.data)) };
