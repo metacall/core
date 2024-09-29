@@ -319,3 +319,84 @@ impl<T> Drop for MetacallFuture<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fmt::Debug;
+
+    use crate::{loaders, metacall, metacall_no_arg, switch, MetacallFuture, MetacallValue};
+    #[test]
+    fn test_metacall_future() {
+        let script = r#"
+function doubleValueAfterTime(value, delay) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            if (typeof value === 'number') {
+                resolve(value * 2); // Resolves if the value is a number
+            } else {
+                reject('Error: The provided value is not a number.'); // Rejects if the value is not a number
+            }
+        }, delay);
+    });
+}
+
+module.exports = {
+    doubleValueAfterTime
+}
+"#;
+
+        let _metacall = switch::initialize().unwrap();
+        loaders::from_memory("node", script).unwrap();
+
+        fn resolve<T: PartialEq<i16> + Debug>(result: Box<dyn MetacallValue>, data: T) {
+            let result = result.downcast::<f64>().unwrap();
+
+            assert_eq!(
+                result, 2.0,
+                "the result should be double of the passed value"
+            );
+            assert_eq!(data, 100, "data should be passed without change");
+        }
+        fn reject<T>(_: Box<dyn MetacallValue>, _: T) {
+            panic!("It shouldnt be rejected");
+        }
+        let future = metacall::<MetacallFuture<i16>>("doubleValueAfterTime", [1, 2000]).unwrap();
+        future
+            .then(resolve::<i16>)
+            .catch(reject::<i16>)
+            .data(100)
+            .await_fut();
+    }
+
+    #[test]
+    fn test_metacall_future_data() {
+        let script = r#"
+function func(value, delay) {
+    return new Promise((resolve) => {
+        resolve(0);
+    });
+}
+
+module.exports = {
+    func
+}
+
+    "#;
+        let _metacall = switch::initialize().unwrap();
+        loaders::from_memory("node", script).unwrap();
+
+        fn resolve<T: PartialEq<String> + Debug>(_: Box<dyn MetacallValue>, data: T) {
+            assert_eq!(
+                data,
+                String::from("USER_DATA"),
+                "data should be passed without change"
+            );
+        }
+
+        let future = metacall_no_arg::<MetacallFuture<String>>("func").unwrap();
+        future
+            .then(resolve::<String>)
+            .data(String::from("USER_DATA"))
+            .await_fut();
+    }
+}
