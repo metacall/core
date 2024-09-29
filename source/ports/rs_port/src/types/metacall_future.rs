@@ -1,7 +1,7 @@
 use super::{MetacallNull, MetacallValue};
 use crate::{
     bindings::{metacall_await_future, metacall_value_destroy, metacall_value_to_future},
-    helpers, parsers,
+    parsers,
 };
 use std::{
     ffi::c_void,
@@ -13,7 +13,7 @@ use std::{
 /// and the second argument is the data that you may want to access when the function gets called.
 /// Checkout [MetacallFuture resolve](MetacallFuture#method.then) or
 /// [MetacallFuture reject](MetacallFuture#method.catch) for usage.
-pub type MetacallFutureHandler<T> = fn(Box<dyn MetacallValue>, T);
+pub type MetacallFutureHandler<T> = fn(Box<dyn MetacallValue>, T) -> Box<dyn MetacallValue>;
 
 /// Represents MetacallFuture. Keep in mind that it's not supported to pass a future as an argument.
 ///
@@ -125,11 +125,12 @@ unsafe extern "C" fn resolver<T: 'static + Debug>(
 ) -> *mut c_void {
     let (resolve, _, data) = *Box::from_raw(upper_data as *mut MetacallFutureFFIData<T>);
     let user_data = std::ptr::read_unaligned(data);
+    let result = (resolve.unwrap())(
         parsers::raw_to_metacallobj_untyped_leak::<T>(resolve_data),
-        *user_data,
+        user_data,
     );
 
-    ptr::null_mut()
+    Box::into_raw(result) as *mut c_void
 }
 unsafe extern "C" fn rejecter<T: 'static + Debug>(
     reject_data: *mut c_void,
@@ -279,12 +280,13 @@ impl<T: 'static + Debug> MetacallFuture<T> {
     ///}
     /// ```
     pub fn data(mut self, data: T) -> Self {
-    pub fn data(mut self, data: impl MetacallValue) -> Self {
+        dbg!(&data);
         unsafe { drop(Box::from_raw(self.data)) };
+        dbg!(&self.data);
         self.data = Box::into_raw(Box::new(Some(data)));
-
-        self.data = Box::into_raw(Box::new(data) as Box<dyn MetacallValue>);
-
+        unsafe {
+            dbg!(&*self.data);
+        }
         self
     }
 
@@ -293,6 +295,9 @@ impl<T: 'static + Debug> MetacallFuture<T> {
         let resolve_is_some = self.resolve.is_some();
         let reject_is_some = self.reject.is_some();
 
+        unsafe {
+            dbg!(&*self.data);
+        }
         unsafe {
             metacall_value_destroy(metacall_await_future(
                 metacall_value_to_future(self.value),
@@ -359,7 +364,9 @@ impl<T> Drop for MetacallFuture<T> {
 mod tests {
     use std::fmt::Debug;
 
-    use crate::{loaders, metacall, metacall_no_arg, switch, MetacallFuture, MetacallValue};
+    use crate::{
+        loaders, metacall, metacall_no_arg, switch, MetacallFuture, MetacallNull, MetacallValue,
+    };
     #[test]
     fn test_metacall_future() {
         let script = r#"
@@ -382,29 +389,36 @@ module.exports = {
 
         let _metacall = switch::initialize().unwrap();
         loaders::from_memory("node", script).unwrap();
-
-        fn resolve<T: PartialEq<i16> + Debug>(result: Box<dyn MetacallValue>, data: T) {
-            let result = result.downcast::<f64>().unwrap();
-
+        for _ in 0..1000000 {
+            fn resolve<T: PartialEq<i64> + Debug>(
+                result: Box<dyn MetacallValue>,
+                data: T,
+            ) -> Box<dyn MetacallValue> {
+                let result_f64 = result.clone().downcast::<f64>().unwrap();
+                println!("data = {data:?}");
                 assert_eq!(
-                result, 2.0,
+                    result_f64, 2.0,
                     "the result should be double of the passed value"
                 );
                 assert_eq!(data, 100, "data should be passed without change");
+                result
             }
-        fn reject<T>(_: Box<dyn MetacallValue>, _: T) {
+            fn reject<T>(_: Box<dyn MetacallValue>, _: T) -> Box<dyn MetacallValue> {
                 panic!("It shouldnt be rejected");
             }
-        let future = metacall::<MetacallFuture<i16>>("doubleValueAfterTime", [1, 2000]).unwrap();
+            let future =
+                metacall::<MetacallFuture<i64>>("doubleValueAfterTime", [1, 2000]).unwrap();
             future
-            .then(resolve::<i16>)
-            .catch(reject::<i16>)
+                .then(resolve::<i64>)
+                .catch(reject::<i64>)
                 .data(100)
                 .await_fut();
+        }
     }
 
     #[test]
     fn test_metacall_future_data() {
+        let _metacall = switch::initialize().unwrap();
         let script = r#"
 function func(value, delay) {
     return new Promise((resolve) => {
@@ -415,17 +429,19 @@ function func(value, delay) {
 module.exports = {
     func
 }
-
     "#;
-        let _metacall = switch::initialize().unwrap();
         loaders::from_memory("node", script).unwrap();
-
-        fn resolve<T: PartialEq<String> + Debug>(_: Box<dyn MetacallValue>, data: T) {
+        for _ in 0..1000000 {
+            fn resolve<T: PartialEq<String> + Debug>(
+                _: Box<dyn MetacallValue>,
+                data: T,
+            ) -> Box<dyn MetacallValue> {
                 assert_eq!(
                     data,
                     String::from("USER_DATA"),
                     "data should be passed without change"
                 );
+                Box::new(MetacallNull())
             }
 
             let future = metacall_no_arg::<MetacallFuture<String>>("func").unwrap();
@@ -433,5 +449,6 @@ module.exports = {
                 .then(resolve::<String>)
                 .data(String::from("USER_DATA"))
                 .await_fut();
+        }
     }
 }
