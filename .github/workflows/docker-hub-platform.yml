@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: index.docker.io/metacall/coree
+  IMAGE_NAME: index.docker.io/metacall/core
 
 jobs:
   build:
