@@ -41,7 +41,7 @@ function repl_initialize(plugin_path) {
 			return fs.readdirSync(repl_path);
 		} catch (e) {
 			/* If the directory does not exist, return no files */
-			if (e?.code === 'ENOENT') {
+			if (e !== undefined && e.code === 'ENOENT') {
 				return []
 			}
 
