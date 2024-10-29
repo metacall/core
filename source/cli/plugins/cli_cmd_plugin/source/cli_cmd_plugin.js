@@ -20,7 +20,19 @@ function command_initialize(plugin_path) {
 	*  };
 	*/
 	const cmd_path = path.join(plugin_path, 'cli', 'cmd');
-	const files = fs.readdirSync(cmd_path);
+	const files = (() => {
+		try {
+			return fs.readdirSync(cmd_path);
+		} catch (e) {
+			/* If the directory does not exist, return no files */
+			if (e?.code === 'ENOENT') {
+				return []
+			}
+
+			/* Otherwise, rethrow the exception */
+			throw e;
+		}
+	})();
 
 	for (const file of files) {
 		const file_path = path.join(cmd_path, file);

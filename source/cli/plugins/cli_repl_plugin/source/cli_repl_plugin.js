@@ -36,7 +36,19 @@ function repl_initialize(plugin_path) {
 	*  plugins/cli/repl/${plugin_name}/${plugin_name}_repl.js
 	*/
 	const repl_path = path.join(plugin_path, 'cli', 'repl');
-	const files = fs.readdirSync(repl_path);
+	const files = (() => {
+		try {
+			return fs.readdirSync(repl_path);
+		} catch (e) {
+			/* If the directory does not exist, return no files */
+			if (e?.code === 'ENOENT') {
+				return []
+			}
+
+			/* Otherwise, rethrow the exception */
+			throw e;
+		}
+	})();
 
 	for (const file of files) {
 		const file_path = path.join(repl_path, file);
