@@ -17,11 +17,12 @@ concurrency:
 jobs:
   macos-test:
     name: MacOS Clang Test
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
+        os: [macos-13, macos-14, macos-15]
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},

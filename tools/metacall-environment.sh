@@ -177,8 +177,10 @@ sub_python(){
 		brew install pyenv openssl
 		export PKG_CONFIG_PATH=$(brew --prefix openssl)/lib/pkgconfig
 		export PYTHON_CONFIGURE_OPTS="--enable-shared"
-		pyenv install 3.11.1
-		pyenv global 3.11.1
+		PYTHON_VERSION_SMALL="3.13"
+		PYTHON_VERSION="${PYTHON_VERSION_SMALL}.0"
+		pyenv install ${PYTHON_VERSION}
+		pyenv global ${PYTHON_VERSION}
 		pyenv rehash
 		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
@@ -187,11 +189,11 @@ sub_python(){
 		echo eval "$(pyenv init -)" >> $ENV_FILE
 		. $ENV_FILE
 
-		echo "-DPython3_INCLUDE_DIRS=$HOME/.pyenv/versions/3.11.1/include/python3.11" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_LIBRARY=$HOME/.pyenv/versions/3.11.1/lib/libpython3.11.dylib" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_EXECUTABLE=$HOME/.pyenv/versions/3.11.1/bin/python3.11" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_ROOT=$HOME/.pyenv/versions/3.11.1" >> $CMAKE_CONFIG_PATH
-		echo "-DPython3_VERSION=3.11.1" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_INCLUDE_DIRS=$HOME/.pyenv/versions/${PYTHON_VERSION}/include/python${PYTHON_VERSION_SMALL}" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_LIBRARY=$HOME/.pyenv/versions/${PYTHON_VERSION}/lib/libpython${PYTHON_VERSION_SMALL}.dylib" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_EXECUTABLE=$HOME/.pyenv/versions/${PYTHON_VERSION}/bin/python${PYTHON_VERSION_SMALL}" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_ROOT=$HOME/.pyenv/versions/${PYTHON_VERSION}" >> $CMAKE_CONFIG_PATH
+		echo "-DPython3_VERSION=${PYTHON_VERSION}" >> $CMAKE_CONFIG_PATH
 		echo "-DPython3_FIND_FRAMEWORK=NEVER" >> $CMAKE_CONFIG_PATH
 
 		pip3 install requests

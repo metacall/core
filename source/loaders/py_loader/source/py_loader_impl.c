@@ -45,6 +45,13 @@
 
 #include <Python.h>
 
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13
+	#ifndef Py_BUILD_CORE
+		#define Py_BUILD_CORE
+	#endif
+	#include <internal/pycore_dict.h>
+#endif
+
 #define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
 #define PY_LOADER_IMPL_FINALIZER_FUNC			 "__py_loader_impl_finalizer__"
 
@@ -287,7 +294,10 @@ static PyTypeObject py_loader_impl_dict_type = {
 	0,										   /* tp_finalize */
 	0,										   /* tp_vectorcall */
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 12
-	0 /* tp_watched */
+	0, /* tp_watched */
+#endif
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13
+	0, /* tp_versions_used */
 #endif
 };
 
