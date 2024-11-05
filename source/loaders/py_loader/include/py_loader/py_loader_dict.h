@@ -23,8 +23,6 @@
 
 #include <py_loader/py_loader_api.h>
 
-#include <loader/loader_impl_interface.h>
-
 #include <Python.h>
 
 #ifdef __cplusplus

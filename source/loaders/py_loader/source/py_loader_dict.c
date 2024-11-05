@@ -21,6 +21,8 @@
 #include <py_loader/py_loader_dict.h>
 #include <py_loader/py_loader_threading.h>
 
+#include <metacall/metacall_value.h>
+
 #include <Python.h>
 
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13
@@ -33,7 +35,7 @@
 struct py_loader_impl_dict_obj
 {
 	PyDictObject dict;
-	value v;
+	void *v;
 	PyObject *parent;
 };
 
@@ -130,13 +132,13 @@ int py_loader_impl_dict_init(struct py_loader_impl_dict_obj *self, PyObject *arg
 
 void py_loader_impl_dict_dealloc(struct py_loader_impl_dict_obj *self)
 {
-	value_type_destroy(self->v);
+	metacall_value_destroy(self->v);
 	Py_DECREF(self->parent); /* TODO: Review if this is correct or this line is unnecessary */
 
 	PyDict_Type.tp_dealloc((PyObject *)self);
 }
 
-int py_loader_impl_dict_type_init()
+int py_loader_impl_dict_type_init(void)
 {
 	/* py_loader_impl_dict_type is derived from PyDict_Type */
 	py_loader_impl_dict_type.tp_base = &PyDict_Type;
