@@ -20,6 +20,7 @@
 
 #include <metacall/metacall.h>
 
+#include <py_loader/py_loader_dict.h>
 #include <py_loader/py_loader_impl.h>
 #include <py_loader/py_loader_port.h>
 #include <py_loader/py_loader_threading.h>
