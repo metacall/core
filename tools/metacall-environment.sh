@@ -537,13 +537,13 @@ sub_nodejs(){
 		# 	echo "-DNPM_ROOT=$NODE_PREFIX" >> $CMAKE_CONFIG_PATH
 		# else
 
-		brew install node@20
-		# Make node 20 the default
-		brew link node@20 --force --overwrite
+		brew install node@22
+		# Make node 22 the default
+		brew link node@22 --force --overwrite
 		# Execute post install scripts
-		brew postinstall node@20
+		brew postinstall node@22
 		# Define node location
-		NODE_PREFIX=$(brew --prefix node@20)
+		NODE_PREFIX=$(brew --prefix node@22)
 		# Include binaries into PATH
 		export PATH="$NODE_PREFIX/bin:$PATH"
 
