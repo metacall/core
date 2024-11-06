@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-13, macos-14] # TODO: macos-15
+        os: [macos-12, macos-13, macos-14] # TODO: macos-15: https://github.com/metacall/core/issues/530
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
@@ -47,8 +47,9 @@ jobs:
 
       - name: Uninstall Ruby
         run: |
-          brew uninstall --force ruby
-          brew autoremove
+          brew uninstall --force --ignore-dependencies ruby
+          brew cleanup -s ruby
+          brew cleanup --prune-prefix
           RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
           sudo rm -rf $RUBY_FRAMEWORK_DIR
 
