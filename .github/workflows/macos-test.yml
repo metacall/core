@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-13, macos-14, macos-15]
+        os: [macos-12, macos-13, macos-14] # TODO: macos-15
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
@@ -31,7 +31,6 @@ jobs:
         ]
 
     env:
-      LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
