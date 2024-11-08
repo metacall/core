@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: index.docker.io/metacall/core
+  IMAGE_NAME: index.docker.io/mryash/core
   BUILDKIT_VERSION: 0.13.0
 
 jobs:
@@ -143,7 +143,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Create manifest list and push
-        if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
+      #  if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
         run: |
           for tag in "deps" "dev" "runtime" "cli"; do
             cd "/tmp/digests/${tag}"
