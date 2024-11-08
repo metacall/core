@@ -124,7 +124,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Create manifest list and push
-        if: github.ref != 'refs/heads/develop'
+        if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
         run: |
           for tag in "deps" "dev" "runtime" "cli"; do
             cd "/tmp/digests/${tag}"
