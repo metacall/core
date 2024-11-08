@@ -26,13 +26,13 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-          - linux/arm64
+         # - linux/arm64
           - linux/riscv64
           - linux/ppc64le
           - linux/s390x
           - linux/386
           - linux/arm/v7
-          - linux/arm/v6
+         # - linux/arm/v6
           # - linux/mips64le
           # - linux/mips64
 
@@ -146,19 +146,19 @@ jobs:
       #  if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
         run: |
           for tag in "deps" "dev" "runtime" "cli"; do
-            cd "/tmp/digests/${tag}"
-            IMAGE_HASHES=$(printf '${{ env.IMAGE_NAME }}:${tag}@sha256:%s ' *)
-            for image in ${IMAGE_HASHES}; do
-              docker image tag ${image} ${{ env.IMAGE_NAME }}:${tag}
-              docker push ${{ env.IMAGE_NAME }}:${tag}
-            done
-            docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:${tag} ${IMAGE_HASHES}
-            if [[ "${tag}" = "cli" ]]; then
-              docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:latest ${IMAGE_HASHES}
-              if [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
-                TAG=${GITHUB_REF#refs/*/}
-                VERSION=${TAG#v}
-                docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:${VERSION} ${IMAGE_HASHES}
-              fi
-            fi
+          cd "/tmp/digests/${tag}"
+          IFS=$'\n' read -ra HASHES <<< "$(printf '%s\n' *)"
+          for hash in "${HASHES[@]}"; do
+          docker image tag "mryash/core:${tag}@${hash}" "${{ env.IMAGE_NAME }}:${tag}@${hash}"
+          docker push "${{ env.IMAGE_NAME }}:${tag}@${hash}"
+          done
+          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${tag}" "${HASHES[@]/#/metacall\/core:${tag}@}"
+          if [[ "${tag}" = "cli" ]]; then
+          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:latest" "${HASHES[@]/#/metacall\/core:${tag}@}"
+          if [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
+          TAG="${GITHUB_REF#refs/*/}"
+          VERSION="${TAG#v}"
+          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${VERSION}" "${HASHES[@]/#/metacall\/core:${tag}@}"
+          fi
+          fi
           done
