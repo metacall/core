@@ -145,20 +145,20 @@ jobs:
       - name: Create manifest list and push
       #  if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
         run: |
-          for tag in "deps" "dev" "runtime" "cli"; do
+         for tag in "deps" "dev" "runtime" "cli"; do
           cd "/tmp/digests/${tag}"
           IFS=$'\n' read -ra HASHES <<< "$(printf '%s\n' *)"
           for hash in "${HASHES[@]}"; do
-          docker image tag "mryash/core:${tag}@${hash}" "${{ env.IMAGE_NAME }}:${tag}@${hash}"
-          docker push "${{ env.IMAGE_NAME }}:${tag}@${hash}"
-          done
-          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${tag}" "${HASHES[@]/#/metacall\/core:${tag}@}"
-          if [[ "${tag}" = "cli" ]]; then
-          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:latest" "${HASHES[@]/#/metacall\/core:${tag}@}"
+            docker image tag "${{ env.IMAGE_NAME }}:${tag}@${hash}" "${{ env.IMAGE_NAME }}:${tag}@${hash}"
+            docker push "${{ env.IMAGE_NAME }}:${tag}@${hash}"
+         done
+         docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${tag}" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}@}"
+         if [[ "${tag}" = "cli" ]]; then
+          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:latest" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}@}"
           if [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
           TAG="${GITHUB_REF#refs/*/}"
           VERSION="${TAG#v}"
-          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${VERSION}" "${HASHES[@]/#/metacall\/core:${tag}@}"
-          fi
-          fi
-          done
+          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${VERSION}" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}@}"
+         fi
+         fi
+         done
