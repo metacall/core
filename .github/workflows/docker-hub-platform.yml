@@ -149,21 +149,23 @@ jobs:
           cd "/tmp/digests/${tag}"
           IFS=$'\n' read -ra HASHES <<< "$(printf '%s\n' *)"
           for hash in "${HASHES[@]}"; do
-            # Push the image directly by digest without re-tagging
-            docker push "${{ env.IMAGE_NAME }}:${tag}@${hash}"
+            # Tag the image locally using a temporary tag and then push
+            docker image tag "${{ env.IMAGE_NAME }}:${tag}@${hash}" "${{ env.IMAGE_NAME }}:${tag}-${hash:0:12}"
+            docker push "${{ env.IMAGE_NAME }}:${tag}-${hash:0:12}"
           done
           
-          # Create manifest list with tagged references
-          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${tag}" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}@}"
-          
+          # Create the manifest list for the current tag
+          docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${tag}" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}-}"
+    
+          # Additional tagging for 'cli' and latest
           if [[ "${tag}" == "cli" ]]; then
-            docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:latest" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}@}"
+            docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:latest" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}-}"
             
             if [[ "${{ contains(github.ref, 'refs/tags/') }}" == true ]]; then
               TAG="${GITHUB_REF#refs/*/}"
               VERSION="${TAG#v}"
-              docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${VERSION}" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}@}"
+              docker buildx imagetools create -t "${{ env.IMAGE_NAME }}:${VERSION}" "${HASHES[@]/#/${{ env.IMAGE_NAME }}:${tag}-}"
             fi
           fi
          done
-        
+
