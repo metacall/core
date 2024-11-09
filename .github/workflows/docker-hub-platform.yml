@@ -27,11 +27,11 @@ jobs:
         platform:
           - linux/amd64
          # - linux/arm64
-          - linux/riscv64
-          - linux/ppc64le
-          - linux/s390x
+         # - linux/riscv64
+         # - linux/ppc64le
+         # - linux/s390x
           - linux/386
-          - linux/arm/v7
+         # - linux/arm/v7
          # - linux/arm/v6
           # - linux/mips64le
           # - linux/mips64
@@ -145,6 +145,7 @@ jobs:
       - name: Create manifest list and push
       #  if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
         run: |
+         set -exuo pipefail
          for tag in "deps" "dev" "runtime" "cli"; do
           cd "/tmp/digests/${tag}"
           IFS=$'\n' read -ra HASHES <<< "$(printf '%s\n' *)"
