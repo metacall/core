@@ -31,12 +31,7 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	const char *c_dep_scripts[] = {
-		"libloadtest.h",
-		"libloadtest.ld"
-	};
-
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_package("c", "loadtest", NULL));
 
 	void *ret = metacall("call_cpp_func");
 
@@ -44,7 +39,7 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_LONG);
 
-	EXPECT_NE((long)metacall_value_to_long(ret), (long)323);
+	EXPECT_EQ((long)metacall_value_to_long(ret), (long)323);
 
 	metacall_value_destroy(ret);
 

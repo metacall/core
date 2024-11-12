@@ -253,7 +253,7 @@ add_subdirectory(metacall_rust_load_from_package_dep_test)
 add_subdirectory(metacall_rust_load_from_package_class_test)
 add_subdirectory(metacall_rust_class_test)
 add_subdirectory(metacall_c_test)
-#add_subdirectory(metacall_c_lib_test) # TODO: TCC cannot list the symbols from the external libraries, neither static or shared
+add_subdirectory(metacall_c_lib_test)
 add_subdirectory(metacall_version_test)
 add_subdirectory(metacall_dynlink_path_test)
 add_subdirectory(metacall_library_path_without_env_vars_test)

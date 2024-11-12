@@ -7,6 +7,14 @@
 	#define EXPORT __attribute__((visibility("default")))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 EXPORT long call_cpp_func(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIB_LOAD_TEST_H */

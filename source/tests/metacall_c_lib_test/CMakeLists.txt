@@ -129,6 +129,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	c_loader
+	loadtest
 )
 
 #

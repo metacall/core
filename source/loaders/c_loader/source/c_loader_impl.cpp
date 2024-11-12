@@ -31,13 +31,27 @@
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_value_type_id_size.h>
 
+#include <dynlink/dynlink.h>
+
 #include <log/log.h>
 
 #include <metacall/metacall.h>
 
-#include <iterator>
+#if defined __has_include
+	#if __has_include(<filesystem>)
+		#include <filesystem>
+namespace fs = std::filesystem;
+	#elif __has_include(<experimental/filesystem>)
+		#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+	#else
+		#error "Missing the <filesystem> header."
+	#endif
+#else
+	#error "C++ standard too old for compiling this file."
+#endif
+
 #include <map>
-#include <new>
 #include <string>
 #include <vector>
 
@@ -60,16 +74,280 @@ typedef struct loader_impl_c_type
 
 } * loader_impl_c;
 
-typedef struct loader_impl_c_handle_type
+typedef struct loader_impl_c_handle_base_type
 {
-	TCCState *state;
+public:
 	std::vector<std::string> files;
+
+	virtual ~loader_impl_c_handle_base_type() {}
+
+	virtual int discover(loader_impl impl, context ctx) = 0;
+
+	virtual const void *symbol(std::string &name) = 0;
+
+	void add(const loader_path path, size_t size)
+	{
+		if (this->is_ld_script(path, size) == false)
+		{
+			std::string filename(path, size);
+
+			this->files.push_back(filename);
+		}
+	}
+
+private:
+	bool is_ld_script(const loader_path path, size_t size)
+	{
+		static const char extension[] = ".ld";
+
+		if (size > sizeof(extension))
+		{
+			for (size_t ext_it = 0, path_it = size - sizeof(extension); path_it < size - 1; ++ext_it, ++path_it)
+			{
+				if (path[path_it] != extension[ext_it])
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+} * loader_impl_c_handle_base;
+
+static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr);
+static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_base c_handle, context ctx);
+
+typedef struct loader_impl_c_handle_tcc_type : loader_impl_c_handle_base_type
+{
+public:
+	TCCState *state;
 	std::map<std::string, const void *> symbols;
 
-} * loader_impl_c_handle;
+	loader_impl_c_handle_tcc_type() :
+		state(NULL) {}
+
+	virtual ~loader_impl_c_handle_tcc_type()
+	{
+		if (this->state != NULL)
+		{
+			tcc_delete(this->state);
+		}
+	}
+
+	bool initialize(loader_impl_c c_impl)
+	{
+		this->state = tcc_new();
+
+		if (this->state == NULL)
+		{
+			return false;
+		}
+
+		/* JIT the code into memory */
+		tcc_set_output_type(this->state, TCC_OUTPUT_MEMORY);
+
+		/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
+		if (!c_impl->libtcc_runtime_path.empty())
+		{
+			tcc_set_lib_path(this->state, c_impl->libtcc_runtime_path.c_str());
+		}
+
+		/* Register execution paths */
+		for (auto exec_path : c_impl->execution_paths)
+		{
+			tcc_add_include_path(this->state, exec_path.c_str());
+			tcc_add_library_path(this->state, exec_path.c_str());
+		}
+
+		/* TODO */
+		/*
+		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+			tcc_enable_debug(this->state);
+		#endif
+		*/
+
+		/* TODO: Add error handling */
+		/* tcc_set_error_func */
+
+		/* TODO: Add some warnings? */
+		/* tcc_set_warning */
+
+		/* tcc_add_include_path, tcc_add_library_path */
+		const char *loader_lib_path = loader_library_path();
+		const char *include_dir = "../include";
+		char join_path[PORTABILITY_PATH_SIZE];
+		char metacall_include_path[PORTABILITY_PATH_SIZE];
+
+		size_t join_path_size = portability_path_join(loader_lib_path, strlen(loader_lib_path) + 1, include_dir, strlen(include_dir) + 1, join_path, PORTABILITY_PATH_SIZE);
+		(void)portability_path_canonical(join_path, join_path_size, metacall_include_path, PORTABILITY_PATH_SIZE);
+
+		/* Add metacall include path */
+		tcc_add_include_path(this->state, metacall_include_path);
+
+		/* Add metacall library path (in other to find metacall library) */
+		if (!c_impl->libtcc_runtime_path.empty())
+		{
+			tcc_add_library_path(this->state, c_impl->libtcc_runtime_path.c_str());
+		}
+
+		return true;
+	}
+
+	virtual int discover(loader_impl impl, context ctx)
+	{
+		/* Get all symbols */
+		tcc_list_symbols(this->state, static_cast<void *>(this), &c_loader_impl_discover_symbols);
+
+		/* Parse the AST and register functions */
+		return c_loader_impl_discover_ast(impl, this, ctx);
+	}
+
+	virtual const void *symbol(std::string &name)
+	{
+		if (this->symbols.count(name) == 0)
+		{
+			return NULL;
+		}
+
+		return this->symbols[name];
+	}
+
+} * loader_impl_c_handle_tcc;
+
+typedef struct loader_impl_c_handle_dynlink_type : loader_impl_c_handle_base_type
+{
+public:
+	dynlink lib;
+
+	loader_impl_c_handle_dynlink_type() :
+		lib(NULL) {}
+
+	virtual ~loader_impl_c_handle_dynlink_type()
+	{
+		if (lib != NULL)
+		{
+			dynlink_unload(this->lib);
+		}
+	}
+
+	bool initialize(loader_impl_c c_impl, const loader_path path)
+	{
+		std::string lib_path_str(path);
+		fs::path lib_path(lib_path_str);
+
+		if (lib_path.is_absolute())
+		{
+			fs::path lib_dir = lib_path.parent_path();
+			std::string lib_name = fs::path(lib_path).filename().string();
+
+			this->load_dynlink(lib_dir, lib_name.c_str());
+
+			if (this->lib != NULL)
+			{
+				return this->add_header(lib_dir, lib_name);
+			}
+		}
+		else
+		{
+			for (auto exec_path : c_impl->execution_paths)
+			{
+				fs::path absolute_path(exec_path);
+
+				absolute_path /= lib_path.parent_path();
+
+				std::string lib_name = lib_path.filename().string();
+
+				this->load_dynlink(absolute_path.c_str(), lib_name.c_str());
+
+				if (this->lib != NULL)
+				{
+					return this->add_header(absolute_path, lib_name);
+				}
+			}
+		}
+
+		return false;
+	}
+
+	virtual const void *symbol(std::string &name)
+	{
+		dynlink_symbol_addr symbol_address = NULL;
+
+		if (dynlink_symbol(this->lib, name.c_str(), &symbol_address) != 0)
+		{
+			return NULL;
+		}
+
+		return (const void *)(symbol_address);
+	}
+
+private:
+	void load_dynlink(fs::path path, const char *library_name)
+	{
+		/* This function will try to check if the library exists before loading it,
+		so we avoid error messages from dynlink when guessing the file path for relative load from file */
+		dynlink_name_impl platform_name;
+
+		dynlink_platform_name(library_name, platform_name);
+
+		fs::path lib_path(path);
+
+		lib_path /= platform_name;
+
+		if (fs::exists(lib_path) == true)
+		{
+			this->lib = dynlink_load(path.string().c_str(), library_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+		}
+	}
+
+	bool add_header(fs::path path, std::string &lib_name)
+	{
+		static const char *extensions[] = {
+			".h",
+			".hh",
+			".H",
+			".hpp",
+			".h++",
+			".hxx",
+			"" /* No extension is also valid */
+		};
+
+		path /= lib_name;
+
+		for (auto extension : extensions)
+		{
+			fs::path header(path);
+
+			header += extension;
+
+			if (fs::exists(header))
+			{
+				std::string header_str = header.string();
+
+				this->add(header_str.c_str(), header_str.length() + 1);
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	virtual int discover(loader_impl impl, context ctx)
+	{
+		/* Parse the AST and register functions */
+		return c_loader_impl_discover_ast(impl, this, ctx);
+	}
+
+} * loader_impl_c_handle_dynlink;
 
 typedef struct loader_impl_c_function_type
 {
+	loader_impl_c_function_type(const void *address) :
+		ret_type(NULL), arg_types(NULL), values(NULL), address(address) {}
+
 	ffi_cif cif;
 	ffi_type *ret_type;
 	ffi_type **arg_types;
@@ -81,7 +359,7 @@ typedef struct loader_impl_c_function_type
 typedef struct c_loader_impl_discover_visitor_data_type
 {
 	loader_impl impl;
-	loader_impl_c_handle c_handle;
+	loader_impl_c_handle_base c_handle;
 	scope sp;
 	int result;
 
@@ -283,77 +561,11 @@ void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void 
 	delete[] values;
 }
 
-static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
+static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr)
 {
-	loader_impl_c_handle c_handle = new loader_impl_c_handle_type();
+	loader_impl_c_handle_tcc c_handle = static_cast<loader_impl_c_handle_tcc>(ctx);
 
-	if (c_handle == nullptr)
-	{
-		return nullptr;
-	}
-
-	c_handle->state = tcc_new();
-
-	if (c_handle->state == NULL)
-	{
-		delete c_handle;
-		return nullptr;
-	}
-
-	/* JIT the code into memory */
-	tcc_set_output_type(c_handle->state, TCC_OUTPUT_MEMORY);
-
-	/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
-	if (!c_impl->libtcc_runtime_path.empty())
-	{
-		tcc_set_lib_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
-	}
-
-	/* Register execution paths */
-	for (auto exec_path : c_impl->execution_paths)
-	{
-		tcc_add_include_path(c_handle->state, exec_path.c_str());
-		tcc_add_library_path(c_handle->state, exec_path.c_str());
-	}
-
-	/* TODO */
-	/*
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		tcc_enable_debug(c_handle->state);
-	#endif
-	*/
-
-	/* TODO: Add error handling */
-	/* tcc_set_error_func */
-
-	/* TODO: Add some warnings? */
-	/* tcc_set_warning */
-
-	/* tcc_add_include_path, tcc_add_library_path */
-	const char *loader_lib_path = loader_library_path();
-	const char *include_dir = "../include";
-	char join_path[PORTABILITY_PATH_SIZE];
-	char metacall_incl_path[PORTABILITY_PATH_SIZE];
-
-	size_t join_path_size = portability_path_join(loader_lib_path, strlen(loader_lib_path) + 1, include_dir, strlen(include_dir) + 1, join_path, PORTABILITY_PATH_SIZE);
-	(void)portability_path_canonical(join_path, join_path_size, metacall_incl_path, PORTABILITY_PATH_SIZE);
-
-	/* Add metacall include path */
-	tcc_add_include_path(c_handle->state, metacall_incl_path);
-
-	/* Add metacall library path (in other to find metacall library) */
-	if (!c_impl->libtcc_runtime_path.empty())
-	{
-		tcc_add_library_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
-	}
-
-	return c_handle;
-}
-
-static void c_loader_impl_handle_destroy(loader_impl_c_handle c_handle)
-{
-	tcc_delete(c_handle->state);
-	delete c_handle;
+	c_handle->symbols.insert(std::pair<std::string, const void *>(name, addr));
 }
 
 static bool c_loader_impl_file_exists(const loader_path path)
@@ -749,7 +961,7 @@ type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_
 	return t;
 }
 
-static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_handle c_handle, scope sp, CXCursor cursor)
+static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_handle_base c_handle, scope sp, CXCursor cursor)
 {
 	auto cursor_type = clang_getCursorType(cursor);
 	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
@@ -759,15 +971,15 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 	symbol_name.insert(0, 1, '_');
 #endif
 
-	if (c_handle->symbols.count(symbol_name) == 0)
+	const void *address = c_handle->symbol(symbol_name);
+
+	if (address == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Symbol '%s' not found, skipping the function", func_name.c_str());
 		return 1;
 	}
 
-	loader_impl_c_function c_function = new loader_impl_c_function_type();
-
-	c_function->address = c_handle->symbols[symbol_name];
+	loader_impl_c_function c_function = new loader_impl_c_function_type(address);
 
 	int num_args = clang_Cursor_getNumArguments(cursor);
 	size_t args_size = num_args < 0 ? (size_t)0 : (size_t)num_args;
@@ -837,7 +1049,7 @@ static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCurs
 	return CXChildVisit_Continue;
 }
 
-static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle c_handle, context ctx)
+static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_base c_handle, context ctx)
 {
 	c_loader_impl_discover_visitor_data_type data = {
 		impl,
@@ -871,42 +1083,14 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle c_h
 	return data.result;
 }
 
-static bool c_loader_impl_is_ld_script(const loader_path path, size_t size)
-{
-	static const char extension[] = ".ld";
-
-	if (size > sizeof(extension))
-	{
-		for (size_t ext_it = 0, path_it = size - sizeof(extension); path_it < size - 1; ++ext_it, ++path_it)
-		{
-			if (path[path_it] != extension[ext_it])
-			{
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-
-static void c_loader_impl_handle_add(loader_impl_c_handle c_handle, const loader_path path, size_t size)
-{
-	if (c_loader_impl_is_ld_script(path, size) == false)
-	{
-		std::string filename(path, size);
-
-		c_handle->files.push_back(filename);
-	}
-}
-
 loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
-	loader_impl_c_handle c_handle = c_loader_impl_handle_create(c_impl);
+	loader_impl_c_handle_tcc c_handle = new loader_impl_c_handle_tcc_type();
 
-	if (c_handle == nullptr)
+	if (c_handle->initialize(c_impl) == false)
 	{
-		return NULL;
+		goto error;
 	}
 
 	for (size_t iterator = 0; iterator < size; ++iterator)
@@ -919,11 +1103,10 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 			if (tcc_add_file(c_handle->state, paths[iterator]) == -1)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
-				c_loader_impl_handle_destroy(c_handle);
-				return NULL;
+				goto error;
 			}
 
-			c_loader_impl_handle_add(c_handle, paths[iterator], path_size);
+			c_handle->add(paths[iterator], path_size);
 		}
 		else
 		{
@@ -935,19 +1118,21 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 				loader_path path;
 				size_t path_size = portability_path_join(exec_path.c_str(), exec_path.length() + 1, paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1, path, LOADER_PATH_SIZE);
 
-				if (c_loader_impl_file_exists(path) == true && tcc_add_file(c_handle->state, path) != -1)
+				if (c_loader_impl_file_exists(path) == true)
 				{
-					c_loader_impl_handle_add(c_handle, path, path_size);
-					found = true;
-					break;
+					if (tcc_add_file(c_handle->state, path) != -1)
+					{
+						c_handle->add(path, path_size);
+						found = true;
+						break;
+					}
 				}
 			}
 
 			if (found == false)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
-				c_loader_impl_handle_destroy(c_handle);
-				return NULL;
+				goto error;
 			}
 		}
 	}
@@ -955,99 +1140,85 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 	if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
-		c_loader_impl_handle_destroy(c_handle);
-		return NULL;
+		goto error;
 	}
 
 	return c_handle;
+
+error:
+	delete c_handle;
+	return NULL;
 }
 
 loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
-	loader_impl_c_handle c_handle = c_loader_impl_handle_create(c_impl);
+	loader_impl_c_handle_tcc c_handle = new loader_impl_c_handle_tcc_type();
 
 	/* Apparently TCC has an unsafe API for compiling strings */
 	(void)size;
 
-	if (c_handle == nullptr)
+	if (c_handle->initialize(c_impl) == false)
 	{
-		return NULL;
+		goto error;
 	}
 
 	if (tcc_compile_string(c_handle->state, buffer) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Failed to compile the buffer: %s", name);
-		c_loader_impl_handle_destroy(c_handle);
-		return NULL;
+		goto error;
 	}
 
 	if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
-		c_loader_impl_handle_destroy(c_handle);
-		return NULL;
+		goto error;
 	}
 
 	/* TODO: Load the buffer with the parser while iterating after loading it with TCC */
 
 	return c_handle;
+
+error:
+	delete c_handle;
+	return NULL;
 }
 
 loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
-	/* TODO: Define what to do with this */
-	/*
-	loader_impl_c_handle c_handle = c_loader_impl_handle_create();
+	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
+	loader_impl_c_handle_dynlink c_handle = new loader_impl_c_handle_dynlink_type();
 
-	if (c_handle == nullptr)
+	if (c_handle->initialize(c_impl, path) == false)
 	{
+		delete c_handle;
 		return NULL;
 	}
 
-	(void)impl;
-
 	return c_handle;
-	*/
-
-	(void)impl;
-	(void)path;
-
-	return NULL;
 }
 
 int c_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
-	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(handle);
+	loader_impl_c_handle_base c_handle = static_cast<loader_impl_c_handle_base>(handle);
 
 	(void)impl;
 
-	if (c_handle != NULL)
+	if (c_handle == NULL)
 	{
-		c_loader_impl_handle_destroy(c_handle);
-
-		return 0;
+		return 1;
 	}
 
-	return 1;
-}
+	delete c_handle;
 
-static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr)
-{
-	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(ctx);
-
-	c_handle->symbols.insert(std::pair<std::string, const void *>(name, addr));
+	return 0;
 }
 
 int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
-	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(handle);
+	loader_impl_c_handle_base c_handle = static_cast<loader_impl_c_handle_base>(handle);
 
-	/* Get all symbols */
-	tcc_list_symbols(c_handle->state, static_cast<void *>(c_handle), &c_loader_impl_discover_symbols);
-
-	/* Parse the AST and register functions */
-	return c_loader_impl_discover_ast(impl, c_handle, ctx);
+	return c_handle->discover(impl, ctx);
 }
 
 int c_loader_impl_destroy(loader_impl impl)
