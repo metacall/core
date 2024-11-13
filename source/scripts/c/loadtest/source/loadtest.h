@@ -11,7 +11,27 @@
 extern "C" {
 #endif
 
+#include <cstdint>
+
+typedef struct
+{
+	uint32_t i;
+	double d;
+} pair;
+
+typedef struct
+{
+	uint32_t size;
+	pair *pairs;
+} pair_list;
+
 EXPORT long call_cpp_func(void);
+
+EXPORT int pair_list_init(pair_list **t);
+
+EXPORT double pair_list_value(pair_list *t, uint32_t id);
+
+EXPORT void pair_list_destroy(pair_list *t);
 
 #ifdef __cplusplus
 }

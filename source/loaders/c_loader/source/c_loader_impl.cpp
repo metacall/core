@@ -244,6 +244,7 @@ public:
 
 			this->load_dynlink(lib_dir, lib_name.c_str());
 
+			/* If the path is absolute, we assume the header is in the same folder */
 			if (this->lib != NULL)
 			{
 				return this->add_header(lib_dir, lib_name);
@@ -251,6 +252,8 @@ public:
 		}
 		else
 		{
+			bool header_found = false;
+
 			for (auto exec_path : c_impl->execution_paths)
 			{
 				fs::path absolute_path(exec_path);
@@ -259,11 +262,23 @@ public:
 
 				std::string lib_name = lib_path.filename().string();
 
-				this->load_dynlink(absolute_path.c_str(), lib_name.c_str());
-
-				if (this->lib != NULL)
+				/* If the path is relative, we keep trying the exec_paths until we find the header,
+				* this is for solving situations where we have the header in /usr/local/include and
+				* the library in /usr/local/lib
+				*/
+				if (this->lib == NULL)
 				{
-					return this->add_header(absolute_path, lib_name);
+					this->load_dynlink(absolute_path, lib_name.c_str());
+				}
+
+				if (header_found == false)
+				{
+					header_found = this->add_header(absolute_path, lib_name);
+				}
+
+				if (this->lib != NULL && header_found == true)
+				{
+					return true;
 				}
 			}
 		}
@@ -284,7 +299,7 @@ public:
 	}
 
 private:
-	void load_dynlink(fs::path path, const char *library_name)
+	void load_dynlink(fs::path &path, const char *library_name)
 	{
 		/* This function will try to check if the library exists before loading it,
 		so we avoid error messages from dynlink when guessing the file path for relative load from file */
@@ -771,12 +786,46 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		const char *name;
 	} type_id_name_pair[] = {
 		{ TYPE_BOOL, "bool" },
+
 		{ TYPE_CHAR, "char" },
+		{ TYPE_CHAR, "int8_t" },
+		{ TYPE_CHAR, "uint8_t" },
+		{ TYPE_CHAR, "int_least8_t" },
+		{ TYPE_CHAR, "uint_least8_t" },
+		{ TYPE_CHAR, "int_fast8_t" },
+		{ TYPE_CHAR, "uint_fast8_t" },
+
 		{ TYPE_SHORT, "short" },
+		{ TYPE_SHORT, "int16_t" },
+		{ TYPE_SHORT, "uint16_t" },
+		{ TYPE_SHORT, "int_least16_t" },
+		{ TYPE_SHORT, "uint_least16_t" },
+		{ TYPE_SHORT, "int_fast16_t" },
+		{ TYPE_SHORT, "uint_fast16_t" },
+
 		{ TYPE_INT, "int" },
+		{ TYPE_INT, "uint32_t" },
+		{ TYPE_INT, "int32_t" },
+		{ TYPE_INT, "int_least32_t" },
+		{ TYPE_INT, "uint_least32_t" },
+		{ TYPE_INT, "int_fast32_t" },
+		{ TYPE_INT, "uint_fast32_t" },
+
 		{ TYPE_LONG, "long" },
+		{ TYPE_LONG, "long long" },
+		{ TYPE_LONG, "uint64_t" },
+		{ TYPE_LONG, "int64_t" },
+		{ TYPE_LONG, "int_least64_t" },
+		{ TYPE_LONG, "uint_least64_t" },
+		{ TYPE_LONG, "int_fast64_t" },
+		{ TYPE_LONG, "uint_fast64_t" },
+		{ TYPE_LONG, "ptrdiff_t" },
+		{ TYPE_LONG, "intptr_t" },
+		{ TYPE_LONG, "uintptr_t" },
+
 		{ TYPE_FLOAT, "float" },
 		{ TYPE_DOUBLE, "double" },
+
 		{ TYPE_INVALID, "void" }
 
 		/* TODO: Do more types (and the unsigned versions too?) */
@@ -838,6 +887,8 @@ int c_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 
+	/* TODO: It would be interesting to support LD_LIBRARY_PATH or DYLD_LIBRARY_PATH
+	* on startup for supporting standard execution paths */
 	c_impl->execution_paths.push_back(path);
 
 	return 0;
