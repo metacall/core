@@ -28,7 +28,7 @@ jobs:
         platform:
           - linux/amd64
         #  - linux/arm64
-        #  - linux/riscv64
+       #   - linux/riscv64
         #  - linux/ppc64le
         #  - linux/s390x
           - linux/386
@@ -73,24 +73,24 @@ jobs:
         run: |
           ./docker-compose.sh platform
 
-      # - name: Generate images
-      #   if: github.event_name != 'pull_request'
-      #   run: |
-      #     for tag in "deps" "dev" "runtime" "cli"; do
-      #       mkdir -p "/tmp/images/${tag}"
-      #       digest="$(docker images --no-trunc --quiet metacall/core:${tag})"
-      #       echo "FROM metacall/core:${tag}@${digest}" &> "/tmp/images/${tag}/Dockerfile"
-      #     done
+      - name: Generate images
+        if: github.event_name != 'pull_request'
+        run: |
+           for tag in "deps" "dev" "runtime" "cli"; do
+             mkdir -p "/tmp/images/${tag}"
+             digest="$(docker images --no-trunc --quiet metacall/core:${tag})"
+             echo "FROM metacall/core:${tag}@${digest}" &> "/tmp/images/${tag}/Dockerfile"
+           done
 
-      # - name: Build and push by digest (deps)
-      #   id: build
-      #   uses: docker/build-push-action@v6
-      #   if: github.event_name != 'pull_request'
-      #   with:
-      #     context: /tmp/images/deps/Dockerfile
-      #     platforms: ${{ matrix.platform }}
-      #     labels: ${{ steps.meta.outputs.labels }}
-      #     outputs: type=image,name=docker.io/${{ env.IMAGE_NAME }}:deps,push-by-digest=true,name-canonical=true,push=true
+      - name: Build and push by digest (deps)
+        id: build
+        uses: docker/build-push-action@v6
+        if: github.event_name != 'pull_request'
+        with:
+           context: /tmp/images/deps/Dockerfile
+           platforms: ${{ matrix.platform }}
+           labels: ${{ steps.meta.outputs.labels }}
+           outputs: type=image,name=docker.io/${{ env.IMAGE_NAME }}:deps,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digests
         if: github.event_name != 'pull_request'
@@ -144,16 +144,10 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Create manifest list and push
-     #   if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
+       # if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
         run: |
-          set -exuo pipefail
-          for tag in "deps" "dev" "runtime" "cli"; do
+          for tag in "deps"; do
             cd "/tmp/digests/${tag}"
-            IMAGE_HASHES=$(printf '${{ env.IMAGE_NAME }}:${tag}@sha256:%s ' *)
-            for image in ${IMAGE_HASHES}; do
-              docker image tag ${image} ${{ env.IMAGE_NAME }}:${tag}
-              docker push ${{ env.IMAGE_NAME }}:${tag}
-            done
             docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:${tag} ${IMAGE_HASHES}
             if [[ "${tag}" = "cli" ]]; then
               docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:latest ${IMAGE_HASHES}
