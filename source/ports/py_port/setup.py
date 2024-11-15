@@ -32,6 +32,10 @@ current_path = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(current_path, 'README.rst'), encoding='utf-8') as f:
 	long_description = f.read()
 
+# Get the version
+with open(os.path.join(current_path, 'VERSION')) as f:
+	version = f.read()
+
 # Define set up options
 options = {
 	'name': 'metacall',
@@ -39,7 +43,7 @@ options = {
 	# Versions should comply with PEP440.  For a discussion on single-sourcing
 	# the version across setup.py and the project code, see
 	# https://packaging.python.org/en/latest/single_source_version.html
-	'version': '0.5.0',
+	'version': version,
 
 	'description': 'A library for providing inter-language foreign function interface calls',
 	'long_description': long_description,
@@ -82,6 +86,10 @@ options = {
 		'Programming Language :: Python :: 3.7',
 		'Programming Language :: Python :: 3.8',
 		'Programming Language :: Python :: 3.9',
+		'Programming Language :: Python :: 3.10',
+		'Programming Language :: Python :: 3.11',
+		'Programming Language :: Python :: 3.12',
+		'Programming Language :: Python :: 3.13',
 	],
 
 	# Keywords
@@ -114,23 +122,23 @@ options = {
 }
 
 # Exclude base packages
-exclude_packages =  ['contrib', 'docs', 'test', 'CMakeLists.txt']
+exclude_packages = ['contrib', 'docs', 'test', 'test.py' 'CMakeLists.txt', '.gitignore', 'upload.sh']
 
 # TODO: Review helper
 # # Detect if metacall port is already installed
 # port_installed = False
 
-# Append environment variable or default install path when building manually (TODO: Cross-platform paths)
-sys.path.append(os.environ.get('PORT_LIBRARY_PATH', os.path.join(os.path.sep, 'usr', 'local', 'lib')));
+# # Append environment variable or default install path when building manually (TODO: Cross-platform paths)
+# sys.path.append(os.environ.get('PORT_LIBRARY_PATH', os.path.join(os.path.sep, 'usr', 'local', 'lib')));
 
-# Find is MetaCall is installed as a distributable tarball (TODO: Cross-platform paths)
-rootdir = os.path.join(os.path.sep, 'gnu', 'store')
-regex = re.compile('.*-metacall-.*')
+# # Find is MetaCall is installed as a distributable tarball (TODO: Cross-platform paths)
+# rootdir = os.path.join(os.path.sep, 'gnu', 'store')
+# regex = re.compile('.*-metacall-.*')
 
-for root, dirs, _ in os.walk(rootdir):
-	for folder in dirs:
-		if regex.match(folder) and not folder.endswith('R'):
-			sys.path.append(os.path.join(rootdir, folder, 'lib'))
+# for root, dirs, _ in os.walk(rootdir):
+# 	for folder in dirs:
+# 		if regex.match(folder) and not folder.endswith('R'):
+# 			sys.path.append(os.path.join(rootdir, folder, 'lib'))
 
 # TODO: Review helper
 # # Find if module is installed
@@ -171,7 +179,7 @@ for root, dirs, _ in os.walk(rootdir):
 #	instead of the old one, but we keep the ./helper folder in order to provide future support for
 #	extra commands, although the main idea is to keep the OS dependant install, this can be useful
 #	for updating or doing Python related things. Meanwhile, it will be avoided.
-exclude_packages.append('helper')
+exclude_packages.extend(['helper', 'helper.py'])
 
 # TODO: Review helper
 # if port_installed == True:

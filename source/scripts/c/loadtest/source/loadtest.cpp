@@ -1,5 +1,4 @@
 #include "loadtest.h"
-#include <cstdint>
 #include <vector>
 
 long call_cpp_func(void)
@@ -38,7 +37,7 @@ void pair_list_destroy(pair_list *t)
 	delete t;
 }
 
-void modify_int_ptr(int *i)
+void modify_int_ptr(long *l)
 {
-	*i = 111;
+	*l = 111;
 }

@@ -33,7 +33,7 @@ EXPORT double pair_list_value(pair_list *t, uint32_t id);
 
 EXPORT void pair_list_destroy(pair_list *t);
 
-EXPORT void modify_int_ptr(int *i);
+EXPORT void modify_int_ptr(long *i);
 
 #ifdef __cplusplus
 }

@@ -819,10 +819,8 @@ static const char py_loader_capsule_reference_id[] = "__metacall_capsule_referen
 
 static void py_loader_port_value_reference_destroy(PyObject *capsule)
 {
-	void *ref = PyCapsule_GetPointer(capsule, py_loader_capsule_reference_id);
-	void *v = PyCapsule_GetContext(capsule);
+	void *v = PyCapsule_GetPointer(capsule, py_loader_capsule_reference_id);
 
-	metacall_value_destroy(ref);
 	metacall_value_destroy(v);
 }
 
@@ -831,7 +829,7 @@ static PyObject *py_loader_port_value_reference(PyObject *self, PyObject *args)
 	static const char format[] = "O:metacall_value_reference";
 	PyObject *obj;
 	loader_impl impl;
-	void *v, *ref;
+	void *v;
 	PyObject *capsule;
 
 	(void)self;
@@ -858,30 +856,15 @@ static PyObject *py_loader_port_value_reference(PyObject *self, PyObject *args)
 		goto error_none;
 	}
 
-	ref = metacall_value_reference(v);
-
-	if (ref == NULL)
-	{
-		PyErr_SetString(PyExc_ValueError, "Failed to create the reference from MetaCall value.");
-		goto error_value;
-	}
-
-	capsule = PyCapsule_New(ref, py_loader_capsule_reference_id, &py_loader_port_value_reference_destroy);
+	capsule = PyCapsule_New(v, py_loader_capsule_reference_id, &py_loader_port_value_reference_destroy);
 
 	if (capsule == NULL)
 	{
-		goto error_ref;
-	}
-
-	if (PyCapsule_SetContext(capsule, v) != 0)
-	{
-		goto error_ref;
+		goto error_value;
 	}
 
 	return capsule;
 
-error_ref:
-	metacall_value_destroy(ref);
 error_value:
 	metacall_value_destroy(v);
 error_none:
@@ -893,7 +876,7 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 	static const char format[] = "O:metacall_value_dereference";
 	PyObject *capsule;
 	const char *name = NULL;
-	void *ref, *v;
+	void *v;
 	loader_impl impl;
 	PyObject *result;
 
@@ -922,21 +905,11 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 		return py_loader_port_none();
 	}
 
-	/* Get the reference */
-	ref = PyCapsule_GetPointer(capsule, name);
-
-	if (ref == NULL)
-	{
-		return py_loader_port_none();
-	}
-
 	/* Get the value */
-	v = metacall_value_dereference(ref);
+	v = PyCapsule_GetPointer(capsule, name);
 
-	/* Validate the result */
-	if (v != PyCapsule_GetContext(capsule))
+	if (v == NULL)
 	{
-		PyErr_SetString(PyExc_TypeError, "Invalid reference, the PyCapsule context does not match the dereferenced value");
 		return py_loader_port_none();
 	}
 

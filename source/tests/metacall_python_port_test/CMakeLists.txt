@@ -97,7 +97,7 @@ target_compile_definitions(${target}
 	${DEFAULT_COMPILE_DEFINITIONS}
 
 	# Python Port Test path
-	METACALL_PYTHON_PORT_TEST_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port/run_tests.py"
+	METACALL_PYTHON_PORT_TEST_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port/test.py"
 )
 
 #
