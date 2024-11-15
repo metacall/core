@@ -221,6 +221,9 @@ static char *py_loader_impl_main_module = NULL;
 /* Holds reference to the original PyCFunction.tp_dealloc method */
 static void (*py_loader_impl_pycfunction_dealloc)(PyObject *) = NULL;
 
+/* Implements PyCapsules with null value internally */
+static const char py_loader_capsule_null_id[] = "__metacall_capsule_null__";
+
 PyObject *py_loader_impl_finalizer_object_impl(PyObject *self, PyObject *Py_UNUSED(args))
 {
 	value v = PyCapsule_GetPointer(self, NULL);
@@ -271,6 +274,14 @@ int py_loader_impl_finalizer_object(loader_impl impl, PyObject *obj, value v)
 	py_loader_thread_release();
 
 	return 0;
+}
+
+PyObject *py_loader_impl_capsule_new_null(void)
+{
+	/* We want to create a new capsule with contents set to NULL, but PyCapsule
+	* does not allow that, instead we are going to identify our NULL capsule with
+	* this configuration (setting the capsule to Py_None) */
+	return PyCapsule_New(Py_None, py_loader_capsule_null_id, NULL);
 }
 
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
@@ -1142,17 +1153,17 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	}
 	else if (id == TYPE_PTR)
 	{
-		void *ptr = NULL;
+		const char *name = PyCapsule_GetName(obj);
+		void *ptr = PyCapsule_GetPointer(obj, name);
 
-#if PY_MAJOR_VERSION == 2
-
-		/* TODO */
-
-#elif PY_MAJOR_VERSION == 3
-		ptr = PyCapsule_GetPointer(obj, NULL);
-
-		v = value_create_ptr(ptr);
-#endif
+		if (ptr == Py_None && name == py_loader_capsule_null_id)
+		{
+			v = value_create_ptr(NULL);
+		}
+		else
+		{
+			v = value_create_ptr(ptr);
+		}
 	}
 	else if (id == TYPE_FUNCTION)
 	{
@@ -1440,13 +1451,12 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	{
 		void *ptr = value_to_ptr(v);
 
-#if PY_MAJOR_VERSION == 2
+		if (ptr == NULL)
+		{
+			return py_loader_impl_capsule_new_null();
+		}
 
-		/* TODO */
-
-#elif PY_MAJOR_VERSION == 3
 		return PyCapsule_New(ptr, NULL, NULL);
-#endif
 	}
 	else if (id == TYPE_FUTURE)
 	{

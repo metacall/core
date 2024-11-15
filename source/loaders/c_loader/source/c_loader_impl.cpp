@@ -826,9 +826,9 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_FLOAT, "float" },
 		{ TYPE_DOUBLE, "double" },
 
-		{ TYPE_INVALID, "void" }
+		{ TYPE_NULL, "void" }
 
-		/* TODO: Do more types (and the unsigned versions too?) */
+		/* TODO: Do more types */
 	};
 
 	size_t size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -956,7 +956,7 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 			return TYPE_INT;
 
 		case CXType_Void:
-			return TYPE_INVALID;
+			return TYPE_NULL;
 
 		case CXType_Enum: {
 			CXCursor referenced = clang_isReference(cursor.kind) ? clang_getCursorReferenced(cursor) : cursor;

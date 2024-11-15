@@ -223,6 +223,16 @@ void *metacall_value_copy(void *v)
 	return value_type_copy(v);
 }
 
+void *metacall_value_reference(void *v)
+{
+	return value_type_reference(v);
+}
+
+void *metacall_value_dereference(void *v)
+{
+	return value_type_dereference(v);
+}
+
 void metacall_value_move(void *src, void *dst)
 {
 	value_move(src, dst);

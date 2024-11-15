@@ -75,6 +75,18 @@ def metacall_inspect():
 		return dic
 	return dict()
 
+# Value API for handling pointers
+def metacall_value_create_ptr(ptr):
+	return module.metacall_value_create_ptr(ptr)
+
+# Value API for getting the pointer to a value
+def metacall_value_reference(v):
+	return module.metacall_value_reference(v)
+
+# Value API for getting the value of a pointer
+def metacall_value_dereference(ptr):
+	return module.metacall_value_dereference(ptr)
+
 # Monkey patching
 import builtins
 import types
@@ -157,6 +169,9 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		'tsx': 'ts',
 		# Rust Loader
 		'rs': 'rs',
+		# C Loader
+		'c': 'c'
+
 		# Note: By default js extension uses NodeJS loader instead of JavaScript V8
 		# Probably in the future we can differenciate between them, but it is not trivial
 	}

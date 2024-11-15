@@ -37,3 +37,8 @@ void pair_list_destroy(pair_list *t)
 	delete[] t->pairs;
 	delete t;
 }
+
+void modify_int_ptr(int *i)
+{
+	*i = 111;
+}

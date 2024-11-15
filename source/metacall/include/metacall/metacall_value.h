@@ -396,6 +396,48 @@ METACALL_API void *metacall_value_copy(void *v);
 
 /**
 *  @brief
+*    Creates a new pointer value, with a reference to the
+*    data contained inside the value @v. For example:
+*
+*    void *v = metacall_value_create_int(20);
+*    void *ptr = metacall_value_reference(v);
+*
+*    In this case, void *ptr is a value equivalent to int*,
+*    and it points directly to the integer contained in void *v.
+*    Note that if we destroy the value @v, the reference will
+*    point to already freed memory, causing use-after-free when used.
+*
+*  @param[in] v
+*    Reference to the value to be referenced
+*
+*  @return
+*    A new value of type pointer, pointing to the @v data
+*/
+METACALL_API void *metacall_value_reference(void *v);
+
+/**
+*  @brief
+*    If you pass a reference previously created (i.e a value of
+*    type pointer, pointing to another value), it returns the
+*    original value. It does not modify the memory of the values
+*    neither allocates anything. If the value @v is pointing to
+*    has been deleted, it will cause an use-after-free. For example:
+*
+*    void *v = metacall_value_create_int(20);
+*    void *ptr = metacall_value_reference(v);
+*    void *w = metacall_value_dereference(ptr);
+*    assert(v == w); // Both are the same value
+*
+*  @param[in] v
+*    Reference to the value to be dereferenced
+*
+*  @return
+*    The value containing the data which ptr is pointing to
+*/
+METACALL_API void *metacall_value_dereference(void *v);
+
+/**
+*  @brief
 *    Copies the ownership from @src to @dst, including the finalizer,
 *    and resets the owner and finalizer of @src
 *

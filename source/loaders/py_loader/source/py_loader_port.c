@@ -493,6 +493,7 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 	/* Obtain Python loader implementation */
 	impl = loader_get_impl(py_loader_tag);
 
+	/* TODO: Remove this check when we implement this: https://github.com/metacall/core/issues/231 */
 	if (impl == NULL)
 	{
 		PyErr_SetString(PyExc_ValueError, "Invalid Python loader instance, MetaCall Port must be used from MetaCall CLI");
@@ -622,6 +623,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 	/* Obtain Python loader implementation */
 	impl = loader_get_impl(py_loader_tag);
 
+	/* TODO: Remove this check when we implement this: https://github.com/metacall/core/issues/231 */
 	if (impl == NULL)
 	{
 		PyErr_SetString(PyExc_ValueError, "Invalid Python loader instance, MetaCall Port must be used from MetaCall CLI");
@@ -778,6 +780,184 @@ static PyObject *py_loader_port_inspect(PyObject *self, PyObject *args)
 	return result;
 }
 
+static PyObject *py_loader_port_value_create_ptr(PyObject *self, PyObject *args)
+{
+	static const char format[] = "O:metacall_value_create_ptr";
+	PyObject *pointer;
+
+	(void)self;
+
+	/* Parse arguments */
+	if (!PyArg_ParseTuple(args, (char *)format, &pointer))
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_value_create_ptr(None); or metacall_value_create_ptr(previous_allocated_ptr);");
+		return py_loader_port_none();
+	}
+
+	if (!PyCapsule_CheckExact(pointer) && pointer != Py_None)
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument must be None or a PyCapsule (i.e a previously allocated pointer)");
+		return py_loader_port_none();
+	}
+
+	if (pointer == Py_None)
+	{
+		return py_loader_impl_capsule_new_null();
+	}
+	else
+	{
+		/* Get capsule pointer */
+		const char *name = PyCapsule_GetName(pointer);
+		void *pointer_addr = PyCapsule_GetPointer(pointer, name);
+
+		/* Return a copy of the capsule */
+		return PyCapsule_New(pointer_addr, name, NULL);
+	}
+}
+
+static const char py_loader_capsule_reference_id[] = "__metacall_capsule_reference__";
+
+static void py_loader_port_value_reference_destroy(PyObject *capsule)
+{
+	void *ref = PyCapsule_GetPointer(capsule, py_loader_capsule_reference_id);
+	void *v = PyCapsule_GetContext(capsule);
+
+	metacall_value_destroy(ref);
+	metacall_value_destroy(v);
+}
+
+static PyObject *py_loader_port_value_reference(PyObject *self, PyObject *args)
+{
+	static const char format[] = "O:metacall_value_reference";
+	PyObject *obj;
+	loader_impl impl;
+	void *v, *ref;
+	PyObject *capsule;
+
+	(void)self;
+
+	/* Parse arguments */
+	if (!PyArg_ParseTuple(args, (char *)format, &obj))
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_value_reference(obj);");
+		goto error_none;
+	}
+
+	/* Obtain Python loader implementation */
+	impl = loader_get_impl(py_loader_tag);
+
+	/* TODO: When using the port outside MetaCall this is going to segfault for functions and similar
+	* structures that require py loader internal structure to be initialized. For those cases, we
+	* must implement this: https://github.com/metacall/core/issues/231
+	*/
+	v = py_loader_impl_capi_to_value(impl, obj, py_loader_impl_capi_to_value_type(impl, obj));
+
+	if (v == NULL)
+	{
+		PyErr_SetString(PyExc_ValueError, "Failed to convert the Python object to MetaCall value.");
+		goto error_none;
+	}
+
+	ref = metacall_value_reference(v);
+
+	if (ref == NULL)
+	{
+		PyErr_SetString(PyExc_ValueError, "Failed to create the reference from MetaCall value.");
+		goto error_value;
+	}
+
+	capsule = PyCapsule_New(ref, py_loader_capsule_reference_id, &py_loader_port_value_reference_destroy);
+
+	if (capsule == NULL)
+	{
+		goto error_ref;
+	}
+
+	if (PyCapsule_SetContext(capsule, v) != 0)
+	{
+		goto error_ref;
+	}
+
+	return capsule;
+
+error_ref:
+	metacall_value_destroy(ref);
+error_value:
+	metacall_value_destroy(v);
+error_none:
+	return py_loader_port_none();
+}
+
+static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args)
+{
+	static const char format[] = "O:metacall_value_dereference";
+	PyObject *capsule;
+	const char *name = NULL;
+	void *ref, *v;
+	loader_impl impl;
+	PyObject *result;
+
+	(void)self;
+
+	/* Parse arguments */
+	if (!PyArg_ParseTuple(args, (char *)format, &capsule))
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_value_dereference(ptr);");
+		return py_loader_port_none();
+	}
+
+	/* Check if it is a valid reference */
+	if (!PyCapsule_CheckExact(capsule))
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument must be a PyCapsule (i.e a previously allocated pointer)");
+		return py_loader_port_none();
+	}
+
+	/* Check if it is a valid MetaCall reference */
+	name = PyCapsule_GetName(capsule);
+
+	if (name != py_loader_capsule_reference_id)
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid reference, argument must be a PyCapsule from MetaCall");
+		return py_loader_port_none();
+	}
+
+	/* Get the reference */
+	ref = PyCapsule_GetPointer(capsule, name);
+
+	if (ref == NULL)
+	{
+		return py_loader_port_none();
+	}
+
+	/* Get the value */
+	v = metacall_value_dereference(ref);
+
+	/* Validate the result */
+	if (v != PyCapsule_GetContext(capsule))
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid reference, the PyCapsule context does not match the dereferenced value");
+		return py_loader_port_none();
+	}
+
+	/* Obtain Python loader implementation */
+	impl = loader_get_impl(py_loader_tag);
+
+	/* TODO: When using the port outside MetaCall this is going to segfault for functions and similar
+	* structures that require py loader internal structure to be initialized. For those cases, we
+	* must implement this: https://github.com/metacall/core/issues/231
+	*/
+	result = py_loader_impl_value_to_capi(impl, value_type_id(v), v);
+
+	if (result == NULL)
+	{
+		PyErr_SetString(PyExc_ValueError, "Failed to convert the MetaCall value to Python object.");
+		return py_loader_port_none();
+	}
+
+	return result;
+}
+
 static PyMethodDef metacall_methods[] = {
 	{ "metacall_load_from_file", py_loader_port_load_from_file, METH_VARARGS,
 		"Loads a script from file." },
@@ -793,6 +973,12 @@ static PyMethodDef metacall_methods[] = {
 		"Get information about all loaded objects." },
 	{ "metacall", py_loader_port_invoke, METH_VARARGS,
 		"Call a function anonymously." },
+	{ "metacall_value_create_ptr", py_loader_port_value_create_ptr, METH_VARARGS,
+		"Create a new value of type Pointer." },
+	{ "metacall_value_reference", py_loader_port_value_reference, METH_VARARGS,
+		"Create a new value of type Pointer." },
+	{ "metacall_value_dereference", py_loader_port_value_dereference, METH_VARARGS,
+		"Get the data which a value of type Pointer is pointing to." },
 	{ NULL, NULL, 0, NULL }
 };
 
