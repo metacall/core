@@ -87,7 +87,7 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INVALID);
+	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
 
 	metacall_value_destroy(ret);
 
