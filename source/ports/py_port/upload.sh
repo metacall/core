@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #
 #	MetaCall Python Port Deploy Script by Parra Studios
@@ -19,20 +19,24 @@
 #	limitations under the License.
 #
 
-# TODO: Update version in setup.py
-# TODO: Automate for CD/CI
+set -exuo pipefail
 
-# Define exit code
-fail=0
+PYPI_VERSION=$(curl -s https://pypi.org/rss/project/metacall/releases.xml | sed -n 's/\s*<title>\([0-9.]*\).*/\1/p' | sed -n '2 p')
+PORT_VERSION=$(cat VERSION)
+
+if [[ "$PYPI_VERSION" == "$PORT_VERSION" ]]; then
+	echo "Current package version is the same as PyPI version, skipping upload."
+	exit 0
+fi
+
+TWINE_USERNAME=${PYTHON_PYPI_USERNAME:-}
+TWINE_PASSWORD=${PYTHON_PYPI_PASSWORD:-}
 
 # Install dependencies and upload MetaCall package
-python3 -m pip install --user --upgrade twine setuptools wheel \
-	&& python3 setup.py sdist bdist_wheel \
-	&& python3 -m twine check dist/* \
-	&& python3 -m twine upload dist/* || fail=1
+python3 -m pip install --user --upgrade twine setuptools wheel
+python3 setup.py sdist bdist_wheel
+python3 -m twine check dist/*
+python3 -m twine upload dist/*
 
 # Delete output
-rm -rf dist/* build/* || fail=1
-
-# Exit
-exit ${fail}
+rm -rf dist/* build/*

@@ -47,11 +47,17 @@ _open-project.bat
 _start-cmake-gui.bat
 _start-cmd.bat
 
+# macOS files
+.DS_Store
+
 # Local config unix
 .localconfig
 
 # Visual Studio Code
 .vscode
+
+# Clang files
+.cache
 
 # Linked dockerignore file in main context
 .dockerignore
@@ -59,6 +65,3 @@ _start-cmd.bat
 !tools/dev/.dockerignore
 !tools/runtime/.dockerignore
 !tools/cli/.dockerignore
-
-# macOS files
-.DS_Store

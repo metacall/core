@@ -31,12 +31,7 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	const char *c_dep_scripts[] = {
-		"libloadtest.h",
-		"libloadtest.ld"
-	};
-
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_package("c", "loadtest", NULL));
 
 	void *ret = metacall("call_cpp_func");
 
@@ -44,9 +39,59 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_LONG);
 
-	EXPECT_NE((long)metacall_value_to_long(ret), (long)323);
+	EXPECT_EQ((long)metacall_value_to_long(ret), (long)323);
 
 	metacall_value_destroy(ret);
+
+	void *pair_list = NULL;
+
+	void *args_init[] = {
+		metacall_value_create_ptr(&pair_list),
+	};
+
+	ret = metacallv("pair_list_init", args_init);
+
+	EXPECT_NE((void *)NULL, (void *)ret);
+
+	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
+
+	EXPECT_EQ((int)metacall_value_to_int(ret), (int)0);
+
+	metacall_value_destroy(ret);
+
+	metacall_value_destroy(args_init[0]);
+
+	void *args_value[] = {
+		metacall_value_create_ptr(pair_list),
+		metacall_value_create_int(2)
+	};
+
+	ret = metacallv("pair_list_value", args_value);
+
+	EXPECT_NE((void *)NULL, (void *)ret);
+
+	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_DOUBLE);
+
+	EXPECT_EQ((double)metacall_value_to_double(ret), (double)2.0);
+
+	metacall_value_destroy(ret);
+
+	metacall_value_destroy(args_value[0]);
+	metacall_value_destroy(args_value[1]);
+
+	void *args_destroy[] = {
+		metacall_value_create_ptr(pair_list),
+	};
+
+	ret = metacallv("pair_list_destroy", args_destroy);
+
+	EXPECT_NE((void *)NULL, (void *)ret);
+
+	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+	metacall_value_destroy(ret);
+
+	metacall_value_destroy(args_destroy[0]);
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

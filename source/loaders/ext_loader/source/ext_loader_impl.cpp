@@ -167,11 +167,11 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 #endif
 
 	fs::path lib_path(lib_path_str);
-	std::string lib_name = fs::path(lib_path).filename().string();
 
 	if (lib_path.is_absolute())
 	{
 		fs::path lib_dir = lib_path.parent_path();
+		std::string lib_name = fs::path(lib_path).filename().string();
 
 		return ext_loader_impl_load_from_file_dynlink(lib_dir.string().c_str(), lib_name.c_str());
 	}
@@ -179,7 +179,13 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 	{
 		for (auto exec_path : ext_impl->paths)
 		{
-			dynlink lib = ext_loader_impl_load_from_file_dynlink(exec_path.string().c_str(), lib_name.c_str());
+			fs::path absolute_path(exec_path);
+
+			absolute_path /= lib_path.parent_path();
+
+			std::string lib_name = lib_path.filename().string();
+
+			dynlink lib = ext_loader_impl_load_from_file_dynlink(absolute_path.string().c_str(), lib_name.c_str());
 
 			if (lib != NULL)
 			{

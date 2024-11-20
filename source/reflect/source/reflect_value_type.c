@@ -153,6 +153,20 @@ value value_type_copy(value v)
 	return NULL;
 }
 
+value value_type_reference(value v)
+{
+	void *data = value_data(v);
+
+	return value_create_ptr(data);
+}
+
+value value_type_dereference(value v)
+{
+	void *data = value_to_ptr(v);
+
+	return value_container(data);
+}
+
 size_t value_type_size(value v)
 {
 	size_t size = value_size(v);

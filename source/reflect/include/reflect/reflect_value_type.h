@@ -73,6 +73,48 @@ REFLECT_API value value_type_copy(value v);
 
 /**
 *  @brief
+*    Creates a new pointer value, with a reference to the
+*    data contained inside the value @v. For example:
+*
+*    value v = value_create_int(20);
+*    value ptr = value_type_reference(v);
+*
+*    In this case, ptr is a value equivalent to int*,
+*    and it points directly to the integer contained in value v.
+*    Note that if we destroy the value @v, the reference will
+*    point to already freed memory, causing use-after-free when used.
+*
+*  @param[in] v
+*    Reference to the value to be referenced
+*
+*  @return
+*    A new value of type pointer, pointing to the @v data
+*/
+REFLECT_API value value_type_reference(value v);
+
+/**
+*  @brief
+*    If you pass a reference previously created (i.e a value of
+*    type pointer, pointing to another value), it returns the
+*    original value. It does not modify the memory of the values
+*    neither allocates anything. If the value @v is pointing to
+*    has been deleted, it will cause an use-after-free. For example:
+*
+*    value v = value_create_int(20);
+*    value ptr = value_type_reference(v);
+*    value w = value_type_dereference(ptr);
+*    assert(v == w); // Both are the same value
+*
+*  @param[in] v
+*    Reference to the value to be dereferenced
+*
+*  @return
+*    The value containing the data which ptr is pointing to
+*/
+REFLECT_API value value_type_dereference(value v);
+
+/**
+*  @brief
 *    Returns the size of the value type
 *
 *  @param[in] v

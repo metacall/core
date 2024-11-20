@@ -60,6 +60,8 @@ PY_LOADER_NO_EXPORT PyObject *py_loader_impl_value_to_capi(loader_impl impl, typ
 
 PY_LOADER_NO_EXPORT int py_loader_impl_finalizer_object(loader_impl impl, PyObject *obj, value v);
 
+PY_LOADER_NO_EXPORT PyObject *py_loader_impl_capsule_new_null(void);
+
 #ifdef __cplusplus
 }
 #endif
