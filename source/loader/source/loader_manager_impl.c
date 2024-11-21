@@ -26,8 +26,8 @@
 
 #include <environment/environment_variable_path.h>
 
-#include <portability/portability_executable_path.h>
 #include <portability/portability_path.h>
+#include <portability/portability_working_path.h>
 
 #include <log/log.h>
 
@@ -52,8 +52,8 @@ static void *loader_manager_impl_is_destroyed_ptr = NULL;
 
 vector loader_manager_impl_script_paths_initialize(void)
 {
-	portability_executable_path_str exe_path_str = { 0 };
-	portability_executable_path_length exe_path_str_length = 0;
+	portability_working_path_str cwd_path_str = { 0 };
+	portability_working_path_length cwd_path_str_length = 0;
 	char *script_path = NULL;
 	size_t script_path_size = 0;
 	vector script_paths = vector_create_type(char *);
@@ -63,11 +63,9 @@ vector loader_manager_impl_script_paths_initialize(void)
 		return NULL;
 	}
 
-	if (portability_executable_path(exe_path_str, &exe_path_str_length) == 0)
+	if (portability_working_path(cwd_path_str, &cwd_path_str_length) == 0)
 	{
-		size_t exe_directory_size = portability_path_get_directory_inplace(exe_path_str, exe_path_str_length + 1);
-
-		script_path = environment_variable_path_create(LOADER_SCRIPT_PATH, exe_path_str, exe_directory_size, &script_path_size);
+		script_path = environment_variable_path_create(LOADER_SCRIPT_PATH, cwd_path_str, cwd_path_str_length + 1, &script_path_size);
 	}
 	else
 	{

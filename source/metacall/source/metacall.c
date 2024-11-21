@@ -76,16 +76,33 @@ portability_constructor(metacall_constructor)
 {
 	const char *metacall_host = environment_variable_get("METACALL_HOST", NULL);
 
+	/* We are running from a different host, initialize the loader of the host
+	* and redirect it to the existing symbols, also avoiding initialization
+	* and destruction of the runtime as it is being managed externally to MetaCall */
 	if (metacall_host != NULL)
 	{
+		static const char host_str[] = "host";
+
 		struct metacall_initialize_configuration_type config[] = {
-			{ metacall_host, NULL /* TODO: Initialize the map and define { host: true } */ },
+			{ metacall_host, metacall_value_create_map(NULL, 1) },
 			{ NULL, NULL }
 		};
 
+		/* Initialize the loader options with a map defining its options to { "host": true } */
+		void **host_tuple, **options_map = metacall_value_to_map(config[0].options);
+
+		options_map[0] = metacall_value_create_array(NULL, 2);
+
+		host_tuple = metacall_value_to_array(options_map[0]);
+
+		host_tuple[0] = metacall_value_create_string(host_str, sizeof(host_str) - 1);
+		host_tuple[1] = metacall_value_create_bool(1);
+
+		/* Initialize MetaCall with extra options, defining the host properly */
 		if (metacall_initialize_ex(config) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall host constructor failed to initialize");
+			metacall_value_destroy(config[0].options);
 			exit(1);
 		}
 	}

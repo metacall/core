@@ -87,7 +87,7 @@ struct loader_impl_type
 	loader_impl_data data;		   /* Derived metadata provided by the loader, usually contains the data of the VM, Interpreter or JIT */
 	context ctx;				   /* Contains the objects, classes and functions loaded in the global scope of each loader */
 	set type_info_map;			   /* Stores a set indexed by type name of all of the types existing in the loader (global scope (TODO: may need refactor per handle)) */
-	void *options;				   /* Additional initialization options passed in the initialize phase */
+	value options;				   /* Additional initialization options passed in the initialize phase */
 	set exec_path_map;			   /* Set of execution paths passed by the end user */
 };
 
@@ -1538,6 +1538,11 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 	set_destroy(impl->exec_path_map);
 
 	context_destroy(impl->ctx);
+
+	if (impl->options != NULL)
+	{
+		value_type_destroy(impl->options);
+	}
 
 	free(impl);
 }
