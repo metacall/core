@@ -58,10 +58,8 @@ struct metacall_initialize_configuration_type;
 
 struct metacall_initialize_configuration_type
 {
-	char *tag;
-	void *options; // TODO: We should use a MetaCall value MAP here and merge it with the configuration.
-				   // By this way loaders will be able to access this information in the backend and we
-				   // can use a weak API in order to implement this successfully
+	const char *tag; /* Tag referring to the loader */
+	void *options;	 /* Value of type Map that will be merged merged into the configuration of the loader */
 };
 
 typedef void *(*metacall_await_callback)(void *, void *);

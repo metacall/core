@@ -35,6 +35,8 @@
 
 #include <environment/environment_variable.h>
 
+#include <portability/portability_constructor.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -67,6 +69,27 @@ static loader_path plugin_path = { 0 };
 static int metacall_plugin_extension_load(void);
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
 static type_id *metacall_type_ids(void *args[], size_t size);
+
+/* -- Costructors -- */
+
+portability_constructor(metacall_constructor)
+{
+	const char *metacall_host = environment_variable_get("METACALL_HOST", NULL);
+
+	if (metacall_host != NULL)
+	{
+		struct metacall_initialize_configuration_type config[] = {
+			{ metacall_host, NULL /* TODO: Initialize the map and define { host: true } */ },
+			{ NULL, NULL }
+		};
+
+		if (metacall_initialize_ex(config) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall host constructor failed to initialize");
+			exit(1);
+		}
+	}
+}
 
 /* -- Methods -- */
 
