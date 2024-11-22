@@ -559,12 +559,17 @@ if(NOT NodeJS_LIBRARY)
 
 			set(BUILD_DEBUG)
 			set(BUILD_DEBUG_ASAN)
+			set(BUILD_DEBUG_ASAN_OPTIONS)
 
 			if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 				set(BUILD_DEBUG --debug)
 
 				if(OPTION_BUILD_ADDRESS_SANITIZER)
 					set(BUILD_DEBUG_ASAN --enable-asan)
+
+					if("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "20")
+						set(BUILD_DEBUG_ASAN_OPTIONS ${CMAKE_COMMAND} -E env ASAN_OPTIONS=detect_container_overflow=0)
+					endif()
 				endif()
 			endif()
 
@@ -585,12 +590,12 @@ if(NOT NodeJS_LIBRARY)
 			if(N GREATER 1)
 				execute_process(
 					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-					COMMAND make -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
+					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} make -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
 				)
 			else()
 				execute_process(
 					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-					COMMAND make -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
+					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} make -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
 				)
 			endif()
 		endif()

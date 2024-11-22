@@ -74,6 +74,18 @@ void *native_get_value(size_t argc, void *args[], void *data)
 	return metacall_value_create_array(array, size);
 }
 
+void *native_ret_null_ptr(size_t argc, void *args[], void *data)
+{
+	void *ptr = metacall_value_to_ptr(args[0]);
+
+	EXPECT_EQ((void *)ptr, (void *)NULL);
+
+	(void)argc;
+	(void)data;
+
+	return metacall_value_create_ptr(NULL);
+}
+
 TEST_F(metacall_python_pointer_test, DefaultConstructor)
 {
 	metacall_print_info();
@@ -89,6 +101,10 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 		metacall_register("native_get_value", native_get_value, NULL, METACALL_ARRAY, 1, METACALL_PTR);
 
 		EXPECT_NE((void *)NULL, (void *)metacall_function("native_get_value"));
+
+		metacall_register("native_ret_null_ptr", native_ret_null_ptr, NULL, METACALL_PTR, 0);
+
+		EXPECT_NE((void *)NULL, (void *)metacall_function("native_ret_null_ptr"));
 	}
 
 /* Python */
@@ -126,6 +142,21 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 		EXPECT_EQ((unsigned char)70U, (unsigned char)t.b);
 
 		metacall_value_destroy(ret);
+
+		void *args[] = {
+			metacall_value_create_ptr(NULL)
+		};
+
+		ret = metacallv("python_ret_null", args);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)METACALL_PTR, (enum metacall_value_id)metacall_value_id(ret));
+
+		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_ptr(ret));
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 

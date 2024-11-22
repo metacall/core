@@ -90,7 +90,7 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUI
 			--label-exclude MEMCHECK_IGNORE
 			--force-new-ctest-process
 			--test-action memcheck
-			--timeout 3600
+			--timeout 5400
 		COMMAND ${CMAKE_COMMAND} -E cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
 	)
 
@@ -195,6 +195,7 @@ add_subdirectory(metacall_python_loader_port_test)
 add_subdirectory(metacall_python_port_test)
 add_subdirectory(metacall_python_port_https_test)
 add_subdirectory(metacall_python_port_callback_test)
+add_subdirectory(metacall_python_port_pointer_test)
 add_subdirectory(metacall_python_port_import_test)
 add_subdirectory(metacall_python_callback_test)
 add_subdirectory(metacall_python_fail_test)
@@ -253,7 +254,7 @@ add_subdirectory(metacall_rust_load_from_package_dep_test)
 add_subdirectory(metacall_rust_load_from_package_class_test)
 add_subdirectory(metacall_rust_class_test)
 add_subdirectory(metacall_c_test)
-#add_subdirectory(metacall_c_lib_test) # TODO: TCC cannot list the symbols from the external libraries, neither static or shared
+add_subdirectory(metacall_c_lib_test)
 add_subdirectory(metacall_version_test)
 add_subdirectory(metacall_dynlink_path_test)
 add_subdirectory(metacall_library_path_without_env_vars_test)

@@ -200,7 +200,25 @@ void *value_data(value v)
 		return NULL;
 	}
 
+	/* Right now the memory layout is designed in a way that
+	* the first byte of the value is the data itself, so returning
+	* the value as (void *) has the same effect as accessing the data
+	*/
 	return v;
+}
+
+value value_container(void *data)
+{
+	if (data == NULL)
+	{
+		return NULL;
+	}
+
+	/* Right now the memory layout is designed in a way that
+	* the first byte of the value is the data itself, so returning
+	* the data as (value) has the same effect as container_of(data, struct value, data)
+	*/
+	return (value)data;
 }
 
 void value_to(value v, void *data, size_t bytes)

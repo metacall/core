@@ -17,11 +17,12 @@ concurrency:
 jobs:
   macos-test:
     name: MacOS Clang Test
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
+        os: [macos-12, macos-13, macos-14] # TODO: macos-15: https://github.com/metacall/core/issues/530
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
@@ -30,7 +31,6 @@ jobs:
         ]
 
     env:
-      LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
@@ -47,8 +47,9 @@ jobs:
 
       - name: Uninstall Ruby
         run: |
-          brew uninstall --force ruby
-          brew autoremove
+          brew uninstall --force --ignore-dependencies ruby
+          brew cleanup -s ruby
+          brew cleanup --prune-prefix
           RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
           sudo rm -rf $RUBY_FRAMEWORK_DIR
 

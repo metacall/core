@@ -7,20 +7,35 @@ try:
 	from metacall import metacall
 except ImportError as e:
 	print('Error when loading MetaCall Python Port: ' + str(e))
+	sys.stdout.flush()
 
 def python_set_value(t, value):
 	print('Python python_set_value: ', type(t), t, value)
+	sys.stdout.flush()
 
 	result = metacall('native_set_value', t, value)
 
 	print('Python result from host native_set_value: ' + str(result), type(result))
+	sys.stdout.flush()
 
 	arr = metacall('native_get_value', t)
 
 	print('Python result from host native_get_value: ' + str(arr), type(arr))
+	sys.stdout.flush()
 
 	if arr != [10, 50, 70]:
 		print('Error: Invalid array values')
 		return None
+
+	return result
+
+def python_ret_null(ptr):
+	print('Python python_ret_null: ', type(ptr), ptr)
+	sys.stdout.flush()
+
+	result = metacall('native_ret_null_ptr', ptr)
+
+	print('Python native_ret_null_ptr: ', type(result), result)
+	sys.stdout.flush()
 
 	return result

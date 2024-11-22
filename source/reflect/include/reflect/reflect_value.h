@@ -171,6 +171,18 @@ REFLECT_API void *value_data(value v);
 
 /**
 *  @brief
+*    From the data get the value pointer (inverse of value_data function)
+*
+*  @param[in] data
+*    Reference to the data of a value
+*
+*  @return
+*    Pointer to the container of the data @data
+*/
+REFLECT_API value value_container(void *data);
+
+/**
+*  @brief
 *    Convert value @v to memory block @data
 *
 *  @param[in] v
