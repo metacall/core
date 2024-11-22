@@ -9,7 +9,7 @@ trait Create<T> {
 }
 
 trait From<T> {
-    fn from(&self, value: T) -> Self;
+    fn from(&mut self, value: T) -> &Self;
 }
 
 trait To<T> {
@@ -26,9 +26,9 @@ impl Create<i64> for Value {
 }
 
 impl From<i64> for Value {
-    fn from(&self, value: i64) -> Self {
-        let val = unsafe { metacall_value_from_long(self.0, value as c_long) };
-        Self(val)
+    fn from(&mut self, value: i64) -> &Self {
+        self.0 = unsafe { metacall_value_from_long(self.0, value as c_long) };
+        self
     }
 }
 
@@ -55,7 +55,7 @@ mod test {
     #[test]
     fn metacall_create_value() {
         // assert!(unsafe { metacall_initialize() } == 0);
-        let val = Value::new(123);
+        let mut val = Value::new(123);
         let result = val.to();
         assert!(result == 123);
         val.from(33);
