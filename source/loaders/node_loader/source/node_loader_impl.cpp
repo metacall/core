@@ -3937,34 +3937,37 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		config
 	};
 
-	/* Create NodeJS thread */
-	if (uv_thread_create(&node_impl->thread, node_loader_impl_thread, &thread_data) != 0)
+	if (loader_impl_get_option_host(impl) == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
+		/* Create NodeJS thread */
+		if (uv_thread_create(&node_impl->thread, node_loader_impl_thread, &thread_data) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 
-		/* TODO: Clear resources */
+			/* TODO: Clear resources */
 
-		delete node_impl;
+			delete node_impl;
 
-		return NULL;
-	}
+			return NULL;
+		}
 
-	/* Wait until start has been launch */
-	uv_mutex_lock(&node_impl->mutex);
+		/* Wait until start has been launch */
+		uv_mutex_lock(&node_impl->mutex);
 
-	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	if (node_impl->error_message != NULL)
-	{
+		if (node_impl->error_message != NULL)
+		{
+			uv_mutex_unlock(&node_impl->mutex);
+
+			/* TODO: Remove this when implementing thread safe */
+			log_write("metacall", LOG_LEVEL_ERROR, node_impl->error_message);
+
+			return NULL;
+		}
+
 		uv_mutex_unlock(&node_impl->mutex);
-
-		/* TODO: Remove this when implementing thread safe */
-		log_write("metacall", LOG_LEVEL_ERROR, node_impl->error_message);
-
-		return NULL;
 	}
-
-	uv_mutex_unlock(&node_impl->mutex);
 
 	/* Call initialize function with thread safe */
 	{

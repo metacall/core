@@ -67,7 +67,11 @@ LOADER_API void *loader_impl_get_handle(loader_impl impl, const char *name);
 
 LOADER_API void loader_impl_set_options(loader_impl impl, void *options);
 
-LOADER_API void *loader_impl_get_options(loader_impl impl);
+LOADER_API value loader_impl_get_options(loader_impl impl);
+
+LOADER_API value loader_impl_get_option(loader_impl impl, const char *field);
+
+LOADER_API int loader_impl_get_option_host(loader_impl impl);
 
 LOADER_API int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr);
 

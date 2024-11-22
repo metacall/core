@@ -1158,7 +1158,7 @@ void loader_impl_set_options(loader_impl impl, void *options)
 	}
 }
 
-void *loader_impl_get_options(loader_impl impl)
+value loader_impl_get_options(loader_impl impl)
 {
 	if (impl != NULL)
 	{
@@ -1166,6 +1166,41 @@ void *loader_impl_get_options(loader_impl impl)
 	}
 
 	return NULL;
+}
+
+value loader_impl_get_option(loader_impl impl, const char *field)
+{
+	value *options_map = value_to_map(impl->options);
+	size_t i, size = value_type_count(impl->options);
+
+	for (i = 0; i < size; ++i)
+	{
+		value *options_tuple = value_to_array(options_map[i]);
+
+		if (value_type_id(options_tuple[0]) == TYPE_STRING)
+		{
+			const char *str = value_to_string(options_tuple[0]);
+
+			if (strncmp(str, field, value_type_size(options_tuple[0])) == 0)
+			{
+				return options_tuple[1];
+			}
+		}
+	}
+
+	return NULL;
+}
+
+int loader_impl_get_option_host(loader_impl impl)
+{
+	value host = loader_impl_get_option(impl, "host");
+
+	if (host != NULL && value_type_id(host) == TYPE_BOOL)
+	{
+		return value_to_bool(host);
+	}
+
+	return 0;
 }
 
 int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr)

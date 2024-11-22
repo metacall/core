@@ -836,17 +836,6 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 /* This function is called by NodeJs when the module is required */
 napi_value node_loader_port_initialize(napi_env env, napi_value exports)
 {
-/* Note: This should not be necessary because we do not allow to use ports outside MetaCall */
-#if 0
-	if (metacall_initialize() != 0)
-	{
-		/* TODO: Show error message (when error handling is properly implemented in the core lib) */
-		napi_throw_error(env, nullptr, "MetaCall failed to initialize");
-
-		return nullptr;
-	}
-#endif
-
 	node_loader_port_exports(env, exports);
 
 	return exports;

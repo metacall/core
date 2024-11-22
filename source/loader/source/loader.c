@@ -547,11 +547,25 @@ void loader_set_options(const loader_tag tag, void *options)
 	loader_impl_set_options(plugin_impl_type(p, loader_impl), options);
 }
 
-void *loader_get_options(const loader_tag tag)
+value loader_get_options(const loader_tag tag)
 {
 	plugin p = loader_get_impl_plugin(tag);
 
 	return loader_impl_get_options(plugin_impl_type(p, loader_impl));
+}
+
+value loader_get_option(const loader_tag tag, const char *field)
+{
+	plugin p = loader_get_impl_plugin(tag);
+
+	return loader_impl_get_option(plugin_impl_type(p, loader_impl), field);
+}
+
+int loader_get_option_host(const loader_tag tag)
+{
+	plugin p = loader_get_impl_plugin(tag);
+
+	return loader_impl_get_option_host(plugin_impl_type(p, loader_impl));
 }
 
 int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr)

@@ -74,36 +74,39 @@ static type_id *metacall_type_ids(void *args[], size_t size);
 
 portability_constructor(metacall_constructor)
 {
-	const char *metacall_host = environment_variable_get("METACALL_HOST", NULL);
-
-	/* We are running from a different host, initialize the loader of the host
-	* and redirect it to the existing symbols, also avoiding initialization
-	* and destruction of the runtime as it is being managed externally to MetaCall */
-	if (metacall_host != NULL)
+	if (metacall_initialize_flag == 1)
 	{
-		static const char host_str[] = "host";
+		const char *metacall_host = environment_variable_get("METACALL_HOST", NULL);
 
-		struct metacall_initialize_configuration_type config[] = {
-			{ metacall_host, metacall_value_create_map(NULL, 1) },
-			{ NULL, NULL }
-		};
-
-		/* Initialize the loader options with a map defining its options to { "host": true } */
-		void **host_tuple, **options_map = metacall_value_to_map(config[0].options);
-
-		options_map[0] = metacall_value_create_array(NULL, 2);
-
-		host_tuple = metacall_value_to_array(options_map[0]);
-
-		host_tuple[0] = metacall_value_create_string(host_str, sizeof(host_str) - 1);
-		host_tuple[1] = metacall_value_create_bool(1);
-
-		/* Initialize MetaCall with extra options, defining the host properly */
-		if (metacall_initialize_ex(config) != 0)
+		/* We are running from a different host, initialize the loader of the host
+		* and redirect it to the existing symbols, also avoiding initialization
+		* and destruction of the runtime as it is being managed externally to MetaCall */
+		if (metacall_host != NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall host constructor failed to initialize");
-			metacall_value_destroy(config[0].options);
-			exit(1);
+			static const char host_str[] = "host";
+
+			struct metacall_initialize_configuration_type config[] = {
+				{ metacall_host, metacall_value_create_map(NULL, 1) },
+				{ NULL, NULL }
+			};
+
+			/* Initialize the loader options with a map defining its options to { "host": true } */
+			void **host_tuple, **options_map = metacall_value_to_map(config[0].options);
+
+			options_map[0] = metacall_value_create_array(NULL, 2);
+
+			host_tuple = metacall_value_to_array(options_map[0]);
+
+			host_tuple[0] = metacall_value_create_string(host_str, sizeof(host_str) - 1);
+			host_tuple[1] = metacall_value_create_bool(1);
+
+			/* Initialize MetaCall with extra options, defining the host properly */
+			if (metacall_initialize_ex(config) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "MetaCall host constructor failed to initialize");
+				metacall_value_destroy(config[0].options);
+				exit(1);
+			}
 		}
 	}
 }
@@ -179,6 +182,13 @@ int metacall_initialize(void)
 {
 	memory_allocator allocator;
 
+	if (metacall_initialize_flag == 0)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized");
+
+		return 0;
+	}
+
 	/* Initialize logs by default to stdout if none has been defined */
 	if (metacall_log_null_flag != 0 && log_size() == 0)
 	{
@@ -192,13 +202,6 @@ int metacall_initialize(void)
 		}
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall default logger to stdout initialized");
-	}
-
-	if (metacall_initialize_flag == 0)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized");
-
-		return 0;
 	}
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall");
