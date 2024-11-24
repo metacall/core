@@ -76,8 +76,13 @@ int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynli
 
 	(void)handle;
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	// For MinGW, set the symbol member of the struct
+	(*addr)->symbol = (dynlink_symbol_addr_win32_impl)proc_addr;
+#else
+	// For MSVC or other compilers, cast directly
 	*addr = (dynlink_symbol_addr)proc_addr;
-
+#endif
 	return (*addr == NULL);
 }
 

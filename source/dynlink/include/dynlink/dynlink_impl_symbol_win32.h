@@ -43,11 +43,27 @@ extern "C" {
 		char name; \
 	} PREPROCESSOR_CONCAT(dynlink_no_export_, name)
 
-#define DYNLINK_SYMBOL_GET(name) name
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	#define DYNLINK_SYMBOL_GET(name) \
+		(((dynlink_symbol_addr_win32)(name))->symbol)
+#else
+	#define DYNLINK_SYMBOL_GET(name) name
+#endif
 
 /* -- Type definitions -- */
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+/* MinGW-compatible definition */
+typedef void (*dynlink_symbol_addr_win32_impl)(void);
+
+typedef struct dynlink_symbol_addr_win32_type
+{
+	dynlink_symbol_addr_win32_impl symbol;
+} * dynlink_symbol_addr_win32;
+
+#else
 typedef void (*dynlink_symbol_addr_win32)(void);
+#endif
 
 typedef dynlink_symbol_addr_win32 dynlink_symbol_addr;
 
