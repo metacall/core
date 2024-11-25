@@ -1,4 +1,3 @@
-
 name: Build and Push Docker Image for Multiple Architectures
 
 on:
@@ -15,7 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: index.docker.io/metacall/core
+  DOCKER_REGISTRY: docker.io
+  DOCKER_USERNAME: metacall
+  IMAGE_NAME: core
   BUILDKIT_VERSION: 0.13.0
 
 jobs:
@@ -27,41 +28,29 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-        #  - linux/arm64
-       #   - linux/riscv64
-        #  - linux/ppc64le
-        #  - linux/s390x
+          - linux/arm64
+          - linux/riscv64
+          - linux/ppc64le
+          - linux/s390x
           - linux/386
-        #  - linux/arm/v7
-        #  - linux/arm/v6
-          # - linux/mips64le
-          # - linux/mips64
+          - linux/arm/v7
+          - linux/arm/v6
 
     steps:
-      - name: Checkout the code
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Docker Setup BuildX
+      - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
         with:
           version: v${{ env.BUILDKIT_VERSION }}
 
-      - name: Verify Docker BuildX Version
-        run: docker buildx version
-
-      - name: Authenticate to Docker registry
-        if: github.event_name != 'pull_request'
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -71,90 +60,140 @@ jobs:
         env:
           METACALL_PLATFORM: ${{ matrix.platform }}
         run: |
+          export DOCKER_BUILDKIT=1
+          export COMPOSE_DOCKER_CLI_BUILD=1
+          export BUILDKIT_PROGRESS=plain
+          export PROGRESS_NO_TRUNC=1
           ./docker-compose.sh platform
 
-      - name: Generate images
-        if: github.event_name != 'pull_request'
+      - name: Push Platform Images
         run: |
-           for tag in "deps" "dev" "runtime" "cli"; do
-             mkdir -p "/tmp/images/${tag}"
-             digest="$(docker images --no-trunc --quiet metacall/core:${tag})"
-             echo "FROM metacall/core:${tag}@${digest}" &> "/tmp/images/${tag}/Dockerfile"
-           done
-
-      - name: Build and push by digest (deps)
-        id: build
-        uses: docker/build-push-action@v6
-        if: github.event_name != 'pull_request'
-        with:
-           context: /tmp/images/deps/Dockerfile
-           platforms: ${{ matrix.platform }}
-           labels: ${{ steps.meta.outputs.labels }}
-           outputs: type=image,name=docker.io/${{ env.IMAGE_NAME }}:deps,push-by-digest=true,name-canonical=true,push=true
-
-      - name: Export digests
-        if: github.event_name != 'pull_request'
-        run: |
-          PLATFORM=${{ matrix.platform }}
-          echo "PLATFORM=${PLATFORM//\//-}" >> $GITHUB_ENV
+          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           for tag in "deps" "dev" "runtime" "cli"; do
-            mkdir -p "/tmp/digests/${tag}"
-            digest="$(docker images --no-trunc --quiet metacall/core:${tag})"
-            touch "/tmp/digests/${tag}/${digest#sha256:}"
+            docker tag ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
+            docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
 
-      - name: Upload digests
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: digests-${{ env.PLATFORM }}
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
-  merge:
-    name: Merge digests for the manifest
+  manifest:
+    name: Create and Push Manifest Lists
+    needs: build
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
-    needs:
-      - build
     steps:
-      - name: Download digests
-        uses: actions/download-artifact@v4
-        with:
-          path: /tmp/digests
-          pattern: digests-*
-          merge-multiple: true
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          version: v${{ env.BUILDKIT_VERSION }}
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-
-      - name: Authenticate to Docker registry
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Create manifest list and push
-       # if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
+      - name: Create and Push Manifest Lists
         run: |
-          for tag in "deps"; do
-            cd "/tmp/digests/${tag}"
-            docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:${tag} ${IMAGE_HASHES}
-            if [[ "${tag}" = "cli" ]]; then
-              docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:latest ${IMAGE_HASHES}
-              if [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
-                TAG=${GITHUB_REF#refs/*/}
-                VERSION=${TAG#v}
-                docker buildx imagetools create -t ${{ env.IMAGE_NAME }}:${VERSION} ${IMAGE_HASHES}
-              fi
-            fi
+          for tag in "deps" "dev" "runtime" "cli"; do
+            docker manifest create ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-amd64 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-arm64 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-riscv64 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-ppc64le \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-s390x \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-386 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-arm-v7 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-arm-v6
+
+            docker manifest push ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}
+          done
+
+      - name: Create Version-Specific Tags
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          for tag in "deps" "dev" "runtime" "cli"; do
+            docker manifest create ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag} \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-amd64 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-arm64 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-riscv64 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-ppc64le \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-s390x \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-386 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-arm-v7 \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-linux-arm-v6
+
+            docker manifest push ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag}
+          done
+
+          docker manifest create ${DOCKER_USERNAME}/${IMAGE_NAME}:latest \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-amd64 \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-arm64 \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-riscv64 \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-ppc64le \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-s390x \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-386 \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-arm-v7 \
+            ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-linux-arm-v6
+
+          docker manifest push ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
+
+  test:
+    name: Test CLI Image
+    needs: manifest
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+          - linux/riscv64
+          - linux/ppc64le
+          - linux/s390x
+          - linux/386
+          - linux/arm/v7
+          - linux/arm/v6
+
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Create Test Dockerfile
+        run: |
+          cat <<EOF > Dockerfile
+          FROM ${DOCKER_USERNAME}/${IMAGE_NAME}:cli
+          RUN echo "console.log('abcde')" > script.js
+          RUN metacallcli script.js
+          EOF
+
+      - name: Build and Test Image
+        run: |
+          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
+          docker pull ${DOCKER_USERNAME}/${IMAGE_NAME}:cli
+          docker build --platform ${{ matrix.platform }} -t test-image .
+          docker run --rm --platform=${{ matrix.platform }} test-image
+
+  cleanup:
+    name: Cleanup Platform Specific Tags
+    needs:
+      - build
+      - manifest
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Remove Platform-Specific Tags
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        run: |
+          platforms=("linux-amd64" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-386" "linux-arm-v7" "linux-arm-v6")
+          tags=("deps" "dev" "runtime" "cli")
+
+          for platform in "${platforms[@]}"; do
+            for tag in "${tags[@]}"; do
+              tag_to_delete="${tag}-${platform}"
+              echo "Deleting tag: ${tag_to_delete}"
+
+              curl -X DELETE \
+                -H "Authorization: Bearer ${DOCKER_HUB_ACCESS_TOKEN}" \
+                "https://hub.docker.com/v2/repositories/${DOCKER_USERNAME}/${IMAGE_NAME}/tags/${tag_to_delete}/"
+            done
           done
