@@ -2,34 +2,20 @@ use metacall_bindings::value::{
     create::metacall_value_create_long, metacall_value_destroy, metacall_value_from_long,
     metacall_value_to_long,
 };
-use std::ffi::c_long;
-
-trait Create<T> {
-    fn new(value: T) -> Self;
+use thiserror::Error;
 }
 
-trait From<T> {
-    fn from(&mut self, value: T) -> &Self;
+#[derive(Error, Debug)]
+pub enum ValueError {
+    #[error("Failed to create CString: {0}")]
+    CStringError(#[from] std::ffi::NulError),
+    #[error("Failed to convert CString to &str: {0}")]
+    Utf8Error(#[from] std::str::Utf8Error),
+    #[error("Null pointer encountered")]
+    NullPointer,
+    #[error("Unknown error")]
+    Unknown,
 }
-
-trait To<T> {
-    fn to(&self) -> T;
-}
-
-struct Value(*mut std::os::raw::c_void);
-
-impl Create<i64> for Value {
-    fn new(value: i64) -> Self {
-        let val = unsafe { metacall_value_create_long(value as c_long) };
-        Self(val)
-    }
-}
-
-impl From<i64> for Value {
-    fn from(&mut self, value: i64) -> &Self {
-        self.0 = unsafe { metacall_value_from_long(self.0, value as c_long) };
-        self
-    }
 }
 
 impl To<i64> for Value {

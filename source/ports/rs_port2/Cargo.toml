@@ -7,4 +7,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.93"
 metacall-bindings = { path = "crates/metacall-bindings" }
+thiserror = "2.0.3"
