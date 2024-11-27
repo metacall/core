@@ -32,16 +32,27 @@ extern "C" {
 #endif
 
 /* -- Definitions -- */
+#if defined(__MING32__) || defined(__MINGW64__)
+	#define DYNLINK_SYMBOL_PREFIX \
+		dynlink_symbol_
 
-#define DYNLINK_SYMBOL_PREFIX
+	/* -- Macros -- */
 
-/* -- Macros -- */
+	#define DYNLINK_SYMBOL_EXPORT(name) \
+		DYNLINK_NO_EXPORT struct dynlink_symbol_addr_win32_type DYNLINK_SYMBOL_NAME(name) = { \
+			(dynlink_symbol_addr_win32_impl)&name \
+		}
+#else
+	#define DYNLINK_SYMBOL_PREFIX
 
-#define DYNLINK_SYMBOL_EXPORT(name) \
-	DYNLINK_NO_EXPORT struct \
-	{ \
-		char name; \
-	} PREPROCESSOR_CONCAT(dynlink_no_export_, name)
+	/* -- Macros -- */
+
+	#define DYNLINK_SYMBOL_EXPORT(name) \
+		DYNLINK_NO_EXPORT struct \
+		{ \
+			char name; \
+		} PREPROCESSOR_CONCAT(dynlink_no_export_, name)
+#endif
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
 	#define DYNLINK_SYMBOL_GET(name) \
