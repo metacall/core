@@ -41,11 +41,16 @@ const char *dynlink_impl_interface_extension_win32(void)
 
 void dynlink_impl_interface_get_name_win32(dynlink_name name, dynlink_name_impl name_impl, size_t size)
 {
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	strncpy(name_impl, "lib", size);
+	strncat(name_impl, name, size - strlen(name_impl) - 1);
+#else
 	strncpy(name_impl, name, size);
+#endif
 
-	strncat(name_impl, ".", size - 1);
+	strncat(name_impl, ".", size - strlen(name_impl) - 1);
 
-	strncat(name_impl, dynlink_impl_extension(), size - 1);
+	strncat(name_impl, dynlink_impl_extension(), size - strlen(name_impl) - 1);
 }
 
 dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
