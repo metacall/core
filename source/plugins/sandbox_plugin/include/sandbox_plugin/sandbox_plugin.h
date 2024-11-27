@@ -23,15 +23,11 @@
 
 #include <sandbox_plugin/sandbox_plugin_api.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 SANDBOX_PLUGIN_API int sandbox_plugin(void *loader, void *handle);
-
-DYNLINK_SYMBOL_EXPORT(sandbox_plugin);
 
 #ifdef __cplusplus
 }

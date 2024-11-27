@@ -23,15 +23,11 @@
 
 #include <plugin_extension/plugin_extension_api.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 PLUGIN_EXTENSION_API int plugin_extension(void *loader, void *handle);
-
-DYNLINK_SYMBOL_EXPORT(plugin_extension);
 
 #ifdef __cplusplus
 }

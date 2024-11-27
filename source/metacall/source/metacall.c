@@ -72,6 +72,65 @@ static type_id *metacall_type_ids(void *args[], size_t size);
 
 /* -- Costructors -- */
 
+/* TODO: Test, abstract and remove this */
+/*
+#include <dlfcn.h>
+
+extern void *__libc_dlsym(void *map, const char *name);
+extern void *__libc_dlopen_mode(const char *name, int mode);
+
+typedef void *(*dynlink_dlsym_fn)(void *, const char *);
+
+static dynlink_dlsym_fn dynlink_dlsym_fn_ptr = NULL;
+
+int dynlink_dlsym_initialize(void)
+{
+	void *handle = __libc_dlopen_mode("libdl.so.2", RTLD_GLOBAL | RTLD_LAZY);
+	union
+	{
+		void *ptr;
+		dynlink_dlsym_fn fn;
+	} cast;
+
+	if (handle == NULL)
+	{
+		return 1;
+	}
+
+	cast.ptr = __libc_dlsym(handle, "dlsym");
+
+	if (cast.ptr == NULL)
+	{
+		return 1;
+	}
+
+	dynlink_dlsym_fn_ptr = cast.fn;
+
+	return 0;
+}
+
+void *dynlink_dlsym(void *handle, const char *symbol)
+{
+	if (dynlink_dlsym_fn_ptr == NULL)
+	{
+		if (dynlink_dlsym_initialize() != 0)
+		{
+			return NULL;
+		}
+	}
+
+	return dynlink_dlsym_fn_ptr(handle, symbol);
+}
+
+void *dlsym(void *handle, const char *symbol)
+{
+	printf("HANDLE %p - Symbol: %s\n", handle, symbol);
+
+	return dynlink_dlsym(handle, symbol);
+}
+*/
+/* TODO-END */
+
 portability_constructor(metacall_constructor)
 {
 	if (metacall_initialize_flag == 1)

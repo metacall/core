@@ -68,17 +68,17 @@ TEST_F(dynlink_test, DefaultConstructor)
 		{
 			static dynlink_symbol_addr mock_loader_print_info_addr;
 
-			EXPECT_EQ((int)0, dynlink_symbol(handle, DYNLINK_SYMBOL_STR("mock_loader_print_info"), &mock_loader_print_info_addr));
+			EXPECT_EQ((int)0, dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr));
 
 			if (mock_loader_print_info_addr != NULL)
 			{
-				mock_loader_print_func print = DYNLINK_SYMBOL_GET(mock_loader_print_info_addr);
+				mock_loader_print_func print = mock_loader_print_info_addr;
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)mock_loader_print_info_addr);
 
-				if (DYNLINK_SYMBOL_GET(mock_loader_print_info_addr) != NULL)
+				if (mock_loader_print_info_addr != NULL)
 				{
 					log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
 				}

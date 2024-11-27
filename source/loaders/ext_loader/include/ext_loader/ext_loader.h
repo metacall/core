@@ -25,19 +25,13 @@
 
 #include <loader/loader_impl_interface.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 EXT_LOADER_API loader_impl_interface ext_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(ext_loader_impl_interface_singleton);
-
 EXT_LOADER_API const char *ext_loader_print_info(void);
-
-DYNLINK_SYMBOL_EXPORT(ext_loader_print_info);
 
 #ifdef __cplusplus
 }

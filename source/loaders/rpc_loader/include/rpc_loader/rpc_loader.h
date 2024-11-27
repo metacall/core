@@ -25,19 +25,13 @@
 
 #include <loader/loader_impl_interface.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 RPC_LOADER_API loader_impl_interface rpc_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(rpc_loader_impl_interface_singleton);
-
 RPC_LOADER_API const char *rpc_loader_print_info(void);
-
-DYNLINK_SYMBOL_EXPORT(rpc_loader_print_info);
 
 #ifdef __cplusplus
 }

@@ -76,7 +76,7 @@ int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynli
 
 	(void)handle;
 
-	*addr = (dynlink_symbol_addr)proc_addr;
+	dynlink_symbol_cast(FARPROC, proc_addr, *addr);
 
 	return (*addr == NULL);
 }

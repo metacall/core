@@ -783,27 +783,35 @@ static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Impl
 
 /* -- Methods -- */
 
-#if 1 // NODE_MAJOR_VERSION < 18
-	#if NODE_MAJOR_VERSION >= 12
-		#define node_loader_impl_register_module_id node::ModuleFlags::kLinked | 0x08 /* NM_F_DELETEME */
-	#else
-		#define node_loader_impl_register_module_id 0x02 | 0x08 /* NM_F_LINKED | NM_F_DELETEME */
-	#endif
+#if NODE_MAJOR_VERSION >= 12
+	#define node_loader_impl_register_module_id node::ModuleFlags::kLinked | 0x08 /* NM_F_DELETEME */
+#else
+	#define node_loader_impl_register_module_id 0x02 | 0x08 /* NM_F_LINKED | NM_F_DELETEME */
+#endif
 
-	#define node_loader_impl_register_module(name, fn) \
-		do \
-		{ \
-			static napi_module node_loader_module = { \
-				NAPI_MODULE_VERSION, \
-				node_loader_impl_register_module_id, \
-				__FILE__, \
-				fn, \
-				name, \
-				NULL, \
-				{ 0 } \
-			}; \
-			napi_module_register(&node_loader_module); \
-		} while (0)
+#if 1 // NODE_MAJOR_VERSION < 18
+	#define node_loader_impl_register_binding(module) \
+		napi_module_register(&module)
+#else
+	// TODO: This won't work, this must be run after NodeJS has initialized and passing the environment
+	#define node_loader_impl_register_binding(module) \
+		AddLinkedBinding(nullptr, module)
+#endif
+
+#define node_loader_impl_register_module(name, fn) \
+	do \
+	{ \
+		static napi_module node_loader_module = { \
+			NAPI_MODULE_VERSION, \
+			node_loader_impl_register_module_id, \
+			__FILE__, \
+			fn, \
+			name, \
+			NULL, \
+			{ 0 } \
+		}; \
+		node_loader_impl_register_binding(node_loader_module); \
+	} while (0)
 
 void node_loader_impl_register_linked_bindings()
 {
@@ -813,9 +821,6 @@ void node_loader_impl_register_linked_bindings()
 	/* Initialize Node Loader Port */
 	node_loader_impl_register_module("node_loader_port_module", node_loader_port_initialize);
 }
-#else
-// TODO: New register implementation
-#endif
 
 void node_loader_impl_exception(napi_env env, napi_status status)
 {
@@ -3806,9 +3811,8 @@ void node_loader_impl_thread(void *data)
 	#endif
 	*/
 
-	// #if NODE_MAJOR_VERSION < 18
+	/* Register bindings */
 	node_loader_impl_register_linked_bindings();
-	// #endif
 
 	/* Unlock node implementation mutex */
 	uv_mutex_unlock(&node_impl->mutex);

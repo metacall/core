@@ -178,20 +178,19 @@ char *plugin_loader_generate_library_name(const char *name, char *suffix)
 char *plugin_loader_generate_symbol_iface_name(const char *name, char *suffix)
 {
 	size_t name_length = strlen(name);
-	size_t mangle_length = dynlink_symbol_name_mangle(name, name_length, NULL);
 	size_t suffix_length = strlen(suffix);
-	char *symbol_iface_name = malloc(sizeof(char) * (mangle_length + suffix_length + 1));
+	char *symbol_iface_name = malloc(sizeof(char) * (name_length + suffix_length + 1));
 
 	if (symbol_iface_name == NULL)
 	{
 		return NULL;
 	}
 
-	dynlink_symbol_name_mangle(name, name_length, symbol_iface_name);
+	memcpy(symbol_iface_name, name, name_length);
 
-	memcpy(&symbol_iface_name[mangle_length], suffix, suffix_length);
+	memcpy(&symbol_iface_name[name_length], suffix, suffix_length);
 
-	symbol_iface_name[mangle_length + suffix_length] = '\0';
+	symbol_iface_name[name_length + suffix_length] = '\0';
 
 	return symbol_iface_name;
 }

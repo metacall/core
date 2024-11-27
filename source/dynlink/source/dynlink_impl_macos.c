@@ -133,10 +133,11 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
 {
 	NSSymbol symbol = NSLookupSymbolInModule(impl, name);
+	void *symbol_addr = NSAddressOfSymbol(symbol);
 
 	(void)handle;
 
-	*addr = (dynlink_symbol_addr)NSAddressOfSymbol(symbol);
+	dynlink_symbol_cast(void *, symbol_addr, *addr);
 
 	return (*addr == NULL);
 }
