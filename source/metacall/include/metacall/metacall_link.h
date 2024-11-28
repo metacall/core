@@ -40,7 +40,38 @@ extern "C" {
 */
 METACALL_API int metacall_link_initialize(void);
 
-// TODO: Implement dlsym hook function table
+/**
+*  @brief
+*    Register a function pointer in order to allow function
+*    interposition when loading a library, if you register a
+*    function @symbol called 'foo', when you try to dlsym (or the equivalent
+*    on every platform), you will get the pointer to @fn, even if
+*    the symbol does not exist in the library, it will work.
+*    Function interposition is required in order to hook into runtimes
+*    and dynamically interpose our functions.
+*
+*  @param[in] symbol
+*    Name of the function to be interposed
+*
+*  @param[in] fn
+*    Function pointer that will be returned by dlsym (or equivalent) when accessing to @symbol
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_link_register(const char *symbol, void (*fn)(void));
+
+/**
+*  @brief
+*    Remove the hook previously registered
+*
+*  @param[in] symbol
+*    Name of the function to be removed
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_link_unregister(const char *symbol);
 
 /**
 *  @brief
