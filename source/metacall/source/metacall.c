@@ -33,6 +33,8 @@
 
 #include <serial/serial.h>
 
+#include <detour/detour.h>
+
 #include <environment/environment_variable.h>
 
 #include <portability/portability_constructor.h>
@@ -44,6 +46,7 @@
 
 #define METACALL_ARGS_SIZE 0x10
 #define METACALL_SERIAL	   "rapid_json"
+#define METACALL_DETOUR	   "funchook"
 
 /* -- Type Definitions -- */
 
@@ -69,67 +72,9 @@ static loader_path plugin_path = { 0 };
 static int metacall_plugin_extension_load(void);
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
 static type_id *metacall_type_ids(void *args[], size_t size);
+static void metacall_detour_destructor(void);
 
 /* -- Costructors -- */
-
-/* TODO: Test, abstract and remove this */
-/*
-#include <dlfcn.h>
-
-extern void *__libc_dlsym(void *map, const char *name);
-extern void *__libc_dlopen_mode(const char *name, int mode);
-
-typedef void *(*dynlink_dlsym_fn)(void *, const char *);
-
-static dynlink_dlsym_fn dynlink_dlsym_fn_ptr = NULL;
-
-int dynlink_dlsym_initialize(void)
-{
-	void *handle = __libc_dlopen_mode("libdl.so.2", RTLD_GLOBAL | RTLD_LAZY);
-	union
-	{
-		void *ptr;
-		dynlink_dlsym_fn fn;
-	} cast;
-
-	if (handle == NULL)
-	{
-		return 1;
-	}
-
-	cast.ptr = __libc_dlsym(handle, "dlsym");
-
-	if (cast.ptr == NULL)
-	{
-		return 1;
-	}
-
-	dynlink_dlsym_fn_ptr = cast.fn;
-
-	return 0;
-}
-
-void *dynlink_dlsym(void *handle, const char *symbol)
-{
-	if (dynlink_dlsym_fn_ptr == NULL)
-	{
-		if (dynlink_dlsym_initialize() != 0)
-		{
-			return NULL;
-		}
-	}
-
-	return dynlink_dlsym_fn_ptr(handle, symbol);
-}
-
-void *dlsym(void *handle, const char *symbol)
-{
-	printf("HANDLE %p - Symbol: %s\n", handle, symbol);
-
-	return dynlink_dlsym(handle, symbol);
-}
-*/
-/* TODO-END */
 
 portability_constructor(metacall_constructor)
 {
@@ -177,6 +122,13 @@ const char *metacall_serial(void)
 	static const char metacall_serial_str[] = METACALL_SERIAL;
 
 	return metacall_serial_str;
+}
+
+const char *metacall_detour(void)
+{
+	static const char metacall_detour_str[] = METACALL_DETOUR;
+
+	return metacall_detour_str;
 }
 
 void metacall_log_null(void)
@@ -237,6 +189,31 @@ plugin_extension_error:
 	return result;
 }
 
+void metacall_detour_destructor(void)
+{
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall detour destruction");
+
+	/* Destroy link */
+	if (metacall_link_destroy() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link destruction");
+	}
+
+	/* Destroy fork */
+#ifdef METACALL_FORK_SAFE
+	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+	{
+		if (metacall_fork_destroy() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
+		}
+	}
+#endif /* METACALL_FORK_SAFE */
+
+	/* Destroy detour */
+	detour_destroy();
+}
+
 int metacall_initialize(void)
 {
 	memory_allocator allocator;
@@ -272,18 +249,37 @@ int metacall_initialize(void)
 		return 1;
 	}
 
-#ifdef METACALL_FORK_SAFE
-	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+	/* Initialize detours */
 	{
-		if (metacall_fork_initialize() != 0)
+		if (detour_initialize() != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour initialization");
+			return 1;
 		}
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
-	}
+		/* Initialize link */
+		if (metacall_link_initialize() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link initialization");
+		}
+
+#ifdef METACALL_FORK_SAFE
+		if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+		{
+			if (metacall_fork_initialize() != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
+			}
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
+		}
 #endif /* METACALL_FORK_SAFE */
 
+		/* Define destructor for detouring (it must be executed at the end to prevent problems with fork mechanisms) */
+		atexit(metacall_detour_destructor);
+	}
+
+	/* Initialize configuration and serializer */
 	allocator = memory_allocator_std(&malloc, &realloc, &free);
 
 	if (configuration_initialize(metacall_serial(), NULL, allocator) != 0)

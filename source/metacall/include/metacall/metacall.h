@@ -28,6 +28,7 @@
 #include <metacall/metacall_allocator.h>
 #include <metacall/metacall_def.h>
 #include <metacall/metacall_error.h>
+#include <metacall/metacall_link.h>
 #include <metacall/metacall_log.h>
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_version.h>
@@ -95,6 +96,15 @@ METACALL_API extern void *metacall_null_args[1];
 *    Name of the serializer to be used with serialization methods
 */
 METACALL_API const char *metacall_serial(void);
+
+/**
+*  @brief
+*    Returns default detour used by MetaCall
+*
+*  @return
+*    Name of the detour to be used with detouring methods
+*/
+METACALL_API const char *metacall_detour(void);
 
 /**
 *  @brief
