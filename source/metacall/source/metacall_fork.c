@@ -212,7 +212,7 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 
 void (*metacall_fork_func(void))(void)
 {
-	return (void (*)(void)) & fork;
+	return (void (*)(void))(&fork);
 }
 
 pid_t metacall_fork_hook(void)
@@ -325,7 +325,7 @@ int metacall_fork_initialize(void)
 
 	if (metacall_detour_handle == NULL)
 	{
-		metacall_detour_handle = detour_install(metacall_detour, (void (*)(void))fork_func, (void (*)(void)) & metacall_fork_hook);
+		metacall_detour_handle = detour_install(metacall_detour, (void (*)(void))fork_func, (void (*)(void))(&metacall_fork_hook));
 
 		if (metacall_detour_handle == NULL)
 		{
