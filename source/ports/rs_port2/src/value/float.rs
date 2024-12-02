@@ -10,16 +10,14 @@ use metacall_bindings::value::{
 };
 impl Value<f32> {
     pub fn get_value(&self) -> Result<f32> {
-        let res = unsafe { metacall_value_to_float(self.ptr).to_owned() };
-
+        let res = unsafe { metacall_value_to_float(self.ptr) };
         Ok(res)
     }
 }
 
 impl_value_constructor!(
     value => {
-        let ptr = unsafe { metacall_value_create_float(value.into()) };
-
+        let ptr = unsafe { metacall_value_create_float(value) };
         check_null_ptr!(ptr, ValueError::NullPointer);
 
         Ok(Self {
@@ -30,9 +28,9 @@ impl_value_constructor!(
 );
 
 impl Value<f64> {
-    pub fn get_value(&self) -> Result<f64> {
-        let res = unsafe { metacall_value_to_double(self.ptr).to_owned() };
 
+    pub fn get_value(&self) -> Result<f64> {
+        let res = unsafe { metacall_value_to_double(self.ptr) };
         Ok(res)
     }
 }
@@ -40,7 +38,6 @@ impl Value<f64> {
 impl_value_constructor!(
     value => {
         let ptr = unsafe { metacall_value_create_double(value) };
-
         check_null_ptr!(ptr, ValueError::NullPointer);
 
         Ok(Self {
