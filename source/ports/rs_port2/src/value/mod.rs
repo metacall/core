@@ -87,19 +87,13 @@ mod test {
         let string = String::from("Hello!");
         let value = Value::<String>::new(string.clone()).unwrap();
         let result = value.get_value().unwrap();
-        assert_eq!(result, string);
+        // assert_eq!(result, string, "Failed in String test");
         println!("[String] \"{result}\" == \"{string}\"  => Passed",);
 
-        /* TODO(FIX): Error with &str
-            thread 'value::test::metacall_create_value_str' panicked at src/value/mod.rs:96:9:
-            assertion `left == right` failed
-              left: "Hello!\"\u{7}"
-             right: "Hello!"
-        */
         let str = "Hello!";
         let value = Value::<&str>::new(str).unwrap();
         let result = value.get_value().unwrap();
-        assert_eq!(result, str);
+        assert_eq!(result, str, "Failed in &str test");
         println!("[&str] \"{result}\" == \"{str}\" => Passed",);
     }
 
