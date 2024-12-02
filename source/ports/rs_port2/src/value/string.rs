@@ -4,11 +4,33 @@ use std::{
 };
 
 use anyhow::Result;
-use metacall_bindings::value::{create::metacall_value_create_string, metacall_value_to_string};
+use metacall_bindings::value::{
+    create::{metacall_value_create_char, metacall_value_create_string},
+    metacall_value_to_char, metacall_value_to_string,
+};
 
 use crate::{check_null_ptr, impl_value_constructor};
 
 use super::{Value, ValueError};
+
+impl_value_constructor!(
+    value => {
+        let value = value.to_string();
+        let ptr = value.as_ptr() as *const c_char;
+        let ptr = unsafe {
+            metacall_value_create_string(ptr, value.len())
+        };
+
+        check_null_ptr!(ptr, ValueError::NullPointer);
+
+        Ok(Self {
+            ptr,
+            _phantom: PhantomData,
+        })
+    },
+    String,
+    &str
+);
 
 impl Value<&str> {
     pub fn get_value<'a>(&self) -> Result<&'a str> {
@@ -36,10 +58,8 @@ impl Value<String> {
 
 impl_value_constructor!(
     value => {
-        let value = value.to_string();
-        let ptr = value.as_ptr() as *const c_char;
         let ptr = unsafe {
-            metacall_value_create_string(ptr, value.len())
+            metacall_value_create_char(value as c_char)
         };
 
         check_null_ptr!(ptr, ValueError::NullPointer);
@@ -49,6 +69,13 @@ impl_value_constructor!(
             _phantom: PhantomData,
         })
     },
-    String,
-    &str
+    char, i8
 );
+
+impl Value<char> {
+    pub fn get_value(&self) -> Result<char> {
+        let ptr = unsafe { metacall_value_to_char(self.ptr) };
+
+        Ok(ptr as u8 as char)
+    }
+}

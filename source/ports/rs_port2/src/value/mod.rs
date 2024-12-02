@@ -95,6 +95,12 @@ mod test {
         let result = value.get_value().unwrap();
         assert_eq!(result, str, "Failed in &str test");
         println!("[&str] \"{result}\" == \"{str}\" => Passed",);
+        
+        let ch = 'F';
+        let value = Value::<char>::new(ch).unwrap();
+        let result = value.get_value().unwrap();
+        assert_eq!(result, ch, "Failed in &str test");
+        println!("[char] \"{result}\" == \"{ch}\" => Passed",);
     }
 
     #[test]
@@ -126,4 +132,6 @@ mod test {
         assert_eq!(result, float64);
         println!("[i64] \"{result}\" == \"{float64}\" => Passed",);
     }
+    
+   
 }
