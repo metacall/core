@@ -684,6 +684,7 @@ struct loader_impl_node_type
 
 	uv_thread_t thread;
 	uv_loop_t *thread_loop;
+	std::vector<std::string> *delayed_execution_paths;
 
 	uv_mutex_t mutex;
 	uv_cond_t cond;
@@ -3691,6 +3692,24 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table("kernel32.dll", "GetModuleHandleA", &get_module_handle_a_hook);
 #endif
 
+	/* On host mode, register delayed paths */
+	if (node_impl->delayed_execution_paths != nullptr)
+	{
+		std::vector<std::string> *paths = node_impl->delayed_execution_paths;
+
+		node_impl->delayed_execution_paths = nullptr;
+
+		for (const std::string &path : *paths)
+		{
+			if (node_loader_impl_execution_path(node_impl->impl, path.c_str()) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to register a delayed execution path: %s", path.c_str());
+			}
+		}
+
+		delete paths;
+	}
+
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
@@ -3736,8 +3755,7 @@ void node_loader_impl_thread(void *data)
 
 	int argc = 4;
 
-	/* TODO: ... reimplement until here */
-
+	/* Initialize current thread event loop */
 	node_impl->thread_loop = uv_default_loop();
 
 #if defined(__POSIX__)
@@ -3956,11 +3974,17 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 				/* TODO: Handle properly the error */
 			}
 		}
+
+		/* Initialize delayed execution paths to null, they are only used in host mode */
+		node_impl->delayed_execution_paths = nullptr;
 	}
 	else
 	{
-		// TODO: Set this to NULL and if in execution_path is null, delay the execution paths..
+		/* Initialize current thread event loop */
 		node_impl->thread_loop = uv_default_loop();
+
+		/* Initialize delayed execution paths for register them once it has been initialized */
+		node_impl->delayed_execution_paths = new std::vector<std::string>();
 	}
 
 	/* Register initialization */
@@ -4005,28 +4029,35 @@ napi_value node_loader_impl_register_bootstrap_startup(loader_impl_node node_imp
 
 int node_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
-	// TODO:
+	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 
-	// loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+	if (node_impl == nullptr)
+	{
+		return 1;
+	}
 
-	// if (node_impl == nullptr)
-	// {
-	// 	return 1;
-	// }
+	/* When using host mode, the paths are registered before NodeJS is properly initialized,
+	* delay the execution path registration until it is properly registered
+	*/
+	if (node_impl->delayed_execution_paths != nullptr)
+	{
+		node_impl->delayed_execution_paths->push_back(path);
+		return 0;
+	}
 
-	// loader_impl_async_execution_path_safe_type execution_path_safe(node_impl, static_cast<const char *>(path));
+	loader_impl_async_execution_path_safe_type execution_path_safe(node_impl, static_cast<const char *>(path));
 
-	// /* Check if we are in the JavaScript thread */
-	// if (node_impl->js_thread_id == std::this_thread::get_id())
-	// {
-	// 	/* We are already in the V8 thread, we can call safely */
-	// 	node_loader_impl_execution_path_safe(node_impl->env, &execution_path_safe);
-	// }
-	// else
-	// {
-	// 	/* Submit the task to the async queue */
-	// 	loader_impl_threadsafe_invoke_type<loader_impl_async_execution_path_safe_type> invoke(node_impl->threadsafe_execution_path, execution_path_safe);
-	// }
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_execution_path_safe(node_impl->env, &execution_path_safe);
+	}
+	else
+	{
+		/* Submit the task to the async queue */
+		loader_impl_threadsafe_invoke_type<loader_impl_async_execution_path_safe_type> invoke(node_impl->threadsafe_execution_path, execution_path_safe);
+	}
 
 	return 0;
 }

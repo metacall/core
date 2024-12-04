@@ -805,6 +805,9 @@ napi_value node_loader_port_register_bootstrap_startup(napi_env env, napi_callba
 	loader_impl impl = loader_get_impl(node_loader_tag);
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 
+	/* Define environment, required to initialize the runtime properly */
+	node_loader_impl_env(node_impl, env);
+
 	/* Return all the values required for the bootstrap startup */
 	return node_loader_impl_register_bootstrap_startup(node_impl, env);
 }
