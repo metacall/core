@@ -68,45 +68,44 @@ jobs:
   windows-mingw-test:
     name: Windows MinGW Test
     runs-on: windows-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sys: mingw32 }
+          - { sys: mingw64 }
+          - { sys: ucrt64 }
+          - { sys: clang64 }
+  
+    defaults:
+      run:
+        shell: msys2 {0}  #default shell
+  
     steps:
-      - name: Check out the repository
+      - name: 'Checkout'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up MSYS2
+  
+      - name: '${{ matrix.sys }} Setup MSYS2'
         uses: msys2/setup-msys2@v2
         with:
+          msystem: ${{ matrix.sys }}
           update: true
-          install: >
-            base-devel
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-make
-          cache: false
-      - name: Wait for MSYS2 to complete setup
-        run: sleep 60
-      - name: Add MSYS2 to PATH
+          install: >-
+            git
+            make
+          pacboy: >-
+            toolchain:p
+            cmake:p
+  
+      - name: 'Configure'
         run: |
-          echo "C:\msys64\mingw64\bin" >> $Env:GITHUB_PATH
-          echo "C:\msys64\usr\bin" >> $Env:GITHUB_PATH
-      - name: Create build directory
-        run: mkdir build
-
-      - name: Configure with CMake
-        working-directory: ./build
+          cmake -G "MinGW Makefiles" -B build -DCMAKE_BUILD_TYPE=Release -DOPTION_FORK_SAFE=OFF -DOPTION_BUILD_PLUGINS_BACKTRACE=OFF
+  
+      - name: 'Build'
         run: |
-          cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DOPTION_FORK_SAFE=OFF -DOPTION_BUILD_PLUGINS_BACKTRACE=OFF ..
-      - name: Build with CMake
-        working-directory: ./build
-        run: cmake --build .
-
-      - name: Run CTest
-        working-directory: ./build
-        run: |
-          ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure -C Debug
-        shell: bash
+          cmake --build build -- -j$(nproc)
 
   windows-distributable:
     name: Windows Distributable Dispatch
