@@ -35,6 +35,8 @@ extern "C" {
 
 /* -- Methods -- */
 
+LOADER_NO_EXPORT int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl);
+
 LOADER_API int loader_impl_is_initialized(loader_impl impl);
 
 LOADER_API loader_impl loader_impl_create(const loader_tag tag);

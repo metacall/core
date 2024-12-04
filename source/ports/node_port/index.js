@@ -133,8 +133,21 @@ const addon = (() => {
 
 			process.dlopen(m, library, constants.dlopen.RTLD_GLOBAL | constants.dlopen.RTLD_NOW);
 
-			// TODO: What to do with m? should we use process._linkedBinding instead, no?
+			/* Save argv */
+			const argv = process.argv;
+			process.argv = [];
 
+			/* Pass the require function in order to import bootstrap.js and register it */
+			const args = m.exports.register_bootstrap_startup();
+
+			const bootstrap = require(args[0]);
+
+			bootstrap(args[1], args[2], args[3]);
+
+			/* Restore argv */
+			process.argv = argv;
+
+			return m.exports;
 		}).catch(err => {
 			console.log(err);
 			process.exit(1);

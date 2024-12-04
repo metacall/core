@@ -158,7 +158,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
 	# TODO: Implement delayed load
-	${NodeJS_LIBRARY} # NodeJS library
+	# ${NodeJS_LIBRARY} # NodeJS library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

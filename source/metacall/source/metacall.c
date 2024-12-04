@@ -350,10 +350,21 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 
 		if (impl == NULL)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to find '%s_loader'", initialize_config[index].tag);
 			return 1;
 		}
 
 		loader_set_options(initialize_config[index].tag, initialize_config[index].options);
+
+		/* If we are initializing a loader as a host, we must initialize it */
+		if (loader_get_option_host(initialize_config[index].tag))
+		{
+			if (loader_initialize_host(initialize_config[index].tag) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to initialize '%s_loader' as host", initialize_config[index].tag);
+				return 1;
+			}
+		}
 
 		++index;
 	}

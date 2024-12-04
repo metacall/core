@@ -51,6 +51,8 @@ LOADER_API void loader_initialization_register(loader_impl impl);
 
 LOADER_API int loader_initialize(void);
 
+LOADER_NO_EXPORT int loader_initialize_host(const loader_tag tag);
+
 LOADER_API int loader_is_initialized(const loader_tag tag);
 
 LOADER_API int loader_register(const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[]);

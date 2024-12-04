@@ -77,9 +77,6 @@ extern char **environ;
 #include <cstring>
 
 #include <atomic>
-#include <fstream>
-#include <new>
-#include <streambuf>
 #include <string>
 #include <thread>
 
@@ -553,6 +550,118 @@ struct loader_impl_async_destroy_safe_type
 		node_impl(node_impl), has_finished(false) {}
 };
 
+static void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr);
+
+typedef struct node_loader_impl_startup_args_type
+{
+	/* Executable path */
+	portability_executable_path_str exe_path_str = { 0 };
+	portability_executable_path_length length = 0;
+	size_t exe_path_str_size = 0, exe_path_str_offset = 0;
+
+	/* Bootstrap path */
+	loader_path bootstrap_path_str = { 0 };
+	size_t bootstrap_path_str_size = 0;
+
+	/* The node_impl pointer */
+	char *node_impl_ptr_str = nullptr;
+	size_t node_impl_ptr_str_size = 0;
+
+	/* The register function pointer */
+	char *register_ptr_str = nullptr;
+	size_t register_ptr_str_size = 0;
+
+	node_loader_impl_startup_args_type() {}
+
+	~node_loader_impl_startup_args_type()
+	{
+		if (node_impl_ptr_str != nullptr)
+		{
+			delete[] node_impl_ptr_str;
+		}
+
+		if (register_ptr_str != nullptr)
+		{
+			delete[] register_ptr_str;
+		}
+	}
+
+	int initialize(loader_impl_node node_impl, configuration config)
+	{
+		/* Get the executable */
+		if (portability_executable_path(exe_path_str, &length) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Node loader failed to retrieve the executable path (%s)", exe_path_str);
+			return 1;
+		}
+
+		for (size_t iterator = 0; iterator <= (size_t)length; ++iterator)
+		{
+#if defined(WIN32) || defined(_WIN32)
+			if (exe_path_str[iterator] == '\\')
+#else
+			if (exe_path_str[iterator] == '/')
+#endif
+			{
+				exe_path_str_offset = iterator + 1;
+			}
+		}
+
+		exe_path_str_size = (size_t)length - exe_path_str_offset + 1;
+
+		/* Get the bootstrap.js path */
+		static const char bootstrap_file_str[] = "bootstrap.js";
+
+		if (node_loader_impl_bootstrap_path(bootstrap_file_str, sizeof(bootstrap_file_str) - 1, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "LOADER_LIBRARY_PATH environment variable or loader_library_path field in configuration is not defined, bootstrap.js cannot be found");
+			return 1;
+		}
+
+		/* Get node impl pointer */
+		ssize_t node_impl_ptr_length = snprintf(NULL, 0, "%p", (void *)node_impl);
+
+		if (node_impl_ptr_length <= 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid node impl pointer length in NodeJS thread");
+			return 1;
+		}
+
+		node_impl_ptr_str_size = static_cast<size_t>(node_impl_ptr_length + 1);
+		node_impl_ptr_str = new char[node_impl_ptr_str_size];
+
+		if (node_impl_ptr_str == nullptr)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid node impl pointer initialization in NodeJS thread");
+			return 1;
+		}
+
+		snprintf(node_impl_ptr_str, node_impl_ptr_str_size, "%p", (void *)node_impl);
+
+		/* Get register pointer */
+		ssize_t register_ptr_length = snprintf(NULL, 0, "%p", (void *)&node_loader_impl_register);
+
+		if (register_ptr_length <= 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid register pointer length in NodeJS thread");
+			return 1;
+		}
+
+		register_ptr_str_size = static_cast<size_t>(register_ptr_length + 1);
+		register_ptr_str = new char[register_ptr_str_size];
+
+		if (register_ptr_str == nullptr)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid register pointer initialization in NodeJS thread");
+			return 1;
+		}
+
+		snprintf(register_ptr_str, register_ptr_str_size, "%p", (void *)&node_loader_impl_register);
+
+		return 0;
+	}
+} * node_loader_impl_startup_args;
+
 struct loader_impl_node_type
 {
 	/* TODO: The current implementation may not support multi-isolate environments. We should test it. */
@@ -588,8 +697,8 @@ struct loader_impl_node_type
 	uv_thread_t thread_log_id;
 #endif
 
+	node_loader_impl_startup_args_type thread_data;
 	int result;
-	const char *error_message;
 
 	/* TODO: This implementation won't work for multi-isolate environments. We should test it. */
 	std::thread::id js_thread_id;
@@ -688,19 +797,29 @@ typedef struct loader_impl_async_func_await_trampoline_type
 
 } * loader_impl_async_func_await_trampoline;
 
-typedef struct loader_impl_thread_type
-{
-	loader_impl_node node_impl;
-	configuration config;
-
-} * loader_impl_thread;
-
 typedef struct loader_impl_napi_to_value_callback_closure_type
 {
 	value func;
 	loader_impl_node node_impl;
 
 } * loader_impl_napi_to_value_callback_closure;
+
+class loader_impl_napi_constructor
+{
+public:
+	loader_impl_napi_constructor()
+	{
+		if (metacall_link_register("napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Node loader failed register the link hook");
+		}
+	}
+
+	~loader_impl_napi_constructor() {}
+};
+
+/* Initializer of napi_register_module_v1 */
+static loader_impl_napi_constructor loader_impl_napi_ctor;
 
 /* Type conversion */
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
@@ -757,8 +876,6 @@ static void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destro
 static char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const char *prop);
 
 /* Loader */
-static void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr);
-
 static void node_loader_impl_thread(void *data);
 
 #ifdef __ANDROID__
@@ -3590,185 +3707,30 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 void node_loader_impl_thread(void *data)
 {
-	loader_impl_thread thread_data = static_cast<loader_impl_thread>(data);
-	loader_impl_node node_impl = thread_data->node_impl;
-	configuration config = thread_data->config;
+	loader_impl_node node_impl = static_cast<loader_impl_node>(data);
+	node_loader_impl_startup_args args = &node_impl->thread_data;
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
 
-	/* TODO: Reimplement from here to ... */
-	portability_executable_path_str exe_path_str = { 0 };
-	portability_executable_path_length length = 0;
-	size_t exe_path_str_size = 0, exe_path_str_offset = 0;
-
-	if (portability_executable_path(exe_path_str, &length) != 0)
-	{
-		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "Node loader failed to retrieve the executable path";
-
-		/* TODO: Make logs thread safe */
-		/* log_write("metacall", LOG_LEVEL_ERROR, "Node loader failed to retrieve the executable path (%s)", exe_path_str); */
-
-		/* Signal start condition */
-		uv_cond_signal(&node_impl->cond);
-
-		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-
-		return;
-	}
-
-	for (size_t iterator = 0; iterator <= (size_t)length; ++iterator)
-	{
-#if defined(WIN32) || defined(_WIN32)
-		if (exe_path_str[iterator] == '\\')
-#else
-		if (exe_path_str[iterator] == '/')
-#endif
-		{
-			exe_path_str_offset = iterator + 1;
-		}
-	}
-
-	exe_path_str_size = (size_t)length - exe_path_str_offset + 1;
-
-	/* Get the boostrap path */
-	static const char bootstrap_file_str[] = "bootstrap.js";
-	loader_path bootstrap_path_str = { 0 };
-	size_t bootstrap_path_str_size = 0;
-
-	if (node_loader_impl_bootstrap_path(bootstrap_file_str, sizeof(bootstrap_file_str) - 1, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
-	{
-		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "LOADER_LIBRARY_PATH environment variable or loader_library_path field in configuration is not defined, bootstrap.js cannot be found";
-
-		/* Signal start condition */
-		uv_cond_signal(&node_impl->cond);
-
-		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-
-		return;
-	}
-
-	/* Get node impl pointer */
-	char *node_impl_ptr_str;
-	size_t node_impl_ptr_str_size;
-
-	ssize_t node_impl_ptr_length = snprintf(NULL, 0, "%p", (void *)node_impl);
-
-	if (node_impl_ptr_length <= 0)
-	{
-		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "Invalid node impl pointer length in NodeJS thread";
-
-		/* Signal start condition */
-		uv_cond_signal(&node_impl->cond);
-
-		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-
-		return;
-	}
-
-	node_impl_ptr_str_size = static_cast<size_t>(node_impl_ptr_length + 1);
-	node_impl_ptr_str = new char[node_impl_ptr_str_size];
-
-	if (node_impl_ptr_str == nullptr)
-	{
-		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "Invalid node impl pointer initialization in NodeJS thread";
-
-		/* Signal start condition */
-		uv_cond_signal(&node_impl->cond);
-
-		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-
-		return;
-	}
-
-	snprintf(node_impl_ptr_str, node_impl_ptr_str_size, "%p", (void *)node_impl);
-
-	/* Get register pointer */
-	char *register_ptr_str;
-	size_t register_ptr_str_size;
-	ssize_t register_ptr_length = snprintf(NULL, 0, "%p", (void *)&node_loader_impl_register);
-
-	if (register_ptr_length <= 0)
-	{
-		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "Invalid register pointer length in NodeJS thread";
-
-		/* Signal start condition */
-		uv_cond_signal(&node_impl->cond);
-
-		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-
-		return;
-	}
-
-	register_ptr_str_size = static_cast<size_t>(register_ptr_length + 1);
-	register_ptr_str = new char[register_ptr_str_size];
-
-	if (register_ptr_str == nullptr)
-	{
-		delete[] node_impl_ptr_str;
-
-		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "Invalid register pointer initialization in NodeJS thread";
-
-		/* Signal start condition */
-		uv_cond_signal(&node_impl->cond);
-
-		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-
-		return;
-	}
-
-	snprintf(register_ptr_str, register_ptr_str_size, "%p", (void *)&node_loader_impl_register);
-
 	/* Define argv_str contigously allocated with: executable name, bootstrap file, node impl pointer and register pointer */
-	size_t argv_str_size = exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size + register_ptr_str_size;
+	size_t argv_str_size = args->exe_path_str_size + args->bootstrap_path_str_size + args->node_impl_ptr_str_size + args->register_ptr_str_size;
 	char *argv_str = new char[argv_str_size];
-
-	if (argv_str == nullptr)
-	{
-		delete[] node_impl_ptr_str;
-		delete[] register_ptr_str;
-
-		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "Invalid argv initialization in NodeJS thread";
-
-		/* Signal start condition */
-		uv_cond_signal(&node_impl->cond);
-
-		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&node_impl->mutex);
-
-		return;
-	}
 
 	/* Initialize the argv string memory */
 	memset(argv_str, 0, sizeof(char) * argv_str_size);
 
-	memcpy(&argv_str[0], &exe_path_str[exe_path_str_offset], exe_path_str_size);
-	memcpy(&argv_str[exe_path_str_size], bootstrap_path_str, bootstrap_path_str_size);
-	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size], node_impl_ptr_str, node_impl_ptr_str_size);
-	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size], register_ptr_str, register_ptr_str_size);
-
-	delete[] node_impl_ptr_str;
-	delete[] register_ptr_str;
+	memcpy(&argv_str[0], &args->exe_path_str[args->exe_path_str_offset], args->exe_path_str_size);
+	memcpy(&argv_str[args->exe_path_str_size], args->bootstrap_path_str, args->bootstrap_path_str_size);
+	memcpy(&argv_str[args->exe_path_str_size + args->bootstrap_path_str_size], args->node_impl_ptr_str, args->node_impl_ptr_str_size);
+	memcpy(&argv_str[args->exe_path_str_size + args->bootstrap_path_str_size + args->node_impl_ptr_str_size], args->register_ptr_str, args->register_ptr_str_size);
 
 	/* Define argv */
 	char *argv[] = {
 		&argv_str[0],
-		&argv_str[exe_path_str_size],
-		&argv_str[exe_path_str_size + bootstrap_path_str_size],
-		&argv_str[exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size],
+		&argv_str[args->exe_path_str_size],
+		&argv_str[args->exe_path_str_size + args->bootstrap_path_str_size],
+		&argv_str[args->exe_path_str_size + args->bootstrap_path_str_size + args->node_impl_ptr_str_size],
 		NULL
 	};
 
@@ -3816,8 +3778,6 @@ void node_loader_impl_thread(void *data)
 
 	/* Unlock node implementation mutex */
 	uv_mutex_unlock(&node_impl->mutex);
-
-	/* Register bindings for versions older than 18 */
 
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
@@ -3915,7 +3875,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	/* Initialize execution result */
 	node_impl->result = 1;
-	node_impl->error_message = NULL;
 
 	/* Initialize the reference to the loader so we can use it on the destruction */
 	node_impl->impl = impl;
@@ -3936,15 +3895,19 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	}
 #endif
 
-	struct loader_impl_thread_type thread_data = {
-		node_impl,
-		config
-	};
+	if (node_impl->thread_data.initialize(node_impl, config) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid startup arguments creation");
+
+		delete node_impl;
+
+		return NULL;
+	}
 
 	if (loader_impl_get_option_host(impl) == 0)
 	{
 		/* Create NodeJS thread */
-		if (uv_thread_create(&node_impl->thread, node_loader_impl_thread, &thread_data) != 0)
+		if (uv_thread_create(&node_impl->thread, node_loader_impl_thread, node_impl) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 
@@ -3960,49 +3923,44 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-		if (node_impl->error_message != NULL)
-		{
-			uv_mutex_unlock(&node_impl->mutex);
-
-			/* TODO: Remove this when implementing thread safe */
-			log_write("metacall", LOG_LEVEL_ERROR, node_impl->error_message);
-
-			return NULL;
-		}
-
 		uv_mutex_unlock(&node_impl->mutex);
+
+		/* Call initialize function with thread safe (only when not using host) */
+		{
+			loader_impl_async_initialize_safe_type initialize_safe(node_impl, value_to_string(configuration_value(config, "loader_library_path")));
+			int result = 1;
+
+			/* Check if we are in the JavaScript thread */
+			if (node_impl->js_thread_id == std::this_thread::get_id())
+			{
+				/* We are already in the V8 thread, we can call safely */
+				node_loader_impl_initialize_safe(node_impl->env, &initialize_safe);
+
+				/* Set up return of the function call */
+				result = initialize_safe.result;
+			}
+			else
+			{
+				/* Submit the task to the async queue */
+				loader_impl_threadsafe_invoke_type<loader_impl_async_initialize_safe_type> invoke(node_impl->threadsafe_initialize, initialize_safe);
+
+				/* Set up return of the function call */
+				result = initialize_safe.result;
+			}
+
+			if (result != 0)
+			{
+				/* TODO: Implement better error message */
+				log_write("metacall", LOG_LEVEL_ERROR, "Call to initialization function node_loader_impl_async_initialize_safe failed");
+
+				/* TODO: Handle properly the error */
+			}
+		}
 	}
-
-	/* Call initialize function with thread safe */
+	else
 	{
-		loader_impl_async_initialize_safe_type initialize_safe(node_impl, value_to_string(configuration_value(config, "loader_library_path")));
-		int result = 1;
-
-		/* Check if we are in the JavaScript thread */
-		if (node_impl->js_thread_id == std::this_thread::get_id())
-		{
-			/* We are already in the V8 thread, we can call safely */
-			node_loader_impl_initialize_safe(node_impl->env, &initialize_safe);
-
-			/* Set up return of the function call */
-			result = initialize_safe.result;
-		}
-		else
-		{
-			/* Submit the task to the async queue */
-			loader_impl_threadsafe_invoke_type<loader_impl_async_initialize_safe_type> invoke(node_impl->threadsafe_initialize, initialize_safe);
-
-			/* Set up return of the function call */
-			result = initialize_safe.result;
-		}
-
-		if (result != 0)
-		{
-			/* TODO: Implement better error message */
-			log_write("metacall", LOG_LEVEL_ERROR, "Call to initialization function node_loader_impl_async_initialize_safe failed");
-
-			/* TODO: Handle properly the error */
-		}
+		// TODO: Set this to NULL and if in execution_path is null, delay the execution paths..
+		node_impl->thread_loop = uv_default_loop();
 	}
 
 	/* Register initialization */
@@ -4011,28 +3969,64 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	return node_impl;
 }
 
+napi_value node_loader_impl_register_bootstrap_startup(loader_impl_node node_impl, napi_env env)
+{
+	node_loader_impl_startup_args args = &node_impl->thread_data;
+	napi_value argv[4], v;
+	napi_status status;
+
+	status = napi_create_array_with_length(env, 4, &v);
+	node_loader_impl_exception(env, status);
+
+	/* Convert bootstrap.js path to N-API value */
+	status = napi_create_string_utf8(env, args->bootstrap_path_str, args->bootstrap_path_str_size - 1, &argv[0]);
+	node_loader_impl_exception(env, status);
+
+	/* Convert node impl to N-API value */
+	status = napi_create_string_utf8(env, args->node_impl_ptr_str, args->node_impl_ptr_str_size - 1, &argv[1]);
+	node_loader_impl_exception(env, status);
+
+	/* Convert register to N-API value */
+	status = napi_create_string_utf8(env, args->register_ptr_str, args->register_ptr_str_size - 1, &argv[2]);
+	node_loader_impl_exception(env, status);
+
+	/* Create trampoline exports */
+	argv[3] = node_loader_trampoline_initialize_object(env);
+
+	/* Set the values */
+	for (size_t iterator = 0; iterator < 4; ++iterator)
+	{
+		status = napi_set_element(env, v, iterator, argv[iterator]);
+		node_loader_impl_exception(env, status);
+	}
+
+	return v;
+}
+
 int node_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
-	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+	// TODO:
 
-	if (node_impl == nullptr)
-	{
-		return 1;
-	}
+	// loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 
-	loader_impl_async_execution_path_safe_type execution_path_safe(node_impl, static_cast<const char *>(path));
+	// if (node_impl == nullptr)
+	// {
+	// 	return 1;
+	// }
 
-	/* Check if we are in the JavaScript thread */
-	if (node_impl->js_thread_id == std::this_thread::get_id())
-	{
-		/* We are already in the V8 thread, we can call safely */
-		node_loader_impl_execution_path_safe(node_impl->env, &execution_path_safe);
-	}
-	else
-	{
-		/* Submit the task to the async queue */
-		loader_impl_threadsafe_invoke_type<loader_impl_async_execution_path_safe_type> invoke(node_impl->threadsafe_execution_path, execution_path_safe);
-	}
+	// loader_impl_async_execution_path_safe_type execution_path_safe(node_impl, static_cast<const char *>(path));
+
+	// /* Check if we are in the JavaScript thread */
+	// if (node_impl->js_thread_id == std::this_thread::get_id())
+	// {
+	// 	/* We are already in the V8 thread, we can call safely */
+	// 	node_loader_impl_execution_path_safe(node_impl->env, &execution_path_safe);
+	// }
+	// else
+	// {
+	// 	/* Submit the task to the async queue */
+	// 	loader_impl_threadsafe_invoke_type<loader_impl_async_execution_path_safe_type> invoke(node_impl->threadsafe_execution_path, execution_path_safe);
+	// }
 
 	return 0;
 }

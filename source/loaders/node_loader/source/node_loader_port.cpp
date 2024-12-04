@@ -799,6 +799,16 @@ napi_value node_loader_port_metacall_logs(napi_env env, napi_callback_info)
 	return nullptr;
 }
 
+napi_value node_loader_port_register_bootstrap_startup(napi_env env, napi_callback_info)
+{
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl(node_loader_tag);
+	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+
+	/* Return all the values required for the bootstrap startup */
+	return node_loader_impl_register_bootstrap_startup(node_impl, env);
+}
+
 /* TODO: Review documentation */
 // This functions sets the necessary js functions that could be called in NodeJs
 void node_loader_port_exports(napi_env env, napi_value exports)
@@ -823,7 +833,8 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 	x(metacall_load_from_configuration); \
 	x(metacall_load_from_configuration_export); \
 	x(metacall_inspect); \
-	x(metacall_logs);
+	x(metacall_logs); \
+	x(register_bootstrap_startup);
 
 	/* Declare all the functions */
 	NODE_LOADER_PORT_DECL_X_MACRO(NODE_LOADER_PORT_DECL_FUNC)
@@ -837,6 +848,12 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 napi_value node_loader_port_initialize(napi_env env, napi_value exports)
 {
 	node_loader_port_exports(env, exports);
+
+	/* Unregister NAPI Hook */
+	if (metacall_link_unregister("napi_register_module_v1") != 0)
+	{
+		// TODO: Handle error
+	}
 
 	return exports;
 }

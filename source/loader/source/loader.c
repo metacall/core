@@ -201,6 +201,18 @@ void loader_initialization_register_plugin(plugin p)
 	}
 }
 
+int loader_initialize_host(const loader_tag tag)
+{
+	plugin p = plugin_manager_get(&loader_manager, tag);
+
+	if (p == NULL)
+	{
+		return 1;
+	}
+
+	return loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl));
+}
+
 int loader_is_initialized(const loader_tag tag)
 {
 	plugin p = plugin_manager_get(&loader_manager, tag);
