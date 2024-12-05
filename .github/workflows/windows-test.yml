@@ -81,6 +81,10 @@ jobs:
           - { sys: clang64, build_type: Debug }
           - { sys: clang64, build_type: Release }
 
+    defaults:
+      run:
+        shell: msys2 {0}
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -95,30 +99,23 @@ jobs:
           install: >-
             base-devel
             git
-            mingw-w64-x86_64-toolchain
             cmake
             make
           pacboy: >-
             toolchain:p
             cmake:p
-
-      - name: Add MSYS2 to PATH
-        run: |
-          echo "C:\\msys64\\${{ matrix.sys }}\\bin" >> $Env:GITHUB_PATH
-          echo "C:\\msys64\\usr\\bin" >> $Env:GITHUB_PATH
+            ninja:p
 
       - name: Create build directory
         run: mkdir build
 
       - name: Configure with CMake
         working-directory: ./build
-        shell: cmd
         run: |
           cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DOPTION_FORK_SAFE=OFF -DOPTION_BUILD_PLUGINS_BACKTRACE=OFF ..
 
       - name: Build with CMake
         working-directory: ./build
-        shell: cmd
         run: |
           cmake --build .
 
@@ -126,7 +123,6 @@ jobs:
         working-directory: ./build
         run: |
           ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure -C ${{ matrix.build_type }}
-        shell: bash
 
   windows-distributable:
     name: Windows Distributable Dispatch
