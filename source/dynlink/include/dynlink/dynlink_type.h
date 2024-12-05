@@ -44,6 +44,37 @@ typedef const char *dynlink_symbol_name;					   /**< Dynamically linked shared o
 typedef portability_library_path_str dynlink_library_path_str; /**< Dynamically linked shared object symbol name */
 typedef void *dynlink_impl;									   /**< Dynamically linked shared object implementation */
 typedef char dynlink_name_impl[PORTABILITY_PATH_SIZE];		   /**< Allocated copy of dynamically linked shared object name */
+typedef void (*dynlink_symbol_addr)(void);					   /**< Function pointer referring to a symbol address */
+
+/* -- Macros -- */
+
+#define dynlink_symbol_cast(type, symbol, result) \
+	do \
+	{ \
+		union \
+		{ \
+			type ptr; \
+			dynlink_symbol_addr fn; \
+		} cast; \
+\
+		cast.ptr = (symbol); \
+		(result) = cast.fn; \
+\
+	} while (0)
+
+#define dynlink_symbol_uncast(fn, result) \
+	do \
+	{ \
+		union \
+		{ \
+			void *ptr; \
+			dynlink_symbol_addr fn; \
+		} cast; \
+\
+		cast.fn = (fn); \
+		(result) = cast.ptr; \
+\
+	} while (0)
 
 #ifdef __cplusplus
 }

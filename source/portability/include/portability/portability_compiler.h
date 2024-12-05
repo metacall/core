@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef PORTABILITY_COMPILER_DETECTION_H
-#define PORTABILITY_COMPILER_DETECTION_H 1
+#ifndef PORTABILITY_COMPILER_H
+#define PORTABILITY_COMPILER_H 1
 
 /* TODO: This needs to be implemented properly, including another file for architecture and operative system detection */
 
@@ -490,4 +490,4 @@
 // PORTABILITY_THREAD_LOCAL not defined for this configuration.
 #endif
 
-#endif /* PORTABILITY_COMPILER_DETECTION_H */
+#endif /* PORTABILITY_COMPILER_H */

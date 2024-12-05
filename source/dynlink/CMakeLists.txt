@@ -47,9 +47,7 @@ set(headers
 	${include_path}/dynlink.h
 	${include_path}/dynlink_flags.h
 	${include_path}/dynlink_impl.h
-	${include_path}/dynlink_impl_symbol_${DYNLINK_IMPL_INTERFACE_NAME}.h
 	${include_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.h
-	${include_path}/dynlink_symbol.h
 )
 
 set(sources
@@ -57,7 +55,6 @@ set(sources
 	${source_path}/dynlink_impl.c
 	${source_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.c
 	${source_path}/dynlink_interface.c
-	${source_path}/dynlink_symbol.c
 )
 
 # Group source files

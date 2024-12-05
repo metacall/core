@@ -23,15 +23,11 @@
 
 #include <sum_extension/sum_extension_api.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 SUM_EXTENSION_API int sum_extension(void *loader, void *handle);
-
-DYNLINK_SYMBOL_EXPORT(sum_extension);
 
 #ifdef __cplusplus
 }

@@ -27,8 +27,6 @@
 
 #include <detour/detour_interface.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,8 +43,6 @@ extern "C" {
 */
 FUNCHOOK_DETOUR_API detour_interface funchook_detour_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(funchook_detour_impl_interface_singleton);
-
 /**
 *  @brief
 *    Provide the module information
@@ -56,8 +52,6 @@ DYNLINK_SYMBOL_EXPORT(funchook_detour_impl_interface_singleton);
 *
 */
 FUNCHOOK_DETOUR_API const char *funchook_detour_print_info(void);
-
-DYNLINK_SYMBOL_EXPORT(funchook_detour_print_info);
 
 #ifdef __cplusplus
 }

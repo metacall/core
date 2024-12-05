@@ -427,3 +427,31 @@ napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)
 
 	return exports;
 }
+
+#define NODE_LOADER_TRAMPOLINE_DECLARE_OBJ_METHOD(name, func) \
+	do \
+	{ \
+		napi_value func_value; \
+		status = napi_create_function(env, name, NAPI_AUTO_LENGTH, func, nullptr, &func_value); \
+		node_loader_impl_exception(env, status); \
+		napi_set_named_property(env, obj, name, func_value); \
+		node_loader_impl_exception(env, status); \
+	} while (0)
+
+napi_value node_loader_trampoline_initialize_object(napi_env env)
+{
+	napi_value obj;
+	napi_status status;
+
+	status = napi_create_object(env, &obj);
+	node_loader_impl_exception(env, status);
+
+	NODE_LOADER_TRAMPOLINE_DECLARE_OBJ_METHOD("register", node_loader_trampoline_register);
+	NODE_LOADER_TRAMPOLINE_DECLARE_OBJ_METHOD("resolve", node_loader_trampoline_resolve);
+	NODE_LOADER_TRAMPOLINE_DECLARE_OBJ_METHOD("reject", node_loader_trampoline_reject);
+	NODE_LOADER_TRAMPOLINE_DECLARE_OBJ_METHOD("destroy", node_loader_trampoline_destroy);
+	NODE_LOADER_TRAMPOLINE_DECLARE_OBJ_METHOD("print", node_loader_trampoline_print);
+	NODE_LOADER_TRAMPOLINE_DECLARE_OBJ_METHOD("active_handles", node_loader_trampoline_active_handles);
+
+	return obj;
+}

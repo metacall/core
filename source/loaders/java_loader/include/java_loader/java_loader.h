@@ -25,19 +25,13 @@
 
 #include <loader/loader_impl_interface.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 JAVA_LOADER_API loader_impl_interface java_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(java_loader_impl_interface_singleton);
-
 JAVA_LOADER_API const char *java_loader_print_info(void);
-
-DYNLINK_SYMBOL_EXPORT(java_loader_print_info);
 
 #ifdef __cplusplus
 }

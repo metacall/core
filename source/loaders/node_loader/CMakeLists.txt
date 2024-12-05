@@ -156,7 +156,9 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${NodeJS_LIBRARY} # NodeJS library
+
+	# TODO: Implement delayed load
+	# ${NodeJS_LIBRARY} # NodeJS library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
