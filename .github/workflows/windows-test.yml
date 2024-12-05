@@ -71,15 +71,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { sys: mingw32, build_type: Debug }
-          - { sys: mingw32, build_type: Release }
-          - { sys: mingw64, build_type: Debug }
-          - { sys: mingw64, build_type: Release }
-          - { sys: ucrt64, build_type: Debug }
-          - { sys: ucrt64, build_type: Release }
-          - { sys: clang64, build_type: Debug }
-          - { sys: clang64, build_type: Release }
+        build_type: [Debug, Release]
+        sys: [mingw32, mingw64, ucrt64, clang64]
 
     defaults:
       run:
