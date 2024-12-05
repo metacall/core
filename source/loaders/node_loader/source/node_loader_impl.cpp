@@ -874,6 +874,8 @@ static void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async
 
 static void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe_type *destroy_safe);
 
+static void node_loader_impl_destroy_hook(loader_impl_node node_impl);
+
 static char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const char *prop);
 
 /* Loader */
@@ -3708,6 +3710,9 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		}
 
 		delete paths;
+
+		/* Trigger destroy hook */
+		node_loader_impl_destroy_hook(node_impl);
 	}
 
 	/* Close scope */
@@ -3985,6 +3990,9 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 		/* Initialize delayed execution paths for register them once it has been initialized */
 		node_impl->delayed_execution_paths = new std::vector<std::string>();
+
+		/* Result will never be defined properly */
+		node_impl->result = 0;
 	}
 
 	/* Register initialization */
@@ -4267,6 +4275,32 @@ napi_value node_loader_impl_promise_await(loader_impl_node node_impl, napi_env e
 	return promise;
 }
 
+static void node_loader_impl_destroy_close_cb(loader_impl_node node_impl, napi_env env)
+{
+	if (--node_impl->extra_active_handles == 0)
+	{
+		if (loader_impl_get_option_host(node_impl->impl) == 0)
+		{
+			node_loader_impl_try_destroy(node_impl);
+		}
+		else
+		{
+			node_impl->threadsafe_initialize.abort(env);
+			node_impl->threadsafe_execution_path.abort(env);
+			node_impl->threadsafe_load_from_file.abort(env);
+			node_impl->threadsafe_load_from_memory.abort(env);
+			node_impl->threadsafe_clear.abort(env);
+			node_impl->threadsafe_discover.abort(env);
+			node_impl->threadsafe_func_call.abort(env);
+			node_impl->threadsafe_func_await.abort(env);
+			node_impl->threadsafe_func_destroy.abort(env);
+			node_impl->threadsafe_future_await.abort(env);
+			node_impl->threadsafe_future_delete.abort(env);
+			node_impl->threadsafe_destroy.abort(env);
+		}
+	}
+}
+
 #define container_of(ptr, type, member) \
 	(type *)((char *)(ptr) - (char *)&((type *)0)->member)
 
@@ -4275,10 +4309,7 @@ static void node_loader_impl_destroy_prepare_close_cb(uv_handle_t *handle)
 	uv_prepare_t *prepare = (uv_prepare_t *)handle;
 	loader_impl_node node_impl = container_of(prepare, struct loader_impl_node_type, destroy_prepare);
 
-	if (--node_impl->extra_active_handles == 0)
-	{
-		node_loader_impl_try_destroy(node_impl);
-	}
+	node_loader_impl_destroy_close_cb(node_impl, node_impl->env);
 }
 
 static void node_loader_impl_destroy_check_close_cb(uv_handle_t *handle)
@@ -4286,10 +4317,7 @@ static void node_loader_impl_destroy_check_close_cb(uv_handle_t *handle)
 	uv_check_t *check = (uv_check_t *)handle;
 	loader_impl_node node_impl = container_of(check, struct loader_impl_node_type, destroy_check);
 
-	if (--node_impl->extra_active_handles == 0)
-	{
-		node_loader_impl_try_destroy(node_impl);
-	}
+	node_loader_impl_destroy_close_cb(node_impl, node_impl->env);
 }
 
 static void node_loader_impl_destroy_cb(loader_impl_node node_impl)
@@ -4329,6 +4357,15 @@ static void node_loader_impl_destroy_check_cb(uv_check_t *handle)
 	node_loader_impl_destroy_cb(node_impl);
 }
 
+void node_loader_impl_destroy_hook(loader_impl_node node_impl)
+{
+	node_impl->extra_active_handles.store(2);
+	uv_prepare_init(node_impl->thread_loop, &node_impl->destroy_prepare);
+	uv_check_init(node_impl->thread_loop, &node_impl->destroy_check);
+	uv_prepare_start(&node_impl->destroy_prepare, &node_loader_impl_destroy_prepare_cb);
+	uv_check_start(&node_impl->destroy_check, &node_loader_impl_destroy_check_cb);
+}
+
 void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe_type *destroy_safe)
 {
 	napi_status status;
@@ -4349,11 +4386,7 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe_
 	}
 	else
 	{
-		node_impl->extra_active_handles.store(2);
-		uv_prepare_init(node_impl->thread_loop, &node_impl->destroy_prepare);
-		uv_check_init(node_impl->thread_loop, &node_impl->destroy_check);
-		uv_prepare_start(&node_impl->destroy_prepare, &node_loader_impl_destroy_prepare_cb);
-		uv_check_start(&node_impl->destroy_check, &node_loader_impl_destroy_check_cb);
+		node_loader_impl_destroy_hook(node_impl);
 	}
 
 	/* Close scope */
@@ -4500,6 +4533,7 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	node_loader_impl_exception(env, status);
 
 	/* Clear thread safe functions except by destroy one */
+	if (loader_impl_get_option_host(node_impl->impl) == 0)
 	{
 		node_impl->threadsafe_initialize.abort(env);
 		node_impl->threadsafe_execution_path.abort(env);
@@ -4552,9 +4586,12 @@ void node_loader_impl_try_destroy(loader_impl_node node_impl)
 		loader_impl_threadsafe_invoke_type<loader_impl_async_destroy_safe_type> invoke(node_impl->threadsafe_destroy, destroy_safe);
 	}
 
-	if (destroy_safe.has_finished)
+	if (loader_impl_get_option_host(node_impl->impl) == 0)
 	{
-		node_impl->threadsafe_destroy.abort(node_impl->env);
+		if (destroy_safe.has_finished)
+		{
+			node_impl->threadsafe_destroy.abort(node_impl->env);
+		}
 	}
 }
 
@@ -4570,8 +4607,11 @@ int node_loader_impl_destroy(loader_impl impl)
 	/* Call destroy function with thread safe */
 	node_loader_impl_try_destroy(node_impl);
 
-	/* Wait for node thread to finish */
-	uv_thread_join(&node_impl->thread);
+	if (loader_impl_get_option_host(impl) == 0)
+	{
+		/* Wait for node thread to finish */
+		uv_thread_join(&node_impl->thread);
+	}
 
 	/* Clear condition syncronization object */
 	uv_cond_destroy(&node_impl->cond);
