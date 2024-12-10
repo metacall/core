@@ -1,6 +1,9 @@
 #![warn(clippy::all)]
 #![allow(
-    clippy::tabs_in_doc_comments
+    clippy::not_unsafe_ptr_arg_deref,
+    clippy::boxed_local,
+    clippy::tabs_in_doc_comments,
+    clippy::needless_doctest_main
 )]
 /*
  *	MetaCall Library by Parra Studios
@@ -38,23 +41,53 @@
 //! Now let's jump into Rust:
 //!
 //! ```
-//! use metacall;
+//! use metacall::{load, metacall};
 //!
 //! fn main() {
-//!     // TODO
+//!     // Load the file (Checkout the load module for loading multiple files or loading from string)
+//!     load::from_single_file("ts", "sum.ts").unwrap();
+//!
+//!     // Call the sum function (Also checkout other metacall functions)
+//!     let sum = metacall::<f64>("sum", [1.0, 2.0]).unwrap();
+//!
+//!     assert_eq!(sum, 3.0);
 //! }
 //!
 //! ```
 
-// TODO
+pub(crate) mod helpers;
+pub(crate) mod parsers;
+pub(crate) use macros::private_macros::*;
 
-mod init;
-pub use init::*;
+/// Contains MetaCall loaders from file and memory. Usage example: ...
+/// ```
+/// // Loading a single file with Nodejs.
+/// metacall::load::from_single_file("node", "index.js").unwrap();
+///
+/// // Loading multiple files with Nodejs.
+/// metacall::load::from_file("node", ["index.js", "main.js"]).unwrap();
+///
+/// // Loading a string with Nodejs.
+/// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
+/// metacall::load::from_memory("node", script).unwrap();
+/// ```
+pub mod load;
 
-mod value;
-pub use value::*;
+mod types;
+pub use types::*;
 
-/// Contains Metacall language inliners. Usage example: ...
+#[doc(hidden)]
+pub mod macros;
+
+#[doc(hidden)]
+pub mod init;
+pub use init::is_initialized;
+
+#[path = "metacall.rs"]
+mod metacall_mod;
+pub use metacall_mod::*;
+
+/// Contains MetaCall language inliners. Usage example: ...
 /// ```
 /// // Python
 /// py! {
@@ -76,4 +109,5 @@ pub mod inline {
 }
 
 #[allow(warnings)]
+#[doc(hidden)]
 pub mod bindings;

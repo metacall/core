@@ -26,14 +26,11 @@ export function sum(a: number, b: number): number {
 
 `main.rs`
 ``` rust
-use metacall::{switch, metacall, loaders};
+use metacall::{metacall, load};
 
 fn main() {
-    // Initialize Metacall at the top
-    let _metacall = switch::initialize().unwrap();
-     
     // Load the file
-    loaders::from_single_file("ts", "sum.ts").unwrap();
+    load::from_single_file("ts", "sum.ts").unwrap();
 
     // Call the sum function
     let sum = metacall::<f64>("sum", [1.0, 2.0]).unwrap();

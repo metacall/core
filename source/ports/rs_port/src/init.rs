@@ -37,7 +37,7 @@ impl Drop for MetaCallDestroy {
     }
 }
 
-/// Initializes Metacall. Always remember to store the output in a variable to avoid instant drop.
+/// Initializes MetaCall. Always remember to store the output in a variable to avoid instant drop.
 /// For example: ...
 /// ```
 /// // Initialize metacall at the top of your main function before loading your codes or
