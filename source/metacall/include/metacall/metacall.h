@@ -40,12 +40,6 @@
 extern "C" {
 #endif
 
-/* -- Headers -- */
-
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdlib.h>
-
 /* -- Definitions -- */
 
 #define METACALL_FLAGS_FORK_SAFE 0x01 << 0x00
