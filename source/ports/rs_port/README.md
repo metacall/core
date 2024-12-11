@@ -29,7 +29,7 @@ export function sum(a: number, b: number): number {
 use metacall::{switch, metacall, loaders};
 
 fn main() {
-    // Initialize Metacall at the top
+    // Initialize MetaCall at the top
     let _metacall = switch::initialize().unwrap();
      
     // Load the file

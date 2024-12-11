@@ -1,6 +1,6 @@
 // Used for documentation.
 #[allow(unused_imports)]
-use crate::MetacallValue;
+use crate::MetaCallValue;
 
 pub(crate) mod private_macros {
     macro_rules! cstring_enum {
@@ -9,7 +9,7 @@ pub(crate) mod private_macros {
             match ::std::ffi::CString::new(var.clone()) {
                 Ok(str) => Ok(str),
                 Err(err) => Err($enum::UnexpectedCStringConversionErr(
-                    $crate::MetacallStringConversionError::new(var, err),
+                    $crate::MetaCallStringConversionError::new(var, err),
                 )),
             }
         }};
@@ -25,7 +25,7 @@ pub(crate) mod private_macros {
             let var = $var.to_string();
             match ::std::ffi::CString::new(var.clone()) {
                 Ok(str) => Ok(str),
-                Err(err) => Err($crate::MetacallStringConversionError::new(var, err)),
+                Err(err) => Err($crate::MetaCallStringConversionError::new(var, err)),
             }
         }};
 
@@ -40,7 +40,7 @@ pub(crate) mod private_macros {
 }
 
 #[macro_export]
-/// Matches [MetacallValue](MetacallValue) trait object. For example: ...
+/// Matches [MetaCallValue](MetaCallValue) trait object. For example: ...
 /// ```
 /// use metacall::{metacall_untyped_no_arg, match_metacall_value};
 ///

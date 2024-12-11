@@ -1,11 +1,11 @@
 use super::{
-    MetacallClass, MetacallException, MetacallFunction, MetacallFuture, MetacallNull,
-    MetacallObject, MetacallPointer, MetacallThrowable,
+    MetaCallClass, MetaCallException, MetaCallFunction, MetaCallFuture, MetaCallNull,
+    MetaCallObject, MetaCallPointer, MetaCallThrowable,
 };
 use crate::{
     bindings::*,
     cstring,
-    helpers::{MetacallClone, MetacallDowncast},
+    helpers::{MetaCallClone, MetaCallDowncast},
     match_metacall_value, parsers,
 };
 use std::{
@@ -15,7 +15,7 @@ use std::{
     slice,
 };
 
-/// Trait of any possible object in Metacall.
+/// Trait of any possible object in MetaCall.
 /// Checkout [match_metacall_value](match_metacall_value) macro for
 /// matching trait objects of this trait. Let' see what types we can use with an example: ...
 /// ```
@@ -50,31 +50,31 @@ use std::{
 /// hashmap.insert(String::from("hi"), String::from("there!"));
 /// metacall::metacall_untyped("x", [hashmap]);
 /// // pointer
-/// metacall::metacall_untyped("x", [metacall::MetacallPointer::new(String::from("hi"))]);
+/// metacall::metacall_untyped("x", [metacall::MetaCallPointer::new(String::from("hi"))]);
 /// // future?
 /// // nope! you can't pass a future!
 /// // function
 /// metacall::metacall_untyped("x", [
-///     metacall::metacall_no_arg::<metacall::MetacallFunction>("my_async_function").unwrap()
+///     metacall::metacall_no_arg::<metacall::MetaCallFunction>("my_async_function").unwrap()
 /// ]);
 /// // null
-/// metacall::metacall_untyped("x", [metacall::MetacallNull()]);
+/// metacall::metacall_untyped("x", [metacall::MetaCallNull()]);
 /// // class
-/// metacall::metacall_untyped("x", [metacall::MetacallClass::from_name("MyClass").unwrap()]);
+/// metacall::metacall_untyped("x", [metacall::MetaCallClass::from_name("MyClass").unwrap()]);
 /// // object
-/// let class = metacall::MetacallClass::from_name("MyClass").unwrap();
+/// let class = metacall::MetaCallClass::from_name("MyClass").unwrap();
 /// metacall::metacall_untyped("x", [class.create_object_no_arg("myObject").unwrap()]);
 /// // exception
 /// metacall::metacall_untyped("x", [
-///     metacall::metacall_no_arg::<metacall::MetacallException>("my_function").unwrap()
+///     metacall::metacall_no_arg::<metacall::MetaCallException>("my_function").unwrap()
 /// ]);
 /// // throwable?
 /// // nope! you can't pass a throwable!
 /// ```
-pub trait MetacallValue: MetacallClone + MetacallDowncast + Debug {
+pub trait MetaCallValue: MetaCallClone + MetaCallDowncast + Debug {
     // It tries to convert the raw pointer to the value or return a trait object on failure.
     #[doc(hidden)]
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>>
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>>
     where
         Self: Sized,
     {
@@ -86,24 +86,24 @@ pub trait MetacallValue: MetacallClone + MetacallDowncast + Debug {
     }
     // Same as `from_metacall_raw` but doesn't free the memory on drop and leaks.
     #[doc(hidden)]
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>>
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>>
     where
         Self: Sized;
-    // It returns the enum index of Metacall Protocol in the core. It's used for faster type matching.
+    // It returns the enum index of MetaCall Protocol in the core. It's used for faster type matching.
     #[doc(hidden)]
-    fn get_metacall_id() -> u32
+    fn get_metacall_id() -> metacall_value_id
     where
         Self: Sized;
     // It converts the value to a raw value known by the metacall core.
     #[doc(hidden)]
     fn into_metacall_raw(self) -> *mut c_void;
 }
-/// Equivalent to Metacall boolean type.
-impl MetacallValue for bool {
-    fn get_metacall_id() -> u32 {
-        0
+/// Equivalent to MetaCall boolean type.
+impl MetaCallValue for bool {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_BOOL
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_bool(v) != 0 };
 
         Ok(value)
@@ -112,12 +112,12 @@ impl MetacallValue for bool {
         unsafe { metacall_value_create_bool((self as c_int).try_into().unwrap()) }
     }
 }
-/// Equivalent to Metacall char type.
-impl MetacallValue for char {
-    fn get_metacall_id() -> u32 {
-        1
+/// Equivalent to MetaCall char type.
+impl MetaCallValue for char {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_CHAR
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_char(v) as u8 as char };
 
         Ok(value)
@@ -126,12 +126,12 @@ impl MetacallValue for char {
         unsafe { metacall_value_create_char(self as c_char) }
     }
 }
-/// Equivalent to Metacall short type.
-impl MetacallValue for i16 {
-    fn get_metacall_id() -> u32 {
-        2
+/// Equivalent to MetaCall short type.
+impl MetaCallValue for i16 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_SHORT
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_short(v) };
 
         Ok(value)
@@ -140,12 +140,12 @@ impl MetacallValue for i16 {
         unsafe { metacall_value_create_short(self) }
     }
 }
-/// Equivalent to Metacall int type.
-impl MetacallValue for i32 {
-    fn get_metacall_id() -> u32 {
-        3
+/// Equivalent to MetaCall int type.
+impl MetaCallValue for i32 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_INT
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_int(v) };
 
         Ok(value)
@@ -154,12 +154,12 @@ impl MetacallValue for i32 {
         unsafe { metacall_value_create_int(self) }
     }
 }
-/// Equivalent to Metacall long type.
-impl MetacallValue for i64 {
-    fn get_metacall_id() -> u32 {
-        4
+/// Equivalent to MetaCall long type.
+impl MetaCallValue for i64 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_LONG
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_long(v) };
 
         Ok(value)
@@ -168,12 +168,12 @@ impl MetacallValue for i64 {
         unsafe { metacall_value_create_long(self) }
     }
 }
-/// Equivalent to Metacall float type.
-impl MetacallValue for f32 {
-    fn get_metacall_id() -> u32 {
-        5
+/// Equivalent to MetaCall float type.
+impl MetaCallValue for f32 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_FLOAT
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_float(v) };
 
         Ok(value)
@@ -182,12 +182,12 @@ impl MetacallValue for f32 {
         unsafe { metacall_value_create_float(self) }
     }
 }
-/// Equivalent to Metacall double type.
-impl MetacallValue for f64 {
-    fn get_metacall_id() -> u32 {
-        6
+/// Equivalent to MetaCall double type.
+impl MetaCallValue for f64 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_DOUBLE
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_double(v) };
 
         Ok(value)
@@ -196,12 +196,12 @@ impl MetacallValue for f64 {
         unsafe { metacall_value_create_double(self) }
     }
 }
-/// Equivalent to Metacall string type.
-impl MetacallValue for String {
-    fn get_metacall_id() -> u32 {
-        7
+/// Equivalent to MetaCall string type.
+impl MetaCallValue for String {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_STRING
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let c_str = unsafe { CStr::from_ptr(metacall_value_to_string(v)) };
         let value = String::from(c_str.to_str().unwrap());
 
@@ -213,12 +213,12 @@ impl MetacallValue for String {
         unsafe { metacall_value_create_string(raw.as_ptr(), self.len()) }
     }
 }
-/// Equivalent to Metacall buffer type.
-impl MetacallValue for Vec<i8> {
-    fn get_metacall_id() -> u32 {
-        8
+/// Equivalent to MetaCall buffer type.
+impl MetaCallValue for Vec<i8> {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_BUFFER
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(unsafe {
             slice::from_raw_parts(
                 metacall_value_to_buffer(v) as *mut c_char,
@@ -231,17 +231,17 @@ impl MetacallValue for Vec<i8> {
         unsafe { metacall_value_create_buffer(self.as_mut_ptr() as *mut c_void, self.len()) }
     }
 }
-/// Equivalent to Metacall array type.
-impl<T: MetacallValue + Clone> MetacallValue for Vec<T> {
-    fn get_metacall_id() -> u32 {
-        9
+/// Equivalent to MetaCall array type.
+impl<T: MetaCallValue + Clone> MetaCallValue for Vec<T> {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_ARRAY
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let count = unsafe { metacall_value_count(v) };
         let vec = unsafe { slice::from_raw_parts(metacall_value_to_array(v), count) }
             .iter()
             .map(|element| parsers::raw_to_metacallobj_leak(*element))
-            .collect::<Result<Vec<T>, Box<dyn MetacallValue>>>()?;
+            .collect::<Result<Vec<T>, Box<dyn MetaCallValue>>>()?;
 
         Ok(vec)
     }
@@ -254,12 +254,12 @@ impl<T: MetacallValue + Clone> MetacallValue for Vec<T> {
         unsafe { metacall_value_create_array(array.as_mut_ptr(), array.len()) }
     }
 }
-/// Equivalent to Metacall map type.
-impl<T: MetacallValue + Clone> MetacallValue for HashMap<String, T> {
-    fn get_metacall_id() -> u32 {
-        10
+/// Equivalent to MetaCall map type.
+impl<T: MetaCallValue + Clone> MetaCallValue for HashMap<String, T> {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_MAP
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         unsafe {
             let mut hashmap = HashMap::new();
             for map_value in
@@ -307,122 +307,122 @@ impl<T: MetacallValue + Clone> MetacallValue for HashMap<String, T> {
         unsafe { metacall_value_create_map(hashmap.as_mut_ptr(), hashmap.len()) }
     }
 }
-/// Equivalent to Metacall pointer type.
-impl MetacallValue for MetacallPointer {
-    fn get_metacall_id() -> u32 {
-        11
+/// Equivalent to MetaCall pointer type.
+impl MetaCallValue for MetaCallPointer {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_PTR
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Self::new_raw_leak(v)
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Self::new_raw(v)
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
     }
 }
-/// Equivalent to Metacall future type.
-impl MetacallValue for MetacallFuture {
-    fn get_metacall_id() -> u32 {
-        12
+/// Equivalent to MetaCall future type.
+impl MetaCallValue for MetaCallFuture {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_FUTURE
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw_leak(v))
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw(v))
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
     }
 }
-/// Equivalent to Metacall function type.
-impl MetacallValue for MetacallFunction {
-    fn get_metacall_id() -> u32 {
-        13
+/// Equivalent to MetaCall function type.
+impl MetaCallValue for MetaCallFunction {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_FUNCTION
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw_leak(v))
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw(v))
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
     }
 }
-/// Equivalent to Metacall null type.
-impl MetacallValue for MetacallNull {
-    fn get_metacall_id() -> u32 {
-        14
+/// Equivalent to MetaCall null type.
+impl MetaCallValue for MetaCallNull {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_NULL
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         unsafe { metacall_value_destroy(v) };
 
-        Ok(MetacallNull())
+        Ok(MetaCallNull())
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Self::from_metacall_raw_leak(v)
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
     }
 }
-/// Equivalent to Metacall class type.
-impl MetacallValue for MetacallClass {
-    fn get_metacall_id() -> u32 {
-        15
+/// Equivalent to MetaCall class type.
+impl MetaCallValue for MetaCallClass {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_CLASS
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw_leak(v))
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw(v))
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
     }
 }
-/// Equivalent to Metacall object type.
-impl MetacallValue for MetacallObject {
-    fn get_metacall_id() -> u32 {
-        16
+/// Equivalent to MetaCall object type.
+impl MetaCallValue for MetaCallObject {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_OBJECT
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw_leak(v))
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw(v))
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
     }
 }
-/// Equivalent to Metacall exception type.
-impl MetacallValue for MetacallException {
-    fn get_metacall_id() -> u32 {
-        17
+/// Equivalent to MetaCall exception type.
+impl MetaCallValue for MetaCallException {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_EXCEPTION
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw_leak(v))
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw(v))
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()
     }
 }
-/// Equivalent to Metacall throwable type.
-impl MetacallValue for MetacallThrowable {
-    fn get_metacall_id() -> u32 {
-        18
+/// Equivalent to MetaCall throwable type.
+impl MetaCallValue for MetaCallThrowable {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_THROWABLE
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw_leak(v))
     }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self::new_raw(v))
     }
     fn into_metacall_raw(self) -> *mut c_void {

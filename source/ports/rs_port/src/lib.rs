@@ -44,7 +44,7 @@
 //! use metacall::{switch, metacall, loaders};
 //!
 //! fn main() {
-//!     // Initialize Metacall at the top
+//!     // Initialize MetaCall at the top
 //!     let _metacall = switch::initialize().unwrap();
 //!     
 //!     // Load the file (Checkout the loaders module for loading multiple files
@@ -63,7 +63,7 @@ pub(crate) mod helpers;
 pub(crate) mod parsers;
 pub(crate) use macros::private_macros::*;
 
-/// Contains Metacall loaders from file and memory. Usage example: ...
+/// Contains MetaCall loaders from file and memory. Usage example: ...
 /// ```
 /// // Loading a single file with Nodejs.
 /// metacall::loaders::from_single_file("node", "index.js").unwrap();
@@ -91,7 +91,7 @@ pub use types::*;
 mod metacall_mod;
 pub use metacall_mod::*;
 
-/// Contains Metacall language inliners. Usage example: ...
+/// Contains MetaCall language inliners. Usage example: ...
 /// ```
 /// // Python
 /// py! {

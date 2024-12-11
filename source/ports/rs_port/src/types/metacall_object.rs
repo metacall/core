@@ -1,6 +1,6 @@
 use super::{
-    MetacallError, MetacallGetAttributeError, MetacallNull, MetacallSetAttributeError,
-    MetacallValue,
+    MetaCallError, MetaCallGetAttributeError, MetaCallNull, MetaCallSetAttributeError,
+    MetaCallValue,
 };
 use crate::{
     bindings::{
@@ -16,17 +16,17 @@ use std::{
 
 // Used for documentation.
 #[allow(unused_imports)]
-use super::MetacallClass;
+use super::MetaCallClass;
 
-/// Represents Metacall Object. You can get this type when returned by a function or create one from
-/// a class with [create_object](MetacallClass#method.create_object).
-pub struct MetacallObject {
+/// Represents MetaCall Object. You can get this type when returned by a function or create one from
+/// a class with [create_object](MetaCallClass#method.create_object).
+pub struct MetaCallObject {
     value: *mut c_void,
     leak: bool,
 }
-unsafe impl Send for MetacallObject {}
-unsafe impl Sync for MetacallObject {}
-impl Clone for MetacallObject {
+unsafe impl Send for MetaCallObject {}
+unsafe impl Sync for MetaCallObject {}
+impl Clone for MetaCallObject {
     fn clone(&self) -> Self {
         Self {
             leak: true,
@@ -34,13 +34,13 @@ impl Clone for MetacallObject {
         }
     }
 }
-impl Debug for MetacallObject {
+impl Debug for MetaCallObject {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "MetacallObject {{ ... }}")
+        write!(f, "MetaCallObject {{ ... }}")
     }
 }
 
-impl MetacallObject {
+impl MetaCallObject {
     #[doc(hidden)]
     pub fn new_raw(value: *mut c_void) -> Self {
         Self { value, leak: false }
@@ -54,28 +54,28 @@ impl MetacallObject {
     fn get_attribute_inner(
         &self,
         name: impl ToString,
-    ) -> Result<*mut c_void, MetacallGetAttributeError> {
-        let c_name = cstring_enum!(name, MetacallGetAttributeError)?;
+    ) -> Result<*mut c_void, MetaCallGetAttributeError> {
+        let c_name = cstring_enum!(name, MetaCallGetAttributeError)?;
 
         Ok(unsafe { metacall_object_get(metacall_value_to_object(self.value), c_name.as_ptr()) })
     }
-    /// Gets attribute from an object without type casting([MetacallValue](MetacallValue)).
+    /// Gets attribute from an object without type casting([MetaCallValue](MetaCallValue)).
     pub fn get_attribute_untyped(
         &self,
         name: impl ToString,
-    ) -> Result<Box<dyn MetacallValue>, MetacallGetAttributeError> {
+    ) -> Result<Box<dyn MetaCallValue>, MetaCallGetAttributeError> {
         Ok(parsers::raw_to_metacallobj_untyped(
             self.get_attribute_inner(name)?,
         ))
     }
     /// Gets attribute from an object.
-    pub fn get_attribute<T: MetacallValue>(
+    pub fn get_attribute<T: MetaCallValue>(
         &self,
         name: impl ToString,
-    ) -> Result<T, MetacallGetAttributeError> {
+    ) -> Result<T, MetaCallGetAttributeError> {
         match parsers::raw_to_metacallobj::<T>(self.get_attribute_inner(name)?) {
             Ok(ret) => Ok(ret),
-            Err(original) => Err(MetacallGetAttributeError::FailedCasting(original)),
+            Err(original) => Err(MetaCallGetAttributeError::FailedCasting(original)),
         }
     }
 
@@ -83,15 +83,15 @@ impl MetacallObject {
     pub fn set_attribute(
         &self,
         key: impl ToString,
-        value: impl MetacallValue,
-    ) -> Result<(), MetacallSetAttributeError> {
-        let c_key = cstring_enum!(key, MetacallSetAttributeError)?;
+        value: impl MetaCallValue,
+    ) -> Result<(), MetaCallSetAttributeError> {
+        let c_key = cstring_enum!(key, MetaCallSetAttributeError)?;
         let c_arg = parsers::metacallobj_to_raw(value);
         if unsafe {
             metacall_object_set(metacall_value_to_object(self.value), c_key.as_ptr(), c_arg)
         } != 0
         {
-            return Err(MetacallSetAttributeError::SetAttributeFailure);
+            return Err(MetaCallSetAttributeError::SetAttributeFailure);
         }
 
         unsafe { metacall_value_destroy(c_arg) };
@@ -99,12 +99,12 @@ impl MetacallObject {
         Ok(())
     }
 
-    fn call_method_inner<T: MetacallValue>(
+    fn call_method_inner<T: MetaCallValue>(
         &self,
         key: impl ToString,
         args: impl IntoIterator<Item = T>,
-    ) -> Result<*mut c_void, MetacallError> {
-        let c_key = cstring_enum!(key, MetacallError)?;
+    ) -> Result<*mut c_void, MetaCallError> {
+        let c_key = cstring_enum!(key, MetaCallError)?;
         let mut c_args = parsers::metacallobj_to_raw_args(args);
         let ret = unsafe {
             metacallv_object(
@@ -121,43 +121,43 @@ impl MetacallObject {
 
         Ok(ret)
     }
-    /// Calls an object method witout type casting([MetacallValue](MetacallValue)).
-    pub fn call_method_untyped<T: MetacallValue>(
+    /// Calls an object method witout type casting([MetaCallValue](MetaCallValue)).
+    pub fn call_method_untyped<T: MetaCallValue>(
         &self,
         key: impl ToString,
         args: impl IntoIterator<Item = T>,
-    ) -> Result<Box<dyn MetacallValue>, MetacallError> {
+    ) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
         Ok(parsers::raw_to_metacallobj_untyped(
             self.call_method_inner::<T>(key, args)?,
         ))
     }
-    /// Calls an object method witout type casting([MetacallValue](MetacallValue)) and
+    /// Calls an object method witout type casting([MetaCallValue](MetaCallValue)) and
     /// without passing arguments.
-    pub fn call_method_untyped_no_arg<T: MetacallValue>(
+    pub fn call_method_untyped_no_arg<T: MetaCallValue>(
         &self,
         key: impl ToString,
-    ) -> Result<Box<dyn MetacallValue>, MetacallError> {
+    ) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
         Ok(parsers::raw_to_metacallobj_untyped(
             self.call_method_inner::<T>(key, [])?,
         ))
     }
     /// Calls an object method.
-    pub fn call_method<T: MetacallValue, U: MetacallValue>(
+    pub fn call_method<T: MetaCallValue, U: MetaCallValue>(
         &self,
         key: impl ToString,
         args: impl IntoIterator<Item = U>,
-    ) -> Result<T, MetacallError> {
+    ) -> Result<T, MetaCallError> {
         match parsers::raw_to_metacallobj::<T>(self.call_method_inner::<U>(key, args)?) {
             Ok(ret) => Ok(ret),
-            Err(original) => Err(MetacallError::FailedCasting(original)),
+            Err(original) => Err(MetaCallError::FailedCasting(original)),
         }
     }
     /// Calls an object method without passing arguments.
-    pub fn call_method_no_arg<T: MetacallValue>(
+    pub fn call_method_no_arg<T: MetaCallValue>(
         &self,
         key: impl ToString,
-    ) -> Result<T, MetacallError> {
-        self.call_method::<T, MetacallNull>(key, [])
+    ) -> Result<T, MetaCallError> {
+        self.call_method::<T, MetaCallNull>(key, [])
     }
 
     #[doc(hidden)]
@@ -168,7 +168,7 @@ impl MetacallObject {
     }
 }
 
-impl Drop for MetacallObject {
+impl Drop for MetaCallObject {
     fn drop(&mut self) {
         if !self.leak {
             unsafe { metacall_value_destroy(self.value) }

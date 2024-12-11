@@ -46,6 +46,8 @@ if(Rust_BINDGEN_EXECUTABLE)
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMAND ${Rust_BINDGEN_EXECUTABLE}
 			--no-include-path-detection
+			--allowlist-function 'metacall.*'
+			--rustified-enum 'metacall_.*'
 			"${CMAKE_SOURCE_DIR}/source/metacall/include/metacall/metacall.h"
 			-o "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs"
 			--

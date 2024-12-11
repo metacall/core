@@ -1,7 +1,7 @@
 use crate::{
     bindings::{metacall_function, metacall_value_destroy, metacallfv_s},
     cstring_enum, parsers,
-    types::{MetacallError, MetacallNull, MetacallValue},
+    types::{MetaCallError, MetaCallNull, MetaCallValue},
 };
 use std::ffi::c_void;
 
@@ -11,13 +11,13 @@ use crate::match_metacall_value;
 
 fn metacall_inner(
     func: impl ToString,
-    args: impl IntoIterator<Item = impl MetacallValue>,
-) -> Result<*mut c_void, MetacallError> {
-    let c_function = cstring_enum!(func, MetacallError)?;
+    args: impl IntoIterator<Item = impl MetaCallValue>,
+) -> Result<*mut c_void, MetaCallError> {
+    let c_function = cstring_enum!(func, MetaCallError)?;
     let c_func = unsafe { metacall_function(c_function.as_ptr()) };
 
     if c_func.is_null() {
-        return Err(MetacallError::FunctionNotFound);
+        return Err(MetaCallError::FunctionNotFound);
     }
 
     let mut c_args = parsers::metacallobj_to_raw_args(args);
@@ -32,7 +32,7 @@ fn metacall_inner(
     Ok(ret)
 }
 /// Calls a function same as [metacall](metacall) but returns a trait object
-/// of [MetacallValue](MetacallValue). This is useful when you don't know the return
+/// of [MetaCallValue](MetaCallValue). This is useful when you don't know the return
 /// type of that function or the function may return multiple types. Checkout
 /// [match_metacall_value](match_metacall_value) for unwrapping the inner value. For example: ...
 /// ```
@@ -40,8 +40,8 @@ fn metacall_inner(
 /// ```
 pub fn metacall_untyped(
     func: impl ToString,
-    args: impl IntoIterator<Item = impl MetacallValue>,
-) -> Result<Box<dyn MetacallValue>, MetacallError> {
+    args: impl IntoIterator<Item = impl MetaCallValue>,
+) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
     Ok(parsers::raw_to_metacallobj_untyped(metacall_inner(
         func, args,
     )?))
@@ -52,28 +52,28 @@ pub fn metacall_untyped(
 /// ```
 pub fn metacall_untyped_no_arg(
     func: impl ToString,
-) -> Result<Box<dyn MetacallValue>, MetacallError> {
-    metacall_untyped(func, [] as [MetacallNull; 0])
+) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
+    metacall_untyped(func, [] as [MetaCallNull; 0])
 }
 /// Calls a function with arguments. The generic parameter is the return type of the function
-/// you're calling. Checkout [MetacallValue](MetacallValue) for possible types.
+/// you're calling. Checkout [MetaCallValue](MetaCallValue) for possible types.
 /// For example: ...
 /// ```
 /// let sum = metacall::metacall::<i32>("sum", [1, 2]).unwrap();
 /// ```
-pub fn metacall<T: MetacallValue>(
+pub fn metacall<T: MetaCallValue>(
     func: impl ToString,
-    args: impl IntoIterator<Item = impl MetacallValue>,
-) -> Result<T, MetacallError> {
+    args: impl IntoIterator<Item = impl MetaCallValue>,
+) -> Result<T, MetaCallError> {
     match parsers::raw_to_metacallobj::<T>(metacall_inner(func, args)?) {
         Ok(ret) => Ok(ret),
-        Err(original) => Err(MetacallError::FailedCasting(original)),
+        Err(original) => Err(MetaCallError::FailedCasting(original)),
     }
 }
 /// Calls a function same as [metacall](metacall) without passing any arguments. For example: ...
 /// ```
 /// let greet = metacall::metacall_no_arg::<String>("greet").unwrap();
 /// ```
-pub fn metacall_no_arg<T: MetacallValue>(func: impl ToString) -> Result<T, MetacallError> {
-    metacall::<T>(func, [] as [MetacallNull; 0])
+pub fn metacall_no_arg<T: MetaCallValue>(func: impl ToString) -> Result<T, MetaCallError> {
+    metacall::<T>(func, [] as [MetaCallNull; 0])
 }

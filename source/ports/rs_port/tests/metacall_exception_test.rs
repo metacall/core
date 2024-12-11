@@ -8,10 +8,10 @@ fn inlines() {
     let tests_dir = env::current_dir().unwrap().join("tests/scripts");
     let js_test_file = tests_dir.join("script.js");
 
-    if let Ok(_) = loaders::from_single_file("node", js_test_file) {
+    if loaders::from_single_file("node", js_test_file).is_ok() {
         // This should not generate a segmentation fault
         let val =
-            metacall::metacall_no_arg::<metacall::MetacallException>("test_exception").unwrap();
+            metacall::metacall_no_arg::<metacall::MetaCallException>("test_exception").unwrap();
 
         let cloned_val_1 = val.clone();
         let cloned_val_2 = val.clone();
@@ -25,7 +25,7 @@ fn inlines() {
 
         // Neither this should not generate a segmentation fault
         let val =
-            metacall::metacall_no_arg::<metacall::MetacallException>("test_exception").unwrap();
+            metacall::metacall_no_arg::<metacall::MetaCallException>("test_exception").unwrap();
 
         let cloned_val_1 = val.clone();
         let cloned_val_2 = val.clone();

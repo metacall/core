@@ -1,7 +1,7 @@
 use crate::{
     bindings::{metacall_load_from_file, metacall_load_from_memory},
     cstring_enum,
-    types::MetacallLoaderError,
+    types::MetaCallLoaderError,
 };
 use std::{
     ffi::CString,
@@ -17,7 +17,7 @@ use std::{
 pub fn from_single_file(
     tag: impl ToString,
     script: impl AsRef<Path>,
-) -> Result<(), MetacallLoaderError> {
+) -> Result<(), MetaCallLoaderError> {
     from_file(tag, [script])
 }
 /// Loads a script from file. Usage example: ...
@@ -28,8 +28,8 @@ pub fn from_single_file(
 pub fn from_file(
     tag: impl ToString,
     scripts: impl IntoIterator<Item = impl AsRef<Path>>,
-) -> Result<(), MetacallLoaderError> {
-    let c_tag = cstring_enum!(tag, MetacallLoaderError)?;
+) -> Result<(), MetaCallLoaderError> {
+    let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
     let mut c_script: CString;
 
     let mut new_scripts: Vec<*const i8> = Vec::new();
@@ -38,15 +38,15 @@ pub fn from_file(
         let script_as_str = script_as_pathbuf.to_str().unwrap();
 
         if !script_as_pathbuf.exists() {
-            return Err(MetacallLoaderError::FileNotFound(script_as_pathbuf));
+            return Err(MetaCallLoaderError::FileNotFound(script_as_pathbuf));
         }
         if !script_as_pathbuf.is_file() {
-            return Err(MetacallLoaderError::NotAFileOrPermissionDenied(
+            return Err(MetaCallLoaderError::NotAFileOrPermissionDenied(
                 script_as_pathbuf,
             ));
         }
 
-        c_script = cstring_enum!(script_as_str, MetacallLoaderError)?;
+        c_script = cstring_enum!(script_as_str, MetaCallLoaderError)?;
 
         new_scripts.push(c_script.as_ptr());
     }
@@ -60,7 +60,7 @@ pub fn from_file(
         )
     } != 0
     {
-        return Err(MetacallLoaderError::FromFileFailure);
+        return Err(MetaCallLoaderError::FromFileFailure);
     }
 
     Ok(())
@@ -73,10 +73,10 @@ pub fn from_file(
 /// // A Nodejs script
 /// metacall::loaders::from_memory("node", script).unwrap();
 /// ```
-pub fn from_memory(tag: impl ToString, script: impl ToString) -> Result<(), MetacallLoaderError> {
+pub fn from_memory(tag: impl ToString, script: impl ToString) -> Result<(), MetaCallLoaderError> {
     let script = script.to_string();
-    let c_tag = cstring_enum!(tag, MetacallLoaderError)?;
-    let c_script = cstring_enum!(script, MetacallLoaderError)?;
+    let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
+    let c_script = cstring_enum!(script, MetaCallLoaderError)?;
 
     if unsafe {
         metacall_load_from_memory(
@@ -87,7 +87,7 @@ pub fn from_memory(tag: impl ToString, script: impl ToString) -> Result<(), Meta
         )
     } != 0
     {
-        return Err(MetacallLoaderError::FromMemoryFailure);
+        return Err(MetaCallLoaderError::FromMemoryFailure);
     }
 
     Ok(())

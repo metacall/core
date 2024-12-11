@@ -8,16 +8,16 @@ use std::{
 /// Represents NULL.
 // This is a zero-sized struct. It doesn't allocate any memory and will only create a null pointer
 // when needed.
-pub struct MetacallNull();
-unsafe impl Send for MetacallNull {}
-unsafe impl Sync for MetacallNull {}
-impl Debug for MetacallNull {
+pub struct MetaCallNull();
+unsafe impl Send for MetaCallNull {}
+unsafe impl Sync for MetaCallNull {}
+impl Debug for MetaCallNull {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "MetacallNull {{ }}")
+        write!(f, "MetaCallNull {{ }}")
     }
 }
 
-impl MetacallNull {
+impl MetaCallNull {
     #[doc(hidden)]
     pub fn into_raw(self) -> *mut c_void {
         unsafe { metacall_value_create_null() }

@@ -1,24 +1,24 @@
-use super::MetacallValue;
+use super::MetaCallValue;
 use crate::{
     bindings::{metacall_value_create_ptr, metacall_value_destroy, metacall_value_to_ptr},
-    MetacallNull,
+    MetaCallNull,
 };
 use std::{
     ffi::c_void,
     fmt::{self, Debug, Formatter},
 };
 
-/// Represents Metacall pointer. This type cannot be used in other languages. This type is highly
+/// Represents MetaCall pointer. This type cannot be used in other languages. This type is highly
 /// unsafe so be careful!
-pub struct MetacallPointer {
+pub struct MetaCallPointer {
     leak: bool,
-    rust_value: *mut Box<dyn MetacallValue>,
+    rust_value: *mut Box<dyn MetaCallValue>,
     rust_value_leak: bool,
     value: *mut c_void,
 }
-unsafe impl Send for MetacallPointer {}
-unsafe impl Sync for MetacallPointer {}
-impl Clone for MetacallPointer {
+unsafe impl Send for MetaCallPointer {}
+unsafe impl Sync for MetaCallPointer {}
+impl Clone for MetaCallPointer {
     fn clone(&self) -> Self {
         Self {
             leak: true,
@@ -28,29 +28,29 @@ impl Clone for MetacallPointer {
         }
     }
 }
-impl Debug for MetacallPointer {
+impl Debug for MetaCallPointer {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let boxed_value = unsafe { Box::from_raw(self.rust_value) };
-        let value = if (*boxed_value).is::<MetacallNull>() {
+        let value = if (*boxed_value).is::<MetaCallNull>() {
             None
         } else {
             Some(format!("{:#?}", boxed_value))
         };
         Box::leak(boxed_value);
 
-        f.debug_struct("MetacallPointer")
+        f.debug_struct("MetaCallPointer")
             .field("value", &value)
             .finish()
     }
 }
 
-impl MetacallPointer {
-    fn get_rust_value_ptr(value: *mut c_void) -> *mut Box<dyn MetacallValue> {
-        unsafe { metacall_value_to_ptr(value) as *mut Box<dyn MetacallValue> }
+impl MetaCallPointer {
+    fn get_rust_value_ptr(value: *mut c_void) -> *mut Box<dyn MetaCallValue> {
+        unsafe { metacall_value_to_ptr(value) as *mut Box<dyn MetaCallValue> }
     }
 
     #[doc(hidden)]
-    pub fn new_raw(value: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    pub fn new_raw(value: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self {
             leak: false,
             rust_value: Self::get_rust_value_ptr(value),
@@ -60,7 +60,7 @@ impl MetacallPointer {
     }
 
     #[doc(hidden)]
-    pub fn new_raw_leak(value: *mut c_void) -> Result<Self, Box<dyn MetacallValue>> {
+    pub fn new_raw_leak(value: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(Self {
             leak: true,
             rust_value: Self::get_rust_value_ptr(value),
@@ -69,9 +69,9 @@ impl MetacallPointer {
         })
     }
 
-    /// Creates a new Metacall pointer and casts it to T.
-    pub fn new(ptr: impl MetacallValue) -> Self {
-        let rust_value = Box::into_raw(Box::new(Box::new(ptr) as Box<dyn MetacallValue>));
+    /// Creates a new MetaCall pointer and casts it to T.
+    pub fn new(ptr: impl MetaCallValue) -> Self {
+        let rust_value = Box::into_raw(Box::new(Box::new(ptr) as Box<dyn MetaCallValue>));
 
         Self {
             leak: false,
@@ -81,15 +81,15 @@ impl MetacallPointer {
         }
     }
 
-    /// Consumes the Metacall pointer and returns ownership of the value without type
-    /// casting([MetacallValue](MetacallValue)).
-    pub fn get_value_untyped(mut self) -> Box<dyn MetacallValue> {
+    /// Consumes the MetaCall pointer and returns ownership of the value without type
+    /// casting([MetaCallValue](MetaCallValue)).
+    pub fn get_value_untyped(mut self) -> Box<dyn MetaCallValue> {
         self.rust_value_leak = true;
 
         unsafe { *Box::from_raw(self.rust_value) }
     }
-    /// Consumes the Metacall pointer and returns ownership of the value.
-    pub fn get_value<T: MetacallValue>(self) -> Result<T, Box<dyn MetacallValue>> {
+    /// Consumes the MetaCall pointer and returns ownership of the value.
+    pub fn get_value<T: MetaCallValue>(self) -> Result<T, Box<dyn MetaCallValue>> {
         match self.get_value_untyped().downcast::<T>() {
             Ok(rust_value) => Ok(rust_value),
             Err(original) => Err(original),
@@ -105,7 +105,7 @@ impl MetacallPointer {
     }
 }
 
-impl Drop for MetacallPointer {
+impl Drop for MetaCallPointer {
     fn drop(&mut self) {
         if !self.leak {
             unsafe { metacall_value_destroy(self.value) }

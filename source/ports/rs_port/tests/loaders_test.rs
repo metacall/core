@@ -13,14 +13,7 @@ const SCRIPT2: &str = "function greet2() { return 'hi there!' } \nmodule.exports
 const SCRIPT3: &str = "console.log('Hello world')";
 fn call_greet(test: &str, num: u32) {
     let out = metacall_no_arg::<String>(format!("greet{}", num)).unwrap();
-    if out.as_str() == "hi there!" {
-        return ();
-    } else {
-        panic!(
-            "Invalid output of the function! Expected `hi there!` but received `{}`.",
-            test
-        );
-    }
+    assert_eq!(out.as_str(), "hi there!", "Testing {}", test);
 }
 
 fn load_from_memory_test() {

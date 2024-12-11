@@ -1,6 +1,6 @@
 use crate::{
     bindings::{metacall_destroy, metacall_initialize},
-    types::MetacallInitError,
+    types::MetaCallInitError,
 };
 use std::ffi::c_int;
 
@@ -11,14 +11,14 @@ pub fn initialize_manually() -> c_int {
     unsafe { metacall_initialize() }
 }
 
-pub struct MetacallAutoDestroy(pub fn() -> c_int);
-impl Drop for MetacallAutoDestroy {
+pub struct MetaCallAutoDestroy(pub fn() -> c_int);
+impl Drop for MetaCallAutoDestroy {
     fn drop(&mut self) {
         self.0();
     }
 }
 
-/// Initializes Metacall. Always remember to store the output in a variable to avoid instant drop.
+/// Initializes MetaCall. Always remember to store the output in a variable to avoid instant drop.
 /// For example: ...
 /// ```
 /// // Initialize metacall at the top of your main function before loading your codes or
@@ -27,10 +27,10 @@ impl Drop for MetacallAutoDestroy {
 ///
 ///
 /// ```
-pub fn initialize() -> Result<MetacallAutoDestroy, MetacallInitError> {
+pub fn initialize() -> Result<MetaCallAutoDestroy, MetaCallInitError> {
     if initialize_manually() != 0 {
-        return Err(MetacallInitError::new());
+        return Err(MetaCallInitError::new());
     }
 
-    Ok(MetacallAutoDestroy(destroy_manually))
+    Ok(MetaCallAutoDestroy(destroy_manually))
 }

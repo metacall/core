@@ -1,4 +1,4 @@
-use metacall::{loaders, switch, MetacallLoaderError};
+use metacall::{loaders, switch, MetaCallLoaderError};
 use std::env;
 
 #[test]
@@ -9,7 +9,7 @@ fn invalid_loaders() {
     let inavlid_file = scripts_dir.join("whatever.yeet");
     let valid_file = scripts_dir.join("script.js");
 
-    if let Err(MetacallLoaderError::FileNotFound(_)) =
+    if let Err(MetaCallLoaderError::FileNotFound(_)) =
         loaders::from_single_file("random", inavlid_file)
     {
         // Everything Ok
@@ -17,7 +17,7 @@ fn invalid_loaders() {
         panic!("Expected the loader fail with `FileNotFound` error variant!");
     }
 
-    if let Err(MetacallLoaderError::FromFileFailure) =
+    if let Err(MetaCallLoaderError::FromFileFailure) =
         loaders::from_single_file("random", valid_file)
     {
         // Everything Ok
@@ -25,7 +25,7 @@ fn invalid_loaders() {
         panic!("Expected the loader fail with `FromFileFailure` error variant!");
     }
 
-    if let Err(MetacallLoaderError::FromMemoryFailure) =
+    if let Err(MetaCallLoaderError::FromMemoryFailure) =
         loaders::from_memory("random", "Invalid code!")
     {
         // Everything Ok
