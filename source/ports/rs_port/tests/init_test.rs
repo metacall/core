@@ -2,6 +2,8 @@
 mod tests {
     #[test]
     fn test_init() {
-        assert_eq!(metacall::is_initialized(), true);
+        let _metacall = metacall::initialize().unwrap();
+
+        assert!(metacall::is_initialized());
     }
 }
