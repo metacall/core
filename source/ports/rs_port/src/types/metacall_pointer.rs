@@ -22,7 +22,7 @@ impl Clone for MetaCallPointer {
     fn clone(&self) -> Self {
         Self {
             leak: true,
-            rust_value: self.rust_value.clone(),
+            rust_value: self.rust_value,
             rust_value_leak: true,
             value: self.value,
         }

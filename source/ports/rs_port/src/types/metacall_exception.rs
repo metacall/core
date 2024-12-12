@@ -12,14 +12,19 @@ use std::{
     sync::Arc,
 };
 
+unsafe impl Send for metacall_exception_type {}
+unsafe impl Sync for metacall_exception_type {}
+
 /// Represents MetaCall exception. You can create an exception with [new](#method.new).
 pub struct MetaCallException {
     exception_struct: Arc<metacall_exception_type>,
     leak: bool,
     value: *mut c_void,
 }
+
 unsafe impl Send for MetaCallException {}
 unsafe impl Sync for MetaCallException {}
+
 impl Clone for MetaCallException {
     fn clone(&self) -> Self {
         Self {
@@ -31,11 +36,7 @@ impl Clone for MetaCallException {
 }
 impl Debug for MetaCallException {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "MetaCallException {}",
-            format!("{{ {} }}", self.to_string())
-        )
+        write!(f, "MetaCallException: {}", self)
     }
 }
 
@@ -146,11 +147,7 @@ impl Clone for MetaCallThrowable {
 }
 impl Debug for MetaCallThrowable {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "MetaCallThrowable {}",
-            format!("{{ {} }}", self.to_string())
-        )
+        write!(f, "MetaCallThrowable: {}", self)
     }
 }
 
@@ -205,19 +202,21 @@ impl MetaCallThrowable {
     }
 }
 
-impl ToString for MetaCallException {
-    fn to_string(&self) -> String {
-        format!(
+impl fmt::Display for MetaCallException {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
             "[Exception(code: `{}`)]: {}",
             self.get_code(),
             self.get_message()
         )
     }
 }
-impl ToString for MetaCallThrowable {
-    fn to_string(&self) -> String {
+
+impl fmt::Display for MetaCallThrowable {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let throwable_value = self.get_value_untyped();
-        format!("[Throwable]: {:#?}", throwable_value)
+        write!(f, "[Throwable]: {:#?}", throwable_value)
     }
 }
 

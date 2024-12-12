@@ -89,22 +89,22 @@ where
         Box::<[T]>::into_raw(self.iter().cloned().collect()) as *mut ()
     }
 }
-impl<'c> Clone for Box<dyn MetaCallValue + 'c> {
+impl Clone for Box<dyn MetaCallValue + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }
 }
-impl<'c> Clone for Box<dyn MetaCallValue + Send + 'c> {
+impl Clone for Box<dyn MetaCallValue + Send + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }
 }
-impl<'c> Clone for Box<dyn MetaCallValue + Sync + 'c> {
+impl Clone for Box<dyn MetaCallValue + Sync + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }
 }
-impl<'c> Clone for Box<dyn MetaCallValue + Send + Sync + 'c> {
+impl Clone for Box<dyn MetaCallValue + Send + Sync + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }

@@ -1,5 +1,5 @@
 use super::MetaCallValue;
-use std::{ffi::NulError, path::PathBuf};
+use std::{ffi::NulError, fmt, path::PathBuf};
 
 #[derive(Debug, Clone)]
 /// This error happens when it's not possible to initialize the MetaCall core. You can check
@@ -16,9 +16,9 @@ impl Default for MetaCallInitError {
         MetaCallInitError::new()
     }
 }
-impl ToString for MetaCallInitError {
-    fn to_string(&self) -> String {
-        String::from("Failed to initialize MetaCall!")
+impl fmt::Display for MetaCallInitError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Failed to initialize MetaCall")
     }
 }
 
@@ -38,9 +38,13 @@ impl MetaCallStringConversionError {
         }
     }
 }
-impl ToString for MetaCallStringConversionError {
-    fn to_string(&self) -> String {
-        self.original_string.clone()
+impl fmt::Display for MetaCallStringConversionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Failed to convert string: {}",
+            self.original_string.clone()
+        )
     }
 }
 
