@@ -341,15 +341,15 @@ fn metacall() {
     let js_test_file = tests_dir.join("script.js");
     let c_test_file = tests_dir.join("script.c");
     let py_test_file = tests_dir.join("script.py");
+    let py_loaded = loaders::from_single_file("py", py_test_file).is_ok();
 
-    if loaders::from_single_file("py", py_test_file).is_ok() {
+    if py_loaded {
         test_buffer();
         test_class();
         test_object();
         test_pointer();
         test_array();
         test_bool();
-        test_function();
         test_map();
         test_string();
         test_null();
@@ -366,5 +366,8 @@ fn metacall() {
         test_exception();
         test_throwable();
         test_future();
+        if py_loaded {
+            test_function();
+        }
     }
 }
