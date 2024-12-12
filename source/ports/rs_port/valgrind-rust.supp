@@ -1,3 +1,4 @@
+# Ignore Rust runtime leaks
 {
     Ignore memory leaked from lang_start_internal.
     Memcheck:Leak
@@ -7,12 +8,6 @@
 }
 
 # Ignore leaks from loaders depenecies for now, we want to debug the port only
-{
-    Ignore leaks from C Loader.
-    Memcheck:Leak
-    ...
-    obj:*/libc_loader*.so
-}
 {
     Ignore leaks from C Loader depends Clang.
     Memcheck:Leak
@@ -24,12 +19,6 @@
     Memcheck:Leak
     ...
     obj:*/libLLVM-*.so.*
-}
-{
-    Ignore leaks from NodeJS Loader.
-    Memcheck:Leak
-    ...
-    obj:*/libnode_loader*.so
 }
 {
     Ignore leaks from Python Loader depends CPython.
