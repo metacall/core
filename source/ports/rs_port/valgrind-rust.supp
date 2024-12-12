@@ -1,0 +1,39 @@
+{
+    Ignore memory leaked from lang_start_internal.
+    Memcheck:Leak
+    ...
+    fun:new_inner
+    ...
+}
+
+# Ignore leaks from loaders depenecies for now, we want to debug the port only
+{
+    Ignore leaks from C Loader.
+    Memcheck:Leak
+    ...
+    obj:*/libc_loader*.so
+}
+{
+    Ignore leaks from C Loader depends Clang.
+    Memcheck:Leak
+    ...
+    obj:*/libclang-*.so.*
+}
+{
+    Ignore leaks from C Loader depends LLVM.
+    Memcheck:Leak
+    ...
+    obj:*/libLLVM-*.so.*
+}
+{
+    Ignore leaks from NodeJS Loader.
+    Memcheck:Leak
+    ...
+    obj:*/libnode_loader*.so
+}
+{
+    Ignore leaks from Python Loader depends CPython.
+    Memcheck:Leak
+    ...
+    obj:*/libpython*.so.*
+}

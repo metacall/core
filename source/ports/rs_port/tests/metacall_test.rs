@@ -347,6 +347,12 @@ fn metacall() {
         test_class();
         test_object();
         test_pointer();
+        test_array();
+        test_bool();
+        test_function();
+        test_map();
+        test_string();
+        test_null();
     }
     if loaders::from_single_file("c", c_test_file).is_ok() {
         test_char();
@@ -357,13 +363,7 @@ fn metacall() {
         test_short();
     }
     if loaders::from_single_file("node", js_test_file).is_ok() {
-        test_array();
-        test_bool();
         test_exception();
-        test_function();
-        test_map();
-        test_null();
-        test_string();
         test_throwable();
         test_future();
     }
