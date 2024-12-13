@@ -1,6 +1,6 @@
 use crate::{
     bindings::{metacall_function, metacall_value_destroy, metacallfv_s},
-    cstring_enum, parsers,
+    cast, cstring_enum,
     types::{MetaCallError, MetaCallNull, MetaCallValue},
 };
 use std::ffi::c_void;
@@ -20,7 +20,7 @@ fn metacall_inner(
         return Err(MetaCallError::FunctionNotFound);
     }
 
-    let mut c_args = parsers::metacallobj_to_raw_args(args);
+    let mut c_args = cast::metacallobj_to_raw_args(args);
     let args_length = c_args.len();
 
     let ret = unsafe { metacallfv_s(c_func, c_args.as_mut_ptr(), args_length) };
@@ -42,7 +42,7 @@ pub fn metacall_untyped(
     func: impl ToString,
     args: impl IntoIterator<Item = impl MetaCallValue>,
 ) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
-    Ok(parsers::raw_to_metacallobj_untyped(metacall_inner(
+    Ok(cast::raw_to_metacallobj_untyped(metacall_inner(
         func, args,
     )?))
 }
@@ -65,7 +65,7 @@ pub fn metacall<T: MetaCallValue>(
     func: impl ToString,
     args: impl IntoIterator<Item = impl MetaCallValue>,
 ) -> Result<T, MetaCallError> {
-    match parsers::raw_to_metacallobj::<T>(metacall_inner(func, args)?) {
+    match cast::raw_to_metacallobj::<T>(metacall_inner(func, args)?) {
         Ok(ret) => Ok(ret),
         Err(original) => Err(MetaCallError::FailedCasting(original)),
     }

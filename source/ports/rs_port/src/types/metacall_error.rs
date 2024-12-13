@@ -1,24 +1,23 @@
 use super::MetaCallValue;
-use std::{ffi::NulError, fmt, path::PathBuf};
+use std::{
+    ffi::{c_int, NulError},
+    fmt,
+    path::PathBuf,
+};
 
 #[derive(Debug, Clone)]
 /// This error happens when it's not possible to initialize the MetaCall core. You can check
 /// your logs for more information.
-pub struct MetaCallInitError;
+pub struct MetaCallInitError(c_int);
 impl MetaCallInitError {
     #[doc(hidden)]
-    pub fn new() -> Self {
-        Self
-    }
-}
-impl Default for MetaCallInitError {
-    fn default() -> Self {
-        MetaCallInitError::new()
+    pub fn new(code: c_int) -> Self {
+        Self(code)
     }
 }
 impl fmt::Display for MetaCallInitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to initialize MetaCall")
+        write!(f, "Failed to initialize MetaCall with code: {}", self.0)
     }
 }
 

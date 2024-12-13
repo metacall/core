@@ -49,7 +49,7 @@
 //!     
 //!     // Load the file (Checkout the loaders module for loading multiple files
 //!     // or loading from string)
-//!     loaders::from_single_file("ts", "sum.ts").unwrap();
+//!     load::from_single_file("ts", "sum.ts").unwrap();
 //!
 //!     // Call the sum function (Also checkout other metacall functions)
 //!     let sum = metacall::<f64>("sum", [1.0, 2.0]).unwrap();
@@ -59,33 +59,37 @@
 //!
 //! ```
 
+pub(crate) mod cast;
 pub(crate) mod helpers;
-pub(crate) mod parsers;
 pub(crate) use macros::private_macros::*;
 
 /// Contains MetaCall loaders from file and memory. Usage example: ...
 /// ```
 /// // Loading a single file with Nodejs.
-/// metacall::loaders::from_single_file("node", "index.js").unwrap();
+/// metacall::load::from_single_file("node", "index.js").unwrap();
 ///
 /// // Loading multiple files with Nodejs.
-/// metacall::loaders::from_file("node", ["index.js", "main.js"]).unwrap();
+/// metacall::load::from_file("node", ["index.js", "main.js"]).unwrap();
 ///
 /// // Loading a string with Nodejs.
 /// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
-/// metacall::loaders::from_memory("node", script).unwrap();
+/// metacall::load::from_memory("node", script).unwrap();
 /// ```
-pub mod loaders;
+pub mod load;
 
 mod types;
-pub use switch::initialize;
 
 #[doc(hidden)]
 pub mod macros;
 
 #[doc(hidden)]
-pub mod switch;
 pub use types::*;
+
+#[doc(hidden)]
+mod init;
+
+pub use init::initialize;
+pub use init::is_initialized;
 
 #[path = "metacall.rs"]
 mod metacall_mod;

@@ -21,6 +21,7 @@
                 }
             },
             "args": [],
+            "envFile": "${workspaceFolder}${/}.vscode${/}.env",
             "cwd": "${workspaceFolder}"
         },
         {
@@ -40,6 +41,7 @@
                 }
             },
             "args": [],
+            "envFile": "${workspaceFolder}${/}.vscode${/}.env",
             "cwd": "${workspaceFolder}"
         },
         {
@@ -59,6 +61,7 @@
                 }
             },
             "args": [],
+            "envFile": "${workspaceFolder}${/}.vscode${/}.env",
             "cwd": "${workspaceFolder}"
         },
         {
@@ -78,6 +81,7 @@
                 }
             },
             "args": [],
+            "envFile": "${workspaceFolder}${/}.vscode${/}.env",
             "cwd": "${workspaceFolder}"
         },
         {
@@ -97,6 +101,7 @@
                 }
             },
             "args": [],
+            "envFile": "${workspaceFolder}${/}.vscode${/}.env",
             "cwd": "${workspaceFolder}"
         }
     ]

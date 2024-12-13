@@ -4,9 +4,9 @@ use super::{
 };
 use crate::{
     bindings::*,
-    cstring,
+    cast, cstring,
     helpers::{MetaCallClone, MetaCallDowncast},
-    match_metacall_value, parsers,
+    match_metacall_value,
 };
 use std::{
     collections::HashMap,
@@ -240,7 +240,7 @@ impl<T: MetaCallValue + Clone> MetaCallValue for Vec<T> {
         let count = unsafe { metacall_value_count(v) };
         let vec = unsafe { slice::from_raw_parts(metacall_value_to_array(v), count) }
             .iter()
-            .map(|element| parsers::raw_to_metacallobj_leak(*element))
+            .map(|element| cast::raw_to_metacallobj_leak(*element))
             .collect::<Result<Vec<T>, Box<dyn MetaCallValue>>>()?;
 
         Ok(vec)
@@ -266,7 +266,7 @@ impl<T: MetaCallValue + Clone> MetaCallValue for HashMap<String, T> {
                 slice::from_raw_parts(metacall_value_to_map(v), metacall_value_count(v)).iter()
             {
                 let m_pair = slice::from_raw_parts(metacall_value_to_array(*map_value), 2);
-                let key = match_metacall_value!(parsers::raw_to_metacallobj_untyped_leak(m_pair[0]), {
+                let key = match_metacall_value!(cast::raw_to_metacallobj_untyped_leak(m_pair[0]), {
                     str: String => str,
                     num: i16 => num.to_string(),
                     num: i32 => num.to_string(),
@@ -275,7 +275,7 @@ impl<T: MetaCallValue + Clone> MetaCallValue for HashMap<String, T> {
                     num: f64 => num.to_string(),
                     _ =>  String::from("Invalid key!")
                 });
-                let val = match parsers::raw_to_metacallobj_leak::<T>(m_pair[1]) {
+                let val = match cast::raw_to_metacallobj_leak::<T>(m_pair[1]) {
                     Ok(parsed) => parsed,
                     Err(original) => {
                         return Err(original);

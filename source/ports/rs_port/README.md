@@ -33,7 +33,7 @@ fn main() {
     let _metacall = switch::initialize().unwrap();
      
     // Load the file
-    loaders::from_single_file("ts", "sum.ts").unwrap();
+    load::from_single_file("ts", "sum.ts").unwrap();
 
     // Call the sum function
     let sum = metacall::<f64>("sum", [1.0, 2.0]).unwrap();

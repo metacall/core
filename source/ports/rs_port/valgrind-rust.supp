@@ -7,6 +7,18 @@
     ...
 }
 
+# Ignore ld leaks
+{
+    Ignore dynamic linker leaks.
+    Memcheck:Leak
+    ...
+    fun:add_dependency
+    fun:_dl_lookup_symbol_x
+    fun:_dl_fixup
+    fun:_dl_runtime_resolve_xsave
+    ...
+}
+
 # Ignore leaks from loaders depenecies for now, we want to debug the port only
 {
     Ignore leaks from C Loader depends Clang.

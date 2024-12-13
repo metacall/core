@@ -1,7 +1,7 @@
 use super::{MetaCallError, MetaCallNull, MetaCallValue};
 use crate::{
     bindings::{metacall_value_destroy, metacall_value_to_function, metacallfv_s},
-    parsers,
+    cast,
 };
 use std::{
     ffi::c_void,
@@ -45,7 +45,7 @@ impl MetaCallFunction {
     }
 
     fn call_inner<T: MetaCallValue>(&self, args: impl IntoIterator<Item = T>) -> *mut c_void {
-        let mut c_args = parsers::metacallobj_to_raw_args(args);
+        let mut c_args = cast::metacallobj_to_raw_args(args);
         let ret: *mut c_void =
             unsafe { metacallfv_s(self.value_to_function(), c_args.as_mut_ptr(), 0) };
 
@@ -60,19 +60,19 @@ impl MetaCallFunction {
         &self,
         args: impl IntoIterator<Item = T>,
     ) -> Box<dyn MetaCallValue> {
-        parsers::raw_to_metacallobj_untyped(self.call_inner(args))
+        cast::raw_to_metacallobj_untyped(self.call_inner(args))
     }
     /// Calls the function without passing arguments and witout type
     /// casting([MetaCallValue](MetaCallValue)).
     pub fn call_untyped_no_arg<T: MetaCallValue>(&self) -> Box<dyn MetaCallValue> {
-        parsers::raw_to_metacallobj_untyped(self.call_inner([] as [MetaCallNull; 0]))
+        cast::raw_to_metacallobj_untyped(self.call_inner([] as [MetaCallNull; 0]))
     }
     /// Calls the function with arguments.
     pub fn call<T: MetaCallValue, U: MetaCallValue>(
         &self,
         args: impl IntoIterator<Item = U>,
     ) -> Result<T, MetaCallError> {
-        match parsers::raw_to_metacallobj::<T>(self.call_inner(args)) {
+        match cast::raw_to_metacallobj::<T>(self.call_inner(args)) {
             Ok(ret) => Ok(ret),
             Err(original) => Err(MetaCallError::FailedCasting(original)),
         }

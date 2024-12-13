@@ -10,7 +10,7 @@ macro_rules! gen_inline_macro {
                 let buffer = token_stream_input.to_string();
 
                 let result = quote! {{
-                    ::metacall::loaders::from_memory(stringify!($name), #buffer.to_string()).unwrap()
+                    ::metacall::load::from_memory(stringify!($name), #buffer.to_string()).unwrap()
                 }};
 
                 result.into()

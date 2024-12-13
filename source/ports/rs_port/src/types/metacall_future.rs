@@ -1,19 +1,24 @@
+use self::cast::metacallobj_untyped_to_raw;
+
 use super::{MetaCallNull, MetaCallValue};
 use crate::{
-    bindings::{metacall_await_future, metacall_value_destroy, metacall_value_to_future},
-    helpers, parsers,
+    bindings::{
+        metacall_await_future, metacall_value_create_null, metacall_value_destroy,
+        metacall_value_to_future,
+    },
+    cast,
 };
 use std::{
+    any::Any,
     ffi::c_void,
     fmt::{self, Debug, Formatter},
-    ptr,
 };
 
 /// Function pointer type used for resolving/rejecting MetaCall futures. The first argument is the result
 /// and the second argument is the data that you may want to access when the function gets called.
 /// Checkout [MetaCallFuture resolve](MetaCallFuture#method.then) or
 /// [MetaCallFuture reject](MetaCallFuture#method.catch) for usage.
-pub type MetaCallFutureHandler = fn(Box<dyn MetaCallValue>, Box<dyn MetaCallValue>);
+pub type MetaCallFutureHandler = fn(Box<dyn MetaCallValue>, Box<dyn Any>) -> Box<dyn MetaCallValue>;
 
 /// Represents MetaCallFuture. Keep in mind that it's not supported to pass a future as an argument.
 ///
@@ -107,35 +112,43 @@ type MetaCallFutureFFIData = (
     // Reject
     Option<MetaCallFutureHandler>,
     // User data
-    *mut dyn MetaCallValue,
+    *mut dyn Any,
 );
 
 unsafe extern "C" fn resolver(resolve_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
     let (resolve, _, data) = *Box::from_raw(upper_data as *mut MetaCallFutureFFIData);
     let user_data = Box::from_raw(data);
 
-    (resolve.unwrap())(
-        parsers::raw_to_metacallobj_untyped_leak(resolve_data),
+    let result = (resolve.unwrap())(
+        cast::raw_to_metacallobj_untyped_leak(resolve_data),
         user_data,
     );
 
-    ptr::null_mut()
+    if let Some(ret) = metacallobj_untyped_to_raw(result) {
+        return ret;
+    }
+
+    unsafe { metacall_value_create_null() }
 }
 unsafe extern "C" fn rejecter(reject_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
     let (_, reject, data) = *Box::from_raw(upper_data as *mut MetaCallFutureFFIData);
     let user_data = Box::from_raw(data);
 
-    (reject.unwrap())(
-        parsers::raw_to_metacallobj_untyped_leak(reject_data),
+    let result = (reject.unwrap())(
+        cast::raw_to_metacallobj_untyped_leak(reject_data),
         user_data,
     );
 
-    ptr::null_mut()
+    if let Some(ret) = metacallobj_untyped_to_raw(result) {
+        return ret;
+    }
+
+    unsafe { metacall_value_create_null() }
 }
 
 impl MetaCallFuture {
     fn create_null_data() -> *mut dyn MetaCallValue {
-        Box::into_raw(helpers::metacall_implementer_to_traitobj(MetaCallNull()))
+        Box::into_raw(cast::metacall_implementer_to_traitobj(MetaCallNull()))
     }
 
     #[doc(hidden)]

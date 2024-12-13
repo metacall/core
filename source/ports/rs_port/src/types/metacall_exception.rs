@@ -4,7 +4,7 @@ use crate::{
         metacall_exception_type, metacall_throwable_value, metacall_value_create_exception,
         metacall_value_destroy, metacall_value_to_exception, metacall_value_to_throwable,
     },
-    cstring, helpers, parsers,
+    cast, cstring,
 };
 use std::{
     ffi::{c_char, c_void, CStr},
@@ -176,11 +176,11 @@ impl MetaCallThrowable {
 
     /// Gets the throwable value without type casting([MetaCallValue](MetaCallValue)).
     pub fn get_value_untyped(&self) -> Box<dyn MetaCallValue> {
-        match parsers::raw_to_metacallobj::<MetaCallException>(self.value) {
+        match cast::raw_to_metacallobj::<MetaCallException>(self.value) {
             Ok(mut value) => {
                 value.leak = true;
 
-                helpers::metacall_implementer_to_traitobj(value)
+                cast::metacall_implementer_to_traitobj(value)
             }
             Err(original) => original,
         }

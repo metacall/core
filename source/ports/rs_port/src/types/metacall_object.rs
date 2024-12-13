@@ -7,7 +7,7 @@ use crate::{
         metacall_object_get, metacall_object_set, metacall_value_destroy, metacall_value_to_object,
         metacallv_object,
     },
-    cstring_enum, parsers,
+    cast, cstring_enum,
 };
 use std::{
     ffi::c_void,
@@ -64,7 +64,7 @@ impl MetaCallObject {
         &self,
         name: impl ToString,
     ) -> Result<Box<dyn MetaCallValue>, MetaCallGetAttributeError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+        Ok(cast::raw_to_metacallobj_untyped(
             self.get_attribute_inner(name)?,
         ))
     }
@@ -73,7 +73,7 @@ impl MetaCallObject {
         &self,
         name: impl ToString,
     ) -> Result<T, MetaCallGetAttributeError> {
-        match parsers::raw_to_metacallobj::<T>(self.get_attribute_inner(name)?) {
+        match cast::raw_to_metacallobj::<T>(self.get_attribute_inner(name)?) {
             Ok(ret) => Ok(ret),
             Err(original) => Err(MetaCallGetAttributeError::FailedCasting(original)),
         }
@@ -86,7 +86,7 @@ impl MetaCallObject {
         value: impl MetaCallValue,
     ) -> Result<(), MetaCallSetAttributeError> {
         let c_key = cstring_enum!(key, MetaCallSetAttributeError)?;
-        let c_arg = parsers::metacallobj_to_raw(value);
+        let c_arg = cast::metacallobj_to_raw(value);
         if unsafe {
             metacall_object_set(metacall_value_to_object(self.value), c_key.as_ptr(), c_arg)
         } != 0
@@ -105,7 +105,7 @@ impl MetaCallObject {
         args: impl IntoIterator<Item = T>,
     ) -> Result<*mut c_void, MetaCallError> {
         let c_key = cstring_enum!(key, MetaCallError)?;
-        let mut c_args = parsers::metacallobj_to_raw_args(args);
+        let mut c_args = cast::metacallobj_to_raw_args(args);
         let ret = unsafe {
             metacallv_object(
                 metacall_value_to_object(self.value),
@@ -127,7 +127,7 @@ impl MetaCallObject {
         key: impl ToString,
         args: impl IntoIterator<Item = T>,
     ) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+        Ok(cast::raw_to_metacallobj_untyped(
             self.call_method_inner::<T>(key, args)?,
         ))
     }
@@ -137,7 +137,7 @@ impl MetaCallObject {
         &self,
         key: impl ToString,
     ) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+        Ok(cast::raw_to_metacallobj_untyped(
             self.call_method_inner::<T>(key, [])?,
         ))
     }
@@ -147,7 +147,7 @@ impl MetaCallObject {
         key: impl ToString,
         args: impl IntoIterator<Item = U>,
     ) -> Result<T, MetaCallError> {
-        match parsers::raw_to_metacallobj::<T>(self.call_method_inner::<U>(key, args)?) {
+        match cast::raw_to_metacallobj::<T>(self.call_method_inner::<U>(key, args)?) {
             Ok(ret) => Ok(ret),
             Err(original) => Err(MetaCallError::FailedCasting(original)),
         }

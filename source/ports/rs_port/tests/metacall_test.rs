@@ -1,8 +1,9 @@
 use metacall::{
-    loaders, switch, MetaCallClass, MetaCallException, MetaCallFunction, MetaCallFuture,
-    MetaCallNull, MetaCallObject, MetaCallPointer, MetaCallThrowable, MetaCallValue,
+    initialize, is_initialized, load, MetaCallClass, MetaCallException, MetaCallFunction,
+    MetaCallFuture, MetaCallNull, MetaCallObject, MetaCallPointer, MetaCallThrowable,
+    MetaCallValue,
 };
-use std::{collections::HashMap, env, fmt::Debug};
+use std::{any::Any, collections::HashMap, env, fmt::Debug};
 
 fn generate_test<T: MetaCallValue + PartialEq + Debug + Clone>(
     name: impl ToString,
@@ -154,7 +155,7 @@ fn test_pointer() {
     );
 }
 fn test_future() {
-    fn validate(upper_result: Box<dyn MetaCallValue>, upper_data: Box<dyn MetaCallValue>) {
+    fn validate(upper_result: Box<dyn MetaCallValue>, upper_data: Box<dyn Any>) {
         match upper_data.downcast::<String>() {
             Ok(ret) => {
                 if ret.as_str() != "data" {
@@ -183,8 +184,12 @@ fn test_future() {
         "future",
         MetaCallNull(),
         move |future| {
-            fn resolve(result: Box<dyn MetaCallValue>, data: Box<dyn MetaCallValue>) {
-                validate(result, data);
+            fn resolve(
+                result: Box<dyn MetaCallValue>,
+                data: Box<dyn Any>,
+            ) -> Box<dyn MetaCallValue> {
+                validate(result.clone(), data);
+                result.clone()
             }
 
             future.then(resolve).data(String::from("data")).await_fut();
@@ -195,8 +200,12 @@ fn test_future() {
         "future",
         MetaCallNull(),
         move |future| {
-            fn reject(result: Box<dyn MetaCallValue>, data: Box<dyn MetaCallValue>) {
-                validate(result, data);
+            fn reject(
+                result: Box<dyn MetaCallValue>,
+                data: Box<dyn Any>,
+            ) -> Box<dyn MetaCallValue> {
+                validate(result.clone(), data);
+                result.clone()
             }
 
             future.catch(reject).data(String::from("data")).await_fut();
@@ -335,13 +344,15 @@ fn test_throwable() {
 
 #[test]
 fn metacall() {
-    let _d = switch::initialize().unwrap();
+    let _d = initialize().unwrap();
+
+    assert!(is_initialized());
 
     let tests_dir = env::current_dir().unwrap().join("tests/scripts");
     let js_test_file = tests_dir.join("script.js");
     let c_test_file = tests_dir.join("script.c");
     let py_test_file = tests_dir.join("script.py");
-    let py_loaded = loaders::from_single_file("py", py_test_file).is_ok();
+    let py_loaded = load::from_single_file("py", py_test_file).is_ok();
 
     if py_loaded {
         test_buffer();
@@ -354,7 +365,7 @@ fn metacall() {
         test_string();
         test_null();
     }
-    if loaders::from_single_file("c", c_test_file).is_ok() {
+    if load::from_single_file("c", c_test_file).is_ok() {
         test_char();
         test_double();
         test_float();
@@ -362,7 +373,7 @@ fn metacall() {
         test_long();
         test_short();
     }
-    if loaders::from_single_file("node", js_test_file).is_ok() {
+    if load::from_single_file("node", js_test_file).is_ok() {
         test_exception();
         test_throwable();
         test_future();

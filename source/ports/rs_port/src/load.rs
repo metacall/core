@@ -12,7 +12,7 @@ use std::{
 /// Loads a script from a single file. Usage example: ...
 /// ```
 /// // A Nodejs script
-/// metacall::loaders::from_single_file("node", "index.js").unwrap();
+/// metacall::load::from_single_file("node", "index.js").unwrap();
 /// ```
 pub fn from_single_file(
     tag: impl ToString,
@@ -23,7 +23,7 @@ pub fn from_single_file(
 /// Loads a script from file. Usage example: ...
 /// ```
 /// // A Nodejs script
-/// metacall::loaders::from_file("node", ["index.js", "main.js"]).unwrap();
+/// metacall::load::from_file("node", ["index.js", "main.js"]).unwrap();
 /// ```
 pub fn from_file(
     tag: impl ToString,
@@ -71,7 +71,7 @@ pub fn from_file(
 /// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
 ///
 /// // A Nodejs script
-/// metacall::loaders::from_memory("node", script).unwrap();
+/// metacall::load::from_memory("node", script).unwrap();
 /// ```
 pub fn from_memory(tag: impl ToString, script: impl ToString) -> Result<(), MetaCallLoaderError> {
     let script = script.to_string();

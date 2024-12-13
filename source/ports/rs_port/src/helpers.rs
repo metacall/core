@@ -109,7 +109,3 @@ impl Clone for Box<dyn MetaCallValue + Send + Sync + '_> {
         clone_box(&**self)
     }
 }
-
-pub fn metacall_implementer_to_traitobj(v: impl MetaCallValue) -> Box<dyn MetaCallValue> {
-    Box::new(v) as Box<dyn MetaCallValue>
-}

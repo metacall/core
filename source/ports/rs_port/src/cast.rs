@@ -190,3 +190,51 @@ pub fn metacallobj_to_raw_args(
         .map(|arg| arg.into_metacall_raw())
         .collect::<Vec<*mut c_void>>()
 }
+
+pub fn metacallobj_untyped_to_raw(ret: Box<dyn MetaCallValue>) -> Option<*mut c_void> {
+    if let Some(v) = ret.downcast_ref::<bool>() {
+        return Some(v.into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<char>() {
+        return Some(v.into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<i16>() {
+        return Some(v.into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<i32>() {
+        return Some(v.into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<i64>() {
+        return Some(v.into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<f32>() {
+        return Some(v.into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<f64>() {
+        return Some(v.into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<String>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<Vec<i8>>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<Vec<MetaCallNull>>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<HashMap<String, MetaCallNull>>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallPointer>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallFuture>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallFunction>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallNull>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallClass>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallObject>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallException>() {
+        return Some(v.clone().into_metacall_raw());
+    } else if let Some(v) = ret.downcast_ref::<MetaCallThrowable>() {
+        return Some(v.clone().into_metacall_raw());
+    }
+
+    None
+}
+
+pub fn metacall_implementer_to_traitobj(v: impl MetaCallValue) -> Box<dyn MetaCallValue> {
+    Box::new(v) as Box<dyn MetaCallValue>
+}
