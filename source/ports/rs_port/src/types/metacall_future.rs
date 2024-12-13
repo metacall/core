@@ -12,6 +12,7 @@ use std::{
     any::Any,
     ffi::c_void,
     fmt::{self, Debug, Formatter},
+    ptr::null_mut,
 };
 
 /// Function pointer type used for resolving/rejecting MetaCall futures. The first argument is the result
@@ -58,7 +59,7 @@ pub type MetaCallFutureHandler = fn(Box<dyn MetaCallValue>, Box<dyn Any>) -> Box
 /// ```
 #[repr(C)]
 pub struct MetaCallFuture {
-    data: *mut dyn MetaCallValue,
+    data: *mut dyn Any,
     leak: bool,
     reject: Option<MetaCallFutureHandler>,
     resolve: Option<MetaCallFutureHandler>,
@@ -147,14 +148,10 @@ unsafe extern "C" fn rejecter(reject_data: *mut c_void, upper_data: *mut c_void)
 }
 
 impl MetaCallFuture {
-    fn create_null_data() -> *mut dyn MetaCallValue {
-        Box::into_raw(cast::metacall_implementer_to_traitobj(MetaCallNull()))
-    }
-
     #[doc(hidden)]
     pub fn new_raw(value: *mut c_void) -> Self {
         Self {
-            data: Self::create_null_data(),
+            data: null_mut::<()>(),
             leak: false,
             reject: None,
             resolve: None,
@@ -165,7 +162,7 @@ impl MetaCallFuture {
     #[doc(hidden)]
     pub fn new_raw_leak(value: *mut c_void) -> Self {
         Self {
-            data: Self::create_null_data(),
+            data: null_mut::<()>(),
             leak: true,
             reject: None,
             resolve: None,
@@ -256,10 +253,8 @@ impl MetaCallFuture {
     ///   future.then(resolve).catch(reject),data(x).await_fut();
     /// }
     /// ```
-    pub fn data(mut self, data: impl MetaCallValue) -> Self {
-        unsafe { drop(Box::from_raw(self.data)) };
-
-        self.data = Box::into_raw(Box::new(data) as Box<dyn MetaCallValue>);
+    pub fn data<T: 'static>(mut self, data: T) -> Self {
+        self.data = Box::into_raw(Box::new(data));
 
         self
     }
