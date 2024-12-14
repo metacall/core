@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-13, macos-14] # TODO: macos-15: https://github.com/metacall/core/issues/530
+        os: [macos-13, macos-14] # TODO: macos-15: https://github.com/metacall/core/issues/530
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
