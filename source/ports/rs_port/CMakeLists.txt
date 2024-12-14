@@ -149,6 +149,15 @@ if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER) AND NOT RS_
 endif()
 
 # If we have cargo-valgrind, run the tests with it
+# For installing it, first install valgrind on your system, then run:
+# cargo install cargo-valgrind
+# It will install the tooling necesary for running with valgrind.
+# For debugging the project run:
+#
+# cmake -DCMAKE_BUILD_TYPE=Debug -DOPTION_BUILD_PORTS=ON \
+# -DOPTION_BUILD_PORTS_RS=ON -DOPTION_TEST_MEMORYCHECK ..
+#
+# You can also add loaders for this command so you can test with them.
 if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER))
 	# Check if cargo-valgrind is installed
 	execute_process(
@@ -162,6 +171,9 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUI
 	endif()
 endif()
 
+# For running one test only, you can add:
+# --test=metacall_test --package=metacall
+# To the command, and it will run metacall_test only
 add_test(NAME ${target}
 	COMMAND ${Rust_CARGO_EXECUTABLE} ${CARGO_VALGRIND} ${NIGHTLY_FLAGS} test ${BUILD_STD_FLAGS}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
