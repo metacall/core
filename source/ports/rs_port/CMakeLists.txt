@@ -158,6 +158,12 @@ endif()
 # -DOPTION_BUILD_PORTS_RS=ON -DOPTION_TEST_MEMORYCHECK ..
 #
 # You can also add loaders for this command so you can test with them.
+# Finally, build and run the tests:
+#
+# make -j8 rs_port
+# ctest -VV -R rs_port
+#
+# CTest will run the tests and show valgrind output if there is any error.
 if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER))
 	# Check if cargo-valgrind is installed
 	execute_process(
