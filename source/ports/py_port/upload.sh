@@ -36,7 +36,7 @@ TWINE_PASSWORD=${PYTHON_PYPI_PASSWORD:-}
 python3 -m pip install --user --upgrade twine setuptools wheel
 python3 setup.py sdist bdist_wheel
 python3 -m twine check dist/*
-python3 -m twine upload -u ${TWINE_USERNAME} -p ${TWINE_PASSWORD} dist/*
+python3 -m twine upload -u "${TWINE_USERNAME}" -p "${TWINE_PASSWORD}" dist/*
 
 # Delete output
 rm -rf dist/* build/*
