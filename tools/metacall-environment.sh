@@ -671,7 +671,7 @@ sub_c(){
 					;;
 			esac
 
-			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
 			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 			$SUDO_CMD apt-get update
@@ -843,7 +843,7 @@ sub_clangformat(){
 					;;
 			esac
 
-			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
 			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 			$SUDO_CMD apt-get update
