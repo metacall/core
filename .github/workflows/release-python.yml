@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master, develop ]
     paths:
-      - 'source/ports/py_port/setup.py'
+      - 'source/ports/py_port/VERSION'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
