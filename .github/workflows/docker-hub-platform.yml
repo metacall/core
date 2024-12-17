@@ -15,7 +15,7 @@ concurrency:
 
 env:
   DOCKER_REGISTRY: docker.io
-  DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+  DOCKER_USERNAME: metacall
   IMAGE_NAME: core
   BUILDKIT_VERSION: 0.13.0
 
@@ -71,8 +71,8 @@ jobs:
           for tag in "deps" "dev" "runtime" "cli"; do
             echo "Pushing image for tag: ${tag} with platform: ${platform_tag}"
             docker tag ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
-              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
-            docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
+              ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
+            docker push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
 
   manifest:
@@ -93,10 +93,10 @@ jobs:
             platform_tags=""
             platforms=("linux-amd64" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-386" "linux-arm-v7" "linux-arm-v6")
             for platform in "${platforms[@]}"; do
-              platform_tags="${platform_tags} ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform}"
+              platform_tags="${platform_tags} ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform}"
             done
-            docker manifest create ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} ${platform_tags} --amend
-            docker manifest push ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}
+            docker manifest create ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} ${platform_tags} --amend
+            docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}
           done
 
       - name: Create Version-Specific Tags
@@ -108,10 +108,10 @@ jobs:
           for tag in "${tags[@]}"; do
             platform_tags=""
             for platform in "${platforms[@]}"; do
-              platform_tags="${platform_tags} ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform}"
+              platform_tags="${platform_tags} ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform}"
             done
-            docker manifest create ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag} ${platform_tags} --amend
-            docker manifest push ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag}
+            docker manifest create ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag} ${platform_tags} --amend
+            docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag}
           done
 
           # Create and push the 'latest' tag for CLI
@@ -119,8 +119,8 @@ jobs:
           for platform in ${{ matrix.platform }}; do
             cli_platform_tags="${cli_platform_tags} ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform}"
           done
-          docker manifest create ${DOCKER_USERNAME}/${IMAGE_NAME}:latest ${cli_platform_tags} --amend
-          docker manifest push ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
+          docker manifest create ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:latest ${cli_platform_tags} --amend
+          docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:latest
 
   test:
     name: Test CLI Image
@@ -170,9 +170,6 @@ jobs:
     if: always()
     steps:
       - name: Remove Platform-Specific Tags
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
         run: |
           platforms=("linux-amd64" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-386" "linux-arm-v7" "linux-arm-v6")
           tags=("deps" "dev" "runtime" "cli")
@@ -183,7 +180,7 @@ jobs:
               echo "Deleting tag: ${tag_to_delete}"
 
               curl -X DELETE \
-                -H "Authorization: Bearer ${DOCKER_HUB_ACCESS_TOKEN}" \
+                -H "Authorization: Bearer ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" \
                 "https://hub.docker.com/v2/repositories/${DOCKER_USERNAME}/${IMAGE_NAME}/tags/${tag_to_delete}/"
             done
           done
