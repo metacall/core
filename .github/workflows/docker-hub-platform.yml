@@ -24,8 +24,19 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        platform: [linux/amd64, linux/arm64, linux/riscv64, linux/ppc64le, linux/s390x, linux/386, linux/arm/v7, linux/arm/v6]
+        platform:
+          - linux/amd64
+          - linux/arm64
+          - linux/riscv64
+          - linux/ppc64le
+          - linux/s390x
+          - linux/386
+          - linux/arm/v7
+          - linux/arm/v6
+          # - linux/mips64le
+          # - linux/mips64
 
     steps:
       - name: Checkout Repository
@@ -68,10 +79,6 @@ jobs:
     name: Create and Push Manifest Lists
     needs: build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [linux-amd64, linux-arm64, linux-riscv64, linux-ppc64le, linux-s390x, linux-386, linux-arm-v7, linux-arm-v6]
-
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -120,8 +127,19 @@ jobs:
     needs: manifest
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        platform: [linux/amd64, linux/arm64, linux/riscv64, linux/ppc64le, linux/s390x, linux/386, linux/arm/v7, linux/arm/v6]
+        platform:
+          - linux/amd64
+          - linux/arm64
+          - linux/riscv64
+          - linux/ppc64le
+          - linux/s390x
+          - linux/386
+          - linux/arm/v7
+          - linux/arm/v6
+          # - linux/mips64le
+          # - linux/mips64
 
     steps:
       - name: Login to Docker Hub
@@ -147,14 +165,8 @@ jobs:
 
   cleanup:
     name: Cleanup Platform Specific Tags
-    needs:
-      - build
-      - manifest
-      - test
+    needs: [build, manifest, test]
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [linux-amd64, linux-arm64, linux-riscv64, linux-ppc64le, linux-s390x, linux-386, linux-arm-v7, linux-arm-v6]
     if: always()
     steps:
       - name: Remove Platform-Specific Tags
