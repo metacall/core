@@ -29,12 +29,13 @@ if [[ "$PYPI_VERSION" == "$PORT_VERSION" ]]; then
 	exit 0
 fi
 
-TWINE_USERNAME=${PYTHON_PYPI_USERNAME:-}
+TWINE_USERNAME=${PYTHON_PYPI_USER:-}
 TWINE_PASSWORD=${PYTHON_PYPI_PASSWORD:-}
 
 # Install dependencies and upload MetaCall package
 python3 -m pip install --user --upgrade twine setuptools wheel
-python3 setup.py sdist bdist_wheel
+# python3 setup.py sdist bdist_wheel
+python3 -m build
 python3 -m twine check dist/*
 python3 -m twine upload -u "${TWINE_USERNAME}" -p "${TWINE_PASSWORD}" dist/*
 
