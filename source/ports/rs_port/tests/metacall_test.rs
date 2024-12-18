@@ -81,27 +81,21 @@ fn test_float() {
 fn test_double() {
     generate_test::<f64>("test_double", 1.2345_f64);
 }
-// TODO
-// fn test_mixed_numbers() {
-//     let result = ::metacall::metacall::<i64>(
-//         "test_mixed_numbers",
-//         [
-//             Box::new(1 as i16) as Box<dyn MetaCallValue>,
-//             Box::new(2 as i32) as Box<dyn MetaCallValue>,
-//             Box::new(3 as i64) as Box<dyn MetaCallValue>,
-//         ],
-//     );
+fn test_mixed_numbers() {
+    let result = ::metacall::metacall::<i64>(
+        "test_mixed_numbers",
+        [
+            ::metacall::metacall_box(1 as i16),
+            ::metacall::metacall_box(2 as i32),
+            ::metacall::metacall_box(3 as i64),
+        ],
+    );
 
-//     // TODO
-//     // ::metacall::metacall::<i64>("test_mixed_numbers", [1_i16, 2_i32, 3_i64]);
-//     // ::metacall::metacall::<i64>("test_mixed_numbers", (1_i16, 2_i32, 3_i64));
-
-//     assert!(result.is_ok());
-
-//     if let Ok(ret) = result {
-//         assert_eq!(ret, 6_i64)
-//     }
-// }
+    assert!(result.is_ok());
+    if let Ok(ret) = result {
+        assert_eq!(ret, 6_i64)
+    }
+}
 fn test_string() {
     generate_test::<String>(
         "return_the_argument_py",
@@ -393,8 +387,7 @@ fn metacall() {
         test_int();
         test_long();
         test_short();
-        // TODO
-        // test_mixed_numbers();
+        test_mixed_numbers();
     }
     if load::from_single_file("node", js_test_file).is_ok() {
         test_exception();
