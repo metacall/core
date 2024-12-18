@@ -20,9 +20,5 @@ jobs:
         with:
           fetch-depth: 0
       - name: Release the port
-        env:
-          PYTHON_PYPI_USER: ${{ secrets.PYTHON_PYPI_USER }}
-          PYTHON_PYPI_PASSWORD: ${{ secrets.PYTHON_PYPI_PASSWORD }}
-        run: |
-          cd source/ports/py_port
-          bash ./upload.sh
+        working-directory: source/ports/py_port
+        run: ./upload.sh
