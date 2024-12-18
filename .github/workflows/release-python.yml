@@ -10,10 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  PYTHON_PIPY_USER: ${{ secrets.PYTHON_PIPY_USER }}
-  PYTHON_PIPY_PASSWORD: ${{ secrets.PYTHON_PIPY_PASSWORD }}
-
 jobs:
   release:
     name: Release Python Port
@@ -24,6 +20,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Release the port
+        env:
+          PYTHON_PYPI_USER: ${{ secrets.PYTHON_PYPI_USER }}
+          PYTHON_PYPI_PASSWORD: ${{ secrets.PYTHON_PYPI_PASSWORD }}
         run: |
           cd source/ports/py_port
           bash ./upload.sh
