@@ -16,7 +16,7 @@ concurrency:
 
 env:
   DOCKER_REGISTRY: docker.io
-  DOCKER_USERNAME: metacall
+  DOCKER_USERNAME: mryash
   IMAGE_NAME: core
   BUILDKIT_VERSION: 0.13.0
 
