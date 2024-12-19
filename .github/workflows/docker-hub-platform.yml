@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOCKER_REGISTRY: docker.io
+  DOCKER_REGISTRY: index.docker.io
   DOCKER_USERNAME: mryash
   IMAGE_NAME: core
   BUILDKIT_VERSION: 0.13.0
@@ -73,7 +73,7 @@ jobs:
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           echo "Platform Tag: ${platform_tag}"
           for tag in "deps" "dev" "runtime" "cli"; do
-            docker tag ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
+            docker tag ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
               ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
 
