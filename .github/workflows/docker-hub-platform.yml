@@ -65,6 +65,9 @@ jobs:
         run: |
           ./docker-compose.sh platform
 
+      - name: List Docker Images
+        run: docker images
+
       - name: Tag Platform Images
         run: |
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
@@ -88,10 +91,6 @@ jobs:
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           docker build --platform ${{ matrix.platform }} -t test-image .
           docker run --rm --platform=${{ matrix.platform }} test-image | grep "abcde"
-
-      - name: List Docker Images
-        run: docker images
-
 
       - name: Push Platform Images
         run: |
