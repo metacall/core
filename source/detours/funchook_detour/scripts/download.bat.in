@@ -1,11 +1,11 @@
 @echo on
 
 rem Download repository if it does not exist
-if not exist @FUNCHOOK_SOURCE_DIR@/.git (
-	if exist @FUNCHOOK_SOURCE_DIR@ (
+if not exist "@FUNCHOOK_SOURCE_DIR@/.git" (
+	if exist "@FUNCHOOK_SOURCE_DIR@" (
 		rmdir /S /Q "@FUNCHOOK_SOURCE_DIR@"
 	)
-	"@GIT_EXECUTABLE@" clone --single-branch --branch v@FUNCHOOK_VERSION@ --recursive https://github.com/kubo/funchook.git @FUNCHOOK_SOURCE_DIR@
+	"@GIT_EXECUTABLE@" clone --single-branch --branch v@FUNCHOOK_VERSION@ --recursive https://github.com/kubo/funchook.git "@FUNCHOOK_SOURCE_DIR@"
 )
 
 rem Write empty CMake file to avoid cmake warnings

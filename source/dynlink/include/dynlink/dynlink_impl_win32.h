@@ -25,8 +25,6 @@
 
 #include <dynlink/dynlink_api.h>
 
-#include <dynlink/dynlink_impl_symbol_win32.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -33,10 +33,6 @@
 extern "C" {
 #endif
 
-/* -- Headers -- */
-
-#include <stdlib.h>
-
 /* -- Forward Declarations -- */
 
 struct loader_type;
@@ -54,6 +50,8 @@ typedef struct loader_type *loader;
 LOADER_API void loader_initialization_register(loader_impl impl);
 
 LOADER_API int loader_initialize(void);
+
+LOADER_NO_EXPORT int loader_initialize_host(const loader_tag tag);
 
 LOADER_API int loader_is_initialized(const loader_tag tag);
 
@@ -81,7 +79,11 @@ LOADER_API void *loader_get_handle(const loader_tag tag, const char *name);
 
 LOADER_API void loader_set_options(const loader_tag tag, void *options);
 
-LOADER_API void *loader_get_options(const loader_tag tag);
+LOADER_API value loader_get_options(const loader_tag tag);
+
+LOADER_API value loader_get_option(const loader_tag tag, const char *field);
+
+LOADER_API int loader_get_option_host(const loader_tag tag);
 
 LOADER_API int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr);
 

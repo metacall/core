@@ -23,15 +23,11 @@
 
 #include <backtrace_plugin/backtrace_plugin_api.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 BACKTRACE_PLUGIN_API int backtrace_plugin(void *loader, void *handle);
-
-DYNLINK_SYMBOL_EXPORT(backtrace_plugin);
 
 #ifdef __cplusplus
 }

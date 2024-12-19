@@ -1,6 +1,6 @@
 /*
- *	Serial Library by Parra Studios
- *	A cross-platform library for managing multiple serialization and deserialization formats.
+ *	Portability Library by Parra Studios
+ *	A generic cross-platform portability utility.
  *
  *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,14 +18,26 @@
  *
  */
 
-#ifndef RAPID_JSON_SERIAL_H
-#define RAPID_JSON_SERIAL_H 1
+#ifndef PORTABILITY_WORKING_PATH_H
+#define PORTABILITY_WORKING_PATH_H 1
 
 /* -- Headers -- */
 
-#include <rapid_json_serial/rapid_json_serial_api.h>
+#include <portability/portability_api.h>
 
-#include <serial/serial_interface.h>
+#include <portability/portability_path.h>
+
+/* -- Type Definitions -- */
+
+typedef char portability_working_path_str[PORTABILITY_PATH_SIZE];
+
+#if defined(WIN32) || defined(_WIN32) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+typedef DWORD portability_working_path_length;
+#else
+typedef size_t portability_working_path_length;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,28 +45,10 @@ extern "C" {
 
 /* -- Methods -- */
 
-/**
-*  @brief
-*    Instance of interface implementation
-*
-*  @return
-*    Returns pointer to interface to be used by implementation
-*
-*/
-RAPID_JSON_SERIAL_API serial_interface rapid_json_serial_impl_interface_singleton(void);
-
-/**
-*  @brief
-*    Provide the module information
-*
-*  @return
-*    Static string containing module information
-*
-*/
-RAPID_JSON_SERIAL_API const char *rapid_json_serial_print_info(void);
+PORTABILITY_API int portability_working_path(portability_working_path_str path, portability_working_path_length *length);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* RAPID_JSON_SERIAL_H */
+#endif /* PORTABILITY_WORKING_PATH_H */
