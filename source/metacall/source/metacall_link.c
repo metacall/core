@@ -92,7 +92,8 @@ void *metacall_link_hook(void *handle, const char *symbol)
 	/* Intercept function if any */
 	void *ptr = set_get(metacall_link_table, (set_key)symbol);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall detour link interception: %s -> %p", symbol, ptr);
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall detour link interception: %s -> %p", symbol, ptr); */
 
 	if (ptr != NULL)
 	{

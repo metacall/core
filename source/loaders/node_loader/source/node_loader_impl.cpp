@@ -4604,11 +4604,11 @@ int node_loader_impl_destroy(loader_impl impl)
 		return 1;
 	}
 
-	/* Call destroy function with thread safe */
-	node_loader_impl_try_destroy(node_impl);
-
 	if (loader_impl_get_option_host(impl) == 0)
 	{
+		/* Call destroy function with thread safe */
+		node_loader_impl_try_destroy(node_impl);
+
 		/* Wait for node thread to finish */
 		uv_thread_join(&node_impl->thread);
 	}

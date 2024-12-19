@@ -72,6 +72,7 @@ static loader_path plugin_path = { 0 };
 static int metacall_plugin_extension_load(void);
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
 static type_id *metacall_type_ids(void *args[], size_t size);
+static void metacall_destructor(void);
 static void metacall_detour_destructor(void);
 
 /* -- Costructors -- */
@@ -111,8 +112,16 @@ portability_constructor(metacall_constructor)
 				metacall_value_destroy(config[0].options);
 				exit(1);
 			}
+
+			/* Register the destructor on exit */
+			atexit(metacall_destructor);
 		}
 	}
+}
+
+void metacall_destructor(void)
+{
+	metacall_destroy();
 }
 
 /* -- Methods -- */

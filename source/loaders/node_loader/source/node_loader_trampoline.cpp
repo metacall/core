@@ -244,7 +244,6 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 {
 	napi_status status;
-
 	const size_t args_size = 1;
 	size_t argc = args_size;
 	napi_value recv;

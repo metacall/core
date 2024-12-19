@@ -436,6 +436,12 @@ const startup = (impl, ptr, trampoline_exports) => {
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
 		});
+
+		// This function must destroy all the loaders but
+		// delaying the NodeJS Loader library unloading
+		if (trampoline_exports) {
+			process.on('exit', () => trampoline.destroy(node_loader_ptr));
+		}
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);
 	}

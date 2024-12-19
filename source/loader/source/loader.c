@@ -210,7 +210,18 @@ int loader_initialize_host(const loader_tag tag)
 		return 1;
 	}
 
-	return loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl));
+	if (loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl)) != 0)
+	{
+		return 1;
+	}
+	else
+	{
+		loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+		manager_impl->host = p;
+
+		return 0;
+	}
 }
 
 int loader_is_initialized(const loader_tag tag)

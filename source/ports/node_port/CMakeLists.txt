@@ -225,7 +225,7 @@ set(node_port_test_exec "${node_port_test}_executable")
 message(STATUS "Test ${node_port_test_exec}")
 
 add_test(NAME ${node_port_test_exec}
-	COMMAND ${NodeJS_EXECUTABLE} test/index.js
+	COMMAND ${NodeJS_EXECUTABLE} -e "require('./test.js').main()"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

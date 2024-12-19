@@ -22,10 +22,10 @@
 
 const mod = require('module');
 const path = require('path');
-const fs = require('fs').promises;
+const fs = require('fs');
 const { URL } = require('url'); /* TODO: RPC Loader */
 
-async function findFilesRecursively(dirPattern, filePattern, depthLimit = Infinity) {
+const findFilesRecursively = (dirPattern, filePattern, depthLimit = Infinity) => {
 	const stack = [{ dir: dirPattern, depth: 0 }];
 	const files = [];
 	const dirRegex = new RegExp(dirPattern);
@@ -43,11 +43,11 @@ async function findFilesRecursively(dirPattern, filePattern, depthLimit = Infini
 				continue;
 			}
 
-			const items = await fs.readdir(dir);
+			const items = fs.readdirSync(dir);
 
 			for (const item of items) {
 				const fullPath = path.join(dir, item);
-				const stat = await fs.stat(fullPath);
+				const stat = fs.statSync(fullPath);
 
 				if (stat.isDirectory()) {
 					stack.push({ dir: fullPath, depth: depth + 1 });
@@ -61,7 +61,7 @@ async function findFilesRecursively(dirPattern, filePattern, depthLimit = Infini
 	}
 
 	return files;
-}
+};
 
 const platformInstallPaths = () => {
 	switch (process.platform) {
@@ -83,7 +83,7 @@ const platformInstallPaths = () => {
 	}
 
 	throw new Error(`Platform ${process.platform} not supported`)
-}
+};
 
 const searchPaths = () => {
 	const customPath = process.env['METACALL_INSTALL_PATH'];
@@ -96,13 +96,13 @@ const searchPaths = () => {
 	}
 
 	return platformInstallPaths()
-}
+};
 
-const findLibrary = async () => {
+const findLibrary = () => {
 	const searchData = searchPaths();
 
 	for (const p of searchData.paths) {
-		const files = await findFilesRecursively(p, searchData.name, 0);
+		const files = findFilesRecursively(p, searchData.name, 0);
 
 		if (files.length !== 0) {
 			return files[0];
@@ -110,7 +110,7 @@ const findLibrary = async () => {
 	}
 
 	throw new Error('MetaCall library not found, if you have it in a special folder, define it through METACALL_INSTALL_PATH')
-}
+};
 
 const addon = (() => {
 	try {
@@ -127,7 +127,9 @@ const addon = (() => {
 		*/
 		process.env['METACALL_HOST'] = 'node';
 
-		findLibrary().then(library => {
+		try {
+			const library = findLibrary();
+
 			const { constants } = require('os');
 			const m = { exports: {} };
 
@@ -148,10 +150,10 @@ const addon = (() => {
 			process.argv = argv;
 
 			return m.exports;
-		}).catch(err => {
+		} catch (err) {
 			console.log(err);
 			process.exit(1);
-		});
+		}
 	}
 })();
 
