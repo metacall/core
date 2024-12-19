@@ -22,3 +22,7 @@ double test_double(double num)
 {
 	return num;
 }
+long test_mixed_numbers(short s, int i, long l)
+{
+	return l + (long)i + (long)s;
+}

@@ -1,12 +1,12 @@
-use crate::types::MetacallValue;
+use crate::types::MetaCallValue;
 use std::any::Any;
 
-pub trait MetacallDowncast: Any {
+pub trait MetaCallDowncast: Any {
     fn into_any(self: Box<Self>) -> Box<dyn Any>;
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
-impl<T: Any> MetacallDowncast for T {
+impl<T: Any> MetaCallDowncast for T {
     fn into_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
@@ -17,40 +17,40 @@ impl<T: Any> MetacallDowncast for T {
         self
     }
 }
-impl dyn MetacallValue {
+impl dyn MetaCallValue {
     /// Checks if the trait object is having the given type.
-    pub fn is<T: MetacallValue>(&self) -> bool {
-        MetacallDowncast::as_any(self).is::<T>()
+    pub fn is<T: MetaCallValue>(&self) -> bool {
+        MetaCallDowncast::as_any(self).is::<T>()
     }
 
     /// Downcasts the inner value of the trait object and returns the ownership.
-    pub fn downcast<T: MetacallValue>(self: Box<Self>) -> Result<T, Box<Self>> {
+    pub fn downcast<T: MetaCallValue>(self: Box<Self>) -> Result<T, Box<Self>> {
         if self.is::<T>() {
-            Ok(*MetacallDowncast::into_any(self).downcast::<T>().unwrap())
+            Ok(*MetaCallDowncast::into_any(self).downcast::<T>().unwrap())
         } else {
             Err(self)
         }
     }
 
     /// Downcasts the inner value of the trait object and returns a reference.
-    pub fn downcast_ref<T: MetacallValue>(&self) -> Option<&T> {
-        MetacallDowncast::as_any(self).downcast_ref::<T>()
+    pub fn downcast_ref<T: MetaCallValue>(&self) -> Option<&T> {
+        MetaCallDowncast::as_any(self).downcast_ref::<T>()
     }
 
     /// Downcasts the inner value of the trait object and returns a mutable reference.
-    pub fn downcast_mut<T: MetacallValue>(&mut self) -> Option<&mut T> {
-        MetacallDowncast::as_any_mut(self).downcast_mut::<T>()
+    pub fn downcast_mut<T: MetaCallValue>(&mut self) -> Option<&mut T> {
+        MetaCallDowncast::as_any_mut(self).downcast_mut::<T>()
     }
 }
 
-pub trait MetacallSealed {}
-impl<T: Clone> MetacallSealed for T {}
-impl MetacallSealed for str {}
-impl<T: Clone> MetacallSealed for [T] {}
+pub trait MetaCallSealed {}
+impl<T: Clone> MetaCallSealed for T {}
+impl MetaCallSealed for str {}
+impl<T: Clone> MetaCallSealed for [T] {}
 
 pub fn clone_box<T>(t: &T) -> Box<T>
 where
-    T: ?Sized + MetacallClone,
+    T: ?Sized + MetaCallClone,
 {
     unsafe {
         let mut fat_ptr = t as *const T;
@@ -58,16 +58,16 @@ where
 
         assert_eq!(*data_ptr as *const (), t as *const T as *const ());
 
-        *data_ptr = <T as MetacallClone>::clone_box(t);
+        *data_ptr = <T as MetaCallClone>::clone_box(t);
 
         Box::from_raw(fat_ptr as *mut T)
     }
 }
 
-pub trait MetacallClone: MetacallSealed {
+pub trait MetaCallClone: MetaCallSealed {
     fn clone_box(&self) -> *mut ();
 }
-impl<T> MetacallClone for T
+impl<T> MetaCallClone for T
 where
     T: Clone,
 {
@@ -76,12 +76,12 @@ where
     }
 }
 
-impl MetacallClone for str {
+impl MetaCallClone for str {
     fn clone_box(&self) -> *mut () {
         Box::<str>::into_raw(Box::from(self)) as *mut ()
     }
 }
-impl<T> MetacallClone for [T]
+impl<T> MetaCallClone for [T]
 where
     T: Clone,
 {
@@ -89,27 +89,23 @@ where
         Box::<[T]>::into_raw(self.iter().cloned().collect()) as *mut ()
     }
 }
-impl<'c> Clone for Box<dyn MetacallValue + 'c> {
+impl Clone for Box<dyn MetaCallValue + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }
 }
-impl<'c> Clone for Box<dyn MetacallValue + Send + 'c> {
+impl Clone for Box<dyn MetaCallValue + Send + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }
 }
-impl<'c> Clone for Box<dyn MetacallValue + Sync + 'c> {
+impl Clone for Box<dyn MetaCallValue + Sync + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }
 }
-impl<'c> Clone for Box<dyn MetacallValue + Send + Sync + 'c> {
+impl Clone for Box<dyn MetaCallValue + Send + Sync + '_> {
     fn clone(&self) -> Self {
         clone_box(&**self)
     }
-}
-
-pub fn metacall_implementer_to_traitobj(v: impl MetacallValue) -> Box<dyn MetacallValue> {
-    Box::new(v) as Box<dyn MetacallValue>
 }

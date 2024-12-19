@@ -1,4 +1,4 @@
-use metacall::{loaders, metacall_no_arg, switch};
+use metacall::{initialize, is_initialized, load, metacall_no_arg};
 use std::{
     env,
     fs::{self, File},
@@ -13,21 +13,14 @@ const SCRIPT2: &str = "function greet2() { return 'hi there!' } \nmodule.exports
 const SCRIPT3: &str = "console.log('Hello world')";
 fn call_greet(test: &str, num: u32) {
     let out = metacall_no_arg::<String>(format!("greet{}", num)).unwrap();
-    if out.as_str() == "hi there!" {
-        return ();
-    } else {
-        panic!(
-            "Invalid output of the function! Expected `hi there!` but received `{}`.",
-            test
-        );
-    }
+    assert_eq!(out.as_str(), "hi there!", "Testing {}", test);
 }
 
 fn load_from_memory_test() {
-    loaders::from_memory("node", SCRIPT1).unwrap();
+    load::from_memory("node", SCRIPT1).unwrap();
     call_greet("load_from_memory", 1);
 
-    loaders::from_memory("node", SCRIPT3).unwrap();
+    load::from_memory("node", SCRIPT3).unwrap();
 }
 
 fn load_from_file_test() {
@@ -41,7 +34,7 @@ fn load_from_file_test() {
     temp_js.write_all(SCRIPT2.as_bytes()).unwrap();
     temp_js.flush().unwrap();
 
-    loaders::from_single_file("node", temp_js_path).unwrap();
+    load::from_single_file("node", temp_js_path).unwrap();
 
     call_greet("load_from_file", 2);
 
@@ -51,7 +44,10 @@ fn load_from_file_test() {
 
 #[test]
 fn loaders() {
-    let _d = switch::initialize().unwrap();
+    let _d = initialize().unwrap();
+
+    assert!(is_initialized());
+
     // Testing load_from_memory
     load_from_memory_test();
 

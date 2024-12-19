@@ -4,15 +4,11 @@ on:
   push:
     branches: [ master, develop ]
     paths:
-      - 'source/ports/py_port/setup.py'
+      - 'source/ports/py_port/VERSION'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-
-env:
-  PYTHON_PIPY_USER: ${{ secrets.PYTHON_PIPY_USER }}
-  PYTHON_PIPY_PASSWORD: ${{ secrets.PYTHON_PIPY_PASSWORD }}
 
 jobs:
   release:
@@ -24,6 +20,5 @@ jobs:
         with:
           fetch-depth: 0
       - name: Release the port
-        run: |
-          cd source/ports/py_port
-          bash ./upload.sh
+        working-directory: source/ports/py_port
+        run: ./upload.sh

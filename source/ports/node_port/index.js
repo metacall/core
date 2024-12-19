@@ -352,6 +352,11 @@ const available_tags = new Set([...Object.values(file_extensions_to_tag), ...Obj
 /* Override require */
 mod.prototype.require = function (name) {
 
+	/* Try to load itself */
+	if (name === 'metacall') {
+		return module_exports;
+	}
+
 	// TODO:
 	// /* Check if the module is an URL */
 	// try {

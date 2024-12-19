@@ -73,8 +73,40 @@ if(OPTION_TEST_MEMORYCHECK)
 	set(MEMORYCHECK_COMPILE_DEFINITIONS
 		"__MEMORYCHECK__=1"
 	)
+
+	set(MEMORYCHECK_COMMAND_OPTIONS "--leak-check=full")
+	# set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-leak-kinds=all")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --trace-children=yes")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-reachable=yes")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-origins=yes")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=100")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all-non-file") # for JITs
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-dl.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-python.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-node.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-wasm.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-wasm.supp")
+
+	# TODO: Implement automatic detection for valgrind suppressions and create a proper test suite for the CI
+	set(MEMORYCHECK_ADDITIONAL_SUPPRESSIONS
+		"/usr/lib/valgrind/python3.supp"
+		"/usr/lib/valgrind/debian.supp"
+	)
+
+	foreach(SUPPRESSION ${MEMORYCHECK_ADDITIONAL_SUPPRESSIONS})
+		if(EXISTS "${SUPPRESSION}")
+			set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${SUPPRESSION}")
+		endif()
+	endforeach()
+
+	# This is needed in order to allow valgrind to properly track malloc in Python
+	set(TESTS_MEMCHECK_ENVIRONMENT_VARIABLES
+		"PYTHONMALLOC=malloc"
+	)
 else()
 	set(MEMORYCHECK_COMPILE_DEFINITIONS)
+	set(MEMORYCHECK_COMMAND_OPTIONS)
+	set(TESTS_MEMCHECK_ENVIRONMENT_VARIABLES)
 endif()
 
 # ThreadSanitizer is incompatible with AddressSanitizer and LeakSanitizer

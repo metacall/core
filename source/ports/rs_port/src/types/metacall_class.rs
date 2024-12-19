@@ -1,23 +1,23 @@
 use super::{
-    MetacallClassFromNameError, MetacallError, MetacallGetAttributeError, MetacallNull,
-    MetacallObject, MetacallSetAttributeError, MetacallStringConversionError, MetacallValue,
+    MetaCallClassFromNameError, MetaCallError, MetaCallGetAttributeError, MetaCallNull,
+    MetaCallObject, MetaCallSetAttributeError, MetaCallStringConversionError, MetaCallValue,
 };
-use crate::{bindings::*, cstring, cstring_enum, parsers};
+use crate::{bindings::*, cast, cstring, cstring_enum};
 use std::{
     ffi::c_void,
     fmt::{self, Debug, Formatter},
 };
 
-/// Represents Metacall Class. You can get this type when returned by a function or get a class by its
+/// Represents MetaCall Class. You can get this type when returned by a function or get a class by its
 /// name with [from_name](#method.from_name).
-pub struct MetacallClass {
+pub struct MetaCallClass {
     found_by_name: bool,
     leak: bool,
     value: *mut c_void,
 }
-unsafe impl Send for MetacallClass {}
-unsafe impl Sync for MetacallClass {}
-impl Clone for MetacallClass {
+unsafe impl Send for MetaCallClass {}
+unsafe impl Sync for MetaCallClass {}
+impl Clone for MetaCallClass {
     fn clone(&self) -> Self {
         Self {
             found_by_name: self.found_by_name,
@@ -26,13 +26,13 @@ impl Clone for MetacallClass {
         }
     }
 }
-impl Debug for MetacallClass {
+impl Debug for MetaCallClass {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "MetacallClass {{ ... }}")
+        write!(f, "MetaCallClass {{ ... }}")
     }
 }
 
-impl MetacallClass {
+impl MetaCallClass {
     #[doc(hidden)]
     pub fn new_raw(value: *mut c_void) -> Self {
         Self {
@@ -52,12 +52,12 @@ impl MetacallClass {
     }
 
     /// Gets a class by its name.
-    pub fn from_name(name: impl ToString) -> Result<Self, MetacallClassFromNameError> {
-        let c_name = cstring_enum!(name, MetacallClassFromNameError)?;
+    pub fn from_name(name: impl ToString) -> Result<Self, MetaCallClassFromNameError> {
+        let c_name = cstring_enum!(name, MetaCallClassFromNameError)?;
         let class = unsafe { metacall_class(c_name.as_ptr()) };
 
         if class.is_null() {
-            return Err(MetacallClassFromNameError::ClassNotFound);
+            return Err(MetaCallClassFromNameError::ClassNotFound);
         }
 
         Ok(Self {
@@ -75,14 +75,14 @@ impl MetacallClass {
         }
     }
 
-    /// Creates an [object](MetacallObject) of the class wtih constructor arguments.
-    pub fn create_object<T: MetacallValue>(
+    /// Creates an [object](MetaCallObject) of the class wtih constructor arguments.
+    pub fn create_object<T: MetaCallValue>(
         &self,
         name: impl ToString,
         constructor_args: impl IntoIterator<Item = T>,
-    ) -> Result<MetacallObject, MetacallStringConversionError> {
+    ) -> Result<MetaCallObject, MetaCallStringConversionError> {
         let c_name = cstring!(name)?;
-        let mut c_args = parsers::metacallobj_to_raw_args(constructor_args);
+        let mut c_args = cast::metacallobj_to_raw_args(constructor_args);
         let obj = unsafe {
             metacall_class_new(
                 self.value_to_class(),
@@ -96,41 +96,41 @@ impl MetacallClass {
             unsafe { metacall_value_destroy(c_arg) };
         }
 
-        Ok(MetacallObject::new_raw(obj))
+        Ok(MetaCallObject::new_raw(obj))
     }
-    /// Creates an [object](MetacallObject) of the class wtihout constructor arguments.
+    /// Creates an [object](MetaCallObject) of the class wtihout constructor arguments.
     pub fn create_object_no_arg(
         &self,
         name: impl ToString,
-    ) -> Result<MetacallObject, MetacallStringConversionError> {
-        self.create_object::<MetacallNull>(name, [])
+    ) -> Result<MetaCallObject, MetaCallStringConversionError> {
+        self.create_object::<MetaCallNull>(name, [])
     }
 
     fn get_attribute_inner(
         &self,
         name: impl ToString,
-    ) -> Result<*mut c_void, MetacallGetAttributeError> {
-        let c_name = cstring_enum!(name, MetacallGetAttributeError)?;
+    ) -> Result<*mut c_void, MetaCallGetAttributeError> {
+        let c_name = cstring_enum!(name, MetaCallGetAttributeError)?;
 
         Ok(unsafe { metacall_class_static_get(self.value_to_class(), c_name.as_ptr()) })
     }
-    /// Gets static attribute from a class without type casting([MetacallValue](MetacallValue)).
+    /// Gets static attribute from a class without type casting([MetaCallValue](MetaCallValue)).
     pub fn get_attribute_untyped(
         &self,
         name: impl ToString,
-    ) -> Result<Box<dyn MetacallValue>, MetacallGetAttributeError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+    ) -> Result<Box<dyn MetaCallValue>, MetaCallGetAttributeError> {
+        Ok(cast::raw_to_metacallobj_untyped(
             self.get_attribute_inner(name)?,
         ))
     }
     /// Gets static attribute from a class.
-    pub fn get_attribute<T: MetacallValue>(
+    pub fn get_attribute<T: MetaCallValue>(
         &self,
         name: impl ToString,
-    ) -> Result<T, MetacallGetAttributeError> {
-        match parsers::raw_to_metacallobj::<T>(self.get_attribute_inner(name)?) {
+    ) -> Result<T, MetaCallGetAttributeError> {
+        match cast::raw_to_metacallobj::<T>(self.get_attribute_inner(name)?) {
             Ok(ret) => Ok(ret),
-            Err(original) => Err(MetacallGetAttributeError::FailedCasting(original)),
+            Err(original) => Err(MetaCallGetAttributeError::FailedCasting(original)),
         }
     }
 
@@ -138,13 +138,13 @@ impl MetacallClass {
     pub fn set_attribute(
         &self,
         key: impl ToString,
-        value: impl MetacallValue,
-    ) -> Result<(), MetacallSetAttributeError> {
-        let c_key = cstring_enum!(key, MetacallSetAttributeError)?;
+        value: impl MetaCallValue,
+    ) -> Result<(), MetaCallSetAttributeError> {
+        let c_key = cstring_enum!(key, MetaCallSetAttributeError)?;
 
-        let c_arg = parsers::metacallobj_to_raw(value);
+        let c_arg = cast::metacallobj_to_raw(value);
         if unsafe { metacall_class_static_set(self.value_to_class(), c_key.as_ptr(), c_arg) } != 0 {
-            return Err(MetacallSetAttributeError::SetAttributeFailure);
+            return Err(MetaCallSetAttributeError::SetAttributeFailure);
         }
 
         unsafe { metacall_value_destroy(c_arg) };
@@ -152,13 +152,13 @@ impl MetacallClass {
         Ok(())
     }
 
-    fn call_method_inner<T: MetacallValue>(
+    fn call_method_inner<T: MetaCallValue>(
         &self,
         name: impl ToString,
         args: impl IntoIterator<Item = T>,
-    ) -> Result<*mut c_void, MetacallError> {
-        let c_key = cstring_enum!(name, MetacallError)?;
-        let mut c_args = parsers::metacallobj_to_raw_args(args);
+    ) -> Result<*mut c_void, MetaCallError> {
+        let c_key = cstring_enum!(name, MetaCallError)?;
+        let mut c_args = cast::metacallobj_to_raw_args(args);
         let ret = unsafe {
             metacallv_class(
                 self.value_to_class(),
@@ -174,43 +174,43 @@ impl MetacallClass {
 
         Ok(ret)
     }
-    /// Calls a static class method witout type casting([MetacallValue](MetacallValue)).
-    pub fn call_method_untyped<T: MetacallValue>(
+    /// Calls a static class method witout type casting([MetaCallValue](MetaCallValue)).
+    pub fn call_method_untyped<T: MetaCallValue>(
         &self,
         name: impl ToString,
         args: impl IntoIterator<Item = T>,
-    ) -> Result<Box<dyn MetacallValue>, MetacallError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+    ) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
+        Ok(cast::raw_to_metacallobj_untyped(
             self.call_method_inner::<T>(name, args)?,
         ))
     }
-    /// Calls a static class method witout type casting([MetacallValue](MetacallValue)) and
+    /// Calls a static class method witout type casting([MetaCallValue](MetaCallValue)) and
     /// without passing arguments.
-    pub fn call_method_untyped_no_arg<T: MetacallValue>(
+    pub fn call_method_untyped_no_arg<T: MetaCallValue>(
         &self,
         name: impl ToString,
-    ) -> Result<Box<dyn MetacallValue>, MetacallError> {
-        Ok(parsers::raw_to_metacallobj_untyped(
+    ) -> Result<Box<dyn MetaCallValue>, MetaCallError> {
+        Ok(cast::raw_to_metacallobj_untyped(
             self.call_method_inner::<T>(name, [])?,
         ))
     }
     /// Calls a static class method.
-    pub fn call_method<T: MetacallValue, U: MetacallValue>(
+    pub fn call_method<T: MetaCallValue, U: MetaCallValue>(
         &self,
         name: impl ToString,
         args: impl IntoIterator<Item = U>,
-    ) -> Result<T, MetacallError> {
-        match parsers::raw_to_metacallobj::<T>(self.call_method_inner::<U>(name, args)?) {
+    ) -> Result<T, MetaCallError> {
+        match cast::raw_to_metacallobj::<T>(self.call_method_inner::<U>(name, args)?) {
             Ok(ret) => Ok(ret),
-            Err(original) => Err(MetacallError::FailedCasting(original)),
+            Err(original) => Err(MetaCallError::FailedCasting(original)),
         }
     }
     /// Calls a static class method without passing arguments.
-    pub fn call_method_no_arg<T: MetacallValue>(
+    pub fn call_method_no_arg<T: MetaCallValue>(
         &self,
         name: impl ToString,
-    ) -> Result<T, MetacallError> {
-        self.call_method::<T, MetacallNull>(name, [])
+    ) -> Result<T, MetaCallError> {
+        self.call_method::<T, MetaCallNull>(name, [])
     }
 
     #[doc(hidden)]
@@ -221,7 +221,7 @@ impl MetacallClass {
     }
 }
 
-impl Drop for MetacallClass {
+impl Drop for MetaCallClass {
     fn drop(&mut self) {
         if !self.leak {
             unsafe { metacall_value_destroy(self.value) }

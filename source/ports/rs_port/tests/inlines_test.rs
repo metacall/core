@@ -1,36 +1,39 @@
 use metacall::{
+    initialize,
     inline::{node, py, ts},
-    loaders, switch,
+    is_initialized, load,
 };
 
 #[test]
 fn inlines() {
-    let _d = switch::initialize().unwrap();
+    let _d = initialize().unwrap();
 
-    if loaders::from_memory("py", "").is_ok() {
+    assert!(is_initialized());
+
+    if load::from_memory("py", "").is_ok() {
         py! {
             print("hello world")
         }
     }
-    if loaders::from_memory("py", "").is_ok() {
+    if load::from_memory("py", "").is_ok() {
         py! {print("hello world")}
     }
 
-    if loaders::from_memory("node", "").is_ok() {
+    if load::from_memory("node", "").is_ok() {
         node! {
             console.log("hello world");
         }
     }
-    if loaders::from_memory("node", "").is_ok() {
+    if load::from_memory("node", "").is_ok() {
         node! {console.log("hello world")}
     }
 
-    if loaders::from_memory("ts", "").is_ok() {
+    if load::from_memory("ts", "").is_ok() {
         ts! {
             console.log("hello world");
         }
     }
-    if loaders::from_memory("ts", "").is_ok() {
+    if load::from_memory("ts", "").is_ok() {
         ts! {console.log("hello world")}
     }
 }

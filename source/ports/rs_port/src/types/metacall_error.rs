@@ -1,35 +1,34 @@
-use super::MetacallValue;
-use std::{ffi::NulError, path::PathBuf};
+use super::MetaCallValue;
+use std::{
+    ffi::{c_int, NulError},
+    fmt,
+    path::PathBuf,
+};
 
 #[derive(Debug, Clone)]
-/// This error happens when it's not possible to initialize the Metacall core. You can check
+/// This error happens when it's not possible to initialize the MetaCall core. You can check
 /// your logs for more information.
-pub struct MetacallInitError;
-impl MetacallInitError {
+pub struct MetaCallInitError(c_int);
+impl MetaCallInitError {
     #[doc(hidden)]
-    pub fn new() -> Self {
-        Self
+    pub fn new(code: c_int) -> Self {
+        Self(code)
     }
 }
-impl Default for MetacallInitError {
-    fn default() -> Self {
-        MetacallInitError::new()
-    }
-}
-impl ToString for MetacallInitError {
-    fn to_string(&self) -> String {
-        String::from("Failed to initialize Metacall!")
+impl fmt::Display for MetaCallInitError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Failed to initialize MetaCall with code: {}", self.0)
     }
 }
 
 #[derive(Debug, Clone)]
 /// This error may happen when passing contains a null character. You can access the
 /// original string and the NulError throughout this struct.
-pub struct MetacallStringConversionError {
+pub struct MetaCallStringConversionError {
     pub original_string: String,
     pub nul_error: NulError,
 }
-impl MetacallStringConversionError {
+impl MetaCallStringConversionError {
     #[doc(hidden)]
     pub fn new(original_string: impl ToString, nul_error: NulError) -> Self {
         Self {
@@ -38,46 +37,50 @@ impl MetacallStringConversionError {
         }
     }
 }
-impl ToString for MetacallStringConversionError {
-    fn to_string(&self) -> String {
-        self.original_string.clone()
+impl fmt::Display for MetaCallStringConversionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Failed to convert string: {}",
+            self.original_string.clone()
+        )
     }
 }
 
 #[derive(Debug, Clone)]
 /// This error may happen when trying to call a function.
-pub enum MetacallError {
+pub enum MetaCallError {
     /// Function not found.
     FunctionNotFound,
     /// Failed to cast the return type as the type requested.
-    FailedCasting(Box<dyn MetacallValue>),
+    FailedCasting(Box<dyn MetaCallValue>),
     /// Null character detected.
-    UnexpectedCStringConversionErr(MetacallStringConversionError),
+    UnexpectedCStringConversionErr(MetaCallStringConversionError),
 }
 
 #[derive(Debug, Clone)]
 /// This error may happen when trying to set a class/object attribute. Check your logs
 /// if you get `SetAttributeFailure` error variant.
-pub enum MetacallSetAttributeError {
+pub enum MetaCallSetAttributeError {
     /// Failed to set the attribute.
     SetAttributeFailure,
     /// Null character detected.
-    UnexpectedCStringConversionErr(MetacallStringConversionError),
+    UnexpectedCStringConversionErr(MetaCallStringConversionError),
 }
 
 #[derive(Debug, Clone)]
 /// This error may happen when trying to get a class/object attribute.
-pub enum MetacallGetAttributeError {
+pub enum MetaCallGetAttributeError {
     /// Failed to cast the attribute as the type requested.
-    FailedCasting(Box<dyn MetacallValue>),
+    FailedCasting(Box<dyn MetaCallValue>),
     /// Null character detected.
-    UnexpectedCStringConversionErr(MetacallStringConversionError),
+    UnexpectedCStringConversionErr(MetaCallStringConversionError),
 }
 
 #[derive(Debug, Clone)]
 /// This error may happen when loading a code. Check your logs for more information if you
 /// get `FromFileFailure` or `FromMemoryFailure` error variant.
-pub enum MetacallLoaderError {
+pub enum MetaCallLoaderError {
     /// File not found.
     FileNotFound(PathBuf),
     /// Failed to load from file.
@@ -87,14 +90,14 @@ pub enum MetacallLoaderError {
     /// Not a file or permission denied.
     NotAFileOrPermissionDenied(PathBuf),
     /// Null character detected.
-    UnexpectedCStringConversionErr(MetacallStringConversionError),
+    UnexpectedCStringConversionErr(MetaCallStringConversionError),
 }
 
 #[derive(Debug, Clone)]
 /// This error may happen when trying to get a class by its name.
-pub enum MetacallClassFromNameError {
+pub enum MetaCallClassFromNameError {
     /// Class not found.
     ClassNotFound,
     /// Null character detected.
-    UnexpectedCStringConversionErr(MetacallStringConversionError),
+    UnexpectedCStringConversionErr(MetaCallStringConversionError),
 }

@@ -1121,6 +1121,7 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 		if (unit == nullptr)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit of: %s", file.c_str());
+			clang_disposeIndex(index);
 			return -1;
 		}
 
