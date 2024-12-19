@@ -29,13 +29,13 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-          - linux/arm64
-          - linux/riscv64
-          - linux/ppc64le
-          - linux/s390x
+        #  - linux/arm64
+        #  - linux/riscv64
+        #  - linux/ppc64le
+        #  - linux/s390x
           - linux/386
-          - linux/arm/v7
-          - linux/arm/v6
+        #  - linux/arm/v7
+        #  - linux/arm/v6
           # - linux/mips64le
           # - linux/mips64
 
@@ -88,6 +88,10 @@ jobs:
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           docker build --platform ${{ matrix.platform }} -t test-image .
           docker run --rm --platform=${{ matrix.platform }} test-image | grep "abcde"
+
+      - name: List Docker Images
+        run: docker images
+
 
       - name: Push Platform Images
         run: |
