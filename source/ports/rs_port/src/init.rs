@@ -2,17 +2,13 @@ use crate::{
     bindings::{metacall_destroy, metacall_initialize, metacall_is_initialized},
     types::MetaCallInitError,
 };
-use std::{ffi::c_int, ptr};
+use std::ptr;
 
-pub struct MetaCallDestroy(unsafe extern "C" fn() -> c_int);
+pub struct MetaCallDestroy(unsafe extern "C" fn());
 
 impl Drop for MetaCallDestroy {
     fn drop(&mut self) {
-        let code = unsafe { self.0() };
-
-        if code != 0 {
-            panic!("MetaCall failed to destroy with code: {}", code)
-        }
+        unsafe { self.0() }
     }
 }
 

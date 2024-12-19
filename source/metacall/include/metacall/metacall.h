@@ -1488,11 +1488,8 @@ METACALL_API const char *metacall_plugin_path(void);
 /**
 *  @brief
 *    Destroy MetaCall library
-*
-*  @return
-*    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_destroy(void);
+METACALL_API void metacall_destroy(void);
 
 /**
 *  @brief

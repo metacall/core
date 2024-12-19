@@ -72,7 +72,6 @@ static loader_path plugin_path = { 0 };
 static int metacall_plugin_extension_load(void);
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
 static type_id *metacall_type_ids(void *args[], size_t size);
-static void metacall_destructor(void);
 static void metacall_detour_destructor(void);
 
 /* -- Costructors -- */
@@ -114,14 +113,9 @@ portability_constructor(metacall_constructor)
 			}
 
 			/* Register the destructor on exit */
-			atexit(metacall_destructor);
+			atexit(metacall_destroy);
 		}
 	}
-}
-
-void metacall_destructor(void)
-{
-	metacall_destroy();
 }
 
 /* -- Methods -- */
@@ -200,8 +194,6 @@ plugin_extension_error:
 
 void metacall_detour_destructor(void)
 {
-	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall detour destruction");
-
 	/* Destroy link */
 	if (metacall_link_destroy() != 0)
 	{
@@ -2364,7 +2356,7 @@ const char *metacall_plugin_path(void)
 	return plugin_path;
 }
 
-int metacall_destroy(void)
+void metacall_destroy(void)
 {
 	if (metacall_initialize_flag == 0)
 	{
@@ -2374,17 +2366,16 @@ int metacall_destroy(void)
 		/* Destroy configurations */
 		configuration_destroy();
 
-		metacall_initialize_flag = 1;
-
 		/* Print stats from functions, classes, objects and exceptions */
 		reflect_memory_tracker_debug();
 
 		/* Set to null the plugin extension and core plugin handles */
 		plugin_extension_handle = NULL;
 		plugin_core_handle = NULL;
-	}
 
-	return 0;
+		/* Set initialization flag to destroyed */
+		metacall_initialize_flag = 1;
+	}
 }
 
 const struct metacall_version_type *metacall_version(void)

@@ -1325,7 +1325,7 @@ pub extern fn metacall_deserialize(name: [*c]const u8, buffer: [*c]const u8, siz
 pub extern fn metacall_clear(handle: ?*anyopaque) c_int;
 pub extern fn metacall_plugin_extension() ?*anyopaque;
 pub extern fn metacall_plugin_path() [*c]const u8;
-pub extern fn metacall_destroy() c_int;
+pub extern fn metacall_destroy() void;
 pub extern fn metacall_version() [*c]const struct_metacall_version_type;
 pub extern fn metacall_version_hex_make(major: c_uint, minor: c_uint, patch: c_uint) u32;
 pub extern fn metacall_version_hex() u32;

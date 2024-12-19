@@ -71,5 +71,5 @@ TEST_F(metacall_python_node_await_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE && OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

@@ -55,5 +55,5 @@ TEST_F(metacall_load_configuration_node_python_test, DefaultConstructor)
 
 	EXPECT_EQ((double)5.0, (double)metacall_value_to_double(ret));
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

@@ -67,5 +67,5 @@ TEST_F(metacall_load_memory_empty_test, DefaultConstructor)
 	/* Non existent loader */
 	ASSERT_EQ((int)1, (int)metacall_load_from_memory("asdfghjk", buffer, sizeof(buffer), NULL));
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

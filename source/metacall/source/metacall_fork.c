@@ -172,10 +172,7 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork auto destroy");
 
 	/* Destroy metacall before the fork */
-	if (metacall_destroy() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction");
-	}
+	metacall_destroy();
 
 	/* Execute the real fork */
 	result = metacall_fork_trampoline(ProcessFlags, ProcessSecurityDescriptor, ThreadSecurityDescriptor, DebugPort, ProcessInformation);
@@ -247,10 +244,7 @@ pid_t metacall_fork_hook(void)
 	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork auto destroy");
 
 	/* Destroy metacall before the fork */
-	if (metacall_destroy() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction fail");
-	}
+	metacall_destroy();
 
 	/* Execute the real fork */
 	pid = metacall_fork_trampoline();

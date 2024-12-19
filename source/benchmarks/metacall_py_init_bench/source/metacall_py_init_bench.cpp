@@ -130,10 +130,7 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, destroy)
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 		{
-			if (metacall_destroy() != 0)
-			{
-				state.SkipWithError("Error destroying MetaCall");
-			}
+			metacall_destroy();
 		}
 #endif /* OPTION_BUILD_LOADERS_PY */
 	}

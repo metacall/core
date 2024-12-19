@@ -65,5 +65,5 @@ TEST_F(metacall_node_python_async_after_destroy_test, DefaultConstructor)
 	* https://github.com/metacall/core/commit/9b64ee533079fa0d543fc346fb7149d1086451f0
 	* https://github.com/metacall/core/commit/22bd999c281f23aac04cea7df435a836631706da
 	*/
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

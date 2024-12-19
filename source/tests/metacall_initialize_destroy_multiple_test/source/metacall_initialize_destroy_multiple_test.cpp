@@ -51,13 +51,13 @@ TEST_F(metacall_initialize_destroy_multiple_test, DefaultConstructor)
 
 		ASSERT_EQ((int)0, (int)metacall_is_initialized(tag));
 
-		ASSERT_EQ((int)0, (int)metacall_destroy());
+		metacall_destroy();
 
 		ASSERT_EQ((int)1, (int)metacall_is_initialized(tag));
 	}
 #endif /* OPTION_BUILD_LOADERS_MOCK */
 
-	ASSERT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 
-	ASSERT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

@@ -65,5 +65,5 @@ TEST_F(metacall_rust_load_from_package_dep_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }
