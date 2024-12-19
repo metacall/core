@@ -23,15 +23,11 @@
 
 #include <cli_core_plugin/cli_core_plugin_api.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 CLI_CORE_PLUGIN_API int cli_core_plugin(void *loader, void *handle);
-
-DYNLINK_SYMBOL_EXPORT(cli_core_plugin);
 
 #ifdef __cplusplus
 }

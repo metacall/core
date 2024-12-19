@@ -60,5 +60,5 @@ TEST_F(metacall_backtrace_plugin_test, DefaultConstructor)
 	/* Generate a segmentation fault in order to catch it by backtrace plugin */
 	EXPECT_DEATH({ badass_function(); }, "");
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

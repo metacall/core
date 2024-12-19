@@ -31,7 +31,7 @@ public interface Bindings extends Library
   SizeT metacall_function_size(Pointer func);
   int metacall_function_async(Pointer func);
 
-  int metacall_destroy();
+  void metacall_destroy();
 
   //metacall_value.h
   Pointer metacall_value_create_int(int i);

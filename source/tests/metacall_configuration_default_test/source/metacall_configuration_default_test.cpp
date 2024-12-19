@@ -33,5 +33,5 @@ TEST_F(metacall_configuration_default_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

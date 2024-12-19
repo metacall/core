@@ -93,5 +93,5 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	metacall_value_destroy(args_destroy[0]);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

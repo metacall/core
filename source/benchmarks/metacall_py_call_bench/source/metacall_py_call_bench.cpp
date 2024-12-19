@@ -178,10 +178,7 @@ int main(int argc, char *argv[])
 	::benchmark::RunSpecifiedBenchmarks();
 	::benchmark::Shutdown();
 
-	if (metacall_destroy() != 0)
-	{
-		return 4;
-	}
+	metacall_destroy();
 
 	return 0;
 }

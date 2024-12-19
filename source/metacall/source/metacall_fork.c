@@ -1,8 +1,20 @@
 /*
  *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
+ *
  *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
- *	A library for providing a foreign function interface calls.
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
+ *
+ *		http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  *
  */
 
@@ -102,16 +114,10 @@ pid_t metacall_fork_hook(void);
 
 /* -- Private Variables -- */
 
-static const char metacall_fork_detour_name[] = "funchook";
-
-static detour metacall_detour = NULL;
-
-static detour_handle metacall_detour_handle = NULL;
+static detour_handle detour_fork_handle = NULL;
 
 static metacall_pre_fork_callback_ptr metacall_pre_fork_callback = NULL;
 static metacall_post_fork_callback_ptr metacall_post_fork_callback = NULL;
-
-static int metacall_fork_flag = 1;
 
 /* -- Methods -- */
 
@@ -142,7 +148,7 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	HANDLE DebugPort,
 	PRTL_USER_PROCESS_INFORMATION ProcessInformation)
 {
-	RtlCloneUserProcessPtr metacall_fork_trampoline = (RtlCloneUserProcessPtr)detour_trampoline(metacall_detour_handle);
+	RtlCloneUserProcessPtr metacall_fork_trampoline = (RtlCloneUserProcessPtr)detour_trampoline(detour_fork_handle);
 
 	metacall_pre_fork_callback_ptr pre_callback = metacall_pre_fork_callback;
 	metacall_post_fork_callback_ptr post_callback = metacall_post_fork_callback;
@@ -159,17 +165,14 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 		/* TODO: Context */
 		if (pre_callback(NULL) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour pre callback invocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour pre fork callback invocation");
 		}
 	}
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork auto destroy");
 
 	/* Destroy metacall before the fork */
-	if (metacall_destroy() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction");
-	}
+	metacall_destroy();
 
 	/* Execute the real fork */
 	result = metacall_fork_trampoline(ProcessFlags, ProcessSecurityDescriptor, ThreadSecurityDescriptor, DebugPort, ProcessInformation);
@@ -198,7 +201,7 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 		/* TODO: Context */
 		if (post_callback(_getpid(), NULL) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour post callback invocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour post fork callback invocation");
 		}
 	}
 
@@ -212,12 +215,12 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 
 void (*metacall_fork_func(void))(void)
 {
-	return (void (*)(void)) & fork;
+	return (void (*)(void))(&fork);
 }
 
 pid_t metacall_fork_hook(void)
 {
-	pid_t (*metacall_fork_trampoline)(void) = (pid_t(*)(void))detour_trampoline(metacall_detour_handle);
+	pid_t (*metacall_fork_trampoline)(void) = (pid_t(*)(void))detour_trampoline(detour_fork_handle);
 
 	metacall_pre_fork_callback_ptr pre_callback = metacall_pre_fork_callback;
 	metacall_post_fork_callback_ptr post_callback = metacall_post_fork_callback;
@@ -234,17 +237,14 @@ pid_t metacall_fork_hook(void)
 		/* TODO: Context */
 		if (pre_callback(NULL) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour pre callback invocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour pre fork callback invocation");
 		}
 	}
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork auto destroy");
 
 	/* Destroy metacall before the fork */
-	if (metacall_destroy() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction fail");
-	}
+	metacall_destroy();
 
 	/* Execute the real fork */
 	pid = metacall_fork_trampoline();
@@ -268,7 +268,7 @@ pid_t metacall_fork_hook(void)
 		/* TODO: Context */
 		if (post_callback(pid, NULL) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour post callback invocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour post fork callback invocation");
 		}
 	}
 
@@ -279,69 +279,22 @@ pid_t metacall_fork_hook(void)
 	#error "Unknown metacall fork safety platform"
 #endif
 
-static void metacall_fork_exit(void)
-{
-	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall atexit triggered");
-
-	if (metacall_fork_destroy() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
-	}
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork destroyed");
-}
-
 int metacall_fork_initialize(void)
 {
-	void (*fork_func)(void) = metacall_fork_func();
+	detour d = detour_create(metacall_detour());
 
-	if (fork_func == NULL)
+	if (detour_fork_handle == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid fork function pointer");
+		detour_fork_handle = detour_install(d, (void (*)(void))metacall_fork_func(), (void (*)(void))(&metacall_fork_hook));
 
-		return 1;
-	}
-
-	if (detour_initialize() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour initialization");
-
-		return 1;
-	}
-
-	if (metacall_detour == NULL)
-	{
-		metacall_detour = detour_create(metacall_fork_detour_name);
-
-		if (metacall_detour == NULL)
+		if (detour_fork_handle == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour creation");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour fork installation");
 
 			metacall_fork_destroy();
 
 			return 1;
 		}
-	}
-
-	if (metacall_detour_handle == NULL)
-	{
-		metacall_detour_handle = detour_install(metacall_detour, (void (*)(void))fork_func, (void (*)(void)) & metacall_fork_hook);
-
-		if (metacall_detour_handle == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour installation");
-
-			metacall_fork_destroy();
-
-			return 1;
-		}
-	}
-
-	if (metacall_fork_flag == 1)
-	{
-		atexit(&metacall_fork_exit);
-
-		metacall_fork_flag = 0;
 	}
 
 	return 0;
@@ -357,31 +310,19 @@ int metacall_fork_destroy(void)
 {
 	int result = 0;
 
-	if (metacall_detour_handle != NULL)
+	if (detour_fork_handle != NULL)
 	{
-		if (detour_uninstall(metacall_detour, metacall_detour_handle) != 0)
+		detour d = detour_create(metacall_detour());
+
+		if (detour_uninstall(d, detour_fork_handle) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour uninstall");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour fork uninstall");
 
 			result = 1;
 		}
 
-		metacall_detour_handle = NULL;
+		detour_fork_handle = NULL;
 	}
-
-	if (metacall_detour != NULL)
-	{
-		if (detour_clear(metacall_detour) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour clear");
-
-			result = 1;
-		}
-
-		metacall_detour = NULL;
-	}
-
-	detour_destroy();
 
 	metacall_pre_fork_callback = NULL;
 	metacall_post_fork_callback = NULL;

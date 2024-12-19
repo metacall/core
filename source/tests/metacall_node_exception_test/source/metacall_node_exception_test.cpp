@@ -75,5 +75,5 @@ TEST_F(metacall_node_exception_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

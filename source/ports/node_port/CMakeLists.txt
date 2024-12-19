@@ -93,12 +93,6 @@ if(NOT OPTION_BUILD_CLI OR NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_
 	return()
 endif()
 
-set(node_port_test "${target}_test")
-
-#
-# Define test
-#
-
 if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
 	# TODO: This test fails when run with thread sanitizer:
 	#
@@ -120,6 +114,14 @@ if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
 	# For solving this, we should enable C# support for sanitizers and debug it properly
 	return()
 endif()
+
+#
+# Define test
+#
+
+set(node_port_test "${target}_test")
+
+message(STATUS "Test ${node_port_test}")
 
 add_test(NAME ${target}
 	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:metacallcli>" -D "INPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/commands/node_port.txt" -P "${CMAKE_SOURCE_DIR}/source/cli/metacallcli/test/commands/command_runner.cmake"
@@ -212,4 +214,34 @@ test_environment_variables(${target}
 	${TESTS_ENVIRONMENT_VARIABLES_C}
 	${TESTS_ENVIRONMENT_VARIABLES_RS}
 	${TESTS_ENVIRONMENT_VARIABLES_OPENSSL}
+)
+
+#
+# Test importing NodeJS Port from node.exe
+#
+
+set(node_port_test_exec "${node_port_test}_executable")
+
+message(STATUS "Test ${node_port_test_exec}")
+
+add_test(NAME ${node_port_test_exec}
+	COMMAND ${NodeJS_EXECUTABLE} -e "require('./test.js').main()"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# Define test labels
+set_property(TEST ${node_port_test_exec}
+	PROPERTY LABELS ${node_port_test_exec}
+)
+
+# Environment variables
+test_environment_variables(${node_port_test_exec}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+	${TESTS_ENVIRONMENT_VARIABLES_COB}
+	${TESTS_ENVIRONMENT_VARIABLES_C}
+	${TESTS_ENVIRONMENT_VARIABLES_RS}
+	${TESTS_ENVIRONMENT_VARIABLES_OPENSSL}
+	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
+	${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}
 )

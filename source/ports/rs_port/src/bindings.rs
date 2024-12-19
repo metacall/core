@@ -1355,8 +1355,8 @@ unsafe extern "C" {
     pub fn metacall_plugin_path() -> *const ::std::os::raw::c_char;
 }
 unsafe extern "C" {
-    #[doc = "  @brief\n    Destroy MetaCall library\n\n  @return\n    Zero if success, different from zero otherwise"]
-    pub fn metacall_destroy() -> ::std::os::raw::c_int;
+    #[doc = "  @brief\n    Destroy MetaCall library\n"]
+    pub fn metacall_destroy();
 }
 unsafe extern "C" {
     #[doc = "  @brief\n    Provide the module version struct\n\n  @return\n    Static struct containing unpacked version"]

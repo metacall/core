@@ -155,5 +155,5 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_PY + OPTION_BUILD_LOADERS_RB */
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

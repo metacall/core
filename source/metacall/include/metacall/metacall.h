@@ -28,6 +28,7 @@
 #include <metacall/metacall_allocator.h>
 #include <metacall/metacall_def.h>
 #include <metacall/metacall_error.h>
+#include <metacall/metacall_link.h>
 #include <metacall/metacall_log.h>
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_version.h>
@@ -58,10 +59,8 @@ struct metacall_initialize_configuration_type;
 
 struct metacall_initialize_configuration_type
 {
-	char *tag;
-	void *options; // TODO: We should use a MetaCall value MAP here and merge it with the configuration.
-				   // By this way loaders will be able to access this information in the backend and we
-				   // can use a weak API in order to implement this successfully
+	const char *tag; /* Tag referring to the loader */
+	void *options;	 /* Value of type Map that will be merged merged into the configuration of the loader */
 };
 
 typedef void *(*metacall_await_callback)(void *, void *);
@@ -97,6 +96,15 @@ METACALL_API extern void *metacall_null_args[1];
 *    Name of the serializer to be used with serialization methods
 */
 METACALL_API const char *metacall_serial(void);
+
+/**
+*  @brief
+*    Returns default detour used by MetaCall
+*
+*  @return
+*    Name of the detour to be used with detouring methods
+*/
+METACALL_API const char *metacall_detour(void);
 
 /**
 *  @brief
@@ -1480,11 +1488,8 @@ METACALL_API const char *metacall_plugin_path(void);
 /**
 *  @brief
 *    Destroy MetaCall library
-*
-*  @return
-*    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_destroy(void);
+METACALL_API void metacall_destroy(void);
 
 /**
 *  @brief

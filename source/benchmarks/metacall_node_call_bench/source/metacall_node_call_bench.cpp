@@ -292,5 +292,7 @@ int main(int argc, char **argv)
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
-	return metacall_destroy();
+	metacall_destroy();
+
+	return 0;
 }

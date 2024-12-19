@@ -151,5 +151,5 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

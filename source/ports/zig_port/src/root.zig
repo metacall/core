@@ -9,13 +9,8 @@ pub fn init() !void {
         return error.FailedToInitMetacall;
 }
 /// Deinitializes MetaCall and returns an error if didn't succeed.
-pub fn destroy() !void {
-    if (mb.metacall_destroy() != 0)
-        return error.FailedToDeinitMetacall;
-}
-/// Deinitializes MetaCall.
-pub fn deinit() void {
-    _ = destroy() catch {};
+pub fn destroy() void {
+    mb.metacall_destroy();
 }
 
 /// Loads files into MetaCall, strings should be null-terminated.

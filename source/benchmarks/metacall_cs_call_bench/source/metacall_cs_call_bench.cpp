@@ -186,5 +186,7 @@ int main(int argc, char **argv)
 
 	::benchmark::RunSpecifiedBenchmarks();
 
-	return metacall_destroy();
+	metacall_destroy();
+
+	return 0;
 }

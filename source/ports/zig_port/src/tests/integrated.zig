@@ -38,5 +38,5 @@ pub fn main() !void {
     try std.testing.expect(ret_string.?[0] == 'h');
     try std.testing.expect(ret_string.?[1] == 'i');
 
-    defer metacall.deinit();
+    defer metacall.destroy();
 }

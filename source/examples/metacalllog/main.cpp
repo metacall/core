@@ -143,5 +143,7 @@ int main(int, char *[])
 
 	/* Here you can load some scripts */
 
-	return metacall_destroy();
+	metacall_destroy();
+
+	return 0;
 }

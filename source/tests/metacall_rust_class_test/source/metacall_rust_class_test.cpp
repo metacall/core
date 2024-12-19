@@ -103,5 +103,5 @@ TEST_F(metacall_rust_class_test, DefaultConstructor)
 		// metacall_value_destroy(book_class);
 	}
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

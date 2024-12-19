@@ -25,19 +25,13 @@
 
 #include <loader/loader_impl_interface.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 WASM_LOADER_API loader_impl_interface wasm_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(wasm_loader_impl_interface_singleton);
-
 WASM_LOADER_API const char *wasm_loader_print_info(void);
-
-DYNLINK_SYMBOL_EXPORT(wasm_loader_print_info);
 
 #ifdef __cplusplus
 }

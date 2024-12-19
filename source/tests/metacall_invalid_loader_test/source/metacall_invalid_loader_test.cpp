@@ -48,5 +48,5 @@ TEST_F(metacall_invalid_loader_test, DefaultConstructor)
 
 	ASSERT_EQ((int)1, (int)metacall_is_initialized("invalid"));
 
-	ASSERT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

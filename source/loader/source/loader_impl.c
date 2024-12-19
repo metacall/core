@@ -87,7 +87,7 @@ struct loader_impl_type
 	loader_impl_data data;		   /* Derived metadata provided by the loader, usually contains the data of the VM, Interpreter or JIT */
 	context ctx;				   /* Contains the objects, classes and functions loaded in the global scope of each loader */
 	set type_info_map;			   /* Stores a set indexed by type name of all of the types existing in the loader (global scope (TODO: may need refactor per handle)) */
-	void *options;				   /* Additional initialization options passed in the initialize phase */
+	value options;				   /* Additional initialization options passed in the initialize phase */
 	set exec_path_map;			   /* Set of execution paths passed by the end user */
 };
 
@@ -122,8 +122,6 @@ static loader_impl loader_impl_allocate(const loader_tag tag);
 static configuration loader_impl_initialize_configuration(plugin p);
 
 static int loader_impl_initialize_registered(plugin_manager manager, plugin p);
-
-static int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl);
 
 static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size);
 
@@ -1158,7 +1156,7 @@ void loader_impl_set_options(loader_impl impl, void *options)
 	}
 }
 
-void *loader_impl_get_options(loader_impl impl)
+value loader_impl_get_options(loader_impl impl)
 {
 	if (impl != NULL)
 	{
@@ -1166,6 +1164,41 @@ void *loader_impl_get_options(loader_impl impl)
 	}
 
 	return NULL;
+}
+
+value loader_impl_get_option(loader_impl impl, const char *field)
+{
+	value *options_map = value_to_map(impl->options);
+	size_t i, size = value_type_count(impl->options);
+
+	for (i = 0; i < size; ++i)
+	{
+		value *options_tuple = value_to_array(options_map[i]);
+
+		if (value_type_id(options_tuple[0]) == TYPE_STRING)
+		{
+			const char *str = value_to_string(options_tuple[0]);
+
+			if (strncmp(str, field, value_type_size(options_tuple[0])) == 0)
+			{
+				return options_tuple[1];
+			}
+		}
+	}
+
+	return NULL;
+}
+
+int loader_impl_get_option_host(loader_impl impl)
+{
+	value host = loader_impl_get_option(impl, "host");
+
+	if (host != NULL && value_type_id(host) == TYPE_BOOL)
+	{
+		return value_to_bool(host);
+	}
+
+	return 0;
 }
 
 int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr)
@@ -1538,6 +1571,11 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 	set_destroy(impl->exec_path_map);
 
 	context_destroy(impl->ctx);
+
+	if (impl->options != NULL)
+	{
+		value_type_destroy(impl->options);
+	}
 
 	free(impl);
 }

@@ -44,7 +44,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	EXPECT_EQ((int)0, (int)metacall_initialize());
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }
 
 class metacall_loader_test : public testing::Test
@@ -63,7 +63,7 @@ public:
 
 	~metacall_loader_test()
 	{
-		EXPECT_EQ((int)0, (int)metacall_destroy());
+		metacall_destroy();
 	}
 };
 
