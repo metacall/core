@@ -200,7 +200,18 @@ sub_cache() {
 }
 
 sub_platform() {
-    
+    # Default platform if not defined
+    if [ -z "$METACALL_PLATFORM" ]; then
+        METACALL_PLATFORM="linux/amd64"
+        echo "METACALL_PLATFORM not defined. Defaulting to: $METACALL_PLATFORM"
+    else
+        echo "Building for platform: $METACALL_PLATFORM"
+    fi
+
+	# Set up Buildx if not already configured
+    docker buildx ls | grep multiarch_builder || docker buildx create --name multiarch_builder --use
+    docker buildx inspect multiarch_builder --bootstrap
+	
 }
 
 # Push MetaCall Docker Compose
