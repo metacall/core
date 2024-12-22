@@ -211,6 +211,11 @@ sub_platform() {
 	# Set up Buildx if not already configured
     docker buildx ls | grep multiarch_builder || docker buildx create --name multiarch_builder --use
     docker buildx inspect multiarch_builder --bootstrap
+
+	# Build dependencies
+    ln -sf tools/deps/.dockerignore .dockerignore
+    docker buildx build --platform $METACALL_PLATFORM -f docker-compose.yml -t metacall/deps .
+
 	
 }
 
