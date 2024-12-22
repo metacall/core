@@ -216,6 +216,10 @@ sub_platform() {
     ln -sf tools/deps/.dockerignore .dockerignore
     docker buildx build --platform $METACALL_PLATFORM -f docker-compose.yml -t metacall/deps .
 
+	# Build development environment
+    ln -sf tools/dev/.dockerignore .dockerignore
+    docker buildx build --platform $METACALL_PLATFORM -f docker-compose.yml -t metacall/dev .
+
 	
 }
 
