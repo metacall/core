@@ -199,24 +199,8 @@ sub_cache() {
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build cli
 }
 
-# Build MetaCall Docker Compose with multi-platform specifier (link manually dockerignore files)
 sub_platform() {
-	if [ -z "$METACALL_PLATFORM" ]; then
-		echo "Error: METACALL_PLATFORM variable not defined"
-		exit 1
-	fi
-
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build dev
-
-	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build runtime
-
-	ln -sf tools/cli/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build cli
+    
 }
 
 # Push MetaCall Docker Compose
