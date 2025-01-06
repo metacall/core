@@ -6,7 +6,6 @@ on:
     branches:
       - master
       - develop
-      - multiArchitectureFeature
     tags:
       - 'v*.*.*'
 
@@ -16,7 +15,7 @@ concurrency:
 
 env:
   DOCKER_REGISTRY: index.docker.io
-  DOCKER_USERNAME: mryash
+  DOCKER_USERNAME: metacall
   IMAGE_NAME: core
   BUILDKIT_VERSION: 0.13.0
 
@@ -29,16 +28,13 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-        #  - linux/arm64
-        #  - linux/riscv64
-        #  - linux/ppc64le
-        #  - linux/s390x
           - linux/386
-        #  - linux/arm/v7
-        #  - linux/arm/v6
-          # - linux/mips64le
-          # - linux/mips64
-
+          - linux/arm64
+          - linux/riscv64
+          - linux/ppc64le
+          - linux/s390x
+          - linux/arm/v7
+          - linux/arm/v6
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -65,32 +61,14 @@ jobs:
         run: |
           ./docker-compose.sh platform
 
-      - name: List Docker Images
-        run: docker images
-
       - name: Tag Platform Images
         run: |
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           echo "Platform Tag: ${platform_tag}"
           for tag in "deps" "dev" "runtime" "cli"; do
-            docker tag ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
+            docker tag metacall/${IMAGE_NAME}:${tag} \
               ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
-
-      - name: Create Test Dockerfile
-        run: |
-          cat <<EOF > Dockerfile
-          FROM ${DOCKER_USERNAME}/${IMAGE_NAME}:cli
-          RUN echo "console.log('abcde')" > script.js
-          RUN metacallcli script.js
-          EOF
-
-      - name: Build and Test Image
-        run: |
-          set -exuo pipefail
-          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
-          docker build --platform ${{ matrix.platform }} -t test-image .
-          docker run --rm --platform=${{ matrix.platform }} test-image | grep "abcde"
 
       - name: Push Platform Images
         run: |
@@ -99,6 +77,19 @@ jobs:
             echo "Pushing image for tag: ${tag} with platform: ${platform_tag}"
             docker push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
+
+      - name: Run Tests
+        run: |
+          set -exuo pipefail
+          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
+          cat <<EOF > Dockerfile.test
+          FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform_tag}
+          RUN echo "console.log('abcde')" > script.js
+          RUN metacallcli script.js
+          EOF
+
+          docker build --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
+          docker run --rm --platform=${{ matrix.platform }} test-image
 
   manifest:
     name: Create and Push Manifest Lists
@@ -116,10 +107,11 @@ jobs:
           for tag in "deps" "dev" "runtime" "cli"; do
             echo "Creating manifest for tag: $tag"
             platform_tags=""
-            platforms=("linux-amd64" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-386" "linux-arm-v7" "linux-arm-v6")
-            for platform in "${platforms[@]}"; do
-              platform_tags="${platform_tags} ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform}"
+            for platform in "linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6"; do
+              platform_tag=$(echo "${platform}" | tr '/' '-')
+              platform_tags="${platform_tags} ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}"
             done
+            echo "Creating manifest with tags: ${platform_tags}"
             docker manifest create ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} ${platform_tags} --amend
             docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}
           done
@@ -129,7 +121,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           tags=("deps" "dev" "runtime" "cli")
-          platforms=("linux-amd64" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-386" "linux-arm-v7" "linux-arm-v6")
+          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
           for tag in "${tags[@]}"; do
             platform_tags=""
             for platform in "${platforms[@]}"; do
@@ -139,7 +131,6 @@ jobs:
             docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag}
           done
 
-          # Create and push the 'latest' tag for CLI
           cli_platform_tags=""
           for platform in ${{ matrix.platform }}; do
             cli_platform_tags="${cli_platform_tags} ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform}"
@@ -155,7 +146,7 @@ jobs:
     steps:
       - name: Remove Platform-Specific Tags
         run: |
-          platforms=("linux-amd64" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-386" "linux-arm-v7" "linux-arm-v6")
+          platforms=("linux-amd64" "linux-386" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-arm-v7" "linux-arm-v6")
           tags=("deps" "dev" "runtime" "cli")
 
           for platform in "${platforms[@]}"; do
