@@ -126,6 +126,27 @@ function Set-Nodejs {
 	Write-Output "-DNodeJS_EXECUTABLE=""$NodeDir/node.exe""" >> $EnvOpts
 	Write-Output "-DNodeJS_LIBRARY_NAME=""libnode.dll""" >> $EnvOpts
 	Write-Output "-DNodeJS_LIBRARY_NAME_PATH=""$NodeDir/lib/libnode.dll""" >> $EnvOpts
+
+	if ($Arguments -contains "c") {
+		# Required for test source/tests/metacall_node_port_c_lib_test
+		if (!(Test-Path -Path "$DepsDir\libgit2")) {
+			# Clone libgit2
+			git clone --depth 1 --branch v1.8.4 https://github.com/libgit2/libgit2
+		}
+
+		$InstallDir = "$DepsDir\libgit2\build\dist"
+
+		mkdir "$DepsDir\libgit2\build"
+		mkdir "$InstallDir"
+		Set-Location "$DepsDir\libgit2\build"
+
+		cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_CLI=OFF ..
+		cmake --build . "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)"
+		cmake --install . --prefix "$InstallDir"
+
+		Write-Output "-DLibGit2_LIBRARY=""$InstallDir\lib\git2.lib""" >> $EnvOpts
+		Write-Output "-DLibGit2_INCLUDE_DIR=""$InstallDir\include""" >> $EnvOpts
+	}
 }
 
 function Set-Java {

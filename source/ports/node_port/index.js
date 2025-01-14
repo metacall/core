@@ -185,6 +185,18 @@ const metacall_await = (name, ...args) => {
 	return addon.metacall_await(name, ...args);
 };
 
+const metacall_execution_path = (tag, path) => {
+	if (Object.prototype.toString.call(tag) !== '[object String]') {
+		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
+	}
+
+	if (Object.prototype.toString.call(path) !== '[object String]') {
+		throw Error('The path should be of string type.');
+	}
+
+	return addon.metacall_execution_path(tag, path);
+};
+
 const metacall_load_from_file = (tag, paths) => {
 	if (Object.prototype.toString.call(tag) !== '[object String]') {
 		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
@@ -231,6 +243,30 @@ const metacall_load_from_memory_export = (tag, code) => {
 	}
 
 	return addon.metacall_load_from_memory_export(tag, code);
+};
+
+const metacall_load_from_package = (tag, pkg) => {
+	if (Object.prototype.toString.call(tag) !== '[object String]') {
+		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
+	}
+
+	if (Object.prototype.toString.call(pkg) !== '[object String]') {
+		throw Error('Package should be a string with the id or path to the package.');
+	}
+
+	return addon.metacall_load_from_package(tag, pkg);
+};
+
+const metacall_load_from_package_export = (tag, pkg) => {
+	if (Object.prototype.toString.call(tag) !== '[object String]') {
+		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
+	}
+
+	if (Object.prototype.toString.call(pkg) !== '[object String]') {
+		throw Error('Package should be a string with the id or path to the package.');
+	}
+
+	return addon.metacall_load_from_package_export(tag, pkg);
 };
 
 const metacall_load_from_configuration = (path) => {
@@ -290,10 +326,13 @@ const module_exports = {
 	metacallfms,
 	metacall_await,
 	metacall_inspect,
+	metacall_execution_path,
 	metacall_load_from_file,
 	metacall_load_from_file_export,
 	metacall_load_from_memory,
 	metacall_load_from_memory_export,
+	metacall_load_from_package,
+	metacall_load_from_package_export,
 	metacall_load_from_configuration,
 	metacall_load_from_configuration_export,
 	metacall_handle,
