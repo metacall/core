@@ -464,11 +464,18 @@ sub_nodejs(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ $INSTALL_C = 1 ]; then
+			# Required for test source/tests/metacall_node_port_c_lib_test
+			INSTALL_LIBGIT2="libgit2-dev"
+		else
+			INSTALL_LIBGIT2=""
+		fi
+
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			# Note that Python is required for GYP
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl $INSTALL_LIBGIT2
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			$SUDO_CMD apk add --no-cache python3 g++ make nodejs nodejs-dev npm curl
+			$SUDO_CMD apk add --no-cache python3 g++ make nodejs nodejs-dev npm curl $INSTALL_LIBGIT2
 
 			# Build dependencies (note libexecinfo-dev is not available in Alpine 3.17)
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main linux-headers libexecinfo libexecinfo-dev
@@ -556,6 +563,12 @@ sub_nodejs(){
 
 		# Configure NPM path
 		echo "-DNPM_ROOT=$NODE_PREFIX/bin" >> $CMAKE_CONFIG_PATH
+
+		if [ $INSTALL_C = 1 ]; then
+			# Required for test source/tests/metacall_node_port_c_lib_test
+			brew install libgit2@1.8
+			brew link libgit2@1.8 --force --overwrite
+		fi
 
 		# fi
 	fi

@@ -81,6 +81,8 @@ public:
 
 	virtual ~loader_impl_c_handle_base_type() {}
 
+	virtual bool recursive_includes() = 0;
+
 	virtual int discover(loader_impl impl, context ctx) = 0;
 
 	virtual const void *symbol(std::string &name) = 0;
@@ -134,6 +136,11 @@ public:
 		{
 			tcc_delete(this->state);
 		}
+	}
+
+	bool recursive_includes()
+	{
+		return false;
 	}
 
 	bool initialize(loader_impl_c c_impl)
@@ -230,6 +237,11 @@ public:
 		{
 			dynlink_unload(this->lib);
 		}
+	}
+
+	bool recursive_includes()
+	{
+		return true;
 	}
 
 	bool initialize(loader_impl_c c_impl, const loader_path path)
@@ -1022,12 +1034,18 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 	symbol_name.insert(0, 1, '_');
 #endif
 
+	if (scope_get(sp, symbol_name.c_str()) != NULL)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "Symbol '%s' redefined, skipping the function", func_name.c_str());
+		return 0;
+	}
+
 	const void *address = c_handle->symbol(symbol_name);
 
 	if (address == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Symbol '%s' not found, skipping the function", func_name.c_str());
-		return 1;
+		log_write("metacall", LOG_LEVEL_WARNING, "Symbol '%s' not found, skipping the function", func_name.c_str());
+		return 0;
 	}
 
 	loader_impl_c_function c_function = new loader_impl_c_function_type(address);
@@ -1080,9 +1098,13 @@ static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCurs
 {
 	c_loader_impl_discover_visitor_data visitor_data = static_cast<c_loader_impl_discover_visitor_data>(data);
 
-	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
+	/* Include recursively when disabled, include only the header inlcuded is populated when enabled */
+	if (visitor_data->c_handle->recursive_includes() == false)
 	{
-		return CXChildVisit_Continue;
+		if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
+		{
+			return CXChildVisit_Continue;
+		}
 	}
 
 	CXCursorKind kind = clang_getCursorKind(cursor);
@@ -1102,6 +1124,7 @@ static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCurs
 
 static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_base c_handle, context ctx)
 {
+	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	c_loader_impl_discover_visitor_data_type data = {
 		impl,
 		c_handle,
@@ -1109,12 +1132,24 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 		0
 	};
 
+	std::vector<std::string> includes;
+	std::vector<const char *> command_line_args;
+
+	/* Otherwise, check the execution paths */
+	for (auto exec_path : c_impl->execution_paths)
+	{
+		includes.push_back("-I" + exec_path);
+		command_line_args.push_back(includes.back().c_str());
+	}
+
 	for (std::string file : c_handle->files)
 	{
-		CXIndex index = clang_createIndex(0, 0);
+		/* Define the command line arguments (simulating compiler flags) */
+		CXIndex index = clang_createIndex(0, 1);
 		CXTranslationUnit unit = clang_parseTranslationUnit(
 			index,
-			file.c_str(), nullptr, 0,
+			file.c_str(),
+			command_line_args.data(), command_line_args.size(),
 			nullptr, 0,
 			CXTranslationUnit_None);
 
