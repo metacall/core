@@ -31,7 +31,7 @@
 #include <string.h>
 
 #if defined(WIN32) || defined(_WIN32)
-	#include <winbase.h>
+	#include <winbase.h> /* SetDllDirectoryA */
 #endif
 
 /* -- Declarations -- */

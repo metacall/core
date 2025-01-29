@@ -22,7 +22,7 @@
 #
 
 # CMake version
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
 # Include cmake modules
 
@@ -240,6 +240,9 @@ else()
 		set(CMAKE_INSTALL_RPATH "$ORIGIN/${INSTALL_LIB}")
 	endif()
 endif()
+
+# Export compile commands
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #
 # CTest configuration

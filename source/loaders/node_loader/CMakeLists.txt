@@ -157,9 +157,6 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
-	# TODO: Implement delayed load
-	${NodeJS_LIBRARY} # NodeJS library
-
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 
@@ -227,6 +224,8 @@ install(TARGETS ${target}
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
 
+set(NodeJS_LIBRARY_DEVELOPMENT "${NodeJS_LIBRARY}")
+
 # Runtime (pack NodeJS DLL in windows)
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
@@ -236,10 +235,32 @@ if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)
+
+	get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY_NAME_PATH}" NAME)
+	set(NodeJS_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${NodeJS_LIBRARY_NAME}")
 elseif(NodeJS_BUILD_FROM_SOURCE AND NOT WIN32)
 	install(FILES
 		"${NodeJS_LIBRARY}"
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)
+
+	get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY}" NAME)
+	set(NodeJS_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${NodeJS_LIBRARY_NAME}")
+else()
+	set(NodeJS_LIBRARY_INSTALL "${NodeJS_LIBRARY}")
 endif()
+
+#
+# Configuration
+#
+
+# Development
+loader_configuration_begin(node_loader)
+loader_configuration_deps(node "${NodeJS_LIBRARY_DEVELOPMENT}")
+loader_configuartion_end_development()
+
+# Install
+loader_configuration_begin(node_loader)
+loader_configuration_deps(node "${NodeJS_LIBRARY_INSTALL}")
+loader_configuartion_end_install()

@@ -1,4 +1,4 @@
 {
-	"dotnet_root":"@DOTNET_CORE_PATH@",
-	"dotnet_loader_assembly_path":"@DOTNET_CORE_LOADER_ASSEMBLY_PATH@"
+	"dotnet_root": "@DOTNET_CORE_PATH@",
+	"dotnet_loader_assembly_path": "@DOTNET_CORE_LOADER_ASSEMBLY_PATH@"
 }
