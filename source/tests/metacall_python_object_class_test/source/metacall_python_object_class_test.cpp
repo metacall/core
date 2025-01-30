@@ -149,6 +149,24 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			ASSERT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret_value));
 			metacall_value_destroy(static_method_args[0]);
 			metacall_value_destroy(ret_value);
+
+			// Get and Set
+			void *param2 = metacall_class_static_get(myclass, "b");
+			ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(param2));
+			ASSERT_EQ((long)44444L, (long)metacall_value_to_long(param2));
+
+			metacall_value_destroy(param2);
+
+			void *long_value = metacall_value_create_long(5555L);
+			int retcode = metacall_class_static_set(myclass, "b", long_value);
+			metacall_value_destroy(long_value);
+			ASSERT_EQ((int)0, int(retcode));
+
+			param2 = metacall_class_static_get(myclass, "b");
+			ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(param2));
+			ASSERT_EQ((long)5555L, (long)metacall_value_to_long(param2));
+
+			metacall_value_destroy(param2);
 		}
 
 		{

@@ -685,7 +685,6 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 	(void)cls;
 
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
-	PyObject *pyobject_class = py_class->cls;
 	char *attr_name = attribute_name(accessor->data.attr);
 
 	if (attr_name == NULL)
@@ -695,15 +694,15 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 
 	py_loader_thread_acquire();
 
-	PyObject *pyvalue = py_loader_impl_value_to_capi(py_class->impl, value_type_id(v), v);
+	PyObject *py_value = py_loader_impl_value_to_capi(py_class->impl, value_type_id(v), v);
 	PyObject *key_py_str = PyUnicode_FromString(attr_name);
-	int retval = PyObject_GenericSetAttr(pyobject_class, key_py_str, pyvalue);
+	int result = PyObject_SetAttr(py_class->cls, key_py_str, py_value);
 
 	Py_DECREF(key_py_str);
 
 	py_loader_thread_release();
 
-	return retval;
+	return result;
 }
 
 value py_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
@@ -2640,7 +2639,11 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	/* Hook the deallocation of PyCFunction */
 	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
 	PyCFunction_Type.tp_dealloc = PyCFunction_dealloc;
+
+	/* TODO: This does not work after 3.13, is it really needed for this hook? */
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 13
 	PyType_Modified(&PyCFunction_Type);
+#endif
 
 	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
 	{
