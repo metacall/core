@@ -90,6 +90,30 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 	return NULL;
 }
 
+dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags)
+{
+	dynlink handle = malloc(sizeof(struct dynlink_type));
+
+	if (handle == NULL)
+	{
+		return NULL;
+	}
+
+	strncpy(handle->name_impl, path, strnlen(path, PORTABILITY_PATH_SIZE) + 1);
+
+	handle->flags = flags;
+
+	handle->impl = dynlink_impl_load(handle);
+
+	if (handle->impl == NULL)
+	{
+		free(handle);
+		return NULL;
+	}
+
+	return handle;
+}
+
 dynlink_name dynlink_get_name(dynlink handle)
 {
 	if (handle != NULL)

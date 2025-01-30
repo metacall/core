@@ -89,6 +89,7 @@ struct loader_impl_type
 	set type_info_map;			   /* Stores a set indexed by type name of all of the types existing in the loader (global scope (TODO: may need refactor per handle)) */
 	value options;				   /* Additional initialization options passed in the initialize phase */
 	set exec_path_map;			   /* Set of execution paths passed by the end user */
+	configuration config;		   /* Reference to the loader configuration, it contains execution_paths, dependencies and additional info */
 };
 
 struct loader_handle_impl_type
@@ -119,7 +120,7 @@ struct loader_impl_metadata_cb_iterator_type
 
 static loader_impl loader_impl_allocate(const loader_tag tag);
 
-static configuration loader_impl_initialize_configuration(plugin p);
+static configuration loader_impl_initialize_configuration(const loader_tag tag);
 
 static int loader_impl_initialize_registered(plugin_manager manager, plugin p);
 
@@ -258,50 +259,110 @@ plugin loader_impl_plugin(loader_impl impl)
 	return NULL;
 }
 
-void loader_impl_configuration(loader_impl_interface iface, loader_impl impl, configuration config)
+void loader_impl_configuration_execution_paths(loader_impl_interface iface, loader_impl impl)
 {
-	value execution_paths_value = configuration_value_type(config, "execution_paths", TYPE_ARRAY);
+	value execution_paths_value = configuration_value_type(impl->config, "execution_paths", TYPE_ARRAY);
 
 	if (execution_paths_value != NULL)
 	{
 		size_t size = value_type_count(execution_paths_value);
 		value *execution_paths_array = value_to_array(execution_paths_value);
+		size_t iterator;
 
-		if (execution_paths_array != NULL)
+		for (iterator = 0; iterator < size; ++iterator)
 		{
-			size_t iterator;
-
-			for (iterator = 0; iterator < size; ++iterator)
+			if (value_type_id(execution_paths_array[iterator]) == TYPE_STRING)
 			{
-				if (execution_paths_array[iterator] != NULL)
+				const char *str = value_to_string(execution_paths_array[iterator]);
+				size_t str_size = value_type_size(execution_paths_array[iterator]);
+
+				if (str != NULL)
 				{
-					const char *str = value_to_string(execution_paths_array[iterator]);
-					size_t str_size = value_type_size(execution_paths_array[iterator]);
+					loader_path execution_path;
 
-					if (str != NULL)
-					{
-						loader_path execution_path;
+					strncpy(execution_path, str, str_size > LOADER_PATH_SIZE ? LOADER_PATH_SIZE : str_size);
 
-						strncpy(execution_path, str, str_size > LOADER_PATH_SIZE ? LOADER_PATH_SIZE : str_size);
-
-						iface->execution_path(impl, execution_path);
-					}
+					iface->execution_path(impl, execution_path);
 				}
 			}
 		}
 	}
 }
 
-configuration loader_impl_initialize_configuration(plugin p)
+int loader_impl_dependencies(loader_impl impl)
+{
+	/* Dependencies have the following format */
+	/*
+	{
+		"dependencies": {
+			"node": ["/usr/lib/x86_64-linux-gnu/libnode.so.72"]
+		}
+	}
+	*/
+	value dependencies_value = configuration_value_type(impl->config, "dependencies", TYPE_MAP);
+
+	if (dependencies_value != NULL)
+	{
+		size_t size = value_type_count(dependencies_value);
+		value *dependencies_map = value_to_map(dependencies_value);
+		size_t iterator;
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			if (value_type_id(dependencies_map[iterator]) == TYPE_ARRAY)
+			{
+				value *library_tuple = value_to_array(dependencies_map[iterator]);
+
+				if (value_type_id(library_tuple[1]) == TYPE_ARRAY)
+				{
+					value *paths_array = value_to_array(library_tuple[1]);
+					size_t paths_size = value_type_count(library_tuple[1]);
+					size_t path;
+					int found = 0;
+
+					for (path = 0; path < paths_size; ++path)
+					{
+						if (value_type_id(paths_array[iterator]) == TYPE_STRING)
+						{
+							const char *library_path = value_to_string(paths_array[iterator]);
+
+							if (library_path != NULL)
+							{
+								dynlink handle = dynlink_load_absolute(library_path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+
+								if (handle != NULL)
+								{
+									found = 1;
+									break;
+								}
+							}
+						}
+					}
+
+					if (!found)
+					{
+						const char *dependency = value_type_id(library_tuple[0]) == TYPE_STRING ? value_to_string(library_tuple[0]) : "unknown_library";
+						log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader configuration '%s.json'", dependency, plugin_name(impl->p));
+						return 1;
+					}
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+configuration loader_impl_initialize_configuration(const loader_tag tag)
 {
 	static const char configuration_key_suffix[] = "_loader";
 #define CONFIGURATION_KEY_SIZE ((size_t)sizeof(configuration_key_suffix) + LOADER_TAG_SIZE - 1)
 	char configuration_key[CONFIGURATION_KEY_SIZE];
 
 	/* Retrieve the configuration key: <tag>_loader */
-	size_t tag_size = strnlen(plugin_name(p), LOADER_TAG_SIZE) + 1;
+	size_t tag_size = strnlen(tag, LOADER_TAG_SIZE) + 1;
 
-	strncpy(configuration_key, plugin_name(p), tag_size);
+	strncpy(configuration_key, tag, tag_size);
 
 	strncat(configuration_key, configuration_key_suffix, CONFIGURATION_KEY_SIZE - tag_size);
 #undef CONFIGURATION_KEY_SIZE
@@ -331,7 +392,6 @@ int loader_impl_initialize_registered(plugin_manager manager, plugin p)
 int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 {
 	static const char loader_library_path[] = "loader_library_path";
-	configuration config;
 	value loader_library_path_value = NULL;
 	char *library_path = NULL;
 	vector script_paths, paths;
@@ -340,9 +400,6 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	{
 		return 0;
 	}
-
-	/* Get the configuration of the loader */
-	config = loader_impl_initialize_configuration(p);
 
 	/* Retrieve the library path */
 	library_path = plugin_manager_library_path(manager);
@@ -355,19 +412,19 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	*/
 
 	/* Check if the configuration has a custom loader_library_path, otherwise set it up */
-	if (config != NULL && configuration_value_type(config, loader_library_path, TYPE_STRING) == NULL)
+	if (impl->config != NULL && configuration_value_type(impl->config, loader_library_path, TYPE_STRING) == NULL)
 	{
 		loader_library_path_value = value_create_string(library_path, strnlen(library_path, LOADER_PATH_SIZE));
-		configuration_define(config, loader_library_path, loader_library_path_value);
+		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
 
 	/* Call to the loader initialize method */
-	impl->data = loader_iface(p)->initialize(impl, config);
+	impl->data = loader_iface(p)->initialize(impl, impl->config);
 
 	/* Undefine the library path field from config */
-	if (config != NULL && loader_library_path_value != NULL)
+	if (impl->config != NULL && loader_library_path_value != NULL)
 	{
-		configuration_undefine(config, loader_library_path);
+		configuration_undefine(impl->config, loader_library_path);
 		value_type_destroy(loader_library_path_value);
 	}
 
@@ -390,9 +447,9 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 
 	impl->init = 0;
 
-	if (config != NULL)
+	if (impl->config != NULL)
 	{
-		loader_impl_configuration(loader_iface(p), impl, config);
+		loader_impl_configuration_execution_paths(loader_iface(p), impl);
 	}
 
 	/* The scripts path priority order is the following:
@@ -402,7 +459,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	*/
 
 	/* Load the library path as execution path */
-	loader_library_path_value = configuration_value_type(config, loader_library_path, TYPE_STRING);
+	loader_library_path_value = configuration_value_type(impl->config, loader_library_path, TYPE_STRING);
 
 	if (loader_library_path_value != NULL)
 	{
@@ -469,6 +526,9 @@ loader_impl loader_impl_create(const loader_tag tag)
 
 	impl->init = 1;
 	impl->options = NULL;
+
+	/* Get the configuration of the loader */
+	impl->config = loader_impl_initialize_configuration(tag);
 
 	return impl;
 }

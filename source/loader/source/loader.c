@@ -264,6 +264,13 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 		goto loader_create_error;
 	}
 
+	/* Dynamic link loader dependencies if it is not host */
+	if (loader_impl_get_option_host(impl) == 0)
+	{
+		loader_impl_dependencies(impl);
+	}
+
+	/* Dynamic link the loader */
 	p = plugin_manager_create(&loader_manager, tag, impl, &loader_impl_destroy_dtor);
 
 	if (p == NULL)

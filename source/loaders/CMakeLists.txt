@@ -75,10 +75,11 @@ set(LOADER_CONFIGURATION_DEFAULT_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/loader.js
 # Define loader configuration for a specific loader
 macro(loader_configuration_begin TARGET)
 	set(LOADER_DEPENDENCIES "")
+	set(OPTIONAL_TEMPLATE "${ARGV1}")
 
 	# Optional argument for template
-	if(${ARGV0})
-		set(LOADER_CONFIGURATION_TEMPLATE "${ARGV0}")
+	if(NOT "${ARGV1}" STREQUAL "")
+		set(LOADER_CONFIGURATION_TEMPLATE "${ARGV1}")
 	else()
 		set(LOADER_CONFIGURATION_TEMPLATE "${LOADER_CONFIGURATION_DEFAULT_TEMPLATE}")
 	endif()

@@ -43,6 +43,8 @@ LOADER_API loader_impl loader_impl_create(const loader_tag tag);
 
 LOADER_API loader_impl loader_impl_create_host(const loader_tag tag);
 
+LOADER_API int loader_impl_dependencies(loader_impl impl);
+
 LOADER_API void loader_impl_attach(loader_impl impl, plugin p);
 
 LOADER_API plugin loader_impl_plugin(loader_impl impl);

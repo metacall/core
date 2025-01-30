@@ -35,8 +35,6 @@
 extern "C" {
 #endif
 
-#include <stdlib.h>
-
 struct loader_impl_type;
 
 typedef struct loader_impl_type *loader_impl;
