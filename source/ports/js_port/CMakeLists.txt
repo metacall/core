@@ -213,11 +213,8 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 # Linker options
 #
 
-target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
+add_link_options(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
-	${V8_LIBRARIES} # V8 libraries
-
-	${META_PROJECT_NAME}::metacall
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
@@ -383,7 +380,7 @@ target_compile_options(${js_port_test}
 # Linker options
 #
 
-target_link_libraries(${js_port_test}
+add_link_options(${js_port_test}
 	PRIVATE
 
 	PUBLIC

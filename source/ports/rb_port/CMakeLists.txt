@@ -237,9 +237,8 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
+add_link_options(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
-	${META_PROJECT_NAME}::metacall
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}

@@ -186,7 +186,7 @@ endif()
 # Linker options
 #
 
-target_link_libraries(${target}
+add_link_options(${target}
 	PRIVATE
 
 	PUBLIC
