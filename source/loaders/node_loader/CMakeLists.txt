@@ -157,6 +157,8 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
+	$<$<CXX_COMPILER_ID:MSVC>:${NodeJS_LIBRARY}> # NodeJS library
+
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 
@@ -197,9 +199,6 @@ target_compile_options(${target}
 
 add_link_options(${target}
 	PRIVATE
-	$<$<CXX_COMPILER_ID:MSVC>:/IGNORE:4199>
-	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
-	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
 	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-undefined dynamic_lookup>
 
 	PUBLIC
