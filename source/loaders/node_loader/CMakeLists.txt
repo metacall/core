@@ -157,9 +157,6 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
-	# TODO: Implement workaround to the problem: "PE32 file format does not support weak linkage"
-	# $<$<BOOL:${WIN32}>:${NodeJS_LIBRARY}> # NodeJS library
-
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 
@@ -200,8 +197,10 @@ target_compile_options(${target}
 
 add_link_options(${target}
 	PRIVATE
-	# TODO: MacOS
-	# $<$<BOOL:${APPLE}>:-Wl,-undefined=dynamic_lookup>
+	$<$<CXX_COMPILER_ID:MSVC>:/IGNORE:4199>
+	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
+	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-undefined dynamic_lookup>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
