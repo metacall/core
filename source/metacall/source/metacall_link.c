@@ -25,6 +25,8 @@
 
 #include <detour/detour.h>
 
+#include <threading/threading_mutex.h>
+
 #include <dynlink/dynlink_type.h>
 
 #include <log/log.h>
@@ -36,8 +38,8 @@
 /* -- Private Variables -- */
 
 static detour_handle detour_link_handle = NULL;
-
 static set metacall_link_table = NULL;
+static threading_mutex_type link_mutex = THREADING_MUTEX_INITIALIZE;
 
 #if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
@@ -54,10 +56,18 @@ FARPROC metacall_link_hook(HMODULE handle, LPCSTR symbol)
 {
 	typedef FARPROC (*metacall_link_func_ptr)(HMODULE, LPCSTR);
 
-	metacall_link_func_ptr metacall_link_trampoline = (metacall_link_func_ptr)detour_trampoline(detour_link_handle);
+	metacall_link_func_ptr metacall_link_trampoline;
+
+	void *ptr;
+
+	threading_mutex_lock(&link_mutex);
+
+	metacall_link_trampoline = (metacall_link_func_ptr)detour_trampoline(detour_link_handle);
 
 	/* Intercept if any */
-	void *ptr = set_get(metacall_link_table, (set_key)symbol);
+	ptr = set_get(metacall_link_table, (set_key)symbol);
+
+	threading_mutex_unlock(&link_mutex);
 
 	if (ptr != NULL)
 	{
@@ -87,13 +97,19 @@ void *metacall_link_hook(void *handle, const char *symbol)
 {
 	typedef void *(*metacall_link_func_ptr)(void *, const char *);
 
-	metacall_link_func_ptr metacall_link_trampoline = (metacall_link_func_ptr)detour_trampoline(detour_link_handle);
+	metacall_link_func_ptr metacall_link_trampoline;
+
+	threading_mutex_lock(&link_mutex);
+
+	metacall_link_trampoline = (metacall_link_func_ptr)detour_trampoline(detour_link_handle);
 
 	/* Intercept function if any */
 	void *ptr = set_get(metacall_link_table, (set_key)symbol);
 
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall detour link interception: %s -> %p", symbol, ptr); */
+
+	threading_mutex_unlock(&link_mutex);
 
 	if (ptr != NULL)
 	{
@@ -172,6 +188,8 @@ int metacall_link_destroy(void)
 {
 	int result = 0;
 
+	threading_mutex_lock(&link_mutex);
+
 	if (detour_link_handle != NULL)
 	{
 		detour d = detour_create(metacall_detour());
@@ -192,6 +210,10 @@ int metacall_link_destroy(void)
 
 		metacall_link_table = NULL;
 	}
+
+	threading_mutex_unlock(&link_mutex);
+
+	threading_mutex_destroy(&link_mutex);
 
 	return result;
 }
