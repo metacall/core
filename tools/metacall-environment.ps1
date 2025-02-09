@@ -202,6 +202,73 @@ function Set-Ruby {
 	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
 }
 
+function Set-C {
+	Write-Output "Install C depenendencies"
+
+	Set-Location $ROOT_DIR
+
+	$DepsDir = "$ROOT_DIR\dependencies"
+	$repositoryUrl = "https://github.com/newlawrence/Libffi.git"
+	$destinationPath = "$DepsDir\libffi"
+	Clone-GitRepository -repositoryUrl $repositoryUrl -destinationPath $destinationPath
+
+	
+	mkdir "$destinationPath\build"
+	Set-Location "$destinationPath\build"
+
+	cmake .. -G"Visual Studio 16 2019"
+
+	cmake --build . --target ffi
+
+	Set-Choco
+
+	# choco install llvm -y
+	choco install llvm -y
+
+
+	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
+
+	$LLVM_Dir1 = "$env:ProgramW6432/LLVM".Replace('\', '/')
+	#  find a way to pass multiple locations to cmake
+	# $LLVM_Dir2 = "$env:ProgramFiles/LLVM".Replace('\', '/')
+	$LibFFI_Dir = $destinationPath.Replace('\','/')
+
+	Write-Output "-DLIBFFI_LIBRARY=""$LibFFI_Dir/build/lib/libffi.lib""" >> $Env_Opts
+	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFI_Dir/build/include/""" >> $Env_Opts
+	Write-Output "-DLibClang_INCLUDE_DIR=""$LLVM_Dir1/include/clang""" >> $Env_Opts
+
+}
+
+function Clone-GitRepository {
+    param (
+        [string]$repositoryUrl,
+        [string]$destinationPath
+    )
+
+    # Check if Git is installed
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Error "Git is not installed. Please install Git and try again."
+        return
+    }
+
+    # Check if the destination path already exists
+    if (Test-Path $destinationPath) {
+        Write-Error "Destination path already exists. Please provide a different path."
+        return
+    }
+
+    # Clone the repository using Git
+    & git clone $repositoryUrl $destinationPath
+
+    # Check if the cloning was successful
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to clone the repository."
+        return
+    }
+
+    Write-Output "Repository cloned successfully."
+}
+
 function Set-TypeScript {
 	Write-Output "Install TypeScript"
 	npm i react@latest -g
@@ -279,6 +346,21 @@ function Set-Base {
 	}
 }
 
+function Set-Choco {
+	# Set directory for installation - Chocolatey does not lock
+	# down the directory if not the default
+	$InstallDir='C:\ProgramData\chocoportable'
+	$env:ChocolateyInstall="$InstallDir"
+
+	# If your PowerShell Execution policy is restrictive, you may
+	# not be able to get around that. Try setting your session to
+	# Bypass.
+	Set-ExecutionPolicy Bypass -Scope Process -Force;
+
+	# All install options - offline, proxy, etc at
+	# https://chocolatey.org/install
+	iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+}
 # Configure
 function Configure {
 	# Create option variables file 
