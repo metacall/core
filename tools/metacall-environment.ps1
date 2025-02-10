@@ -202,42 +202,106 @@ function Set-Ruby {
 	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
 }
 
-function Set-C {
-	Write-Output "Install C depenendencies"
-
-	Set-Location $ROOT_DIR
-
-	$DepsDir = "$ROOT_DIR\dependencies"
-	$repositoryUrl = "https://github.com/newlawrence/Libffi.git"
-	$destinationPath = "$DepsDir\libffi"
-	Clone-GitRepository -repositoryUrl $repositoryUrl -destinationPath $destinationPath
-
-	
-	mkdir "$destinationPath\build"
-	Set-Location "$destinationPath\build"
-
-	cmake .. -G"Visual Studio 16 2019"
-
-	cmake --build . --target ffi
-
-	Set-Choco
-
-	# choco install llvm -y
-	choco install llvm -y
-
-
-	$Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
-
-	$LLVM_Dir1 = "$env:ProgramW6432/LLVM".Replace('\', '/')
-	#  find a way to pass multiple locations to cmake
-	# $LLVM_Dir2 = "$env:ProgramFiles/LLVM".Replace('\', '/')
-	$LibFFI_Dir = $destinationPath.Replace('\','/')
-
-	Write-Output "-DLIBFFI_LIBRARY=""$LibFFI_Dir/build/lib/libffi.lib""" >> $Env_Opts
-	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFI_Dir/build/include/""" >> $Env_Opts
-	Write-Output "-DLibClang_INCLUDE_DIR=""$LLVM_Dir1/include/clang""" >> $Env_Opts
-
+function Install-VS {
+    Write-Output "Checking for preinstalled Visual Studio Build Tools..."
+    
+    # Path to vswhere.exe
+    $vsWherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    
+    # Use vswhere to search for a Visual Studio instance with the VC++ tools
+    if (Test-Path $vsWherePath) {
+        $vsInstance = & $vsWherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+    }
+    
+    if (-not $vsInstance) {
+        Write-Output "Visual Studio Build Tools with VC++ components not found. Installing..."
+        choco install visualstudio2019buildtools -y
+        Write-Output "Installation initiated. Please reboot if required and re-run the script."
+    } else {
+        Write-Output "Found Visual Studio at: $vsInstance"
+    }
 }
+
+function Set-C {
+    $ErrorActionPreference = "Stop"
+    Write-Output "Installing C dependencies..."
+
+    # Ensure Chocolatey is set up
+    Set-Choco
+
+    # Install Visual Studio Build Tools
+    Install-VS
+
+    # Set directories
+    Set-Location $ROOT_DIR
+    $DepsDir = Join-Path $ROOT_DIR 'dependencies'
+    $vcpkgDir = Join-Path $DepsDir 'vcpkg'
+
+	# Install vcpkg if missing
+    if (-not (Test-Path (Join-Path $vcpkgDir 'vcpkg.exe'))) {
+        Write-Output "Cloning vcpkg into $vcpkgDir..."
+        git clone https://github.com/microsoft/vcpkg.git $vcpkgDir
+        & (Join-Path $vcpkgDir 'bootstrap-vcpkg.bat')
+        & (Join-Path $vcpkgDir 'vcpkg.exe') integrate install
+    } else {
+        Write-Output "vcpkg already installed."
+    }
+
+    # Install libffi using vcpkg
+    Write-Output "Installing libffi using vcpkg..."
+    & (Join-Path $vcpkgDir 'vcpkg.exe') install libffi
+
+    # Install LLVM using Chocolatey
+    Write-Output "Installing LLVM..."
+    choco install llvm -y
+
+    # Clone and build libtcc
+    $tccRepoUrl = "https://github.com/TinyCC/tinycc.git"
+    $tccDestination = "$DepsDir\tcc"
+    if (-not (Test-Path "$tccDestination\.git")) {
+        Write-Output "Cloning libtcc..."
+        git clone $tccRepoUrl $tccDestination
+    } else {
+        Write-Output "libtcc already cloned."
+    }
+
+    # Build libtcc using Git Bash
+    $gitBashPath = "C:\Program Files\Git\bin\bash.exe"
+    if ($gitBashPath) {
+        Write-Output "Building libtcc..."
+        Set-Location $tccDestination
+		& "$gitBashPath" -c "git config --global core.autocrlf input"
+		$bashCommand = "cd /c/gcc-14.2.0/bin/ && gcc --version"
+        & "$gitBashPath" -c "$bashCommand" | Tee-Object -Variable output
+		& "$gitBashPath" -c "sed -i 's/\r$//' configure"
+        & "$gitBashPath" -c "ls && ./configure && make && make test && make install" | Tee-Object -Variable output
+    } else {
+        Write-Output "Git Bash not found. Please install Git for Windows."
+    }
+
+    # Write environment options for CMake configuration
+    $Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
+    $LLVM_Dir = "$env:ProgramFiles\LLVM"
+    $vcpkgLibDir = "$DepsDir\vcpkg\installed\x64-windows\lib"
+    $vcpkgIncludeDir = "$DepsDir\vcpkg\installed\x64-windows\include"
+    $tccLib = "$tccDestination\lib\tcc.lib"
+    $tccInclude = "$tccDestination\include"
+
+    $cmakeOptions = @(
+        "-DLIBFFI_LIBRARY=$vcpkgLibDir\libffi.lib"
+        "-DLIBFFI_INCLUDE_DIR=$vcpkgIncludeDir"
+        "-DLibClang_INCLUDE_DIR=$LLVM_Dir\include\clang"
+        "-DLIBCLANG_LIBRARY=$LLVM_Dir\lib\libclang.lib"
+        "-DTCC_LIBRARY=$tccLib"
+        "-DTCC_INCLUDE_DIR=$tccInclude"
+    )
+
+    $cmakeOptions | Out-File -Append -FilePath $Env_Opts
+
+    Write-Output "All dependencies installed and configured successfully."
+}
+
+
 
 function Clone-GitRepository {
     param (
@@ -434,6 +498,7 @@ function Configure {
 		}
 		if ("$var" -eq 'c') {
 			Write-Output "c selected"
+			Set-C
 		}
 		if ("$var" -eq 'cobol') {
 			Write-Output "cobol selected"
