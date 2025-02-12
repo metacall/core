@@ -100,6 +100,9 @@ log_singleton log_singleton_instance_impl(void)
 			abort();
 		}
 
+		/* Initialize at exit handlers */
+		portability_atexit_initialize();
+
 		if (portability_atexit_register(&log_atexit_callback) != 0)
 		{
 			if (log_singleton_destroy() != 0)
