@@ -200,6 +200,8 @@ target_link_libraries(${target}
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 
+	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
+
 	INTERFACE
 )
 
@@ -247,8 +249,6 @@ add_link_options(${target}
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
-
-	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
 
 	INTERFACE
 )

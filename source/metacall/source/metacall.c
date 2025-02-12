@@ -37,6 +37,7 @@
 
 #include <environment/environment_variable.h>
 
+#include <portability/portability_atexit.h>
 #include <portability/portability_constructor.h>
 
 #include <stdio.h>
@@ -82,6 +83,9 @@ portability_constructor(metacall_constructor)
 	{
 		const char *metacall_host = environment_variable_get("METACALL_HOST", NULL);
 
+		/* Initialize at exit handlers */
+		portability_atexit_initialize();
+
 		/* We are running from a different host, initialize the loader of the host
 		* and redirect it to the existing symbols, also avoiding initialization
 		* and destruction of the runtime as it is being managed externally to MetaCall */
@@ -113,7 +117,7 @@ portability_constructor(metacall_constructor)
 			}
 
 			/* Register the destructor on exit */
-			atexit(metacall_destroy);
+			portability_atexit_register(metacall_destroy);
 		}
 	}
 }
@@ -277,7 +281,7 @@ int metacall_initialize(void)
 #endif /* METACALL_FORK_SAFE */
 
 		/* Define destructor for detouring (it must be executed at the end to prevent problems with fork mechanisms) */
-		atexit(metacall_detour_destructor);
+		portability_atexit_register(metacall_detour_destructor);
 	}
 
 	/* Initialize configuration and serializer */

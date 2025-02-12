@@ -9,6 +9,8 @@
 #include <log/log_map.h>
 #include <log/log_singleton.h>
 
+#include <portability/portability_atexit.h>
+
 #include <stdlib.h>
 
 /* -- Definitions -- */
@@ -98,7 +100,7 @@ log_singleton log_singleton_instance_impl(void)
 			abort();
 		}
 
-		if (atexit(&log_atexit_callback) != 0)
+		if (portability_atexit_register(&log_atexit_callback) != 0)
 		{
 			if (log_singleton_destroy() != 0)
 			{
