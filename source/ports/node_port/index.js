@@ -289,6 +289,8 @@ const file_extensions_to_tag = {
 	tsx: 'ts',
 	/* Rust Loader */
 	rs: 'rs',
+	/* C Loader */
+	c: 'c',
 
 	/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 	/* Probably in the future we can differenciate between them, but it is not trivial */
