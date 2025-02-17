@@ -202,25 +202,6 @@ function Set-Ruby {
 	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
 }
 
-function Install-VS {
-    Write-Output "Checking for preinstalled Visual Studio Build Tools..."
-    
-    # Path to vswhere.exe
-    $vsWherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-    
-    # Use vswhere to search for a Visual Studio instance with the VC++ tools
-    if (Test-Path $vsWherePath) {
-        $vsInstance = & $vsWherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-    }
-    
-    if (-not $vsInstance) {
-        Write-Output "Visual Studio Build Tools with VC++ components not found. Installing..."
-        choco install visualstudio2019buildtools -y
-        Write-Output "Installation initiated. Please reboot if required and re-run the script."
-    } else {
-        Write-Output "Found Visual Studio at: $vsInstance"
-    }
-}
 
 function Set-C {
     $ErrorActionPreference = "Stop"
@@ -228,9 +209,6 @@ function Set-C {
 
     # Ensure Chocolatey is set up
     Set-Choco
-
-    # Install Visual Studio Build Tools
-    Install-VS
 
     # Set directories
     Set-Location $ROOT_DIR
@@ -240,7 +218,7 @@ function Set-C {
 	# Install vcpkg if missing
     if (-not (Test-Path (Join-Path $vcpkgDir 'vcpkg.exe'))) {
         Write-Output "Cloning vcpkg into $vcpkgDir..."
-        git clone https://github.com/microsoft/vcpkg.git $vcpkgDir
+        git clone --depth=1 https://github.com/microsoft/vcpkg.git $vcpkgDir
         & (Join-Path $vcpkgDir 'bootstrap-vcpkg.bat')
         & (Join-Path $vcpkgDir 'vcpkg.exe') integrate install
     } else {
@@ -251,57 +229,69 @@ function Set-C {
     Write-Output "Installing libffi using vcpkg..."
     & (Join-Path $vcpkgDir 'vcpkg.exe') install libffi
 
-    # Install LLVM using Chocolatey
-    Write-Output "Installing LLVM..."
-    choco install llvm -y
 
-    # Clone and build libtcc
-    $tccRepoUrl = "https://github.com/TinyCC/tinycc.git"
-    $tccDestination = "$DepsDir\tcc"
-    if (-not (Test-Path "$tccDestination\.git")) {
-        Write-Output "Cloning libtcc..."
-        git clone $tccRepoUrl $tccDestination
-    } else {
-        Write-Output "libtcc already cloned."
-    }
+	# Define LLVM version and download URL
+	$llvmVersion = "19.1.7"
+	$llvmArchiveUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$llvmVersion/clang+llvm-$llvmVersion-x86_64-pc-windows-msvc.tar.xz"
+	$archivePath = "$env:TEMP\clang+llvm-$llvmVersion-x86_64-pc-windows-msvc.tar.xz"
+	$extractPath = "$env:TEMP\clang+llvm-$llvmVersion"
+	$finalPath = Join-Path $DepsDir 'llvm'
 
-    # Build libtcc using Git Bash
-    $gitBashPath = "C:\Program Files\Git\bin\bash.exe"
-    if ($gitBashPath) {
-        Write-Output "Building libtcc..."
-        Set-Location $tccDestination
-		& "$gitBashPath" -c "git config --global core.autocrlf input"
-		$bashCommand = "cd /c/gcc-14.2.0/bin/ && gcc --version"
-        & "$gitBashPath" -c "$bashCommand" | Tee-Object -Variable output
-		& "$gitBashPath" -c "sed -i 's/\r$//' configure"
-        & "$gitBashPath" -c "ls && ./configure && make && make test && make install" | Tee-Object -Variable output
-    } else {
-        Write-Output "Git Bash not found. Please install Git for Windows."
-    }
+	# Ensure dependencies directory exists
+	if (!(Test-Path $DepsDir)) {
+		New-Item -ItemType Directory -Path $DepsDir -Force | Out-Null
+	}
+
+	Download LLVM archive
+	Write-Output "Downloading LLVM $llvmVersion archive..."
+	Invoke-WebRequest -Uri $llvmArchiveUrl -OutFile $archivePath
+
+	# Extract the .xz file
+	Write-Output "Extracting .xz archive..."
+	tar -xf $archivePath -C $env:TEMP
+	$tarFile = $archivePath -replace '\.xz$', ''  # Remove .xz extension
+
+	# Extract the .tar file
+	Write-Output "Extracting .tar archive..."
+	tar -xf $tarFile -C $env:TEMP
+
+	# Find the extracted folder
+	$extractedFolder = Get-ChildItem -Path $env:TEMP -Directory | Where-Object { $_.Name -match "clang\+llvm-$llvmVersion-x86_64-pc-windows-msvc" } | Select-Object -First 1
+
+	if ($extractedFolder) {
+		Write-Output "Moving extracted LLVM to $finalPath..."
+		Move-Item -Path $extractedFolder.FullName -Destination $finalPath -Force
+	} else {
+		Write-Output "Extracted LLVM folder not found!"
+	}
+
+	# Clean up
+	Write-Output "Cleaning up downloaded files..."
+	Remove-Item -Path $archivePath, $tarFile -Force
+
+	Write-Output "LLVM $llvmVersion successfully installed at $finalPath!"
 
     # Write environment options for CMake configuration
     $Env_Opts = "$ROOT_DIR\build\CMakeConfig.txt"
-    $LLVM_Dir = "$env:ProgramFiles\LLVM"
     $vcpkgLibDir = "$DepsDir\vcpkg\installed\x64-windows\lib"
     $vcpkgIncludeDir = "$DepsDir\vcpkg\installed\x64-windows\include"
-    $tccLib = "$tccDestination\lib\tcc.lib"
-    $tccInclude = "$tccDestination\include"
 
     $cmakeOptions = @(
-        "-DLIBFFI_LIBRARY=$vcpkgLibDir\libffi.lib"
-        "-DLIBFFI_INCLUDE_DIR=$vcpkgIncludeDir"
-        "-DLibClang_INCLUDE_DIR=$LLVM_Dir\include\clang"
-        "-DLIBCLANG_LIBRARY=$LLVM_Dir\lib\libclang.lib"
-        "-DTCC_LIBRARY=$tccLib"
-        "-DTCC_INCLUDE_DIR=$tccInclude"
+		"set(OPTION_BUILD_LOADERS_C ON CACHE BOOL `"Build C loaders`")"
+
+		"set(LIBFFI_LIBRARY `"$vcpkgLibDir\ffi.lib`" CACHE STRING `"Path to libffi library`")"
+		"set(LIBFFI_INCLUDE_DIR `"$vcpkgIncludeDir`" CACHE STRING `"Path to libffi include directory`")"
+
+		"set(LibClang_INCLUDE_DIR `"$finalPath\include`" CACHE STRING `"Path to libclang include directory`")"
+		"set(LIBCLANG_LIBRARY `"$finalPath\lib\libclang.lib`" CACHE STRING `"Path to libclang library`")"
+
+		"set(CMAKE_TOOLCHAIN_FILE `"$vcpkgDir\scripts\buildsystems\vcpkg.cmake`" CACHE STRING `"Path to vcpkg toolchain file`")"
     )
 
     $cmakeOptions | Out-File -Append -FilePath $Env_Opts
 
     Write-Output "All dependencies installed and configured successfully."
 }
-
-
 
 function Clone-GitRepository {
     param (
