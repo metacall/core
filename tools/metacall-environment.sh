@@ -696,7 +696,7 @@ sub_c(){
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing tcc
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
 		fi
-	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+	elif [[ $OSTYPE == 'darwin'* ]]; then
 		brew install libffi
 		brew install llvm@$LLVM_VERSION_STRING
 		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
