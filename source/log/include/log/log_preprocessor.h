@@ -18,7 +18,7 @@
  *
  */
 
- #ifndef LOG_PREPROCESSOR_H
+#ifndef LOG_PREPROCESSOR_H
 #define LOG_PREPROCESSOR_H 1
 
 /* -- Headers -- */
@@ -39,15 +39,19 @@ extern "C" {
 /* -- Macros -- */
 
 #define log_configure(name, ...) \
-    log_configure_impl(name, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), ##__VA_ARGS__)
+	log_configure_impl(name, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), __VA_ARGS__)
 
-/* Unified log_write macro that works across all compilers */
-#if defined(_MSC_VER) && !defined(__clang__)
-    #define log_write(name, level, format, ...) \
-        log_write_impl_va(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, format, ##__VA_ARGS__)
+#if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
+	(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
+	#define log_write(name, level, ...) \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
+			log_write_impl(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, __VA_ARGS__), \
+			log_write_impl_va(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, __VA_ARGS__))
 #else
-    #define log_write(name, level, ...) \
-        log_write_impl_va(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, __VA_ARGS__)
+	#define log_write(name, level, message, ...) \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
+			log_write_impl(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, message), \
+			log_write_impl_va(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, message, __VA_ARGS__))
 #endif
 
 #ifdef __cplusplus
