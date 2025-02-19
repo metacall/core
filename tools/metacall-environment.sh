@@ -652,8 +652,6 @@ sub_c(){
 	echo "configure c"
 	LLVM_VERSION_STRING=14
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		
-
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
 			UBUNTU_CODENAME=""
 			CODENAME_FROM_ARGUMENTS=""
@@ -699,10 +697,13 @@ sub_c(){
 	elif [[ $OSTYPE == 'darwin'* ]]; then
 		brew install libffi
 		brew install llvm@$LLVM_VERSION_STRING
-		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
+		# brew link llvm@$LLVM_VERSION_STRING --force --overwrite
 		mkdir -p "$ROOT_DIR/build"
-		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
+		export PATH="$LIBCLANG_PREFIX/bin:$PATH"
+		export CPATH="$LIBCLANG_PREFIX/include:$CPATH"
+		export LIBRARY_PATH="$LIBCLANG_PREFIX/lib:$LIBRARY_PATH"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 	fi
