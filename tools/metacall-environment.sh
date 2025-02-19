@@ -698,22 +698,12 @@ sub_c(){
 	elif [[ $OSTYPE == 'darwin'* ]]; then
 		brew install libffi
 		brew install llvm@$LLVM_VERSION_STRING
-		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
-		echo "LLVM Prefix: ${LIBCLANG_PREFIX}"
 		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
-		CLANG_C_HEADERS="${LIBCLANG_PREFIX}/include/clang-c"
-		echo "Checking for clang-c headers in: ${CLANG_C_HEADERS}"
-		if ! ls "${CLANG_C_HEADERS}"; then
-			echo "Error: clang-c headers not found in ${CLANG_C_HEADERS}"
-			exit 1
-		fi
 		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
-		echo "CMake config path: ${CMAKE_CONFIG_PATH}"
+		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
-		echo "CMake config contents:"
-		cat $CMAKE_CONFIG_PATH
 	fi
 }
 
