@@ -17,12 +17,14 @@ endif()
 find_package(LibTCC)
 
 if(NOT LIBTCC_FOUND)
+	message(Status "###########checking in install libtcc###########")
 	include(InstallLibTCC)
-
+	message(Status "###########Done checking###########")
 	if(NOT LIBTCC_FOUND)
 		message(SEND_ERROR "TCC library not found")
 		return()
 	endif()
+	message(Status "###########Lib tcc found###########")
 endif()
 
 find_package(LibClang)

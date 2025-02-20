@@ -40,7 +40,7 @@ else()
 endif()
 
 # Configure
-if(PROJECT_OS_FAMILY STREQUAL unix OR PROJECT_OS_FAMILY STREQUAL macos)
+if(PROJECT_OS_FAMILY STREQUAL unix)
 	if(OPTION_BUILD_MUSL)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --config-musl)
 	else()
@@ -83,8 +83,9 @@ elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	# r12 = 0x0000000000000000  r13 = 0x00007ffee8c29fe0  r14 = 0x000000010bb13c50  r15 = 0x000000000000053b
 	# AddressSanitizer can not provide additional info.
 	# SUMMARY: AddressSanitizer: BUS (libsystem_c.dylib:x86_64+0x3647db0f) in off32
-
-	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --enable-cross)
+	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+    message(STATUS "macOS universal (x86_64 / arm64) build")
+	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} CMAKE_OSX_ARCHITECTURES "x86_64" --enable-cross)
 	elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static)
