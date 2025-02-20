@@ -84,7 +84,7 @@ elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	# AddressSanitizer can not provide additional info.
 	# SUMMARY: AddressSanitizer: BUS (libsystem_c.dylib:x86_64+0x3647db0f) in off32
 
-	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --enable-cross --cpu=x86_64)
+	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --enable-cross)
 	elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static)
