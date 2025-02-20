@@ -83,10 +83,9 @@ elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	# r12 = 0x0000000000000000  r13 = 0x00007ffee8c29fe0  r14 = 0x000000010bb13c50  r15 = 0x000000000000053b
 	# AddressSanitizer can not provide additional info.
 	# SUMMARY: AddressSanitizer: BUS (libsystem_c.dylib:x86_64+0x3647db0f) in off32
-	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
-    message(STATUS "macOS universal (x86_64 / arm64) build")
-	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} CMAKE_OSX_ARCHITECTURES "x86_64" --enable-cross)
-	elseif(PROJECT_OS_FAMILY STREQUAL win32)
+
+	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --enable-cross) # --disable-static
+elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static)
 	else()
@@ -102,7 +101,7 @@ ProcessorCount(N)
 # Build
 if(PROJECT_OS_BSD)
 	set(LIBTCC_BUILD gmake -j${N})
-elseif(PROJECT_OS_FAMILY STREQUAL unix OR PROJECT_OS_FAMILY STREQUAL macos)
+elseif(PROJECT_OS_FAMILY STREQUAL unix)
 	set(LIBTCC_BUILD make -j${N})
 elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	set(LIBTCC_BUILD make -j${N} MACOSX_DEPLOYMENT_TARGET=${PROJECT_OS_VERSION})
@@ -126,7 +125,7 @@ else()
 endif()
 
 set(LIBTCC_TARGET libtcc-depends)
-set(LIBTCC_COMMIT_SHA "f8bd136")
+set(LIBTCC_COMMIT_SHA "afc1362")
 if(PROJECT_OS_FAMILY STREQUAL macos)
 	# TODO: --disable-static is not working on MacOS, this should be reported or further investigated, remove this when it is solved
 	set(LIBTTC_LIBRARY_NAME "${CMAKE_STATIC_LIBRARY_PREFIX}tcc${CMAKE_STATIC_LIBRARY_SUFFIX}")
@@ -146,8 +145,8 @@ set(LIBTTC_RUNTIME_FILES
 # LibTCC Proejct
 ExternalProject_Add(${LIBTCC_TARGET}
 	DOWNLOAD_NAME		tinycc.tar.gz
-	URL					https://github.com/Bishoywadea/tinycc/archive/${LIBTCC_COMMIT_SHA}.tar.gz
-	URL_MD5				1031bd56e751ce19bae85bd86a82f107
+	URL					https://github.com/metacall/tinycc/archive/${LIBTCC_COMMIT_SHA}.tar.gz
+	URL_MD5				5582b17ee5848aeec28bee13773843f7
 	CONFIGURE_COMMAND	${LIBTCC_CONFIGURE}
 	BUILD_COMMAND		${LIBTCC_BUILD}
 	BUILD_IN_SOURCE		true
