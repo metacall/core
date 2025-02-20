@@ -40,36 +40,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Uninstall NodeJS and NPM
-      #   run: |
-      #     npm uninstall npm -g
-      #     rm -rf /usr/local/lib/node_modules/npm
+      - name: Uninstall NodeJS and NPM
+        run: |
+          npm uninstall npm -g
+          rm -rf /usr/local/lib/node_modules/npm
 
-      # - name: Uninstall Ruby
-      #   run: |
-      #     brew uninstall --force --ignore-dependencies ruby
-      #     brew cleanup -s ruby
-      #     brew cleanup --prune-prefix
-      #     RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
-      #     sudo rm -rf $RUBY_FRAMEWORK_DIR
+      - name: Uninstall Ruby
+        run: |
+          brew uninstall --force --ignore-dependencies ruby
+          brew cleanup -s ruby
+          brew cleanup --prune-prefix
+          RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
+          sudo rm -rf $RUBY_FRAMEWORK_DIR
 
-      # - name: Uninstall Go
-      #   run: |
-      #     brew uninstall --force go
-      #     brew autoremove
-      #     sudo rm -rf /usr/local/Cellar/go
-      #     sudo rm -rf /usr/local/go
-      #     sudo rm -rf /usr/local/opt/go
-      #     sudo rm -rf /etc/paths.d/go
-      #     sudo rm -rf /usr/local/bin/go
-      #     sudo rm -rf /usr/local/bin/gofmt
+      - name: Uninstall Go
+        run: |
+          brew uninstall --force go
+          brew autoremove
+          sudo rm -rf /usr/local/Cellar/go
+          sudo rm -rf /usr/local/go
+          sudo rm -rf /usr/local/opt/go
+          sudo rm -rf /etc/paths.d/go
+          sudo rm -rf /usr/local/bin/go
+          sudo rm -rf /usr/local/bin/gofmt
 
-      # - name: Uninstall Java
-      #   run: |
-      #     sudo rm -rf /Library/Java/JavaVirtualMachines/*
-      #     sudo rm -rf /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin
-      #     sudo rm -rf /Library/PreferencePanes/JavaControlPanel.prefPane
-      #     unset JAVA_HOME
+      - name: Uninstall Java
+        run: |
+          sudo rm -rf /Library/Java/JavaVirtualMachines/*
+          sudo rm -rf /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin
+          sudo rm -rf /Library/PreferencePanes/JavaControlPanel.prefPane
+          unset JAVA_HOME
 
       - name: Export XCode SDK Root
         run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
@@ -77,7 +77,7 @@ jobs:
       - name: Set up the environment
         run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base c rpc file backtrace #cobol go nodejs typescript java ruby wasm python netcore5 rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: base python nodejs typescript java ruby wasm rpc file cobol go backtrace c #netcore5 rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |
@@ -85,7 +85,7 @@ jobs:
           . .env
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests c rpc file benchmarks install #cobol go python nodejs typescript java ruby wasm netcore5 rust examples pack # v8 coverage
+          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs typescript java ruby wasm rpc file cobol go benchmarks install c # netcore5 rust examples pack # v8 coverage
 
       - name: Build
         working-directory: ./build
