@@ -40,7 +40,7 @@ else()
 endif()
 
 # Configure
-if(PROJECT_OS_FAMILY STREQUAL unix)
+if(PROJECT_OS_FAMILY STREQUAL unix OR PROJECT_OS_FAMILY STREQUAL macos)
 	if(OPTION_BUILD_MUSL)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --config-musl)
 	else()
@@ -101,7 +101,7 @@ ProcessorCount(N)
 # Build
 if(PROJECT_OS_BSD)
 	set(LIBTCC_BUILD gmake -j${N})
-elseif(PROJECT_OS_FAMILY STREQUAL unix)
+elseif(PROJECT_OS_FAMILY STREQUAL unix OR PROJECT_OS_FAMILY STREQUAL macos)
 	set(LIBTCC_BUILD make -j${N})
 elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	set(LIBTCC_BUILD make -j${N} MACOSX_DEPLOYMENT_TARGET=${PROJECT_OS_VERSION})

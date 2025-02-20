@@ -64,8 +64,8 @@ namespace fs = std::experimental::filesystem;
 #include <libtcc.h>
 
 /* LibClang */
-#include <clang-c/CXString.h>
 #include <clang-c/Index.h>
+#include <clang-c/CXString.h>
 
 typedef struct loader_impl_c_type
 {
