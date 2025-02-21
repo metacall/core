@@ -698,13 +698,17 @@ sub_c(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install libffi
-		brew install llvm@$LLVM_VERSION_STRING
-		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
-		mkdir -p "$ROOT_DIR/build"
+		brew install --HEAD tcc
+		brew install llvm@11 
+		brew link llvm@11 --force --overwrite
+		mkdir -p build
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
-		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
-		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
-		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
+		TCC_PREFIX=$(brew --prefix tcc)
+		LIBC_PREFIX=$(brew --prefix llvm@11)
+		echo "-DLIBTCC_LIBRARY=${TCC_PREFIX}/lib/libtcc.a" >> $CMAKE_CONFIG_PATH
+		echo "-DLIBTCC_INCLUDE_DIR=${TCC_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_INCLUDE_DIR=${LIBC_PREFIX}/include/clang-c" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBC_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
