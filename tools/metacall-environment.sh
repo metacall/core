@@ -650,10 +650,8 @@ sub_java(){
 # C
 sub_c(){
 	echo "configure c"
-
+	LLVM_VERSION_STRING=14
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		LLVM_VERSION_STRING=14
-
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
 			UBUNTU_CODENAME=""
 			CODENAME_FROM_ARGUMENTS=""
@@ -698,17 +696,13 @@ sub_c(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install libffi
-		brew install --HEAD tcc
-		brew install llvm@11 
-		brew link llvm@11 --force --overwrite
-		mkdir -p build
+		brew install llvm@$LLVM_VERSION_STRING
+		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
+		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
-		TCC_PREFIX=$(brew --prefix tcc)
-		LIBC_PREFIX=$(brew --prefix llvm@11)
-		echo "-DLIBTCC_LIBRARY=${TCC_PREFIX}/lib/libtcc.a" >> $CMAKE_CONFIG_PATH
-		echo "-DLIBTCC_INCLUDE_DIR=${TCC_PREFIX}/include" >> $CMAKE_CONFIG_PATH
-		echo "-DLibClang_INCLUDE_DIR=${LIBC_PREFIX}/include/clang-c" >> $CMAKE_CONFIG_PATH
-		echo "-DLibClang_LIBRARY=${LIBC_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
+		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
+		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
