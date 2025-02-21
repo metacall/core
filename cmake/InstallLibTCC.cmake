@@ -125,7 +125,7 @@ else()
 endif()
 
 set(LIBTCC_TARGET libtcc-depends)
-set(LIBTCC_COMMIT_SHA "afc1362")
+set(LIBTCC_COMMIT_SHA "f8bd136")
 if(PROJECT_OS_FAMILY STREQUAL macos)
 	# TODO: --disable-static is not working on MacOS, this should be reported or further investigated, remove this when it is solved
 	set(LIBTTC_LIBRARY_NAME "${CMAKE_STATIC_LIBRARY_PREFIX}tcc${CMAKE_STATIC_LIBRARY_SUFFIX}")
@@ -145,8 +145,8 @@ set(LIBTTC_RUNTIME_FILES
 # LibTCC Proejct
 ExternalProject_Add(${LIBTCC_TARGET}
 	DOWNLOAD_NAME		tinycc.tar.gz
-	URL					https://github.com/metacall/tinycc/archive/${LIBTCC_COMMIT_SHA}.tar.gz
-	URL_MD5				5582b17ee5848aeec28bee13773843f7
+	URL					https://github.com/Bishoywadea/tinycc/archive/${LIBTCC_COMMIT_SHA}.tar.gz
+	URL_MD5				1031bd56e751ce19bae85bd86a82f107
 	CONFIGURE_COMMAND	${LIBTCC_CONFIGURE}
 	BUILD_COMMAND		${LIBTCC_BUILD}
 	BUILD_IN_SOURCE		true
