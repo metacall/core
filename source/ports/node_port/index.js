@@ -25,20 +25,15 @@ const path = require('path');
 const fs = require('fs');
 const { URL } = require('url'); /* TODO: RPC Loader */
 
-const findFilesRecursively = (dirPattern, filePattern, depthLimit = Infinity) => {
-	const stack = [{ dir: dirPattern, depth: 0 }];
+const findFilesRecursively = (directory, filePattern, depthLimit = Infinity) => {
+	const stack = [{ dir: directory, depth: 0 }];
 	const files = [];
-	const dirRegex = new RegExp(dirPattern);
 	const fileRegex = new RegExp(filePattern);
 
 	while (stack.length > 0) {
 		const { dir, depth } = stack.pop();
 
 		try {
-			if (!dirRegex.test(dir)) {
-				continue;
-			}
-
 			if (depth > depthLimit) {
 				continue;
 			}
@@ -56,7 +51,7 @@ const findFilesRecursively = (dirPattern, filePattern, depthLimit = Infinity) =>
 				}
 			}
 		} catch (err) {
-			console.error(`Error reading directory ${dir}:`, err);
+			console.error(`Error reading directory '${dir}' while searching for MetaCall Library:`, err);
 		}
 	}
 

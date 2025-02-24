@@ -172,6 +172,9 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	$<$<BOOL:${WIN32}>:NODEJS_LIBRARY_NAME="${NodeJS_LIBRARY_NAME}">
+	$<$<NOT:$<BOOL:${MSVC}>>:_LARGEFILE_SOURCE>
+	$<$<NOT:$<BOOL:${MSVC}>>:_FILE_OFFSET_BITS=64>
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:_DARWIN_USE_64_BIT_INODE=1>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
@@ -199,7 +202,7 @@ target_compile_options(${target}
 
 add_link_options(${target}
 	PRIVATE
-	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-undefined dynamic_lookup>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
