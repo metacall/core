@@ -155,7 +155,7 @@ jobs:
               echo "Deleting tag: ${tag_to_delete}"
 
               curl -X DELETE \
-                -H "Authorization: Bearer ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" \
-                "https://hub.docker.com/v2/repositories/${DOCKER_USERNAME}/${IMAGE_NAME}/tags/${tag_to_delete}/"
+                -u "${{ secrets.DOCKER_HUB_USERNAME }}:${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" \
+                "https://cloud.docker.com/v2/repositories/${DOCKER_USERNAME}/${IMAGE_NAME}/tags/${tag_to_delete}/"
             done
           done
