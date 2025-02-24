@@ -125,7 +125,7 @@ else()
 endif()
 
 set(LIBTCC_TARGET libtcc-depends)
-set(LIBTCC_COMMIT_SHA "afc1362")
+set(LIBTCC_COMMIT_SHA "6ec4a10")
 if(PROJECT_OS_FAMILY STREQUAL macos)
 	# TODO: --disable-static is not working on MacOS, this should be reported or further investigated, remove this when it is solved
 	set(LIBTTC_LIBRARY_NAME "${CMAKE_STATIC_LIBRARY_PREFIX}tcc${CMAKE_STATIC_LIBRARY_SUFFIX}")
