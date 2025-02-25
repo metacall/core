@@ -75,6 +75,7 @@ sub_build() {
 
 	# Debug the make output
 	ls -la
+	find . -name "*funchook*"
 
 	# Tests (coverage needs to run the tests)
 	if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS=1 ] || [ $BUILD_COVERAGE = 1 ]; then
