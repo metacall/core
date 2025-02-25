@@ -202,7 +202,9 @@ target_compile_options(${target}
 
 add_link_options(${target}
 	PRIVATE
-	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-undefined dynamic_lookup>
+	# $<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+	# $<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-undefined dynamic_lookup>
+	-Wl,-undefined,dynamic_lookup
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
