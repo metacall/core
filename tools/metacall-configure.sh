@@ -532,7 +532,7 @@ sub_configure() {
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 	
 	# Execute CMake
-	cmake -Wno-dev -DCMAKE_VERBOSE_MAKEFILE=ON -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
 }
 
 sub_help() {
