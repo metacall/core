@@ -110,7 +110,7 @@ sub_base(){
 			$SUDO_CMD apk add --no-cache g++ make git cmake gtest-dev wget gnupg ca-certificates
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		brew install llvm cmake git googletest wget gnupg ca-certificates
+		brew install llvm cmake git wget gnupg ca-certificates # googletest
 	fi
 }
 
