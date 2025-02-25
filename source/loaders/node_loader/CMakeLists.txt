@@ -200,18 +200,15 @@ target_compile_options(${target}
 # Linker options
 #
 
-set_target_properties(${target} PROPERTIES LINK_FLAGS "-Wl,-undefined,dynamic_lookup")
+target_link_options(${target}
+	PRIVATE
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
 
-# add_link_options(${target}
-# 	PRIVATE
-# 	# $<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
-# 	# $<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-undefined dynamic_lookup>
+	PUBLIC
+	${DEFAULT_LINKER_OPTIONS}
 
-# 	PUBLIC
-# 	${DEFAULT_LINKER_OPTIONS}
-
-# 	INTERFACE
-# )
+	INTERFACE
+)
 
 #
 # Standard options
