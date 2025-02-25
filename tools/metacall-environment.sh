@@ -532,7 +532,7 @@ sub_nodejs(){
 			# Define node location
 			NODE_PREFIX="$ROOT_DIR/build"
 			# Include binaries into PATH
-			export PATH="$NODE_PREFIX:$PATH"
+			export PATH="$NODE_PREFIX:$NODE_PREFIX/bin:$PATH"
 
 			# Create install path
 			mkdir -p "$NODE_PREFIX"
@@ -550,7 +550,7 @@ sub_nodejs(){
 			echo "-DNodeJS_LIBRARY=$NODE_PREFIX/libnode.127.dylib" >> $CMAKE_CONFIG_PATH
 
 			# Configure NPM path
-			echo "-DNPM_ROOT=$NODE_PREFIX" >> $CMAKE_CONFIG_PATH
+			echo "-DNPM_ROOT=$NODE_PREFIX/bin" >> $CMAKE_CONFIG_PATH
 		else
 			brew install node@22
 			# Make node 22 the default
