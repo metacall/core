@@ -588,6 +588,11 @@ sub_typescript(){
 		$SUDO_CMD npm i react@latest -g
 		$SUDO_CMD npm i react-dom@latest -g
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		if [ -z "${NodeJS_BUILD_FROM_SOURCE:-}" ]; then
+			# Include NPM binaries into PATH
+			export PATH="$ROOT_DIR/build/bin:$PATH"
+		fi
+
 		# Install React dependencies in order to run the tests
 		npm i react@latest -g
 		npm i react-dom@latest -g
