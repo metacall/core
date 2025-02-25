@@ -548,10 +548,10 @@ sub_nodejs(){
 			# Define node location
 			NODE_PREFIX="$ROOT_DIR/build"
 			# Install NodeJS
-			wget -qO- https://github.com/metacall/libnode/releases/download/v22.6.0/libnode-${ARCHITECTURE}-macos.tar.xz | tar xvJ -C $NODE_PREFIX
+			wget -qO- https://github.com/metacall/libnode/releases/download/v22.9.0/libnode-${ARCHITECTURE}-macos.tar.xz | tar xvJ -C $NODE_PREFIX
 			# Configure NodeJS path
 			echo "-DNodeJS_EXECUTABLE=$NODE_PREFIX/node" >> $CMAKE_CONFIG_PATH
-			echo "-DNodeJS_LIBRARY=$NODE_PREFIX/libnode.so" >> $CMAKE_CONFIG_PATH
+			echo "-DNodeJS_LIBRARY=$NODE_PREFIX/libnode.dylib" >> $CMAKE_CONFIG_PATH
 		else
 			# Include binaries into PATH
 			export PATH="$NODE_PREFIX/bin:$PATH"
