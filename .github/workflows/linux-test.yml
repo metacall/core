@@ -8,6 +8,7 @@ on:
       - 'v*.*.*'
     branches:
       - master
+      - run-outside-metacall-cli
       - develop
 
 concurrency:
