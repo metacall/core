@@ -237,7 +237,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-add_link_options(${SWIG_MODULE_${target}_REAL_NAME}
+target_link_options(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
 
 	PUBLIC

@@ -213,7 +213,7 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 # Linker options
 #
 
-add_link_options(${SWIG_MODULE_${target}_REAL_NAME}
+target_link_options(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
 
 	PUBLIC
@@ -380,7 +380,7 @@ target_compile_options(${js_port_test}
 # Linker options
 #
 
-add_link_options(${js_port_test}
+target_link_options(${js_port_test}
 	PRIVATE
 
 	PUBLIC

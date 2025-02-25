@@ -171,7 +171,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-add_link_options(${target}
+target_link_options(${target}
 	PRIVATE
 
 	PUBLIC
