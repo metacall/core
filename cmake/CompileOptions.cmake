@@ -410,5 +410,3 @@ elseif(PROJECT_OS_HAIKU)
 		-lpthread
 	)
 endif()
-
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,dynamic_lookup")
