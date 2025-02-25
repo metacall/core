@@ -73,10 +73,6 @@ sub_build() {
 	# Build the project
 	make -j$(getconf _NPROCESSORS_ONLN)
 
-	# Debug the make output
-	ls -la
-	find . -name "*funchook*"
-
 	# Tests (coverage needs to run the tests)
 	if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS=1 ] || [ $BUILD_COVERAGE = 1 ]; then
 		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
