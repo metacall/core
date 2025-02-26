@@ -157,6 +157,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
+	# TODO: Replace this by /FORCE:UNRESOLVED on MSVC for later on resolving it ourselves?
 	$<$<CXX_COMPILER_ID:MSVC>:${NodeJS_LIBRARY}> # NodeJS library
 
 	PUBLIC

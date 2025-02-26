@@ -152,7 +152,6 @@ endif()
 function(find_sanitizer NAME LINK_OPTION)
 	string(TOUPPER "${NAME}" NAME_UPPER)
 	set(SANITIZER_PROGRAM_CODE "int main() {return 0;}")
-	message(STATUS "${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate.cpp")
 	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate.cpp" "${SANITIZER_PROGRAM_CODE}")
 
 	try_compile(
