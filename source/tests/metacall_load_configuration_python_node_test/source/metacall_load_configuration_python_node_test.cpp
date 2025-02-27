@@ -62,5 +62,5 @@ TEST_F(metacall_load_configuration_python_node_test, DefaultConstructor)
 
 	metacall_allocator_destroy(config_allocator);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

@@ -169,5 +169,5 @@ TEST_F(metacall_fork_test, DefaultConstructor)
 	EXPECT_EQ((int)1, (int)pre_callback_fired);
 	EXPECT_EQ((int)1, (int)post_callback_fired);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

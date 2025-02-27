@@ -67,6 +67,11 @@ const char *detour_name(detour d)
 
 void (*detour_trampoline(detour_handle handle))(void)
 {
+	if (handle == NULL)
+	{
+		return NULL;
+	}
+
 	return handle->target;
 }
 

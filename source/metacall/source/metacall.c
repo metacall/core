@@ -33,7 +33,12 @@
 
 #include <serial/serial.h>
 
+#include <detour/detour.h>
+
 #include <environment/environment_variable.h>
+
+#include <portability/portability_atexit.h>
+#include <portability/portability_constructor.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -42,6 +47,7 @@
 
 #define METACALL_ARGS_SIZE 0x10
 #define METACALL_SERIAL	   "rapid_json"
+#define METACALL_DETOUR	   "funchook"
 
 /* -- Type Definitions -- */
 
@@ -67,6 +73,54 @@ static loader_path plugin_path = { 0 };
 static int metacall_plugin_extension_load(void);
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
 static type_id *metacall_type_ids(void *args[], size_t size);
+static void metacall_detour_destructor(void);
+
+/* -- Costructors -- */
+
+portability_constructor(metacall_constructor)
+{
+	if (metacall_initialize_flag == 1)
+	{
+		const char *metacall_host = environment_variable_get("METACALL_HOST", NULL);
+
+		/* Initialize at exit handlers */
+		portability_atexit_initialize();
+
+		/* We are running from a different host, initialize the loader of the host
+		* and redirect it to the existing symbols, also avoiding initialization
+		* and destruction of the runtime as it is being managed externally to MetaCall */
+		if (metacall_host != NULL)
+		{
+			static const char host_str[] = "host";
+
+			struct metacall_initialize_configuration_type config[] = {
+				{ metacall_host, metacall_value_create_map(NULL, 1) },
+				{ NULL, NULL }
+			};
+
+			/* Initialize the loader options with a map defining its options to { "host": true } */
+			void **host_tuple, **options_map = metacall_value_to_map(config[0].options);
+
+			options_map[0] = metacall_value_create_array(NULL, 2);
+
+			host_tuple = metacall_value_to_array(options_map[0]);
+
+			host_tuple[0] = metacall_value_create_string(host_str, sizeof(host_str) - 1);
+			host_tuple[1] = metacall_value_create_bool(1);
+
+			/* Initialize MetaCall with extra options, defining the host properly */
+			if (metacall_initialize_ex(config) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "MetaCall host constructor failed to initialize");
+				metacall_value_destroy(config[0].options);
+				exit(1);
+			}
+
+			/* Register the destructor on exit */
+			portability_atexit_register(metacall_destroy);
+		}
+	}
+}
 
 /* -- Methods -- */
 
@@ -75,6 +129,13 @@ const char *metacall_serial(void)
 	static const char metacall_serial_str[] = METACALL_SERIAL;
 
 	return metacall_serial_str;
+}
+
+const char *metacall_detour(void)
+{
+	static const char metacall_detour_str[] = METACALL_DETOUR;
+
+	return metacall_detour_str;
 }
 
 void metacall_log_null(void)
@@ -135,9 +196,39 @@ plugin_extension_error:
 	return result;
 }
 
+void metacall_detour_destructor(void)
+{
+	/* Destroy link */
+	if (metacall_link_destroy() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link destruction");
+	}
+
+	/* Destroy fork */
+#ifdef METACALL_FORK_SAFE
+	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+	{
+		if (metacall_fork_destroy() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
+		}
+	}
+#endif /* METACALL_FORK_SAFE */
+
+	/* Destroy detour */
+	detour_destroy();
+}
+
 int metacall_initialize(void)
 {
 	memory_allocator allocator;
+
+	if (metacall_initialize_flag == 0)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized");
+
+		return 0;
+	}
 
 	/* Initialize logs by default to stdout if none has been defined */
 	if (metacall_log_null_flag != 0 && log_size() == 0)
@@ -154,13 +245,6 @@ int metacall_initialize(void)
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall default logger to stdout initialized");
 	}
 
-	if (metacall_initialize_flag == 0)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized");
-
-		return 0;
-	}
-
 	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall");
 
 	/* Initialize MetaCall version environment variable */
@@ -170,18 +254,37 @@ int metacall_initialize(void)
 		return 1;
 	}
 
-#ifdef METACALL_FORK_SAFE
-	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+	/* Initialize detours */
 	{
-		if (metacall_fork_initialize() != 0)
+		if (detour_initialize() != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour initialization");
+			return 1;
 		}
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
-	}
+		/* Initialize link */
+		if (metacall_link_initialize() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link initialization");
+		}
+
+#ifdef METACALL_FORK_SAFE
+		if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+		{
+			if (metacall_fork_initialize() != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
+			}
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
+		}
 #endif /* METACALL_FORK_SAFE */
 
+		/* Define destructor for detouring (it must be executed at the end to prevent problems with fork mechanisms) */
+		portability_atexit_register(metacall_detour_destructor);
+	}
+
+	/* Initialize configuration and serializer */
 	allocator = memory_allocator_std(&malloc, &realloc, &free);
 
 	if (configuration_initialize(metacall_serial(), NULL, allocator) != 0)
@@ -252,10 +355,21 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 
 		if (impl == NULL)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to find '%s_loader'", initialize_config[index].tag);
 			return 1;
 		}
 
 		loader_set_options(initialize_config[index].tag, initialize_config[index].options);
+
+		/* If we are initializing a loader as a host, we must initialize it */
+		if (loader_get_option_host(initialize_config[index].tag))
+		{
+			if (loader_initialize_host(initialize_config[index].tag) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to initialize '%s_loader' as host", initialize_config[index].tag);
+				return 1;
+			}
+		}
 
 		++index;
 	}
@@ -2246,7 +2360,7 @@ const char *metacall_plugin_path(void)
 	return plugin_path;
 }
 
-int metacall_destroy(void)
+void metacall_destroy(void)
 {
 	if (metacall_initialize_flag == 0)
 	{
@@ -2256,17 +2370,16 @@ int metacall_destroy(void)
 		/* Destroy configurations */
 		configuration_destroy();
 
-		metacall_initialize_flag = 1;
-
 		/* Print stats from functions, classes, objects and exceptions */
 		reflect_memory_tracker_debug();
 
 		/* Set to null the plugin extension and core plugin handles */
 		plugin_extension_handle = NULL;
 		plugin_core_handle = NULL;
-	}
 
-	return 0;
+		/* Set initialization flag to destroyed */
+		metacall_initialize_flag = 1;
+	}
 }
 
 const struct metacall_version_type *metacall_version(void)

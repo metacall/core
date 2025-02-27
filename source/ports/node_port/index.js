@@ -22,55 +22,133 @@
 
 const mod = require('module');
 const path = require('path');
+const fs = require('fs');
 const { URL } = require('url'); /* TODO: RPC Loader */
+
+const findFilesRecursively = (directory, filePattern, depthLimit = Infinity) => {
+	const stack = [{ dir: directory, depth: 0 }];
+	const files = [];
+	const fileRegex = new RegExp(filePattern);
+
+	while (stack.length > 0) {
+		const { dir, depth } = stack.pop();
+
+		try {
+			if (depth > depthLimit) {
+				continue;
+			}
+
+			const items = fs.readdirSync(dir);
+
+			for (const item of items) {
+				const fullPath = path.join(dir, item);
+				const stat = fs.statSync(fullPath);
+
+				if (stat.isDirectory()) {
+					stack.push({ dir: fullPath, depth: depth + 1 });
+				} else if (stat.isFile() && fileRegex.test(item)) {
+					files.push(fullPath);
+				}
+			}
+		} catch (err) {
+			console.error(`Error reading directory '${dir}' while searching for MetaCall Library:`, err);
+		}
+	}
+
+	return files;
+};
+
+const platformInstallPaths = () => {
+	switch (process.platform) {
+		case 'win32':
+			return {
+				paths: [ path.join(process.env['LOCALAPPDATA'], 'MetaCall', 'metacall') ],
+				name: 'metacall.dll'
+			}
+		case 'darwin':
+			return {
+				paths: [ '/opt/homebrew/lib/', '/usr/local/lib/' ],
+				name: 'libmetacall.dylib'
+			}
+		case 'linux':
+			return {
+				paths: [ '/usr/local/lib/', '/gnu/lib/' ],
+				name: 'libmetacall.so'
+			}
+	}
+
+	throw new Error(`Platform ${process.platform} not supported`)
+};
+
+const searchPaths = () => {
+	const customPath = process.env['METACALL_INSTALL_PATH'];
+
+	if (customPath) {
+		return {
+			paths: [ customPath ],
+			name: /^(lib)?metacall(d)?\.(so|dylib|dll)$/
+		}
+	}
+
+	return platformInstallPaths()
+};
+
+const findLibrary = () => {
+	const searchData = searchPaths();
+
+	for (const p of searchData.paths) {
+		const files = findFilesRecursively(p, searchData.name, 0);
+
+		if (files.length !== 0) {
+			return files[0];
+		}
+	}
+
+	throw new Error('MetaCall library not found, if you have it in a special folder, define it through METACALL_INSTALL_PATH')
+};
 
 const addon = (() => {
 	try {
-		/* This forces metacall port to be run always by metacall cli */
+		/* If the binding can be loaded, it means MetaCall is being
+		* imported from the node_loader, in that case the runtime
+		* was initialized by node_loader itself and we can proceed.
+		*/
 		return process._linkedBinding('node_loader_port_module');
 	} catch (e) {
-		console.error('MetaCall failed to load, probably you are importing this file from NodeJS directly.');
-		console.error('You should use MetaCall CLI instead. Install it from: https://github.com/metacall/install');
-		throw e;
-
-		/* TODO: Until we find a better way to do this, we should disable it */
-		/*
-		const write = (data, cb) => {
-			if (!process.stdout.write(data)) {
-				process.stdout.once('drain', cb);
-			} else {
-				process.nextTick(cb);
-			}
-		};
-
-		// Notify synchronously that we are launching MetaCall
-		write('NodeJS detected, launching MetaCall...\n', () => {
-			try {
-				const { spawnSync } = require('child_process');
-				const args = [...process.argv];
-
-				args.shift();
-
-				const result = spawnSync('metacall', args, {});
-
-				if (result.error && result.error.code === 'ENOENT') {
-					write('MetaCall not found. Please install MetaCall from: https://github.com/metacall/install and run it again.\n', () => {
-						process.exit(1);
-					});
-				}
-
-				process.exit(result.status !== null ? result.status : 1);
-			} catch (e) {
-				const message = 'MetaCall failed to load, probably you are importing this file from NodeJS directly.\n'
-					+ e.message + '\n'
-					+ 'Install MetaCall from: https://github.com/metacall/install and run it again.\n';
-
-				write(message, () => {
-					throw e;
-				});
-			}
-		});
+		/* If the port cannot be found, it means MetaCall port has
+		* been imported for the first time from node.exe, the
+		* runtime in this case has been initialized by node.exe,
+		* and MetaCall is not initialized
 		*/
+		process.env['METACALL_HOST'] = 'node';
+
+		try {
+			const library = findLibrary();
+
+			const { constants } = require('os');
+			const m = { exports: {} };
+
+			process.dlopen(m, library, constants.dlopen.RTLD_GLOBAL | constants.dlopen.RTLD_NOW);
+
+			/* Save argv */
+			const argv = process.argv;
+			process.argv = [];
+
+			/* Pass the require function in order to import bootstrap.js and register it */
+			const args = m.exports.register_bootstrap_startup();
+
+			const bootstrap = require(args[0]);
+
+			bootstrap(args[1], args[2], args[3]);
+
+			/* Restore argv */
+			process.argv = argv;
+
+			return m.exports;
+		} catch (err) {
+			console.log(err);
+			process.exit(1);
+		}
 	}
 })();
 

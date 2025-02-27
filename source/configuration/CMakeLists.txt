@@ -164,7 +164,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 
 	PUBLIC
@@ -180,17 +180,19 @@ target_link_libraries(${target}
 function(configurations_write config_dir config_path)
 	set(CONFIGURATION_GLOBAL "{")
 
-	if(OPTION_BUILD_LOADERS)
-		set(CONFIGURATION_GLOBAL_LOADERS 0)
+	# TODO: Make this automatic for all loaders
 
+	if(OPTION_BUILD_LOADERS)
 		if(OPTION_BUILD_LOADERS_CS)
 			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"cs_loader\":\"${config_dir}/cs_loader.json\",")
-			set(CONFIGURATION_GLOBAL_LOADERS 1)
+		endif()
+
+		if(OPTION_BUILD_LOADERS_NODE)
+			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"node_loader\":\"${config_dir}/node_loader.json\",")
 		endif()
 
 		#if(OPTION_BUILD_LOADERS_JS)
 		#	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"js_loader\":\"${config_dir}/js_loader.json\",")
-		#	set(CONFIGURATION_GLOBAL_LOADERS 1)
 		#endif()
 	endif()
 

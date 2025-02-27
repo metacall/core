@@ -35,16 +35,21 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/portability.h
 	${include_path}/portability_assert.h
-	${include_path}/portability_path.h
+	${include_path}/portability_constructor.h
 	${include_path}/portability_executable_path.h
 	${include_path}/portability_library_path.h
+	${include_path}/portability_working_path.h
+	${include_path}/portability_path.h
+	${include_path}/portability_atexit.h
 )
 
 set(sources
 	${source_path}/portability.c
-	${source_path}/portability_path.c
 	${source_path}/portability_executable_path.c
 	${source_path}/portability_library_path.c
+	${source_path}/portability_working_path.c
+	${source_path}/portability_path.c
+	${source_path}/portability_atexit.c
 )
 
 # Group source files
@@ -153,7 +158,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 
 	PUBLIC

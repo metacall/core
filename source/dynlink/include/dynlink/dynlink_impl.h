@@ -33,10 +33,6 @@
 extern "C" {
 #endif
 
-/* -- Headers -- */
-
-#include <stdlib.h>
-
 /* -- Methods -- */
 
 /**

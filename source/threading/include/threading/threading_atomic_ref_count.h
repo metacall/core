@@ -50,7 +50,7 @@ struct threading_atomic_ref_count_type
 {
 #if defined(__THREAD_SANITIZER__)
 	uintmax_t count;
-	struct threading_mutex_type m;
+	threading_mutex_type m;
 #else
 	atomic_uintmax_t count;
 #endif

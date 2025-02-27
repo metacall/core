@@ -65,7 +65,7 @@ plugin_descriptor plugin_descriptor_create(char *path, char *library_name, char 
 		return NULL;
 	}
 
-	descriptor->iface_singleton = (void *(*)(void))DYNLINK_SYMBOL_GET(address);
+	descriptor->iface_singleton = (void *(*)(void))(address);
 
 	if (descriptor->iface_singleton == NULL)
 	{

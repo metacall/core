@@ -192,5 +192,5 @@ TEST_F(metacall_wasm_test, Default)
 		ASSERT_EQ((int)1, (int)metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
 	}
 
-	ASSERT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

@@ -59,5 +59,5 @@ TEST_F(metacall_ruby_integration_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

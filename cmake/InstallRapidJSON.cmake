@@ -28,19 +28,17 @@ if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
 	endif()
 
 	ExternalProject_Add(rapid-json-depends
-		GIT_REPOSITORY	"https://github.com/Tencent/rapidjson.git"
-		GIT_TAG			"${RAPIDJSON_VERSION}"
-		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-			-DRAPIDJSON_BUILD_DOC=Off
-			-DRAPIDJSON_BUILD_EXAMPLES=Off
-			-DRAPIDJSON_BUILD_TESTS=Off
-		TEST_COMMAND	""
+		GIT_REPOSITORY		"https://github.com/Tencent/rapidjson.git"
+		GIT_TAG				"${RAPIDJSON_VERSION}"
+		BUILD_COMMAND		""
+		CONFIGURE_COMMAND	""
+		INSTALL_COMMAND		""
+		TEST_COMMAND		""
 	)
 
-	ExternalProject_Get_Property(rapid-json-depends INSTALL_DIR)
+	ExternalProject_Get_Property(rapid-json-depends SOURCE_DIR)
 
-	set(RAPIDJSON_ROOT_DIR		${INSTALL_DIR})
+	set(RAPIDJSON_ROOT_DIR		${SOURCE_DIR})
 	set(RAPIDJSON_INCLUDE_DIRS	${RAPIDJSON_ROOT_DIR}/include)
 	set(RAPIDJSON_FOUND			TRUE)
 

@@ -177,7 +177,6 @@ target_link_options(${target}
 	PRIVATE
 	$<$<CXX_COMPILER_ID:MSVC>:/IGNORE:4199>
 	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
-	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
 	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-undefined dynamic_lookup>
 
 	PUBLIC

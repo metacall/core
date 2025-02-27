@@ -1,5 +1,5 @@
 # Check if detours are enabled
-if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_FORK_SAFE)
+if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS)
 	return()
 endif()
 
@@ -110,7 +110,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 	${DEFAULT_LINKER_OPTIONS}
 )

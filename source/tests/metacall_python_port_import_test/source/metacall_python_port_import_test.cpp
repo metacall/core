@@ -118,5 +118,5 @@ TEST_F(metacall_python_port_import_test, metacall_node_ramda_case_1)
 		ASSERT_NE((void *)handle, (void *)NULL);
 	}
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

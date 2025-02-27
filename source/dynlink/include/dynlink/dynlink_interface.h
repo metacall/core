@@ -28,18 +28,14 @@
 #include <dynlink/dynlink_type.h>
 
 #if defined(WIN32) || defined(_WIN32)
-	#include <dynlink/dynlink_impl_symbol_win32.h>
 	#include <dynlink/dynlink_impl_win32.h>
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	(((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) && (defined(MAC_OS_X_VERSION_10_15) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15)))
-	#include <dynlink/dynlink_impl_symbol_unix.h>
 	#include <dynlink/dynlink_impl_unix.h>
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	#include <dynlink/dynlink_impl_symbol_macos.h>
 	#include <dynlink/dynlink_impl_macos.h>
 #elif defined(__HAIKU__) || defined(__BEOS__)
-	#include <dynlink/dynlink_impl_symbol_beos.h>
 	#include <dynlink/dynlink_impl_beos.h>
 #else
 	#error "Unsupported platform for dynlink"
@@ -50,26 +46,9 @@
 #include <preprocessor/preprocessor_concatenation.h>
 #include <preprocessor/preprocessor_stringify.h>
 
-#include <stdlib.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* -- Macros -- */
-
-#define DYNLINK_SYMBOL_PREFIX_STR() \
-	PREPROCESSOR_STRINGIFY_OR_EMPTY(DYNLINK_SYMBOL_PREFIX)
-
-#define DYNLINK_SYMBOL_NAME(name) \
-	PREPROCESSOR_CONCAT(DYNLINK_SYMBOL_PREFIX, name)
-
-#define DYNLINK_SYMBOL_NAME_STR(name) \
-	PREPROCESSOR_STRINGIFY(DYNLINK_SYMBOL_NAME(name))
-
-#define DYNLINK_SYMBOL_STR(name) \
-	DYNLINK_SYMBOL_PREFIX_STR() \
-	name
 
 /* -- Type definitions -- */
 

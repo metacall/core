@@ -201,6 +201,29 @@ void loader_initialization_register_plugin(plugin p)
 	}
 }
 
+int loader_initialize_host(const loader_tag tag)
+{
+	plugin p = plugin_manager_get(&loader_manager, tag);
+
+	if (p == NULL)
+	{
+		return 1;
+	}
+
+	if (loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl)) != 0)
+	{
+		return 1;
+	}
+	else
+	{
+		loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+		manager_impl->host = p;
+
+		return 0;
+	}
+}
+
 int loader_is_initialized(const loader_tag tag)
 {
 	plugin p = plugin_manager_get(&loader_manager, tag);
@@ -241,6 +264,13 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 		goto loader_create_error;
 	}
 
+	/* Dynamic link loader dependencies if it is not host */
+	if (loader_impl_get_option_host(impl) == 0)
+	{
+		loader_impl_dependencies(impl);
+	}
+
+	/* Dynamic link the loader */
 	p = plugin_manager_create(&loader_manager, tag, impl, &loader_impl_destroy_dtor);
 
 	if (p == NULL)
@@ -547,11 +577,25 @@ void loader_set_options(const loader_tag tag, void *options)
 	loader_impl_set_options(plugin_impl_type(p, loader_impl), options);
 }
 
-void *loader_get_options(const loader_tag tag)
+value loader_get_options(const loader_tag tag)
 {
 	plugin p = loader_get_impl_plugin(tag);
 
 	return loader_impl_get_options(plugin_impl_type(p, loader_impl));
+}
+
+value loader_get_option(const loader_tag tag, const char *field)
+{
+	plugin p = loader_get_impl_plugin(tag);
+
+	return loader_impl_get_option(plugin_impl_type(p, loader_impl), field);
+}
+
+int loader_get_option_host(const loader_tag tag)
+{
+	plugin p = loader_get_impl_plugin(tag);
+
+	return loader_impl_get_option_host(plugin_impl_type(p, loader_impl));
 }
 
 int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr)

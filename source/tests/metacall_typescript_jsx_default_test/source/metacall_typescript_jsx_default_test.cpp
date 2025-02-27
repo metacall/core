@@ -47,5 +47,5 @@ TEST_F(metacall_typescript_jsx_default_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_TS */
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

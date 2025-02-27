@@ -110,5 +110,5 @@ TEST_F(metacall_node_python_ruby_test, DefaultConstructor)
 
 	EXPECT_EQ((int)success_callbacks, (int)1);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

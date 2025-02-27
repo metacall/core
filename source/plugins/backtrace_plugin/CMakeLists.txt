@@ -7,27 +7,28 @@ endif()
 # External dependencies
 #
 
-include(FetchContent)
+if(NOT OPTION_BUILD_GUIX)
+	include(FetchContent)
 
-FetchContent_Declare(BackwardCpp
-	GIT_REPOSITORY https://github.com/bombela/backward-cpp
-	GIT_TAG f30744bcf726ea3735df7ecf9e9de9ddac540283
-)
+	FetchContent_Declare(BackwardCpp
+		GIT_REPOSITORY https://github.com/bombela/backward-cpp
+		GIT_TAG f30744bcf726ea3735df7ecf9e9de9ddac540283
+	)
 
-FetchContent_MakeAvailable(BackwardCpp)
+	FetchContent_MakeAvailable(BackwardCpp)
 
-FetchContent_GetProperties(BackwardCpp
-	SOURCE_DIR BackwardCpp_SOURCE
-	POPULATED BackwardCpp_POPULATED
-)
+	FetchContent_GetProperties(BackwardCpp
+		SOURCE_DIR BackwardCpp_SOURCE
+		POPULATED BackwardCpp_POPULATED
+	)
 
-if(NOT BackwardCpp_POPULATED)
-	FetchContent_Populate(backward-cpp)
+	if(NOT BackwardCpp_POPULATED)
+		FetchContent_Populate(backward-cpp)
+	endif()
 endif()
 
 if(NOT BackwardCpp_POPULATED OR NOT BackwardCpp_SOURCE)
 	message(STATUS "BackwardCpp could not be installed, trying to find it on the system")
-	return()
 endif()
 
 find_package(Backward
@@ -216,7 +217,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 
 	PUBLIC

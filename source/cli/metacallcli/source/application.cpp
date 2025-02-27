@@ -299,12 +299,7 @@ application::application(int argc, char *argv[]) :
 
 application::~application()
 {
-	int result = metacall_destroy();
-
-	if (result != 0)
-	{
-		std::cout << "Error while destroying MetaCall, exit code: " << result << std::endl;
-	}
+	metacall_destroy();
 }
 
 void application::arguments_parse(std::vector<std::string> &arguments)

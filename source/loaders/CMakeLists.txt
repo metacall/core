@@ -26,6 +26,142 @@ option(OPTION_BUILD_LOADERS_RPC "Build cURL Remote Procedure Call loader plugin.
 option(OPTION_BUILD_LOADERS_TS "Build TypeScript 3.9.7 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugin." OFF)
 
+#
+# Configuration for loaders
+#
+# The following list of macros is used for generating a configuration file which includes
+# dependencies, this is required because now loaders can either load the dependencies or
+# use the existing dependencies if MetaCall is being loaded from python.exe, node.exe
+# or similar... so we require to delay the loader dependencies until we know if
+# their dependencies are already present.
+#
+# This set of macros provies a flexible way of defining the configuration and dependencies.
+#
+# 1) The most basic case, let's assume we have the dependencies in the system, like in Python:
+#
+#     loader_configuration_begin(py_loader)
+#     loader_configuration_deps(python "${Python3_LIBRARY}")
+#     loader_configuartion_end()
+#
+# 2) Maybe you want to have multiple paths for a library:
+#
+#     loader_configuration_begin(node_loader)
+#     loader_configuration_deps(node "/path/to/libnode.so" "/alternative/path/to/libnode.so")
+#     loader_configuartion_end()
+#
+# 3) Or the dependencies are compiled by you and you so you have different folders for
+# for development (build folder) and for when installing it:
+#
+#     loader_configuration_begin(node_loader)
+#     loader_configuration_deps(node "/path/to/build/folder/libnode.so")
+#     loader_configuartion_end_development()
+#
+#     loader_configuration_begin(node_loader)
+#     loader_configuration_deps(node "/path/to/install/folder/libnode.so")
+#     loader_configuartion_end_install()
+#
+# 4) Or you have a custom template because your loader needs a configuration with more fields:
+#
+#     loader_configuration_begin(cs_loader)
+#     loader_configuration_deps(netcore "/path/to/build/folder/libnetcore.so")
+#     loader_configuartion_end()
+#
+# You can do any combination of those for defining the configuration of your loaders.
+#
+
+# Define loader template configuration
+set(LOADER_CONFIGURATION_DEFAULT_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/loader.json.in")
+
+# Define loader configuration for a specific loader
+macro(loader_configuration_begin TARGET)
+	set(LOADER_DEPENDENCIES "")
+	set(OPTIONAL_TEMPLATE "${ARGV1}")
+
+	# Optional argument for template
+	if(NOT "${ARGV1}" STREQUAL "")
+		set(LOADER_CONFIGURATION_TEMPLATE "${ARGV1}")
+	else()
+		set(LOADER_CONFIGURATION_TEMPLATE "${LOADER_CONFIGURATION_DEFAULT_TEMPLATE}")
+	endif()
+
+	set(LOADER_CONFIGURATION_TARGET "${TARGET}")
+endmacro()
+
+# Generate configuration with dependencies for a loader
+#
+#	node_loader:
+#		"node": [ "/path/to/libnode.so", "/alternative/path/to/libnode.so" ],
+#
+#	c_loader:
+#		"libffi": [ ... ],
+#		"libclang": [ ... ],
+#		"libtcc": [ ... ]
+macro(loader_configuration_deps LIBRARY)
+	# Add new line from previous dependency
+	if(NOT "${LOADER_DEPENDENCIES}" STREQUAL "")
+		string(APPEND LOADER_DEPENDENCIES ",\n\t\t")
+	endif()
+
+	# Define the library
+	string(APPEND LOADER_DEPENDENCIES "\"${LIBRARY}\": [")
+
+	# Define the paths
+	set(FIRST_ARGUMENT 0)
+	foreach(DEPENDENCY IN ITEMS ${ARGN})
+		if(${FIRST_ARGUMENT} EQUAL 0)
+			# Set first path
+			string(APPEND LOADER_DEPENDENCIES "\"${DEPENDENCY}\"")
+			set(FIRST_ARGUMENT 1)
+		else()
+			# Set the rest of the paths
+			string(APPEND LOADER_DEPENDENCIES ", \"${DEPENDENCY}\"")
+		endif()
+	endforeach()
+
+	# Finalize the list
+	string(APPEND LOADER_DEPENDENCIES "]")
+endmacro()
+
+# Commit development version
+macro(loader_configuartion_end_development)
+	if(NOT DEFINED LOADER_CONFIGURATION_TEMPLATE OR NOT DEFINED LOADER_CONFIGURATION_TARGET)
+		return()
+	endif()
+
+	configure_file(${LOADER_CONFIGURATION_TEMPLATE} ${CONFIGURATION_DIR}/${LOADER_CONFIGURATION_TARGET}.json)
+
+	unset(LOADER_DEPENDENCIES)
+	unset(LOADER_CONFIGURATION_TEMPLATE)
+	unset(LOADER_CONFIGURATION_TARGET)
+endmacro()
+
+# Commit install version
+macro(loader_configuartion_end_install)
+	if(NOT DEFINED LOADER_CONFIGURATION_TEMPLATE OR NOT DEFINED LOADER_CONFIGURATION_TARGET)
+		return()
+	endif()
+
+	configure_file(${LOADER_CONFIGURATION_TEMPLATE} ${CONFIGURATION_DIR}/install/configurations/${LOADER_CONFIGURATION_TARGET}.json)
+
+	unset(LOADER_DEPENDENCIES)
+	unset(LOADER_CONFIGURATION_TEMPLATE)
+	unset(LOADER_CONFIGURATION_TARGET)
+endmacro()
+
+# Commit both versions
+macro(loader_configuartion_end)
+	if(NOT DEFINED LOADER_CONFIGURATION_TEMPLATE OR NOT DEFINED LOADER_CONFIGURATION_TARGET)
+		return()
+	endif()
+
+	configure_file(${LOADER_CONFIGURATION_TEMPLATE} ${CONFIGURATION_DIR}/${LOADER_CONFIGURATION_TARGET}.json)
+	configure_file(${LOADER_CONFIGURATION_TEMPLATE} ${CONFIGURATION_DIR}/install/configurations/${LOADER_CONFIGURATION_TARGET}.json)
+
+	unset(LOADER_DEPENDENCIES)
+	unset(LOADER_CONFIGURATION_TEMPLATE)
+	unset(LOADER_CONFIGURATION_TARGET)
+endmacro()
+
 # Plugin packages
 add_subdirectory(c_loader) # Foreign Function Interface library
 add_subdirectory(cob_loader) # GNU/Cobol 2.2 Runtime
@@ -49,34 +185,18 @@ add_subdirectory(rpc_loader) # cURL Remote Procedure Call
 add_subdirectory(ts_loader) # TypeScript 3.9.7
 add_subdirectory(wasm_loader) # WebAssembly Virtual Machine
 
-# Optionally enable loader dependencies utility
-macro(add_loader_dependencies target)
-	set(loaders_map_c_loader	OPTION_BUILD_LOADERS_C)
-	set(loaders_map_cob_loader	OPTION_BUILD_LOADERS_COB)
-	set(loaders_map_cr_loader	OPTION_BUILD_LOADERS_CR)
-	set(loaders_map_cs_loader	OPTION_BUILD_LOADERS_DART)
-	set(loaders_map_dart_loader	OPTION_BUILD_LOADERS_CS)
-	set(loaders_map_ext_loader	OPTION_BUILD_LOADERS_EXT)
-	set(loaders_map_file_loader	OPTION_BUILD_LOADERS_FILE)
-	set(loaders_map_java_loader	OPTION_BUILD_LOADERS_JAVA)
-	set(loaders_map_jl_loader	OPTION_BUILD_LOADERS_JL)
-	set(loaders_map_jsm_loader	OPTION_BUILD_LOADERS_JSM)
-	set(loaders_map_js_loader	OPTION_BUILD_LOADERS_JS)
-	set(loaders_map_llvm_loader	OPTION_BUILD_LOADERS_LLVM)
-	set(loaders_map_lua_loader	OPTION_BUILD_LOADERS_LUA)
-	set(loaders_map_mock_loader	OPTION_BUILD_LOADERS_MOCK)
-	set(loaders_map_node_loader	OPTION_BUILD_LOADERS_NODE)
-	set(loaders_map_py_loader	OPTION_BUILD_LOADERS_PY)
-	set(loaders_map_rb_loader	OPTION_BUILD_LOADERS_RB)
-	set(loaders_map_rs_loader	OPTION_BUILD_LOADERS_RS)
-	set(loaders_map_rpc_loader	OPTION_BUILD_LOADERS_RPC)
-	set(loaders_map_ts_loader	OPTION_BUILD_LOADERS_TS)
-	set(loaders_map_wasm_loader	OPTION_BUILD_LOADERS_WASM)
-
+# Optionally enable loader dependencies utility (for tests)
+macro(add_loader_dependencies TARGET)
 	set(LOADERS_LIST)
 
-	foreach(loader ${ARGN})
-		if(${loaders_map_${loader}})
+	foreach(LOADER ${ARGN})
+		# Loaders come in the form of: py_loader, node_loader, ...
+		# Convert them into OPTION_BUILD_LOADERS_PY, OPTION_BUILD_LOADERS_NODE, ...
+		string(REPLACE "_loader" "" LOADER_TAG "${LOADER}")
+		string(TOUPPER "${LOADER_TAG}" LOADER_TAG)
+
+		# Check if the loader is enabled
+		if(${OPTION_BUILD_LOADERS_${LOADER_TAG}})
 			set(LOADERS_LIST
 				${LOADERS_LIST}
 				${loader}
@@ -85,6 +205,6 @@ macro(add_loader_dependencies target)
 	endforeach()
 
 	if(LOADERS_LIST)
-		add_dependencies(${target} ${LOADERS_LIST})
+		add_dependencies(${TARGET} ${LOADERS_LIST})
 	endif()
 endmacro()

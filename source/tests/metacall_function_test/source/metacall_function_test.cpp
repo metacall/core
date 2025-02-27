@@ -272,5 +272,5 @@ TEST_F(metacall_function_test, DefaultConstructor)
 	metacall_value_destroy(c_callback_factorial_impl_value);
 	metacall_value_destroy(c_callback_factorial_value);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

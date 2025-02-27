@@ -56,6 +56,7 @@ set(headers
 	${include_path}/metacall_log.h
 	${include_path}/metacall_allocator.h
 	${include_path}/metacall_error.h
+	${include_path}/metacall_link.h
 )
 
 set(sources
@@ -64,6 +65,7 @@ set(sources
 	${source_path}/metacall_log.c
 	${source_path}/metacall_allocator.c
 	${source_path}/metacall_error.c
+	${source_path}/metacall_link.c
 )
 
 if(OPTION_FORK_SAFE)
@@ -198,6 +200,8 @@ target_link_libraries(${target}
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 
+	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
+
 	INTERFACE
 )
 
@@ -240,13 +244,11 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
-
-	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
 
 	INTERFACE
 )

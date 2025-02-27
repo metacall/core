@@ -408,14 +408,20 @@ function node_loader_trampoline_await_future(trampoline) {
 	};
 }
 
-module.exports = ((impl, ptr) => {
+const startup = (impl, ptr, trampoline_exports) => {
 	try {
 		if (typeof impl === 'undefined' || typeof ptr === 'undefined') {
-			throw new Error('Process arguments (process.argv[2], process.argv[3]) not defined.');
+			throw new Error('Bootstrap startup arguments impl or ptr are not defined.');
 		}
 
 		// Get trampoline from list of linked bindings
-		const trampoline = process._linkedBinding('node_loader_trampoline_module');
+		const trampoline = (() => {
+			if (trampoline_exports) {
+				return trampoline_exports;
+			}
+
+			return process._linkedBinding('node_loader_trampoline_module');
+		})();
 
 		const node_loader_ptr = trampoline.register(impl, ptr, {
 			'initialize': node_loader_trampoline_initialize,
@@ -430,7 +436,21 @@ module.exports = ((impl, ptr) => {
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
 		});
+
+		// This function must destroy all the loaders but
+		// delaying the NodeJS Loader library unloading
+		if (trampoline_exports) {
+			process.on('exit', () => trampoline.destroy(node_loader_ptr));
+		}
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);
+	}
+};
+
+module.exports = ((impl, ptr) => {
+	if (impl === undefined || ptr === undefined) {
+		return startup;
+	} else {
+		return startup(impl, ptr);
 	}
 })(process.argv[2], process.argv[3]);

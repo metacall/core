@@ -25,19 +25,13 @@
 
 #include <loader/loader_impl_interface.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 COB_LOADER_API loader_impl_interface cob_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(cob_loader_impl_interface_singleton);
-
 COB_LOADER_API const char *cob_loader_print_info(void);
-
-DYNLINK_SYMBOL_EXPORT(cob_loader_print_info);
 
 #ifdef __cplusplus
 }

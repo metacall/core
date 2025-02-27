@@ -139,7 +139,7 @@ target_compile_features(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 	${DEFAULT_LINKER_OPTIONS}
 )

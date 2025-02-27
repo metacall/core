@@ -113,7 +113,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 	${DEFAULT_LINKER_OPTIONS}
 )
@@ -193,15 +193,15 @@ add_dependencies(${target}
 set(NodeJS_EXECUTABLE_ONLY ON)
 
 find_package(NodeJS)
-find_package(Python COMPONENTS Interpreter)
+find_package(Python3 COMPONENTS Interpreter)
 
-if(NodeJS_FOUND AND Python_Interpreter_FOUND)
+if(NodeJS_FOUND AND Python3_Interpreter_FOUND)
 	execute_process(
 		COMMAND ${NodeJS_EXECUTABLE} -e "console.log(process.versions.openssl)"
 		OUTPUT_VARIABLE NODEJS_OPENSSL_VERSION
 	)
 	execute_process(
-		COMMAND ${Python_EXECUTABLE} -c "import ssl; print(ssl.OPENSSL_VERSION.split()[1])"
+		COMMAND ${Python3_EXECUTABLE} -c "import ssl; print(ssl.OPENSSL_VERSION.split()[1])"
 		OUTPUT_VARIABLE PYTHON_OPENSSL_VERSION
 	)
 

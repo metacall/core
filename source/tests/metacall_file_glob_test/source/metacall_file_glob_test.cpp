@@ -70,5 +70,5 @@ TEST_F(metacall_file_glob_test, DefaultConstructor)
 
 	metacall_allocator_destroy(config_allocator);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

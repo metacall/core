@@ -94,6 +94,8 @@ jobs:
   manifest:
     name: Create and Push Manifest Lists
     needs: build
+    # Only run when master or when tagging a version
+    if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Login to Docker Hub
@@ -104,10 +106,15 @@ jobs:
 
       - name: Create and Push Manifest Lists
         run: |
-          for tag in "deps" "dev" "runtime" "cli"; do
+          tags=("deps" "dev" "runtime" "cli")
+          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
+
+          echo "Create all the tags by platform"
+
+          for tag in "${tags[@]}"; do
             echo "Creating manifest for tag: $tag"
             platform_tags=""
-            for platform in "linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6"; do
+            for platform in "${platforms[@]}"; do
               platform_tag=$(echo "${platform}" | tr '/' '-')
               platform_tags="${platform_tags} ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}"
             done
@@ -116,27 +123,31 @@ jobs:
             docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}
           done
 
-      - name: Create Version Specific Tags
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          tags=("deps" "dev" "runtime" "cli")
-          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
-          for tag in "${tags[@]}"; do
-            platform_tags=""
-            for platform in "${platforms[@]}"; do
-              platform_tags="${platform_tags} ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform}"
-            done
-            docker manifest create ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag} ${platform_tags} --amend
-            docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag}
-          done
+          echo "Create the latest tag"
 
           cli_platform_tags=""
-          for platform in ${{ matrix.platform }}; do
-            cli_platform_tags="${cli_platform_tags} ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform}"
+          for platform in ${platforms[@]}"; do
+              platform_tag=$(echo "${platform}" | tr '/' '-')
+            cli_platform_tags="${cli_platform_tags} ${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform_tag}"
           done
           docker manifest create ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:latest ${cli_platform_tags} --amend
           docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:latest
+
+          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" = true ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+
+            echo "Create the version ${VERSION} tag"
+
+            for tag in "${tags[@]}"; do
+              platform_tags=""
+              for platform in "${platforms[@]}"; do
+                platform_tag=$(echo "${platform}" | tr '/' '-')
+                platform_tags="${platform_tags} ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}"
+              done
+              docker manifest create ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag} ${platform_tags} --amend
+              docker manifest push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag}
+            done
+          fi
 
   cleanup:
     name: Cleanup Platform Specific Tags
@@ -146,16 +157,19 @@ jobs:
     steps:
       - name: Remove Platform-Specific Tags
         run: |
-          platforms=("linux-amd64" "linux-386" "linux-arm64" "linux-riscv64" "linux-ppc64le" "linux-s390x" "linux-arm-v7" "linux-arm-v6")
           tags=("deps" "dev" "runtime" "cli")
+          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
 
-          for platform in "${platforms[@]}"; do
-            for tag in "${tags[@]}"; do
-              tag_to_delete="${tag}-${platform}"
+          for tag in "${tags[@]}"; do
+            for platform in "${platforms[@]}"; do
+              platform_tag=$(echo "${platform}" | tr '/' '-')
+              tag_to_delete="${tag}-${platform_tag}"
+
               echo "Deleting tag: ${tag_to_delete}"
+              echo "https://hub.docker.com/v2/repositories/${DOCKER_USERNAME}/${IMAGE_NAME}/tags/${tag_to_delete}/"
 
               curl -X DELETE \
-                -H "Authorization: Bearer ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" \
+                -H "Authorization: Bearer ${{ secrets.DOCKER_HUB_ACCESS_TOKEN_DELETE }}" \
                 "https://hub.docker.com/v2/repositories/${DOCKER_USERNAME}/${IMAGE_NAME}/tags/${tag_to_delete}/"
             done
           done

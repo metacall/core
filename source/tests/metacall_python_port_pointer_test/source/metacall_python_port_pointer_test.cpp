@@ -118,5 +118,5 @@ TEST_F(metacall_python_port_pointer_test, DefaultConstructor)
 
 	metacall_value_destroy(ret);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

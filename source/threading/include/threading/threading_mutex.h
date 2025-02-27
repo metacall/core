@@ -33,6 +33,10 @@ extern "C" {
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(_WIN64)
 	#include <windows.h>
+	#define THREADING_MUTEX_INITIALIZE \
+		{ \
+			0 \
+		}
 typedef CRITICAL_SECTION threading_mutex_impl_type;
 #elif (defined(linux) || defined(__linux) || defined(__linux__) || defined(__gnu_linux) || defined(__gnu_linux__) || defined(__TOS_LINUX__)) || \
 	defined(__FreeBSD__) || \
@@ -41,10 +45,12 @@ typedef CRITICAL_SECTION threading_mutex_impl_type;
 	(defined(bsdi) || defined(__bsdi__)) || \
 	defined(__DragonFly__)
 	#include <pthread.h>
+	#define THREADING_MUTEX_INITIALIZE PTHREAD_MUTEX_INITIALIZER
 typedef pthread_mutex_t threading_mutex_impl_type;
 #elif (defined(__MACOS__) || defined(macintosh) || defined(Macintosh) || defined(__TOS_MACOS__)) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	#include <os/lock.h>
+	#define THREADING_MUTEX_INITIALIZE OS_UNFAIR_LOCK_INIT
 typedef os_unfair_lock threading_mutex_impl_type;
 #else
 	#error "Platform not supported for mutex implementation"
@@ -52,16 +58,10 @@ typedef os_unfair_lock threading_mutex_impl_type;
 
 #include <string.h>
 
-/* -- Member Data -- */
-
-struct threading_mutex_type
-{
-	threading_mutex_impl_type impl;
-};
-
 /* -- Type Definitions -- */
 
-typedef struct threading_mutex_type *threading_mutex;
+typedef threading_mutex_impl_type threading_mutex_type;
+typedef threading_mutex_type *threading_mutex;
 
 /* -- Methods -- */
 

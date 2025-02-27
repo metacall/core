@@ -180,6 +180,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::threading
+	${META_PROJECT_NAME}::portability
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -219,7 +220,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_options(${target}
 	PRIVATE
 
 	PUBLIC

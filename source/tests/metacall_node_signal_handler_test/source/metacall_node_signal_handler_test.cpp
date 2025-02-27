@@ -127,7 +127,7 @@ TEST_F(metacall_node_signal_handler_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 
 	EXPECT_EQ((bool)callback_result.load(), (bool)true);
 	EXPECT_EQ((bool)signal_result.load(), (bool)true);

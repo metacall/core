@@ -40,5 +40,5 @@ void environment::SetUp()
 
 void environment::TearDown()
 {
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	metacall_destroy();
 }

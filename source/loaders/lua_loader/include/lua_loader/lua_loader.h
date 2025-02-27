@@ -25,19 +25,13 @@
 
 #include <loader/loader_impl_interface.h>
 
-#include <dynlink/dynlink.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 LUA_LOADER_API loader_impl_interface lua_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(lua_loader_impl_interface_singleton);
-
 LUA_LOADER_API const char *lua_loader_print_info(void);
-
-DYNLINK_SYMBOL_EXPORT(lua_loader_print_info);
 
 #ifdef __cplusplus
 }

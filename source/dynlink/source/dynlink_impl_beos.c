@@ -85,7 +85,7 @@ int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlin
 		return 1;
 	}
 
-	*addr = (dynlink_symbol_addr)symbol;
+	dynlink_symbol_cast(void *, symbol, *addr);
 
 	return (*addr == NULL);
 }

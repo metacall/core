@@ -29,7 +29,6 @@
 
 #include <dynlink/dynlink_flags.h>
 #include <dynlink/dynlink_interface.h>
-#include <dynlink/dynlink_symbol.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,6 +62,21 @@ DYNLINK_API const char *dynlink_extension(void);
 *    A handle to the dynamically linked shared object
 */
 DYNLINK_API dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags);
+
+/**
+*  @brief
+*    Load a dynamically linked shared object with absolute path
+*
+*  @param[in] path
+*    Path where is located the shared object (absolute)
+*
+*  @param[in] flags
+*    Dynamic linking flags
+*
+*  @return
+*    A handle to the dynamically linked shared object
+*/
+DYNLINK_API dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags);
 
 /**
 *  @brief
