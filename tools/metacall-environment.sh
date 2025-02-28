@@ -643,10 +643,10 @@ sub_java(){
 # C
 sub_c(){
 	echo "configure c"
+	cd $ROOT_DIR
+	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		LLVM_VERSION_STRING=14
-
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
 			UBUNTU_CODENAME=""
 			CODENAME_FROM_ARGUMENTS=""

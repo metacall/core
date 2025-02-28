@@ -1224,7 +1224,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 		}
 	}
 
-	if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
+	if (tcc_relocate(c_handle->state) == -1)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
 		goto error;
@@ -1256,7 +1256,7 @@ loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name
 		goto error;
 	}
 
-	if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
+	if (tcc_relocate(c_handle->state) == -1)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
 		goto error;
