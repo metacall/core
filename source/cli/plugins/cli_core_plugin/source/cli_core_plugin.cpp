@@ -2,7 +2,7 @@
  *	CLI Core Plugin by Parra Studios
  *	A plugin implementing core functionality for MetaCall CLI.
  *
- *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@
 		std::cout << "MetaCall Command Line Interface by Parra Studios" << std::endl; \
 		std::cout << "A command line interface for MetaCall Core" << std::endl; \
 		std::cout << std::endl; \
-		std::cout << "Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl; \
+		std::cout << "Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl; \
 	} while (0)
 
 template <typename result_type, typename cast_func_type>

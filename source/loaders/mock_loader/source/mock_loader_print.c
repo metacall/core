@@ -1,6 +1,6 @@
 /*
 *	Loader Library by Parra Studios
-*	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 *
 *	A plugin for loading mock code at run-time into a process.
 *
@@ -14,7 +14,7 @@ const char *mock_loader_print_info(void)
 {
 	static const char mock_loader_info[] =
 		"Mock Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 #ifdef MOCK_LOADER_STATIC_DEFINE
 		"Compiled as static library type\n"

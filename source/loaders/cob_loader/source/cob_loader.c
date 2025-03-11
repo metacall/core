@@ -2,7 +2,7 @@
  *	Loader Library by Parra Studios
  *	A plugin for loading cobol code at run-time into a process.
  *
- *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ const char *cob_loader_print_info(void)
 {
 	static const char cob_loader_info[] =
 		"Cobol Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 #ifdef COB_LOADER_STATIC_DEFINE
 		"Compiled as static library type\n"

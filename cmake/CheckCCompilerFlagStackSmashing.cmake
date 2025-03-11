@@ -2,7 +2,7 @@
 #	Compiler checker for stack smashing flags by Parra Studios
 #	Tests if a defined stack smashing security flag is available.
 #
-#	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.

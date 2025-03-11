@@ -1,6 +1,6 @@
 /*
  *	Abstract Data Type Library by Parra Studios
- *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A abstract data type library providing generic containers.
  *

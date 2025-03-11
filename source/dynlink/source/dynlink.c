@@ -2,7 +2,7 @@
  *	Dynamic Link Library by Parra Studios
  *	A library for dynamic loading and linking shared objects at run-time.
  *
- *	Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -196,7 +196,7 @@ const char *dynlink_print_info(void)
 {
 	static const char dynlink_info[] =
 		"Dynamic Link Library " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2024 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 #ifdef DYNLINK_STATIC_DEFINE
 		"Compiled as static library type"
