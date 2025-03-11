@@ -27,6 +27,10 @@ include(FindPackageHandleStandardArgs)
 find_package(PkgConfig QUIET)
 pkg_check_modules(PKG_GIT2 QUIET libgit2)
 
+if(NOT PKG_GIT2_FOUND)
+	return()
+endif()
+
 if(NOT LibGit2_DEFINITIONS)
 	set(LibGit2_DEFINITIONS ${PKG_GIT2_CFLAGS_OTHER})
 endif()
