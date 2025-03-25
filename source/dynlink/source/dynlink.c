@@ -25,6 +25,7 @@
 #include <dynlink/dynlink.h>
 #include <dynlink/dynlink_impl.h>
 
+#include <portability/portability_executable_path.h>
 #include <portability/portability_path.h>
 
 #include <stdlib.h>
@@ -74,7 +75,7 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 				strncpy(handle->name_impl, name_impl, strnlen(name_impl, PORTABILITY_PATH_SIZE) + 1);
 			}
 
-			handle->flags = flags;
+			DYNLINK_FLAGS_SET(handle->flags, flags);
 
 			handle->impl = dynlink_impl_load(handle);
 
@@ -101,8 +102,33 @@ dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags)
 
 	strncpy(handle->name_impl, path, strnlen(path, PORTABILITY_PATH_SIZE) + 1);
 
-	handle->flags = flags;
+	DYNLINK_FLAGS_SET(handle->flags, flags);
 
+	handle->impl = dynlink_impl_load(handle);
+
+	if (handle->impl == NULL)
+	{
+		free(handle);
+		return NULL;
+	}
+
+	return handle;
+}
+
+dynlink dynlink_load_self(dynlink_flags flags)
+{
+	portability_executable_path_length path_length;
+	dynlink handle = malloc(sizeof(struct dynlink_type));
+
+	if (handle == NULL)
+	{
+		return NULL;
+	}
+
+	portability_executable_path(handle->name_impl, &path_length);
+	portability_path_get_name(handle->name_impl, path_length + 1, handle->name, PORTABILITY_PATH_SIZE);
+	DYNLINK_FLAGS_SET(handle->flags, flags);
+	DYNLINK_FLAGS_ADD(handle->flags, DYNLINK_FLAGS_BIND_SELF);
 	handle->impl = dynlink_impl_load(handle);
 
 	if (handle->impl == NULL)
@@ -142,6 +168,16 @@ dynlink_flags dynlink_get_flags(dynlink handle)
 	}
 
 	return 0;
+}
+
+dynlink_impl dynlink_get_impl(dynlink handle)
+{
+	if (handle != NULL)
+	{
+		return handle->impl;
+	}
+
+	return NULL;
 }
 
 int dynlink_symbol(dynlink handle, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address)

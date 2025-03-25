@@ -60,9 +60,7 @@ void dynlink_impl_interface_get_name_unix(dynlink_name name, dynlink_name_impl n
 dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
-
 	int flags_impl;
-
 	void *impl;
 
 	DYNLINK_FLAGS_SET(flags_impl, 0);
@@ -87,16 +85,23 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 		DYNLINK_FLAGS_ADD(flags_impl, RTLD_GLOBAL);
 	}
 
-	impl = dlopen(dynlink_get_name_impl(handle), flags_impl);
-
-	if (impl != NULL)
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
 	{
-		return (dynlink_impl)impl;
+		impl = dlopen(NULL, flags_impl);
+	}
+	else
+	{
+		impl = dlopen(dynlink_get_name_impl(handle), flags_impl);
 	}
 
-	log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: %s", dlerror());
+	if (impl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: %s", dlerror());
 
-	return NULL;
+		return NULL;
+	}
+
+	return (dynlink_impl)impl;
 }
 
 int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
@@ -112,7 +117,15 @@ int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, dynlin
 
 int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 {
+	dynlink_flags flags = dynlink_get_flags(handle);
+
 	(void)handle;
+
+	/* Skip unlink when using global handle for loading symbols of the current process */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		return 0;
+	}
 
 #if defined(__MEMORYCHECK__) || defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
 	/* Disable dlclose when running with valgrind or sanitizers in order to maintain stacktraces */

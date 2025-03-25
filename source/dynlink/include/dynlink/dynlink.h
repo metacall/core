@@ -80,6 +80,18 @@ DYNLINK_API dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags
 
 /**
 *  @brief
+*    Get the reference of the current process
+*
+*  @param[in] flags
+*    Dynamic linking flags
+*
+*  @return
+*    A handle to the current process
+*/
+DYNLINK_API dynlink dynlink_load_self(dynlink_flags flags);
+
+/**
+*  @brief
 *    Retreive the name of the dynamically linked shared object
 *
 *  @param[in] handle
@@ -113,6 +125,18 @@ DYNLINK_API dynlink_name dynlink_get_name_impl(dynlink handle);
 *    Linking flags of dynamically linked shared object
 */
 DYNLINK_API dynlink_flags dynlink_get_flags(dynlink handle);
+
+/**
+*  @brief
+*    Retreive the internal representation of the dynamically linked shared object
+*
+*  @param[in] handle
+*    Handle of dynamically linked shared object
+*
+*  @return
+*    The implementation dependant handle representing the dynamically linked shared object
+*/
+DYNLINK_API dynlink_impl dynlink_get_impl(dynlink handle);
 
 /**
 *  @brief

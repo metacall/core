@@ -52,23 +52,33 @@ void dynlink_impl_interface_get_name_beos(dynlink_name name, dynlink_name_impl n
 dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
+	image_id impl = 0;
 
-	int flags_impl;
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		image_info info;
+		int32 cookie = 0;
 
-	image_id impl;
+		if (get_next_image_info(0, &cookie, &info) != B_OK)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku image add-on on current executable");
+			return NULL;
+		}
 
-	DYNLINK_FLAGS_SET(flags_impl, 0);
-
-	impl = load_add_on(dynlink_get_name_impl(handle));
+		impl = load_add_on(info.name);
+	}
+	else
+	{
+		impl = load_add_on(dynlink_get_name_impl(handle));
+	}
 
 	if (impl < B_NO_ERROR)
 	{
-		return (dynlink_impl)impl;
+		log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku image add-on with error code %d", (int)impl);
+		return NULL;
 	}
 
-	log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku image add-on");
-
-	return NULL;
+	return (dynlink_impl)impl;
 }
 
 int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
@@ -92,7 +102,15 @@ int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlin
 
 int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
 {
+	dynlink_flags flags = dynlink_get_flags(handle);
+
 	(void)handle;
+
+	/* Skip unlink when using global handle for loading symbols of the current process */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		return 0;
+	}
 
 #if defined(__MEMORYCHECK__) || defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
 	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */

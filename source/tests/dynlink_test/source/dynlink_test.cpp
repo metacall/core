@@ -35,6 +35,19 @@ class dynlink_test : public testing::Test
 protected:
 };
 
+#ifdef _WIN32
+	#define EXPORT_SYMBOL __declspec(dllexport)
+#else
+	#define EXPORT_SYMBOL __attribute__((visibility("default")))
+#endif
+
+extern "C" EXPORT_SYMBOL int function_from_current_executable(void)
+{
+	log_write("metacall", LOG_LEVEL_INFO, "function_from_current_executable");
+
+	return 48;
+}
+
 TEST_F(dynlink_test, DefaultConstructor)
 {
 	EXPECT_EQ((int)0, (int)log_configure("metacall",
@@ -47,6 +60,7 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
+	/* Test library loading */
 	{
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		const char library_name[] = "mock_loaderd";
@@ -60,13 +74,13 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		environment_variable_path_destroy(path);
 
-		EXPECT_NE(handle, (dynlink)NULL);
+		ASSERT_NE(handle, (dynlink)NULL);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file: %s", dynlink_get_name_impl(handle));
 
 		if (handle != NULL)
 		{
-			static dynlink_symbol_addr mock_loader_print_info_addr;
+			dynlink_symbol_addr mock_loader_print_info_addr;
 
 			EXPECT_EQ((int)0, dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr));
 
@@ -88,5 +102,24 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 			dynlink_unload(handle);
 		}
+	}
+
+	/* Test loading symbols from current process */
+	{
+		dynlink proc = dynlink_load_self(DYNLINK_FLAGS_BIND_GLOBAL | DYNLINK_FLAGS_BIND_LAZY);
+
+		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
+
+		dynlink_symbol_addr addr;
+
+		EXPECT_EQ((int)0, dynlink_symbol(proc, "function_from_current_executable", &addr));
+
+		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
+
+		int (*fn_ptr)(void) = (int (*)(void))addr;
+
+		EXPECT_EQ((int)48, fn_ptr());
+
+		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 	}
 }

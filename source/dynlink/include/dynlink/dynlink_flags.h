@@ -36,6 +36,8 @@ extern "C" {
 #define DYNLINK_FLAGS_BIND_LOCAL  (0x01 << 0x02) /**< Private visibility bind flag */
 #define DYNLINK_FLAGS_BIND_GLOBAL (0x01 << 0x03) /**< Public visibility bind flag */
 
+#define DYNLINK_FLAGS_BIND_SELF (0x01 << 0x10) /**< Private flag for when loading the current process */
+
 /* -- Macros -- */
 
 /**

@@ -56,7 +56,17 @@ void dynlink_impl_interface_get_name_win32(dynlink_name name, dynlink_name_impl 
 
 dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 {
-	HANDLE impl = LoadLibrary(dynlink_get_name_impl(handle));
+	HMODULE impl;
+	dynlink_flags flags = dynlink_get_flags(handle);
+
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		impl = GetModuleHandle(NULL);
+	}
+	else
+	{
+		impl = LoadLibrary(dynlink_get_name_impl(handle));
+	}
 
 	if (impl == NULL)
 	{
@@ -89,9 +99,23 @@ int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynli
 
 int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 {
+	dynlink_flags flags = dynlink_get_flags(handle);
+
 	(void)handle;
 
+	/* Skip unlink when using global handle for loading symbols of the current process */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		return 0;
+	}
+
+#if defined(__MEMORYCHECK__) || defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+	(void)impl;
+	return 0;
+#else
 	return (FreeLibrary(impl) == FALSE);
+#endif
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton(void)
