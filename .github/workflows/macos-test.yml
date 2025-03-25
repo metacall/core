@@ -77,7 +77,7 @@ jobs:
       - name: Set up the environment
         run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base python nodejs typescript java ruby wasm rpc file cobol go backtrace #netcore5 c rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: base python nodejs typescript java ruby wasm rpc file cobol go backtrace #netcore5 c rust rapidjson swig pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |
@@ -89,10 +89,8 @@ jobs:
 
       - name: Build
         working-directory: ./build
-        # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
           . .env
-          cmake -DOPTION_FORK_SAFE=OFF  ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests

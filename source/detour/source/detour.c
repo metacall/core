@@ -34,7 +34,11 @@ static plugin_manager_declare(detour_manager);
 
 struct detour_handle_type
 {
-	void (*target)(void);
+	/* TODO: Implement hash map for holding the symbol table? */
+	/* TODO: Optimize the replace process by exposing the internal replace function
+	* and store all the symbols in the hash table then iterate and replace at the
+	* same time, so the functions are accessed in O(1) instead of O(n)
+	*/
 	detour_impl_handle impl;
 };
 
@@ -65,37 +69,27 @@ const char *detour_name(detour d)
 	return plugin_name(d);
 }
 
-void (*detour_trampoline(detour_handle handle))(void)
+detour_handle detour_load_file(detour d, const char *path)
 {
-	if (handle == NULL)
-	{
-		return NULL;
-	}
+	detour_handle handle;
 
-	return handle->target;
-}
-
-detour_handle detour_install(detour d, void (*target)(void), void (*hook)(void))
-{
-	if (d == NULL || target == NULL || hook == NULL)
+	if (d == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour install arguments");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour load arguments");
 
 		return NULL;
 	}
 
-	detour_handle handle = malloc(sizeof(struct detour_handle_type));
+	handle = malloc(sizeof(struct detour_handle_type));
 
 	if (handle == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour install handle allocation");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour load handle allocation");
 
 		return NULL;
 	}
 
-	handle->impl = detour_iface(d)->initialize();
-
-	if (handle->impl == NULL)
+	if (detour_iface(d)->initialize_file(&handle->impl, path) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle initialization");
 
@@ -104,55 +98,106 @@ detour_handle detour_install(detour d, void (*target)(void), void (*hook)(void))
 		return NULL;
 	}
 
-	void (**target_ptr)(void) = &target;
+	return handle;
+}
 
-	if (detour_iface(d)->install(handle->impl, target_ptr, hook) != 0)
+detour_handle detour_load_handle(detour d, dynlink library)
+{
+	detour_handle handle;
+
+	if (d == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle installation");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour load arguments");
 
-		if (detour_iface(d)->destroy(handle->impl) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle destruction");
-		}
+		return NULL;
+	}
+
+	handle = malloc(sizeof(struct detour_handle_type));
+
+	if (handle == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour load handle allocation");
+
+		return NULL;
+	}
+
+	if (detour_iface(d)->initialize_handle(&handle->impl, library) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle initialization");
 
 		free(handle);
 
 		return NULL;
 	}
 
-	handle->target = *target_ptr;
+	return handle;
+}
+
+detour_handle detour_load_address(detour d, void (*address)(void))
+{
+	detour_handle handle;
+
+	if (d == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour load arguments");
+
+		return NULL;
+	}
+
+	handle = malloc(sizeof(struct detour_handle_type));
+
+	if (handle == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour load handle allocation");
+
+		return NULL;
+	}
+
+	if (detour_iface(d)->initialize_address(&handle->impl, address) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle initialization");
+
+		free(handle);
+
+		return NULL;
+	}
 
 	return handle;
 }
 
-int detour_uninstall(detour d, detour_handle handle)
+int detour_enumerate(detour d, detour_handle handle, unsigned int *position, const char **name, void (***address)(void))
 {
-	int result = 0;
-
-	if (d == NULL || handle == NULL)
+	if (d == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid uninstall arguments");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour enumerate arguments");
 
 		return 1;
 	}
 
-	result |= detour_iface(d)->uninstall(handle->impl);
+	return detour_iface(d)->enumerate(handle, position, name, (void ***)address);
+}
 
-	if (result != 0)
+int detour_replace(detour d, detour_handle handle, const char *function_name, void (*function_addr)(void), void (**function_trampoline)(void))
+{
+	if (d == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle uninstallation");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour replace arguments");
+
+		return 1;
 	}
 
-	result |= detour_iface(d)->destroy(handle->impl);
+	return detour_iface(d)->replace(handle, function_name, function_addr, (void **)function_trampoline);
+}
 
-	if (result != 0)
+void detour_unload(detour d, detour_handle handle)
+{
+	if (d == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle destruction");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour replace arguments");
+		return;
 	}
 
-	free(handle);
-
-	return result;
+	detour_iface(d)->destroy(handle);
 }
 
 int detour_clear(detour d)

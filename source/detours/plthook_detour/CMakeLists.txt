@@ -1,5 +1,5 @@
 # Check if this	detour is enabled
-if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_FUNCHOOK)
+if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_PLTHOOK)
 	return()
 endif()
 
@@ -7,66 +7,35 @@ endif()
 # External dependencies
 #
 
-find_package(Git REQUIRED)
+# PLTHook
+include(FetchContent)
 
-# Target depends name
-set(target_depends funchook_detour_depends)
+set(PLTHook_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/plthook")
 
-include(ExternalProject)
-
-set(FUNCHOOK_VERSION 1.1.3)
-
-if(WIN32)
-	set(FUNCHOOK_LIBRARY_SUFFIX "lib")
-	set(FUNCHOOK_LIBRARY_INSTALL_SUFFIX "dll")
-elseif(APPLE)
-	set(FUNCHOOK_LIBRARY_SUFFIX "dylib")
-else()
-	set(FUNCHOOK_LIBRARY_SUFFIX "so")
-endif()
-
-set(FUNCHOOK_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/funchook/src/funchook")
-
-if(WIN32)
-	set(FUNCHOOK_BUILD_TARGET "INSTALL")
-	set(FUNCHOOK_LIBRARY_NAME "funchook_dll.${FUNCHOOK_LIBRARY_SUFFIX}")
-	set(FUNCHOOK_LIBRARY "${FUNCHOOK_SOURCE_DIR}/${CMAKE_BUILD_TYPE}/${FUNCHOOK_LIBRARY_NAME}")
-	set(FUNCHOOK_LIBRARY_INSTALL_NAME "funchook.${FUNCHOOK_LIBRARY_INSTALL_SUFFIX}")
-	set(FUNCHOOK_LIBRARY_INSTALL_DIR "${FUNCHOOK_SOURCE_DIR}/${CMAKE_BUILD_TYPE}/${FUNCHOOK_LIBRARY_INSTALL_NAME}")
-else()
-	set(FUNCHOOK_BUILD_TARGET "install")
-	set(FUNCHOOK_LIBRARY_NAME "libfunchook.${FUNCHOOK_LIBRARY_SUFFIX}")
-	set(FUNCHOOK_LIBRARY "${FUNCHOOK_SOURCE_DIR}/${FUNCHOOK_LIBRARY_NAME}")
-	set(FUNCHOOK_LIBRARY_INSTALL_NAME "${FUNCHOOK_LIBRARY_NAME}")
-	set(FUNCHOOK_LIBRARY_INSTALL_DIR "${FUNCHOOK_LIBRARY}")
-endif()
-
-set(FUNCHOOK_INSTALL_DIR "${PROJECT_OUTPUT_DIR}")
-set(FUNCHOOK_LIBRARY_INSTALL "${PROJECT_OUTPUT_DIR}/${FUNCHOOK_LIBRARY_INSTALL_NAME}")
-set(FUNCHOOK_INCLUDE_DIR "${FUNCHOOK_SOURCE_DIR}/include")
-
-ExternalProject_Add(${target_depends}
-	PREFIX funchook
-	SOURCE_DIR ${FUNCHOOK_SOURCE_DIR}
-	INSTALL_DIR ${FUNCHOOK_INSTALL_DIR}
-	DOWNLOAD_COMMAND "${GIT_EXECUTABLE}" clone --single-branch --branch v${FUNCHOOK_VERSION} --recursive https://github.com/kubo/funchook.git "${FUNCHOOK_SOURCE_DIR}"
-	CONFIGURE_COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" -DCMAKE_BUILD_PARALLEL_LEVEL=1 -DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON -DCMAKE_INSTALL_PREFIX=${FUNCHOOK_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DFUNCHOOK_BUILD_SHARED=ON -DFUNCHOOK_BUILD_TESTS=OFF -DFUNCHOOK_BUILD_STATIC=OFF .
-	BUILD_COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_PARALLEL_LEVEL=1 ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-	INSTALL_COMMAND ${CMAKE_COMMAND} -E copy "${FUNCHOOK_LIBRARY_INSTALL_DIR}" "${FUNCHOOK_INSTALL_DIR}"
-	UPDATE_COMMAND ""
-	BUILD_IN_SOURCE ON
-	LOG_DOWNLOAD ON
-	LOG_CONFIGURE ON
-	LOG_BUILD ON
-	LOG_INSTALL ON
+FetchContent_Declare(PLTHook
+    GIT_REPOSITORY https://github.com/metacall/plthook.git
+    GIT_TAG master
+    SOURCE_DIR ${PLTHook_SOURCE_DIR}
 )
+
+FetchContent_MakeAvailable(PLTHook)
+
+set(PLTHook_INCLUDE_DIR "${PLTHook_SOURCE_DIR}")
+
+if(APPLE)
+    set(PLTHook_SOURCE "${PLTHook_SOURCE_DIR}/plthook_osx.c")
+elseif(WIN32 OR MINGW)
+    set(PLTHook_SOURCE "${PLTHook_SOURCE_DIR}/plthook_win32.c")
+else()
+    set(PLTHook_SOURCE "${PLTHook_SOURCE_DIR}/plthook_elf.c")
+endif()
 
 #
 # Library name and options
 #
 
 # Target name
-set(target funchook_detour)
+set(target plthook_detour)
 
 # Exit here if required dependencies are not met
 message(STATUS "Detour ${target}")
@@ -96,13 +65,14 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/funchook_detour.h
-	${include_path}/funchook_detour_impl.h
+	${include_path}/plthook_detour.h
+	${include_path}/plthook_detour_impl.h
 )
 
 set(sources
-	${source_path}/funchook_detour.c
-	${source_path}/funchook_detour_impl.c
+	${source_path}/plthook_detour.c
+	${source_path}/plthook_detour_impl.c
+	${PLTHook_SOURCE} # PLTHook Source
 )
 
 # Group source files
@@ -121,11 +91,6 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 add_library(${target} MODULE
 	${sources}
 	${headers}
-)
-
-# Add target dependencies
-add_dependencies(${target}
-	${target_depends}
 )
 
 # Create namespaced alias
@@ -162,7 +127,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${FUNCHOOK_INCLUDE_DIR} # FuncHook includes
+	${PLTHook_INCLUDE_DIR} # PLTHook includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -180,7 +145,6 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${FUNCHOOK_LIBRARY} # FuncHook libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -234,7 +198,6 @@ target_link_options(${target}
 
 # Dependency
 install(FILES
-	${FUNCHOOK_LIBRARY_INSTALL}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

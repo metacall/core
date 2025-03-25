@@ -30,7 +30,6 @@ INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
 INSTALL_RAPIDJSON=0
-INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_NETCORE5=0
@@ -260,12 +259,6 @@ sub_rapidjson(){
 		$SUDO_CMD make install
 		cd ../.. && rm -rf ./rapidjson
 	fi
-}
-
-# FuncHook
-sub_funchook(){
-	echo "configure funchook"
-
 }
 
 # NetCore
@@ -917,9 +910,6 @@ sub_install(){
 	if [ $INSTALL_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
-	if [ $INSTALL_FUNCHOOK = 1 ]; then
-		sub_funchook
-	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
 	fi
@@ -1039,10 +1029,6 @@ sub_options(){
 			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
 		fi
-		if [ "$option" = 'funchook' ]; then
-			echo "funchook selected"
-			INSTALL_FUNCHOOK=1
-		fi
 		if [ "$option" = 'v8' ] || [ "$option" = 'v8rep54' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
@@ -1149,7 +1135,6 @@ sub_help() {
 	echo "	netcore5"
 	echo "	netcore7"
 	echo "	rapidjson"
-	echo "	funchook"
 	echo "	v8"
 	echo "	v8rep51"
 	echo "	v8rep54"

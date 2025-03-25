@@ -35,7 +35,7 @@ if [ "${BUILD_SANITIZER}" != "address-sanitizer" ] && [ "${BUILD_SANITIZER}" != 
 fi
 
 # Install
-"${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} rapidjson funchook swig pack backtrace
+"${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} rapidjson swig pack backtrace
 
 # Configure and Build
 export NODE_PATH="/usr/lib/node_modules"

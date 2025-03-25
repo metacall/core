@@ -310,9 +310,6 @@ function Configure {
 		if ("$var" -eq 'rapidjson') {
 			Write-Output "rapidjson selected"
 		}
-		if ("$var" -eq 'funchook') {
-			Write-Output "funchook selected"
-		}
 		if (("$var" -eq 'v8') -or ("$var" -eq 'v8rep54')) {
 			Write-Output "v8 selected"
 		}
@@ -387,7 +384,6 @@ function Help {
 	Write-Output "	netcore2"
 	Write-Output "	netcore5"
 	Write-Output "	rapidjson"
-	Write-Output "	funchook"
 	Write-Output "	v8"
 	Write-Output "	v8rep51"
 	Write-Output "	v8rep54"

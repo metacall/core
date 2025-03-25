@@ -128,7 +128,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	funchook_detour
+	plthook_detour
 )
 
 #

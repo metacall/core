@@ -66,7 +66,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
         - [5.3.2.1 MetaCall](#5321-metacall)
         - [5.3.2.2 RapidJSON](#5322-rapidjson)
       - [5.3.3 Detours](#533-detours)
-        - [5.3.3.1 FuncHook](#5331-funchook)
+        - [5.3.3.1 PLTHook](#5331-plthook)
     - [5.4 Ports](#54-ports)
     - [5.5 Serialization](#55-serialization)
     - [5.6 Memory Layout](#56-memory-layout)
@@ -251,7 +251,7 @@ The environment variables are optional, in case you want to modify default paths
 
 - [`detours`](/source/detours) implement the [`detour`](/source/detour) interface by using a plugin architecture. The current list of available detour plugins is the following one.
 
-  - [`funchook_detour`](/source/detours/funchook_detour) implemented by means of FuncHook library.
+  - [`plthook_detour`](/source/detours/plthook_detour) implemented by means of PLTHook library.
 
 - [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **METACALL**.
 
@@ -499,7 +499,7 @@ A loader must implement it to be considered a valid loader.
 
 #### 5.3.3 Detours
 
-##### 5.3.3.1 FuncHook
+##### 5.3.3.1 PLTHook
 
 ### 5.4 Ports
 
@@ -666,7 +666,7 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 | **OPTION*BUILD_LOADERS*** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `FILE`                    |
 | **OPTION*BUILD_SCRIPTS*** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
 | **OPTION*BUILD_SERIALS*** | `METACALL` `RAPID_JSON`                                               |
-| **OPTION*BUILD_DETOURS*** | `FUNCHOOK`                                                            |
+| **OPTION*BUILD_DETOURS*** | `PLTHOOK`                                                            |
 |  **OPTION*BUILD_PORTS***  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
 
 To format the entire C/C++ codebase use:
