@@ -167,37 +167,37 @@ detour_handle detour_load_address(detour d, void (*address)(void))
 
 int detour_enumerate(detour d, detour_handle handle, unsigned int *position, const char **name, void (***address)(void))
 {
-	if (d == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour enumerate arguments");
-
-		return 1;
-	}
-
-	return detour_iface(d)->enumerate(handle, position, name, (void ***)address);
-}
-
-int detour_replace(detour d, detour_handle handle, const char *function_name, void (*function_addr)(void), void (**function_trampoline)(void))
-{
-	if (d == NULL)
+	if (d == NULL || handle == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour replace arguments");
 
 		return 1;
 	}
 
-	return detour_iface(d)->replace(handle, function_name, function_addr, (void **)function_trampoline);
+	return detour_iface(d)->enumerate(handle->impl, position, name, (void ***)address);
+}
+
+int detour_replace(detour d, detour_handle handle, const char *function_name, void (*function_addr)(void), void (**function_trampoline)(void))
+{
+	if (d == NULL || handle == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour replace arguments");
+
+		return 1;
+	}
+
+	return detour_iface(d)->replace(handle->impl, function_name, function_addr, (void **)function_trampoline);
 }
 
 void detour_unload(detour d, detour_handle handle)
 {
-	if (d == NULL)
+	if (d == NULL || handle == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour replace arguments");
 		return;
 	}
 
-	detour_iface(d)->destroy(handle);
+	detour_iface(d)->destroy(handle->impl);
 }
 
 int detour_clear(detour d)

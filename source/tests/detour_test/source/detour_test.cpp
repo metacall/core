@@ -24,6 +24,8 @@
 
 #include <detour/detour.h>
 
+#include <dynlink/dynlink.h>
+
 #include <string.h>
 
 class detour_test : public testing::Test
@@ -32,21 +34,31 @@ public:
 };
 
 static detour_handle handle = NULL;
-static void (*trampoline)(void) = NULL;
+static const char *(*trampoline)(void) = NULL;
 
-int hook_function(int x)
+int check_detour_hook(const char *(*fp)(void))
 {
-	EXPECT_EQ((int)128, (int)x);
+	static const char str_without_hook[] = "Detour Library";
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Hook function %d", x);
+	const char *str = fp();
 
-	int (*trampoline_ptr)(int) = (int (*)(int))trampoline;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Check: %s", str);
 
-	int result = trampoline_ptr(x + 2) + 2;
+	return strncmp(str, str_without_hook, sizeof(str_without_hook) - 1);
+}
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Hook function result %d", result);
+const char *hook_function(void)
+{
+	static const char str_with_hook[] = "Yeet";
 
-	return result;
+	log_write("metacall", LOG_LEVEL_DEBUG, "HOOK WORKING PROPERLY");
+	log_write("metacall", LOG_LEVEL_DEBUG, "Original function: %s", trampoline());
+
+	/* Here we check that we got the correct trampoline implementation (aka the original function)
+	and we can call it from inside of the body of the hook function */
+	EXPECT_EQ((int)0, (int)check_detour_hook(trampoline));
+
+	return str_with_hook;
 }
 
 #ifdef _WIN32
@@ -55,10 +67,8 @@ int hook_function(int x)
 	#define EXPORT_SYMBOL __attribute__((visibility("default")))
 #endif
 
-extern "C" EXPORT_SYMBOL int target_function(int x)
+extern "C" EXPORT_SYMBOL int test_exported_symbols_from_executable(int x)
 {
-	EXPECT_EQ((int)130, (int)x);
-
 	log_write("metacall", LOG_LEVEL_DEBUG, "Target function %d", x);
 
 	return x;
@@ -85,19 +95,43 @@ TEST_F(detour_test, DefaultConstructor)
 
 	EXPECT_EQ((int)0, (int)strcmp(name, detour_name(d)));
 
-	/* Load detour */
+	/* Load detour of detour library */
 	handle = detour_load_file(d, NULL);
 
+	ASSERT_NE((detour_handle)NULL, (detour_handle)handle);
+
+	/* Check if it can list exported symbols from executable */
+	test_exported_symbols_from_executable(3);
+
+	unsigned int position = 0;
+	const char *fn_name = NULL;
+	void (**addr)(void) = NULL;
+	bool found = false;
+	while (detour_enumerate(d, handle, &position, &fn_name, &addr) == 0)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "[%d] %p %s", position, *addr, fn_name);
+
+		if (strcmp("test_exported_symbols_from_executable", fn_name) == 0)
+		{
+			found = true;
+			EXPECT_EQ((void *)(*addr), (void *)(&test_exported_symbols_from_executable));
+			break;
+		}
+	}
+
+	EXPECT_EQ((bool)true, (bool)found);
+
 	/* Install detour */
-	detour_replace(d, handle, "target_function", (void (*)(void))(&hook_function), &trampoline);
+	union
+	{
+		const char *(**trampoline)(void);
+		void (**ptr)(void);
+	} cast = { &trampoline };
 
-	EXPECT_NE((detour_handle)NULL, (detour_handle)handle);
+	ASSERT_EQ((int)0, detour_replace(d, handle, "detour_print_info", (void (*)(void))(&hook_function), cast.ptr));
 
-	/* Old funciton must equal to the trampoline returned by replace */
-	EXPECT_EQ((int (*)(int))trampoline, (int (*)(int))(&target_function));
-
-	/* Call detour, it should call hooked function */
-	EXPECT_EQ((int)132, (int)target_function(128));
+	/* This must return "Yeet", so when checking the test it should return distinct from 0, then the funtion is properly hooked */
+	EXPECT_NE((int)0, (int)check_detour_hook(&detour_print_info));
 
 	/* Uninstall detour */
 	detour_unload(d, handle);
