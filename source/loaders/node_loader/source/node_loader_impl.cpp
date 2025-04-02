@@ -899,6 +899,7 @@ static void node_loader_impl_try_destroy(loader_impl_node node_impl);
 /* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll */
 static HMODULE node_loader_node_dll_handle = NULL;
 static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Implement W version too? */
+static detour_handle node_module_handle_a_handle = NULL;
 #endif
 
 /* -- Methods -- */
@@ -3690,8 +3691,38 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-	node_loader_node_dll_handle = GetModuleHandle(NODEJS_LIBRARY_NAME);
-	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table("kernel32.dll", "GetModuleHandleA", &get_module_handle_a_hook);
+	{
+		/* As the library handle is correctly resolved here, either to executable, library of the executable,
+		or the loader dependency we can directly obtain the handle of this dependency from a function pointer */
+		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, &napi_create_reference, &node_loader_node_dll_handle))
+		{
+			napi_throw_type_error(env, nullptr, "Failed to initialize the hooking against node extensions load mechanism");
+		}
+
+		detour d = detour_create(metacall_detour());
+
+		node_module_handle_a_handle = detour_load_file(d, "kernel32.dll");
+
+		if (node_module_handle_a_handle == NULL)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism");
+		}
+		else
+		{
+			typedef HMODULE (*get_module_handle_a_type)(_In_opt_ LPCSTR);
+
+			union
+			{
+				get_module_handle_a_type *trampoline;
+				void (**ptr)(void);
+			} cast = { &get_module_handle_a_ptr };
+
+			if (detour_replace(d, node_module_handle_a_handle, "GetModuleHandleA", (void (*)(void))(&get_module_handle_a_hook), cast.ptr) != 0)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandle for hooking node extension load mechanism");
+			}
+		}
+	}
 #endif
 
 	/* On host mode, register delayed paths */
@@ -4626,6 +4657,20 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	/* Wait for node log thread to finish */
 	uv_thread_join(&node_impl->thread_log_id);
+#endif
+
+	/* On Windows, destroy the node extension hooking mechanism */
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+	{
+		if (node_module_handle_a_handle != NULL)
+		{
+			detour d = detour_create(metacall_detour());
+
+			detour_unload(d, node_module_handle_a_handle);
+
+			node_module_handle_a_handle = NULL;
+		}
+	}
 #endif
 
 	/* Print NodeJS execution result */
