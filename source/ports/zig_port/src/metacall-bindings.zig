@@ -1235,7 +1235,7 @@ pub const metacall_pre_fork_callback_ptr = ?*const fn (?*anyopaque) callconv(.C)
 pub const metacall_post_fork_callback_ptr = ?*const fn (metacall_pid, ?*anyopaque) callconv(.C) c_int;
 pub extern fn metacall_fork_initialize() c_int;
 pub extern fn metacall_fork(pre_callback: metacall_pre_fork_callback_ptr, post_callback: metacall_post_fork_callback_ptr) void;
-pub extern fn metacall_fork_destroy() c_int;
+pub extern fn metacall_fork_destroy() void;
 pub const struct_metacall_initialize_configuration_type = extern struct {
     tag: [*c]u8 = @import("std").mem.zeroes([*c]u8),
     options: ?*anyopaque = @import("std").mem.zeroes(?*anyopaque),

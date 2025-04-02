@@ -199,19 +199,13 @@ plugin_extension_error:
 void metacall_detour_destructor(void)
 {
 	/* Destroy link */
-	if (metacall_link_destroy() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link destruction");
-	}
+	metacall_link_destroy();
 
 	/* Destroy fork */
 #ifdef METACALL_FORK_SAFE
 	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
 	{
-		if (metacall_fork_destroy() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
-		}
+		metacall_fork_destroy();
 	}
 #endif /* METACALL_FORK_SAFE */
 

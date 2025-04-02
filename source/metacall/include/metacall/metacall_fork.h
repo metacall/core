@@ -88,11 +88,8 @@ METACALL_API void metacall_fork(metacall_pre_fork_callback_ptr pre_callback, met
 /**
 *  @brief
 *    Unregister fork detours and destroy shared memory
-*
-*  @return
-*    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_fork_destroy(void);
+METACALL_API void metacall_fork_destroy(void);
 
 #ifdef __cplusplus
 }

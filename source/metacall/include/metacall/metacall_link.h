@@ -76,11 +76,8 @@ METACALL_API int metacall_link_unregister(const char *symbol);
 /**
 *  @brief
 *    Unregister link detours and destroy shared memory
-*
-*  @return
-*    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_link_destroy(void);
+METACALL_API void metacall_link_destroy(void);
 
 #ifdef __cplusplus
 }

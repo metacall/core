@@ -47,22 +47,21 @@ static threading_mutex_type link_mutex = THREADING_MUTEX_INITIALIZE;
 
 	#include <windows.h>
 
-void (*metacall_link_func(void))(void)
+typedef FARPROC (*metacall_link_trampoline_type)(HMODULE, LPCSTR);
+
+static const char metacall_link_func_name[] = "GetProcAddress";
+static metacall_link_trampoline_type metacall_link_trampoline = NULL;
+
+static detour_handle metacall_link_handle(detour d)
 {
-	return (void (*)(void))(&GetProcAddress);
+	return detour_load_address(d, (void (*)(void))(&GetProcAddress));
 }
 
 FARPROC metacall_link_hook(HMODULE handle, LPCSTR symbol)
 {
-	typedef FARPROC (*metacall_link_func_ptr)(HMODULE, LPCSTR);
-
-	metacall_link_func_ptr metacall_link_trampoline;
-
 	void *ptr;
 
 	threading_mutex_lock(&link_mutex);
-
-	metacall_link_trampoline = (metacall_link_func_ptr)detour_trampoline(detour_link_handle);
 
 	/* Intercept if any */
 	ptr = set_get(metacall_link_table, (set_key)symbol);
@@ -93,17 +92,21 @@ void (*metacall_link_func(void))(void)
 	return (void (*)(void))(&dlsym);
 }
 
+typedef void *(*metacall_link_trampoline_type)(void *, const char *);
+
+static const char metacall_link_func_name[] = "dlsym";
+static metacall_link_trampoline_type metacall_link_trampoline = NULL;
+
+static detour_handle metacall_link_handle(detour d)
+{
+	return detour_load_address(d, (void (*)(void))(&dlsym));
+}
+
 void *metacall_link_hook(void *handle, const char *symbol)
 {
-	typedef void *(*metacall_link_func_ptr)(void *, const char *);
-
-	metacall_link_func_ptr metacall_link_trampoline;
-
 	void *ptr;
 
 	threading_mutex_lock(&link_mutex);
-
-	metacall_link_trampoline = (metacall_link_func_ptr)detour_trampoline(detour_link_handle);
 
 	/* Intercept function if any */
 	ptr = set_get(metacall_link_table, (set_key)symbol);
@@ -140,11 +143,27 @@ int metacall_link_initialize(void)
 
 	if (detour_link_handle == NULL)
 	{
-		detour_link_handle = detour_install(d, (void (*)(void))metacall_link_func(), (void (*)(void))(&metacall_link_hook));
+		/* Casting for getting the original function */
+		union
+		{
+			metacall_link_trampoline_type *trampoline;
+			void (**ptr)(void);
+		} cast = { &metacall_link_trampoline };
+
+		detour_link_handle = metacall_link_handle(d);
 
 		if (detour_link_handle == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour link installation");
+
+			metacall_link_destroy();
+
+			return 1;
+		}
+
+		if (detour_replace(d, detour_link_handle, metacall_link_func_name, (void (*)(void))(&metacall_link_hook), cast.ptr) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour link replacement");
 
 			metacall_link_destroy();
 
@@ -193,22 +212,15 @@ int metacall_link_unregister(const char *symbol)
 	return (set_remove(metacall_link_table, (set_key)symbol) == NULL);
 }
 
-int metacall_link_destroy(void)
+void metacall_link_destroy(void)
 {
-	int result = 0;
-
 	threading_mutex_lock(&link_mutex);
 
 	if (detour_link_handle != NULL)
 	{
 		detour d = detour_create(metacall_detour());
 
-		if (detour_uninstall(d, detour_link_handle) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour fork uninstall");
-
-			result = 1;
-		}
+		detour_unload(d, detour_link_handle);
 
 		detour_link_handle = NULL;
 	}
@@ -223,6 +235,4 @@ int metacall_link_destroy(void)
 	threading_mutex_unlock(&link_mutex);
 
 	threading_mutex_destroy(&link_mutex);
-
-	return result;
 }
