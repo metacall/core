@@ -38,20 +38,18 @@ static void *dynlink_impl_global_handle_macos = NULL;
 
 /* -- Methods -- */
 
+const char *dynlink_impl_interface_prefix_macos(void)
+{
+	static const char prefix_macos[] = "lib";
+
+	return prefix_macos;
+}
+
 const char *dynlink_impl_interface_extension_macos(void)
 {
 	static const char extension_macos[] = "dylib";
 
 	return extension_macos;
-}
-
-void dynlink_impl_interface_get_name_macos(dynlink_name name, dynlink_name_impl name_impl, size_t size)
-{
-	strncpy(name_impl, name, size);
-
-	strncat(name_impl, ".", size - 1);
-
-	strncat(name_impl, dynlink_impl_extension(), size - 1);
 }
 
 dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
@@ -193,8 +191,8 @@ int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
 dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_macos = {
+		&dynlink_impl_interface_prefix_macos,
 		&dynlink_impl_interface_extension_macos,
-		&dynlink_impl_interface_get_name_macos,
 		&dynlink_impl_interface_load_macos,
 		&dynlink_impl_interface_symbol_macos,
 		&dynlink_impl_interface_unload_macos,

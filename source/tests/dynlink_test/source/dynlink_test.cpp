@@ -28,7 +28,7 @@
 
 #define DYNLINK_TEST_LIBRARY_PATH "DYNLINK_TEST_LIBRARY_PATH"
 
-typedef void (*mock_loader_print_func)(void);
+typedef void (*dynlink_print_func)(void);
 
 class dynlink_test : public testing::Test
 {
@@ -60,39 +60,41 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
-	/* Test library loading */
-	{
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		const char library_name[] = "mock_loaderd";
+	const char library_name[] = "dynlinkd";
 #else
-		const char library_name[] = "mock_loader";
+	const char library_name[] = "dynlink";
 #endif
 
-		char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL, 0, NULL);
+	char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL, 0, NULL);
 
+	ASSERT_NE((char *)path, (char *)NULL);
+
+	/* Test library loading */
+	{
 		dynlink handle = dynlink_load(path, library_name, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
-
-		environment_variable_path_destroy(path);
 
 		ASSERT_NE(handle, (dynlink)NULL);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file: %s", dynlink_get_name_impl(handle));
 
+		EXPECT_EQ((int)0, (int)strcmp(library_name, dynlink_get_name(handle)));
+
 		if (handle != NULL)
 		{
-			dynlink_symbol_addr mock_loader_print_info_addr;
+			dynlink_symbol_addr dynlink_print_info_addr;
 
-			EXPECT_EQ((int)0, dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr));
+			EXPECT_EQ((int)0, dynlink_symbol(handle, "dynlink_print_info", &dynlink_print_info_addr));
 
-			if (mock_loader_print_info_addr != NULL)
+			if (dynlink_print_info_addr != NULL)
 			{
-				mock_loader_print_func print = mock_loader_print_info_addr;
+				dynlink_print_func print = dynlink_print_info_addr;
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
 
-				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)mock_loader_print_info_addr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)dynlink_print_info_addr);
 
-				if (mock_loader_print_info_addr != NULL)
+				if (dynlink_print_info_addr != NULL)
 				{
 					log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
 				}
@@ -122,4 +124,52 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 	}
+
+	/* Test loading symbols from absolute path */
+	{
+		char library_name_platform[PORTABILITY_PATH_SIZE];
+		char absolute_path[PORTABILITY_PATH_SIZE];
+
+		dynlink_platform_name(library_name, library_name_platform);
+
+		portability_path_join(path, strlen(path) + 1, library_name_platform, strlen(library_name_platform) + 1, absolute_path, PORTABILITY_PATH_SIZE);
+
+		dynlink handle = dynlink_load_absolute(absolute_path, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+
+		ASSERT_NE(handle, (dynlink)NULL);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object absolute path: %s", absolute_path);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file name:     %s", dynlink_get_name_impl(handle));
+		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file:          %s", dynlink_get_name(handle));
+
+		EXPECT_EQ((int)0, (int)strcmp(absolute_path, dynlink_get_name_impl(handle)));
+		EXPECT_EQ((int)0, (int)strcmp(library_name, dynlink_get_name(handle)));
+
+		if (handle != NULL)
+		{
+			dynlink_symbol_addr dynlink_print_info_addr;
+
+			EXPECT_EQ((int)0, dynlink_symbol(handle, "dynlink_print_info", &dynlink_print_info_addr));
+
+			if (dynlink_print_info_addr != NULL)
+			{
+				dynlink_print_func print = dynlink_print_info_addr;
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)dynlink_print_info_addr);
+
+				if (dynlink_print_info_addr != NULL)
+				{
+					log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
+				}
+
+				print();
+			}
+
+			dynlink_unload(handle);
+		}
+	}
+
+	environment_variable_path_destroy(path);
 }

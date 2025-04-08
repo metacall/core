@@ -38,6 +38,15 @@ extern "C" {
 
 /**
 *  @brief
+*    Get the library prefix for specified platform (normally "lib")
+*
+*  @return
+*    A constant string pointer to the platform prefix
+*/
+DYNLINK_API const char *dynlink_prefix(void);
+
+/**
+*  @brief
 *    Get the library extension for specified platform
 *
 *  @return

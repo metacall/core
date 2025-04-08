@@ -43,6 +43,11 @@ struct dynlink_type
 
 /* -- Methods -- */
 
+const char *dynlink_prefix(void)
+{
+	return dynlink_impl_prefix();
+}
+
 const char *dynlink_extension(void)
 {
 	return dynlink_impl_extension();
@@ -94,13 +99,33 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags)
 {
 	dynlink handle = malloc(sizeof(struct dynlink_type));
+	size_t path_size, name_size, prefix_length;
+	const char *prefix = dynlink_prefix();
 
 	if (handle == NULL)
 	{
 		return NULL;
 	}
 
-	strncpy(handle->name_impl, path, strnlen(path, PORTABILITY_PATH_SIZE) + 1);
+	path_size = strnlen(path, PORTABILITY_PATH_SIZE) + 1;
+
+	strncpy(handle->name_impl, path, path_size);
+
+	/* Get the library name without any extension */
+	name_size = portability_path_get_name_canonical(path, path_size, handle->name, PORTABILITY_PATH_SIZE);
+
+	/* Remove the library prefix */
+	prefix_length = strlen(prefix);
+
+	if (strncmp(prefix, handle->name, prefix_length) == 0)
+	{
+		size_t current, next = prefix_length, end = name_size - prefix_length;
+
+		for (current = 0; current < end; ++current, ++next)
+		{
+			handle->name[current] = handle->name[next];
+		}
+	}
 
 	DYNLINK_FLAGS_SET(handle->flags, flags);
 
@@ -125,10 +150,19 @@ dynlink dynlink_load_self(dynlink_flags flags)
 		return NULL;
 	}
 
+	/* Retrieve the executable path for the full name */
 	portability_executable_path(handle->name_impl, &path_length);
+
+	/* Get the name without the extension */
 	portability_path_get_name(handle->name_impl, path_length + 1, handle->name, PORTABILITY_PATH_SIZE);
+
+	/* Set the flags with the additional special flag for itself,
+	this will help to identify that the handle loaded is the current executable
+	and behave accordingly depending on the implementation
+	*/
 	DYNLINK_FLAGS_SET(handle->flags, flags);
 	DYNLINK_FLAGS_ADD(handle->flags, DYNLINK_FLAGS_BIND_SELF);
+
 	handle->impl = dynlink_impl_load(handle);
 
 	if (handle->impl == NULL)

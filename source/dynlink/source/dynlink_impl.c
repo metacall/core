@@ -28,6 +28,13 @@
 
 /* -- Methods -- */
 
+const char *dynlink_impl_prefix(void)
+{
+	dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
+
+	return singleton()->prefix();
+}
+
 const char *dynlink_impl_extension(void)
 {
 	dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
@@ -39,9 +46,13 @@ void dynlink_impl_get_name(dynlink_name name, dynlink_name_impl name_impl, size_
 {
 	if (name != NULL && name_impl != NULL && size > 1)
 	{
-		dynlink_impl_interface_singleton_ptr singleton = dynlink_interface();
+		strncpy(name_impl, dynlink_impl_prefix(), size);
 
-		singleton()->get_name(name, name_impl, size);
+		strncat(name_impl, name, size - 1);
+
+		strncat(name_impl, ".", size - 1);
+
+		strncat(name_impl, dynlink_impl_extension(), size - 1);
 	}
 }
 

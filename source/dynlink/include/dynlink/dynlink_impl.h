@@ -37,6 +37,15 @@ extern "C" {
 
 /**
 *  @brief
+*    Dynamically linked shared object handle prefix implementation (normally "lib")
+*
+*  @return
+*    A const string reference to the prefix depending on the OS implementation
+*/
+DYNLINK_API const char *dynlink_impl_prefix(void);
+
+/**
+*  @brief
 *    Dynamically linked shared object handle extension implementation
 *
 *  @return

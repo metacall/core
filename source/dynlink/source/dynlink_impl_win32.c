@@ -32,26 +32,22 @@
 
 /* -- Methods -- */
 
+const char *dynlink_impl_interface_prefix_win32(void)
+{
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	static const char prefix_win32[] = "lib";
+#else
+	static const char prefix_win32[] = "";
+#endif
+
+	return prefix_win32;
+}
+
 const char *dynlink_impl_interface_extension_win32(void)
 {
 	static const char extension_win32[] = "dll";
 
 	return extension_win32;
-}
-
-void dynlink_impl_interface_get_name_win32(dynlink_name name, dynlink_name_impl name_impl, size_t size)
-{
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	strncpy(name_impl, "lib", size);
-
-	strncat(name_impl, name, size - 1);
-#else
-	strncpy(name_impl, name, size);
-#endif
-
-	strncat(name_impl, ".", size - 1);
-
-	strncat(name_impl, dynlink_impl_extension(), size - 1);
 }
 
 dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
@@ -121,8 +117,8 @@ int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_win32 = {
+		&dynlink_impl_interface_prefix_win32,
 		&dynlink_impl_interface_extension_win32,
-		&dynlink_impl_interface_get_name_win32,
 		&dynlink_impl_interface_load_win32,
 		&dynlink_impl_interface_symbol_win32,
 		&dynlink_impl_interface_unload_win32,
