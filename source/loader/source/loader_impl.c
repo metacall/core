@@ -36,6 +36,8 @@
 
 #include <configuration/configuration.h>
 
+#include <portability/portability_dependency.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,6 +92,7 @@ struct loader_impl_type
 	value options;				   /* Additional initialization options passed in the initialize phase */
 	set exec_path_map;			   /* Set of execution paths passed by the end user */
 	configuration config;		   /* Reference to the loader configuration, it contains execution_paths, dependencies and additional info */
+	set dependencies_map;		   /* List of handles (dynlink) to the dependencies of the loader */
 };
 
 struct loader_handle_impl_type
@@ -119,6 +122,14 @@ struct loader_impl_metadata_cb_iterator_type
 /* -- Private Methods -- */
 
 static loader_impl loader_impl_allocate(const loader_tag tag);
+
+static void loader_impl_configuration_execution_paths(loader_impl_interface iface, loader_impl impl);
+
+static int loader_impl_dependencies_self_list(const char *library, void *data);
+
+static int loader_impl_dependencies_self_find(loader_impl impl, const char *key_str, vector dependencies_self);
+
+static int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *paths_array, size_t paths_size);
 
 static configuration loader_impl_initialize_configuration(const loader_tag tag);
 
@@ -208,8 +219,17 @@ loader_impl loader_impl_allocate(const loader_tag tag)
 		goto alloc_exec_path_map_error;
 	}
 
+	impl->dependencies_map = set_create(&hash_callback_str, &comparable_callback_str);
+
+	if (impl->dependencies_map == NULL)
+	{
+		goto alloc_dependencies_map_error;
+	}
+
 	return impl;
 
+alloc_dependencies_map_error:
+	set_destroy(impl->exec_path_map);
 alloc_exec_path_map_error:
 	context_destroy(impl->ctx);
 alloc_ctx_error:
@@ -289,15 +309,113 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 	}
 }
 
+int loader_impl_dependencies_self_list(const char *library, void *data)
+{
+	vector dependencies_self = (vector)data;
+
+	vector_push_back_empty(dependencies_self);
+
+	strncpy(vector_back(dependencies_self), library, strnlen(library, PORTABILITY_PATH_SIZE));
+
+	return 0;
+}
+
+int loader_impl_dependencies_self_find(loader_impl impl, const char *key_str, vector dependencies_self)
+{
+	size_t iterator, size = vector_size(dependencies_self);
+	char library_self_name[PORTABILITY_PATH_SIZE];
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		const char *library_self = vector_at(dependencies_self, iterator);
+
+		/* Get the name of the library */
+		portability_path_get_fullname(library_self, strnlen(library_self, PORTABILITY_PATH_SIZE) + 1, library_self_name, PORTABILITY_PATH_SIZE);
+
+		/* Try to find the dependency name in the library */
+		if (strstr(library_self_name, key_str) != NULL)
+		{
+			dynlink handle = dynlink_load_absolute(library_self, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+
+			if (handle != NULL && set_insert(impl->dependencies_map, (const set_key)key_str, (set_value)handle) == 0)
+			{
+				return 0;
+			}
+
+			dynlink_unload(handle);
+
+			return 1;
+		}
+	}
+
+	return 1;
+}
+
+int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *paths_array, size_t paths_size)
+{
+	size_t iterator;
+
+	for (iterator = 0; iterator < paths_size; ++iterator)
+	{
+		if (value_type_id(paths_array[iterator]) == TYPE_STRING)
+		{
+			const char *library_path = value_to_string(paths_array[iterator]);
+
+			if (library_path != NULL)
+			{
+				dynlink handle = dynlink_load_absolute(library_path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+
+				if (handle != NULL && set_insert(impl->dependencies_map, (const set_key)key_str, (set_value)handle) == 0)
+				{
+					return 0;
+				}
+
+				dynlink_unload(handle);
+			}
+		}
+	}
+
+	return 1;
+}
+
 int loader_impl_dependencies(loader_impl impl)
 {
-	/* Dependencies have the following format */
-	/*
+	const int host = loader_impl_get_option_host(impl);
+
+	/* Dependencies have the following format:
+
 	{
 		"dependencies": {
 			"node": ["/usr/lib/x86_64-linux-gnu/libnode.so.72"]
 		}
 	}
+
+	The algorithm works in the following way:
+		1) If current loader is the host:
+			- Take the dependency name and try to find if it is already
+				loaded as a library in the current process, for example:
+
+				"dependencies": {
+					"node": ["/usr/lib/x86_64-linux-gnu/libnode.so.72"]
+				}
+
+				Will search for all libraries, looking for the library name
+				with the following substring (lib)node, so if we find:
+
+				"/usr/lib/x86_64-linux-gnu/libnode.so.108"
+
+				It will test against libnode.so.108 the substring (lib)node.
+
+			- If it has not been found, then get the handle of the current process.
+
+		2) Otherwise, the current loader is not the host:
+			- Iterate the dependencies and if they are properly loaded, index
+				them by name in the dependency map, for example:
+
+				[ Key ] => [ Value ]
+				"node"  => "/usr/lib/x86_64-linux-gnu/libnode.so.72"
+
+				The value in this case will be the library loaded, instead of the full path.
 	*/
 	value dependencies_value = configuration_value_type(impl->config, "dependencies", TYPE_MAP);
 
@@ -305,49 +423,67 @@ int loader_impl_dependencies(loader_impl impl)
 	{
 		size_t size = value_type_count(dependencies_value);
 		value *dependencies_map = value_to_map(dependencies_value);
+		vector dependencies_self = NULL;
 		size_t iterator;
 
+		/* In case of host, get all loaded dependencies into an array */
+		if (host == 1)
+		{
+			dependencies_self = vector_create(sizeof(char) * PORTABILITY_PATH_SIZE);
+
+			if (dependencies_self == NULL)
+			{
+				return 1;
+			}
+
+			if (portability_dependendency_iterate(&loader_impl_dependencies_self_list, (void *)dependencies_self) != 0)
+			{
+				vector_destroy(dependencies_self);
+				return 1;
+			}
+		}
+
+		/* Iterate through the dependencies */
 		for (iterator = 0; iterator < size; ++iterator)
 		{
 			if (value_type_id(dependencies_map[iterator]) == TYPE_ARRAY)
 			{
 				value *library_tuple = value_to_array(dependencies_map[iterator]);
 
-				if (value_type_id(library_tuple[1]) == TYPE_ARRAY)
+				if (value_type_id(library_tuple[0]) == TYPE_STRING)
 				{
-					value *paths_array = value_to_array(library_tuple[1]);
-					size_t paths_size = value_type_count(library_tuple[1]);
-					size_t path;
-					int found = 0;
+					const char *key_str = value_to_string(library_tuple[0]);
 
-					for (path = 0; path < paths_size; ++path)
+					if (host == 0)
 					{
-						if (value_type_id(paths_array[iterator]) == TYPE_STRING)
+						/* If the loader is not the host, iterate through all dependencies and load them */
+						if (value_type_id(library_tuple[1]) == TYPE_ARRAY)
 						{
-							const char *library_path = value_to_string(paths_array[iterator]);
+							value *paths_array = value_to_array(library_tuple[1]);
+							size_t paths_size = value_type_count(library_tuple[1]);
 
-							if (library_path != NULL)
+							if (loader_impl_dependencies_load(impl, key_str, paths_array, paths_size) != 0)
 							{
-								dynlink handle = dynlink_load_absolute(library_path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
-
-								if (handle != NULL)
-								{
-									found = 1;
-									break;
-								}
+								log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader configuration '%s.json'", key_str, plugin_name(impl->p));
+								return 1;
 							}
 						}
 					}
-
-					if (!found)
+					else
 					{
-						const char *dependency = value_type_id(library_tuple[0]) == TYPE_STRING ? value_to_string(library_tuple[0]) : "unknown_library";
-						log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader configuration '%s.json'", dependency, plugin_name(impl->p));
-						return 1;
+						/* Otherwise try to find if the library is already loaded, and if not, load the process */
+						if (loader_impl_dependencies_self_find(impl, key_str, dependencies_self) != 0)
+						{
+							log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader '%s' as a host", key_str, plugin_name(impl->p));
+							vector_destroy(dependencies_self);
+							return 1;
+						}
 					}
 				}
 			}
 		}
+
+		vector_destroy(dependencies_self);
 	}
 
 	return 0;
@@ -1580,6 +1716,22 @@ int loader_impl_destroy_exec_path_map_cb_iterate(set s, set_key key, set_value v
 	return 0;
 }
 
+int loader_impl_destroy_dependencies_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
+	{
+		dynlink dependency = val;
+
+		dynlink_unload(dependency);
+	}
+
+	return 0;
+}
+
 void loader_impl_destroy_objects(loader_impl impl)
 {
 	/* This iterates through all functions, classes objects and types,
@@ -1636,6 +1788,11 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 	{
 		value_type_destroy(impl->options);
 	}
+
+	/* Unload all the dependencies when everything has been destroyed and the loader is unloaded */
+	set_iterate(impl->dependencies_map, &loader_impl_destroy_dependencies_map_cb_iterate, NULL);
+
+	set_destroy(impl->dependencies_map);
 
 	free(impl);
 }

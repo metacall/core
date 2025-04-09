@@ -265,9 +265,9 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 	}
 
 	/* Dynamic link loader dependencies if it is not host */
-	if (loader_impl_get_option_host(impl) == 0)
+	if (loader_impl_dependencies(impl) != 0)
 	{
-		loader_impl_dependencies(impl);
+		goto plugin_manager_create_error;
 	}
 
 	/* Dynamic link the loader */
@@ -276,6 +276,15 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 	if (p == NULL)
 	{
 		goto plugin_manager_create_error;
+	}
+
+	/* If it is host, relink the loader symbols to the host (either the executable or a library) */
+	if (loader_impl_get_option_host(impl) == 1)
+	{
+		// if (loader_impl_relink(impl) != 0)
+		// {
+		// 	goto plugin_manager_create_error;
+		// }
 	}
 
 	/* Store in the loader implementation the reference to the plugin which belongs to */
