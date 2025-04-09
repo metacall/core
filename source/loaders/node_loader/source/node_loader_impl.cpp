@@ -810,7 +810,9 @@ class loader_impl_napi_constructor
 public:
 	loader_impl_napi_constructor()
 	{
-		if (metacall_link_register("napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
+		static const loader_tag node_loader_tag = "node";
+
+		if (metacall_link_register(node_loader_tag, "node", "napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Node loader failed register the link hook");
 		}
@@ -3693,8 +3695,9 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
 	{
 		/* As the library handle is correctly resolved here, either to executable, library of the executable,
-		or the loader dependency we can directly obtain the handle of this dependency from a function pointer */
-		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, &napi_create_reference, &node_loader_node_dll_handle))
+		or the loader dependency we can directly obtain the handle of this dependency from a function pointer,
+		use any function that is contained in node runtime, in this case we are using napi_create_array */
+		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, &napi_create_array, &node_loader_node_dll_handle))
 		{
 			napi_throw_type_error(env, nullptr, "Failed to initialize the hooking against node extensions load mechanism");
 		}

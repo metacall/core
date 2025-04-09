@@ -278,13 +278,10 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 		goto plugin_manager_create_error;
 	}
 
-	/* If it is host, relink the loader symbols to the host (either the executable or a library) */
-	if (loader_impl_get_option_host(impl) == 1)
+	/* If it is host, link the loader symbols to the host (either the executable or a library) */
+	if (loader_impl_link(p, impl) != 0)
 	{
-		// if (loader_impl_relink(impl) != 0)
-		// {
-		// 	goto plugin_manager_create_error;
-		// }
+		goto plugin_manager_create_error;
 	}
 
 	/* Store in the loader implementation the reference to the plugin which belongs to */
@@ -793,7 +790,7 @@ void loader_unload_children(loader_impl impl)
 			* the loader has been unloaded, and the function interface will point to an unloaded
 			* plugin, generating a segmentation fault. All the plugins will be unloaded on plugin_manager_destroy.
 			*/
-			plugin_destroy_delayed(order->p);
+			plugin_destructor(order->p);
 
 			/* Mark loader as destroyed (prevents access to already freed memory and defines what loaders are destroyed) */
 			loader_manager_impl_set_destroyed(manager_impl, destroyed_impl);

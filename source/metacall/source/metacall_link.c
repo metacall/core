@@ -97,9 +97,20 @@ typedef void *(*metacall_link_trampoline_type)(void *, const char *);
 static const char metacall_link_func_name[] = "dlsym";
 static metacall_link_trampoline_type metacall_link_trampoline = NULL;
 
+/* TODO: We have to implement a lazy loaded map for
+detours and load it from the loaders whenever hooking
+is required, on destroy we can delete all the hook handles
+*/
+
 static detour_handle metacall_link_handle(detour d)
 {
+	/*
 	return detour_load_address(d, (void (*)(void))(&dlsym));
+	*/
+	/*
+	return detour_load_file(d, NULL);
+	*/
+	return detour_load_file(d, "/lib/x86_64-linux-gnu/libnode.so.72");
 }
 
 void *metacall_link_hook(void *handle, const char *symbol)
@@ -188,7 +199,7 @@ int metacall_link_initialize(void)
 	return 0;
 }
 
-int metacall_link_register(const char *symbol, void (*fn)(void))
+int metacall_link_register(const char *tag, const char *library, const char *symbol, void (*fn)(void))
 {
 	void *ptr;
 
@@ -202,7 +213,7 @@ int metacall_link_register(const char *symbol, void (*fn)(void))
 	return set_insert(metacall_link_table, (set_key)symbol, ptr);
 }
 
-int metacall_link_unregister(const char *symbol)
+int metacall_link_unregister(const char *tag, const char *library, const char *symbol)
 {
 	if (metacall_link_table == NULL)
 	{

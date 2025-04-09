@@ -92,7 +92,7 @@ struct loader_impl_type
 	value options;				   /* Additional initialization options passed in the initialize phase */
 	set exec_path_map;			   /* Set of execution paths passed by the end user */
 	configuration config;		   /* Reference to the loader configuration, it contains execution_paths, dependencies and additional info */
-	set dependencies_map;		   /* List of handles (dynlink) to the dependencies of the loader */
+	set library_map;			   /* List of handles (dynlink) to the dependencies of the loader and the loader itself */
 };
 
 struct loader_handle_impl_type
@@ -219,16 +219,16 @@ loader_impl loader_impl_allocate(const loader_tag tag)
 		goto alloc_exec_path_map_error;
 	}
 
-	impl->dependencies_map = set_create(&hash_callback_str, &comparable_callback_str);
+	impl->library_map = set_create(&hash_callback_str, &comparable_callback_str);
 
-	if (impl->dependencies_map == NULL)
+	if (impl->library_map == NULL)
 	{
-		goto alloc_dependencies_map_error;
+		goto alloc_library_map_error;
 	}
 
 	return impl;
 
-alloc_dependencies_map_error:
+alloc_library_map_error:
 	set_destroy(impl->exec_path_map);
 alloc_exec_path_map_error:
 	context_destroy(impl->ctx);
@@ -324,7 +324,9 @@ int loader_impl_dependencies_self_find(loader_impl impl, const char *key_str, ve
 {
 	size_t iterator, size = vector_size(dependencies_self);
 	char library_self_name[PORTABILITY_PATH_SIZE];
+	dynlink handle;
 
+	/* Try to load it from the dependencies of the executable */
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		const char *library_self = vector_at(dependencies_self, iterator);
@@ -335,18 +337,23 @@ int loader_impl_dependencies_self_find(loader_impl impl, const char *key_str, ve
 		/* Try to find the dependency name in the library */
 		if (strstr(library_self_name, key_str) != NULL)
 		{
-			dynlink handle = dynlink_load_absolute(library_self, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+			handle = dynlink_load_absolute(library_self, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
-			if (handle != NULL && set_insert(impl->dependencies_map, (const set_key)key_str, (set_value)handle) == 0)
-			{
-				return 0;
-			}
-
-			dynlink_unload(handle);
-
-			return 1;
+			goto dependencies_map_insert;
 		}
 	}
+
+	/* If it is not found in the dependencies, it is linked statically to the executable, load it */
+	handle = dynlink_load_self(DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+
+dependencies_map_insert:
+
+	if (handle != NULL && set_insert(impl->library_map, (const set_key)key_str, (set_value)handle) == 0)
+	{
+		return 0;
+	}
+
+	dynlink_unload(handle);
 
 	return 1;
 }
@@ -365,7 +372,7 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 			{
 				dynlink handle = dynlink_load_absolute(library_path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
-				if (handle != NULL && set_insert(impl->dependencies_map, (const set_key)key_str, (set_value)handle) == 0)
+				if (handle != NULL && set_insert(impl->library_map, (const set_key)key_str, (set_value)handle) == 0)
 				{
 					return 0;
 				}
@@ -380,17 +387,16 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 
 int loader_impl_dependencies(loader_impl impl)
 {
-	const int host = loader_impl_get_option_host(impl);
-
 	/* Dependencies have the following format:
-
 	{
 		"dependencies": {
 			"node": ["/usr/lib/x86_64-linux-gnu/libnode.so.72"]
 		}
 	}
+	*/
+	value dependencies_value = configuration_value_type(impl->config, "dependencies", TYPE_MAP);
 
-	The algorithm works in the following way:
+	/* The algorithm works in the following way:
 		1) If current loader is the host:
 			- Take the dependency name and try to find if it is already
 				loaded as a library in the current process, for example:
@@ -417,7 +423,6 @@ int loader_impl_dependencies(loader_impl impl)
 
 				The value in this case will be the library loaded, instead of the full path.
 	*/
-	value dependencies_value = configuration_value_type(impl->config, "dependencies", TYPE_MAP);
 
 	if (dependencies_value != NULL)
 	{
@@ -425,6 +430,7 @@ int loader_impl_dependencies(loader_impl impl)
 		value *dependencies_map = value_to_map(dependencies_value);
 		vector dependencies_self = NULL;
 		size_t iterator;
+		const int host = loader_impl_get_option_host(impl);
 
 		/* In case of host, get all loaded dependencies into an array */
 		if (host == 1)
@@ -484,6 +490,55 @@ int loader_impl_dependencies(loader_impl impl)
 		}
 
 		vector_destroy(dependencies_self);
+	}
+
+	return 0;
+}
+
+int loader_impl_link(plugin p, loader_impl impl)
+{
+	plugin_descriptor desc = plugin_desc(p);
+
+	/* On Linux and MacOS, if the symbols are exported,
+	the linker when loading the library automatically resolves the symbols
+	so there is no need for doing the link manually, in Windows meanwhile
+	we link the dependency with delay load linking. Before we execute anything,
+	we should relink all the symbols to the host.
+	*/
+#if defined(WIN32) || defined(_WIN32)
+	if (loader_impl_get_option_host(impl) == 1)
+	{
+		/* TODO: Replace loader symbols by the dependency (aka the already loaded
+		library if the host is linked dynamically, or the executable if it is
+		linked statically):
+
+			loader_handle = detour_load_handle(d, desc->handle);
+
+			while (detour_enumerate(d, loader_handle, position, name, addr))
+			{
+				foreach(library_handle in impl->library_map)
+				{
+					symbol = dynlink_symbol(library_handle, name);
+
+					if (symbol != NULL)
+					{
+						if (detour_replace(d, loader_handle, name, symbol, ...) == 0)
+						{
+							break;
+						}
+					}
+				}
+			}
+
+			detour_unload(d, loader_handle);
+		*/
+	}
+#endif
+
+	/* Store itself in the library map along with the dependencies */
+	if (set_insert(impl->library_map, (set_key)desc->library_name, (set_value)desc->handle) != 0)
+	{
+		return 1;
 	}
 
 	return 0;
@@ -1789,10 +1844,16 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 		value_type_destroy(impl->options);
 	}
 
+	/* TODO: I am not sure this will work.
+	This must be done when the plugin handle (aka the loader) gets unloaded,
+	at this point it is not unloaded yet, because the plugin destructor is called before doing:
+		dynlink_unload(p->descriptor->handle);
+	In theory it should work because normally those handles are reference counted but "I don't trust like that".
+	*/
 	/* Unload all the dependencies when everything has been destroyed and the loader is unloaded */
-	set_iterate(impl->dependencies_map, &loader_impl_destroy_dependencies_map_cb_iterate, NULL);
+	set_iterate(impl->library_map, &loader_impl_destroy_dependencies_map_cb_iterate, NULL);
 
-	set_destroy(impl->dependencies_map);
+	set_destroy(impl->library_map);
 
 	free(impl);
 }
@@ -1822,6 +1883,11 @@ void loader_impl_destroy(plugin p, loader_impl impl)
 
 				impl->init = 1;
 			}
+
+			/* Remove the loader library from the library list */
+			plugin_descriptor desc = plugin_desc(p);
+
+			set_remove(impl->library_map, (set_key)desc->library_name);
 		}
 		else
 		{

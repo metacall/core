@@ -1114,7 +1114,7 @@ napi_value node_loader_port_initialize(napi_env env, napi_value exports)
 	node_loader_port_exports(env, exports);
 
 	/* Unregister NAPI Hook */
-	if (metacall_link_unregister("napi_register_module_v1") != 0)
+	if (metacall_link_unregister(node_loader_tag, "node", "napi_register_module_v1") != 0)
 	{
 		// TODO: Handle error
 	}

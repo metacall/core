@@ -101,7 +101,7 @@ void *plugin_impl(plugin p)
 	return p->impl;
 }
 
-void plugin_destroy_delayed(plugin p)
+void plugin_destructor(plugin p)
 {
 	if (p != NULL)
 	{

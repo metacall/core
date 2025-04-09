@@ -50,6 +50,12 @@ METACALL_API int metacall_link_initialize(void);
 *    Function interposition is required in order to hook into runtimes
 *    and dynamically interpose our functions.
 *
+*  @param[in] tag
+*    Name of the loader which the @dependency belongs to
+*
+*  @param[in] library
+*    Name of the library that is going to be hooked
+*
 *  @param[in] symbol
 *    Name of the function to be interposed
 *
@@ -59,19 +65,25 @@ METACALL_API int metacall_link_initialize(void);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_link_register(const char *symbol, void (*fn)(void));
+METACALL_API int metacall_link_register(const char *tag, const char *library, const char *symbol, void (*fn)(void));
 
 /**
 *  @brief
 *    Remove the hook previously registered
 *
+*  @param[in] tag
+*    Name of the loader which the @dependency belongs to
+*
+*  @param[in] library
+*    Name of the library that is going to be hooked
+*
 *  @param[in] symbol
-*    Name of the function to be removed
+*    Name of the function to be interposed
 *
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_link_unregister(const char *symbol);
+METACALL_API int metacall_link_unregister(const char *tag, const char *library, const char *symbol);
 
 /**
 *  @brief
