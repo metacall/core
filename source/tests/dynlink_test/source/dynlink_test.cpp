@@ -122,6 +122,8 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		EXPECT_EQ((int)48, fn_ptr());
 
+		EXPECT_EQ((int (*)(void))&function_from_current_executable, (int (*)(void))fn_ptr);
+
 		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 	}
 
