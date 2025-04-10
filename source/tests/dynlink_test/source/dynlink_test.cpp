@@ -38,7 +38,7 @@ protected:
 #ifdef _WIN32
 	#define EXPORT_SYMBOL __declspec(dllexport)
 #else
-	#define EXPORT_SYMBOL __attribute__((visibility("default")))
+	#define EXPORT_SYMBOL __attribute__((used)) __attribute__((visibility("default")))
 #endif
 
 extern "C" EXPORT_SYMBOL int function_from_current_executable(void)
@@ -114,15 +114,17 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		dynlink_symbol_addr addr;
 
+		EXPECT_EQ((int)48, (int)function_from_current_executable());
+
 		EXPECT_EQ((int)0, dynlink_symbol(proc, "function_from_current_executable", &addr));
 
-		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
+		ASSERT_NE((dynlink_symbol_addr)addr, (dynlink_symbol_addr)NULL);
 
 		int (*fn_ptr)(void) = (int (*)(void))addr;
 
 		EXPECT_EQ((int)48, fn_ptr());
 
-		EXPECT_EQ((int (*)(void))&function_from_current_executable, (int (*)(void))fn_ptr);
+		EXPECT_EQ((int (*)(void))(&function_from_current_executable), (int (*)(void))fn_ptr);
 
 		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 	}
