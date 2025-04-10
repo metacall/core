@@ -202,6 +202,9 @@ target_link_libraries(${target}
 
 	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
 
+	# Fix issues with atomics in armv6 and armv7
+	$<$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},armv7l>:-latomic>
+
 	INTERFACE
 )
 
