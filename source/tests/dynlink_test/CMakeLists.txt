@@ -115,6 +115,9 @@ target_compile_options(${target}
 target_link_options(${target}
 	PRIVATE
 	${DEFAULT_LINKER_OPTIONS}
+
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>
+	$<$<CXX_COMPILER_ID:GNU>:-rdynamic>
 )
 
 #

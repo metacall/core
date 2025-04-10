@@ -38,7 +38,7 @@ protected:
 #ifdef _WIN32
 	#define EXPORT_SYMBOL __declspec(dllexport)
 #else
-	#define EXPORT_SYMBOL __attribute__((used)) __attribute__((visibility("default")))
+	#define EXPORT_SYMBOL __attribute__((visibility("default")))
 #endif
 
 extern "C" EXPORT_SYMBOL int function_from_current_executable(void)
@@ -113,8 +113,6 @@ TEST_F(dynlink_test, DefaultConstructor)
 		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
 
 		dynlink_symbol_addr addr;
-
-		EXPECT_EQ((int)48, (int)function_from_current_executable());
 
 		EXPECT_EQ((int)0, dynlink_symbol(proc, "function_from_current_executable", &addr));
 
