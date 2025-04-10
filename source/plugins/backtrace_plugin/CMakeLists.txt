@@ -13,6 +13,8 @@ if(NOT OPTION_BUILD_GUIX)
 	FetchContent_Declare(BackwardCpp
 		GIT_REPOSITORY https://github.com/bombela/backward-cpp
 		GIT_TAG f30744bcf726ea3735df7ecf9e9de9ddac540283
+		CMAKE_ARGS
+			-DCMAKE_POLICY_VERSION_MINIMUM=3.5
 	)
 
 	FetchContent_MakeAvailable(BackwardCpp)
