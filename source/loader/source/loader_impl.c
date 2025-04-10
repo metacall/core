@@ -93,6 +93,8 @@ struct loader_impl_type
 	set exec_path_map;			   /* Set of execution paths passed by the end user */
 	configuration config;		   /* Reference to the loader configuration, it contains execution_paths, dependencies and additional info */
 	set library_map;			   /* List of handles (dynlink) to the dependencies of the loader and the loader itself */
+	detour d;					   /* Reference to the detour which was used for hooking the loader or its dependencies */
+	set detour_map;				   /* List of detour handles (detour_handle) to the dependencies of the loader and the loader itself */
 };
 
 struct loader_handle_impl_type
@@ -226,8 +228,17 @@ loader_impl loader_impl_allocate(const loader_tag tag)
 		goto alloc_library_map_error;
 	}
 
+	impl->detour_map = set_create(&hash_callback_str, &comparable_callback_str);
+
+	if (impl->detour_map == NULL)
+	{
+		goto alloc_detour_map_error;
+	}
+
 	return impl;
 
+alloc_detour_map_error:
+	set_destroy(impl->library_map);
 alloc_library_map_error:
 	set_destroy(impl->exec_path_map);
 alloc_exec_path_map_error:
@@ -385,7 +396,7 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 	return 1;
 }
 
-int loader_impl_dependencies(loader_impl impl)
+int loader_impl_dependencies(loader_impl impl, detour d)
 {
 	/* Dependencies have the following format:
 	{
@@ -424,6 +435,10 @@ int loader_impl_dependencies(loader_impl impl)
 				The value in this case will be the library loaded, instead of the full path.
 	*/
 
+	/* Initialize the loader detour */
+	impl->d = d;
+
+	/* Check if the loader has dependencies and load them */
 	if (dependencies_value != NULL)
 	{
 		size_t size = value_type_count(dependencies_value);
@@ -542,6 +557,42 @@ int loader_impl_link(plugin p, loader_impl impl)
 	}
 
 	return 0;
+}
+
+detour_handle loader_impl_detour(loader_impl impl, const char *library, int (*load_cb)(detour, detour_handle))
+{
+	detour_handle handle = set_get(impl->detour_map, (const set_key)library);
+
+	if (handle == NULL)
+	{
+		dynlink library_handle = set_get(impl->library_map, (const set_key)library);
+
+		if (library_handle == NULL)
+		{
+			return NULL;
+		}
+
+		handle = detour_load_handle(impl->d, library_handle);
+
+		if (handle == NULL)
+		{
+			return NULL;
+		}
+
+		if (load_cb(impl->d, handle) != 0)
+		{
+			detour_unload(impl->d, handle);
+			return NULL;
+		}
+
+		if (set_insert(impl->detour_map, (set_key)library, handle) != 0)
+		{
+			detour_unload(impl->d, handle);
+			return NULL;
+		}
+	}
+
+	return handle;
 }
 
 configuration loader_impl_initialize_configuration(const loader_tag tag)
@@ -1771,6 +1822,22 @@ int loader_impl_destroy_exec_path_map_cb_iterate(set s, set_key key, set_value v
 	return 0;
 }
 
+int loader_impl_destroy_detour_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	(void)s;
+	(void)key;
+
+	if (val != NULL && args != NULL)
+	{
+		detour d = args;
+		detour_handle handle = val;
+
+		detour_unload(d, handle);
+	}
+
+	return 0;
+}
+
 int loader_impl_destroy_dependencies_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
 	(void)s;
@@ -1844,12 +1911,18 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 		value_type_destroy(impl->options);
 	}
 
+	/* Destroy detour map */
+	set_iterate(impl->detour_map, &loader_impl_destroy_detour_map_cb_iterate, impl->d);
+
+	set_destroy(impl->detour_map);
+
 	/* TODO: I am not sure this will work.
-	This must be done when the plugin handle (aka the loader) gets unloaded,
-	at this point it is not unloaded yet, because the plugin destructor is called before doing:
-		dynlink_unload(p->descriptor->handle);
-	In theory it should work because normally those handles are reference counted but "I don't trust like that".
+		This must be done when the plugin handle (aka the loader) gets unloaded,
+		at this point it is not unloaded yet, because the plugin destructor is called before doing:
+			dynlink_unload(p->descriptor->handle);
+		In theory it should work because normally those handles are reference counted but "I don't trust like that".
 	*/
+
 	/* Unload all the dependencies when everything has been destroyed and the loader is unloaded */
 	set_iterate(impl->library_map, &loader_impl_destroy_dependencies_map_cb_iterate, NULL);
 

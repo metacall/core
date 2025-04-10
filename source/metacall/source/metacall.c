@@ -256,12 +256,6 @@ int metacall_initialize(void)
 			return 1;
 		}
 
-		/* Initialize link */
-		if (metacall_link_initialize() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link initialization");
-		}
-
 #ifdef METACALL_FORK_SAFE
 		if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
 		{
@@ -316,11 +310,18 @@ int metacall_initialize(void)
 		}
 	}
 
+	/* Initialize loader subsystem */
 	if (loader_initialize() != 0)
 	{
 		configuration_destroy();
 
 		return 1;
+	}
+
+	/* Initialize link */
+	if (metacall_link_initialize() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link initialization");
 	}
 
 	/* Load core plugins */

@@ -35,10 +35,10 @@
 
 struct dynlink_type
 {
-	dynlink_name_impl name;		 /**< Dynamically linked shared object name */
-	dynlink_name_impl name_impl; /**< Dynamically linked shared object file name */
-	dynlink_flags flags;		 /**< Dynamically linked shared object flags */
-	dynlink_impl impl;			 /**< Dynamically linked shared object loader implementation */
+	dynlink_path name;	 /**< Dynamically linked shared object name */
+	dynlink_path path;	 /**< Dynamically linked shared object file name */
+	dynlink_flags flags; /**< Dynamically linked shared object flags */
+	dynlink_impl impl;	 /**< Dynamically linked shared object loader implementation */
 };
 
 /* -- Methods -- */
@@ -53,7 +53,7 @@ const char *dynlink_extension(void)
 	return dynlink_impl_extension();
 }
 
-dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
+dynlink dynlink_load(const char *path, const char *name, dynlink_flags flags)
 {
 	if (name != NULL)
 	{
@@ -61,23 +61,23 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 
 		if (handle != NULL)
 		{
-			dynlink_name_impl name_impl;
+			dynlink_path name_impl;
 
 			strncpy(handle->name, name, PORTABILITY_PATH_SIZE - 1);
 
-			dynlink_impl_get_name(dynlink_get_name(handle), name_impl, PORTABILITY_PATH_SIZE);
+			dynlink_impl_get_name(handle->name, name_impl, PORTABILITY_PATH_SIZE);
 
 			if (path != NULL)
 			{
-				dynlink_name_impl join_path;
+				dynlink_path join_path;
 
 				size_t join_path_size = portability_path_join(path, strnlen(path, PORTABILITY_PATH_SIZE) + 1, name_impl, strnlen(name_impl, PORTABILITY_PATH_SIZE) + 1, join_path, PORTABILITY_PATH_SIZE);
 
-				(void)portability_path_canonical(join_path, join_path_size, handle->name_impl, PORTABILITY_PATH_SIZE);
+				(void)portability_path_canonical(join_path, join_path_size, handle->path, PORTABILITY_PATH_SIZE);
 			}
 			else
 			{
-				strncpy(handle->name_impl, name_impl, strnlen(name_impl, PORTABILITY_PATH_SIZE) + 1);
+				strncpy(handle->path, name_impl, strnlen(name_impl, PORTABILITY_PATH_SIZE) + 1);
 			}
 
 			DYNLINK_FLAGS_SET(handle->flags, flags);
@@ -96,7 +96,7 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 	return NULL;
 }
 
-dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags)
+dynlink dynlink_load_absolute(const char *path, dynlink_flags flags)
 {
 	dynlink handle = malloc(sizeof(struct dynlink_type));
 	size_t path_size, name_size, prefix_length;
@@ -109,7 +109,7 @@ dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags)
 
 	path_size = strnlen(path, PORTABILITY_PATH_SIZE) + 1;
 
-	strncpy(handle->name_impl, path, path_size);
+	strncpy(handle->path, path, path_size);
 
 	/* Get the library name without any extension */
 	name_size = portability_path_get_name_canonical(path, path_size, handle->name, PORTABILITY_PATH_SIZE);
@@ -151,10 +151,10 @@ dynlink dynlink_load_self(dynlink_flags flags)
 	}
 
 	/* Retrieve the executable path for the full name */
-	portability_executable_path(handle->name_impl, &path_length);
+	portability_executable_path(handle->path, &path_length);
 
 	/* Get the name without the extension */
-	portability_path_get_name(handle->name_impl, path_length + 1, handle->name, PORTABILITY_PATH_SIZE);
+	portability_path_get_name(handle->path, path_length + 1, handle->name, PORTABILITY_PATH_SIZE);
 
 	/* Set the flags with the additional special flag for itself,
 	this will help to identify that the handle loaded is the current executable
@@ -174,7 +174,7 @@ dynlink dynlink_load_self(dynlink_flags flags)
 	return handle;
 }
 
-dynlink_name dynlink_get_name(dynlink handle)
+const char *dynlink_get_name(dynlink handle)
 {
 	if (handle != NULL)
 	{
@@ -184,11 +184,11 @@ dynlink_name dynlink_get_name(dynlink handle)
 	return NULL;
 }
 
-dynlink_name dynlink_get_name_impl(dynlink handle)
+const char *dynlink_get_path(dynlink handle)
 {
 	if (handle != NULL)
 	{
-		return handle->name_impl;
+		return handle->path;
 	}
 
 	return NULL;
@@ -214,7 +214,7 @@ dynlink_impl dynlink_get_impl(dynlink handle)
 	return NULL;
 }
 
-int dynlink_symbol(dynlink handle, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address)
+int dynlink_symbol(dynlink handle, const char *symbol_name, dynlink_symbol_addr *symbol_address)
 {
 	if (handle != NULL && handle->impl != NULL && symbol_name != NULL && symbol_address != NULL)
 	{
@@ -234,9 +234,9 @@ void dynlink_unload(dynlink handle)
 	}
 }
 
-int dynlink_library_path(dynlink_name name, dynlink_library_path_str path, size_t *length)
+int dynlink_library_path(const char *name, dynlink_path path, size_t *length)
 {
-	dynlink_name_impl name_impl;
+	dynlink_path name_impl;
 
 	dynlink_impl_get_name(name, name_impl, PORTABILITY_PATH_SIZE);
 
@@ -251,13 +251,13 @@ int dynlink_library_path(dynlink_name name, dynlink_library_path_str path, size_
 	}
 	else
 	{
-		(void)portability_path_get_directory_inplace(path, strnlen(path, sizeof(dynlink_library_path_str) / sizeof(char)) + 1);
+		(void)portability_path_get_directory_inplace(path, strnlen(path, PORTABILITY_PATH_SIZE));
 	}
 
 	return 0;
 }
 
-void dynlink_platform_name(dynlink_name name, dynlink_name_impl result)
+void dynlink_platform_name(const char *name, dynlink_path result)
 {
 	dynlink_impl_get_name(name, result, PORTABILITY_PATH_SIZE);
 }

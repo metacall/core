@@ -142,7 +142,7 @@ dynlink ext_loader_impl_load_from_file_dynlink(const char *path, const char *lib
 {
 	/* This function will try to check if the library exists before loading it,
 	so we avoid error messages from dynlink when guessing the file path for relative load from file */
-	dynlink_name_impl platform_name;
+	dynlink_path platform_name;
 
 	dynlink_platform_name(library_name, platform_name);
 

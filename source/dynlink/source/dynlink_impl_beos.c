@@ -65,7 +65,7 @@ dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 	}
 	else
 	{
-		impl = load_add_on(dynlink_get_name_impl(handle));
+		impl = load_add_on(dynlink_get_path(handle));
 	}
 
 	if (impl < B_NO_ERROR)
@@ -77,7 +77,7 @@ dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
+int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	void *symbol = NULL;
 

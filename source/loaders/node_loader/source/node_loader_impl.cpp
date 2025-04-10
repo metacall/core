@@ -805,25 +805,6 @@ typedef struct loader_impl_napi_to_value_callback_closure_type
 
 } * loader_impl_napi_to_value_callback_closure;
 
-class loader_impl_napi_constructor
-{
-public:
-	loader_impl_napi_constructor()
-	{
-		static const loader_tag node_loader_tag = "node";
-
-		if (metacall_link_register(node_loader_tag, "node", "napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Node loader failed register the link hook");
-		}
-	}
-
-	~loader_impl_napi_constructor() {}
-};
-
-/* Initializer of napi_register_module_v1 */
-static loader_impl_napi_constructor loader_impl_napi_ctor;
-
 /* Type conversion */
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
 
@@ -4027,6 +4008,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 		/* Result will never be defined properly */
 		node_impl->result = 0;
+
+		if (metacall_link_register_impl(impl, "node", "napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Node Loader failed to hook napi_register_module_v1");
+		}
 	}
 
 	/* Register initialization */

@@ -33,7 +33,7 @@ TEST_F(metacall_dynlink_path_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	dynlink_library_path_str path;
+	dynlink_path path;
 
 	const char name[] = "metacall"
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))

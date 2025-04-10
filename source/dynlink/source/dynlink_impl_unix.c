@@ -28,16 +28,6 @@
 
 #include <string.h>
 
-/* Enable if needed for extended API */
-/*
-#ifndef _GNU_SOURCE
-	#define _GNU_SOURCE
-#endif
-#ifndef __USE_GNU
-	#define __USE_GNU
-#endif
-*/
-
 #include <dlfcn.h>
 
 /* -- Methods -- */
@@ -90,7 +80,7 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 	}
 	else
 	{
-		impl = dlopen(dynlink_get_name_impl(handle), flags_impl);
+		impl = dlopen(dynlink_get_path(handle), flags_impl);
 	}
 
 	if (impl == NULL)
@@ -103,7 +93,7 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
+int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	void *symbol = dlsym(impl, name);
 

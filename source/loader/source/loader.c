@@ -33,8 +33,6 @@
 
 #include <serial/serial.h>
 
-#include <detour/detour.h>
-
 #include <log/log.h>
 
 #include <threading/threading_thread_id.h>
@@ -133,6 +131,9 @@ int loader_initialize(void)
 
 	/* Insert into destruction list */
 	loader_initialization_register_plugin(manager_impl->host);
+
+	/* Initialize detours */
+	manager_impl->d = NULL;
 
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader host initialized"); */
@@ -248,6 +249,23 @@ int loader_register_impl(void *impl, void *handle, const char *name, loader_regi
 	return loader_host_register((loader_impl)impl, loader_impl_handle_context(handle), name, invoke, NULL, return_type, arg_size, args_type_id);
 }
 
+void loader_detour(detour d)
+{
+	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+	manager_impl->d = d;
+}
+
+detour_handle loader_hook(const loader_tag tag, const char *library, int (*load_cb)(detour, detour_handle))
+{
+	return loader_impl_detour(loader_get_impl(tag), library, load_cb);
+}
+
+detour_handle loader_hook_impl(void *impl, const char *library, int (*load_cb)(detour, detour_handle))
+{
+	return loader_impl_detour((loader_impl)impl, library, load_cb);
+}
+
 plugin loader_get_impl_plugin(const loader_tag tag)
 {
 	plugin p = plugin_manager_get(&loader_manager, tag);
@@ -265,7 +283,7 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 	}
 
 	/* Dynamic link loader dependencies if it is not host */
-	if (loader_impl_dependencies(impl) != 0)
+	if (loader_impl_dependencies(impl, plugin_manager_impl_type(&loader_manager, loader_manager_impl)->d) != 0)
 	{
 		goto plugin_manager_create_error;
 	}

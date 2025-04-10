@@ -57,7 +57,7 @@ typedef dynlink_symbol_addr *dynlink_symbol_addr_ptr;
 typedef const char *(*dynlink_impl_interface_prefix)(void);
 typedef const char *(*dynlink_impl_interface_extension)(void);
 typedef dynlink_impl (*dynlink_impl_interface_load)(dynlink);
-typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, dynlink_symbol_name, dynlink_symbol_addr_ptr);
+typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, const char *, dynlink_symbol_addr_ptr);
 typedef int (*dynlink_impl_interface_unload)(dynlink, dynlink_impl);
 
 struct dynlink_impl_interface_type

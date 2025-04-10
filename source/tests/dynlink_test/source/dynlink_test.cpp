@@ -76,7 +76,7 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		ASSERT_NE(handle, (dynlink)NULL);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file: %s", dynlink_get_name_impl(handle));
+		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file: %s", dynlink_get_path(handle));
 
 		EXPECT_EQ((int)0, (int)strcmp(library_name, dynlink_get_name(handle)));
 
@@ -139,10 +139,10 @@ TEST_F(dynlink_test, DefaultConstructor)
 		ASSERT_NE(handle, (dynlink)NULL);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object absolute path: %s", absolute_path);
-		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file name:     %s", dynlink_get_name_impl(handle));
+		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file name:     %s", dynlink_get_path(handle));
 		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file:          %s", dynlink_get_name(handle));
 
-		EXPECT_EQ((int)0, (int)strcmp(absolute_path, dynlink_get_name_impl(handle)));
+		EXPECT_EQ((int)0, (int)strcmp(absolute_path, dynlink_get_path(handle)));
 		EXPECT_EQ((int)0, (int)strcmp(library_name, dynlink_get_name(handle)));
 
 		if (handle != NULL)

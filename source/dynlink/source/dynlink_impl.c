@@ -42,17 +42,17 @@ const char *dynlink_impl_extension(void)
 	return singleton()->extension();
 }
 
-void dynlink_impl_get_name(dynlink_name name, dynlink_name_impl name_impl, size_t size)
+void dynlink_impl_get_name(const char *name, dynlink_path destination, size_t size)
 {
-	if (name != NULL && name_impl != NULL && size > 1)
+	if (name != NULL && destination != NULL && size > 1)
 	{
-		strncpy(name_impl, dynlink_impl_prefix(), size);
+		strncpy(destination, dynlink_impl_prefix(), size);
 
-		strncat(name_impl, name, size - 1);
+		strncat(destination, name, size - 1);
 
-		strncat(name_impl, ".", size - 1);
+		strncat(destination, ".", size - 1);
 
-		strncat(name_impl, dynlink_impl_extension(), size - 1);
+		strncat(destination, dynlink_impl_extension(), size - 1);
 	}
 }
 
@@ -63,7 +63,7 @@ dynlink_impl dynlink_impl_load(dynlink handle)
 	return singleton()->load(handle);
 }
 
-int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address)
+int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, const char *symbol_name, dynlink_symbol_addr *symbol_address)
 {
 	if (impl != NULL)
 	{

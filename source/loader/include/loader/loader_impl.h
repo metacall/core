@@ -29,6 +29,8 @@
 #include <plugin/plugin_impl.h>
 #include <plugin/plugin_manager.h>
 
+#include <detour/detour.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,9 +45,11 @@ LOADER_API loader_impl loader_impl_create(const loader_tag tag);
 
 LOADER_API loader_impl loader_impl_create_host(const loader_tag tag);
 
-LOADER_API int loader_impl_dependencies(loader_impl impl);
+LOADER_API int loader_impl_dependencies(loader_impl impl, detour d);
 
 LOADER_API int loader_impl_link(plugin p, loader_impl impl);
+
+LOADER_API detour_handle loader_impl_detour(loader_impl impl, const char *library, int (*load_cb)(detour, detour_handle));
 
 LOADER_API void loader_impl_attach(loader_impl impl, plugin p);
 

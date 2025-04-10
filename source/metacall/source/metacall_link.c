@@ -33,11 +33,12 @@
 
 #include <adt/adt_set.h>
 
+#include <loader/loader.h>
+
 #include <stdlib.h>
 
 /* -- Private Variables -- */
 
-static detour_handle detour_link_handle = NULL;
 static set metacall_link_table = NULL;
 static threading_mutex_type link_mutex = THREADING_MUTEX_INITIALIZE;
 
@@ -52,9 +53,9 @@ typedef FARPROC (*metacall_link_trampoline_type)(HMODULE, LPCSTR);
 static const char metacall_link_func_name[] = "GetProcAddress";
 static metacall_link_trampoline_type metacall_link_trampoline = NULL;
 
-static detour_handle metacall_link_handle(detour d)
+static metacall_link_trampoline_type metacall_link_func(void)
 {
-	return detour_load_address(d, (void (*)(void))(&GetProcAddress));
+	return &GetProcAddress;
 }
 
 FARPROC metacall_link_hook(HMODULE handle, LPCSTR symbol)
@@ -87,30 +88,14 @@ FARPROC metacall_link_hook(HMODULE handle, LPCSTR symbol)
 
 	#include <dlfcn.h>
 
-void (*metacall_link_func(void))(void)
-{
-	return (void (*)(void))(&dlsym);
-}
-
 typedef void *(*metacall_link_trampoline_type)(void *, const char *);
 
 static const char metacall_link_func_name[] = "dlsym";
 static metacall_link_trampoline_type metacall_link_trampoline = NULL;
 
-/* TODO: We have to implement a lazy loaded map for
-detours and load it from the loaders whenever hooking
-is required, on destroy we can delete all the hook handles
-*/
-
-static detour_handle metacall_link_handle(detour d)
+static metacall_link_trampoline_type metacall_link_func(void)
 {
-	/*
-	return detour_load_address(d, (void (*)(void))(&dlsym));
-	*/
-	/*
-	return detour_load_file(d, NULL);
-	*/
-	return detour_load_file(d, "/lib/x86_64-linux-gnu/libnode.so.72");
+	return &dlsym;
 }
 
 void *metacall_link_hook(void *handle, const char *symbol)
@@ -143,8 +128,6 @@ void *metacall_link_hook(void *handle, const char *symbol)
 
 int metacall_link_initialize(void)
 {
-	detour d = detour_create(metacall_detour());
-
 	if (threading_mutex_initialize(&link_mutex) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid link mutex initialization");
@@ -152,34 +135,13 @@ int metacall_link_initialize(void)
 		return 1;
 	}
 
-	if (detour_link_handle == NULL)
+	/* Initialize the default detour for the loaders */
+	loader_detour(detour_create(metacall_detour()));
+
+	if (metacall_link_trampoline == NULL)
 	{
-		/* Casting for getting the original function */
-		union
-		{
-			metacall_link_trampoline_type *trampoline;
-			void (**ptr)(void);
-		} cast = { &metacall_link_trampoline };
-
-		detour_link_handle = metacall_link_handle(d);
-
-		if (detour_link_handle == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour link installation");
-
-			metacall_link_destroy();
-
-			return 1;
-		}
-
-		if (detour_replace(d, detour_link_handle, metacall_link_func_name, (void (*)(void))(&metacall_link_hook), cast.ptr) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour link replacement");
-
-			metacall_link_destroy();
-
-			return 1;
-		}
+		/* Store the original symbol link function */
+		metacall_link_trampoline = metacall_link_func();
 	}
 
 	if (metacall_link_table == NULL)
@@ -199,11 +161,42 @@ int metacall_link_initialize(void)
 	return 0;
 }
 
+static int metacall_link_register_load_cb(detour d, detour_handle handle)
+{
+	void (*addr)(void) = NULL;
+
+	return detour_replace(d, handle, metacall_link_func_name, (void (*)(void))(&metacall_link_hook), &addr);
+}
+
 int metacall_link_register(const char *tag, const char *library, const char *symbol, void (*fn)(void))
 {
 	void *ptr;
 
 	if (metacall_link_table == NULL)
+	{
+		return 1;
+	}
+
+	if (loader_hook(tag, library, metacall_link_register_load_cb) == NULL)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast(fn, ptr);
+
+	return set_insert(metacall_link_table, (set_key)symbol, ptr);
+}
+
+int metacall_link_register_impl(void *loader, const char *library, const char *symbol, void (*fn)(void))
+{
+	void *ptr;
+
+	if (metacall_link_table == NULL)
+	{
+		return 1;
+	}
+
+	if (loader_hook_impl(loader, library, metacall_link_register_load_cb) == NULL)
 	{
 		return 1;
 	}
@@ -220,21 +213,16 @@ int metacall_link_unregister(const char *tag, const char *library, const char *s
 		return 1;
 	}
 
+	/* TODO: Restore the hook? We need support for this on the detour API */
+	(void)tag;
+	(void)library;
+
 	return (set_remove(metacall_link_table, (set_key)symbol) == NULL);
 }
 
 void metacall_link_destroy(void)
 {
 	threading_mutex_lock(&link_mutex);
-
-	if (detour_link_handle != NULL)
-	{
-		detour d = detour_create(metacall_detour());
-
-		detour_unload(d, detour_link_handle);
-
-		detour_link_handle = NULL;
-	}
 
 	if (metacall_link_table != NULL)
 	{

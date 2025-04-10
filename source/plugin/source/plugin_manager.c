@@ -111,7 +111,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 #endif
 			;
 
-		dynlink_library_path_str path;
+		dynlink_path path;
 		size_t length = 0;
 
 		/* The order of precedence is:

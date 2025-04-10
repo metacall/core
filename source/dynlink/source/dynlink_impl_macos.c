@@ -61,7 +61,7 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 	{
 		unsigned long flags_impl;
 		NSObjectFileImage image;
-		const char *name = dynlink_get_name_impl(handle);
+		const char *name = dynlink_get_path(handle);
 		NSObjectFileImageReturnCode ret = NSCreateObjectFileImageFromFile(name, &image);
 
 		if (ret != NSObjectFileImageSuccess)
@@ -136,7 +136,7 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
+int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 	NSSymbol symbol;

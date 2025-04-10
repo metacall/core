@@ -53,6 +53,7 @@ struct loader_manager_impl_type
 	uint64_t init_thread_id;	 /* Stores the thread id of the thread that initialized metacall */
 	vector script_paths;		 /* Vector of search path for the scripts */
 	set destroy_map;			 /* Tracks the list of destroyed runtimes during destruction of the manager (loader_impl -> NULL) */
+	detour d;					 /* Stores the detour manager that is being used for hooking */
 };
 
 /* -- Type Definitions -- */

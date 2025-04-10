@@ -59,6 +59,12 @@ LOADER_API int loader_register(const char *name, loader_register_invoke invoke, 
 
 LOADER_API int loader_register_impl(void *impl, void *handle, const char *name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[]);
 
+LOADER_API void loader_detour(detour d);
+
+LOADER_API detour_handle loader_hook(const loader_tag tag, const char *library, int (*load_cb)(detour, detour_handle));
+
+LOADER_API detour_handle loader_hook_impl(void *impl, const char *library, int (*load_cb)(detour, detour_handle));
+
 LOADER_API const char *loader_library_path(void);
 
 LOADER_API int loader_execution_path(const loader_tag tag, const loader_path path);

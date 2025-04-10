@@ -61,7 +61,7 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 	}
 	else
 	{
-		impl = LoadLibrary(dynlink_get_name_impl(handle));
+		impl = LoadLibrary(dynlink_get_path(handle));
 	}
 
 	if (impl == NULL)
@@ -72,7 +72,7 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 		size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 			NULL, error_id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&message_buffer, 0, NULL);
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load: %s with error code [%d]: %.*s", dynlink_get_name_impl(handle), error_id, size - 1, (const char *)message_buffer);
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load: %s with error code [%d]: %.*s", dynlink_get_path(handle), error_id, size - 1, (const char *)message_buffer);
 
 		LocalFree(message_buffer);
 
@@ -82,7 +82,7 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
+int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	FARPROC proc_addr = GetProcAddress(impl, name);
 
