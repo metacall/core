@@ -619,7 +619,7 @@ typedef struct node_loader_impl_startup_args_type
 		}
 
 		/* Get node impl pointer */
-		ssize_t node_impl_ptr_length = snprintf(NULL, 0, "%p", (void *)node_impl);
+		ssize_t node_impl_ptr_length = snprintf(NULL, 0, "%" PRIxPTR, (uintptr_t)(node_impl));
 
 		if (node_impl_ptr_length <= 0)
 		{
@@ -636,10 +636,10 @@ typedef struct node_loader_impl_startup_args_type
 			return 1;
 		}
 
-		snprintf(node_impl_ptr_str, node_impl_ptr_str_size, "%p", (void *)node_impl);
+		snprintf(node_impl_ptr_str, node_impl_ptr_str_size, "%" PRIxPTR, (uintptr_t)(node_impl));
 
 		/* Get register pointer */
-		ssize_t register_ptr_length = snprintf(NULL, 0, "%p", (void *)&node_loader_impl_register);
+		ssize_t register_ptr_length = snprintf(NULL, 0, "%" PRIxPTR, (uintptr_t)(&node_loader_impl_register));
 
 		if (register_ptr_length <= 0)
 		{
@@ -656,7 +656,7 @@ typedef struct node_loader_impl_startup_args_type
 			return 1;
 		}
 
-		snprintf(register_ptr_str, register_ptr_str_size, "%p", (void *)&node_loader_impl_register);
+		snprintf(register_ptr_str, register_ptr_str_size, "%" PRIxPTR, (uintptr_t)(&node_loader_impl_register));
 
 		return 0;
 	}
