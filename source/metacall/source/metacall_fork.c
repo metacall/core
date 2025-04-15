@@ -316,6 +316,8 @@ void metacall_fork_destroy(void)
 	{
 		detour d = detour_create(metacall_detour());
 
+		/* TODO: Restore the hook? We need support for this on the detour API */
+
 		detour_unload(d, detour_fork_handle);
 
 		detour_fork_handle = NULL;
