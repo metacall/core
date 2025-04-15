@@ -84,7 +84,7 @@ jobs:
           set -exuo pipefail
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           cat <<EOF > Dockerfile.test
-          FROM metacall/${IMAGE_NAME}:${tag}-${platform_tag}
+          FROM metacall/${IMAGE_NAME}:cli-${platform_tag}
           RUN echo "console.log('0123456789abcdef')" > script.js
           RUN metacallcli script.js
           EOF
