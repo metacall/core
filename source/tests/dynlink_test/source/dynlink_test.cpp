@@ -26,9 +26,9 @@
 
 #include <log/log.h>
 
-#define DYNLINK_TEST_LIBRARY_PATH "DYNLINK_TEST_LIBRARY_PATH"
+#define METACALL_TEST_LIBRARY_PATH "METACALL_TEST_LIBRARY_PATH"
 
-typedef void (*dynlink_print_func)(void);
+typedef const char *(*metacall_print_func)(void);
 
 class dynlink_test : public testing::Test
 {
@@ -61,12 +61,12 @@ TEST_F(dynlink_test, DefaultConstructor)
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	const char library_name[] = "dynlinkd";
+	const char library_name[] = "metacalld";
 #else
-	const char library_name[] = "dynlink";
+	const char library_name[] = "metacall";
 #endif
 
-	char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL, 0, NULL);
+	char *path = environment_variable_path_create(METACALL_TEST_LIBRARY_PATH, NULL, 0, NULL);
 
 	ASSERT_NE((char *)path, (char *)NULL);
 
@@ -82,24 +82,24 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		if (handle != NULL)
 		{
-			dynlink_symbol_addr dynlink_print_info_addr;
+			dynlink_symbol_addr metacall_print_info_addr;
 
-			EXPECT_EQ((int)0, dynlink_symbol(handle, "dynlink_print_info", &dynlink_print_info_addr));
+			EXPECT_EQ((int)0, dynlink_symbol(handle, "metacall_print_info", &metacall_print_info_addr));
 
-			if (dynlink_print_info_addr != NULL)
+			if (metacall_print_info_addr != NULL)
 			{
-				dynlink_print_func print = dynlink_print_info_addr;
+				metacall_print_func print = (metacall_print_func)metacall_print_info_addr;
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
 
-				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)dynlink_print_info_addr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)metacall_print_info_addr);
 
-				if (dynlink_print_info_addr != NULL)
+				if (metacall_print_info_addr != NULL)
 				{
 					log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
 				}
 
-				print();
+				log_write("metacall", LOG_LEVEL_DEBUG, "Print: %s", print());
 			}
 
 			dynlink_unload(handle);
@@ -149,24 +149,24 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		if (handle != NULL)
 		{
-			dynlink_symbol_addr dynlink_print_info_addr;
+			dynlink_symbol_addr metacall_print_info_addr;
 
-			EXPECT_EQ((int)0, dynlink_symbol(handle, "dynlink_print_info", &dynlink_print_info_addr));
+			EXPECT_EQ((int)0, dynlink_symbol(handle, "metacall_print_info", &metacall_print_info_addr));
 
-			if (dynlink_print_info_addr != NULL)
+			if (metacall_print_info_addr != NULL)
 			{
-				dynlink_print_func print = dynlink_print_info_addr;
+				metacall_print_func print = (metacall_print_func)metacall_print_info_addr;
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
 
-				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)dynlink_print_info_addr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)metacall_print_info_addr);
 
-				if (dynlink_print_info_addr != NULL)
+				if (metacall_print_info_addr != NULL)
 				{
 					log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
 				}
 
-				print();
+				log_write("metacall", LOG_LEVEL_DEBUG, "Print: %s", print());
 			}
 
 			dynlink_unload(handle);
