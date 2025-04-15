@@ -70,26 +70,28 @@ jobs:
               ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
 
-      - name: Push Platform Images
-        run: |
-          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
-          for tag in "deps" "dev" "runtime" "cli"; do
-            echo "Pushing image for tag: ${tag} with platform: ${platform_tag}"
-            docker push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
-          done
-
       - name: Run Tests
         run: |
           set -exuo pipefail
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           cat <<EOF > Dockerfile.test
-          FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform_tag}
+          FROM metacall/${IMAGE_NAME}:cli
           RUN echo "console.log('abcde')" > script.js
           RUN metacallcli script.js
           EOF
 
           docker build --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
           docker run --rm --platform=${{ matrix.platform }} test-image
+
+      - name: Push Platform Images
+        # Only run when master or when tagging a version
+        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
+        run: |
+          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
+          for tag in "deps" "dev" "runtime" "cli"; do
+            echo "Pushing image for tag: ${tag} with platform: ${platform_tag}"
+            docker push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
+          done
 
   manifest:
     name: Create and Push Manifest Lists
@@ -153,7 +155,8 @@ jobs:
     name: Cleanup Platform Specific Tags
     needs: [build, manifest]
     runs-on: ubuntu-latest
-    if: always()
+    # Only run when master or when tagging a version
+    if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
     steps:
       - name: Remove Platform-Specific Tags
         run: |
