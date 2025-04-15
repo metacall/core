@@ -35,6 +35,12 @@ jobs:
           - linux/s390x
           - linux/arm/v7
           - linux/arm/v6
+          # TODO:
+          # - linux/amd64/v2
+          # - linux/amd64/v3
+          # - linux/mips64le
+          # - linux/mips64
+          # - linux/loong64
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -63,9 +69,12 @@ jobs:
 
       - name: Tag Platform Images
         run: |
+          set -exuo pipefail
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           echo "Platform Tag: ${platform_tag}"
           for tag in "deps" "dev" "runtime" "cli"; do
+            docker tag metacall/${IMAGE_NAME}:${tag} \
+              metacall/${IMAGE_NAME}:${tag}-${platform_tag}
             docker tag metacall/${IMAGE_NAME}:${tag} \
               ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
@@ -75,13 +84,14 @@ jobs:
           set -exuo pipefail
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           cat <<EOF > Dockerfile.test
-          FROM metacall/${IMAGE_NAME}:cli
-          RUN echo "console.log('abcde')" > script.js
+          FROM metacall/${IMAGE_NAME}:${tag}-${platform_tag}
+          RUN echo "console.log('0123456789abcdef')" > script.js
           RUN metacallcli script.js
           EOF
 
-          docker build --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
-          docker run --rm --platform=${{ matrix.platform }} test-image
+          docker build --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image . &> output.txt
+          cat output.txt
+          grep "0123456789abcdef" output.txt
 
       - name: Push Platform Images
         # Only run when master or when tagging a version
@@ -155,8 +165,7 @@ jobs:
     name: Cleanup Platform Specific Tags
     needs: [build, manifest]
     runs-on: ubuntu-latest
-    # Only run when master or when tagging a version
-    if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
+    if: always()
     steps:
       - name: Remove Platform-Specific Tags
         run: |
