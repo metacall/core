@@ -138,14 +138,6 @@ add_test(NAME ${target}
 )
 
 #
-# Define dependencies
-#
-
-add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall
-)
-
-#
 # Define test labels
 #
 
@@ -157,5 +149,5 @@ include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
 	""
-	"METACALL_TEST_LIBRARY_PATH=@OUTPUT_DIRECTORY_DIR@"
+	"DYNLINK_TEST_LIBRARY_PATH=@OUTPUT_DIRECTORY_DIR@"
 )
