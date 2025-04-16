@@ -213,6 +213,11 @@ int metacall_link_unregister(const char *tag, const char *library, const char *s
 		return 1;
 	}
 
+	if (set_get(metacall_link_table, (set_key)symbol) == NULL)
+	{
+		return 0;
+	}
+
 	/* TODO: Restore the hook? We need support for this on the detour API */
 	(void)tag;
 	(void)library;
