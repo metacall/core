@@ -89,8 +89,8 @@ jobs:
           RUN metacallcli script.js
           EOF
 
-          docker build --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image . &> output.txt
-          cat output.txt
+          export DOCKER_BUILDKIT=1
+          docker build --progress=plain --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image . | tee output.txt
           grep "0123456789abcdef" output.txt
 
       - name: Push Platform Images
