@@ -39,6 +39,8 @@ struct detour_handle_type
 	* and store all the symbols in the hash table then iterate and replace at the
 	* same time, so the functions are accessed in O(1) instead of O(n)
 	*/
+	set symbol_map;
+	set replaced_symbols;
 	detour_impl_handle impl;
 };
 
@@ -69,6 +71,41 @@ const char *detour_name(detour d)
 	return plugin_name(d);
 }
 
+static detour_handle detour_handle_allocate(void)
+{
+	detour_handle handle = malloc(sizeof(struct detour_handle_type));
+
+	if (handle == NULL)
+	{
+		goto alloc_handle_error;
+	}
+
+	handle->symbol_map = set_create(&hash_callback_ptr, &comparable_callback_ptr);
+
+	if (handle->symbol_map == NULL)
+	{
+		goto alloc_symbol_map_error;
+	}
+
+	handle->replaced_symbols = set_create(&hash_callback_ptr, &comparable_callback_ptr);
+
+	if (handle->replaced_symbols == NULL)
+	{
+		goto alloc_replaced_symbols_error;
+	}
+
+	handle->impl = NULL;
+
+	return handle;
+
+alloc_replaced_symbols_error:
+	set_destroy(handle->symbol_map);
+alloc_symbol_map_error:
+	free(handle);
+alloc_handle_error:
+	return NULL;
+}
+
 detour_handle detour_load_file(detour d, const char *path)
 {
 	detour_handle handle;
@@ -80,7 +117,7 @@ detour_handle detour_load_file(detour d, const char *path)
 		return NULL;
 	}
 
-	handle = malloc(sizeof(struct detour_handle_type));
+	handle = detour_handle_allocate();
 
 	if (handle == NULL)
 	{
@@ -112,7 +149,7 @@ detour_handle detour_load_handle(detour d, dynlink library)
 		return NULL;
 	}
 
-	handle = malloc(sizeof(struct detour_handle_type));
+	handle = detour_handle_allocate();
 
 	if (handle == NULL)
 	{
@@ -144,7 +181,7 @@ detour_handle detour_load_address(detour d, void (*address)(void))
 		return NULL;
 	}
 
-	handle = malloc(sizeof(struct detour_handle_type));
+	handle = detour_handle_allocate();
 
 	if (handle == NULL)
 	{
@@ -197,7 +234,13 @@ void detour_unload(detour d, detour_handle handle)
 		return;
 	}
 
+	/* TODO: Should we restore all the replaced symbols? */
+
 	detour_iface(d)->destroy(handle->impl);
+
+	set_destroy(handle->symbol_map);
+
+	set_destroy(handle->replaced_symbols);
 }
 
 int detour_clear(detour d)
