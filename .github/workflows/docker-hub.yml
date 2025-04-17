@@ -84,10 +84,10 @@ jobs:
           set -exuo pipefail
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           cat <<EOF > Dockerfile.test
-          FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli
+          FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform_tag}
           RUN echo "console.log('abcde')" > script.js
           RUN which metacallcli
-          RUN metacallcli script.js
+          RUN /usr/local/bin/metacallcli script.js
           EOF
 
           docker build --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
