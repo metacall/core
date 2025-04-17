@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - develop
+      - metacallclid
     tags:
       - 'v*.*.*'
 
@@ -85,6 +86,8 @@ jobs:
           cat <<EOF > Dockerfile.test
           FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform_tag}
           RUN echo "console.log('abcde')" > script.js
+          RUN which metacallcli && metacallcli --version
+          RUN metacallclid script.js
           RUN metacallcli script.js
           EOF
 
