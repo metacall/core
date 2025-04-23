@@ -87,6 +87,7 @@ jobs:
           cat <<EOF > Dockerfile.test
           FROM metacall/${IMAGE_NAME}:cli-${platform_tag}
           RUN echo "console.log('0123456789abcdef')" > script.js
+          RUN apt-get update && apt-get install file
           RUN file /usr/local/bin/metacallcli
           RUN /usr/local/bin/metacallcli /usr/local/scripts/script.js
           RUN /usr/local/bin/metacallcli script.js | tee output.txt
