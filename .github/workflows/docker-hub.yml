@@ -83,15 +83,12 @@ jobs:
         run: |
           set -exuo pipefail
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
+          docker image inspect metacall/${IMAGE_NAME}:cli-${platform_tag} --format='{{.Os}}/{{.Architecture}}'
           cat <<EOF > Dockerfile.test
           FROM metacall/${IMAGE_NAME}:cli-${platform_tag}
           RUN echo "console.log('0123456789abcdef')" > script.js
-          RUN pwd
-          RUN ls -la
-          RUN ls -la /usr/local/bin
-          RUN whoami
-          RUN /usr/local/bin/metacallcli `pwd`/script.js
-          RUN /usr/local/bin/metacallcli script.js
+          RUN file /usr/local/bin/metacallcli
+          RUN /usr/local/bin/metacallcli /usr/local/scripts/script.js
           RUN /usr/local/bin/metacallcli script.js | tee output.txt
           RUN grep 0123456789abcdef output.txt
           EOF
