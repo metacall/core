@@ -86,13 +86,18 @@ jobs:
           cat <<EOF > Dockerfile.test
           FROM metacall/${IMAGE_NAME}:cli-${platform_tag}
           RUN echo "console.log('0123456789abcdef')" > script.js
+          RUN pwd
+          RUN ls -la
           RUN ls -la /usr/local/bin
+          RUN whoami
+          RUN /usr/local/bin/metacallcli `pwd`/script.js
+          RUN /usr/local/bin/metacallcli script.js
           RUN /usr/local/bin/metacallcli script.js | tee output.txt
           RUN grep 0123456789abcdef output.txt
           EOF
 
           export DOCKER_BUILDKIT=1
-          docker build --progress=plain --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
+          docker build --progress=plain --platform=${{ matrix.platform }} -f Dockerfile.test -t test-image .
 
       - name: Push Platform Images
         # Only run when master or when tagging a version
