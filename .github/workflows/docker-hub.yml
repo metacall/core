@@ -86,6 +86,7 @@ jobs:
           cat <<EOF > Dockerfile.test
           FROM metacall/${IMAGE_NAME}:cli-${platform_tag}
           RUN echo "console.log('0123456789abcdef')" > script.js
+          RUN ls -la /usr/local/bin
           RUN metacallcli script.js | tee output.txt
           RUN grep 0123456789abcdef output.txt
           EOF
