@@ -40,8 +40,7 @@ ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 	PORT_LIBRARY_PATH=$METACALL_PATH/build \
 	DEBIAN_FRONTEND=noninteractive \
 	NODE_PATH=/usr/lib/node_modules \
-	DOTNET_CLI_TELEMETRY_OPTOUT=true \
-	PATH="/usr/local/bin:$PATH"
+	DOTNET_CLI_TELEMETRY_OPTOUT=true
 
 # Define working directory
 WORKDIR $METACALL_PATH
