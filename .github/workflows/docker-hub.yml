@@ -65,7 +65,7 @@ jobs:
       - name: Test platform list
         run: |
           set -exuo pipefail
-          platforms=($(echo "${{ needs.generate_matrix.outputs.platform_list }}" | jq -r '.[]'))
+          platforms=($(echo '${{ needs.generate_matrix.outputs.platform_list }}' | jq -r '.[]'))
           for platform in "${platforms[@]}"; do
             echo "$platform"
           done
