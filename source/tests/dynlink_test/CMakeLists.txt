@@ -97,6 +97,8 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	$<$<AND:$<BOOL:${OPTION_BUILD_LOADERS}>,$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>>:DYNLINK_TEST_MOCK_LOADER>
 )
 
 #
@@ -136,6 +138,16 @@ target_link_options(${target}
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
+
+#
+# Define dependencies
+#
+
+if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_MOCK)
+	add_dependencies(${target}
+		mock_loader
+	)
+endif()
 
 #
 # Define test labels
