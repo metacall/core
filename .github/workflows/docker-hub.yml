@@ -53,7 +53,8 @@ jobs:
           ${{ env.PLATFORM_LIST }}
           EOF
           )
-          PLATFORM_LIST=$(echo "$PLATFORM_STRING" | jq .)
+          # Convert array to comma-separated string with each element quoted
+          PLATFORM_LIST=$(echo $PLATFORM_STRING | jq -r '[.[] | "\""+tostring+"\""] | join(",")')
           echo "PLATFORM_LIST=$PLATFORM_LIST" >> $GITHUB_ENV
           echo "::set-output name=platform_list::$PLATFORM_LIST"
 
