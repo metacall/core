@@ -919,11 +919,34 @@ static detour_handle node_module_handle_a_handle = NULL;
 
 void node_loader_impl_register_linked_bindings()
 {
+	/*
+	* For now napi_module_register won't be deprecated: https://github.com/nodejs/node/issues/56153
+	* If this changes, we can investigate the alternative approach.
+	*/
+#if defined(_MSC_VER)
+	#pragma warning(push)
+	#pragma warning(disable : 4996)
+#elif defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 	/* Initialize Node Loader Trampoline */
 	node_loader_impl_register_module("node_loader_trampoline_module", node_loader_trampoline_initialize);
 
 	/* Initialize Node Loader Port */
 	node_loader_impl_register_module("node_loader_port_module", node_loader_port_initialize);
+
+#if defined(_MSC_VER)
+	#pragma warning(pop)
+#elif defined(__clang__)
+	#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic pop
+#endif
 }
 
 void node_loader_impl_exception(napi_env env, napi_status status)
