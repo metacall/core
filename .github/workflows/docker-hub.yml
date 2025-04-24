@@ -57,23 +57,10 @@ jobs:
           echo "PLATFORM_LIST=$PLATFORM_LIST" >> $GITHUB_ENV
           echo "::set-output name=platform_list::$PLATFORM_LIST"
 
-  test_matrix:
-    name: Test Platform List
-    runs-on: ubuntu-latest
-    needs: generate_matrix
-    steps:
-      - name: Test platform list
-        run: |
-          set -exuo pipefail
-          platforms=($(echo '${{ needs.generate_matrix.outputs.platform_list }}' | jq -r '.[]'))
-          for platform in "${platforms[@]}"; do
-            echo "$platform"
-          done
-
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: test_matrix
+    needs: generate_matrix
     strategy:
       fail-fast: false
       matrix:
@@ -106,9 +93,10 @@ jobs:
         run: |
           ./docker-compose.sh platform
 
-          echo
-          echo "-------------------- Run Tests --------------------"
-          echo
+      - name: Run Tests
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
           set -exuo pipefail
           docker image inspect ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli --format='{{.Os}}/{{.Architecture}}'
           cat <<EOF > Dockerfile.test
@@ -152,7 +140,7 @@ jobs:
       - name: Create and Push Manifest Lists
         run: |
           tags=("deps" "dev" "runtime" "cli")
-          platforms=("${{ join(fromJSON(needs.generate_matrix.outputs.platform_list), '" "') }}")
+          platforms=($(echo '${{ needs.generate_matrix.outputs.platform_list }}' | jq -r '.[]'))
 
           echo "Create all the tags by platform"
 
@@ -203,7 +191,7 @@ jobs:
       - name: Remove Platform-Specific Tags
         run: |
           tags=("deps" "dev" "runtime" "cli")
-          platforms=("${{ join(fromJSON(needs.generate_matrix.outputs.platform_list), '" "') }}")
+          platforms=($(echo '${{ needs.generate_matrix.outputs.platform_list }}' | jq -r '.[]'))
 
           for tag in "${tags[@]}"; do
             for platform in "${platforms[@]}"; do
