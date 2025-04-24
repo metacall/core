@@ -44,7 +44,7 @@ env:
   # ]
 
 jobs:
-  generate_matrix:
+  matrix:
     name: Generate Platform List
     runs-on: ubuntu-latest
     outputs:
@@ -65,11 +65,11 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: generate_matrix
+    needs: matrix
     strategy:
       fail-fast: false
       matrix:
-        platform: ${{ fromJSON(needs.generate_matrix.outputs.platform_list) }}
+        platform: ${{ fromJSON(needs.matrix.outputs.platform_list) }}
 
     steps:
       - name: Checkout Repository
@@ -131,7 +131,7 @@ jobs:
 
   manifest:
     name: Create and Push Manifest Lists
-    needs: build
+    needs: [matrix, build]
     # Only run when master or when tagging a version
     if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -144,8 +144,10 @@ jobs:
 
       - name: Create and Push Manifest Lists
         run: |
+          set -exuo pipefail
+
           tags=("deps" "dev" "runtime" "cli")
-          platforms=($(echo '${{ needs.generate_matrix.outputs.platform_list }}' | jq -r '.[]'))
+          platforms=($(echo '${{ needs.matrix.outputs.platform_list }}' | jq -r '.[]'))
 
           echo "Create all the tags by platform"
 
@@ -189,14 +191,16 @@ jobs:
 
   cleanup:
     name: Cleanup Platform Specific Tags
-    needs: [build, manifest]
+    needs: [matrix, build, manifest]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Remove Platform-Specific Tags
         run: |
+          set -exuo pipefail
+
           tags=("deps" "dev" "runtime" "cli")
-          platforms=($(echo '${{ needs.generate_matrix.outputs.platform_list }}' | jq -r '.[]'))
+          platforms=($(echo '${{ needs.matrix.outputs.platform_list }}' | jq -r '.[]'))
 
           for tag in "${tags[@]}"; do
             for platform in "${platforms[@]}"; do
