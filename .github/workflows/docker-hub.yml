@@ -82,7 +82,7 @@ jobs:
           RUN grep 0123456789abcdef output.txt
           EOF
 
-          docker build --progress=plain --platform=${{ matrix.platform }} -f Dockerfile.test -t test-image .
+          docker buildx build --progress=plain --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
 
       - name: Tag & Push Platform Images
         # Only run when master or when tagging a version
