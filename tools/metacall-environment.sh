@@ -250,9 +250,9 @@ sub_rapidjson(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		git clone https://github.com/miloyip/rapidjson.git
+		git clone https://github.com/Tencent/rapidjson.git
 		cd rapidjson
-		git checkout ab1842a2dae061284c0a62dca1cc6d5e7e37e346
+		git checkout 24b5e7a8b27f42fa16b96fc70aade9106cf7102f
 		mkdir build
 		cd build
 		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..

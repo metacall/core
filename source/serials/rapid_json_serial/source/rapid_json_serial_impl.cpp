@@ -12,13 +12,26 @@
 
 #include <log/log.h>
 
-// TODO: RapidJSON seems to be outdated, but we use it meanwhile there's a better solution.
-// Here's a patch for some of the bugs in the library: https://github.com/Tencent/rapidjson/issues/1928
+/* Disable warnings from RapidJSON */
+#if defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wstrict-overflow"
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
 
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+
+/* Disable warnings from RapidJSON */
+#if defined(__clang__)
+	#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic pop
+#endif
 
 #include <sstream>
 
@@ -41,7 +54,6 @@ static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 /* -- Classes -- */
 
-// https://techoverflow.net/2020/01/13/how-to-fix-rapidjson-segmentation-faults-when-building-nested-documents/
 rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
 
 /* -- Methods -- */
@@ -91,9 +103,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 	{
 		short s = value_to_short(v);
 
-		int i = (int)s;
-
-		json_v->SetInt(i);
+		json_v->SetInt((int)s);
 	}
 	else if (id == TYPE_INT)
 	{
@@ -105,9 +115,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 	{
 		long l = value_to_long(v);
 
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int64_t (posible incompatible types) in RapidJSON implementation");
-
-		json_v->SetInt64(l);
+		json_v->SetInt64((int64_t)l);
 	}
 	else if (id == TYPE_FLOAT)
 	{
@@ -394,6 +402,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	{
 		unsigned int ui = v->GetUint();
 
+		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
 		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to integer (posible overflow) in RapidJSON implementation");
 
 		return value_create_int((int)ui);
@@ -402,13 +411,21 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	{
 		int64_t i = v->GetInt64();
 
+		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
+#if LONG_MAX < INT64_MAX
+		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int (posible overflow) in RapidJSON implementation");
+#endif
+
 		return value_create_long((long)i);
 	}
 	else if (v->IsUint64() == true)
 	{
 		uint64_t ui = v->GetUint64();
 
+		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
+#if LONG_MAX < UINT64_MAX
 		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible overflow) in RapidJSON implementation");
+#endif
 
 		return value_create_long((long)ui);
 	}
