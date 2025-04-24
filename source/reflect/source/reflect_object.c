@@ -67,9 +67,7 @@ object object_create(const char *name, enum accessor_type_id accessor, object_im
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object name allocation <%s>", name);
 
-			free(obj);
-
-			return NULL;
+			goto name_error;
 		}
 
 		memcpy(obj->name, name, obj_name_size);
@@ -79,12 +77,11 @@ object object_create(const char *name, enum accessor_type_id accessor, object_im
 		obj->name = NULL;
 	}
 
-	obj->impl = impl;
-	obj->accessor = accessor;
 	threading_atomic_ref_count_initialize(&obj->ref);
 
+	obj->impl = impl;
+	obj->accessor = accessor;
 	obj->interface = singleton ? singleton() : NULL;
-
 	obj->cls = cls;
 
 	if (obj->interface != NULL && obj->interface->create != NULL)
@@ -93,16 +90,23 @@ object object_create(const char *name, enum accessor_type_id accessor, object_im
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object (%s) create callback <%p>", obj->name, obj->interface->create);
 
-			free(obj->name);
-			free(obj);
-
-			return NULL;
+			goto interface_create_error;
 		}
 	}
 
 	reflect_memory_tracker_allocation(object_stats);
 
 	return obj;
+
+interface_create_error:
+	if (obj->name != NULL)
+	{
+		free(obj->name);
+	}
+name_error:
+	free(obj);
+
+	return NULL;
 }
 
 int object_increment_reference(object obj)

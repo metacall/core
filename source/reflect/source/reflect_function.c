@@ -66,9 +66,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid function name allocation <%s>", name);
 
-			free(func);
-
-			return NULL;
+			goto name_error;
 		}
 
 		memcpy(func->name, name, func_name_size);
@@ -88,7 +86,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function signature allocation");
 
-		goto function_create_error;
+		goto signature_error;
 	}
 
 	threading_atomic_ref_count_initialize(&func->ref);
@@ -101,7 +99,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid function (%s) create callback <%p>", func->name, func->interface->create);
 
-			goto function_create_error;
+			goto interface_create_error;
 		}
 	}
 
@@ -109,8 +107,14 @@ function function_create(const char *name, size_t args_count, function_impl impl
 
 	return func;
 
-function_create_error:
-	free(func->name);
+interface_create_error:
+	signature_destroy(func->s);
+signature_error:
+	if (func->name != NULL)
+	{
+		free(func->name);
+	}
+name_error:
 	free(func);
 
 	return NULL;

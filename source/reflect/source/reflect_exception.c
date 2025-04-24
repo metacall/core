@@ -138,9 +138,15 @@ exception exception_create_const(const char *message, const char *label, int64_t
 	return ex;
 
 stacktrace_bad_alloc:
-	free(ex->label);
+	if (ex->label != NULL)
+	{
+		free(ex->label);
+	}
 label_bad_alloc:
-	free(ex->message);
+	if (ex->message != NULL)
+	{
+		free(ex->message);
+	}
 message_bad_alloc:
 	free(ex);
 exception_bad_alloc:

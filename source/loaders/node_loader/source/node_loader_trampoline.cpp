@@ -397,12 +397,17 @@ napi_value node_loader_trampoline_active_handles(napi_env env, napi_callback_inf
 		return nullptr;
 	}
 
-	int64_t active_handles = node_loader_impl_user_async_handles_count(node_impl_cast.data);
+	uint64_t active_handles = node_loader_impl_user_async_handles_count(node_impl_cast.data);
 
 	/* Create the integer return value */
 	napi_value result;
 
-	status = napi_create_int64(env, active_handles, &result);
+	if (active_handles > (uint64_t)INT64_MAX)
+	{
+		active_handles = (uint64_t)INT64_MAX;
+	}
+
+	status = napi_create_int64(env, (int64_t)active_handles, &result);
 
 	node_loader_impl_exception(env, status);
 

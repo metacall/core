@@ -170,6 +170,15 @@ sub_netcore7(){
 	sub_apt_install_hold dotnet-runtime-7.0=7.0.5-1
 }
 
+# NetCore 8
+sub_netcore8(){
+	echo "configure netcore 8"
+	cd $ROOT_DIR
+
+	# Install NET Core Runtime 8.x
+	wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin --runtime dotnet
+}
+
 # V8
 sub_v8(){
 	echo "configure v8"

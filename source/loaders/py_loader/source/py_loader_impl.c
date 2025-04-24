@@ -44,8 +44,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <Python.h>
-
 #define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
 #define PY_LOADER_IMPL_FINALIZER_FUNC			 "__py_loader_impl_finalizer__"
 

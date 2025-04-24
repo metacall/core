@@ -123,6 +123,7 @@ klass class_create(const char *name, enum accessor_type_id accessor, class_impl 
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) create callback <%p>", cls->name, cls->interface->create);
 
 			free(cls->name);
+			threading_atomic_ref_count_destroy(&cls->ref);
 			vector_destroy(cls->constructors);
 			map_destroy(cls->methods);
 			map_destroy(cls->static_methods);
