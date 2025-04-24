@@ -48,8 +48,10 @@ jobs:
       - name: Generate platform list
         id: generate_platform_list
         run: |
+          set -exuo pipefail
           PLATFORM_STRING=$(cat <<EOF
           ${{ env.PLATFORM_LIST }}
+          EOF
           )
           PLATFORM_LIST=$(echo "$PLATFORM_STRING" | jq .)
           echo "PLATFORM_LIST=$PLATFORM_LIST" >> $GITHUB_ENV
