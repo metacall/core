@@ -46,19 +46,19 @@ extern "C" {
 
 /* -- Member Data -- */
 
-struct threading_atomic_ref_count_type
-{
 #if defined(__THREAD_SANITIZER__)
+typedef struct
+{
 	uintmax_t count;
 	threading_mutex_type m;
+} threading_atomic_ref_count_type;
 #else
-	atomic_uintmax_t count;
+typedef atomic_uintmax_t threading_atomic_ref_count_type;
 #endif
-};
 
 /* -- Type Definitions -- */
 
-typedef struct threading_atomic_ref_count_type *threading_atomic_ref_count;
+typedef threading_atomic_ref_count_type *threading_atomic_ref_count;
 
 /* -- Methods -- */
 
@@ -67,7 +67,7 @@ static inline void threading_atomic_ref_count_store(threading_atomic_ref_count r
 #if defined(__THREAD_SANITIZER__)
 	threading_mutex_store(&ref->m, &ref->count, &v, sizeof(uintmax_t));
 #else
-	atomic_store(&ref->count, v);
+	atomic_store(ref, v);
 #endif
 }
 
@@ -93,7 +93,7 @@ static inline uintmax_t threading_atomic_ref_count_load(threading_atomic_ref_cou
 
 	return result;
 #else
-	return atomic_load_explicit(&ref->count, memory_order_relaxed);
+	return atomic_load_explicit(ref, memory_order_relaxed);
 #endif
 }
 
@@ -106,12 +106,12 @@ static inline int threading_atomic_ref_count_increment(threading_atomic_ref_coun
 	}
 	threading_mutex_unlock(&ref->m);
 #else
-	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MAX)
+	if (atomic_load_explicit(ref, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MAX)
 	{
 		return 1;
 	}
 
-	atomic_fetch_add_explicit(&ref->count, 1, memory_order_relaxed);
+	atomic_fetch_add_explicit(ref, 1, memory_order_relaxed);
 #endif
 
 	return 0;
@@ -126,12 +126,12 @@ static inline int threading_atomic_ref_count_decrement(threading_atomic_ref_coun
 	}
 	threading_mutex_unlock(&ref->m);
 #else
-	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MIN)
+	if (atomic_load_explicit(ref, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MIN)
 	{
 		return 1;
 	}
 
-	uintmax_t old_ref_count = atomic_fetch_sub_explicit(&ref->count, 1, memory_order_release);
+	uintmax_t old_ref_count = atomic_fetch_sub_explicit(ref, 1, memory_order_release);
 
 	if (old_ref_count == THREADING_ATOMIC_REF_COUNT_MIN + 1)
 	{

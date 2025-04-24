@@ -40,7 +40,7 @@ struct object_type
 	enum accessor_type_id accessor;
 	object_impl impl;
 	object_interface interface;
-	struct threading_atomic_ref_count_type ref;
+	threading_atomic_ref_count_type ref;
 	klass cls;
 };
 

@@ -36,7 +36,7 @@ struct function_type
 	signature s;
 	function_impl impl;
 	function_interface interface;
-	struct threading_atomic_ref_count_type ref;
+	threading_atomic_ref_count_type ref;
 	enum async_id async;
 	void *data;
 };

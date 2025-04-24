@@ -42,7 +42,7 @@ struct class_type
 	enum accessor_type_id accessor;
 	class_impl impl;
 	class_interface interface;
-	struct threading_atomic_ref_count_type ref;
+	threading_atomic_ref_count_type ref;
 	vector constructors;
 	map methods;
 	map static_methods;

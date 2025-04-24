@@ -37,7 +37,7 @@ struct exception_type
 	int64_t code;	  /* Numeric code of error */
 	char *stacktrace; /* Stack trace of the error */
 	uint64_t id;	  /* Thread id where the error was raised */
-	struct threading_atomic_ref_count_type ref;
+	threading_atomic_ref_count_type ref;
 	/* TODO: value attributes; // This should implement a map for representing the extra attributes of an exception */
 };
 
