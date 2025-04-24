@@ -19,6 +19,25 @@ env:
   IMAGE_NAME: core
   BUILDKIT_VERSION: 0.13.0
 
+  # TODO: Tests failing
+  # - linux/s390x
+  # TODO: Not tested or no hooking support
+  # - linux/mips64le
+  # - linux/mips64
+  # - linux/loong64
+  PLATFORM_LIST: >
+    [
+      "linux/amd64",
+      "linux/amd64/v2"
+      "linux/amd64/v3"
+      "linux/386",
+      "linux/arm64",
+      "linux/riscv64",
+      "linux/ppc64le",
+      "linux/arm/v7",
+      "linux/arm/v6"
+    ]
+
 jobs:
   build:
     name: Build
@@ -26,21 +45,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/386
-          - linux/arm64
-          - linux/riscv64
-          - linux/ppc64le
-          - linux/s390x
-          - linux/arm/v7
-          - linux/arm/v6
-          # TODO:
-          # - linux/amd64/v2
-          # - linux/amd64/v3
-          # - linux/mips64le
-          # - linux/mips64
-          # - linux/loong64
+        platform: ${{ fromJSON(env.PLATFORM_LIST) }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -114,7 +120,7 @@ jobs:
       - name: Create and Push Manifest Lists
         run: |
           tags=("deps" "dev" "runtime" "cli")
-          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
+          platforms=("${{ join(fromJSON(env.PLATFORM_LIST), '" "') }}")
 
           echo "Create all the tags by platform"
 
@@ -165,7 +171,7 @@ jobs:
       - name: Remove Platform-Specific Tags
         run: |
           tags=("deps" "dev" "runtime" "cli")
-          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
+          platforms=("${{ join(fromJSON(env.PLATFORM_LIST), '" "') }}")
 
           for tag in "${tags[@]}"; do
             for platform in "${platforms[@]}"; do
