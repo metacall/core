@@ -44,7 +44,7 @@ union loader_host_invoke_cast
 
 static value function_host_interface_invoke(function func, function_impl func_impl, function_args args, size_t size);
 
-static function_return function_host_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context);
+static function_return function_host_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *ctx);
 
 static function_interface function_host_singleton(void);
 
@@ -64,7 +64,7 @@ function_return function_host_interface_invoke(function func, function_impl func
 	return invoke_cast.fn(size, args, data);
 }
 
-function_return function_host_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+function_return function_host_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *ctx)
 {
 	/* TODO */
 
@@ -74,7 +74,7 @@ function_return function_host_interface_await(function func, function_impl impl,
 	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
-	(void)context;
+	(void)ctx;
 
 	return NULL;
 }

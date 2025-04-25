@@ -36,7 +36,7 @@
 
 #include <configuration/configuration.h>
 
-#include <portability/portability_dependency.h>
+#include <portability/portability_library_path.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -457,7 +457,7 @@ int loader_impl_dependencies(loader_impl impl, detour d)
 				return 1;
 			}
 
-			if (portability_dependendency_iterate(&loader_impl_dependencies_self_list, (void *)dependencies_self) != 0)
+			if (portability_library_path_list(&loader_impl_dependencies_self_list, (void *)dependencies_self) != 0)
 			{
 				vector_destroy(dependencies_self);
 				return 1;

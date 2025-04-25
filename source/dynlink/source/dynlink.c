@@ -240,7 +240,7 @@ int dynlink_library_path(const char *name, dynlink_path path, size_t *length)
 
 	dynlink_impl_get_name(name, name_impl, PORTABILITY_PATH_SIZE);
 
-	if (portability_library_path(name_impl, path, length) != 0)
+	if (portability_library_path_find(name_impl, path, length) != 0)
 	{
 		return 1;
 	}

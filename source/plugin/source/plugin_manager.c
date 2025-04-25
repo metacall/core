@@ -105,9 +105,9 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	/* Initialize the library path */
 	if (manager->library_path == NULL)
 	{
-		const char name[] = "metacall"
+		const char library_name[] = "metacall"
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-							"d"
+									"d"
 #endif
 			;
 
@@ -119,7 +119,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 		* 2) Dynamic link library path of the host library
 		* 3) Default compile time path
 		*/
-		if (dynlink_library_path(name, path, &length) == 0)
+		if (dynlink_library_path(library_name, path, &length) == 0)
 		{
 			default_library_path = path;
 		}

@@ -49,7 +49,7 @@ extern char **environ;
 #include <node_loader/node_loader_trampoline.h>
 
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-	#include <node_loader/node_loader_win32_delay_load.h>
+	#include <detour/detour.h>
 
 	/* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll*/
 	#include <intrin.h>
@@ -3701,7 +3701,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		/* As the library handle is correctly resolved here, either to executable, library of the executable,
 		or the loader dependency we can directly obtain the handle of this dependency from a function pointer,
 		use any function that is contained in node runtime, in this case we are using napi_create_array */
-		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, &napi_create_array, &node_loader_node_dll_handle))
+		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)&napi_create_array, &node_loader_node_dll_handle))
 		{
 			napi_throw_type_error(env, nullptr, "Failed to initialize the hooking against node extensions load mechanism");
 		}

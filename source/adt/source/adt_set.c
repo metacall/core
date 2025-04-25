@@ -256,9 +256,9 @@ set_value set_get(set s, set_key key)
 {
 	if (s != NULL && key != NULL)
 	{
-		set_hash hash = s->hash_cb(key);
+		set_hash h = s->hash_cb(key);
 
-		size_t index = hash % s->capacity;
+		size_t index = h % s->capacity;
 
 		bucket b = &s->buckets[index];
 
@@ -277,9 +277,9 @@ int set_contains(set s, set_key key)
 {
 	if (s != NULL && key != NULL)
 	{
-		set_hash hash = s->hash_cb(key);
+		set_hash h = s->hash_cb(key);
 
-		size_t index = hash % s->capacity;
+		size_t index = h % s->capacity;
 
 		bucket b = &s->buckets[index];
 

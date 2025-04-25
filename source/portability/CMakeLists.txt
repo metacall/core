@@ -41,7 +41,6 @@ set(headers
 	${include_path}/portability_working_path.h
 	${include_path}/portability_path.h
 	${include_path}/portability_atexit.h
-	${include_path}/portability_dependency.h
 )
 
 set(sources
@@ -51,7 +50,6 @@ set(sources
 	${source_path}/portability_working_path.c
 	${source_path}/portability_path.c
 	${source_path}/portability_atexit.c
-	${source_path}/portability_dependency.c
 )
 
 # Group source files

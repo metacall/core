@@ -239,9 +239,9 @@ vector map_get(map m, map_key key)
 {
 	if (m != NULL && key != NULL)
 	{
-		map_hash hash = m->hash_cb(key);
+		map_hash h = m->hash_cb(key);
 
-		size_t index = hash % m->capacity;
+		size_t index = h % m->capacity;
 
 		bucket b = &m->buckets[index];
 
@@ -255,9 +255,9 @@ int map_contains(map m, map_key key)
 {
 	if (m != NULL && key != NULL)
 	{
-		map_hash hash = m->hash_cb(key);
+		map_hash h = m->hash_cb(key);
 
-		size_t index = hash % m->capacity;
+		size_t index = h % m->capacity;
 
 		bucket b = &m->buckets[index];
 

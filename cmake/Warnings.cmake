@@ -46,6 +46,7 @@ if(WARNINGS_ENABLED)
 
 	# Define C compiler warning flags
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+		# TODO: Uncomment the rest of the warnings, enable Weverything for clang
 		add_compile_options(-Wall)
 		add_compile_options(-Wextra)
 		add_compile_options(-Wunused)
@@ -85,7 +86,7 @@ if(WARNINGS_ENABLED)
 		string(REPLACE "/W1" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 		string(REPLACE "/W2" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 		string(REPLACE "/W3" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /Wall")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4") # /Wall
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D _CTR_NONSTDC_NO_WARNINGS=1")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D _CTR_SECURE_NO_WARNINGS=1")
 		set(WARNINGS_C_AVAILABLE 1)
@@ -105,7 +106,7 @@ if(WARNINGS_ENABLED)
 		string(REPLACE "/W1" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 		string(REPLACE "/W2" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 		string(REPLACE "/W3" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /Wall")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4") # /Wall
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _CTR_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _CTR_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _CTR_NONSTDC_NO_WARNINGS=1")

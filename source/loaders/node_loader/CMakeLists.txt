@@ -178,9 +178,9 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
-    # Delay load for MSVC
-    $<$<CXX_COMPILER_ID:MSVC>:libnode2>
-    $<$<CXX_COMPILER_ID:MSVC>:delayimp>
+	# Delay load for MSVC
+	$<$<CXX_COMPILER_ID:MSVC>:${NodeJS_LIBRARY}> # NodeJS library
+	$<$<CXX_COMPILER_ID:MSVC>:delayimp>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

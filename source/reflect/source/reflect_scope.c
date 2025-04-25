@@ -200,17 +200,17 @@ int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_it
 	(void)s;
 	(void)key;
 
-	int type_id = value_type_id(val);
+	type_id id = value_type_id(val);
 
-	if (type_id == TYPE_FUNCTION)
+	if (id == TYPE_FUNCTION)
 	{
 		metadata_iterator->functions[metadata_iterator->functions_size++] = function_metadata(value_to_function(val));
 	}
-	else if (type_id == TYPE_CLASS)
+	else if (id == TYPE_CLASS)
 	{
 		metadata_iterator->classes[metadata_iterator->classes_size++] = class_metadata(value_to_class(val));
 	}
-	else if (type_id == TYPE_OBJECT)
+	else if (id == TYPE_OBJECT)
 	{
 		metadata_iterator->objects[metadata_iterator->objects_size++] = object_metadata(value_to_object(val));
 	}
