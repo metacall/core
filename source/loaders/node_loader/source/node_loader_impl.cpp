@@ -3702,7 +3702,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		or the loader dependency we can directly get the handle of this dependency */
 		dynlink node_library = loader_impl_dependency(node_impl->impl, "node");
 
-		node_loader_node_dll_handle = dynlink_get_impl(node_library);
+		node_loader_node_dll_handle = static_cast<HMODULE>(dynlink_get_impl(node_library));
 
 		if (node_loader_node_dll_handle == NULL)
 		{
