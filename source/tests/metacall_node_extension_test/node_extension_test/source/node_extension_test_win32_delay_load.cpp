@@ -29,6 +29,8 @@
 #include <delayimp.h>
 #include <string.h>
 
+static const char node_library_name[] = NODEJS_LIBRARY_NAME;
+
 static FARPROC WINAPI load_exe_hook(unsigned int event, DelayLoadInfo *info)
 {
 	HMODULE m;
@@ -38,7 +40,7 @@ static FARPROC WINAPI load_exe_hook(unsigned int event, DelayLoadInfo *info)
 		return NULL;
 	}
 
-	if (_stricmp(info->szDll, NODEJS_LIBRARY_NAME) != 0)
+	if (_stricmp(info->szDll, node_library_name) != 0)
 	{
 		return NULL;
 	}

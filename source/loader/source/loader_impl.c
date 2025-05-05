@@ -559,6 +559,13 @@ int loader_impl_link(plugin p, loader_impl impl)
 	return 0;
 }
 
+dynlink loader_impl_dependency(loader_impl impl, const char *library)
+{
+	dynlink library_handle = set_get(impl->library_map, (const set_key)library);
+
+	return library_handle;
+}
+
 detour_handle loader_impl_detour(loader_impl impl, const char *library, int (*load_cb)(detour, detour_handle))
 {
 	detour_handle handle = set_get(impl->detour_map, (const set_key)library);

@@ -92,7 +92,7 @@ METACALL_API int metacall_link_register(const char *tag, const char *library, co
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_link_register_impl(void *loader, const char *library, const char *symbol, void (*fn)(void));
+METACALL_API int metacall_link_register_loader(void *loader, const char *library, const char *symbol, void (*fn)(void));
 
 /**
 *  @brief

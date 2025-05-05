@@ -187,7 +187,7 @@ int metacall_link_register(const char *tag, const char *library, const char *sym
 	return set_insert(metacall_link_table, (set_key)symbol, ptr);
 }
 
-int metacall_link_register_impl(void *loader, const char *library, const char *symbol, void (*fn)(void))
+int metacall_link_register_loader(void *loader, const char *library, const char *symbol, void (*fn)(void))
 {
 	void *ptr;
 

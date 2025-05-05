@@ -3699,11 +3699,15 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
 	{
 		/* As the library handle is correctly resolved here, either to executable, library of the executable,
-		or the loader dependency we can directly obtain the handle of this dependency from a function pointer,
-		use any function that is contained in node runtime, in this case we are using napi_create_array */
-		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)&napi_create_array, &node_loader_node_dll_handle))
+		or the loader dependency we can directly get the handle of this dependency */
+		dynlink node_library = loader_impl_dependency(node_impl->impl, "node");
+
+		node_loader_node_dll_handle = dynlink_get_impl(node_library);
+
+		if (node_loader_node_dll_handle == NULL)
 		{
-			napi_throw_type_error(env, nullptr, "Failed to initialize the hooking against node extensions load mechanism");
+			napi_throw_error(env, nullptr, "Failed to initialize the hooking against node extensions load mechanism");
+			return NULL;
 		}
 
 		detour d = detour_create(metacall_detour());
@@ -4032,7 +4036,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		/* Result will never be defined properly */
 		node_impl->result = 0;
 
-		if (metacall_link_register_impl(impl, "node", "napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
+		if (metacall_link_register_loader(impl, "node", "napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Node Loader failed to hook napi_register_module_v1");
 		}
