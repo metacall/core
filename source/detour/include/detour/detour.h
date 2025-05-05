@@ -158,7 +158,7 @@ DETOUR_API int detour_enumerate(detour d, detour_handle handle, unsigned int *po
 *    Return zero if success, different from zero otherwise
 *
 */
-int detour_replace(detour d, detour_handle handle, const char *function_name, void (*function_addr)(void), void (**function_trampoline)(void));
+DETOUR_API int detour_replace(detour d, detour_handle handle, const char *function_name, void (*function_addr)(void), void (**function_trampoline)(void));
 
 /**
 *  @brief
@@ -171,7 +171,7 @@ int detour_replace(detour d, detour_handle handle, const char *function_name, vo
 *    Reference to the detour handle
 *
 */
-void detour_unload(detour d, detour_handle handle);
+DETOUR_API void detour_unload(detour d, detour_handle handle);
 
 /**
 *  @brief

@@ -4069,7 +4069,7 @@ napi_value node_loader_impl_register_bootstrap_startup(loader_impl_node node_imp
 	argv[3] = node_loader_trampoline_initialize_object(env);
 
 	/* Set the values */
-	for (size_t iterator = 0; iterator < 4; ++iterator)
+	for (uint32_t iterator = 0; iterator < 4; ++iterator)
 	{
 		status = napi_set_element(env, v, iterator, argv[iterator]);
 		node_loader_impl_exception(env, status);
