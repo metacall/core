@@ -523,30 +523,53 @@ int loader_impl_link(plugin p, loader_impl impl)
 #if defined(WIN32) || defined(_WIN32)
 	if (loader_impl_get_option_host(impl) == 1)
 	{
-		/* TODO: Replace loader symbols by the dependency (aka the already loaded
+		/* Replace loader symbols by the dependency (aka the already loaded
 		library if the host is linked dynamically, or the executable if it is
-		linked statically):
-
-			loader_handle = detour_load_handle(d, desc->handle);
-
-			while (detour_enumerate(d, loader_handle, position, name, addr))
+		linked statically) */
+		detour_handle loader_handle;
+		void *position = NULL;
+		char name[DETOUR_SYMBOL_SIZE];
+		void *addr = NULL;
+		
+		loader_handle = detour_load_handle(impl->d, desc->handle);
+		
+		if (loader_handle != NULL)
+		{
+			set_iterator it;
+			size_t iterator;
+			
+			while (detour_enumerate(impl->d, loader_handle, &position, name, &addr))
 			{
-				foreach(library_handle in impl->library_map)
+				/* Iterate through all library handles in the library map */
+				it = set_iterator_begin(impl->library_map);
+				
+				for (iterator = 0; iterator < set_size(impl->library_map); ++iterator)
 				{
-					symbol = dynlink_symbol(library_handle, name);
-
-					if (symbol != NULL)
+					dynlink library_handle = set_iterator_value(it);
+					void *symbol = NULL;
+					
+					if (library_handle != NULL)
 					{
-						if (detour_replace(d, loader_handle, name, symbol, ...) == 0)
+						if (dynlink_symbol(library_handle, name, &symbol) == 0)
 						{
-							break;
+							if (symbol != NULL)
+							{
+								if (detour_replace(impl->d, loader_handle, name, symbol, NULL) == 0)
+								{
+									/* Symbol successfully replaced */
+									
+									break;
+								}
+							}
 						}
 					}
+					
+					it = set_iterator_next(it);
 				}
 			}
-
-			detour_unload(d, loader_handle);
-		*/
+			
+			detour_unload(impl->d, loader_handle);
+		}
 	}
 #endif
 
