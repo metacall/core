@@ -77,7 +77,7 @@ LOADER_API int loader_impl_load_from_package(plugin_manager manager, plugin p, l
 
 LOADER_API void *loader_impl_get_handle(loader_impl impl, const char *name);
 
-LOADER_API void loader_impl_set_options(loader_impl impl, void *options);
+LOADER_API void loader_impl_set_options(loader_impl impl, value options);
 
 LOADER_API value loader_impl_get_options(loader_impl impl);
 

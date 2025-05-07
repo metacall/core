@@ -74,6 +74,8 @@ static void loader_initialization_register_plugin(plugin p);
 
 static plugin loader_get_impl_plugin(const loader_tag tag);
 
+static plugin loader_get_impl_plugin_options(const loader_tag tag, value options);
+
 static int loader_get_cb_iterate(plugin_manager manager, plugin p, void *data);
 
 static int loader_metadata_cb_iterate(plugin_manager manager, plugin p, void *data);
@@ -202,29 +204,6 @@ void loader_initialization_register_plugin(plugin p)
 	}
 }
 
-int loader_initialize_host(const loader_tag tag)
-{
-	plugin p = plugin_manager_get(&loader_manager, tag);
-
-	if (p == NULL)
-	{
-		return 1;
-	}
-
-	if (loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl)) != 0)
-	{
-		return 1;
-	}
-	else
-	{
-		loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
-
-		manager_impl->host = p;
-
-		return 0;
-	}
-}
-
 int loader_is_initialized(const loader_tag tag)
 {
 	plugin p = plugin_manager_get(&loader_manager, tag);
@@ -268,19 +247,29 @@ detour_handle loader_hook_impl(void *impl, const char *library, int (*load_cb)(d
 
 plugin loader_get_impl_plugin(const loader_tag tag)
 {
+	return loader_get_impl_plugin_options(tag, NULL);
+}
+
+plugin loader_get_impl_plugin_options(const loader_tag tag, value options)
+{
 	plugin p = plugin_manager_get(&loader_manager, tag);
+
+	loader_impl impl;
 
 	if (p != NULL)
 	{
 		return p;
 	}
 
-	loader_impl impl = loader_impl_create(tag);
+	impl = loader_impl_create(tag);
 
 	if (impl == NULL)
 	{
 		goto loader_create_error;
 	}
+
+	/* Define the options */
+	loader_impl_set_options(impl, options);
 
 	/* Dynamic link loader dependencies if it is not host */
 	if (loader_impl_dependencies(impl, plugin_manager_impl_type(&loader_manager, loader_manager_impl)->d) != 0)
@@ -304,6 +293,21 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 
 	/* Store in the loader implementation the reference to the plugin which belongs to */
 	loader_impl_attach(impl, p);
+
+	/* Check if it is host, initialize it and set it as host */
+	if (options != NULL && loader_impl_get_option_host(impl) == 1)
+	{
+		loader_manager_impl manager_impl;
+
+		if (loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl)) != 0)
+		{
+			goto plugin_manager_create_error;
+		}
+
+		manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+		manager_impl->host = p;
+	}
 
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "Created loader (%s) implementation <%p>", tag, (void *)impl); */
@@ -594,11 +598,11 @@ void *loader_get_handle(const loader_tag tag, const char *name)
 	return loader_impl_get_handle(plugin_impl_type(p, loader_impl), name);
 }
 
-void loader_set_options(const loader_tag tag, void *options)
+int loader_set_options(const loader_tag tag, value options)
 {
-	plugin p = loader_get_impl_plugin(tag);
+	plugin p = loader_get_impl_plugin_options(tag, options);
 
-	loader_impl_set_options(plugin_impl_type(p, loader_impl), options);
+	return (p == NULL);
 }
 
 value loader_get_options(const loader_tag tag)
@@ -613,13 +617,6 @@ value loader_get_option(const loader_tag tag, const char *field)
 	plugin p = loader_get_impl_plugin(tag);
 
 	return loader_impl_get_option(plugin_impl_type(p, loader_impl), field);
-}
-
-int loader_get_option_host(const loader_tag tag)
-{
-	plugin p = loader_get_impl_plugin(tag);
-
-	return loader_impl_get_option_host(plugin_impl_type(p, loader_impl));
 }
 
 int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr)

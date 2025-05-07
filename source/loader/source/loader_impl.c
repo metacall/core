@@ -326,7 +326,7 @@ int loader_impl_dependencies_self_list(const char *library, void *data)
 
 	vector_push_back_empty(dependencies_self);
 
-	strncpy(vector_back(dependencies_self), library, strnlen(library, PORTABILITY_PATH_SIZE));
+	strncpy(vector_back(dependencies_self), library, strnlen(library, PORTABILITY_PATH_SIZE) + 1);
 
 	return 0;
 }
@@ -1457,7 +1457,7 @@ void *loader_impl_get_handle(loader_impl impl, const char *name)
 	return NULL;
 }
 
-void loader_impl_set_options(loader_impl impl, void *options)
+void loader_impl_set_options(loader_impl impl, value options)
 {
 	if (impl != NULL && options != NULL)
 	{
@@ -1923,14 +1923,15 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 
 	set_destroy(impl->detour_map);
 
-	/* TODO: I am not sure this will work.
-		This must be done when the plugin handle (aka the loader) gets unloaded,
-		at this point it is not unloaded yet, because the plugin destructor is called before doing:
-			dynlink_unload(p->descriptor->handle);
-		In theory it should work because normally those handles are reference counted but "I don't trust like that".
+	/* Unload all the dependencies.
+	This must be done when the plugin dynlink handle (aka the loader) gets unloaded,
+	at this point it is not unloaded yet, because the plugin destructor is called before doing:
+		dynlink_unload(p->descriptor->handle);
+	As the destroy mechanism requires the loaders to be unloaded at the end after all the destroy methods of all
+	loaders have been called, this generates an ourobros that cannot be solved easily. In any case,
+	this method still should work because normally those handles are reference counted and we increment
+	the reference counter at the beginning, so they will be properly unloaded when the dynlink handle gets unloaded.
 	*/
-
-	/* Unload all the dependencies when everything has been destroyed and the loader is unloaded */
 	set_iterate(impl->library_map, &loader_impl_destroy_dependencies_map_cb_iterate, NULL);
 
 	set_destroy(impl->library_map);

@@ -27,12 +27,12 @@
 
 size_t portability_path_get_name(const char *path, size_t path_size, char *name, size_t name_size)
 {
+	size_t i, count, last;
+
 	if (path == NULL || name == NULL)
 	{
 		return 0;
 	}
-
-	size_t i, count, last;
 
 	for (i = 0, count = 0, last = 0; path[i] != '\0' && i < path_size && count < name_size; ++i)
 	{
@@ -63,7 +63,7 @@ size_t portability_path_get_name(const char *path, size_t path_size, char *name,
 		}
 	}
 
-	if (last == 0 && count > 1)
+	if ((last == 0 && count > 1) || last > count)
 	{
 		last = count;
 	}
