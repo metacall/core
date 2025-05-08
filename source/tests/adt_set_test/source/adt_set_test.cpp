@@ -27,12 +27,16 @@
 typedef char key_str[7];
 
 static size_t iterator_counter = 0;
+static std::vector<int> order_iterate;
+static std::vector<int> order_iterator;
 
 int set_cb_iterate_str_to_int(set s, set_key key, set_value value, set_cb_iterate_args args)
 {
 	if (s && args == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "%s -> %d", (char *)key, *((int *)(value)));
+
+		order_iterate.push_back(*((int *)(value)));
 
 		++iterator_counter;
 
@@ -119,6 +123,25 @@ TEST_F(adt_set_test, DefaultConstructor)
 		set_iterate(s, &set_cb_iterate_str_to_int, NULL);
 
 		EXPECT_EQ((size_t)iterator_counter, (size_t)value_array_size);
+
+		/* Iterators */
+		iterator_counter = 0;
+
+		for (set_iterator it = set_iterator_begin(s); set_iterator_end(&it) != 0; set_iterator_next(it))
+		{
+			char *key = (char *)set_iterator_get_key(it);
+			int *value = (int *)set_iterator_get_value(it);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "[%s -> %d]", (char *)key, *((int *)(value)));
+
+			order_iterator.push_back(*((int *)(value)));
+
+			iterator_counter++;
+		}
+
+		EXPECT_EQ((size_t)iterator_counter, (size_t)value_array_size);
+
+		EXPECT_EQ((bool)true, (bool)(order_iterator == order_iterate));
 
 		/* Get value */
 		for (size_t i = 0; i < key_array_size; ++i)

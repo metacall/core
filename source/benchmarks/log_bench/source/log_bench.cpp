@@ -21,7 +21,6 @@
 #include <benchmark/benchmark.h>
 
 #include <log/log.h>
-#include <metacall/metacall_loaders.h>
 
 static int stream_write(void *, const char *, const size_t)
 {

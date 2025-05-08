@@ -520,7 +520,8 @@ int loader_impl_link(plugin p, loader_impl impl)
 	we link the dependency with delay load linking. Before we execute anything,
 	we should relink all the symbols to the host.
 	*/
-#if defined(WIN32) || defined(_WIN32)
+#if 0 // TODO
+	#if defined(WIN32) || defined(_WIN32)
 	if (loader_impl_get_option_host(impl) == 1)
 	{
 		/* Replace loader symbols by the dependency (aka the already loaded
@@ -571,6 +572,7 @@ int loader_impl_link(plugin p, loader_impl impl)
 			detour_unload(impl->d, loader_handle);
 		}
 	}
+	#endif
 #endif
 
 	/* Store itself in the library map along with the dependencies */

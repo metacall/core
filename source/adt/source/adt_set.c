@@ -582,6 +582,8 @@ void set_iterator_next(set_iterator it)
 						return;
 					}
 				}
+
+				it->current_pair = 0;
 			}
 		}
 	}

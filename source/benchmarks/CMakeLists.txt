@@ -58,6 +58,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/b
 
 include(CTest)
 
+add_subdirectory(set_bench)
 add_subdirectory(log_bench)
 add_subdirectory(metacall_py_c_api_bench)
 add_subdirectory(metacall_py_call_bench)

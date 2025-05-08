@@ -72,7 +72,6 @@ static value class_metadata_attributes(klass cls);
 static value class_metadata_static_attributes(klass cls);
 static method class_get_method_type_safe(vector v, type_id ret, type_id args[], size_t size);
 static int class_attributes_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-static int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
 static void class_constructors_destroy(klass cls);
 
 klass class_create(const char *name, enum accessor_type_id accessor, class_impl impl, class_impl_interface_singleton singleton)
@@ -262,23 +261,12 @@ value class_metadata_constructors(klass cls)
 	return v;
 }
 
-int class_metadata_methods_impl_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args)
-{
-	class_metadata_iterator_args iterator = (class_metadata_iterator_args)args;
-	value *v_array = value_to_array(iterator->v);
-
-	(void)m;
-	(void)key;
-
-	v_array[iterator->count++] = method_metadata((method)val);
-
-	return 0;
-}
-
 value class_metadata_methods_impl(const char name[], size_t size, map methods)
 {
 	value v = value_create_array(NULL, 2);
 	value *v_array;
+	map_iterator it;
+	size_t count = 0;
 
 	if (v == NULL)
 	{
@@ -300,12 +288,12 @@ value class_metadata_methods_impl(const char name[], size_t size, map methods)
 		goto error_value;
 	}
 
-	struct class_metadata_iterator_args_type iterator;
+	for (it = map_iterator_begin(methods); map_iterator_end(&it) != 0; map_iterator_next(it))
+	{
+		value *method_array = value_to_array(v_array[1]);
 
-	iterator.v = v_array[1];
-	iterator.count = 0;
-
-	map_iterate(methods, &class_metadata_methods_impl_cb_iterate, &iterator);
+		method_array[count++] = method_metadata((method)map_iterator_get_value(it));
+	}
 
 	return v;
 error_value:
@@ -807,17 +795,6 @@ int class_attributes_destroy_cb_iterate(set s, set_key key, set_value val, set_c
 	return 0;
 }
 
-int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args)
-{
-	(void)m;
-	(void)key;
-	(void)args;
-
-	method_destroy((method)val);
-
-	return 0;
-}
-
 void class_constructors_destroy(klass cls)
 {
 	size_t iterator, size = vector_size(cls->constructors);
@@ -846,6 +823,8 @@ void class_destroy(klass cls)
 
 		if (threading_atomic_ref_count_load(&cls->ref) == 0)
 		{
+			map_iterator it;
+
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 
 			/*
@@ -864,8 +843,15 @@ void class_destroy(klass cls)
 			set_iterate(cls->attributes, &class_attributes_destroy_cb_iterate, NULL);
 			set_iterate(cls->static_attributes, &class_attributes_destroy_cb_iterate, NULL);
 
-			map_iterate(cls->methods, &class_methods_destroy_cb_iterate, NULL);
-			map_iterate(cls->static_methods, &class_methods_destroy_cb_iterate, NULL);
+			for (it = map_iterator_begin(cls->methods); map_iterator_end(&it) != 0; map_iterator_next(it))
+			{
+				method_destroy((method)map_iterator_get_value(it));
+			}
+
+			for (it = map_iterator_begin(cls->static_methods); map_iterator_end(&it) != 0; map_iterator_next(it))
+			{
+				method_destroy((method)map_iterator_get_value(it));
+			}
 
 			if (cls->interface != NULL && cls->interface->destroy != NULL)
 			{
