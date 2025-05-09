@@ -25,10 +25,6 @@ struct configuration_singleton_type
 	configuration global;
 };
 
-/* -- Private Methods -- */
-
-static int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
 /* -- Member Data -- */
 
 static struct configuration_singleton_type configuration_singleton_default = {
@@ -115,22 +111,6 @@ int configuration_singleton_clear(configuration config)
 	return 0;
 }
 
-int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (val != NULL)
-	{
-		configuration config = val;
-
-		configuration_object_destroy(config);
-	}
-
-	return 0;
-}
-
 void configuration_singleton_destroy(void)
 {
 	configuration_singleton singleton = configuration_singleton_instance();
@@ -139,7 +119,14 @@ void configuration_singleton_destroy(void)
 
 	if (singleton->scopes != NULL)
 	{
-		set_iterate(singleton->scopes, &configuration_singleton_destroy_cb_iterate, NULL);
+		set_iterator it;
+
+		for (it = set_iterator_begin(singleton->scopes); set_iterator_end(&it) != 0; set_iterator_next(it))
+		{
+			configuration config = set_iterator_value(it);
+
+			configuration_object_destroy(config);
+		}
 
 		set_destroy(singleton->scopes);
 

@@ -527,7 +527,7 @@ map_iterator map_iterator_begin(map m)
 	return NULL;
 }
 
-map_key map_iterator_get_key(map_iterator it)
+map_key map_iterator_key(map_iterator it)
 {
 	if (it != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
 	{
@@ -537,7 +537,7 @@ map_key map_iterator_get_key(map_iterator it)
 	return NULL;
 }
 
-map_value map_iterator_get_value(map_iterator it)
+map_value map_iterator_value(map_iterator it)
 {
 	if (it != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
 	{

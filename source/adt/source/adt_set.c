@@ -542,7 +542,7 @@ set_iterator set_iterator_begin(set s)
 	return NULL;
 }
 
-set_key set_iterator_get_key(set_iterator it)
+set_key set_iterator_key(set_iterator it)
 {
 	if (it != NULL && it->current_bucket < it->s->capacity && it->current_pair > 0)
 	{
@@ -552,7 +552,7 @@ set_key set_iterator_get_key(set_iterator it)
 	return NULL;
 }
 
-set_value set_iterator_get_value(set_iterator it)
+set_value set_iterator_value(set_iterator it)
 {
 	if (it != NULL && it->current_bucket < it->s->capacity && it->current_pair > 0)
 	{

@@ -41,8 +41,6 @@ struct loader_type;
 
 typedef value (*loader_register_invoke)(size_t, void *[], void *);
 
-typedef void *loader_data;
-
 typedef struct loader_type *loader;
 
 /* -- Methods  -- */
@@ -77,7 +75,7 @@ LOADER_API int loader_load_from_configuration(const loader_path path, void **han
 
 LOADER_API loader_impl loader_get_impl(const loader_tag tag);
 
-LOADER_API loader_data loader_get(const char *name);
+LOADER_API value loader_get(const char *name);
 
 LOADER_API void *loader_get_handle(const loader_tag tag, const char *name);
 
@@ -93,7 +91,7 @@ LOADER_API const char *loader_handle_id(void *handle);
 
 LOADER_API void *loader_handle_export(void *handle);
 
-LOADER_API loader_data loader_handle_get(void *handle, const char *name);
+LOADER_API value loader_handle_get(void *handle, const char *name);
 
 LOADER_API int loader_handle_populate(void *handle_dest, void *handle_src);
 

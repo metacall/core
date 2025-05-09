@@ -129,8 +129,8 @@ TEST_F(adt_set_test, DefaultConstructor)
 
 		for (set_iterator it = set_iterator_begin(s); set_iterator_end(&it) != 0; set_iterator_next(it))
 		{
-			char *key = (char *)set_iterator_get_key(it);
-			int *value = (int *)set_iterator_get_value(it);
+			char *key = (char *)set_iterator_key(it);
+			int *value = (int *)set_iterator_value(it);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "[%s -> %d]", (char *)key, *((int *)(value)));
 

@@ -119,8 +119,8 @@ TEST_F(adt_map_test, map_int)
 
 	for (map_iterator it = map_iterator_begin(m); map_iterator_end(&it) != 0; map_iterator_next(it))
 	{
-		char *key = (char *)map_iterator_get_key(it);
-		int *value = (int *)map_iterator_get_value(it);
+		char *key = (char *)map_iterator_key(it);
+		int *value = (int *)map_iterator_value(it);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "[%s -> %d]", (char *)key, *((int *)(value)));
 

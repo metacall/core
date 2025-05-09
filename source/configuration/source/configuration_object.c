@@ -15,23 +15,7 @@
 
 #include <string.h>
 
-/* -- Forward Declarations -- */
-
-struct configuration_childs_cb_iterator_type;
-
-/* -- Type Definitions -- */
-
-typedef struct configuration_childs_cb_iterator_type *configuration_childs_cb_iterator;
-
 /* -- Member Data -- */
-
-struct configuration_childs_cb_iterator_type
-{
-	int result;
-	configuration parent;
-	vector childs;
-	set storage;
-};
 
 struct configuration_type
 {
@@ -45,27 +29,9 @@ struct configuration_type
 
 /* -- Private Methods -- */
 
-static int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
 static char *configuration_object_read(const char *path);
 
-static int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
 /* -- Methods -- */
-
-int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	set map = args;
-
-	(void)s;
-
-	if (key != NULL && val != NULL)
-	{
-		return set_insert(map, key, val);
-	}
-
-	return 0;
-}
 
 char *configuration_object_read(const char *path)
 {
@@ -190,7 +156,12 @@ configuration configuration_object_initialize(const char *name, const char *path
 
 	if (config->parent != NULL)
 	{
-		set_iterate(config->parent->map, &configuration_object_initialize_cb_iterate, config->map);
+		set_iterator it;
+
+		for (it = set_iterator_begin(config->parent->map); set_iterator_end(&it) != 0; set_iterator_next(it))
+		{
+			set_insert(config->map, set_iterator_key(it), set_iterator_value(it));
+		}
 	}
 
 	config->v = NULL;
@@ -198,7 +169,7 @@ configuration configuration_object_initialize(const char *name, const char *path
 	return config;
 }
 
-int configuration_object_childs_cb_iterate_valid(set_key key, set_value val)
+int configuration_object_childs_valid(set_key key, set_value val)
 {
 	value v = val;
 
@@ -243,48 +214,36 @@ int configuration_object_childs_cb_iterate_valid(set_key key, set_value val)
 	return 1;
 }
 
-int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+int configuration_object_childs(configuration config, vector childs, set storage)
 {
-	(void)s;
+	set_iterator it;
 
-	if (configuration_object_childs_cb_iterate_valid(key, val) == 0)
+	for (it = set_iterator_begin(config->map); set_iterator_end(&it) != 0; set_iterator_next(it))
 	{
-		configuration_childs_cb_iterator iterator = args;
+		set_key key = set_iterator_key(it);
+		set_value val = set_iterator_value(it);
 
-		if (set_get(iterator->storage, key) == NULL)
+		if (configuration_object_childs_valid(key, val) == 0)
 		{
-			value v = val;
-
-			const char *path = value_to_string(v);
-
-			configuration child = configuration_object_initialize(key, path, iterator->parent);
-
-			if (child == NULL)
+			if (set_get(storage, key) == NULL)
 			{
-				iterator->result = 1;
+				value v = val;
 
-				return 1;
+				const char *path = value_to_string(v);
+
+				configuration child = configuration_object_initialize(key, path, config);
+
+				if (child == NULL)
+				{
+					return 1;
+				}
+
+				vector_push_back(childs, &child);
 			}
-
-			vector_push_back(iterator->childs, &child);
 		}
 	}
 
 	return 0;
-}
-
-int configuration_object_childs(configuration config, vector childs, set storage)
-{
-	struct configuration_childs_cb_iterator_type iterator;
-
-	iterator.result = 0;
-	iterator.parent = config;
-	iterator.childs = childs;
-	iterator.storage = storage;
-
-	set_iterate(config->map, &configuration_object_childs_cb_iterate, &iterator);
-
-	return iterator.result;
 }
 
 void configuration_object_instantiate(configuration config, value v)

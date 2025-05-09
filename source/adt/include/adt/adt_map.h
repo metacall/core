@@ -81,9 +81,9 @@ ADT_API void map_destroy(map m);
 
 ADT_API map_iterator map_iterator_begin(map m);
 
-ADT_API map_key map_iterator_get_key(map_iterator it);
+ADT_API map_key map_iterator_key(map_iterator it);
 
-ADT_API map_value map_iterator_get_value(map_iterator it);
+ADT_API map_value map_iterator_value(map_iterator it);
 
 ADT_API void map_iterator_next(map_iterator it);
 

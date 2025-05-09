@@ -82,9 +82,9 @@ ADT_API void set_destroy(set s);
 
 ADT_API set_iterator set_iterator_begin(set s);
 
-ADT_API set_key set_iterator_get_key(set_iterator it);
+ADT_API set_key set_iterator_key(set_iterator it);
 
-ADT_API set_value set_iterator_get_value(set_iterator it);
+ADT_API set_value set_iterator_value(set_iterator it);
 
 ADT_API void set_iterator_next(set_iterator it);
 

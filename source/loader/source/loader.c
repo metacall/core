@@ -46,26 +46,6 @@
 #define LOADER_LIBRARY_PATH			"LOADER_LIBRARY_PATH"
 #define LOADER_LIBRARY_DEFAULT_PATH "loaders"
 
-/* -- Member Data -- */
-
-struct loader_metadata_cb_iterator_type
-{
-	size_t iterator;
-	value *values;
-};
-
-struct loader_get_cb_iterator_type
-{
-	const char *name;
-	value obj; /* scope_object */
-};
-
-/* -- Type Definitions -- */
-
-typedef struct loader_get_cb_iterator_type *loader_get_cb_iterator;
-
-typedef struct loader_metadata_cb_iterator_type *loader_metadata_cb_iterator;
-
 /* -- Private Methods -- */
 
 static void loader_initialization_debug(void);
@@ -75,10 +55,6 @@ static void loader_initialization_register_plugin(plugin p);
 static plugin loader_get_impl_plugin(const loader_tag tag);
 
 static plugin loader_get_impl_plugin_options(const loader_tag tag, value options);
-
-static int loader_get_cb_iterate(plugin_manager manager, plugin p, void *data);
-
-static int loader_metadata_cb_iterate(plugin_manager manager, plugin p, void *data);
 
 /* -- Member Data -- */
 
@@ -560,35 +536,25 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 	return 0;
 }
 
-int loader_get_cb_iterate(plugin_manager manager, plugin p, void *data)
+value loader_get(const char *name)
 {
-	loader_impl impl = plugin_impl_type(p, loader_impl);
-	loader_get_cb_iterator get_iterator = data;
+	set_iterator it;
 
-	(void)manager;
-
-	get_iterator->obj = loader_impl_get_value(impl, get_iterator->name);
-
-	if (get_iterator->obj != NULL)
+	for (it = set_iterator_begin(loader_manager.plugins); set_iterator_end(&it) != 0; set_iterator_next(it))
 	{
-		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
-		/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) get value: %s <%p>", plugin_name(p), get_iterator->name, (void *)get_iterator->obj); */
-		return 1;
+		plugin p = set_iterator_value(it);
+
+		loader_impl impl = plugin_impl_type(p, loader_impl);
+
+		value scope_object = loader_impl_get_value(impl, name);
+
+		if (scope_object != NULL)
+		{
+			return scope_object;
+		}
 	}
 
-	return 0;
-}
-
-loader_data loader_get(const char *name)
-{
-	struct loader_get_cb_iterator_type get_iterator;
-
-	get_iterator.name = name;
-	get_iterator.obj = NULL;
-
-	plugin_manager_iterate(&loader_manager, &loader_get_cb_iterate, (void *)&get_iterator);
-
-	return (loader_data)get_iterator.obj;
+	return NULL;
 }
 
 void *loader_get_handle(const loader_tag tag, const char *name)
@@ -662,7 +628,7 @@ value loader_handle_export(void *handle)
 	return loader_impl_handle_export(handle);
 }
 
-loader_data loader_handle_get(void *handle, const char *name)
+value loader_handle_get(void *handle, const char *name)
 {
 	if (handle != NULL)
 	{
@@ -710,37 +676,32 @@ value loader_metadata_impl(plugin p, loader_impl impl)
 	return v;
 }
 
-int loader_metadata_cb_iterate(plugin_manager manager, plugin p, void *data)
-{
-	loader_impl impl = plugin_impl_type(p, loader_impl);
-	loader_metadata_cb_iterator metadata_iterator = data;
-
-	(void)manager;
-
-	metadata_iterator->values[metadata_iterator->iterator] = loader_metadata_impl(p, impl);
-
-	if (metadata_iterator->values[metadata_iterator->iterator] != NULL)
-	{
-		++metadata_iterator->iterator;
-	}
-
-	return 0;
-}
-
 value loader_metadata(void)
 {
-	struct loader_metadata_cb_iterator_type metadata_iterator;
-	value v = value_create_map(NULL, plugin_manager_size(&loader_manager));
+	value *values, v = value_create_map(NULL, plugin_manager_size(&loader_manager));
+	set_iterator it;
+	size_t values_it;
 
 	if (v == NULL)
 	{
 		return NULL;
 	}
 
-	metadata_iterator.iterator = 0;
-	metadata_iterator.values = value_to_map(v);
+	values = value_to_map(v);
 
-	plugin_manager_iterate(&loader_manager, &loader_metadata_cb_iterate, (void *)&metadata_iterator);
+	for (it = set_iterator_begin(loader_manager.plugins), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		plugin p = set_iterator_value(it);
+
+		loader_impl impl = plugin_impl_type(p, loader_impl);
+
+		values[values_it] = loader_metadata_impl(p, impl);
+
+		if (values[values_it] != NULL)
+		{
+			++values_it;
+		}
+	}
 
 	return v;
 }

@@ -30,14 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct scope_metadata_array_cb_iterator_type;
-
-struct scope_export_cb_iterator_type;
-
-typedef struct scope_metadata_array_cb_iterator_type *scope_metadata_array_cb_iterator;
-
-typedef struct scope_export_cb_iterator_type *scope_export_cb_iterator;
-
 struct scope_type
 {
 	char *name;		   /**< Scope name */
@@ -45,32 +37,11 @@ struct scope_type
 	vector call_stack; /**< Scope call stack */
 };
 
-struct scope_metadata_array_cb_iterator_type
-{
-	value *functions;
-	value *classes;
-	value *objects;
-
-	size_t functions_size;
-	size_t classes_size;
-	size_t objects_size;
-};
-
-struct scope_export_cb_iterator_type
-{
-	size_t iterator;
-	value *values;
-};
-
-static int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
-static int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
 static int scope_metadata_array(scope sp, value v_array[3]);
 
 static value scope_metadata_name(scope sp);
 
-static int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+static value scope_export_value(const char *key, value val);
 
 scope scope_create(const char *name)
 {
@@ -193,106 +164,94 @@ int scope_define(scope sp, const char *key, value val)
 	return 1;
 }
 
-int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	scope_metadata_array_cb_iterator metadata_iterator = (scope_metadata_array_cb_iterator)args;
-
-	(void)s;
-	(void)key;
-
-	type_id id = value_type_id(val);
-
-	if (id == TYPE_FUNCTION)
-	{
-		metadata_iterator->functions[metadata_iterator->functions_size++] = function_metadata(value_to_function(val));
-	}
-	else if (id == TYPE_CLASS)
-	{
-		metadata_iterator->classes[metadata_iterator->classes_size++] = class_metadata(value_to_class(val));
-	}
-	else if (id == TYPE_OBJECT)
-	{
-		metadata_iterator->objects[metadata_iterator->objects_size++] = object_metadata(value_to_object(val));
-	}
-
-	return 0;
-}
-
-int scope_metadata_array_cb_iterate_counter(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	scope_metadata_array_cb_iterator metadata_iterator = (scope_metadata_array_cb_iterator)args;
-
-	(void)s;
-	(void)key;
-
-	type_id id = value_type_id(val);
-
-	if (id == TYPE_FUNCTION)
-	{
-		metadata_iterator->functions_size++;
-	}
-	else if (id == TYPE_CLASS)
-	{
-		metadata_iterator->classes_size++;
-	}
-	else if (id == TYPE_OBJECT)
-	{
-		metadata_iterator->objects_size++;
-	}
-
-	return 0;
-}
-
 int scope_metadata_array(scope sp, value v_array[3])
 {
-	struct scope_metadata_array_cb_iterator_type metadata_iterator = {
-		NULL, NULL, NULL, 0, 0, 0
-	};
+	size_t functions_size = 0, classes_size = 0, objects_size = 0;
+	value functions_value, classes_value, objects_value;
+	value *functions, *classes, *objects;
+	set_iterator it;
 
-	set_iterate(sp->objects, &scope_metadata_array_cb_iterate_counter, (set_cb_iterate_args)&metadata_iterator);
-
-	value functions_val = value_create_array(NULL, metadata_iterator.functions_size);
-
-	if (functions_val == NULL)
+	for (it = set_iterator_begin(sp->objects); set_iterator_end(&it) != 0; set_iterator_next(it))
 	{
-		return 1;
+		type_id id = value_type_id(set_iterator_value(it));
+
+		if (id == TYPE_FUNCTION)
+		{
+			functions_size++;
+		}
+		else if (id == TYPE_CLASS)
+		{
+			classes_size++;
+		}
+		else if (id == TYPE_OBJECT)
+		{
+			objects_size++;
+		}
 	}
 
-	metadata_iterator.functions = value_to_array(functions_val);
+	functions_value = value_create_array(NULL, functions_size);
 
-	value classes_val = value_create_array(NULL, metadata_iterator.classes_size);
-
-	if (classes_val == NULL)
+	if (functions_value == NULL)
 	{
-		value_destroy(functions_val);
-		return 1;
+		goto functions_error;
 	}
 
-	metadata_iterator.classes = value_to_array(classes_val);
+	functions = value_to_array(functions_value);
 
-	value objects_val = value_create_array(NULL, metadata_iterator.objects_size);
+	classes_value = value_create_array(NULL, classes_size);
 
-	if (objects_val == NULL)
+	if (classes_value == NULL)
 	{
-		value_destroy(functions_val);
-		value_destroy(classes_val);
-		return 1;
+		goto classes_error;
 	}
 
-	metadata_iterator.objects = value_to_array(objects_val);
+	classes = value_to_array(classes_value);
+
+	objects_value = value_create_array(NULL, objects_size);
+
+	if (objects_value == NULL)
+	{
+		goto objects_error;
+	}
+
+	objects = value_to_array(objects_value);
 
 	/* Reuse counters to fill the arrays */
-	metadata_iterator.classes_size = 0;
-	metadata_iterator.functions_size = 0;
-	metadata_iterator.objects_size = 0;
+	classes_size = 0;
+	functions_size = 0;
+	objects_size = 0;
 
-	set_iterate(sp->objects, &scope_metadata_array_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
+	for (it = set_iterator_begin(sp->objects); set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		value v = set_iterator_value(it);
+		type_id id = value_type_id(v);
 
-	v_array[0] = functions_val;
-	v_array[1] = classes_val;
-	v_array[2] = objects_val;
+		if (id == TYPE_FUNCTION)
+		{
+			functions[functions_size++] = function_metadata(value_to_function(v));
+		}
+		else if (id == TYPE_CLASS)
+		{
+			classes[classes_size++] = class_metadata(value_to_class(v));
+		}
+		else if (id == TYPE_OBJECT)
+		{
+			objects[objects_size++] = object_metadata(value_to_object(v));
+		}
+	}
+
+	v_array[0] = functions_value;
+	v_array[1] = classes_value;
+	v_array[2] = objects_value;
 
 	return 0;
+
+objects_error:
+	value_destroy(classes_value);
+classes_error:
+	value_destroy(functions_value);
+functions_error:
+	return 1;
 }
 
 value scope_metadata_name(scope sp)
@@ -379,62 +338,60 @@ value scope_metadata(scope sp)
 	return v;
 }
 
-int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+value scope_export_value(const char *key, value val)
 {
-	scope_export_cb_iterator export_iterator = (scope_export_cb_iterator)args;
-
-	const char *key_str = (const char *)key;
-
 	value *v_array, v = value_create_array(NULL, 2);
-
-	(void)s;
 
 	if (v == NULL)
 	{
-		return 0;
+		goto array_create_error;
 	}
 
 	v_array = value_to_array(v);
 
-	v_array[0] = value_create_string(key_str, strlen(key_str));
+	v_array[0] = value_create_string(key, strlen(key));
 
 	if (v_array[0] == NULL)
 	{
-		value_type_destroy(v);
-
-		return 0;
+		goto string_create_error;
 	}
 
 	v_array[1] = value_type_copy(val);
 
 	if (v_array[1] == NULL)
 	{
-		value_type_destroy(v);
-
-		return 0;
+		goto value_copy_error;
 	}
 
-	export_iterator->values[export_iterator->iterator] = v;
-	++export_iterator->iterator;
+	return v;
 
-	return 0;
+value_copy_error:
+	value_type_destroy(v_array[0]);
+string_create_error:
+	value_type_destroy(v);
+array_create_error:
+	return NULL;
 }
 
 value scope_export(scope sp)
 {
-	struct scope_export_cb_iterator_type export_iterator;
-
-	value export = value_create_map(NULL, scope_size(sp));
+	value *values, export = value_create_map(NULL, scope_size(sp));
+	size_t values_it;
+	set_iterator it;
 
 	if (export == NULL)
 	{
 		return NULL;
 	}
 
-	export_iterator.iterator = 0;
-	export_iterator.values = value_to_map(export);
+	values = value_to_map(export);
 
-	set_iterate(sp->objects, &scope_export_cb_iterate, (set_cb_iterate_args)&export_iterator);
+	for (it = set_iterator_begin(sp->objects), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		value v = scope_export_value(set_iterator_key(it), set_iterator_value(it));
+
+		values[values_it++] = v;
+	}
 
 	return export;
 }
@@ -592,27 +549,16 @@ int scope_stack_pop(scope sp)
 	return 1;
 }
 
-int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (val != NULL)
-	{
-		value_type_destroy(val);
-
-		return 0;
-	}
-
-	return 1;
-}
-
 void scope_destroy(scope sp)
 {
 	if (sp != NULL)
 	{
-		set_iterate(sp->objects, &scope_destroy_cb_iterate, NULL);
+		set_iterator it;
+
+		for (it = set_iterator_begin(sp->objects); set_iterator_end(&it) != 0; set_iterator_next(it))
+		{
+			value_type_destroy(set_iterator_value(it));
+		}
 
 		set_destroy(sp->objects);
 

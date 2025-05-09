@@ -65,17 +65,9 @@
 
 struct loader_handle_impl_type;
 
-struct loader_impl_metadata_cb_iterator_type;
-
-struct loader_impl_handle_register_cb_iterator_type;
-
 /* -- Type Definitions -- */
 
 typedef struct loader_handle_impl_type *loader_handle_impl;
-
-typedef struct loader_impl_metadata_cb_iterator_type *loader_impl_metadata_cb_iterator;
-
-typedef struct loader_impl_handle_register_cb_iterator_type *loader_impl_handle_register_cb_iterator;
 
 /* -- Member Data -- */
 
@@ -109,18 +101,6 @@ struct loader_handle_impl_type
 	vector populated_handles;	 /* Vector containing all the references to which this handle has been populated into, it is necessary for detach the symbols when destroying (used in load_from_* when passing an input parameter) */
 };
 
-struct loader_impl_handle_register_cb_iterator_type
-{
-	context handle_ctx;
-	char *duplicated_key;
-};
-
-struct loader_impl_metadata_cb_iterator_type
-{
-	size_t iterator;
-	value *values;
-};
-
 /* -- Private Methods -- */
 
 static loader_impl loader_impl_allocate(const loader_tag tag);
@@ -141,8 +121,6 @@ static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_
 
 static int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr, int populated);
 
-static int loader_impl_handle_register_cb_iterate(plugin_manager manager, plugin p, void *data);
-
 static int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr);
 
 static size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, loader_path result);
@@ -155,11 +133,7 @@ static value loader_impl_metadata_handle_context(loader_handle_impl handle_impl)
 
 static value loader_impl_metadata_handle(loader_handle_impl handle_impl);
 
-static int loader_impl_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
 static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
-
-static int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Private Member Data -- */
 
@@ -520,59 +494,50 @@ int loader_impl_link(plugin p, loader_impl impl)
 	we link the dependency with delay load linking. Before we execute anything,
 	we should relink all the symbols to the host.
 	*/
-#if 0 // TODO
-	#if defined(WIN32) || defined(_WIN32)
+#if defined(WIN32) || defined(_WIN32) || 1 // TODO: Remove this
 	if (loader_impl_get_option_host(impl) == 1)
 	{
 		/* Replace loader symbols by the dependency (aka the already loaded
 		library if the host is linked dynamically, or the executable if it is
 		linked statically) */
-		detour_handle loader_handle;
-		void *position = NULL;
-		char name[DETOUR_SYMBOL_SIZE];
-		void *addr = NULL;
-		
-		loader_handle = detour_load_handle(impl->d, desc->handle);
-		
+		detour_handle loader_handle = detour_load_handle(impl->d, desc->handle);
+
 		if (loader_handle != NULL)
 		{
-			set_iterator it;
-			size_t iterator;
-			
-			while (detour_enumerate(impl->d, loader_handle, &position, name, &addr))
+			unsigned int position = 0;
+			const char *name = NULL;
+			void (**addr)(void) = NULL;
+
+			while (detour_enumerate(impl->d, loader_handle, &position, &name, &addr) == 0)
 			{
 				/* Iterate through all library handles in the library map */
-				it = set_iterator_begin(impl->library_map);
-				
-				for (iterator = 0; iterator < set_size(impl->library_map); ++iterator)
+				set_iterator it;
+
+				for (it = set_iterator_begin(impl->library_map); set_iterator_end(&it) != 0; set_iterator_next(it))
 				{
 					dynlink library_handle = set_iterator_value(it);
-					void *symbol = NULL;
-					
-					if (library_handle != NULL)
+
+					/* Try to find the symbols in the dependencies, do not use the
+					loader dynlink handle for this, it is included in the library map */
+					if (library_handle != NULL && library_handle != desc->handle)
 					{
-						if (dynlink_symbol(library_handle, name, &symbol) == 0)
+						dynlink_symbol_addr symbol = NULL;
+
+						if (dynlink_symbol(library_handle, name, &symbol) == 0 && symbol != NULL)
 						{
-							if (symbol != NULL)
+							if (detour_replace(impl->d, loader_handle, name, symbol, NULL) == 0)
 							{
-								if (detour_replace(impl->d, loader_handle, name, symbol, NULL) == 0)
-								{
-									/* Symbol successfully replaced */
-									
-									break;
-								}
+								/* Symbol successfully replaced */
+								break;
 							}
 						}
 					}
-					
-					it = set_iterator_next(it);
 				}
 			}
-			
+
 			detour_unload(impl->d, loader_handle);
 		}
 	}
-	#endif
 #endif
 
 	/* Store itself in the library map along with the dependencies */
@@ -1040,36 +1005,29 @@ int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_im
 	return result;
 }
 
-int loader_impl_handle_register_cb_iterate(plugin_manager manager, plugin p, void *data)
-{
-	loader_impl impl = plugin_impl_type(p, loader_impl);
-	loader_impl_handle_register_cb_iterator iterator = (loader_impl_handle_register_cb_iterator)data;
-
-	(void)manager;
-
-	return (context_contains(impl->ctx, iterator->handle_ctx, &iterator->duplicated_key) == 0);
-}
-
 int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr)
 {
 	/* If there's no handle input/output pointer passed as input parameter, then propagate the handle symbols to the loader context */
 	if (handle_ptr == NULL)
 	{
+		set_iterator it;
+
 		/* This case handles the global scope (shared scope between all loaders, there is no out reference to a handle) */
-		struct loader_impl_handle_register_cb_iterator_type iterator;
-
-		iterator.handle_ctx = handle_impl->ctx;
-		iterator.duplicated_key = NULL;
-
-		/* This checks if there are duplicated keys between all loaders and the current handle context */
-		plugin_manager_iterate(manager, &loader_impl_handle_register_cb_iterate, &iterator);
-
-		if (iterator.duplicated_key != NULL)
+		for (it = set_iterator_begin(manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(it))
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", iterator.duplicated_key, path);
-			return 1;
+			plugin p = set_iterator_value(it);
+			loader_impl other_impl = plugin_impl_type(p, loader_impl);
+			char *duplicated_key = NULL;
+
+			/* This checks if there are duplicated keys between all loaders and the current handle context */
+			if (context_contains(other_impl->ctx, handle_impl->ctx, &duplicated_key) == 0 && duplicated_key != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", duplicated_key, path);
+				return 1;
+			}
 		}
-		else if (context_append(impl->ctx, handle_impl->ctx) == 0)
+
+		if (context_append(impl->ctx, handle_impl->ctx) == 0)
 		{
 			return loader_impl_handle_init(impl, path, handle_impl, handle_ptr, 0);
 		}
@@ -1748,38 +1706,30 @@ value loader_impl_metadata_handle(loader_handle_impl handle_impl)
 	return v;
 }
 
-int loader_impl_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	loader_impl_metadata_cb_iterator metadata_iterator = (loader_impl_metadata_cb_iterator)args;
-
-	(void)s;
-	(void)key;
-
-	metadata_iterator->values[metadata_iterator->iterator] = loader_impl_metadata_handle((loader_handle_impl)val);
-
-	if (metadata_iterator->values[metadata_iterator->iterator] != NULL)
-	{
-		++metadata_iterator->iterator;
-	}
-
-	return 0;
-}
-
 value loader_impl_metadata(loader_impl impl)
 {
-	struct loader_impl_metadata_cb_iterator_type metadata_iterator;
-
-	value v = value_create_array(NULL, set_size(impl->handle_impl_path_map));
+	value *values, v = value_create_array(NULL, set_size(impl->handle_impl_path_map));
+	set_iterator it;
+	size_t values_it;
 
 	if (v == NULL)
 	{
 		return NULL;
 	}
 
-	metadata_iterator.iterator = 0;
-	metadata_iterator.values = value_to_array(v);
+	values = value_to_map(v);
 
-	set_iterate(impl->handle_impl_path_map, &loader_impl_metadata_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
+	for (it = set_iterator_begin(impl->handle_impl_path_map), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		loader_handle_impl handle_impl = set_iterator_value(it);
+
+		values[values_it] = loader_impl_metadata_handle(handle_impl);
+
+		if (values[values_it] != NULL)
+		{
+			++values_it;
+		}
+	}
 
 	return v;
 }
@@ -1820,72 +1770,6 @@ int loader_impl_clear(void *handle)
 	return 1;
 }
 
-int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (val != NULL)
-	{
-		type t = val;
-
-		type_destroy(t);
-
-		return 0;
-	}
-
-	return 1;
-}
-
-int loader_impl_destroy_exec_path_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (val != NULL)
-	{
-		vector paths = val;
-
-		vector_destroy(paths);
-	}
-
-	return 0;
-}
-
-int loader_impl_destroy_detour_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-
-	if (val != NULL && args != NULL)
-	{
-		detour d = args;
-		detour_handle handle = val;
-
-		detour_unload(d, handle);
-	}
-
-	return 0;
-}
-
-int loader_impl_destroy_dependencies_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (val != NULL)
-	{
-		dynlink dependency = val;
-
-		dynlink_unload(dependency);
-	}
-
-	return 0;
-}
-
 void loader_impl_destroy_objects(loader_impl impl)
 {
 	/* This iterates through all functions, classes objects and types,
@@ -1924,7 +1808,16 @@ void loader_impl_destroy_objects(loader_impl impl)
 		set_destroy(impl->handle_impl_map);
 
 		/* Destroy all the types */
-		set_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
+		{
+			set_iterator it;
+
+			for (it = set_iterator_begin(impl->type_info_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+			{
+				type t = set_iterator_value(it);
+
+				type_destroy(t);
+			}
+		}
 
 		set_destroy(impl->type_info_map);
 	}
@@ -1932,19 +1825,34 @@ void loader_impl_destroy_objects(loader_impl impl)
 
 void loader_impl_destroy_deallocate(loader_impl impl)
 {
-	set_iterate(impl->exec_path_map, &loader_impl_destroy_exec_path_map_cb_iterate, NULL);
+	set_iterator it;
+
+	/* Destroy execution path map */
+	for (it = set_iterator_begin(impl->exec_path_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		vector paths = set_iterator_value(it);
+
+		vector_destroy(paths);
+	}
 
 	set_destroy(impl->exec_path_map);
 
+	/* Destroy context */
 	context_destroy(impl->ctx);
 
+	/* Destroy options */
 	if (impl->options != NULL)
 	{
 		value_type_destroy(impl->options);
 	}
 
 	/* Destroy detour map */
-	set_iterate(impl->detour_map, &loader_impl_destroy_detour_map_cb_iterate, impl->d);
+	for (it = set_iterator_begin(impl->detour_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		detour_handle handle = set_iterator_value(it);
+
+		detour_unload(impl->d, handle);
+	}
 
 	set_destroy(impl->detour_map);
 
@@ -1957,7 +1865,12 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 	this method still should work because normally those handles are reference counted and we increment
 	the reference counter at the beginning, so they will be properly unloaded when the dynlink handle gets unloaded.
 	*/
-	set_iterate(impl->library_map, &loader_impl_destroy_dependencies_map_cb_iterate, NULL);
+	for (it = set_iterator_begin(impl->library_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		dynlink dependency = set_iterator_value(it);
+
+		dynlink_unload(dependency);
+	}
 
 	set_destroy(impl->library_map);
 

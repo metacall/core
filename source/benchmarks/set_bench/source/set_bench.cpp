@@ -97,7 +97,7 @@ BENCHMARK_DEFINE_F(set_bench, set_iterators)
 	{
 		for (set_iterator it = set_iterator_begin(s); set_iterator_end(&it) > 0; set_iterator_next(it))
 		{
-			int *i = (int *)set_iterator_get_value(it);
+			int *i = (int *)set_iterator_value(it);
 
 			sum += ((uint64_t)(*i));
 		}
@@ -126,7 +126,7 @@ BENCHMARK_DEFINE_F(set_bench, set_iterators_2)
 
 		for (set_iterator_begin_2(s, &it); set_iterator_end_2(&it) > 0; set_iterator_next(&it))
 		{
-			int *i = (int *)set_iterator_get_value(&it);
+			int *i = (int *)set_iterator_value(&it);
 
 			sum += ((uint64_t)(*i));
 		}
