@@ -49,22 +49,6 @@ struct set_iterator_type
 	size_t current_pair;
 };
 
-struct set_contains_any_cb_iterator_type
-{
-	set s;
-	int result;
-};
-
-struct set_contains_which_cb_iterator_type
-{
-	set s;
-	int result;
-	set_key *key;
-};
-
-typedef struct set_contains_any_cb_iterator_type *set_contains_any_cb_iterator;
-typedef struct set_contains_which_cb_iterator_type *set_contains_which_cb_iterator;
-
 /* -- Methods -- */
 
 set set_create(set_cb_hash hash_cb, set_cb_compare compare_cb)
@@ -112,30 +96,38 @@ size_t set_size(set s)
 	return 0;
 }
 
-static int set_bucket_realloc_iterator(set s, set_key key, set_value value, set_cb_iterate_args args)
+static int set_bucket_rehash(set s, set new_set)
 {
-	set new_set = (set)args;
+	size_t bucket_iterator, pair_iterator;
 
-	if (new_set != s && key != NULL && args != NULL)
+	for (bucket_iterator = 0; bucket_iterator < s->capacity; ++bucket_iterator)
 	{
-		set_hash h = new_set->hash_cb(key);
+		bucket b = &s->buckets[bucket_iterator];
 
-		size_t index = h % new_set->capacity;
-
-		bucket b = &new_set->buckets[index];
-
-		if (bucket_insert(b, key, value) != 0)
+		if (b->pairs != NULL && b->count > 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket realloc insertion");
-			return 1;
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
+
+				set_hash h = new_set->hash_cb(p->key);
+
+				size_t index = h % new_set->capacity;
+
+				bucket b = &new_set->buckets[index];
+
+				if (bucket_insert(b, p->key, p->value) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket realloc insertion");
+					return 1;
+				}
+
+				++new_set->count;
+			}
 		}
-
-		++new_set->count;
-
-		return 0;
 	}
 
-	return 1;
+	return 0;
 }
 
 static int set_bucket_realloc(set s)
@@ -168,8 +160,10 @@ static int set_bucket_realloc(set s)
 	{
 		size_t iterator;
 
-		set_iterate(s, &set_bucket_realloc_iterator, &new_set);
+		/* Rehash all the elements into the new set */
+		set_bucket_rehash(s, &new_set);
 
+		/* Destroy all pairs from old set */
 		for (iterator = 0; iterator < s->capacity; ++iterator)
 		{
 			bucket b = &s->buckets[iterator];
@@ -180,6 +174,7 @@ static int set_bucket_realloc(set s)
 			}
 		}
 
+		/* Destroy all buckets from old set */
 		free(s->buckets);
 
 		s->capacity = new_set.capacity;
@@ -294,63 +289,55 @@ int set_contains(set s, set_key key)
 	return 1;
 }
 
-static int set_contains_any_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
-{
-	set_contains_any_cb_iterator iterator = (set_contains_any_cb_iterator)args;
-
-	(void)s;
-	(void)value;
-
-	iterator->result = set_contains(iterator->s, key);
-
-	/* Stop iteration if we found an element */
-	return !iterator->result;
-}
-
 int set_contains_any(set dest, set src)
 {
-	struct set_contains_any_cb_iterator_type args;
+	size_t bucket_iterator, pair_iterator;
 
-	args.s = dest;
-	args.result = 1;
-
-	set_iterate(src, &set_contains_any_cb_iterate, (set_cb_iterate_args)&args);
-
-	return args.result;
-}
-
-static int set_contains_which_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
-{
-	set_contains_which_cb_iterator iterator = (set_contains_which_cb_iterator)args;
-
-	(void)s;
-	(void)value;
-
-	iterator->result = set_contains(iterator->s, key);
-
-	if (iterator->result == 0)
+	for (bucket_iterator = 0; bucket_iterator < src->capacity; ++bucket_iterator)
 	{
-		iterator->key = key;
+		bucket b = &src->buckets[bucket_iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
+
+				if (set_contains(dest, p->key) == 0)
+				{
+					return 0;
+				}
+			}
+		}
 	}
 
-	/* Stop iteration if we found an element */
-	return !iterator->result;
+	return 1;
 }
 
 int set_contains_which(set dest, set src, set_key *key)
 {
-	struct set_contains_which_cb_iterator_type args;
+	size_t bucket_iterator, pair_iterator;
 
-	args.s = dest;
-	args.result = 1;
-	args.key = NULL;
+	for (bucket_iterator = 0; bucket_iterator < src->capacity; ++bucket_iterator)
+	{
+		bucket b = &src->buckets[bucket_iterator];
 
-	set_iterate(src, &set_contains_which_cb_iterate, (set_cb_iterate_args)&args);
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
 
-	/* Return which is the duplicated key if any */
-	*key = args.key;
+				if (set_contains(dest, p->key) == 0)
+				{
+					*key = p->key;
+					return 0;
+				}
+			}
+		}
+	}
 
-	return args.result;
+	return 1;
 }
 
 set_value set_remove(set s, set_key key)
@@ -417,40 +404,54 @@ void set_iterate(set s, set_cb_iterate iterate_cb, set_cb_iterate_args args)
 	}
 }
 
-static int set_append_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
-{
-	set dest = (set)args;
-
-	(void)s;
-
-	return set_insert(dest, key, value);
-}
-
 int set_append(set dest, set src)
 {
-	set_cb_iterate_args args = (set_cb_iterate_args)dest;
+	size_t bucket_iterator, pair_iterator;
 
-	set_iterate(src, &set_append_cb_iterate, args);
+	for (bucket_iterator = 0; bucket_iterator < src->capacity; ++bucket_iterator)
+	{
+		bucket b = &src->buckets[bucket_iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
+
+				if (set_insert(dest, p->key, p->value) != 0)
+				{
+					return 1;
+				}
+			}
+		}
+	}
 
 	return 0;
 }
 
-static int set_disjoint_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
-{
-	set dest = (set)args;
-
-	set_value deleted = set_remove(dest, key);
-
-	(void)s;
-
-	return !(deleted == value);
-}
-
 int set_disjoint(set dest, set src)
 {
-	set_cb_iterate_args args = (set_cb_iterate_args)dest;
+	size_t bucket_iterator, pair_iterator;
 
-	set_iterate(src, &set_disjoint_cb_iterate, args);
+	for (bucket_iterator = 0; bucket_iterator < src->capacity; ++bucket_iterator)
+	{
+		bucket b = &src->buckets[bucket_iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
+
+				set_value deleted = set_remove(dest, p->key);
+
+				if (deleted != p->value)
+				{
+					return 1;
+				}
+			}
+		}
+	}
 
 	return 0;
 }
