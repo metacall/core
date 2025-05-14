@@ -21,7 +21,7 @@ env:
 
   # TODO: Tests failing
   # - linux/s390x
-  # TODO: Not tested or no hooking support
+  # TODO: Not tested or detour not supported
   # - linux/mips64le
   # - linux/mips64
   PLATFORM_LIST: >

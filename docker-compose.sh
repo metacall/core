@@ -206,6 +206,12 @@ sub_platform() {
 		exit 1
 	fi
 
+	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
+	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
+		source .env
+		export METACALL_BASE_IMAGE="ghcr.io/loong64/${METACALL_BASE_IMAGE}"
+	fi
+
 	ln -sf tools/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build deps
 
