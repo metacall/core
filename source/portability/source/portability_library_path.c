@@ -190,7 +190,8 @@ int portability_library_path_find(const char name[], portability_library_path_st
 		memcpy(path, dylib_suffix, sizeof(dylib_suffix));
 	}
 
-	for (image_index = 0; image_index < size; ++image_index)
+	/* Start from 1 so we avoid the executable itself */
+	for (image_index = 1; image_index < size; ++image_index)
 	{
 		const char *image_name = _dyld_get_image_name(image_index);
 
@@ -242,7 +243,8 @@ int portability_library_path_list(portability_library_path_list_cb callback, voi
 	{
 		uint32_t iterator, size = _dyld_image_count();
 
-		for (iterator = 0; iterator < size; ++iterator)
+		/* Start from 1 so we avoid the executable itself */
+		for (iterator = 1; iterator < size; ++iterator)
 		{
 			const char *image_name = _dyld_get_image_name(iterator);
 
