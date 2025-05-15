@@ -9,7 +9,8 @@
 #include <node_loader/node_loader_impl.h>
 #include <node_loader/node_loader_trampoline.h>
 
-#include <stdio.h> /* TODO: Improve this trick */
+#include <cinttypes>
+#include <cstdio> /* TODO: Improve this trick */
 
 #define NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD(name, func) \
 	{ \
@@ -45,7 +46,7 @@ union loader_impl_trampoline_cast
  */
 static void node_loader_trampoline_parse_pointer(napi_env env, napi_value v, void **ptr)
 {
-	const size_t ptr_str_size = (sizeof(void *) * 2) + 1;
+	const size_t ptr_str_size = (sizeof(uintptr_t) * 2) + 1;
 	size_t ptr_str_size_copied = 0;
 	char ptr_str[ptr_str_size];
 	napi_status status = napi_get_value_string_utf8(env, v, ptr_str, ptr_str_size, &ptr_str_size_copied);
@@ -53,7 +54,9 @@ static void node_loader_trampoline_parse_pointer(napi_env env, napi_value v, voi
 	node_loader_impl_exception(env, status);
 
 	/* Convert the string to pointer type */
-	sscanf(ptr_str, "%p", ptr);
+	uintptr_t uint_ptr;
+	sscanf(ptr_str, "%" SCNxPTR, &uint_ptr);
+	*ptr = (void *)uint_ptr;
 }
 
 napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info)
@@ -394,12 +397,17 @@ napi_value node_loader_trampoline_active_handles(napi_env env, napi_callback_inf
 		return nullptr;
 	}
 
-	int64_t active_handles = node_loader_impl_user_async_handles_count(node_impl_cast.data);
+	uint64_t active_handles = node_loader_impl_user_async_handles_count(node_impl_cast.data);
 
 	/* Create the integer return value */
 	napi_value result;
 
-	status = napi_create_int64(env, active_handles, &result);
+	if (active_handles > (uint64_t)INT64_MAX)
+	{
+		active_handles = (uint64_t)INT64_MAX;
+	}
+
+	status = napi_create_int64(env, (int64_t)active_handles, &result);
 
 	node_loader_impl_exception(env, status);
 

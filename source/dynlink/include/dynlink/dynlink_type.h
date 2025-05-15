@@ -37,14 +37,10 @@ struct dynlink_type;
 
 /* -- Type definitions -- */
 
-typedef struct dynlink_type *dynlink;						   /**< Dynamically linked shared object handle */
-typedef const char *dynlink_path;							   /**< Dynamically linked shared object path */
-typedef const char *dynlink_name;							   /**< Dynamically linked shared object name */
-typedef const char *dynlink_symbol_name;					   /**< Dynamically linked shared object symbol name */
-typedef portability_library_path_str dynlink_library_path_str; /**< Dynamically linked shared object symbol name */
-typedef void *dynlink_impl;									   /**< Dynamically linked shared object implementation */
-typedef char dynlink_name_impl[PORTABILITY_PATH_SIZE];		   /**< Allocated copy of dynamically linked shared object name */
-typedef void (*dynlink_symbol_addr)(void);					   /**< Function pointer referring to a symbol address */
+typedef struct dynlink_type *dynlink;			  /**< Dynamically linked shared object handle */
+typedef void *dynlink_impl;						  /**< Dynamically linked shared object implementation */
+typedef char dynlink_path[PORTABILITY_PATH_SIZE]; /**< Allocated copy of dynamically linked shared object name */
+typedef void (*dynlink_symbol_addr)(void);		  /**< Function pointer referring to a symbol address */
 
 /* -- Macros -- */
 

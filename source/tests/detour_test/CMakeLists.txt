@@ -1,5 +1,5 @@
 # Check if detours are enabled
-if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_FUNCHOOK)
+if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_PLTHOOK)
 	return()
 endif()
 
@@ -118,6 +118,15 @@ target_compile_options(${target}
 )
 
 #
+# Compile features
+#
+
+target_compile_features(${target}
+	PRIVATE
+	cxx_std_17
+)
+
+#
 # Linker options
 #
 
@@ -132,6 +141,14 @@ target_link_options(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+)
+
+#
+# Define dependencies
+#
+
+add_dependencies(${target}
+	plthook_detour
 )
 
 #

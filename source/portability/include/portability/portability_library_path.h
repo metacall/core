@@ -27,13 +27,15 @@
 
 #include <portability/portability_path.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* -- Type Definitions -- */
 
 typedef char portability_library_path_str[PORTABILITY_PATH_SIZE];
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef int (*portability_library_path_list_cb)(const char *library, void *data);
 
 /* -- Methods -- */
 
@@ -53,7 +55,22 @@ extern "C" {
 *  @return
 *    Returns zero if it could find the path, different from zero if not found
 */
-PORTABILITY_API int portability_library_path(const char name[], portability_library_path_str path, size_t *length);
+PORTABILITY_API int portability_library_path_find(const char name[], portability_library_path_str path, size_t *length);
+
+/**
+*  @brief
+*    List all the libraries loaded in the current process
+*
+*  @param[in] callback
+*    Function pointer that will be called for each library loaded in the process
+*
+*  @param[inout] data
+*    User defined data to pass to the callback
+*
+*  @return
+*    Returns zero if it there is no error, different from zero on error
+*/
+PORTABILITY_API int portability_library_path_list(portability_library_path_list_cb callback, void *data);
 
 #ifdef __cplusplus
 }

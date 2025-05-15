@@ -33,7 +33,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_module_name)
 
 	size_t size = portability_path_get_module_name(base, sizeof(base), extension, sizeof(extension), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -48,7 +48,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_module_name_without
 
 	size_t size = portability_path_get_module_name(base, sizeof(base), extension, sizeof(extension), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -63,7 +63,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_module_name_with_ra
 
 	size_t size = portability_path_get_module_name(base, sizeof(base), extension, sizeof(extension), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -77,7 +77,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_name)
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -91,7 +91,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_end_dot)
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -105,7 +105,21 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_without_dot)
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_path_get_name_only_separator_dot)
+{
+	static const char base[] = "/.";
+	static const char result[] = "";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -119,7 +133,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_only_dot)
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -133,7 +147,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_two_dots)
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -147,7 +161,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_three_dots)
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -161,7 +175,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_only_extension
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -175,7 +189,7 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_double_extensi
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -189,7 +203,21 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_triple_extensi
 
 	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_path_get_name_nullchar)
+{
+	static const char base[] = "/home/yeet/.nvm/versions/node/v18.20.3/bin/node";
+	static const char result[] = "node";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -203,7 +231,7 @@ TEST_F(portability_path_test, portability_path_test_get_path_of_path)
 
 	size_t size = portability_path_get_directory(base, sizeof(base), path, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(path, result));
+	EXPECT_STREQ(path, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -217,7 +245,7 @@ TEST_F(portability_path_test, portability_path_test_get_path_of_filepath)
 
 	size_t size = portability_path_get_directory(base, sizeof(base), path, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(path, result));
+	EXPECT_STREQ(path, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -232,7 +260,7 @@ TEST_F(portability_path_test, portability_path_test_get_relative)
 
 	size_t size = portability_path_get_relative(base, sizeof(base), path, sizeof(path), relative, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(relative, result));
+	EXPECT_STREQ(relative, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -247,7 +275,7 @@ TEST_F(portability_path_test, portability_path_test_get_relative_fail)
 
 	size_t size = portability_path_get_relative(base, sizeof(base), path, sizeof(path), relative, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(relative, result));
+	EXPECT_STREQ(relative, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -262,7 +290,7 @@ TEST_F(portability_path_test, portability_path_test_join_none_slash)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -277,7 +305,7 @@ TEST_F(portability_path_test, portability_path_test_join_left_slash)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -292,7 +320,7 @@ TEST_F(portability_path_test, portability_path_test_join_right_slash)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -307,7 +335,7 @@ TEST_F(portability_path_test, portability_path_test_join_both_slash)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -322,7 +350,7 @@ TEST_F(portability_path_test, portability_path_test_join_left_empty)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -337,7 +365,7 @@ TEST_F(portability_path_test, portability_path_test_join_right_empty)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -352,7 +380,7 @@ TEST_F(portability_path_test, portability_path_test_join_right_empty_non_slash)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -367,7 +395,7 @@ TEST_F(portability_path_test, portability_path_test_join_both_empty)
 
 	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_STREQ(join, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -381,7 +409,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_begin_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -395,7 +423,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_begin_double_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -409,7 +437,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_begin_many_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -423,7 +451,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_begin_many_double_
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -437,7 +465,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_begin_dot_non_slas
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -451,7 +479,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_begin_many_dot_non
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -465,7 +493,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_begin_invalid)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -479,7 +507,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_middle_double_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -493,7 +521,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_middle_double_dot_
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -507,7 +535,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_middle_double_dot_
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -521,7 +549,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_middle_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -535,7 +563,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_middle_mixed_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -549,7 +577,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_end_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -563,7 +591,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_end_double_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -577,7 +605,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_end_mixed_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -591,7 +619,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_absolute_end_mixed
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -605,7 +633,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_absolute_end_dot)
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -619,7 +647,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_relative_begin_end
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
@@ -633,7 +661,7 @@ TEST_F(portability_path_test, portability_path_test_canonical_absolute_end_many_
 
 	size_t size = portability_path_canonical(path, sizeof(path), canonical, PATH_SIZE);
 
-	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_STREQ(canonical, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }

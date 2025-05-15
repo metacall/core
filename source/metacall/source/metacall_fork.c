@@ -29,6 +29,8 @@
 
 #include <stdlib.h>
 
+/* -- Methods -- */
+
 #if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
@@ -42,10 +44,6 @@
 		#define WIN32_LEAN_AND_MEAN
 	#endif
 	#include <windows.h>
-
-/* -- Definitions -- */
-
-	#define metacall_fork_pid _getpid
 
 /* -- Type Definitions -- */
 
@@ -89,8 +87,6 @@ typedef NTSTATUS(NTAPI *RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 
 /* -- Methods -- */
 
-void (*metacall_fork_func(void))(void);
-
 NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
@@ -103,8 +99,6 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
 /* -- Methods -- */
-
-void (*metacall_fork_func(void))(void);
 
 pid_t metacall_fork_hook(void);
 
@@ -125,21 +119,14 @@ static metacall_post_fork_callback_ptr metacall_post_fork_callback = NULL;
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
-void (*metacall_fork_func(void))(void)
+typedef RtlCloneUserProcessPtr metacall_fork_trampoline_type;
+
+static const char metacall_fork_func_name[] = "RtlCloneUserProcess";
+static metacall_fork_trampoline_type metacall_fork_trampoline = NULL;
+
+static detour_handle metacall_fork_handle(detour d)
 {
-	HMODULE module;
-	RtlCloneUserProcessPtr clone_ptr;
-
-	module = GetModuleHandle("ntdll.dll");
-
-	if (!module)
-	{
-		return NULL;
-	}
-
-	clone_ptr = (RtlCloneUserProcessPtr)GetProcAddress(module, "RtlCloneUserProcess");
-
-	return (void (*)(void))clone_ptr;
+	return detour_load_file(d, "ntdll.dll");
 }
 
 NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
@@ -148,8 +135,6 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	HANDLE DebugPort,
 	PRTL_USER_PROCESS_INFORMATION ProcessInformation)
 {
-	RtlCloneUserProcessPtr metacall_fork_trampoline = (RtlCloneUserProcessPtr)detour_trampoline(detour_fork_handle);
-
 	metacall_pre_fork_callback_ptr pre_callback = metacall_pre_fork_callback;
 	metacall_post_fork_callback_ptr post_callback = metacall_post_fork_callback;
 
@@ -213,15 +198,18 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-void (*metacall_fork_func(void))(void)
+typedef pid_t (*metacall_fork_trampoline_type)(void);
+
+static const char metacall_fork_func_name[] = "fork";
+static metacall_fork_trampoline_type metacall_fork_trampoline = NULL;
+
+static detour_handle metacall_fork_handle(detour d)
 {
-	return (void (*)(void))(&fork);
+	return detour_load_file(d, NULL);
 }
 
 pid_t metacall_fork_hook(void)
 {
-	pid_t (*metacall_fork_trampoline)(void) = (pid_t(*)(void))detour_trampoline(detour_fork_handle);
-
 	metacall_pre_fork_callback_ptr pre_callback = metacall_pre_fork_callback;
 	metacall_post_fork_callback_ptr post_callback = metacall_post_fork_callback;
 
@@ -285,13 +273,29 @@ int metacall_fork_initialize(void)
 
 	if (detour_fork_handle == NULL)
 	{
-		detour_fork_handle = detour_install(d, (void (*)(void))metacall_fork_func(), (void (*)(void))(&metacall_fork_hook));
+		/* Casting for getting the original function */
+		union
+		{
+			metacall_fork_trampoline_type *trampoline;
+			void (**ptr)(void);
+		} cast = { &metacall_fork_trampoline };
+
+		detour_fork_handle = metacall_fork_handle(d);
 
 		if (detour_fork_handle == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour fork installation");
 
 			metacall_fork_destroy();
+
+			return 1;
+		}
+
+		if (detour_replace(d, detour_fork_handle, metacall_fork_func_name, (void (*)(void))(&metacall_fork_hook), cast.ptr) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour fork replacement");
+
+			metacall_link_destroy();
 
 			return 1;
 		}
@@ -306,26 +310,19 @@ void metacall_fork(metacall_pre_fork_callback_ptr pre_callback, metacall_post_fo
 	metacall_post_fork_callback = post_callback;
 }
 
-int metacall_fork_destroy(void)
+void metacall_fork_destroy(void)
 {
-	int result = 0;
-
 	if (detour_fork_handle != NULL)
 	{
 		detour d = detour_create(metacall_detour());
 
-		if (detour_uninstall(d, detour_fork_handle) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour fork uninstall");
+		/* TODO: Restore the hook? We need support for this on the detour API */
 
-			result = 1;
-		}
+		detour_unload(d, detour_fork_handle);
 
 		detour_fork_handle = NULL;
 	}
 
 	metacall_pre_fork_callback = NULL;
 	metacall_post_fork_callback = NULL;
-
-	return result;
 }

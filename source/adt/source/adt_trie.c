@@ -525,9 +525,10 @@ void trie_node_iterate(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_
 				if (back->childs != NULL)
 				{
 					set_iterator it;
+
 					for (it = set_iterator_begin(back->childs); set_iterator_end(&it) > 0; set_iterator_next(it))
 					{
-						trie_node_ref ref_node = set_iterator_get_value(it);
+						trie_node_ref ref_node = set_iterator_value(it);
 
 						trie_node current_node = &t->node_list[ref_node->index];
 
@@ -613,7 +614,7 @@ int trie_node_clear(trie t, trie_node n)
 
 					for (it = set_iterator_begin(back->childs); set_iterator_end(&it) > 0; set_iterator_next(it))
 					{
-						trie_node_ref ref_node = set_iterator_get_value(it);
+						trie_node_ref ref_node = set_iterator_value(it);
 
 						trie_node current_node = &t->node_list[ref_node->index];
 
@@ -688,7 +689,7 @@ trie_node trie_node_find(trie t, trie_key key)
 				{
 					for (it = set_iterator_begin(back->childs); set_iterator_end(&it) > 0; set_iterator_next(it))
 					{
-						trie_node_ref ref_node = set_iterator_get_value(it);
+						trie_node_ref ref_node = set_iterator_value(it);
 
 						trie_node current_node = &t->node_list[ref_node->index];
 

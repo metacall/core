@@ -18,12 +18,12 @@
  *
  */
 
-#ifndef FUNCHOOK_DETOUR_H
-#define FUNCHOOK_DETOUR_H 1
+#ifndef PLTHOOK_DETOUR_H
+#define PLTHOOK_DETOUR_H 1
 
 /* -- Headers -- */
 
-#include <funchook_detour/funchook_detour_api.h>
+#include <plthook_detour/plthook_detour_api.h>
 
 #include <detour/detour_interface.h>
 
@@ -41,7 +41,7 @@ extern "C" {
 *    Returns pointer to interface to be used by implementation
 *
 */
-FUNCHOOK_DETOUR_API detour_interface funchook_detour_impl_interface_singleton(void);
+PLTHOOK_DETOUR_API detour_interface plthook_detour_impl_interface_singleton(void);
 
 /**
 *  @brief
@@ -51,10 +51,10 @@ FUNCHOOK_DETOUR_API detour_interface funchook_detour_impl_interface_singleton(vo
 *    Static string containing module information
 *
 */
-FUNCHOOK_DETOUR_API const char *funchook_detour_print_info(void);
+PLTHOOK_DETOUR_API const char *plthook_detour_print_info(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FUNCHOOK_DETOUR_H */
+#endif /* PLTHOOK_DETOUR_H */

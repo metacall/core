@@ -23,7 +23,7 @@ set -euxo pipefail
 
 BUILD_SANITIZER=${1:-address-sanitizer}
 BUILD_LANGUAGES=(
-	python ruby netcore7 nodejs typescript file rpc wasm java c cobol rust
+	python ruby netcore8 nodejs typescript file rpc wasm java c cobol rust
 )
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 ROOT_DIR=$(dirname "$SCRIPT_DIR")
@@ -35,7 +35,7 @@ if [ "${BUILD_SANITIZER}" != "address-sanitizer" ] && [ "${BUILD_SANITIZER}" != 
 fi
 
 # Install
-"${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} rapidjson funchook swig pack backtrace
+"${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} rapidjson swig pack backtrace
 
 # Configure and Build
 export NODE_PATH="/usr/lib/node_modules"

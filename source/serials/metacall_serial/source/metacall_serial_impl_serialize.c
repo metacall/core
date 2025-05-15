@@ -221,7 +221,7 @@ void metacall_serial_impl_serialize_array(value v, char *dest, size_t size, cons
 
 	(void)format;
 
-	/* Calculate sum of all array values lenght */
+	/* Calculate sum of all array values length */
 	for (iterator = 0; iterator < array_size; ++iterator)
 	{
 		value current_value = array_value[iterator];

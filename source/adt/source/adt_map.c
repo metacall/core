@@ -49,14 +49,6 @@ struct map_iterator_type
 	size_t current_pair;
 };
 
-struct map_contains_any_cb_iterator_type
-{
-	map m;
-	int result;
-};
-
-typedef struct map_contains_any_cb_iterator_type *map_contains_any_cb_iterator;
-
 /* -- Methods -- */
 
 map map_create(map_cb_hash hash_cb, map_cb_compare compare_cb)
@@ -104,30 +96,38 @@ size_t map_size(map m)
 	return 0;
 }
 
-static int map_bucket_realloc_iterator(map m, map_key key, map_value value, map_cb_iterate_args args)
+static int map_bucket_rehash(map m, map new_map)
 {
-	map new_map = (map)args;
+	size_t bucket_iterator, pair_iterator;
 
-	if (new_map != m && key != NULL && args != NULL)
+	for (bucket_iterator = 0; bucket_iterator < m->capacity; ++bucket_iterator)
 	{
-		map_hash h = new_map->hash_cb(key);
+		bucket b = &m->buckets[bucket_iterator];
 
-		size_t index = h % new_map->capacity;
-
-		bucket b = &new_map->buckets[index];
-
-		if (bucket_insert(b, key, value) != 0)
+		if (b->pairs != NULL && b->count > 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid map bucket realloc insertion");
-			return 1;
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
+
+				map_hash h = new_map->hash_cb(p->key);
+
+				size_t index = h % new_map->capacity;
+
+				bucket b = &new_map->buckets[index];
+
+				if (bucket_insert(b, p->key, p->value) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid map bucket realloc insertion");
+					return 1;
+				}
+
+				++new_map->count;
+			}
 		}
-
-		++new_map->count;
-
-		return 0;
 	}
 
-	return 1;
+	return 0;
 }
 
 static int map_bucket_realloc(map m)
@@ -160,8 +160,10 @@ static int map_bucket_realloc(map m)
 	{
 		size_t iterator;
 
-		map_iterate(m, &map_bucket_realloc_iterator, &new_map);
+		/* Rehash all the elements into the new map */
+		map_bucket_rehash(m, &new_map);
 
+		/* Destroy all pairs from old map */
 		for (iterator = 0; iterator < m->capacity; ++iterator)
 		{
 			bucket b = &m->buckets[iterator];
@@ -172,6 +174,7 @@ static int map_bucket_realloc(map m)
 			}
 		}
 
+		/* Destroy all buckets from old map */
 		free(m->buckets);
 
 		m->capacity = new_map.capacity;
@@ -239,9 +242,9 @@ vector map_get(map m, map_key key)
 {
 	if (m != NULL && key != NULL)
 	{
-		map_hash hash = m->hash_cb(key);
+		map_hash h = m->hash_cb(key);
 
-		size_t index = hash % m->capacity;
+		size_t index = h % m->capacity;
 
 		bucket b = &m->buckets[index];
 
@@ -255,9 +258,9 @@ int map_contains(map m, map_key key)
 {
 	if (m != NULL && key != NULL)
 	{
-		map_hash hash = m->hash_cb(key);
+		map_hash h = m->hash_cb(key);
 
-		size_t index = hash % m->capacity;
+		size_t index = h % m->capacity;
 
 		bucket b = &m->buckets[index];
 
@@ -272,29 +275,29 @@ int map_contains(map m, map_key key)
 	return 1;
 }
 
-static int map_contains_any_cb_iterate(map m, map_key key, map_value value, map_cb_iterate_args args)
-{
-	map_contains_any_cb_iterator iterator = (map_contains_any_cb_iterator)args;
-
-	(void)m;
-	(void)value;
-
-	iterator->result = map_contains(iterator->m, key);
-
-	/* Stop iteration if we found an element */
-	return !iterator->result;
-}
-
 int map_contains_any(map dest, map src)
 {
-	struct map_contains_any_cb_iterator_type args;
+	size_t bucket_iterator, pair_iterator;
 
-	args.m = dest;
-	args.result = 1;
+	for (bucket_iterator = 0; bucket_iterator < src->capacity; ++bucket_iterator)
+	{
+		bucket b = &src->buckets[bucket_iterator];
 
-	map_iterate(src, &map_contains_any_cb_iterate, (map_cb_iterate_args)&args);
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
 
-	return args.result;
+				if (map_contains(dest, p->key) == 0)
+				{
+					return 0;
+				}
+			}
+		}
+	}
+
+	return 1;
 }
 
 map_value map_remove(map m, map_key key)
@@ -413,20 +416,27 @@ void map_iterate(map m, map_cb_iterate iterate_cb, map_cb_iterate_args args)
 	}
 }
 
-static int map_append_cb_iterate(map m, map_key key, map_value value, map_cb_iterate_args args)
-{
-	map dest = (map)args;
-
-	(void)m;
-
-	return map_insert(dest, key, value);
-}
-
 int map_append(map dest, map src)
 {
-	map_cb_iterate_args args = (map_cb_iterate_args)dest;
+	size_t bucket_iterator, pair_iterator;
 
-	map_iterate(src, &map_append_cb_iterate, args);
+	for (bucket_iterator = 0; bucket_iterator < src->capacity; ++bucket_iterator)
+	{
+		bucket b = &src->buckets[bucket_iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (pair_iterator = 0; pair_iterator < b->count; ++pair_iterator)
+			{
+				pair p = &b->pairs[pair_iterator];
+
+				if (map_insert(dest, p->key, p->value) != 0)
+				{
+					return 1;
+				}
+			}
+		}
+	}
 
 	return 0;
 }
@@ -517,7 +527,7 @@ map_iterator map_iterator_begin(map m)
 	return NULL;
 }
 
-map_key map_iterator_get_key(map_iterator it)
+map_key map_iterator_key(map_iterator it)
 {
 	if (it != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
 	{
@@ -527,7 +537,7 @@ map_key map_iterator_get_key(map_iterator it)
 	return NULL;
 }
 
-map_value map_iterator_get_value(map_iterator it)
+map_value map_iterator_value(map_iterator it)
 {
 	if (it != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
 	{
@@ -559,6 +569,8 @@ void map_iterator_next(map_iterator it)
 					}
 				}
 			}
+
+			it->current_pair = 0;
 		}
 	}
 }

@@ -37,7 +37,7 @@ struct exception_type
 	int64_t code;	  /* Numeric code of error */
 	char *stacktrace; /* Stack trace of the error */
 	uint64_t id;	  /* Thread id where the error was raised */
-	struct threading_atomic_ref_count_type ref;
+	threading_atomic_ref_count_type ref;
 	/* TODO: value attributes; // This should implement a map for representing the extra attributes of an exception */
 };
 
@@ -138,9 +138,15 @@ exception exception_create_const(const char *message, const char *label, int64_t
 	return ex;
 
 stacktrace_bad_alloc:
-	free(ex->label);
+	if (ex->label != NULL)
+	{
+		free(ex->label);
+	}
 label_bad_alloc:
-	free(ex->message);
+	if (ex->message != NULL)
+	{
+		free(ex->message);
+	}
 message_bad_alloc:
 	free(ex);
 exception_bad_alloc:

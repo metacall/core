@@ -59,7 +59,7 @@ PLUGIN_API void *plugin_iface(plugin p);
 
 PLUGIN_API void *plugin_impl(plugin p);
 
-PLUGIN_API void plugin_destroy_delayed(plugin p);
+PLUGIN_API void plugin_destructor(plugin p);
 
 PLUGIN_API void plugin_destroy(plugin p);
 

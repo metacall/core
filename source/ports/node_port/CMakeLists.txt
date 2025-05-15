@@ -89,7 +89,7 @@ install(FILES
 #
 
 # Check if loaders are enabled
-if(NOT OPTION_BUILD_CLI OR NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_LOADERS_TS OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB OR NOT OPTION_BUILD_SCRIPTS_TS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_LOADERS_TS OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB OR NOT OPTION_BUILD_SCRIPTS_TS)
 	return()
 endif()
 
@@ -116,29 +116,8 @@ if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
 endif()
 
 #
-# Define test
+# Define environment variables
 #
-
-set(node_port_test "${target}_test")
-
-message(STATUS "Test ${node_port_test}")
-
-add_test(NAME ${target}
-	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:metacallcli>" -D "INPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/commands/node_port.txt" -P "${CMAKE_SOURCE_DIR}/source/cli/metacallcli/test/commands/command_runner.cmake"
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-#
-# Define test labels
-#
-
-set_property(TEST ${target}
-	PROPERTY LABELS ${node_port_test}
-)
-
-set_tests_properties(${target} PROPERTIES
-	PASS_REGULAR_EXPRESSION "Tests passed without errors"
-)
 
 include(TestEnvironmentVariables)
 
@@ -160,19 +139,7 @@ if(OPTION_BUILD_LOADERS_RS)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
 endif()
 
-# Add dependencies and optional dependencies
-add_dependencies(${target}
-	node_loader
-	mock_loader
-	py_loader
-	rb_loader
-	ts_loader
-	${COBOL_DEPENDENCY}
-	${C_DEPENDENCY}
-	${RS_DEPENDENCY}
-)
-
-# Disable OpenSSL related tests if versions are incompatible
+# Disable OpenSSL related tests if versions are incompatible (TODO: Review this bug and remove the workaround if possible)
 set(NodeJS_EXECUTABLE_ONLY ON)
 
 find_package(NodeJS)
@@ -207,14 +174,54 @@ if(NodeJS_FOUND AND Python_Interpreter_FOUND)
 	endif()
 endif()
 
-test_environment_variables(${target}
-	""
-	${TESTS_ENVIRONMENT_VARIABLES}
-	${TESTS_ENVIRONMENT_VARIABLES_COB}
-	${TESTS_ENVIRONMENT_VARIABLES_C}
-	${TESTS_ENVIRONMENT_VARIABLES_RS}
-	${TESTS_ENVIRONMENT_VARIABLES_OPENSSL}
-)
+#
+# Test importing NodeJS Port from CLI
+#
+
+set(node_port_test "${target}_test")
+
+if(OPTION_BUILD_CLI)
+	message(STATUS "Test ${node_port_test}")
+
+	add_test(NAME ${target}
+		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:metacallcli>" -D "INPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/commands/node_port.txt" -P "${CMAKE_SOURCE_DIR}/source/cli/metacallcli/test/commands/command_runner.cmake"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+
+	#
+	# Define test labels
+	#
+
+	set_property(TEST ${target}
+		PROPERTY LABELS ${node_port_test}
+	)
+
+	set_tests_properties(${target} PROPERTIES
+		PASS_REGULAR_EXPRESSION "Tests passed without errors"
+	)
+
+	# Add dependencies and optional dependencies
+	add_dependencies(${target}
+		node_loader
+		mock_loader
+		py_loader
+		rb_loader
+		ts_loader
+		${COBOL_DEPENDENCY}
+		${C_DEPENDENCY}
+		${RS_DEPENDENCY}
+	)
+
+	# Environment variables
+	test_environment_variables(${target}
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+		${TESTS_ENVIRONMENT_VARIABLES_COB}
+		${TESTS_ENVIRONMENT_VARIABLES_C}
+		${TESTS_ENVIRONMENT_VARIABLES_RS}
+		${TESTS_ENVIRONMENT_VARIABLES_OPENSSL}
+	)
+endif()
 
 #
 # Test importing NodeJS Port from node.exe

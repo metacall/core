@@ -67,7 +67,7 @@ NODE_LOADER_NO_EXPORT void node_loader_impl_destroy_safe_impl(loader_impl_node n
 
 NODE_LOADER_NO_EXPORT void node_loader_impl_print_handles(loader_impl_node node_impl);
 
-NODE_LOADER_NO_EXPORT int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl);
+NODE_LOADER_NO_EXPORT uint64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl);
 
 NODE_LOADER_NO_EXPORT napi_value node_loader_impl_register_bootstrap_startup(loader_impl_node node_impl, napi_env env);
 

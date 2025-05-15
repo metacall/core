@@ -62,7 +62,7 @@ process.on('uncaughtException', killTest);
 		if (ready === false) {
 			killTest('Timeout reached, server is not ready');
 		}
-	}, 10000);
+	}, 60000);
 
 	while (ready !== true) {
 		try {

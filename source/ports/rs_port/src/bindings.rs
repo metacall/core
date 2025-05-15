@@ -627,8 +627,8 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    #[doc = "  @brief\n    Unregister fork detours and destroy shared memory\n\n  @return\n    Zero if success, different from zero otherwise"]
-    pub fn metacall_fork_destroy() -> ::std::os::raw::c_int;
+    #[doc = "  @brief\n    Unregister fork detours and destroy shared memory"]
+    pub fn metacall_fork_destroy();
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

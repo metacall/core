@@ -25,7 +25,7 @@
 #include <log/log_handle.h>
 #include <log/log_level.h>
 
-static const char format[] = "%.19s #%" PRIuS " %s:%" PRIuS " %s @%s ";
+static const char format[] = "%.19s #%" PRIu64 " %s:%" PRIuS " %s @%s ";
 
 class log_custom_test : public testing::Test
 {

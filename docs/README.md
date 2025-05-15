@@ -66,7 +66,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
         - [5.3.2.1 MetaCall](#5321-metacall)
         - [5.3.2.2 RapidJSON](#5322-rapidjson)
       - [5.3.3 Detours](#533-detours)
-        - [5.3.3.1 FuncHook](#5331-funchook)
+        - [5.3.3.1 PLTHook](#5331-plthook)
     - [5.4 Ports](#54-ports)
     - [5.5 Serialization](#55-serialization)
     - [5.6 Memory Layout](#56-memory-layout)
@@ -116,7 +116,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [Java](https://www.java.com)                                       | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)                                                                                             |                **>=11**                 | java |
 | [WebAssembly](https://webassembly.org/)                            | [Wasmtime](https://github.com/bytecodealliance/wasmtime)                                                                                              |          **>= 0.27 <= 8.0.1**           | wasm |
 | [C](<https://en.wikipedia.org/wiki/C_(programming_language)>)      | [libclang](https://clang.llvm.org/doxygen/group__CINDEX.html) - [Tiny C Compiler](https://bellard.org/tcc/) - [libffi](http://sourceware.org/libffi/) | **>=12** - **>=2021-10-30** - **>=3.2** |  c   |
-| [Rust](https://www.rust-lang.org/)                                 | [rustc](https://doc.rust-lang.org/rustc/what-is-rustc.html) - [libffi](http://sourceware.org/libffi/)                                                  |         **nightly-2021-12-04**          |  rs  |
+| [Rust](https://www.rust-lang.org/)                                 | [rustc](https://doc.rust-lang.org/rustc/what-is-rustc.html) - [libffi](http://sourceware.org/libffi/)                                                 |         **nightly-2021-12-04**          |  rs  |
 
 - Languages and run-times under construction:
 
@@ -251,7 +251,7 @@ The environment variables are optional, in case you want to modify default paths
 
 - [`detours`](/source/detours) implement the [`detour`](/source/detour) interface by using a plugin architecture. The current list of available detour plugins is the following one.
 
-  - [`funchook_detour`](/source/detours/funchook_detour) implemented by means of FuncHook library.
+  - [`plthook_detour`](/source/detours/plthook_detour) implemented by means of PLTHook library.
 
 - [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **METACALL**.
 
@@ -499,7 +499,7 @@ A loader must implement it to be considered a valid loader.
 
 #### 5.3.3 Detours
 
-##### 5.3.3.1 FuncHook
+##### 5.3.3.1 PLTHook
 
 ### 5.4 Ports
 
@@ -663,11 +663,11 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 
 |    Build Option Prefix    | Build Option Suffix                                                   |
 | :-----------------------: | --------------------------------------------------------------------- |
-| **OPTION*BUILD_LOADERS*** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `FILE`                    |
-| **OPTION*BUILD_SCRIPTS*** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
-| **OPTION*BUILD_SERIALS*** | `METACALL` `RAPID_JSON`                                               |
-| **OPTION*BUILD_DETOURS*** | `FUNCHOOK`                                                            |
-|  **OPTION*BUILD_PORTS***  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
+| **OPTION_BUILD_LOADERS_*** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `FILE`                    |
+| **OPTION_BUILD_SCRIPTS_*** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
+| **OPTION_BUILD_SERIALS_*** | `METACALL` `RAPID_JSON`                                               |
+| **OPTION_BUILD_DETOURS_*** | `PLTHOOK`                                                             |
+|  **OPTION_BUILD_PORTS_***  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
 
 To format the entire C/C++ codebase use:
 
@@ -740,12 +740,12 @@ Click the button below. A workspace with all required environments will be creat
 
 The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
 
-| Operative System |    Architecture     |  Compiler   |
-| :--------------: | :-----------------: | :---------: |
-|   **`ubuntu`**   |     **`amd64`**     |  **`gcc`**  |
-|   **`debian`**   |     **`amd64`**     |  **`gcc`**  |
-|   **`debian`**   |     **`amd64`**     | **`clang`** |
-|  **`windows`**   | **`x86`** **`x64`** | **`msvc`**  |
+| Operative System |                                                            Architecture                                                             |  Compiler   |
+| :--------------: | :---------------------------------------------------------------------------------------------------------------------------------: | :---------: |
+|   **`ubuntu`**   |                                                             **`amd64`**                                                             |  **`gcc`**  |
+|   **`debian`**   | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`ppc64le`** **`arm/v7`** **`arm/v6`** **`loong64`** |  **`gcc`**  |
+|   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
+|  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
 
 ### 7.1 Docker Support
 

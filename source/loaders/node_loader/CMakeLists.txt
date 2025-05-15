@@ -22,6 +22,34 @@ if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
 	file(COPY "${NodeJS_LIBRARY_NAME_PATH}" DESTINATION ${PROJECT_OUTPUT_DIR})
 endif()
 
+# Runtime (pack NodeJS DLL in windows)
+# TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
+# TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
+set(NodeJS_LIBRARY_DEVELOPMENT "${NodeJS_LIBRARY}")
+
+if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
+	install(FILES
+		"${NodeJS_LIBRARY_NAME_PATH}"
+		DESTINATION ${INSTALL_LIB}
+		COMPONENT runtime
+	)
+
+	get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY_NAME_PATH}" NAME)
+	set(NodeJS_LIBRARY_DEVELOPMENT "${NodeJS_LIBRARY_NAME_PATH}")
+	set(NodeJS_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${NodeJS_LIBRARY_NAME}")
+elseif(NodeJS_BUILD_FROM_SOURCE AND NOT WIN32)
+	install(FILES
+		"${NodeJS_LIBRARY}"
+		DESTINATION ${INSTALL_LIB}
+		COMPONENT runtime
+	)
+
+	get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY}" NAME)
+	set(NodeJS_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${NodeJS_LIBRARY_NAME}")
+else()
+	set(NodeJS_LIBRARY_INSTALL "${NodeJS_LIBRARY}")
+endif()
+
 #
 # Plugin name and options
 #
@@ -73,13 +101,6 @@ set(sources
 	${source_path}/node_loader_port.cpp
 	${source_path}/node_loader_trampoline.cpp
 )
-
-if(WIN32 AND MSVC_VERSION GREATER_EQUAL 1200)
-	set(headers
-		${headers}
-		${include_path}/node_loader_win32_delay_load.h
-	)
-endif()
 
 # Group source files
 set(header_group "Header Files (API)")
@@ -157,8 +178,9 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
-	# TODO: Replace this by /FORCE:UNRESOLVED on MSVC for later on resolving it ourselves?
+	# Delay load for MSVC
 	$<$<CXX_COMPILER_ID:MSVC>:${NodeJS_LIBRARY}> # NodeJS library
+	$<$<CXX_COMPILER_ID:MSVC>:delayimp>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -172,7 +194,6 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	$<$<BOOL:${WIN32}>:NODEJS_LIBRARY_NAME="${NodeJS_LIBRARY_NAME}">
 	$<$<NOT:$<BOOL:${MSVC}>>:_LARGEFILE_SOURCE>
 	$<$<NOT:$<BOOL:${MSVC}>>:_FILE_OFFSET_BITS=64>
 	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:_DARWIN_USE_64_BIT_INODE=1>
@@ -204,6 +225,7 @@ target_compile_options(${target}
 target_link_options(${target}
 	PRIVATE
 	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
@@ -230,34 +252,6 @@ install(TARGETS ${target}
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
-
-set(NodeJS_LIBRARY_DEVELOPMENT "${NodeJS_LIBRARY}")
-
-# Runtime (pack NodeJS DLL in windows)
-# TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
-# TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
-if(NodeJS_LIBRARY_NAME_PATH AND WIN32)
-	install(FILES
-		"${NodeJS_LIBRARY_NAME_PATH}"
-		DESTINATION ${INSTALL_LIB}
-		COMPONENT runtime
-	)
-
-	get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY_NAME_PATH}" NAME)
-	set(NodeJS_LIBRARY_DEVELOPMENT "${NodeJS_LIBRARY_NAME_PATH}")
-	set(NodeJS_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${NodeJS_LIBRARY_NAME}")
-elseif(NodeJS_BUILD_FROM_SOURCE AND NOT WIN32)
-	install(FILES
-		"${NodeJS_LIBRARY}"
-		DESTINATION ${INSTALL_LIB}
-		COMPONENT runtime
-	)
-
-	get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY}" NAME)
-	set(NodeJS_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${NodeJS_LIBRARY_NAME}")
-else()
-	set(NodeJS_LIBRARY_INSTALL "${NodeJS_LIBRARY}")
-endif()
 
 #
 # Configuration

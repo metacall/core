@@ -24,8 +24,6 @@
 
 #include <Python.h>
 
-#include <thread>
-
 struct py_thread_state
 {
 	uint64_t ref_count;

@@ -27,6 +27,54 @@
 
 size_t portability_path_get_name(const char *path, size_t path_size, char *name, size_t name_size)
 {
+	size_t i, count, last;
+
+	if (path == NULL || name == NULL)
+	{
+		return 0;
+	}
+
+	for (i = 0, count = 0, last = 0; path[i] != '\0' && i < path_size && count < name_size; ++i)
+	{
+		name[count++] = path[i];
+
+		if (PORTABILITY_PATH_SEPARATOR(path[i]))
+		{
+			count = 0;
+		}
+		else if (path[i] == '.')
+		{
+			if (i > 0 && path[i - 1] == '.')
+			{
+				last = 0;
+				count = 0;
+			}
+			else
+			{
+				if (count > 0)
+				{
+					last = count - 1;
+				}
+				else
+				{
+					last = 0;
+				}
+			}
+		}
+	}
+
+	if ((last == 0 && count > 1) || last > count)
+	{
+		last = count;
+	}
+
+	name[last] = '\0';
+
+	return last + 1;
+}
+
+size_t portability_path_get_name_canonical(const char *path, size_t path_size, char *name, size_t name_size)
+{
 	if (path == NULL || name == NULL)
 	{
 		return 0;
@@ -59,6 +107,13 @@ size_t portability_path_get_name(const char *path, size_t path_size, char *name,
 				{
 					last = 0;
 				}
+
+				/* This function is the same as portability_path_get_name but
+				returns the name of the file without any extension, for example:
+					- portability_path_get_name of libnode.so.72 is libnode.so
+					- portability_path_get_name_canonical of libnode.so.72 is libnode
+				*/
+				break;
 			}
 		}
 	}

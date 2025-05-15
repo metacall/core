@@ -128,6 +128,15 @@ target_compile_options(${target}
 )
 
 #
+# Compile features
+#
+
+target_compile_features(${target}
+	PRIVATE
+	cxx_std_17
+)
+
+#
 # Linker options
 #
 

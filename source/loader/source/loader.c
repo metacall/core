@@ -33,8 +33,6 @@
 
 #include <serial/serial.h>
 
-#include <detour/detour.h>
-
 #include <log/log.h>
 
 #include <threading/threading_thread_id.h>
@@ -48,26 +46,6 @@
 #define LOADER_LIBRARY_PATH			"LOADER_LIBRARY_PATH"
 #define LOADER_LIBRARY_DEFAULT_PATH "loaders"
 
-/* -- Member Data -- */
-
-struct loader_metadata_cb_iterator_type
-{
-	size_t iterator;
-	value *values;
-};
-
-struct loader_get_cb_iterator_type
-{
-	const char *name;
-	value obj; /* scope_object */
-};
-
-/* -- Type Definitions -- */
-
-typedef struct loader_get_cb_iterator_type *loader_get_cb_iterator;
-
-typedef struct loader_metadata_cb_iterator_type *loader_metadata_cb_iterator;
-
 /* -- Private Methods -- */
 
 static void loader_initialization_debug(void);
@@ -76,9 +54,7 @@ static void loader_initialization_register_plugin(plugin p);
 
 static plugin loader_get_impl_plugin(const loader_tag tag);
 
-static int loader_get_cb_iterate(plugin_manager manager, plugin p, void *data);
-
-static int loader_metadata_cb_iterate(plugin_manager manager, plugin p, void *data);
+static plugin loader_get_impl_plugin_options(const loader_tag tag, value options);
 
 /* -- Member Data -- */
 
@@ -133,6 +109,9 @@ int loader_initialize(void)
 
 	/* Insert into destruction list */
 	loader_initialization_register_plugin(manager_impl->host);
+
+	/* Initialize detours */
+	manager_impl->d = NULL;
 
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader host initialized"); */
@@ -201,29 +180,6 @@ void loader_initialization_register_plugin(plugin p)
 	}
 }
 
-int loader_initialize_host(const loader_tag tag)
-{
-	plugin p = plugin_manager_get(&loader_manager, tag);
-
-	if (p == NULL)
-	{
-		return 1;
-	}
-
-	if (loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl)) != 0)
-	{
-		return 1;
-	}
-	else
-	{
-		loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
-
-		manager_impl->host = p;
-
-		return 0;
-	}
-}
-
 int loader_is_initialized(const loader_tag tag)
 {
 	plugin p = plugin_manager_get(&loader_manager, tag);
@@ -248,26 +204,53 @@ int loader_register_impl(void *impl, void *handle, const char *name, loader_regi
 	return loader_host_register((loader_impl)impl, loader_impl_handle_context(handle), name, invoke, NULL, return_type, arg_size, args_type_id);
 }
 
+void loader_detour(detour d)
+{
+	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+	manager_impl->d = d;
+}
+
+detour_handle loader_hook(const loader_tag tag, const char *library, int (*load_cb)(detour, detour_handle))
+{
+	return loader_impl_detour(loader_get_impl(tag), library, load_cb);
+}
+
+detour_handle loader_hook_impl(void *impl, const char *library, int (*load_cb)(detour, detour_handle))
+{
+	return loader_impl_detour((loader_impl)impl, library, load_cb);
+}
+
 plugin loader_get_impl_plugin(const loader_tag tag)
 {
+	return loader_get_impl_plugin_options(tag, NULL);
+}
+
+plugin loader_get_impl_plugin_options(const loader_tag tag, value options)
+{
 	plugin p = plugin_manager_get(&loader_manager, tag);
+
+	loader_impl impl;
 
 	if (p != NULL)
 	{
 		return p;
 	}
 
-	loader_impl impl = loader_impl_create(tag);
+	impl = loader_impl_create(tag);
 
 	if (impl == NULL)
 	{
 		goto loader_create_error;
 	}
 
+	/* Define the options */
+	loader_impl_set_options(impl, options);
+
 	/* Dynamic link loader dependencies if it is not host */
-	if (loader_impl_get_option_host(impl) == 0)
+	if (loader_impl_dependencies(impl, plugin_manager_impl_type(&loader_manager, loader_manager_impl)->d) != 0)
 	{
-		loader_impl_dependencies(impl);
+		goto plugin_manager_create_error;
 	}
 
 	/* Dynamic link the loader */
@@ -278,8 +261,29 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 		goto plugin_manager_create_error;
 	}
 
+	/* If it is host, link the loader symbols to the host (either the executable or a library) */
+	if (loader_impl_link(p, impl) != 0)
+	{
+		goto plugin_manager_create_error;
+	}
+
 	/* Store in the loader implementation the reference to the plugin which belongs to */
 	loader_impl_attach(impl, p);
+
+	/* Check if it is host, initialize it and set it as host */
+	if (options != NULL && loader_impl_get_option_host(impl) == 1)
+	{
+		loader_manager_impl manager_impl;
+
+		if (loader_impl_initialize(&loader_manager, p, plugin_impl_type(p, loader_impl)) != 0)
+		{
+			goto plugin_manager_create_error;
+		}
+
+		manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+		manager_impl->host = p;
+	}
 
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "Created loader (%s) implementation <%p>", tag, (void *)impl); */
@@ -532,35 +536,25 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 	return 0;
 }
 
-int loader_get_cb_iterate(plugin_manager manager, plugin p, void *data)
+value loader_get(const char *name)
 {
-	loader_impl impl = plugin_impl_type(p, loader_impl);
-	loader_get_cb_iterator get_iterator = data;
+	set_iterator it;
 
-	(void)manager;
-
-	get_iterator->obj = loader_impl_get_value(impl, get_iterator->name);
-
-	if (get_iterator->obj != NULL)
+	for (it = set_iterator_begin(loader_manager.plugins); set_iterator_end(&it) != 0; set_iterator_next(it))
 	{
-		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
-		/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) get value: %s <%p>", plugin_name(p), get_iterator->name, (void *)get_iterator->obj); */
-		return 1;
+		plugin p = set_iterator_value(it);
+
+		loader_impl impl = plugin_impl_type(p, loader_impl);
+
+		value scope_object = loader_impl_get_value(impl, name);
+
+		if (scope_object != NULL)
+		{
+			return scope_object;
+		}
 	}
 
-	return 0;
-}
-
-loader_data loader_get(const char *name)
-{
-	struct loader_get_cb_iterator_type get_iterator;
-
-	get_iterator.name = name;
-	get_iterator.obj = NULL;
-
-	plugin_manager_iterate(&loader_manager, &loader_get_cb_iterate, (void *)&get_iterator);
-
-	return (loader_data)get_iterator.obj;
+	return NULL;
 }
 
 void *loader_get_handle(const loader_tag tag, const char *name)
@@ -570,11 +564,11 @@ void *loader_get_handle(const loader_tag tag, const char *name)
 	return loader_impl_get_handle(plugin_impl_type(p, loader_impl), name);
 }
 
-void loader_set_options(const loader_tag tag, void *options)
+int loader_set_options(const loader_tag tag, value options)
 {
-	plugin p = loader_get_impl_plugin(tag);
+	plugin p = loader_get_impl_plugin_options(tag, options);
 
-	loader_impl_set_options(plugin_impl_type(p, loader_impl), options);
+	return (p == NULL);
 }
 
 value loader_get_options(const loader_tag tag)
@@ -589,13 +583,6 @@ value loader_get_option(const loader_tag tag, const char *field)
 	plugin p = loader_get_impl_plugin(tag);
 
 	return loader_impl_get_option(plugin_impl_type(p, loader_impl), field);
-}
-
-int loader_get_option_host(const loader_tag tag)
-{
-	plugin p = loader_get_impl_plugin(tag);
-
-	return loader_impl_get_option_host(plugin_impl_type(p, loader_impl));
 }
 
 int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr)
@@ -641,7 +628,7 @@ value loader_handle_export(void *handle)
 	return loader_impl_handle_export(handle);
 }
 
-loader_data loader_handle_get(void *handle, const char *name)
+value loader_handle_get(void *handle, const char *name)
 {
 	if (handle != NULL)
 	{
@@ -689,37 +676,32 @@ value loader_metadata_impl(plugin p, loader_impl impl)
 	return v;
 }
 
-int loader_metadata_cb_iterate(plugin_manager manager, plugin p, void *data)
-{
-	loader_impl impl = plugin_impl_type(p, loader_impl);
-	loader_metadata_cb_iterator metadata_iterator = data;
-
-	(void)manager;
-
-	metadata_iterator->values[metadata_iterator->iterator] = loader_metadata_impl(p, impl);
-
-	if (metadata_iterator->values[metadata_iterator->iterator] != NULL)
-	{
-		++metadata_iterator->iterator;
-	}
-
-	return 0;
-}
-
 value loader_metadata(void)
 {
-	struct loader_metadata_cb_iterator_type metadata_iterator;
-	value v = value_create_map(NULL, plugin_manager_size(&loader_manager));
+	value *values, v = value_create_map(NULL, plugin_manager_size(&loader_manager));
+	set_iterator it;
+	size_t values_it;
 
 	if (v == NULL)
 	{
 		return NULL;
 	}
 
-	metadata_iterator.iterator = 0;
-	metadata_iterator.values = value_to_map(v);
+	values = value_to_map(v);
 
-	plugin_manager_iterate(&loader_manager, &loader_metadata_cb_iterate, (void *)&metadata_iterator);
+	for (it = set_iterator_begin(loader_manager.plugins), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		plugin p = set_iterator_value(it);
+
+		loader_impl impl = plugin_impl_type(p, loader_impl);
+
+		values[values_it] = loader_metadata_impl(p, impl);
+
+		if (values[values_it] != NULL)
+		{
+			++values_it;
+		}
+	}
 
 	return v;
 }
@@ -784,7 +766,7 @@ void loader_unload_children(loader_impl impl)
 			* the loader has been unloaded, and the function interface will point to an unloaded
 			* plugin, generating a segmentation fault. All the plugins will be unloaded on plugin_manager_destroy.
 			*/
-			plugin_destroy_delayed(order->p);
+			plugin_destructor(order->p);
 
 			/* Mark loader as destroyed (prevents access to already freed memory and defines what loaders are destroyed) */
 			loader_manager_impl_set_destroyed(manager_impl, destroyed_impl);

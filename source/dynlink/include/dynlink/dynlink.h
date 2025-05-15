@@ -38,6 +38,15 @@ extern "C" {
 
 /**
 *  @brief
+*    Get the library prefix for specified platform (normally "lib")
+*
+*  @return
+*    A constant string pointer to the platform prefix
+*/
+DYNLINK_API const char *dynlink_prefix(void);
+
+/**
+*  @brief
 *    Get the library extension for specified platform
 *
 *  @return
@@ -61,7 +70,7 @@ DYNLINK_API const char *dynlink_extension(void);
 *  @return
 *    A handle to the dynamically linked shared object
 */
-DYNLINK_API dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags);
+DYNLINK_API dynlink dynlink_load(const char *path, const char *name, dynlink_flags flags);
 
 /**
 *  @brief
@@ -76,7 +85,19 @@ DYNLINK_API dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_f
 *  @return
 *    A handle to the dynamically linked shared object
 */
-DYNLINK_API dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags);
+DYNLINK_API dynlink dynlink_load_absolute(const char *path, dynlink_flags flags);
+
+/**
+*  @brief
+*    Get the reference of the current process
+*
+*  @param[in] flags
+*    Dynamic linking flags
+*
+*  @return
+*    A handle to the current process
+*/
+DYNLINK_API dynlink dynlink_load_self(dynlink_flags flags);
 
 /**
 *  @brief
@@ -88,19 +109,19 @@ DYNLINK_API dynlink dynlink_load_absolute(dynlink_path path, dynlink_flags flags
 *  @return
 *    Reference to the name of the dynamically linked shared object
 */
-DYNLINK_API dynlink_name dynlink_get_name(dynlink handle);
+DYNLINK_API const char *dynlink_get_name(dynlink handle);
 
 /**
 *  @brief
-*    Retreive the file name of the dynamically linked shared object handle
+*    Retreive the path of the dynamically linked shared object handle
 *
 *  @param[in] handle
 *    Handle of dynamically linked shared object
 *
 *  @return
-*    Reference to the file name of the dynamically linked shared object
+*    Reference to the path of the dynamically linked shared object
 */
-DYNLINK_API dynlink_name dynlink_get_name_impl(dynlink handle);
+DYNLINK_API const char *dynlink_get_path(dynlink handle);
 
 /**
 *  @brief
@@ -113,6 +134,18 @@ DYNLINK_API dynlink_name dynlink_get_name_impl(dynlink handle);
 *    Linking flags of dynamically linked shared object
 */
 DYNLINK_API dynlink_flags dynlink_get_flags(dynlink handle);
+
+/**
+*  @brief
+*    Retreive the internal representation of the dynamically linked shared object
+*
+*  @param[in] handle
+*    Handle of dynamically linked shared object
+*
+*  @return
+*    The implementation dependant handle representing the dynamically linked shared object
+*/
+DYNLINK_API dynlink_impl dynlink_get_impl(dynlink handle);
 
 /**
 *  @brief
@@ -130,7 +163,7 @@ DYNLINK_API dynlink_flags dynlink_get_flags(dynlink handle);
 *  @return
 *    Returns zero on correct dynamic linking, distinct from zero otherwise
 */
-DYNLINK_API int dynlink_symbol(dynlink handle, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address);
+DYNLINK_API int dynlink_symbol(dynlink handle, const char *symbol_name, dynlink_symbol_addr *symbol_address);
 
 /**
 *  @brief
@@ -157,7 +190,7 @@ DYNLINK_API void dynlink_unload(dynlink handle);
 *  @return
 *    Returns zero if it could find the path, different from zero if not found
 */
-DYNLINK_API int dynlink_library_path(dynlink_name name, dynlink_library_path_str path, size_t *length);
+DYNLINK_API int dynlink_library_path(const char *name, dynlink_path path, size_t *length);
 
 /**
 *  @brief
@@ -169,7 +202,7 @@ DYNLINK_API int dynlink_library_path(dynlink_name name, dynlink_library_path_str
 *  @param[out] result
 *    The resulting library name that will be generated (i.e libexample.so in Linux, or example.dll in Windows)
 */
-DYNLINK_API void dynlink_platform_name(dynlink_name name, dynlink_name_impl result);
+DYNLINK_API void dynlink_platform_name(const char *name, dynlink_path result);
 
 /**
 *  @brief

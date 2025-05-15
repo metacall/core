@@ -42,12 +42,6 @@ enum rb_loader_impl_comment_state
 	rb_loader_impl_comment_state_multi_line_end
 };
 
-/* -- Private Methods -- */
-
-static int rb_loader_impl_key_print_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args);
-
-static int rb_loader_impl_key_clear_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args);
-
 /* -- Methods -- */
 
 int rb_loader_impl_key_parse(const char *source, set function_map)
@@ -396,53 +390,38 @@ int rb_loader_impl_key_parse(const char *source, set function_map)
 	return 0;
 }
 
-int rb_loader_impl_key_print_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args)
-{
-	size_t parameter;
-
-	rb_function_parser function = v;
-
-	(void)s;
-	(void)key;
-	(void)args;
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader key parse function (%s)", function->name);
-
-	for (parameter = 0; parameter < function->params_size; ++parameter)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "	Ruby loader key parse parameter [%d] (%s : %s)",
-			function->params[parameter].index,
-			function->params[parameter].name,
-			function->params[parameter].type);
-	}
-
-	return 0;
-}
-
 void rb_loader_impl_key_print(set function_map)
 {
-	set_iterate(function_map, &rb_loader_impl_key_print_cb_iterate, NULL);
-}
+	set_iterator it;
 
-int rb_loader_impl_key_clear_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args)
-{
-	rb_function_parser function = v;
-
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (function != NULL)
+	for (it = set_iterator_begin(function_map); set_iterator_end(&it) != 0; set_iterator_next(it))
 	{
-		free(function);
-	}
+		size_t parameter;
 
-	return 0;
+		rb_function_parser function = set_iterator_value(it);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader key parse function (%s)", function->name);
+
+		for (parameter = 0; parameter < function->params_size; ++parameter)
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "	Ruby loader key parse parameter [%d] (%s : %s)",
+				function->params[parameter].index,
+				function->params[parameter].name,
+				function->params[parameter].type);
+		}
+	}
 }
 
 void rb_loader_impl_key_clear(set function_map)
 {
-	set_iterate(function_map, &rb_loader_impl_key_clear_cb_iterate, NULL);
+	set_iterator it;
+
+	for (it = set_iterator_begin(function_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	{
+		rb_function_parser function = set_iterator_value(it);
+
+		free(function);
+	}
 
 	set_destroy(function_map);
 }

@@ -42,6 +42,7 @@
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wredundant-decls"
 	#pragma GCC diagnostic ignored "-Wpedantic"
+	#pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include <ruby.h>

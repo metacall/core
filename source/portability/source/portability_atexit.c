@@ -54,6 +54,7 @@ static void portability_atexit_destroy(void)
 			}
 
 			free(prev);
+
 		} while (atexit_list != NULL);
 
 		atexit_list = NULL;

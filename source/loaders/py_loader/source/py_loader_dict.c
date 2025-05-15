@@ -26,10 +26,32 @@
 #include <Python.h>
 
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13
+	/* Disable warnings from Python */
+	#if defined(__clang__)
+		#pragma clang diagnostic push
+		#pragma clang diagnostic ignored "-Wredundant-decls"
+		#pragma clang diagnostic ignored "-Wstrict-aliasing"
+		#pragma clang diagnostic ignored "-Wunused-parameter"
+		#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+	#elif defined(__GNUC__)
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wredundant-decls"
+		#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+		#pragma GCC diagnostic ignored "-Wunused-parameter"
+		#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+	#endif
+
 	#ifndef Py_BUILD_CORE
 		#define Py_BUILD_CORE
 	#endif
 	#include <internal/pycore_dict.h>
+
+	/* Disable warnings from Python */
+	#if defined(__clang__)
+		#pragma clang diagnostic pop
+	#elif defined(__GNUC__)
+		#pragma GCC diagnostic pop
+	#endif
 #endif
 
 struct py_loader_impl_dict_obj

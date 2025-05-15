@@ -86,7 +86,7 @@ TEST_F(metacall_node_python_ruby_test, DefaultConstructor)
 			"module.exports = {\n"
 			"  test: async function () {\n"
 			"    try {\n"
-			"      const result = fetch('https://www.google.com');\n"
+			"      const result = fetch('https://www.google.com', { signal: AbortSignal.timeout(30000) });\n"
 			"      console.log(result);\n"
 			"      return true;\n"
 			"    } catch (e) {\n"

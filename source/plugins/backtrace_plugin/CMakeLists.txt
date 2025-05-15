@@ -12,7 +12,7 @@ if(NOT OPTION_BUILD_GUIX)
 
 	FetchContent_Declare(BackwardCpp
 		GIT_REPOSITORY https://github.com/bombela/backward-cpp
-		GIT_TAG f30744bcf726ea3735df7ecf9e9de9ddac540283
+		GIT_TAG 94718085efa256fb25a311a46b5948ee0d95890a
 	)
 
 	FetchContent_MakeAvailable(BackwardCpp)
@@ -23,25 +23,13 @@ if(NOT OPTION_BUILD_GUIX)
 	)
 
 	if(NOT BackwardCpp_POPULATED)
-		FetchContent_Populate(backward-cpp)
+		FetchContent_Populate(BackwardCpp)
 	endif()
 endif()
 
 if(NOT BackwardCpp_POPULATED OR NOT BackwardCpp_SOURCE)
 	message(STATUS "BackwardCpp could not be installed, trying to find it on the system")
 endif()
-
-find_package(Backward
-	CONFIG
-	PATHS ${BackwardCpp_SOURCE}
-)
-
-if(NOT BACKWARD_FOUND)
-	message(WARNING "BackwardCpp could not be found, skipping backtrace plugin compilation")
-	return()
-endif()
-
-include(${BackwardCpp_SOURCE}/BackwardConfig.cmake)
 
 #
 # Plugin name and options
@@ -159,8 +147,6 @@ target_include_directories(${target}
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
 
-	${BACKWARD_INCLUDE_DIR} # Backward-cpp includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -178,10 +164,10 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
+	Backward::Interface # Backward-cpp library
+
 	PUBLIC
 	${DEFAULT_LIBRARIES}
-
-	Backward::Backward # Backward-cpp library
 
 	INTERFACE
 )

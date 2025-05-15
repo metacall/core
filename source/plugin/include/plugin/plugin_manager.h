@@ -64,7 +64,7 @@ struct plugin_manager_type
 
 struct plugin_manager_interface_type
 {
-	int (*clear)(plugin_manager, plugin);	 /* Hook for clearing the plugin implementation */
+	void (*clear)(plugin_manager, plugin);	 /* Hook for clearing the plugin implementation */
 	void (*destroy)(plugin_manager, void *); /* Hook for destroying the plugin manager implementation */
 };
 
@@ -85,8 +85,6 @@ PLUGIN_API int plugin_manager_register(plugin_manager manager, plugin p);
 PLUGIN_API plugin plugin_manager_create(plugin_manager manager, const char *name, void *impl, void (*dtor)(plugin));
 
 PLUGIN_API plugin plugin_manager_get(plugin_manager manager, const char *name);
-
-PLUGIN_API void plugin_manager_iterate(plugin_manager manager, int (*iterator)(plugin_manager, plugin, void *), void *data);
 
 PLUGIN_API int plugin_manager_clear(plugin_manager manager, plugin p);
 

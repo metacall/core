@@ -20,8 +20,8 @@
 
 /* -- Definitions -- */
 
-#define LOG_POLICY_FORMAT_TEXT_STR_DEBUG   "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
-#define LOG_POLICY_FORMAT_TEXT_STR_RELEASE "[%.19s] #%" PRIuS " @%s : "
+#define LOG_POLICY_FORMAT_TEXT_STR_DEBUG   "[%.19s] #%" PRIu64 " [ %" PRIuS " | %s | %s ] @%s : "
+#define LOG_POLICY_FORMAT_TEXT_STR_RELEASE "[%.19s] #%" PRIu64 " @%s : "
 #define LOG_POLICY_FORMAT_TEXT_STR_PRETTY  "\x1b[32m%s\x1b[0m: "
 
 /* -- Macros -- */

@@ -34,20 +34,9 @@
 	#include <winbase.h> /* SetDllDirectoryA */
 #endif
 
-/* -- Declarations -- */
-
-struct plugin_manager_iterate_cb_type
-{
-	plugin_manager manager;
-	int (*iterator)(plugin_manager, plugin, void *);
-	void *data;
-};
-
 /* -- Private Methods -- */
 
 static int plugin_manager_unregister(plugin_manager manager, plugin p);
-static int plugin_manager_iterate_cb(set s, set_key key, set_value val, set_cb_iterate_args args);
-static int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Methods -- */
 
@@ -105,13 +94,13 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	/* Initialize the library path */
 	if (manager->library_path == NULL)
 	{
-		const char name[] = "metacall"
+		const char library_name[] = "metacall"
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-							"d"
+									"d"
 #endif
 			;
 
-		dynlink_library_path_str path;
+		dynlink_path path;
 		size_t length = 0;
 
 		/* The order of precedence is:
@@ -119,7 +108,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 		* 2) Dynamic link library path of the host library
 		* 3) Default compile time path
 		*/
-		if (dynlink_library_path(name, path, &length) == 0)
+		if (dynlink_library_path(library_name, path, &length) == 0)
 		{
 			default_library_path = path;
 		}
@@ -234,36 +223,6 @@ plugin plugin_manager_get(plugin_manager manager, const char *name)
 	return set_get(manager->plugins, (set_key)name);
 }
 
-int plugin_manager_iterate_cb(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-
-	if (val != NULL && args != NULL)
-	{
-		struct plugin_manager_iterate_cb_type *args_ptr = (struct plugin_manager_iterate_cb_type *)args;
-		return args_ptr->iterator(args_ptr->manager, (plugin)val, args_ptr->data);
-	}
-
-	return 0;
-}
-
-void plugin_manager_iterate(plugin_manager manager, int (*iterator)(plugin_manager, plugin, void *), void *data)
-{
-	if (iterator == NULL)
-	{
-		return;
-	}
-
-	struct plugin_manager_iterate_cb_type args = {
-		manager,
-		iterator,
-		data
-	};
-
-	set_iterate(manager->plugins, &plugin_manager_iterate_cb, (void *)&args);
-}
-
 int plugin_manager_unregister(plugin_manager manager, plugin p)
 {
 	const char *name = plugin_name(p);
@@ -299,35 +258,6 @@ int plugin_manager_clear(plugin_manager manager, plugin p)
 	return result;
 }
 
-int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	int result = 0;
-
-	(void)s;
-	(void)key;
-
-	if (val != NULL)
-	{
-		plugin p = (plugin)val;
-
-		if (args != NULL)
-		{
-			plugin_manager manager = (plugin_manager)args;
-
-			if (manager->iface != NULL && manager->iface->clear != NULL)
-			{
-				/* Call to the clear method of the manager */
-				result = manager->iface->clear(manager, p);
-			}
-		}
-
-		/* Unload the dynamic link library and destroy the plugin */
-		plugin_destroy(p);
-	}
-
-	return result;
-}
-
 void plugin_manager_destroy(plugin_manager manager)
 {
 	/* If there's a destroy callback, probably the plugin manager needs a complex destroy algorithm */
@@ -340,7 +270,21 @@ void plugin_manager_destroy(plugin_manager manager)
 	* plugin set and this will do nothing if the set has been emptied before with plugin_manager_clear */
 	if (manager->plugins != NULL)
 	{
-		set_iterate(manager->plugins, &plugin_manager_destroy_cb, NULL);
+		set_iterator it;
+
+		for (it = set_iterator_begin(manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(it))
+		{
+			plugin p = set_iterator_value(it);
+
+			if (manager->iface != NULL && manager->iface->clear != NULL)
+			{
+				/* Call to the clear method of the manager */
+				manager->iface->clear(manager, p);
+			}
+
+			/* Unload the dynamic link library and destroy the plugin */
+			plugin_destroy(p);
+		}
 	}
 
 	/* Clear the name */

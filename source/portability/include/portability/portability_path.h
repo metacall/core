@@ -111,6 +111,8 @@ extern "C" {
 
 PORTABILITY_API size_t portability_path_get_name(const char *path, size_t path_size, char *name, size_t name_size);
 
+PORTABILITY_API size_t portability_path_get_name_canonical(const char *path, size_t path_size, char *name, size_t name_size);
+
 PORTABILITY_API size_t portability_path_get_fullname(const char *path, size_t path_size, char *name, size_t name_size);
 
 PORTABILITY_API size_t portability_path_get_extension(const char *path, size_t path_size, char *extension, size_t extension_size);

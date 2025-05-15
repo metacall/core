@@ -115,7 +115,7 @@ pid_t fork()
 	}
 	else if (result == RTL_CLONE_CHILD)
 	{
-		/* fix stdio */
+		/* Fix stdio */
 		AllocConsole();
 		return 0;
 	}

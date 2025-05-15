@@ -46,7 +46,7 @@ extern "C" {
 
 /* -- Member Data -- */
 
-struct threading_atomic_ref_count_type
+typedef struct
 {
 #if defined(__THREAD_SANITIZER__)
 	uintmax_t count;
@@ -54,11 +54,11 @@ struct threading_atomic_ref_count_type
 #else
 	atomic_uintmax_t count;
 #endif
-};
+} threading_atomic_ref_count_type;
 
 /* -- Type Definitions -- */
 
-typedef struct threading_atomic_ref_count_type *threading_atomic_ref_count;
+typedef threading_atomic_ref_count_type *threading_atomic_ref_count;
 
 /* -- Methods -- */
 

@@ -49,7 +49,7 @@ extern char **environ;
 #include <node_loader/node_loader_trampoline.h>
 
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-	#include <node_loader/node_loader_win32_delay_load.h>
+	#include <detour/detour.h>
 
 	/* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll*/
 	#include <intrin.h>
@@ -619,7 +619,7 @@ typedef struct node_loader_impl_startup_args_type
 		}
 
 		/* Get node impl pointer */
-		ssize_t node_impl_ptr_length = snprintf(NULL, 0, "%p", (void *)node_impl);
+		ssize_t node_impl_ptr_length = snprintf(NULL, 0, "%" PRIxPTR, (uintptr_t)(node_impl));
 
 		if (node_impl_ptr_length <= 0)
 		{
@@ -636,10 +636,10 @@ typedef struct node_loader_impl_startup_args_type
 			return 1;
 		}
 
-		snprintf(node_impl_ptr_str, node_impl_ptr_str_size, "%p", (void *)node_impl);
+		snprintf(node_impl_ptr_str, node_impl_ptr_str_size, "%" PRIxPTR, (uintptr_t)(node_impl));
 
 		/* Get register pointer */
-		ssize_t register_ptr_length = snprintf(NULL, 0, "%p", (void *)&node_loader_impl_register);
+		ssize_t register_ptr_length = snprintf(NULL, 0, "%" PRIxPTR, (uintptr_t)(&node_loader_impl_register));
 
 		if (register_ptr_length <= 0)
 		{
@@ -656,7 +656,7 @@ typedef struct node_loader_impl_startup_args_type
 			return 1;
 		}
 
-		snprintf(register_ptr_str, register_ptr_str_size, "%p", (void *)&node_loader_impl_register);
+		snprintf(register_ptr_str, register_ptr_str_size, "%" PRIxPTR, (uintptr_t)(&node_loader_impl_register));
 
 		return 0;
 	}
@@ -704,8 +704,8 @@ struct loader_impl_node_type
 	/* TODO: This implementation won't work for multi-isolate environments. We should test it. */
 	std::thread::id js_thread_id;
 
-	int64_t base_active_handles;
-	std::atomic_int64_t extra_active_handles;
+	uint64_t base_active_handles;
+	std::atomic_uint64_t extra_active_handles;
 	uv_prepare_t destroy_prepare;
 	uv_check_t destroy_check;
 	std::atomic_bool event_loop_empty;
@@ -805,23 +805,6 @@ typedef struct loader_impl_napi_to_value_callback_closure_type
 
 } * loader_impl_napi_to_value_callback_closure;
 
-class loader_impl_napi_constructor
-{
-public:
-	loader_impl_napi_constructor()
-	{
-		if (metacall_link_register("napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Node loader failed register the link hook");
-		}
-	}
-
-	~loader_impl_napi_constructor() {}
-};
-
-/* Initializer of napi_register_module_v1 */
-static loader_impl_napi_constructor loader_impl_napi_ctor;
-
 /* Type conversion */
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
 
@@ -891,7 +874,7 @@ static void node_loader_impl_thread_log(void *data);
 static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg);
 #endif
 
-static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
+static uint64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 
 static void node_loader_impl_try_destroy(loader_impl_node node_impl);
 
@@ -899,6 +882,7 @@ static void node_loader_impl_try_destroy(loader_impl_node node_impl);
 /* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll */
 static HMODULE node_loader_node_dll_handle = NULL;
 static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Implement W version too? */
+static detour_handle node_module_handle_a_handle = NULL;
 #endif
 
 /* -- Methods -- */
@@ -935,11 +919,34 @@ static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Impl
 
 void node_loader_impl_register_linked_bindings()
 {
+	/*
+	* For now napi_module_register won't be deprecated: https://github.com/nodejs/node/issues/56153
+	* If this changes, we can investigate the alternative approach.
+	*/
+#if defined(_MSC_VER)
+	#pragma warning(push)
+	#pragma warning(disable : 4996)
+#elif defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 	/* Initialize Node Loader Trampoline */
 	node_loader_impl_register_module("node_loader_trampoline_module", node_loader_trampoline_initialize);
 
 	/* Initialize Node Loader Port */
 	node_loader_impl_register_module("node_loader_port_module", node_loader_port_initialize);
+
+#if defined(_MSC_VER)
+	#pragma warning(pop)
+#elif defined(__clang__)
+	#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic pop
+#endif
 }
 
 void node_loader_impl_exception(napi_env env, napi_status status)
@@ -3690,8 +3697,43 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-	node_loader_node_dll_handle = GetModuleHandle(NODEJS_LIBRARY_NAME);
-	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table("kernel32.dll", "GetModuleHandleA", &get_module_handle_a_hook);
+	{
+		/* As the library handle is correctly resolved here, either to executable, library of the executable,
+		or the loader dependency we can directly get the handle of this dependency */
+		dynlink node_library = loader_impl_dependency(node_impl->impl, "node");
+
+		node_loader_node_dll_handle = static_cast<HMODULE>(dynlink_get_impl(node_library));
+
+		if (node_loader_node_dll_handle == NULL)
+		{
+			napi_throw_error(env, nullptr, "Failed to initialize the hooking against node extensions load mechanism");
+			return NULL;
+		}
+
+		detour d = detour_create(metacall_detour());
+
+		node_module_handle_a_handle = detour_load_file(d, "kernel32.dll");
+
+		if (node_module_handle_a_handle == NULL)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism");
+		}
+		else
+		{
+			typedef HMODULE (*get_module_handle_a_type)(_In_opt_ LPCSTR);
+
+			union
+			{
+				get_module_handle_a_type *trampoline;
+				void (**ptr)(void);
+			} cast = { &get_module_handle_a_ptr };
+
+			if (detour_replace(d, node_module_handle_a_handle, "GetModuleHandleA", (void (*)(void))(&get_module_handle_a_hook), cast.ptr) != 0)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandle for hooking node extension load mechanism");
+			}
+		}
+	}
 #endif
 
 	/* On host mode, register delayed paths */
@@ -3993,6 +4035,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 		/* Result will never be defined properly */
 		node_impl->result = 0;
+
+		if (metacall_link_register_loader(impl, "node", "napi_register_module_v1", (void (*)(void))(&node_loader_port_initialize)) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Node Loader failed to hook napi_register_module_v1");
+		}
 	}
 
 	/* Register initialization */
@@ -4026,7 +4073,7 @@ napi_value node_loader_impl_register_bootstrap_startup(loader_impl_node node_imp
 	argv[3] = node_loader_trampoline_initialize_object(env);
 
 	/* Set the values */
-	for (size_t iterator = 0; iterator < 4; ++iterator)
+	for (uint32_t iterator = 0; iterator < 4; ++iterator)
 	{
 		status = napi_set_element(env, v, iterator, argv[iterator]);
 		node_loader_impl_exception(env, status);
@@ -4326,7 +4373,7 @@ static void node_loader_impl_destroy_cb(loader_impl_node node_impl)
 	node_loader_impl_print_handles(node_impl);
 #endif
 
-	if (node_impl->event_loop_empty.load() == false && node_loader_impl_user_async_handles_count(node_impl) <= 0)
+	if (node_impl->event_loop_empty.load() == false && node_loader_impl_user_async_handles_count(node_impl) == 0)
 	{
 		loader_impl_handle_safe_cast<uv_prepare_t> destroy_prepare_cast = { NULL };
 		loader_impl_handle_safe_cast<uv_check_t> destroy_check_cast = { NULL };
@@ -4379,7 +4426,7 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe_
 	node_loader_impl_exception(env, status);
 
 	/* Check if there are async handles, destroy if the queue is empty, otherwise request the destroy */
-	if (node_loader_impl_user_async_handles_count(node_impl) <= 0 || node_impl->event_loop_empty.load() == true)
+	if (node_loader_impl_user_async_handles_count(node_impl) == 0 || node_impl->event_loop_empty.load() == true)
 	{
 		node_loader_impl_destroy_safe_impl(node_impl, env);
 		destroy_safe->has_finished = true;
@@ -4411,7 +4458,7 @@ static inline int uv__queue_empty(const struct node_loader_impl_uv__queue *q)
 #if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
 {
-	int64_t *async_count = static_cast<int64_t *>(arg);
+	uint64_t *async_count = static_cast<uint64_t *>(arg);
 
 	if (uv_is_active(handle) && !uv_is_closing(handle))
 	{
@@ -4427,11 +4474,11 @@ void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
 }
 #endif
 
-int64_t node_loader_impl_async_closing_handles_count(loader_impl_node node_impl)
+uint64_t node_loader_impl_async_closing_handles_count(loader_impl_node node_impl)
 {
 #if defined(WIN32) || defined(_WIN32)
-	return (int64_t)(node_impl->thread_loop->pending_reqs_tail != NULL) +
-		   (int64_t)(node_impl->thread_loop->endgame_handles != NULL);
+	return (uint64_t)(node_impl->thread_loop->pending_reqs_tail != NULL) +
+		   (uint64_t)(node_impl->thread_loop->endgame_handles != NULL);
 #else
 	union
 	{
@@ -4441,49 +4488,66 @@ int64_t node_loader_impl_async_closing_handles_count(loader_impl_node node_impl)
 
 	uv__queue_cast.data = (void *)&node_impl->thread_loop->pending_queue;
 
-	return (int64_t)(!uv__queue_empty(uv__queue_cast.ptr)) +
-		   (int64_t)(node_impl->thread_loop->closing_handles != NULL);
+	return (uint64_t)(!uv__queue_empty(uv__queue_cast.ptr)) +
+		   (uint64_t)(node_impl->thread_loop->closing_handles != NULL);
 #endif
 }
 
-int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
+uint64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 {
 #if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	int64_t active_handles = 0;
+	uint64_t active_handles = 0;
 	uv_walk(node_impl->thread_loop, node_loader_impl_walk_async_handles_count, (void *)&active_handles);
 
 	return active_handles +
-		   (int64_t)(node_impl->thread_loop->active_reqs.count > 0) +
+		   (uint64_t)(node_impl->thread_loop->active_reqs.count > 0) +
 		   node_loader_impl_async_closing_handles_count(node_impl);
 #else
-	int64_t active_handles = (int64_t)node_impl->thread_loop->active_handles +
-							 (int64_t)(node_impl->thread_loop->active_reqs.count > 0) +
-							 node_loader_impl_async_closing_handles_count(node_impl);
+	uint64_t active_handles = (uint64_t)node_impl->thread_loop->active_handles +
+							  (uint64_t)(node_impl->thread_loop->active_reqs.count > 0) +
+							  node_loader_impl_async_closing_handles_count(node_impl);
 	return active_handles;
 #endif
 }
 
-int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
+uint64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 {
-	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
-	int64_t extra_active_handles = node_impl->extra_active_handles.load();
+	uint64_t active_handles = node_loader_impl_async_handles_count(node_impl);
+	uint64_t extra_active_handles = node_impl->extra_active_handles.load();
+	uint64_t base_active_handles = node_impl->base_active_handles;
 
 	/* TODO: Uncomment for debugging handles */
 	/*
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	int64_t closing = node_loader_impl_async_closing_handles_count(node_impl);
+	uint64_t closing = node_loader_impl_async_closing_handles_count(node_impl);
 
 	printf("[active_handles] - [base_active_handles] - [extra_active_handles] + [active_reqs] + [closing]\n");
-	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +    %" PRId64 " [> 0]    +    %" PRId64 "\n",
-		(int64_t)node_impl->thread_loop->active_handles,
-		node_impl->base_active_handles,
+	printf("       %" PRIu64 "        -           %" PRIu64 "          -            %" PRIu64 "           +    %" PRIu64 " [> 0]    +    %" PRIu64 "\n",
+		(uint64_t)node_impl->thread_loop->active_handles,
+		base_active_handles,
 		extra_active_handles,
-		(int64_t)node_impl->thread_loop->active_reqs.count,
+		(uint64_t)node_impl->thread_loop->active_reqs.count,
 		closing);
 #endif
 */
 
-	return active_handles - node_impl->base_active_handles - extra_active_handles;
+	/* Check for overflow */
+	uint64_t total_base_handles = base_active_handles + extra_active_handles;
+
+	if (total_base_handles < base_active_handles)
+	{
+		/* Overflow occurred */
+		return UINT64_MAX;
+	}
+
+	/* Check for underflow */
+	if (active_handles < total_base_handles)
+	{
+		/* Underflow occurred */
+		return 0;
+	}
+
+	return active_handles - total_base_handles;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
@@ -4492,8 +4556,8 @@ void node_loader_impl_print_handles(loader_impl_node node_impl)
 
 	/* TODO: Uncomment for debugging handles */
 	/*
-	printf("Number of active handles: %" PRId64 "\n", node_loader_impl_async_handles_count(node_impl));
-	printf("Number of user active handles: %" PRId64 "\n", node_loader_impl_user_async_handles_count(node_impl));
+	printf("Number of active handles: %" PRIu64 "\n", node_loader_impl_async_handles_count(node_impl));
+	printf("Number of user active handles: %" PRIu64 "\n", node_loader_impl_user_async_handles_count(node_impl));
 	uv_print_active_handles(node_impl->thread_loop, stdout);
 	fflush(stdout);
 	*/
@@ -4626,6 +4690,20 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	/* Wait for node log thread to finish */
 	uv_thread_join(&node_impl->thread_log_id);
+#endif
+
+	/* On Windows, destroy the node extension hooking mechanism */
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+	{
+		if (node_module_handle_a_handle != NULL)
+		{
+			detour d = detour_create(metacall_detour());
+
+			detour_unload(d, node_module_handle_a_handle);
+
+			node_module_handle_a_handle = NULL;
+		}
+	}
 #endif
 
 	/* Print NodeJS execution result */

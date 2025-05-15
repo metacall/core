@@ -108,6 +108,15 @@ target_compile_options(${target}
 )
 
 #
+# Compile features
+#
+
+target_compile_features(${target}
+	PRIVATE
+	cxx_std_17
+)
+
+#
 # Linker options
 #
 
@@ -122,6 +131,7 @@ target_link_options(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+	WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 )
 
 #
@@ -139,7 +149,6 @@ add_dependencies(${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
-	WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 )
 
 include(TestEnvironmentVariables)

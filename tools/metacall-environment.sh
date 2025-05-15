@@ -30,11 +30,11 @@ INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
 INSTALL_RAPIDJSON=0
-INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_NETCORE5=0
 INSTALL_NETCORE7=0
+INSTALL_NETCORE8=0
 INSTALL_V8=0
 INSTALL_V8REPO=0
 INSTALL_V8REPO58=0
@@ -250,9 +250,9 @@ sub_rapidjson(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		git clone https://github.com/miloyip/rapidjson.git
+		git clone https://github.com/Tencent/rapidjson.git
 		cd rapidjson
-		git checkout ab1842a2dae061284c0a62dca1cc6d5e7e37e346
+		git checkout 24b5e7a8b27f42fa16b96fc70aade9106cf7102f
 		mkdir build
 		cd build
 		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
@@ -260,12 +260,6 @@ sub_rapidjson(){
 		$SUDO_CMD make install
 		cd ../.. && rm -rf ./rapidjson
 	fi
-}
-
-# FuncHook
-sub_funchook(){
-	echo "configure funchook"
-
 }
 
 # NetCore
@@ -390,6 +384,20 @@ sub_netcore7(){
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache dotnet7-sdk
+		fi
+	fi
+}
+
+# NetCore 8
+sub_netcore8(){
+	echo "configure netcore 8"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache dotnet8-sdk
 		fi
 	fi
 }
@@ -917,9 +925,6 @@ sub_install(){
 	if [ $INSTALL_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
-	if [ $INSTALL_FUNCHOOK = 1 ]; then
-		sub_funchook
-	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
 	fi
@@ -931,6 +936,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NETCORE7 = 1 ]; then
 		sub_netcore7
+	fi
+	if [ $INSTALL_NETCORE8 = 1 ]; then
+		sub_netcore8
 	fi
 	if [ $INSTALL_V8 = 1 ]; then
 		sub_v8
@@ -1035,13 +1043,13 @@ sub_options(){
 			echo "netcore 7 selected"
 			INSTALL_NETCORE7=1
 		fi
+		if [ "$option" = 'netcore8' ]; then
+			echo "netcore 8 selected"
+			INSTALL_NETCORE8=1
+		fi
 		if [ "$option" = 'rapidjson' ]; then
 			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
-		fi
-		if [ "$option" = 'funchook' ]; then
-			echo "funchook selected"
-			INSTALL_FUNCHOOK=1
 		fi
 		if [ "$option" = 'v8' ] || [ "$option" = 'v8rep54' ]; then
 			echo "v8 selected"
@@ -1148,8 +1156,8 @@ sub_help() {
 	echo "	netcore2"
 	echo "	netcore5"
 	echo "	netcore7"
+	echo "	netcore8"
 	echo "	rapidjson"
-	echo "	funchook"
 	echo "	v8"
 	echo "	v8rep51"
 	echo "	v8rep54"

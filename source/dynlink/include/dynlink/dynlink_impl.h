@@ -37,6 +37,15 @@ extern "C" {
 
 /**
 *  @brief
+*    Dynamically linked shared object handle prefix implementation (normally "lib")
+*
+*  @return
+*    A const string reference to the prefix depending on the OS implementation
+*/
+DYNLINK_API const char *dynlink_impl_prefix(void);
+
+/**
+*  @brief
 *    Dynamically linked shared object handle extension implementation
 *
 *  @return
@@ -51,19 +60,19 @@ DYNLINK_API const char *dynlink_impl_extension(void);
 *  @param[in] name
 *    Name of dynamically linked shared object
 *
-*  @param[out] name_impl
-*    Pointer to the dynamically linked shared object handle
+*  @param[out] destination
+*    Pointer to string where final platform dependant name will be stored
 *
 *  @param[in] size
-*    Size of string @name_impl
+*    Size of string @destination
 */
-DYNLINK_API void dynlink_impl_get_name(dynlink_name name, dynlink_name_impl name_impl, size_t size);
+DYNLINK_API void dynlink_impl_get_name(const char *name, dynlink_path destination, size_t size);
 
 /**
 *  @brief
 *    Load a dynamically linked shared object implementation
 *
-*  @param[in] name
+*  @param[in] handle
 *    Pointer to the dynamically linked shared object handle
 *
 *  @return
@@ -90,7 +99,7 @@ DYNLINK_API dynlink_impl dynlink_impl_load(dynlink handle);
 *  @return
 *    Returns zero on correct dynamic linking, distinct from zero otherwise
 */
-DYNLINK_API int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address);
+DYNLINK_API int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, const char *symbol_name, dynlink_symbol_addr *symbol_address);
 
 /**
 *  @brief

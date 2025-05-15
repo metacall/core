@@ -19,7 +19,7 @@ All external code and licenses used by **METACALL** are always wrapped into plug
     - [2. Serials](#2-serials)
         - [2.1 RapidJSON](#21-rapidjson)
     - [3. Detours](#3-detours)
-        - [3.1 FuncHook](#31-funchook)
+        - [3.1 PLTHook](#31-plthook)
     - [4. Ports](#4-ports)
         - [4.1 Swig](#41-swig)
 
@@ -80,11 +80,11 @@ All external code and licenses used by **METACALL** are always wrapped into plug
 
 ## 3. Detours
 
-### 3.1 FuncHook
+### 3.1 PLTHook
 
-| Software     | License                                                                                             |
-| :----------: | :-------------------------------------------------------------------------------------------------: |
-| **FuncHook** | [GPLv2 or later with a GPL linking exception](https://github.com/kubo/funchook/blob/master/LICENSE) |
+| Software     | License                                                                                      |
+| :----------: | :------------------------------------------------------------------------------------------: |
+| **PLTHook**  | [2-clause BSD-style license](https://github.com/metacall/plthook?tab=readme-ov-file#license) |
 
 ## 4. Ports
 

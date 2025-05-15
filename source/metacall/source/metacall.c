@@ -47,7 +47,7 @@
 
 #define METACALL_ARGS_SIZE 0x10
 #define METACALL_SERIAL	   "rapid_json"
-#define METACALL_DETOUR	   "funchook"
+#define METACALL_DETOUR	   "plthook"
 
 /* -- Type Definitions -- */
 
@@ -199,19 +199,13 @@ plugin_extension_error:
 void metacall_detour_destructor(void)
 {
 	/* Destroy link */
-	if (metacall_link_destroy() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link destruction");
-	}
+	metacall_link_destroy();
 
 	/* Destroy fork */
 #ifdef METACALL_FORK_SAFE
 	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
 	{
-		if (metacall_fork_destroy() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
-		}
+		metacall_fork_destroy();
 	}
 #endif /* METACALL_FORK_SAFE */
 
@@ -260,12 +254,6 @@ int metacall_initialize(void)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour initialization");
 			return 1;
-		}
-
-		/* Initialize link */
-		if (metacall_link_initialize() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link initialization");
 		}
 
 #ifdef METACALL_FORK_SAFE
@@ -322,11 +310,18 @@ int metacall_initialize(void)
 		}
 	}
 
+	/* Initialize loader subsystem */
 	if (loader_initialize() != 0)
 	{
 		configuration_destroy();
 
 		return 1;
+	}
+
+	/* Initialize link */
+	if (metacall_link_initialize() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link initialization");
 	}
 
 	/* Load core plugins */
@@ -351,24 +346,10 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 
 	while (!(initialize_config[index].tag == NULL && initialize_config[index].options == NULL))
 	{
-		loader_impl impl = loader_get_impl(initialize_config[index].tag);
-
-		if (impl == NULL)
+		if (loader_set_options(initialize_config[index].tag, initialize_config[index].options) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to find '%s_loader'", initialize_config[index].tag);
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to set options of '%s_loader'", initialize_config[index].tag);
 			return 1;
-		}
-
-		loader_set_options(initialize_config[index].tag, initialize_config[index].options);
-
-		/* If we are initializing a loader as a host, we must initialize it */
-		if (loader_get_option_host(initialize_config[index].tag))
-		{
-			if (loader_initialize_host(initialize_config[index].tag) != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to initialize '%s_loader' as host", initialize_config[index].tag);
-				return 1;
-			}
 		}
 
 		++index;

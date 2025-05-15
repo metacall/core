@@ -24,15 +24,21 @@
 
 #include <log/log.h>
 
+#include <vector>
+
 typedef char key_str[7];
 
 static size_t iterator_counter = 0;
+static std::vector<int> order_iterate;
+static std::vector<int> order_iterator;
 
 int map_cb_iterate_str_to_int(map m, map_key key, map_value value, map_cb_iterate_args args)
 {
 	if (m && args == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "%s -> %d", (char *)key, *((int *)(value)));
+
+		order_iterate.push_back(*((int *)(value)));
 
 		++iterator_counter;
 
@@ -107,6 +113,25 @@ TEST_F(adt_map_test, map_int)
 	map_iterate(m, &map_cb_iterate_str_to_int, NULL);
 
 	EXPECT_EQ((size_t)iterator_counter, (size_t)value_array_size * 2);
+
+	/* Iterators */
+	iterator_counter = 0;
+
+	for (map_iterator it = map_iterator_begin(m); map_iterator_end(&it) != 0; map_iterator_next(it))
+	{
+		char *key = (char *)map_iterator_key(it);
+		int *value = (int *)map_iterator_value(it);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "[%s -> %d]", (char *)key, *((int *)(value)));
+
+		order_iterator.push_back(*((int *)(value)));
+
+		iterator_counter++;
+	}
+
+	EXPECT_EQ((size_t)iterator_counter, (size_t)value_array_size * 2);
+
+	EXPECT_EQ((bool)true, (bool)(order_iterator == order_iterate));
 
 	/* Get value */
 	for (size_t i = 0; i < key_array_size; ++i)

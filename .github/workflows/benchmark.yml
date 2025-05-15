@@ -56,12 +56,10 @@ jobs:
 
       - name: Build 
         working-directory: ./build
-        # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
           if [ "$(uname)" == "Darwin" ]; then
             . .env
           fi
-          cmake -DOPTION_FORK_SAFE=OFF  ..
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: release benchmarks

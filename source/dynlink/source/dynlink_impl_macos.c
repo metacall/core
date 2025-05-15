@@ -32,7 +32,18 @@
 
 #include <unistd.h>
 
+/* -- Member Data -- */
+
+static void *dynlink_impl_global_handle_macos = NULL;
+
 /* -- Methods -- */
+
+const char *dynlink_impl_interface_prefix_macos(void)
+{
+	static const char prefix_macos[] = "lib";
+
+	return prefix_macos;
+}
 
 const char *dynlink_impl_interface_extension_macos(void)
 {
@@ -41,76 +52,71 @@ const char *dynlink_impl_interface_extension_macos(void)
 	return extension_macos;
 }
 
-void dynlink_impl_interface_get_name_macos(dynlink_name name, dynlink_name_impl name_impl, size_t size)
-{
-	strncpy(name_impl, name, size);
-
-	strncat(name_impl, ".", size - 1);
-
-	strncat(name_impl, dynlink_impl_extension(), size - 1);
-}
-
 dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
-
-	unsigned long flags_impl;
-
-	NSObjectFileImage image;
-
 	NSModule impl;
 
-	const char *name = dynlink_get_name_impl(handle);
-
-	NSObjectFileImageReturnCode ret = NSCreateObjectFileImageFromFile(name, &image);
-
-	if (ret != NSObjectFileImageSuccess)
+	if (!DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
 	{
-		char *error;
+		unsigned long flags_impl;
+		NSObjectFileImage image;
+		const char *name = dynlink_get_path(handle);
+		NSObjectFileImageReturnCode ret = NSCreateObjectFileImageFromFile(name, &image);
 
-		switch (ret)
+		if (ret != NSObjectFileImageSuccess)
 		{
-			case NSObjectFileImageAccess:
-				if (access(name, F_OK) == 0)
-				{
-					error = "DynLink error: %s permission denied";
-				}
-				else
-				{
-					error = "DynLink error: %s no such file or directory";
-				}
-			case NSObjectFileImageArch:
-				error = "DynLink error: %s is not built for the current architecture";
-				break;
-			case NSObjectFileImageInappropriateFile:
-			case NSObjectFileImageFormat:
-				error = "DynLink error: %s is not a loadable module";
-				break;
-			default:
-				error = "DynLink error: unknown error for %s";
-				break;
+			char *error;
+
+			switch (ret)
+			{
+				case NSObjectFileImageAccess:
+					if (access(name, F_OK) == 0)
+					{
+						error = "DynLink error: %s permission denied";
+					}
+					else
+					{
+						error = "DynLink error: %s no such file or directory";
+					}
+				case NSObjectFileImageArch:
+					error = "DynLink error: %s is not built for the current architecture";
+					break;
+				case NSObjectFileImageInappropriateFile:
+				case NSObjectFileImageFormat:
+					error = "DynLink error: %s is not a loadable module";
+					break;
+				default:
+					error = "DynLink error: unknown error for %s";
+					break;
+			}
+
+			log_write("metacall", LOG_LEVEL_ERROR, error, name);
+
+			return NULL;
 		}
 
-		log_write("metacall", LOG_LEVEL_ERROR, error, name);
+		DYNLINK_FLAGS_SET(flags_impl, NSLINKMODULE_OPTION_RETURN_ON_ERROR);
 
-		return NULL;
+		if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LOCAL))
+		{
+			DYNLINK_FLAGS_ADD(flags_impl, NSLINKMODULE_OPTION_PRIVATE);
+		}
+
+		if (!DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LAZY))
+		{
+			DYNLINK_FLAGS_ADD(flags_impl, NSLINKMODULE_OPTION_BINDNOW);
+		}
+
+		impl = NSLinkModule(image, name, flags_impl);
+
+		NSDestroyObjectFileImage(image);
 	}
-
-	DYNLINK_FLAGS_SET(flags_impl, NSLINKMODULE_OPTION_RETURN_ON_ERROR);
-
-	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LOCAL))
+	else
 	{
-		DYNLINK_FLAGS_ADD(flags_impl, NSLINKMODULE_OPTION_PRIVATE);
+		/* We return this for identifying the global handle when loading symbols of the current process */
+		impl = (void *)(&dynlink_impl_global_handle_macos);
 	}
-
-	if (!DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LAZY))
-	{
-		DYNLINK_FLAGS_ADD(flags_impl, NSLINKMODULE_OPTION_BINDNOW);
-	}
-
-	impl = NSLinkModule(image, name, flags_impl);
-
-	NSDestroyObjectFileImage(image);
 
 	if (impl == NULL)
 	{
@@ -130,12 +136,31 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
+int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
-	NSSymbol symbol = NSLookupSymbolInModule(impl, name);
-	void *symbol_addr = NSAddressOfSymbol(symbol);
+	dynlink_flags flags = dynlink_get_flags(handle);
+	NSSymbol symbol;
+	void *symbol_addr;
 
 	(void)handle;
+
+	/* Skip unlink when using global handle for loading symbols of the current process */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		/* Global context, use NSLookupAndBindSymbol */
+		if (!NSIsSymbolNameDefined(name))
+		{
+			return 1;
+		}
+
+		symbol = NSLookupAndBindSymbol(name);
+	}
+	else
+	{
+		symbol = NSLookupSymbolInModule(impl, name);
+	}
+
+	symbol_addr = NSAddressOfSymbol(symbol);
 
 	dynlink_symbol_cast(void *, symbol_addr, *addr);
 
@@ -144,16 +169,30 @@ int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, dynli
 
 int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
 {
+	dynlink_flags flags = dynlink_get_flags(handle);
+
 	(void)handle;
 
+	/* Skip unlink when using global handle for loading symbols of the current process */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		return 0;
+	}
+
+#if defined(__MEMORYCHECK__) || defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+	(void)impl;
+	return 0;
+#else
 	return NSUnLinkModule(impl, 0) == TRUE ? 0 : 1;
+#endif
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_macos = {
+		&dynlink_impl_interface_prefix_macos,
 		&dynlink_impl_interface_extension_macos,
-		&dynlink_impl_interface_get_name_macos,
 		&dynlink_impl_interface_load_macos,
 		&dynlink_impl_interface_symbol_macos,
 		&dynlink_impl_interface_unload_macos,

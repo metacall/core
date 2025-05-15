@@ -32,6 +32,17 @@
 
 /* -- Methods -- */
 
+const char *dynlink_impl_interface_prefix_win32(void)
+{
+#if defined(__MINGW32__) || defined(__MINGW64__)
+	static const char prefix_win32[] = "lib";
+#else
+	static const char prefix_win32[] = "";
+#endif
+
+	return prefix_win32;
+}
+
 const char *dynlink_impl_interface_extension_win32(void)
 {
 	static const char extension_win32[] = "dll";
@@ -39,24 +50,19 @@ const char *dynlink_impl_interface_extension_win32(void)
 	return extension_win32;
 }
 
-void dynlink_impl_interface_get_name_win32(dynlink_name name, dynlink_name_impl name_impl, size_t size)
-{
-#if defined(__MINGW32__) || defined(__MINGW64__)
-	strncpy(name_impl, "lib", size);
-
-	strncat(name_impl, name, size - 1);
-#else
-	strncpy(name_impl, name, size);
-#endif
-
-	strncat(name_impl, ".", size - 1);
-
-	strncat(name_impl, dynlink_impl_extension(), size - 1);
-}
-
 dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 {
-	HANDLE impl = LoadLibrary(dynlink_get_name_impl(handle));
+	HMODULE impl;
+	dynlink_flags flags = dynlink_get_flags(handle);
+
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		impl = GetModuleHandle(NULL);
+	}
+	else
+	{
+		impl = LoadLibrary(dynlink_get_path(handle));
+	}
 
 	if (impl == NULL)
 	{
@@ -66,7 +72,7 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 		size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 			NULL, error_id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&message_buffer, 0, NULL);
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load: %s with error code [%d]: %.*s", dynlink_get_name_impl(handle), error_id, size - 1, (const char *)message_buffer);
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load: %s with error code [%d]: %.*s", dynlink_get_path(handle), error_id, size - 1, (const char *)message_buffer);
 
 		LocalFree(message_buffer);
 
@@ -76,7 +82,7 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
+int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	FARPROC proc_addr = GetProcAddress(impl, name);
 
@@ -89,16 +95,30 @@ int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynli
 
 int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 {
+	dynlink_flags flags = dynlink_get_flags(handle);
+
 	(void)handle;
 
+	/* Skip unlink when using global handle for loading symbols of the current process */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		return 0;
+	}
+
+#if defined(__MEMORYCHECK__) || defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+	(void)impl;
+	return 0;
+#else
 	return (FreeLibrary(impl) == FALSE);
+#endif
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_win32 = {
+		&dynlink_impl_interface_prefix_win32,
 		&dynlink_impl_interface_extension_win32,
-		&dynlink_impl_interface_get_name_win32,
 		&dynlink_impl_interface_load_win32,
 		&dynlink_impl_interface_symbol_win32,
 		&dynlink_impl_interface_unload_win32,

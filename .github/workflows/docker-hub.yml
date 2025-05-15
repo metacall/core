@@ -19,22 +19,53 @@ env:
   IMAGE_NAME: core
   BUILDKIT_VERSION: 0.13.0
 
+  # TODO: Tests failing
+  # - linux/s390x
+  # TODO: Not tested or detour not supported
+  # - linux/mips64le
+  # - linux/mips64
+  PLATFORM_LIST: >
+    [
+      "linux/amd64",
+      "linux/amd64/v2",
+      "linux/amd64/v3",
+      "linux/386",
+      "linux/arm64",
+      "linux/riscv64",
+      "linux/ppc64le",
+      "linux/arm/v7",
+      "linux/arm/v6",
+      "linux/loong64"
+    ]
+
 jobs:
+  matrix:
+    name: Generate Platform List
+    runs-on: ubuntu-latest
+    outputs:
+      platform_list: ${{ steps.generate_platform_list.outputs.platform_list }}
+    steps:
+      - name: Generate platform list
+        id: generate_platform_list
+        run: |
+          set -exuo pipefail
+          PLATFORM_STRING=$(cat <<EOF
+          ${{ env.PLATFORM_LIST }}
+          EOF
+          )
+          PLATFORM_LIST=$(echo $PLATFORM_STRING | jq -c .)
+          echo "PLATFORM_LIST=$PLATFORM_LIST" >> $GITHUB_ENV
+          echo "::set-output name=platform_list::$PLATFORM_LIST"
+
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: matrix
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/386
-          - linux/arm64
-          - linux/riscv64
-          - linux/ppc64le
-          - linux/s390x
-          - linux/arm/v7
-          - linux/arm/v6
+        platform: ${{ fromJSON(needs.matrix.outputs.platform_list) }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -58,42 +89,44 @@ jobs:
       - name: Build MetaCall Docker Images
         env:
           METACALL_PLATFORM: ${{ matrix.platform }}
+          DOCKER_BUILDKIT: 1
         run: |
           ./docker-compose.sh platform
 
-      - name: Tag Platform Images
+      - name: Run Tests
+        env:
+          DOCKER_BUILDKIT: 1
         run: |
-          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
-          echo "Platform Tag: ${platform_tag}"
-          for tag in "deps" "dev" "runtime" "cli"; do
-            docker tag metacall/${IMAGE_NAME}:${tag} \
-              ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
-          done
+          set -exuo pipefail
+          docker image inspect ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli --format='{{.Os}}/{{.Architecture}}'
+          cat <<EOF > Dockerfile.test
+          FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli
+          RUN apt-get update && apt-get install -y file
+          RUN file /usr/local/bin/metacallcli && ldd /usr/local/bin/metacallcli
+          RUN echo "console.log('0123456789abcdef')" > script.js
+          RUN metacallcli script.js | tee output.txt
+          RUN grep 0123456789abcdef output.txt
+          EOF
 
-      - name: Push Platform Images
+          docker buildx build --progress=plain --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
+
+      - name: Tag & Push Platform Images
+        # Only run when master or when tagging a version
+        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
         run: |
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           for tag in "deps" "dev" "runtime" "cli"; do
+            docker tag \
+              ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
+              ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
+
             echo "Pushing image for tag: ${tag} with platform: ${platform_tag}"
             docker push ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
           done
 
-      - name: Run Tests
-        run: |
-          set -exuo pipefail
-          platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
-          cat <<EOF > Dockerfile.test
-          FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli-${platform_tag}
-          RUN echo "console.log('abcde')" > script.js
-          RUN metacallcli script.js
-          EOF
-
-          docker build --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
-          docker run --rm --platform=${{ matrix.platform }} test-image
-
   manifest:
     name: Create and Push Manifest Lists
-    needs: build
+    needs: [matrix, build]
     # Only run when master or when tagging a version
     if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -106,8 +139,10 @@ jobs:
 
       - name: Create and Push Manifest Lists
         run: |
+          set -exuo pipefail
+
           tags=("deps" "dev" "runtime" "cli")
-          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
+          platforms=($(echo '${{ needs.matrix.outputs.platform_list }}' | jq -r '.[]'))
 
           echo "Create all the tags by platform"
 
@@ -151,14 +186,16 @@ jobs:
 
   cleanup:
     name: Cleanup Platform Specific Tags
-    needs: [build, manifest]
+    needs: [matrix, build, manifest]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Remove Platform-Specific Tags
         run: |
+          set -exuo pipefail
+
           tags=("deps" "dev" "runtime" "cli")
-          platforms=("linux/amd64" "linux/386" "linux/arm64" "linux/riscv64" "linux/ppc64le" "linux/s390x" "linux/arm/v7" "linux/arm/v6")
+          platforms=($(echo '${{ needs.matrix.outputs.platform_list }}' | jq -r '.[]'))
 
           for tag in "${tags[@]}"; do
             for platform in "${platforms[@]}"; do

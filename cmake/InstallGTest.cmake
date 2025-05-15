@@ -24,7 +24,7 @@
 
 if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	if(NOT GTEST_VERSION OR USE_BUNDLED_GTEST)
-		set(GTEST_VERSION 1.11.0)
+		set(GTEST_VERSION 1.16.0)
 	endif()
 
 	find_package(Threads REQUIRED)
@@ -38,7 +38,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	# Import Google Test Framework
 	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
-		GIT_TAG release-${GTEST_VERSION}
+		GIT_TAG v${GTEST_VERSION}
 		CMAKE_ARGS
 			-Dgtest_build_samples=OFF
 			-Dgtest_build_tests=OFF
@@ -65,17 +65,11 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		set(GTEST_LIB_SUFFIX "lib")
 		set(GTEST_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
 		set(GMOCK_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
-		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-			set(GTEST_LIB_DEBUG "d")
-		else()
-			set(GTEST_LIB_DEBUG "")
-		endif()
 	else()
 		set(GTEST_LIB_PREFIX "lib")
 		set(GTEST_LIB_SUFFIX "a")
 		set(GTEST_LIBS_DIR "${binary_dir}/lib")
 		set(GMOCK_LIBS_DIR "${binary_dir}/lib")
-		set(GTEST_LIB_DEBUG "")
 	endif()
 
 	# Define Paths
@@ -85,11 +79,11 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	)
 
 	set(GTEST_LIBRARY
-		"${GTEST_LIBS_DIR}/${GTEST_LIB_PREFIX}gtest${GTEST_LIB_DEBUG}.${GTEST_LIB_SUFFIX}"
+		"${GTEST_LIBS_DIR}/${GTEST_LIB_PREFIX}gtest.${GTEST_LIB_SUFFIX}"
 	)
 
 	set(GMOCK_LIBRARY
-		"${GMOCK_LIBS_DIR}/${GTEST_LIB_PREFIX}gmock${GTEST_LIB_DEBUG}.${GTEST_LIB_SUFFIX}"
+		"${GMOCK_LIBS_DIR}/${GTEST_LIB_PREFIX}gmock.${GTEST_LIB_SUFFIX}"
 	)
 
 	set(GTEST_LIBRARIES

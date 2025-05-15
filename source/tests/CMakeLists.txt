@@ -12,7 +12,7 @@ if("${CMAKE_VERSION}" VERSION_LESS "3.11" AND POLICY CMP0037)
 	set_policy(CMP0037 OLD)
 endif()
 
-set(GTEST_VERSION 1.11.0)
+set(GTEST_VERSION 1.16.0)
 
 find_package(GTest ${GTEST_VERSION})
 

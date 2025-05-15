@@ -25,6 +25,8 @@
 
 #include <detour/detour_api.h>
 
+#include <dynlink/dynlink.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,10 +44,13 @@ typedef struct detour_interface_type *detour_interface;
 
 struct detour_interface_type
 {
-	detour_impl_handle (*initialize)(void);
-	int (*install)(detour_impl_handle, void (**)(void), void (*)(void));
-	int (*uninstall)(detour_impl_handle);
-	int (*destroy)(detour_impl_handle);
+	int (*initialize_file)(detour_impl_handle *, const char *);
+	int (*initialize_handle)(detour_impl_handle *, dynlink);
+	int (*initialize_address)(detour_impl_handle *, void (*)(void));
+	int (*enumerate)(detour_impl_handle, unsigned int *, const char **, void ***);
+	int (*replace)(detour_impl_handle, const char *, void (*)(void), void **);
+	const char *(*error)(detour_impl_handle);
+	void (*destroy)(detour_impl_handle);
 };
 
 #ifdef __cplusplus

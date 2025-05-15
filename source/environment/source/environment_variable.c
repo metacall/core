@@ -77,7 +77,7 @@ const char *environment_variable_get(const char *name, const char *default_value
 
 int environment_variable_set(const char *name, const char *value_string)
 {
-#if defined(_WIN32)
+#if defined(WIN32) || defined(_WIN32)
 	return _putenv_s(name, value_string);
 #else
 	return setenv(name, value_string, 1);
