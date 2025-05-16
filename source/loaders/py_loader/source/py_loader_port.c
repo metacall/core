@@ -27,10 +27,6 @@
 
 #include <loader/loader.h>
 
-#ifndef PY_LOADER_PORT_NAME
-	#error "The Python Loader Port must be defined"
-#endif
-
 static const loader_tag py_loader_tag = "py";
 
 static PyObject *py_loader_port_none(void)
@@ -955,26 +951,33 @@ static PyMethodDef metacall_methods[] = {
 	{ NULL, NULL, 0, NULL }
 };
 
-static struct PyModuleDef metacall_definition = {
-	PyModuleDef_HEAD_INIT,
-	"metacall",
-	"A library for providing inter-language foreign function interface calls.",
-	-1,
-	metacall_methods,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
-PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC(void)
+int py_port_initialize(void)
 {
-	static PyObject *module = NULL;
+	static struct PyModuleDef metacall_definition = {
+		PyModuleDef_HEAD_INIT,
+		"py_port_impl_module",
+		"A library for providing inter-language foreign function interface calls.",
+		-1,
+		metacall_methods,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	};
+
+	PyObject *module = PyModule_Create(&metacall_definition);
 
 	if (module == NULL)
 	{
-		module = PyModule_Create(&metacall_definition);
+		return 1;
 	}
 
-	return module;
+	PyObject *sys_modules = PyImport_GetModuleDict();
+
+	if (PyDict_SetItemString(sys_modules, metacall_definition.m_name, module) < 0)
+	{
+		return 1;
+	}
+
+	return 0;
 }

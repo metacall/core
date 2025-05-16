@@ -205,6 +205,49 @@ test_environment_variables(${target}
 )
 
 #
+# External dependencies
+#
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(Python3_FIND_ABI "ON" "ANY" "ANY")
+	find_package(Python3 COMPONENTS Development)
+
+	# Fallback to release if not found
+	if(NOT Python3_Development_FOUND)
+		set(Python3_FIND_ABI)
+		find_package(Python3 COMPONENTS Development REQUIRED)
+	endif()
+else()
+	find_package(Python3 COMPONENTS Development REQUIRED)
+endif()
+
+# Find Python DLL
+include(Portability)
+
+if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_LIBRARIES AND Python3_ROOT_DIR AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+	foreach(library ${Python3_LIBRARIES})
+		if(${library} MATCHES "[^_d][.]lib$")
+			# Get the library path with dll suffix
+			string(REGEX REPLACE "[.]lib$" ".dll" LIB_PATH ${library})
+			# Get the library name
+			get_filename_component(LIB_NAME "${LIB_PATH}" NAME)
+			# Find the library in the Python3 root path
+			find_file(Python3_LIBRARY_NAME_PATH ${LIB_NAME}
+				PATHS ${Python3_ROOT_DIR}
+				NO_DEFAULT_PATH
+			)
+			if(Python3_LIBRARY_NAME_PATH)
+				break()
+			endif()
+		endif()
+	endforeach()
+endif()
+
+if(NOT Python3_LIBRARY_NAME_PATH)
+	set(Python3_LIBRARY_NAME_PATH "${Python3_LIBRARIES}")
+endif()
+
+#
 # Configure test data
 #
 

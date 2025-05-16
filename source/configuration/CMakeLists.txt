@@ -191,6 +191,10 @@ function(configurations_write config_dir config_path)
 			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"node_loader\":\"${config_dir}/node_loader.json\",")
 		endif()
 
+		if(OPTION_BUILD_LOADERS_PY)
+			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"py_loader\":\"${config_dir}/py_loader.json\",")
+		endif()
+
 		#if(OPTION_BUILD_LOADERS_JS)
 		#	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"js_loader\":\"${config_dir}/js_loader.json\",")
 		#endif()

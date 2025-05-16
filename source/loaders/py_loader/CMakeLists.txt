@@ -33,20 +33,22 @@ if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_LIBRARIES AND Python3_ROOT_DIR A
 			# Get the library name
 			get_filename_component(LIB_NAME "${LIB_PATH}" NAME)
 			# Find the library in the Python3 root path
-			find_file(Python3_LIBRARY_NAME ${LIB_NAME}
+			find_file(Python3_LIBRARY_NAME_PATH ${LIB_NAME}
 				PATHS ${Python3_ROOT_DIR}
 				NO_DEFAULT_PATH
 			)
-			if(Python3_LIBRARY_NAME)
+			if(Python3_LIBRARY_NAME_PATH)
 				break()
 			endif()
 		endif()
 	endforeach()
 endif()
 
-if(Python3_LIBRARY_NAME)
+if(Python3_LIBRARY_NAME_PATH)
 	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-	file(COPY "${Python3_LIBRARY_NAME}" DESTINATION ${PROJECT_OUTPUT_DIR})
+	file(COPY "${Python3_LIBRARY_NAME_PATH}" DESTINATION ${PROJECT_OUTPUT_DIR})
+else()
+	set(Python3_LIBRARY_NAME_PATH "${Python3_LIBRARIES}")
 endif()
 
 #
@@ -169,7 +171,10 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${Python3_LIBRARIES} # Python libraries
+
+	# Delay load for MSVC
+	$<$<CXX_COMPILER_ID:MSVC>:${Python3_LIBRARIES}> # Python library
+	$<$<CXX_COMPILER_ID:MSVC>:delayimp>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -183,7 +188,6 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	PY_LOADER_PORT_NAME=$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:lib>py_loader$<$<CONFIG:DEBUG>:d>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
@@ -209,8 +213,12 @@ target_compile_options(${target}
 # Linker options
 #
 
+get_filename_component(Python3_LIBRARY_NAME "${Python3_LIBRARY_NAME_PATH}" NAME)
+
 target_link_options(${target}
 	PRIVATE
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${Python3_LIBRARY_NAME}>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
@@ -233,10 +241,30 @@ install(TARGETS ${target}
 # Runtime (pack Python DLL in windows)
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
-if(Python3_LIBRARY_NAME)
+set(Python3_LIBRARY_DEVELOPMENT "${Python3_LIBRARY_NAME_PATH}")
+
+if(Python3_LIBRARY_NAME_PATH AND PROJECT_OS_FAMILY STREQUAL win32)
 	install(FILES
-		"${Python3_LIBRARY_NAME}"
+		"${Python3_LIBRARY_NAME_PATH}"
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)
+
+	set(Python3_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${Python3_LIBRARY_NAME}")
+else()
+	set(Python3_LIBRARY_INSTALL "${Python3_LIBRARY_NAME_PATH}")
 endif()
+
+#
+# Configuration
+#
+
+# Development
+loader_configuration_begin(py_loader)
+loader_configuration_deps(python "${Python3_LIBRARY_DEVELOPMENT}")
+loader_configuartion_end_development()
+
+# Install
+loader_configuration_begin(py_loader)
+loader_configuration_deps(python "${Python3_LIBRARY_INSTALL}")
+loader_configuartion_end_install()

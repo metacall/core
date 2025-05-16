@@ -27,11 +27,7 @@
 extern "C" {
 #endif
 
-#define PY_LOADER_PORT_NAME_FUNC_IMPL_EXPAND(x) PyInit_##x
-#define PY_LOADER_PORT_NAME_FUNC_IMPL(x)		PY_LOADER_PORT_NAME_FUNC_IMPL_EXPAND(x)
-#define PY_LOADER_PORT_NAME_FUNC				PY_LOADER_PORT_NAME_FUNC_IMPL(PY_LOADER_PORT_NAME)
-
-PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC(void);
+int py_port_initialize(void);
 
 #ifdef __cplusplus
 }

@@ -18,34 +18,91 @@
 #	limitations under the License.
 
 import os
+import re
 import sys
 import json
-import inspect # TODO: Remove this, check the monkey patching
+import ctypes
 
-if sys.platform == 'win32':
-	from metacall.module_win32 import metacall_module_load
-elif sys.platform == 'linux':
-	from metacall.module_linux import metacall_module_load
-elif sys.platform == 'darwin' or sys.platform == 'cygwin':
-	print('\x1b[31m\x1b[1m', 'The platform', sys.platform, 'has not been not tested, but we are using linux module as a fallback.', '\x1b[0m')
-	# TODO: Probably it won't work, but we use it as a fallback, implement other platforms
-	from metacall.module_linux import metacall_module_load
-else:
-	raise ImportError('MetaCall Python Port is not implemented under this platform.')
+def find_files_recursively(root_dir, pattern):
+	regex = re.compile(pattern)
+	matches = []
+	for dirpath, dirnames, filenames in os.walk(root_dir):
+		for filename in filenames:
+			if regex.search(filename):
+				matches.append(os.path.join(dirpath, filename))
+	return matches
+
+def platform_install_paths():
+	if sys.platform == 'win32':
+		return {
+			'paths': [ os.path.join(os.environ.get('LOCALAPPDATA', ''), 'MetaCall', 'metacall') ],
+			'name': r'metacall\.dll'
+		}
+	elif sys.platform == 'darwin':
+		return {
+			'paths': [ '/opt/homebrew/lib/', '/usr/local/lib/' ],
+			'name': r'libmetacall\.dylib'
+		}
+	elif sys.platform == 'linux':
+		return {
+			'paths': [ '/usr/local/lib/', '/gnu/lib/' ],
+			'name': r'libmetacall\.so'
+		}
+	else:
+		raise RuntimeError(f"Platform {sys.platform} not supported")
+
+def search_paths():
+	custom_path = os.environ.get('METACALL_INSTALL_PATH')
+	if custom_path:
+		return {
+			'paths': [ custom_path ],
+			'name': r'^(lib)?metacall(d)?\.(so|dylib|dll)$'
+		}
+
+	return platform_install_paths()
+
+def find_library():
+	search_data = search_paths()
+
+	for path in search_data['paths']:
+		files = find_files_recursively(path, search_data['name'])
+		if files:
+			return files[0]
+
+	raise ImportError("""
+		MetaCall library not found, if you have it in a special folder, define it through METACALL_INSTALL_PATH'.
+		"""
+		+ "Looking for it in the following paths: " + ', '.join(search_data['paths']) + """
+		If you do not have it installed, you have three options:
+			1) Go to https://github.com/metacall/install and install it.
+			2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.
+			3) Be a x10 programmer and compile it by yourself, then define the install folder if it is different from the default in os.environ['METACALL_INSTALL_PATH'].
+	""")
+
+def metacall_module_load():
+	# Check if it is loaded from MetaCall or from Python
+	if 'py_port_impl_module' in sys.modules:
+		return sys.modules['py_port_impl_module']
+
+	# Define the Python host
+	os.environ['METACALL_HOST'] = 'py'
+
+	# Find the shared library
+	library_path = find_library()
+
+	# Load MetaCall
+	lib = ctypes.CDLL(library_path, mode=ctypes.RTLD_GLOBAL)
+
+	# Python Port must have been loaded at this point
+	if 'py_port_impl_module' in sys.modules:
+		return sys.modules['py_port_impl_module']
+	else:
+		raise ImportError(
+			'MetaCall was found but failed to load'
+		)
 
 # Load metacall extension depending on the platform
 module = metacall_module_load()
-
-# Check if library was found and print error message otherwhise
-if module == None:
-	print('\x1b[31m\x1b[1m', 'You do not have MetaCall installed or we cannot find it.', '\x1b[0m')
-	print('\x1b[1m', 'Looking for it in the following paths:', sys.path, '\x1b[0m')
-	print('\x1b[33m\x1b[1m', 'If you do not have it installed, you have three options:', '\x1b[0m')
-	print('\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m')
-	print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m')
-	print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
-	print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
-	raise ImportError('MetaCall Python Port was not found')
 
 # Load from file
 def metacall_load_from_file(tag, paths):

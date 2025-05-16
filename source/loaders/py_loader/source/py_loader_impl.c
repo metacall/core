@@ -192,7 +192,7 @@ static void py_loader_impl_value_invoke_state_finalize(value v, void *data);
 
 static void py_loader_impl_value_ptr_finalize(value v, void *data);
 
-static int py_loader_impl_finalize(loader_impl_py py_impl);
+static int py_loader_impl_finalize(loader_impl impl, loader_impl_py py_impl);
 
 static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_name name, const char *buffer);
 
@@ -2620,19 +2620,22 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_alloc_py_impl;
 	}
 
-	Py_InitializeEx(0);
-
-	if (Py_IsInitialized() == 0)
+	if (loader_impl_get_option_host(impl) == 0)
 	{
-		goto error_init_py;
-	}
+		Py_InitializeEx(0);
+
+		if (Py_IsInitialized() == 0)
+		{
+			goto error_init_py;
+		}
 
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION <= 6
-	if (PyEval_ThreadsInitialized() == 0)
-	{
-		PyEval_InitThreads();
-	}
+		if (PyEval_ThreadsInitialized() == 0)
+		{
+			PyEval_InitThreads();
+		}
 #endif
+	}
 
 	/* Hook the deallocation of PyCFunction */
 	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
@@ -2695,7 +2698,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_inspect;
 	}
 
-	if (PY_LOADER_PORT_NAME_FUNC() == NULL)
+	if (py_port_initialize() != 0)
 	{
 		goto error_after_import;
 	}
@@ -2759,7 +2762,7 @@ error_after_traceback_and_gc:
 #endif
 error_after_argv:
 error_after_sys_executable:
-	(void)py_loader_impl_finalize(py_impl);
+	(void)py_loader_impl_finalize(impl, py_impl);
 error_init_py:
 	free(py_impl);
 error_alloc_py_impl:
@@ -4140,7 +4143,7 @@ void py_loader_impl_sys_path_print(PyObject *sys_path_list)
 }
 #endif
 
-int py_loader_impl_finalize(loader_impl_py py_impl)
+int py_loader_impl_finalize(loader_impl impl, loader_impl_py py_impl)
 {
 	if (Py_IsInitialized() != 0)
 	{
@@ -4149,19 +4152,18 @@ int py_loader_impl_finalize(loader_impl_py py_impl)
 			py_loader_impl_error_print(py_impl);
 		}
 
-#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 6
+		if (loader_impl_get_option_host(impl) == 0)
 		{
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 6
 			if (Py_FinalizeEx() != 0)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Error when executing Py_FinalizeEx");
 				return 1;
 			}
-		}
 #else
-		{
 			Py_Finalize();
-		}
 #endif
+		}
 	}
 
 	return 0;
@@ -4225,7 +4227,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 #endif
 
-	int result = py_loader_impl_finalize(py_impl);
+	int result = py_loader_impl_finalize(impl, py_impl);
 
 	/* Unhook the deallocation of PyCFunction */
 	PyCFunction_Type.tp_dealloc = py_loader_impl_pycfunction_dealloc;
