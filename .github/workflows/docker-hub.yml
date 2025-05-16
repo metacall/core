@@ -21,7 +21,7 @@ env:
 
   # TODO: Tests failing
   # - linux/s390x
-  # TODO: Not tested or detour not supported
+  # TODO: Detour not supported, needs to patch GOT instead of PLT
   # - linux/mips64le
   # - linux/mips64
   PLATFORM_LIST: >
@@ -98,9 +98,9 @@ jobs:
           DOCKER_BUILDKIT: 1
         run: |
           set -exuo pipefail
-          docker image inspect ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli --format='{{.Os}}/{{.Architecture}}'
+          docker image inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:cli --format='{{.Os}}/{{.Architecture}}'
           cat <<EOF > Dockerfile.test
-          FROM ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:cli
+          FROM ${DOCKER_USERNAME}/${IMAGE_NAME}:cli
           RUN apt-get update && apt-get install -y file
           RUN file /usr/local/bin/metacallcli && ldd /usr/local/bin/metacallcli
           RUN echo "console.log('0123456789abcdef')" > script.js
@@ -117,7 +117,7 @@ jobs:
           platform_tag=$(echo "${{ matrix.platform }}" | tr '/' '-')
           for tag in "deps" "dev" "runtime" "cli"; do
             docker tag \
-              ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
+              ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} \
               ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}-${platform_tag}
 
             echo "Pushing image for tag: ${tag} with platform: ${platform_tag}"

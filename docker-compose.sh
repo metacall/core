@@ -206,23 +206,33 @@ sub_platform() {
 		exit 1
 	fi
 
+	# Initialize QEMU for Buildkit
+	docker run --rm --privileged tonistiigi/binfmt --install all
+
 	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
 	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
 		source .env
 		export METACALL_BASE_IMAGE="ghcr.io/loong64/${METACALL_BASE_IMAGE}"
 	fi
 
+	# Generate the docker compose file with all .env variables substituted (bake seems not to support this)
+	$DOCKER_COMPOSE config &> docker-compose.bake.yml
+
+	# Build with Bake, so the image can be loaded into local docker context
 	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build deps
+	docker buildx bake -f docker-compose.bake.yml -f docker-compose.platform.yml --load deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build dev
+	docker buildx bake -f docker-compose.bake.yml -f docker-compose.platform.yml --load dev
 
 	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build runtime
+	docker buildx bake -f docker-compose.bake.yml -f docker-compose.platform.yml --load runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.platform.yml build cli
+	docker buildx bake -f docker-compose.bake.yml -f docker-compose.platform.yml --load cli
+
+	# Delete temporal docker compose file
+	rm -rf docker-compose.bake.yml
 }
 
 # Push MetaCall Docker Compose
