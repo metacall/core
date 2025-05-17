@@ -1,3 +1,0 @@
-[env]
-CMAKE_BUILD_TYPE = { value = "Debug", force = true }
-PROJECT_OUTPUT_DIR = { value = "/media/sf_koyanisqaatsi/metacall-core-rs-port-improved/build", force = true }

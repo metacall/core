@@ -80,6 +80,40 @@ unsafe extern "C" {
     #[doc = "  @brief\n    Clear last error that has happened after a call to any API from MetaCall"]
     pub fn metacall_error_clear();
 }
+unsafe extern "C" {
+    #[doc = "  @brief\n    Initialize link detours and allocate shared memory\n\n  @return\n    Zero if success, different from zero otherwise"]
+    pub fn metacall_link_initialize() -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = "  @brief\n    Register a function pointer in order to allow function\n    interposition when loading a library, if you register a\n    function @symbol called 'foo', when you try to dlsym (or the equivalent\n    on every platform), you will get the pointer to @fn, even if\n    the symbol does not exist in the library, it will work.\n    Function interposition is required in order to hook into runtimes\n    and dynamically interpose our functions.\n\n  @param[in] tag\n    Name of the loader which the @library belongs to\n\n  @param[in] library\n    Name of the library that is going to be hooked\n\n  @param[in] symbol\n    Name of the function to be interposed\n\n  @param[in] fn\n    Function pointer that will be returned by dlsym (or equivalent) when accessing to @symbol\n\n  @return\n    Zero if success, different from zero otherwise"]
+    pub fn metacall_link_register(
+        tag: *const ::std::os::raw::c_char,
+        library: *const ::std::os::raw::c_char,
+        symbol: *const ::std::os::raw::c_char,
+        fn_: ::std::option::Option<unsafe extern "C" fn()>,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = "  @brief\n    Register a function pointer in order to allow function\n    interposition when loading a library, if you register a\n    function @symbol called 'foo', when you try to dlsym (or the equivalent\n    on every platform), you will get the pointer to @fn, even if\n    the symbol does not exist in the library, it will work.\n    Function interposition is required in order to hook into runtimes\n    and dynamically interpose our functions.\n\n  @param[in] loader\n    Pointer to the loader which the @library belongs to\n\n  @param[in] library\n    Name of the library that is going to be hooked\n\n  @param[in] symbol\n    Name of the function to be interposed\n\n  @param[in] fn\n    Function pointer that will be returned by dlsym (or equivalent) when accessing to @symbol\n\n  @return\n    Zero if success, different from zero otherwise"]
+    pub fn metacall_link_register_loader(
+        loader: *mut ::std::os::raw::c_void,
+        library: *const ::std::os::raw::c_char,
+        symbol: *const ::std::os::raw::c_char,
+        fn_: ::std::option::Option<unsafe extern "C" fn()>,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = "  @brief\n    Remove the hook previously registered\n\n  @param[in] tag\n    Name of the loader which the @library belongs to\n\n  @param[in] library\n    Name of the library that is going to be hooked\n\n  @param[in] symbol\n    Name of the function to be interposed\n\n  @return\n    Zero if success, different from zero otherwise"]
+    pub fn metacall_link_unregister(
+        tag: *const ::std::os::raw::c_char,
+        library: *const ::std::os::raw::c_char,
+        symbol: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = "  @brief\n    Unregister link detours and destroy shared memory"]
+    pub fn metacall_link_destroy();
+}
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum metacall_log_id {
@@ -633,7 +667,7 @@ unsafe extern "C" {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct metacall_initialize_configuration_type {
-    pub tag: *mut ::std::os::raw::c_char,
+    pub tag: *const ::std::os::raw::c_char,
     pub options: *mut ::std::os::raw::c_void,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
@@ -702,6 +736,10 @@ const _: () = {
 unsafe extern "C" {
     #[doc = "  @brief\n    Returns default serializer used by MetaCall\n\n  @return\n    Name of the serializer to be used with serialization methods"]
     pub fn metacall_serial() -> *const ::std::os::raw::c_char;
+}
+unsafe extern "C" {
+    #[doc = "  @brief\n    Returns default detour used by MetaCall\n\n  @return\n    Name of the detour to be used with detouring methods"]
+    pub fn metacall_detour() -> *const ::std::os::raw::c_char;
 }
 unsafe extern "C" {
     #[doc = "  @brief\n    Disables MetaCall logs, must be called before @metacall_initialize.\n\n   When initializing MetaCall, it initializes a default logs to stdout\n   if none was defined. If you want to benchmark or simply disable this\n   default logs, you can call to this function before @metacall_initialize."]
@@ -1355,7 +1393,7 @@ unsafe extern "C" {
     pub fn metacall_plugin_path() -> *const ::std::os::raw::c_char;
 }
 unsafe extern "C" {
-    #[doc = "  @brief\n    Destroy MetaCall library\n"]
+    #[doc = "  @brief\n    Destroy MetaCall library"]
     pub fn metacall_destroy();
 }
 unsafe extern "C" {
