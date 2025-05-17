@@ -17,8 +17,6 @@
 #	limitations under the License.
 #
 
-version: "3.7"
-
 services:
   deps:
     image: metacall/core:deps
@@ -66,8 +64,6 @@ services:
       DETOUR_LIBRARY_PATH: $METACALL_PATH/build
       PORT_LIBRARY_PATH: $METACALL_PATH/build
       NODE_PATH: /usr/lib/node_modules
-    depends_on:
-      - deps
 
   runtime:
     image: metacall/core:runtime
@@ -91,8 +87,6 @@ services:
       DETOUR_LIBRARY_PATH: /usr/local/lib
       PORT_LIBRARY_PATH: /usr/local/lib
       NODE_PATH: /usr/local/lib/node_modules
-    depends_on:
-      - dev
 
   cli:
     image: metacall/core:cli
@@ -112,6 +106,3 @@ services:
       DETOUR_LIBRARY_PATH: /usr/local/lib
       PORT_LIBRARY_PATH: /usr/local/lib
       NODE_PATH: /usr/local/lib/node_modules
-    depends_on:
-      - dev
-      - runtime

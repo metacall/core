@@ -216,7 +216,7 @@ sub_platform() {
 	fi
 
 	# Generate the docker compose file with all .env variables substituted (bake seems not to support this)
-	$DOCKER_COMPOSE config &> docker-compose.bake.yml
+	$DOCKER_COMPOSE -f docker-compose.yml config &> docker-compose.bake.yml
 	cat docker-compose.bake.yml
 
 	# Build with Bake, so the image can be loaded into local docker context
