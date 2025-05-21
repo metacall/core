@@ -1,3 +1,0 @@
-load node test.js
-await main()
-exit

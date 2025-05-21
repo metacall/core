@@ -99,6 +99,7 @@ set(sources
 	${source_path}/py_loader_port.c
 	${source_path}/py_loader_threading.cpp
 	${source_path}/py_loader_dict.c
+	${source_path}/py_loader_symbol_fallback.c
 )
 
 # Group source files

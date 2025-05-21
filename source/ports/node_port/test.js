@@ -41,17 +41,15 @@ const waitForMocha = async () => {
 	return new Promise((resolve, reject) => mocha.run(failures => failures ? reject(failures) : resolve()));
 };
 
-module.exports = {
-	main: async () => {
-		try {
-			// Run the tests
-			await waitForMocha();
-		} catch (failures) {
-			if (failures !== 0) {
-				process.exit(1);
-			}
+void (async () => {
+	try {
+		// Run the tests
+		await waitForMocha();
+	} catch (failures) {
+		if (failures !== 0) {
+			process.exit(1);
 		}
+	}
 
-		return 'Tests passed without errors';
-	},
-};
+	console.log('Tests passed without errors');
+})();

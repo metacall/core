@@ -18,25 +18,11 @@
  *
  */
 
-#ifndef PY_LOADER_THREADING_H
-#define PY_LOADER_THREADING_H 1
+#include <Python.h>
 
-#include <py_loader/py_loader_api.h>
-
-#ifdef __cplusplus
-extern "C" {
+/* Required for when linking to Python in debug mode and loading with Python.exe in release mode */
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	#if defined(__clang__) || defined(__GNUC__)
+__attribute__((weak)) void _Py_DECREF_DecRefTotal(void) {}
+	#endif
 #endif
-
-PY_LOADER_NO_EXPORT void py_loader_thread_initialize(const int host);
-
-PY_LOADER_NO_EXPORT int py_loader_thread_is_main(void);
-
-PY_LOADER_NO_EXPORT void py_loader_thread_acquire(void);
-
-PY_LOADER_NO_EXPORT void py_loader_thread_release(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* PY_LOADER_THREADING_H */

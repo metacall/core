@@ -62,9 +62,15 @@ static uint64_t main_thread_ref_count = 0;
 thread_local py_thread_state current_thread_state;
 thread_local uint64_t current_thread_id = thread_id_get_current();
 
-void py_loader_thread_initialize()
+void py_loader_thread_initialize(const int host)
 {
 	main_thread_id = thread_id_get_current();
+
+	if (host == 1)
+	{
+		main_thread_state = PyThreadState_Get();
+		main_thread_ref_count++;
+	}
 }
 
 int py_loader_thread_is_main()

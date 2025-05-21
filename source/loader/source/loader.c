@@ -241,6 +241,8 @@ plugin loader_get_impl_plugin_options(const loader_tag tag, value options)
 
 	if (impl == NULL)
 	{
+		/* Destroy options on error */
+		value_type_destroy(options);
 		goto loader_create_error;
 	}
 

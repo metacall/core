@@ -120,6 +120,7 @@ struct loader_impl_py_type
 	PyObject *thread_background_start;
 	PyObject *thread_background_send;
 	PyObject *thread_background_stop;
+	PyObject *thread_background_register_atexit;
 	PyObject *py_task_callback_handler;
 	/* End asyncio required modules */
 
@@ -192,7 +193,7 @@ static void py_loader_impl_value_invoke_state_finalize(value v, void *data);
 
 static void py_loader_impl_value_ptr_finalize(value v, void *data);
 
-static int py_loader_impl_finalize(loader_impl impl, loader_impl_py py_impl);
+static int py_loader_impl_finalize(loader_impl_py py_impl, const int host);
 
 static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_name name, const char *buffer);
 
@@ -2001,14 +2002,21 @@ error_get_builtin:
 	return 1;
 }
 
-int py_loader_impl_import_module(loader_impl_py py_impl, PyObject **loc, const char *name)
+int py_loader_impl_import_module(loader_impl_py py_impl, PyObject **module, const char *name)
 {
-	PyObject *module_name = PyUnicode_DecodeFSDefault(name);
-	*loc = PyImport_Import(module_name);
+	PyObject *module_name, *sys_modules = PyImport_GetModuleDict();
+	*module = PyDict_GetItemString(sys_modules, name);
 
+	if (*module != NULL)
+	{
+		return 0;
+	}
+
+	module_name = PyUnicode_DecodeFSDefault(name);
+	*module = PyImport_Import(module_name);
 	Py_DECREF(module_name);
 
-	if (*loc == NULL)
+	if (*module == NULL)
 	{
 		py_loader_impl_error_print(py_impl);
 		return 1;
@@ -2134,7 +2142,7 @@ error_import_module:
 	return 1;
 }
 
-int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl)
+int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int host)
 {
 	PyObject *module_name = PyUnicode_DecodeFSDefault("asyncio");
 	py_impl->asyncio_module = PyImport_Import(module_name);
@@ -2186,6 +2194,17 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Error produced while starting the asyncio thread");
 		goto error_after_py_task_callback_handler;
+	}
+
+	/* When running in host, we must register a thread atexit for finalizing the background threads
+	before Python_AtExit, just before when all threads are join (except by daemon threads) */
+	if (host == 1)
+	{
+		PyObject *args_tuple = PyTuple_New(1);
+		Py_INCREF(py_impl->asyncio_loop);
+		PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
+		PyObject_Call(py_impl->thread_background_register_atexit, args_tuple, NULL);
+		Py_XDECREF(args_tuple);
 	}
 
 	return 0;
@@ -2377,8 +2396,8 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 {
 	static const char thread_background_module_str[] =
 		"import asyncio\n"
-		"from threading import Thread\n"
-		"from threading import Event\n"
+		"import threading\n"
+		"import sys\n"
 		"class ThreadLoop:\n"
 		"	def __init__(self, loop, t):\n"
 		"		self.loop = loop\n"
@@ -2399,7 +2418,7 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"	loop.close()\n"
 		"def start_background_loop():\n"
 		"	loop = asyncio.new_event_loop()\n"
-		"	t = Thread(target=background_loop, name='MetaCall asyncio event loop', args=(loop,), daemon=False)\n"
+		"	t = threading.Thread(target=background_loop, name='MetaCall asyncio event loop', args=(loop,), daemon=False)\n"
 		"	t.start()\n"
 		"	return ThreadLoop(loop, t)\n"
 		"def send_background_loop(tl, coro, callback, capsule):\n"
@@ -2407,9 +2426,18 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"	task.__metacall_capsule = capsule\n"
 		"	task.add_done_callback(callback)\n"
 		"	return asyncio.wrap_future(task, loop=tl.loop)\n"
-		"def stop_background_loop(tl):\n"
+		/* Stop background loop enqueues at the end of the event loop
+		the task to be finished, so effectively it waits until the event loop finishes */
+		"def stop_background_loop(tl, join):\n"
 		"	tl.loop.call_soon_threadsafe(tl.loop.stop)\n"
-		"	tl.t.join()\n";
+		"	if join:\n"
+		"		tl.t.join()\n"
+		"def atexit_background_loop(tl):\n"
+		/* This checks if py_port_impl_module contains py_loader_port_atexit */
+		"	py_loader_port_atexit = getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)\n"
+		"	tl.loop.call_soon_threadsafe(py_loader_port_atexit)\n"
+		"def register_atexit_background_loop(tl):\n"
+		"	threading._register_atexit(atexit_background_loop, tl)\n";
 
 	/* How to use the module: */
 	/*
@@ -2478,8 +2506,18 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		goto error_thread_background_stop;
 	}
 
+	py_impl->thread_background_register_atexit = PyObject_GetAttrString(py_impl->thread_background_module, "register_atexit_background_loop");
+
+	if (py_impl->thread_background_register_atexit == NULL || !PyCallable_Check(py_impl->thread_background_register_atexit))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting register_atexit_background_loop function");
+		goto error_thread_background_register_atexit;
+	}
+
 	return 0;
 
+error_thread_background_register_atexit:
+	Py_XDECREF(py_impl->thread_background_register_atexit);
 error_thread_background_stop:
 	Py_XDECREF(py_impl->thread_background_stop);
 error_thread_background_send:
@@ -2606,6 +2644,8 @@ static void PyCFunction_dealloc(PyObject *obj)
 
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
+	const int host = loader_impl_get_option_host(impl);
+
 	(void)impl;
 	(void)config;
 
@@ -2620,7 +2660,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_alloc_py_impl;
 	}
 
-	if (loader_impl_get_option_host(impl) == 0)
+	if (host == 0)
 	{
 		Py_InitializeEx(0);
 
@@ -2637,20 +2677,16 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 #endif
 	}
 
-	/* Hook the deallocation of PyCFunction */
-	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
-	PyCFunction_Type.tp_dealloc = PyCFunction_dealloc;
+	/* Initialize threading */
+	py_loader_thread_initialize(host);
 
-	/* TODO: This does not work after 3.13, is it really needed for this hook? */
-#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 13
-	PyType_Modified(&PyCFunction_Type);
-#endif
-
+	/* Initialize executable */
 	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
 	{
 		goto error_after_sys_executable;
 	}
 
+	/* Initialize main arguments */
 	char **argv = metacall_argv();
 	int argc = metacall_argc();
 
@@ -2665,6 +2701,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		py_loader_impl_run_main = 0;
 	}
 
+	/* Initialize stack trace module */
 	if (py_loader_impl_initialize_traceback(impl, py_impl) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid traceback module creation");
@@ -2675,6 +2712,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 #if DEBUG_ENABLED
+	/* Initialize GC module */
 	{
 		if (py_loader_impl_initialize_gc(py_impl) != 0)
 		{
@@ -2688,37 +2726,50 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 #endif
 
+	/* Initialize inspect module */
 	if (py_loader_impl_initialize_inspect(impl, py_impl) != 0)
 	{
 		goto error_after_traceback_and_gc;
 	}
 
+	/* Initialize import module */
 	if (py_loader_impl_initialize_import(py_impl) != 0)
 	{
 		goto error_after_inspect;
 	}
 
+	/* Initialize port module */
 	if (py_port_initialize() != 0)
 	{
 		goto error_after_import;
 	}
 
+	/* Initialize thread module for supporting threaded async */
 	if (py_loader_impl_initialize_thread_background_module(py_impl) != 0)
 	{
 		goto error_after_import;
 	}
 
-	if (py_loader_impl_initialize_asyncio_module(py_impl) != 0)
+	/* Initialize asyncio module for supporting async */
+	if (py_loader_impl_initialize_asyncio_module(py_impl, host) != 0)
 	{
 		goto error_after_thread_background_module;
 	}
 
+	/* Initialize custom dict type */
 	if (py_loader_impl_dict_type_init() < 0)
 	{
 		goto error_after_asyncio_module;
 	}
 
-	py_loader_thread_initialize();
+	/* Hook the deallocation of PyCFunction */
+	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
+	PyCFunction_Type.tp_dealloc = PyCFunction_dealloc;
+
+	/* TODO: This does not work after 3.13, is it really needed for this hook? */
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 13
+	PyType_Modified(&PyCFunction_Type);
+#endif
 
 	/* Register initialization */
 	loader_initialization_register(impl);
@@ -2737,6 +2788,7 @@ error_after_thread_background_module:
 	Py_DECREF(py_impl->thread_background_start);
 	Py_DECREF(py_impl->thread_background_send);
 	Py_DECREF(py_impl->thread_background_stop);
+	Py_DECREF(py_impl->thread_background_register_atexit);
 	Py_DECREF(py_impl->thread_background_future_check);
 error_after_import:
 	Py_DECREF(py_impl->import_module);
@@ -2762,7 +2814,7 @@ error_after_traceback_and_gc:
 #endif
 error_after_argv:
 error_after_sys_executable:
-	(void)py_loader_impl_finalize(impl, py_impl);
+	(void)py_loader_impl_finalize(py_impl, host);
 error_init_py:
 	free(py_impl);
 error_alloc_py_impl:
@@ -4143,7 +4195,7 @@ void py_loader_impl_sys_path_print(PyObject *sys_path_list)
 }
 #endif
 
-int py_loader_impl_finalize(loader_impl impl, loader_impl_py py_impl)
+int py_loader_impl_finalize(loader_impl_py py_impl, const int host)
 {
 	if (Py_IsInitialized() != 0)
 	{
@@ -4152,7 +4204,7 @@ int py_loader_impl_finalize(loader_impl impl, loader_impl_py py_impl)
 			py_loader_impl_error_print(py_impl);
 		}
 
-		if (loader_impl_get_option_host(impl) == 0)
+		if (host == 0)
 		{
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 6
 			if (Py_FinalizeEx() != 0)
@@ -4171,7 +4223,9 @@ int py_loader_impl_finalize(loader_impl impl, loader_impl_py py_impl)
 
 int py_loader_impl_destroy(loader_impl impl)
 {
+	const int host = loader_impl_get_option_host(impl);
 	loader_impl_py py_impl = loader_impl_get(impl);
+	int result = 0;
 
 	if (py_impl == NULL)
 	{
@@ -4184,15 +4238,19 @@ int py_loader_impl_destroy(loader_impl impl)
 	py_loader_thread_acquire();
 
 	/* Stop event loop for async calls */
-	PyObject *args_tuple = PyTuple_New(1);
-	Py_INCREF(py_impl->asyncio_loop);
-	PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
-	PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
-	Py_XDECREF(args_tuple);
-
-	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(py_impl);
+		PyObject *args_tuple = PyTuple_New(2);
+		Py_INCREF(py_impl->asyncio_loop);
+		PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
+		/* If it is host, do not join the thread */
+		PyTuple_SetItem(args_tuple, 1, PyBool_FromLong(!host));
+		PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
+		Py_XDECREF(args_tuple);
+
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+		}
 	}
 
 	Py_DECREF(py_impl->inspect_signature);
@@ -4216,6 +4274,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_XDECREF(py_impl->thread_background_start);
 	Py_XDECREF(py_impl->thread_background_send);
 	Py_XDECREF(py_impl->thread_background_stop);
+	Py_XDECREF(py_impl->thread_background_register_atexit);
 
 #if DEBUG_ENABLED
 	{
@@ -4227,10 +4286,18 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 #endif
 
-	int result = py_loader_impl_finalize(impl, py_impl);
+	result = py_loader_impl_finalize(py_impl, host);
 
-	/* Unhook the deallocation of PyCFunction */
-	PyCFunction_Type.tp_dealloc = py_loader_impl_pycfunction_dealloc;
+	if (host == 0)
+	{
+		/* Unhook the deallocation of PyCFunction */
+		PyCFunction_Type.tp_dealloc = py_loader_impl_pycfunction_dealloc;
+	}
+	else
+	{
+		/* On host, release the GIL and let Python continue until it calls Py_Finalize by itself */
+		py_loader_thread_release();
+	}
 
 	free(py_impl);
 

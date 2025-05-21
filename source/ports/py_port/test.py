@@ -16,4 +16,7 @@ def main():
 	if len(result.errors) + len(result.failures) == 0:
 		return 'Tests passed without errors'
 	else:
-		return ''
+		exit(1)
+
+if __name__ == "__main__":
+    main()

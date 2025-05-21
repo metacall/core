@@ -184,8 +184,7 @@ if(OPTION_BUILD_CLI)
 	message(STATUS "Test ${node_port_test}")
 
 	add_test(NAME ${target}
-		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:metacallcli>" -D "INPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/commands/node_port.txt" -P "${CMAKE_SOURCE_DIR}/source/cli/metacallcli/test/commands/command_runner.cmake"
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		COMMAND $<TARGET_FILE:metacallcli> ${CMAKE_CURRENT_SOURCE_DIR}/test.js
 	)
 
 	#
@@ -194,10 +193,6 @@ if(OPTION_BUILD_CLI)
 
 	set_property(TEST ${target}
 		PROPERTY LABELS ${node_port_test}
-	)
-
-	set_tests_properties(${target} PROPERTIES
-		PASS_REGULAR_EXPRESSION "Tests passed without errors"
 	)
 
 	# Add dependencies and optional dependencies
@@ -232,8 +227,7 @@ set(node_port_test_exec "${node_port_test}_executable")
 message(STATUS "Test ${node_port_test_exec}")
 
 add_test(NAME ${node_port_test_exec}
-	COMMAND ${NodeJS_EXECUTABLE} -e "require('./test.js').main()"
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMAND ${NodeJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test.js
 )
 
 # Define test labels

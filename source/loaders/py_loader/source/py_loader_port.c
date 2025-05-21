@@ -489,13 +489,6 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 	/* Obtain Python loader implementation */
 	impl = loader_get_impl(py_loader_tag);
 
-	/* TODO: Remove this check when we implement this: https://github.com/metacall/core/issues/231 */
-	if (impl == NULL)
-	{
-		PyErr_SetString(PyExc_ValueError, "Invalid Python loader instance, MetaCall Port must be used from MetaCall CLI");
-		return py_loader_port_none();
-	}
-
 	var_args_size = PyTuple_Size(var_args);
 
 	if (var_args_size == 0)
@@ -618,13 +611,6 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 
 	/* Obtain Python loader implementation */
 	impl = loader_get_impl(py_loader_tag);
-
-	/* TODO: Remove this check when we implement this: https://github.com/metacall/core/issues/231 */
-	if (impl == NULL)
-	{
-		PyErr_SetString(PyExc_ValueError, "Invalid Python loader instance, MetaCall Port must be used from MetaCall CLI");
-		return py_loader_port_none();
-	}
 
 	var_args_size = PyTuple_Size(var_args);
 
@@ -840,10 +826,6 @@ static PyObject *py_loader_port_value_reference(PyObject *self, PyObject *args)
 	/* Obtain Python loader implementation */
 	impl = loader_get_impl(py_loader_tag);
 
-	/* TODO: When using the port outside MetaCall this is going to segfault for functions and similar
-	* structures that require py loader internal structure to be initialized. For those cases, we
-	* must implement this: https://github.com/metacall/core/issues/231
-	*/
 	v = py_loader_impl_capi_to_value(impl, obj, py_loader_impl_capi_to_value_type(impl, obj));
 
 	if (v == NULL)
@@ -912,10 +894,6 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 	/* Obtain Python loader implementation */
 	impl = loader_get_impl(py_loader_tag);
 
-	/* TODO: When using the port outside MetaCall this is going to segfault for functions and similar
-	* structures that require py loader internal structure to be initialized. For those cases, we
-	* must implement this: https://github.com/metacall/core/issues/231
-	*/
 	result = py_loader_impl_value_to_capi(impl, value_type_id(v), v);
 
 	if (result == NULL)
@@ -925,6 +903,24 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 	}
 
 	return result;
+}
+
+static PyObject *py_loader_port_atexit(PyObject *self, PyObject *args)
+{
+	loader_impl impl = loader_get_impl(py_loader_tag);
+
+	(void)self;
+	(void)args;
+
+	if (impl != NULL)
+	{
+		if (py_loader_impl_destroy(impl) != 0)
+		{
+			PyErr_SetString(PyExc_RuntimeError, "Failed to destroy Python Loader on MetaCall.");
+		}
+	}
+
+	return py_loader_port_none();
 }
 
 static PyMethodDef metacall_methods[] = {
@@ -948,6 +944,8 @@ static PyMethodDef metacall_methods[] = {
 		"Create a new value of type Pointer." },
 	{ "metacall_value_dereference", py_loader_port_value_dereference, METH_VARARGS,
 		"Get the data which a value of type Pointer is pointing to." },
+	{ "py_loader_port_atexit", py_loader_port_atexit, METH_NOARGS,
+		"At exit function that will be executed when Python is host, for internal cleanup purposes." },
 	{ NULL, NULL, 0, NULL }
 };
 

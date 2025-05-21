@@ -21,13 +21,15 @@
 #ifndef PY_LOADER_PORT_H
 #define PY_LOADER_PORT_H 1
 
+#include <py_loader/py_loader_api.h>
+
 #include <Python.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int py_port_initialize(void);
+PY_LOADER_NO_EXPORT int py_port_initialize(void);
 
 #ifdef __cplusplus
 }

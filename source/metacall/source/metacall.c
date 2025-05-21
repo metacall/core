@@ -112,7 +112,6 @@ portability_constructor(metacall_constructor)
 			if (metacall_initialize_ex(config) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "MetaCall host constructor failed to initialize");
-				metacall_value_destroy(config[0].options);
 				exit(1);
 			}
 
