@@ -4130,29 +4130,39 @@ value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject
 void py_loader_impl_gc_print(loader_impl_py py_impl)
 {
 	static const char garbage_format_str[] = "Python Garbage Collector:\n%s";
-	static const char separator_str[] = "\n";
+	PyObject *garbage_repr, *garbage_list = PyObject_GetAttrString(py_impl->gc_module, "garbage");
+	const char *garbage_str;
 
-	PyObject *garbage_list, *separator, *garbage_str_obj;
+	if (garbage_list == NULL)
+	{
+		goto error_garbage_list;
+	}
 
-	garbage_list = PyObject_GetAttrString(py_impl->gc_module, "garbage");
+	garbage_repr = PyObject_Repr(garbage_list);
 
-	#if PY_MAJOR_VERSION == 2
-	separator = PyString_FromString(separator_str);
+	if (garbage_repr == NULL)
+	{
+		goto error_garbage_repr;
+	}
 
-	garbage_str_obj = PyString_Join(separator, garbage_list);
+	garbage_str = PyUnicode_AsUTF8(garbage_repr);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyString_AsString(garbage_str_obj));
-	#elif PY_MAJOR_VERSION == 3
-	separator = PyUnicode_FromString(separator_str);
+	if (garbage_str == NULL)
+	{
+		goto error_garbage_str;
+	}
 
-	garbage_str_obj = PyUnicode_Join(separator, garbage_list);
+	log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, garbage_str);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyUnicode_AsUTF8(garbage_str_obj));
-	#endif
-
+error_garbage_str:
+	Py_DECREF(garbage_repr);
+error_garbage_repr:
 	Py_DECREF(garbage_list);
-	Py_DECREF(separator);
-	Py_DECREF(garbage_str_obj);
+error_garbage_list:
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+	}
 }
 
 void py_loader_impl_sys_path_print(PyObject *sys_path_list)
