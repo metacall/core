@@ -62,7 +62,7 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 	/* Test loading symbols from current process */
 	{
-		dynlink proc = dynlink_load_self(DYNLINK_FLAGS_BIND_GLOBAL | DYNLINK_FLAGS_BIND_LAZY);
+		dynlink proc = dynlink_load_self(DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
 		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
 

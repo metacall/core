@@ -52,6 +52,10 @@ static void loader_host_destroy_dtor(plugin p);
 
 static void loader_host_destroy(loader_impl host);
 
+/* -- Private Member Data -- */
+
+static plugin loader_host_plugin = NULL;
+
 /* -- Methods -- */
 
 function_return function_host_interface_invoke(function func, function_impl func_impl, function_args args, size_t size)
@@ -139,10 +143,17 @@ plugin loader_host_initialize(void)
 		goto error;
 	}
 
+	loader_host_plugin = p;
+
 	return p;
 error:
 	loader_host_destroy(host);
 	return NULL;
+}
+
+plugin loader_host_get(void)
+{
+	return loader_host_plugin;
 }
 
 int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[])

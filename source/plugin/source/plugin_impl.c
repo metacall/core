@@ -113,6 +113,14 @@ void plugin_destructor(plugin p)
 	}
 }
 
+void plugin_destroyed(plugin p)
+{
+	if (p != NULL)
+	{
+		p->dtor = NULL;
+	}
+}
+
 void plugin_destroy(plugin p)
 {
 	if (p != NULL)

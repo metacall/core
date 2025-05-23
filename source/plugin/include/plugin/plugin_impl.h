@@ -59,8 +59,36 @@ PLUGIN_API void *plugin_iface(plugin p);
 
 PLUGIN_API void *plugin_impl(plugin p);
 
+/**
+*  @brief
+*    Executes the destructor once and nullifies it, it does not free
+*    the memory of the plugin but the destructor is removed
+*
+*  @param[in] p
+*    The plugin that will be used to execute the destructor
+*/
 PLUGIN_API void plugin_destructor(plugin p);
 
+/**
+*  @brief
+*    Marks the plugin as destroyed, nullifies the destructor
+*    but does not free the memory of the plugin, this is useful
+*    for when we execute loader plugin manager in host mode,
+*    because the destructor is called without the control of metacall,
+*    and it prevents to call it again after it has been called by host
+*
+*  @param[in] p
+*    The plugin that will be used to clear the destructor
+*/
+PLUGIN_API void plugin_destroyed(plugin p);
+
+/**
+*  @brief
+*    Executes the destructor if any and frees all the memory
+*
+*  @param[in] p
+*    The plugin to be destroyed
+*/
 PLUGIN_API void plugin_destroy(plugin p);
 
 #ifdef __cplusplus

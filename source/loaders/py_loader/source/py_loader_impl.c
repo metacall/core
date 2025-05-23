@@ -292,9 +292,7 @@ void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 
 	if (loader_is_destroyed(invoke_state->impl) != 0 && capsule != NULL)
 	{
-		py_loader_thread_acquire();
-		Py_DECREF(capsule);
-		py_loader_thread_release();
+		py_loader_thread_delayed_destroy(capsule);
 	}
 
 	free(invoke_state);
@@ -312,10 +310,9 @@ void py_loader_impl_value_ptr_finalize(value v, void *data)
 
 			if (loader_is_destroyed(impl) != 0)
 			{
-				py_loader_thread_acquire();
 				PyObject *obj = (PyObject *)value_to_ptr(v);
-				Py_XDECREF(obj);
-				py_loader_thread_release();
+
+				py_loader_thread_delayed_destroy(obj);
 			}
 		}
 	}
@@ -401,9 +398,7 @@ void future_py_interface_destroy(future f, future_impl impl)
 	{
 		if (loader_is_destroyed(py_future->impl) != 0)
 		{
-			py_loader_thread_acquire();
-			Py_DECREF(py_future->future);
-			py_loader_thread_release();
+			py_loader_thread_delayed_destroy(py_future->future);
 		}
 
 		free(py_future);
@@ -555,16 +550,15 @@ void py_object_interface_destroy(object obj, object_impl impl)
 	{
 		if (loader_is_destroyed(py_object->impl) != 0)
 		{
-			py_loader_thread_acquire();
-
-			Py_XDECREF(py_object->obj);
-
-			py_loader_thread_release();
-
-			if (py_object->obj_class != NULL)
+			if (py_object->obj != NULL)
 			{
-				value_type_destroy(py_object->obj_class);
+				py_loader_thread_delayed_destroy(py_object->obj);
 			}
+		}
+
+		if (py_object->obj_class != NULL)
+		{
+			value_type_destroy(py_object->obj_class);
 		}
 
 		free(py_object);
@@ -781,9 +775,7 @@ void py_class_interface_destroy(klass cls, class_impl impl)
 	{
 		if (loader_is_destroyed(py_class->impl) != 0)
 		{
-			py_loader_thread_acquire();
-			Py_XDECREF(py_class->cls);
-			py_loader_thread_release();
+			py_loader_thread_delayed_destroy(py_class->cls);
 		}
 
 		free(py_class);
@@ -1862,9 +1854,7 @@ void function_py_interface_destroy(function func, function_impl impl)
 
 		if (loader_is_destroyed(py_func->impl) != 0)
 		{
-			py_loader_thread_acquire();
-			Py_DECREF(py_func->func);
-			py_loader_thread_release();
+			py_loader_thread_delayed_destroy(py_func->func);
 		}
 
 		free(py_func);
@@ -1958,25 +1948,9 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
-PyObject *py_loader_impl_get_builtin(loader_impl_py py_impl, const char *builtin_name)
-{
-	PyObject *builtin = PyObject_GetAttrString(py_impl->builtins_module, builtin_name);
-
-	Py_XINCREF(builtin);
-
-	if (builtin != NULL && PyType_Check(builtin))
-	{
-		return builtin;
-	}
-
-	Py_XDECREF(builtin);
-
-	return NULL;
-}
-
 int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, type_id id, const char *name)
 {
-	PyObject *builtin = py_loader_impl_get_builtin(py_impl, name);
+	PyObject *builtin = PyObject_GetAttrString(py_impl->builtins_module, name);
 
 	if (builtin == NULL)
 	{
@@ -1990,11 +1964,14 @@ int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, ty
 		goto error_create_type;
 	}
 
-	if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) == 0)
+	if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) != 0)
 	{
-		return 0;
+		goto error_define_type;
 	}
 
+	return 0;
+
+error_define_type:
 	type_destroy(builtin_type);
 error_create_type:
 	Py_DECREF(builtin);
@@ -2004,17 +1981,7 @@ error_get_builtin:
 
 int py_loader_impl_import_module(loader_impl_py py_impl, PyObject **module, const char *name)
 {
-	PyObject *module_name, *sys_modules = PyImport_GetModuleDict();
-	*module = PyDict_GetItemString(sys_modules, name);
-
-	if (*module != NULL)
-	{
-		return 0;
-	}
-
-	module_name = PyUnicode_DecodeFSDefault(name);
-	*module = PyImport_Import(module_name);
-	Py_DECREF(module_name);
+	*module = PyImport_ImportModule(name);
 
 	if (*module == NULL)
 	{
@@ -2247,9 +2214,11 @@ error_import_module:
 	return 1;
 }
 
+#if DEBUG_ENABLED
 int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 {
-#if DEBUG_ENABLED
+	PyObject *flags;
+
 	if (py_loader_impl_import_module(py_impl, &py_impl->gc_module, "gc") != 0)
 	{
 		goto error_import_module;
@@ -2268,33 +2237,55 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 	}
 
 	py_impl->gc_debug_leak = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_LEAK");
-	py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
 
-	if (py_impl->gc_debug_leak != NULL && py_impl->gc_debug_stats != NULL)
+	if (py_impl->gc_debug_leak == NULL)
 	{
-		Py_INCREF(py_impl->gc_debug_leak);
-		Py_INCREF(py_impl->gc_debug_stats);
-
-		return 0;
+		goto error_callable_check;
 	}
 
-	Py_XDECREF(py_impl->gc_debug_leak);
-	Py_XDECREF(py_impl->gc_debug_stats);
+	Py_INCREF(py_impl->gc_debug_leak);
 
+	py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
+
+	if (py_impl->gc_debug_stats == NULL)
+	{
+		goto error_debug_leak;
+	}
+
+	Py_INCREF(py_impl->gc_debug_stats);
+
+	flags = PyNumber_Or(py_impl->gc_debug_leak, py_impl->gc_debug_stats);
+
+	if (flags == NULL)
+	{
+		goto error_debug_stats;
+	}
+
+	PyObject_CallFunctionObjArgs(py_impl->gc_set_debug, flags, NULL);
+
+	Py_DECREF(flags);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		goto error_call_set_debug;
+	}
+
+	return 0;
+
+error_call_set_debug:
+	py_loader_impl_error_print(py_impl);
+error_debug_stats:
+	Py_XDECREF(py_impl->gc_debug_stats);
+error_debug_leak:
+	Py_XDECREF(py_impl->gc_debug_leak);
 error_callable_check:
 	Py_XDECREF(py_impl->gc_set_debug);
 error_set_debug:
 	Py_DECREF(py_impl->gc_module);
 error_import_module:
 	return 1;
-#else
-	{
-		(void)py_impl;
-
-		return 1;
-	}
-#endif
 }
+#endif
 
 int py_loader_impl_initialize_import(loader_impl_py py_impl)
 {
@@ -2398,6 +2389,7 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"import asyncio\n"
 		"import threading\n"
 		"import sys\n"
+		// "import atexit; atexit.register(getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None))\n"
 		"class ThreadLoop:\n"
 		"	def __init__(self, loop, t):\n"
 		"		self.loop = loop\n"
@@ -2433,9 +2425,10 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"	if join:\n"
 		"		tl.t.join()\n"
 		"def atexit_background_loop(tl):\n"
-		/* This checks if py_port_impl_module contains py_loader_port_atexit */
-		"	py_loader_port_atexit = getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)\n"
-		"	tl.loop.call_soon_threadsafe(py_loader_port_atexit)\n"
+		/* Checks if py_port_impl_module contains py_loader_port_atexit and executes it */
+		// "	py_loader_port_atexit = getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)\n"
+		"	getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)()\n"
+		// "	tl.loop.call_soon_threadsafe(stop_background_loop, tl, False)\n"
 		"def register_atexit_background_loop(tl):\n"
 		"	threading._register_atexit(atexit_background_loop, tl)\n";
 
@@ -2714,12 +2707,9 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 #if DEBUG_ENABLED
 	/* Initialize GC module */
 	{
-		if (py_loader_impl_initialize_gc(py_impl) != 0)
-		{
-			PyObject_CallMethodObjArgs(py_impl->gc_module, py_impl->gc_set_debug, py_impl->gc_debug_leak /* py_impl->gc_debug_stats */);
-			gc_initialized = 0;
-		}
-		else
+		gc_initialized = py_loader_impl_initialize_gc(py_impl);
+
+		if (gc_initialized != 0)
 		{
 			log_write("metacall", LOG_LEVEL_WARNING, "Invalid garbage collector module creation");
 		}
@@ -4253,6 +4243,10 @@ int py_loader_impl_destroy(loader_impl impl)
 		}
 	}
 
+	/* Delete all the objects from the destructors of the other threads */
+	py_loader_thread_destroy();
+
+	/* Destroy all Python loader objects */
 	Py_DECREF(py_impl->inspect_signature);
 	Py_DECREF(py_impl->inspect_getattr_static);
 	Py_DECREF(py_impl->inspect_getfullargspec);
@@ -4286,6 +4280,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 #endif
 
+	/* Destroy Python runtime itself (only when it is not the host) */
 	result = py_loader_impl_finalize(py_impl, host);
 
 	if (host == 0)

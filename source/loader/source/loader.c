@@ -818,15 +818,19 @@ void loader_destroy(void)
 		loader_unload_children(NULL);
 
 		/* The host is the first loader, it must be destroyed at the end */
-		if (manager_impl->host != NULL)
+		if (manager_impl->host == loader_host_get())
 		{
 			if (plugin_manager_clear(&loader_manager, manager_impl->host) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Failed to clear host loader");
 			}
-
-			manager_impl->host = NULL;
 		}
+		else
+		{
+			plugin_destroyed(manager_impl->host);
+		}
+
+		manager_impl->host = NULL;
 	}
 
 	plugin_manager_destroy(&loader_manager);

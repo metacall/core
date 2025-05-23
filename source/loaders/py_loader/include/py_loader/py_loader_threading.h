@@ -23,6 +23,8 @@
 
 #include <py_loader/py_loader_api.h>
 
+#include <Python.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,6 +36,10 @@ PY_LOADER_NO_EXPORT int py_loader_thread_is_main(void);
 PY_LOADER_NO_EXPORT void py_loader_thread_acquire(void);
 
 PY_LOADER_NO_EXPORT void py_loader_thread_release(void);
+
+PY_LOADER_NO_EXPORT void py_loader_thread_delayed_destroy(PyObject *obj);
+
+PY_LOADER_NO_EXPORT void py_loader_thread_destroy(void);
 
 #ifdef __cplusplus
 }

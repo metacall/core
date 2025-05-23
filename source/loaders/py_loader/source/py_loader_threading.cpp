@@ -22,7 +22,7 @@
 
 #include <threading/threading_thread_id.h>
 
-#include <Python.h>
+#include <vector>
 
 struct py_thread_state
 {
@@ -61,6 +61,7 @@ static uint64_t main_thread_id = 0;
 static uint64_t main_thread_ref_count = 0;
 thread_local py_thread_state current_thread_state;
 thread_local uint64_t current_thread_id = thread_id_get_current();
+static std::vector<PyObject *> delayed_destructor;
 
 void py_loader_thread_initialize(const int host)
 {
@@ -118,4 +119,30 @@ void py_loader_thread_release()
 	{
 		current_thread_state.release();
 	}
+}
+
+void py_loader_thread_delayed_destroy(PyObject *obj)
+{
+	if (main_thread_id == current_thread_id)
+	{
+		py_loader_thread_acquire();
+		Py_DECREF(obj);
+		py_loader_thread_release();
+	}
+	else
+	{
+		delayed_destructor.push_back(obj);
+	}
+}
+
+void py_loader_thread_destroy(void)
+{
+	py_loader_thread_acquire();
+
+	for (auto obj : delayed_destructor)
+	{
+		Py_DECREF(obj);
+	}
+
+	py_loader_thread_release();
 }
