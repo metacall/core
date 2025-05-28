@@ -45,57 +45,21 @@ option(OPTION_BUILD_PORTS_TS	"Build TypeScript port."		OFF)
 option(OPTION_BUILD_PORTS_ZIG	"Build Zig port."				OFF)
 
 #
-# Port languages (Standalone)
+# Port languages
 #
-
-add_subdirectory(cxx_port)
-add_subdirectory(node_port)
-add_subdirectory(py_port)
-add_subdirectory(go_port)
-add_subdirectory(rs_port)
-add_subdirectory(zig_port)
-
-#
-# External dependencies
-#
-
-# SWIG (TODO: Remove SWIG)
-find_package(SWIG)
-
-if(NOT SWIG_FOUND)
-	message(WARNING "Swig not found: disabling ports depending on swig")
-	return()
-endif()
-
-include(${SWIG_USE_FILE})
-
-#
-# Set MetaCall inlcude directories for SWIG
-#
-
-get_filename_component(CMAKE_PARENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
-get_filename_component(CMAKE_PARENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
-
-list(APPEND CMAKE_SWIG_FLAGS
-	"-I${CMAKE_PARENT_SOURCE_DIR}/metacall/include"
-	"-I${CMAKE_PARENT_BINARY_DIR}/metacall/include"
-)
-
-#
-# Port languages (Swig)
-#
-
-# TODO: Swig must be completely removed eventually,
-# new architecture needs ports and loaders unified so
-# Swig is not needed anymore
 
 add_subdirectory(cs_port)
+add_subdirectory(cxx_port)
 add_subdirectory(d_port)
-# add_subdirectory(go_port) # TODO: Integrate it with CMake properly and with Docker
+add_subdirectory(go_port)
 add_subdirectory(java_port)
 add_subdirectory(js_port)
 add_subdirectory(lua_port)
+add_subdirectory(node_port)
 add_subdirectory(php_port)
 add_subdirectory(pl_port)
+add_subdirectory(py_port)
 add_subdirectory(r_port)
 add_subdirectory(rb_port)
+add_subdirectory(rs_port)
+add_subdirectory(zig_port)

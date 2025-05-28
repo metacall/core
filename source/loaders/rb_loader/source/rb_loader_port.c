@@ -142,7 +142,12 @@ VALUE rb_loader_port_load_from_memory(int argc, VALUE *argv, VALUE self)
 	return LONG2NUM(result);
 }
 
+// TODO: Implement metacall function
+
 int rb_loader_port_initialize(void)
 {
+	VALUE rb_loader_port = rb_define_module("metacall_rb_loader_port");
+	rb_define_module_function(mRb_portd, "metacall_detour", _wrap_metacall_detour, -1);
+
 	return 0;
 }

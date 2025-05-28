@@ -60,12 +60,14 @@ set(headers
 	${include_path}/rb_loader.h
 	${include_path}/rb_loader_impl.h
 	${include_path}/rb_loader_impl_parser.h
+	# ${include_path}/rb_loader_port.h
 )
 
 set(sources
 	${source_path}/rb_loader.c
 	${source_path}/rb_loader_impl.c
 	${source_path}/rb_loader_impl_parser.c
+	# ${source_path}/rb_loader_port.c
 )
 
 # Group source files

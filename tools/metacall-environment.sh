@@ -52,7 +52,6 @@ INSTALL_C=0
 INSTALL_COBOL=0
 INSTALL_GO=0
 INSTALL_RUST=0
-INSTALL_SWIG=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_CLANGFORMAT=0
@@ -111,28 +110,6 @@ sub_base(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
-	fi
-}
-
-# Swig
-sub_swig(){
-	echo "configure swig"
-	cd $ROOT_DIR
-
-	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends swig
-
-			# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3-setuptools
-		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			$SUDO_CMD apk add --no-cache swig
-
-			# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
-			$SUDO_CMD apk add --no-cache py3-setuptools
-		fi
-	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		brew install swig
 	fi
 }
 
@@ -976,9 +953,6 @@ sub_install(){
 	if [ $INSTALL_RUST = 1 ]; then
 		sub_rust
 	fi
-	if [ $INSTALL_SWIG = 1 ]; then
-		sub_swig
-	fi
 	if [ $INSTALL_PACK = 1 ]; then
 		sub_pack
 	fi
@@ -1116,10 +1090,6 @@ sub_options(){
 			echo "rust selected"
 			INSTALL_RUST=1
 		fi
-		if [ "$option" = 'swig' ]; then
-			echo "swig selected"
-			INSTALL_SWIG=1
-		fi
 		if [ "$option" = 'pack' ]; then
 			echo "pack selected"
 			INSTALL_PACK=1
@@ -1172,7 +1142,6 @@ sub_help() {
 	echo "	c"
 	echo "	cobol"
 	echo "	go"
-	echo "	swig"
 	echo "	pack"
 	echo "	coverage"
 	echo "	clangformat"

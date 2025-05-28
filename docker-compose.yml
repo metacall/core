@@ -29,7 +29,7 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby nodejs typescript file rpc rapidjson swig pack backtrace # clangformat v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: base python ruby nodejs typescript file rpc rapidjson pack backtrace # clangformat v8rep51 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
       # Work around https://github.com/dotnet/cli/issues/1582 until Docker releases a

@@ -359,9 +359,6 @@ function Configure {
 		if ("$var" -eq 'rust') {
 			Write-Output "rust selected"
 		}
-		if ("$var" -eq 'swig') {
-			Write-Output "swig selected"
-		}
 		if ("$var" -eq 'metacall') {
 			Write-Output "metacall selected"
 		}
@@ -398,7 +395,6 @@ function Help {
 	Write-Output "	c"
 	Write-Output "	cobol"
 	Write-Output "	go"
-	Write-Output "	swig"
 	Write-Output "	metacall"
 	Write-Output "	pack"
 	Write-Output "	clangformat"
