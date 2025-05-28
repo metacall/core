@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	A plugin for loading python code at run-time into a process.
+ *	A plugin for loading ruby code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,19 +18,19 @@
  *
  */
 
-#ifndef PY_LOADER_PORT_H
-#define PY_LOADER_PORT_H 1
+#ifndef RB_LOADER_PORT_H
+#define RB_LOADER_PORT_H 1
 
-#include <py_loader/py_loader_api.h>
+#include <rb_loader/rb_loader_api.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-PY_LOADER_NO_EXPORT int py_port_initialize(void);
+RB_LOADER_NO_EXPORT int rb_loader_port_initialize(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PY_LOADER_PORT_H */
+#endif /* RB_LOADER_PORT_H */

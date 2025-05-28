@@ -169,11 +169,11 @@ int scope_metadata_array(scope sp, value v_array[3])
 	size_t functions_size = 0, classes_size = 0, objects_size = 0;
 	value functions_value, classes_value, objects_value;
 	value *functions, *classes, *objects;
-	set_iterator it;
+	struct set_iterator_type it;
 
-	for (it = set_iterator_begin(sp->objects); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, sp->objects); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		type_id id = value_type_id(set_iterator_value(it));
+		type_id id = value_type_id(set_iterator_value(&it));
 
 		if (id == TYPE_FUNCTION)
 		{
@@ -221,9 +221,9 @@ int scope_metadata_array(scope sp, value v_array[3])
 	functions_size = 0;
 	objects_size = 0;
 
-	for (it = set_iterator_begin(sp->objects); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, sp->objects); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		value v = set_iterator_value(it);
+		value v = set_iterator_value(&it);
 		type_id id = value_type_id(v);
 
 		if (id == TYPE_FUNCTION)
@@ -377,7 +377,7 @@ value scope_export(scope sp)
 {
 	value *values, export = value_create_map(NULL, scope_size(sp));
 	size_t values_it;
-	set_iterator it;
+	struct set_iterator_type it;
 
 	if (export == NULL)
 	{
@@ -386,9 +386,9 @@ value scope_export(scope sp)
 
 	values = value_to_map(export);
 
-	for (it = set_iterator_begin(sp->objects), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, sp->objects), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		value v = scope_export_value(set_iterator_key(it), set_iterator_value(it));
+		value v = scope_export_value(set_iterator_key(&it), set_iterator_value(&it));
 
 		values[values_it++] = v;
 	}
@@ -553,11 +553,11 @@ void scope_destroy(scope sp)
 {
 	if (sp != NULL)
 	{
-		set_iterator it;
+		struct set_iterator_type it;
 
-		for (it = set_iterator_begin(sp->objects); set_iterator_end(&it) != 0; set_iterator_next(it))
+		for (set_iterator_begin(&it, sp->objects); set_iterator_end(&it) != 0; set_iterator_next(&it))
 		{
-			value_type_destroy(set_iterator_value(it));
+			value_type_destroy(set_iterator_value(&it));
 		}
 
 		set_destroy(sp->objects);

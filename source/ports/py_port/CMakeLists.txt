@@ -74,6 +74,15 @@ endif()
 
 set(py_port_test_exec "${py_port_test}_executable")
 
+# Check if Python is compiled with Address Sanitizer
+if(OPTION_BUILD_ADDRESS_SANITIZER)
+	check_asan_executable("${Python3_EXECUTABLE}" Python3_ASAN)
+	if(NOT Python3_ASAN)
+		# Skip this test because it gives false positives if Python is not compiled with ASan
+		return()
+	endif()
+endif()
+
 # Add test (Python)
 add_test(NAME ${py_port_test_exec}
 	COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test.py

@@ -524,11 +524,11 @@ void trie_node_iterate(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_
 
 				if (back->childs != NULL)
 				{
-					set_iterator it;
+					struct set_iterator_type it;
 
-					for (it = set_iterator_begin(back->childs); set_iterator_end(&it) > 0; set_iterator_next(it))
+					for (set_iterator_begin(&it, back->childs); set_iterator_end(&it) > 0; set_iterator_next(&it))
 					{
-						trie_node_ref ref_node = set_iterator_value(it);
+						trie_node_ref ref_node = set_iterator_value(&it);
 
 						trie_node current_node = &t->node_list[ref_node->index];
 
@@ -610,11 +610,11 @@ int trie_node_clear(trie t, trie_node n)
 
 				if (back->childs != NULL)
 				{
-					set_iterator it;
+					struct set_iterator_type it;
 
-					for (it = set_iterator_begin(back->childs); set_iterator_end(&it) > 0; set_iterator_next(it))
+					for (set_iterator_begin(&it, back->childs); set_iterator_end(&it) > 0; set_iterator_next(&it))
 					{
-						trie_node_ref ref_node = set_iterator_value(it);
+						trie_node_ref ref_node = set_iterator_value(&it);
 
 						trie_node current_node = &t->node_list[ref_node->index];
 
@@ -682,14 +682,13 @@ trie_node trie_node_find(trie t, trie_key key)
 			if (back_ptr != NULL && *back_ptr != NULL)
 			{
 				trie_node back = *back_ptr;
-
-				set_iterator it = NULL;
+				struct set_iterator_type it;
 
 				if (back->childs != NULL)
 				{
-					for (it = set_iterator_begin(back->childs); set_iterator_end(&it) > 0; set_iterator_next(it))
+					for (set_iterator_begin(&it, back->childs); set_iterator_end(&it) > 0; set_iterator_next(&it))
 					{
-						trie_node_ref ref_node = set_iterator_value(it);
+						trie_node_ref ref_node = set_iterator_value(&it);
 
 						trie_node current_node = &t->node_list[ref_node->index];
 
@@ -699,9 +698,10 @@ trie_node trie_node_find(trie t, trie_key key)
 
 				if (back->key != NULL && t->compare_cb(back->key, key) == 0)
 				{
+					/* TODO: it may be un-initialized here */
 					while (set_iterator_end(&it) > 0)
 					{
-						set_iterator_next(it);
+						set_iterator_next(&it);
 					}
 
 					vector_destroy(node_stack);

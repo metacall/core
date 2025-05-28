@@ -254,7 +254,7 @@ value class_metadata_methods_impl(const char name[], size_t size, map methods)
 {
 	value v = value_create_array(NULL, 2);
 	value *v_array;
-	map_iterator it;
+	struct map_iterator_type it;
 	size_t count;
 
 	if (v == NULL)
@@ -277,11 +277,11 @@ value class_metadata_methods_impl(const char name[], size_t size, map methods)
 		goto error_value;
 	}
 
-	for (it = map_iterator_begin(methods), count = 0; map_iterator_end(&it) != 0; map_iterator_next(it))
+	for (map_iterator_begin(&it, methods), count = 0; map_iterator_end(&it) != 0; map_iterator_next(&it))
 	{
 		value *method_array = value_to_array(v_array[1]);
 
-		method_array[count++] = method_metadata((method)map_iterator_value(it));
+		method_array[count++] = method_metadata((method)map_iterator_value(&it));
 	}
 
 	return v;
@@ -306,7 +306,7 @@ value class_metadata_attributes_impl(const char name[], size_t size, set attribu
 {
 	value v = value_create_array(NULL, 2);
 	value *v_array;
-	set_iterator it;
+	struct set_iterator_type it;
 	size_t count;
 
 	if (v == NULL)
@@ -329,11 +329,11 @@ value class_metadata_attributes_impl(const char name[], size_t size, set attribu
 		goto error_value;
 	}
 
-	for (it = set_iterator_begin(attributes), count = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, attributes), count = 0; set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
 		value *attribute_array = value_to_array(v_array[1]);
 
-		attribute_array[count++] = attribute_metadata(set_iterator_value(it));
+		attribute_array[count++] = attribute_metadata(set_iterator_value(&it));
 	}
 
 	return v;
@@ -802,31 +802,31 @@ void class_destroy(klass cls)
 
 			/* Destroy attributes */
 			{
-				set_iterator it;
+				struct set_iterator_type it;
 
-				for (it = set_iterator_begin(cls->attributes); set_iterator_end(&it) != 0; set_iterator_next(it))
+				for (set_iterator_begin(&it, cls->attributes); set_iterator_end(&it) != 0; set_iterator_next(&it))
 				{
-					attribute_destroy(set_iterator_value(it));
+					attribute_destroy(set_iterator_value(&it));
 				}
 
-				for (it = set_iterator_begin(cls->static_attributes); set_iterator_end(&it) != 0; set_iterator_next(it))
+				for (set_iterator_begin(&it, cls->static_attributes); set_iterator_end(&it) != 0; set_iterator_next(&it))
 				{
-					attribute_destroy(set_iterator_value(it));
+					attribute_destroy(set_iterator_value(&it));
 				}
 			}
 
 			/* Destroy methods */
 			{
-				map_iterator it;
+				struct map_iterator_type it;
 
-				for (it = map_iterator_begin(cls->methods); map_iterator_end(&it) != 0; map_iterator_next(it))
+				for (map_iterator_begin(&it, cls->methods); map_iterator_end(&it) != 0; map_iterator_next(&it))
 				{
-					method_destroy(map_iterator_value(it));
+					method_destroy(map_iterator_value(&it));
 				}
 
-				for (it = map_iterator_begin(cls->static_methods); map_iterator_end(&it) != 0; map_iterator_next(it))
+				for (map_iterator_begin(&it, cls->static_methods); map_iterator_end(&it) != 0; map_iterator_next(&it))
 				{
-					method_destroy(map_iterator_value(it));
+					method_destroy(map_iterator_value(&it));
 				}
 			}
 

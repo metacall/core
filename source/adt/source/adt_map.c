@@ -42,13 +42,6 @@ struct map_type
 	map_cb_compare compare_cb;
 };
 
-struct map_iterator_type
-{
-	map m;
-	size_t current_bucket;
-	size_t current_pair;
-};
-
 /* -- Methods -- */
 
 map map_create(map_cb_hash hash_cb, map_cb_compare compare_cb)
@@ -506,30 +499,29 @@ void map_destroy(map m)
 	free(m);
 }
 
-map_iterator map_iterator_begin(map m)
+void map_iterator_begin(map_iterator it, map m)
 {
-	if (m != NULL && m->buckets != NULL && map_size(m) > 0)
+	if (it != NULL)
 	{
-		map_iterator it = malloc(sizeof(struct map_iterator_type));
+		it->current_bucket = 0;
+		it->current_pair = 0;
 
-		if (it != NULL)
+		if (m != NULL && m->buckets != NULL && map_size(m) > 0)
 		{
 			it->m = m;
-			it->current_bucket = 0;
-			it->current_pair = 0;
 
 			map_iterator_next(it);
-
-			return it;
+		}
+		else
+		{
+			it->m = NULL;
 		}
 	}
-
-	return NULL;
 }
 
 map_key map_iterator_key(map_iterator it)
 {
-	if (it != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
+	if (it != NULL && it->m != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
 	{
 		return it->m->buckets[it->current_bucket].pairs[it->current_pair - 1].key;
 	}
@@ -539,7 +531,7 @@ map_key map_iterator_key(map_iterator it)
 
 map_value map_iterator_value(map_iterator it)
 {
-	if (it != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
+	if (it != NULL && it->m != NULL && it->current_bucket < it->m->capacity && it->current_pair > 0)
 	{
 		return it->m->buckets[it->current_bucket].pairs[it->current_pair - 1].value;
 	}
@@ -549,7 +541,7 @@ map_value map_iterator_value(map_iterator it)
 
 void map_iterator_next(map_iterator it)
 {
-	if (it != NULL)
+	if (it != NULL && it->m != NULL)
 	{
 		for (; it->current_bucket < it->m->capacity; ++it->current_bucket)
 		{
@@ -575,16 +567,12 @@ void map_iterator_next(map_iterator it)
 	}
 }
 
-int map_iterator_end(map_iterator *it)
+int map_iterator_end(map_iterator it)
 {
-	if (it != NULL && *it != NULL)
+	if (it != NULL && it->m != NULL)
 	{
-		if ((*it)->current_bucket >= (*it)->m->capacity)
+		if (it->current_bucket >= it->m->capacity)
 		{
-			free(*it);
-
-			*it = NULL;
-
 			return 0;
 		}
 

@@ -88,6 +88,7 @@ BENCHMARK_REGISTER_F(set_bench, set_iterate)
 	->Iterations(ITERATIONS)
 	->Repetitions(3);
 
+/*
 BENCHMARK_DEFINE_F(set_bench, set_iterators)
 (benchmark::State &state)
 {
@@ -113,8 +114,8 @@ BENCHMARK_REGISTER_F(set_bench, set_iterators)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(ITERATIONS)
 	->Repetitions(3);
+*/
 
-/*
 BENCHMARK_DEFINE_F(set_bench, set_iterators_2)
 (benchmark::State &state)
 {
@@ -124,7 +125,7 @@ BENCHMARK_DEFINE_F(set_bench, set_iterators_2)
 	{
 		set_iterator_type it;
 
-		for (set_iterator_begin_2(s, &it); set_iterator_end_2(&it) > 0; set_iterator_next(&it))
+		for (set_iterator_begin(&it, s); set_iterator_end(&it) > 0; set_iterator_next(&it))
 		{
 			int *i = (int *)set_iterator_value(&it);
 
@@ -142,6 +143,5 @@ BENCHMARK_REGISTER_F(set_bench, set_iterators_2)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(ITERATIONS)
 	->Repetitions(3);
-*/
 
 BENCHMARK_MAIN();

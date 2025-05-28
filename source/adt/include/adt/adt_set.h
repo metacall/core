@@ -50,6 +50,15 @@ typedef int (*set_cb_iterate)(set, set_key, set_value, set_cb_iterate_args);
 
 typedef struct set_iterator_type *set_iterator;
 
+/* -- Member Data -- */
+
+struct set_iterator_type
+{
+	set s;
+	size_t current_bucket;
+	size_t current_pair;
+};
+
 /* -- Methods -- */
 
 ADT_API set set_create(set_cb_hash hash_cb, set_cb_compare compare_cb);
@@ -80,7 +89,7 @@ ADT_API int set_clear(set s);
 
 ADT_API void set_destroy(set s);
 
-ADT_API set_iterator set_iterator_begin(set s);
+ADT_API void set_iterator_begin(set_iterator it, set s);
 
 ADT_API set_key set_iterator_key(set_iterator it);
 
@@ -88,7 +97,7 @@ ADT_API set_value set_iterator_value(set_iterator it);
 
 ADT_API void set_iterator_next(set_iterator it);
 
-ADT_API int set_iterator_end(set_iterator *it);
+ADT_API int set_iterator_end(set_iterator it);
 
 #ifdef __cplusplus
 }

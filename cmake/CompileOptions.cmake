@@ -427,6 +427,55 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 	endif()
 endif()
 
+macro(check_symbol_executable symbol binary_path result_var)
+	if(WIN32)
+		find_program(DUMPBIN_EXECUTABLE dumpbin)
+		if(NOT DUMPBIN_EXECUTABLE)
+			message(FATAL_ERROR "Trying to find symbol ${symbol} in ${binary_path} but dumpbin was not found")
+		endif()
+		execute_process(
+			COMMAND ${DUMPBIN_EXECUTABLE} /symbols ${binary_path}
+			OUTPUT_VARIABLE dumpbin_output
+			RESULT_VARIABLE dumpbin_result
+			ERROR_QUIET
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+		string(FIND "${dumpbin_output}" symbol SYMBOL_FOUND)
+		if(NOT SYMBOL_FOUND EQUAL -1)
+			set(${result_var} TRUE PARENT_SCOPE)
+		else()
+			set(${result_var} FALSE PARENT_SCOPE)
+		endif()
+	else()
+		find_program(NM_EXECUTABLE nm)
+		if(NM_EXECUTABLE)
+			execute_process(
+				COMMAND ${NM_EXECUTABLE} -D ${binary_path}
+				OUTPUT_VARIABLE nm_output
+				RESULT_VARIABLE nm_result
+				ERROR_QUIET
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+			)
+			string(FIND "${nm_output}" symbol SYMBOL_FOUND)
+			if(NOT SYMBOL_FOUND EQUAL -1)
+				set(${result_var} TRUE PARENT_SCOPE)
+			else()
+				set(${result_var} FALSE PARENT_SCOPE)
+			endif()
+		else()
+			message(FATAL_ERROR "Trying to find symbol ${symbol} in ${binary_path} but nm was not found")
+		endif()
+	endif()
+endmacro()
+
+function(check_asan_executable binary_path result_var)
+	check_symbol_executable("__asan_init" "${binary_path}" ${result_var})
+endfunction()
+
+function(check_tsan_executable binary_path result_var)
+	check_symbol_executable("__tsan_init" "${binary_path}" ${result_var})
+endfunction()
+
 #
 # Linker options
 #

@@ -156,11 +156,11 @@ configuration configuration_object_initialize(const char *name, const char *path
 
 	if (config->parent != NULL)
 	{
-		set_iterator it;
+		struct set_iterator_type it;
 
-		for (it = set_iterator_begin(config->parent->map); set_iterator_end(&it) != 0; set_iterator_next(it))
+		for (set_iterator_begin(&it, config->parent->map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 		{
-			set_insert(config->map, set_iterator_key(it), set_iterator_value(it));
+			set_insert(config->map, set_iterator_key(&it), set_iterator_value(&it));
 		}
 	}
 
@@ -216,12 +216,12 @@ int configuration_object_childs_valid(set_key key, set_value val)
 
 int configuration_object_childs(configuration config, vector childs, set storage)
 {
-	set_iterator it;
+	struct set_iterator_type it;
 
-	for (it = set_iterator_begin(config->map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, config->map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		set_key key = set_iterator_key(it);
-		set_value val = set_iterator_value(it);
+		set_key key = set_iterator_key(&it);
+		set_value val = set_iterator_value(&it);
 
 		if (configuration_object_childs_valid(key, val) == 0)
 		{

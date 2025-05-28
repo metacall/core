@@ -51,6 +51,15 @@ typedef int (*map_cb_iterate)(map, map_key, map_value, map_cb_iterate_args);
 
 typedef struct map_iterator_type *map_iterator;
 
+/* -- Member Data -- */
+
+struct map_iterator_type
+{
+	map m;
+	size_t current_bucket;
+	size_t current_pair;
+};
+
 /* -- Methods -- */
 
 ADT_API map map_create(map_cb_hash hash_cb, map_cb_compare compare_cb);
@@ -79,7 +88,7 @@ ADT_API int map_clear(map m);
 
 ADT_API void map_destroy(map m);
 
-ADT_API map_iterator map_iterator_begin(map m);
+ADT_API void map_iterator_begin(map_iterator it, map m);
 
 ADT_API map_key map_iterator_key(map_iterator it);
 
@@ -87,7 +96,7 @@ ADT_API map_value map_iterator_value(map_iterator it);
 
 ADT_API void map_iterator_next(map_iterator it);
 
-ADT_API int map_iterator_end(map_iterator *it);
+ADT_API int map_iterator_end(map_iterator it);
 
 #ifdef __cplusplus
 }

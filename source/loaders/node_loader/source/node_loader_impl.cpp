@@ -178,8 +178,8 @@ union loader_impl_handle_safe_cast
 
 typedef struct loader_impl_node_function_type
 {
-	loader_impl_node node_impl;
 	loader_impl impl;
+	loader_impl_node node_impl;
 	napi_ref func_ref;
 	napi_value *argv;
 
@@ -187,6 +187,7 @@ typedef struct loader_impl_node_function_type
 
 typedef struct loader_impl_node_future_type
 {
+	loader_impl impl;
 	loader_impl_node node_impl;
 	napi_ref promise_ref;
 
@@ -1357,6 +1358,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 			/* Create reference to promise */
 			node_future->node_impl = node_impl;
+			node_future->impl = node_impl->impl;
 
 			status = napi_create_reference(env, v, 1, &node_future->promise_ref);
 
@@ -1843,7 +1845,7 @@ void function_node_interface_destroy(function func, function_impl impl)
 		return;
 	}
 
-	if (loader_is_destroyed(node_func->node_impl->impl) != 0)
+	if (loader_is_destroyed(node_func->impl) != 0)
 	{
 		loader_impl_node node_impl = node_func->node_impl;
 		loader_impl_async_func_destroy_safe_type func_destroy_safe(node_impl, node_func);
@@ -1924,7 +1926,7 @@ void future_node_interface_destroy(future f, future_impl impl)
 		return;
 	}
 
-	if (loader_is_destroyed(node_future->node_impl->impl) != 0)
+	if (loader_is_destroyed(node_future->impl) != 0)
 	{
 		loader_impl_node node_impl = node_future->node_impl;
 		loader_impl_async_future_delete_safe_type future_delete_safe(node_impl, f, node_future);

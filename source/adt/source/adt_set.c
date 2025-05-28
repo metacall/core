@@ -42,13 +42,6 @@ struct set_type
 	set_cb_compare compare_cb;
 };
 
-struct set_iterator_type
-{
-	set s;
-	size_t current_bucket;
-	size_t current_pair;
-};
-
 /* -- Methods -- */
 
 set set_create(set_cb_hash hash_cb, set_cb_compare compare_cb)
@@ -521,30 +514,29 @@ void set_destroy(set s)
 	free(s);
 }
 
-set_iterator set_iterator_begin(set s)
+void set_iterator_begin(set_iterator it, set s)
 {
-	if (s != NULL && s->buckets != NULL && set_size(s) > 0)
+	if (it != NULL)
 	{
-		set_iterator it = malloc(sizeof(struct set_iterator_type));
+		it->current_bucket = 0;
+		it->current_pair = 0;
 
-		if (it != NULL)
+		if (s != NULL && s->buckets != NULL && set_size(s) > 0)
 		{
 			it->s = s;
-			it->current_bucket = 0;
-			it->current_pair = 0;
 
 			set_iterator_next(it);
-
-			return it;
+		}
+		else
+		{
+			it->s = NULL;
 		}
 	}
-
-	return NULL;
 }
 
 set_key set_iterator_key(set_iterator it)
 {
-	if (it != NULL && it->current_bucket < it->s->capacity && it->current_pair > 0)
+	if (it != NULL && it->s != NULL && it->current_bucket < it->s->capacity && it->current_pair > 0)
 	{
 		return it->s->buckets[it->current_bucket].pairs[it->current_pair - 1].key;
 	}
@@ -554,7 +546,7 @@ set_key set_iterator_key(set_iterator it)
 
 set_value set_iterator_value(set_iterator it)
 {
-	if (it != NULL && it->current_bucket < it->s->capacity && it->current_pair > 0)
+	if (it != NULL && it->s != NULL && it->current_bucket < it->s->capacity && it->current_pair > 0)
 	{
 		return it->s->buckets[it->current_bucket].pairs[it->current_pair - 1].value;
 	}
@@ -564,7 +556,7 @@ set_value set_iterator_value(set_iterator it)
 
 void set_iterator_next(set_iterator it)
 {
-	if (it != NULL)
+	if (it != NULL && it->s != NULL)
 	{
 		for (; it->current_bucket < it->s->capacity; ++it->current_bucket)
 		{
@@ -590,16 +582,12 @@ void set_iterator_next(set_iterator it)
 	}
 }
 
-int set_iterator_end(set_iterator *it)
+int set_iterator_end(set_iterator it)
 {
-	if (it != NULL && *it != NULL)
+	if (it != NULL && it->s != NULL)
 	{
-		if ((*it)->current_bucket >= (*it)->s->capacity)
+		if (it->current_bucket >= it->s->capacity)
 		{
-			free(*it);
-
-			*it = NULL;
-
 			return 0;
 		}
 

@@ -392,13 +392,13 @@ int rb_loader_impl_key_parse(const char *source, set function_map)
 
 void rb_loader_impl_key_print(set function_map)
 {
-	set_iterator it;
+	struct set_iterator_type it;
 
-	for (it = set_iterator_begin(function_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, function_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
 		size_t parameter;
 
-		rb_function_parser function = set_iterator_value(it);
+		rb_function_parser function = set_iterator_value(&it);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader key parse function (%s)", function->name);
 
@@ -414,11 +414,11 @@ void rb_loader_impl_key_print(set function_map)
 
 void rb_loader_impl_key_clear(set function_map)
 {
-	set_iterator it;
+	struct set_iterator_type it;
 
-	for (it = set_iterator_begin(function_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, function_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		rb_function_parser function = set_iterator_value(it);
+		rb_function_parser function = set_iterator_value(&it);
 
 		free(function);
 	}

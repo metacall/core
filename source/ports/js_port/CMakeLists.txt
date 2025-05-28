@@ -7,12 +7,28 @@ endif()
 # External dependencies
 #
 
+# V8
 find_package(V8 5.1)
 
 if(NOT V8_FOUND)
 	message(SEND_ERROR "V8 libraries not found")
 	return()
 endif()
+
+# SWIG
+find_package(SWIG)
+
+if(NOT SWIG_FOUND)
+	message(WARNING "Swig not found: disabling ports depending on swig")
+	return()
+endif()
+
+include(${SWIG_USE_FILE})
+
+list(APPEND CMAKE_SWIG_FLAGS
+	"-I${CMAKE_SOURCE_DIR}/source/metacall/include"
+	"-I${CMAKE_BINARY_DIR}/source/metacall/include"
+)
 
 #
 # Port name and options

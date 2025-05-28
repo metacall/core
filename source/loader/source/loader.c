@@ -540,11 +540,11 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 
 value loader_get(const char *name)
 {
-	set_iterator it;
+	struct set_iterator_type it;
 
-	for (it = set_iterator_begin(loader_manager.plugins); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, loader_manager.plugins); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		plugin p = set_iterator_value(it);
+		plugin p = set_iterator_value(&it);
 
 		loader_impl impl = plugin_impl_type(p, loader_impl);
 
@@ -681,7 +681,7 @@ value loader_metadata_impl(plugin p, loader_impl impl)
 value loader_metadata(void)
 {
 	value *values, v = value_create_map(NULL, plugin_manager_size(&loader_manager));
-	set_iterator it;
+	struct set_iterator_type it;
 	size_t values_it;
 
 	if (v == NULL)
@@ -691,9 +691,9 @@ value loader_metadata(void)
 
 	values = value_to_map(v);
 
-	for (it = set_iterator_begin(loader_manager.plugins), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, loader_manager.plugins), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		plugin p = set_iterator_value(it);
+		plugin p = set_iterator_value(&it);
 
 		loader_impl impl = plugin_impl_type(p, loader_impl);
 

@@ -24,14 +24,14 @@
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#if defined(__clang__) || defined(__GNUC__)
 
-		#include <dynlink/dynlink.h>
-
 __attribute__((weak)) void _Py_DECREF_DecRefTotal(void) {}
 __attribute__((weak)) void _Py_INCREF_IncRefTotal(void) {}
 
 		/* When Python has been compiled with tracing reference counting,
-provide fallback symbols for allowing it to compile properly */
+		* provide fallback symbols for allowing it to compile properly */
 		#ifdef Py_TRACE_REFS
+
+			#include <dynlink/dynlink.h>
 
 			#undef PyModule_Create2
 			#undef PyModule_FromDefAndSpec2

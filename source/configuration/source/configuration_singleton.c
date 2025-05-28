@@ -119,11 +119,11 @@ void configuration_singleton_destroy(void)
 
 	if (singleton->scopes != NULL)
 	{
-		set_iterator it;
+		struct set_iterator_type it;
 
-		for (it = set_iterator_begin(singleton->scopes); set_iterator_end(&it) != 0; set_iterator_next(it))
+		for (set_iterator_begin(&it, singleton->scopes); set_iterator_end(&it) != 0; set_iterator_next(&it))
 		{
-			configuration config = set_iterator_value(it);
+			configuration config = set_iterator_value(&it);
 
 			configuration_object_destroy(config);
 		}

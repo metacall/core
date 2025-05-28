@@ -23,8 +23,6 @@
 
 #include <metacall/metacall_value.h>
 
-#include <Python.h>
-
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13
 	/* Disable warnings from Python */
 	#if defined(__clang__)

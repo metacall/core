@@ -270,11 +270,11 @@ void plugin_manager_destroy(plugin_manager manager)
 	* plugin set and this will do nothing if the set has been emptied before with plugin_manager_clear */
 	if (manager->plugins != NULL)
 	{
-		set_iterator it;
+		struct set_iterator_type it;
 
-		for (it = set_iterator_begin(manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(it))
+		for (set_iterator_begin(&it, manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(&it))
 		{
-			plugin p = set_iterator_value(it);
+			plugin p = set_iterator_value(&it);
 
 			if (manager->iface != NULL && manager->iface->clear != NULL)
 			{

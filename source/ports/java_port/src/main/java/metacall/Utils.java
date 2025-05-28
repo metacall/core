@@ -2,7 +2,7 @@ package metacall;
 
 import com.sun.jna.*;
 
-class util
+class Utils
 {
 
 	public static class SizeT extends IntegerType

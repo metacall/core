@@ -511,11 +511,11 @@ int loader_impl_link(plugin p, loader_impl impl)
 			while (detour_enumerate(impl->d, loader_handle, &position, &name, &addr) == 0)
 			{
 				/* Iterate through all library handles in the library map */
-				set_iterator it;
+				struct set_iterator_type it;
 
-				for (it = set_iterator_begin(impl->library_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+				for (set_iterator_begin(&it, impl->library_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 				{
-					dynlink library_handle = set_iterator_value(it);
+					dynlink library_handle = set_iterator_value(&it);
 
 					/* Try to find the symbols in the dependencies, do not use the
 					loader dynlink handle for this, it is included in the library map */
@@ -1010,12 +1010,12 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const 
 	/* If there's no handle input/output pointer passed as input parameter, then propagate the handle symbols to the loader context */
 	if (handle_ptr == NULL)
 	{
-		set_iterator it;
+		struct set_iterator_type it;
 
 		/* This case handles the global scope (shared scope between all loaders, there is no out reference to a handle) */
-		for (it = set_iterator_begin(manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(it))
+		for (set_iterator_begin(&it, manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(&it))
 		{
-			plugin p = set_iterator_value(it);
+			plugin p = set_iterator_value(&it);
 			loader_impl other_impl = plugin_impl_type(p, loader_impl);
 			char *duplicated_key = NULL;
 
@@ -1709,7 +1709,7 @@ value loader_impl_metadata_handle(loader_handle_impl handle_impl)
 value loader_impl_metadata(loader_impl impl)
 {
 	value *values, v = value_create_array(NULL, set_size(impl->handle_impl_path_map));
-	set_iterator it;
+	struct set_iterator_type it;
 	size_t values_it;
 
 	if (v == NULL)
@@ -1719,9 +1719,9 @@ value loader_impl_metadata(loader_impl impl)
 
 	values = value_to_map(v);
 
-	for (it = set_iterator_begin(impl->handle_impl_path_map), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, impl->handle_impl_path_map), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		loader_handle_impl handle_impl = set_iterator_value(it);
+		loader_handle_impl handle_impl = set_iterator_value(&it);
 
 		values[values_it] = loader_impl_metadata_handle(handle_impl);
 
@@ -1809,11 +1809,11 @@ void loader_impl_destroy_objects(loader_impl impl)
 
 		/* Destroy all the types */
 		{
-			set_iterator it;
+			struct set_iterator_type it;
 
-			for (it = set_iterator_begin(impl->type_info_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+			for (set_iterator_begin(&it, impl->type_info_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 			{
-				type t = set_iterator_value(it);
+				type t = set_iterator_value(&it);
 
 				type_destroy(t);
 			}
@@ -1825,12 +1825,12 @@ void loader_impl_destroy_objects(loader_impl impl)
 
 void loader_impl_destroy_deallocate(loader_impl impl)
 {
-	set_iterator it;
+	struct set_iterator_type it;
 
 	/* Destroy execution path map */
-	for (it = set_iterator_begin(impl->exec_path_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, impl->exec_path_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		vector paths = set_iterator_value(it);
+		vector paths = set_iterator_value(&it);
 
 		vector_destroy(paths);
 	}
@@ -1847,9 +1847,9 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 	}
 
 	/* Destroy detour map */
-	for (it = set_iterator_begin(impl->detour_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, impl->detour_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		detour_handle handle = set_iterator_value(it);
+		detour_handle handle = set_iterator_value(&it);
 
 		detour_unload(impl->d, handle);
 	}
@@ -1865,9 +1865,9 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 	this method still should work because normally those handles are reference counted and we increment
 	the reference counter at the beginning, so they will be properly unloaded when the dynlink handle gets unloaded.
 	*/
-	for (it = set_iterator_begin(impl->library_map); set_iterator_end(&it) != 0; set_iterator_next(it))
+	for (set_iterator_begin(&it, impl->library_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
 	{
-		dynlink dependency = set_iterator_value(it);
+		dynlink dependency = set_iterator_value(&it);
 
 		dynlink_unload(dependency);
 	}
