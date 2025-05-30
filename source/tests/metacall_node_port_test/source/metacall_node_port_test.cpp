@@ -75,11 +75,11 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 
 		void *future = metacall_await("main", metacall_null_args, accept, reject, static_cast<void *>(&await_data));
 
+		ASSERT_NE((void *)NULL, (void *)future);
+
+		ASSERT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
+
 		await_data.c.wait(lock);
-
-		EXPECT_NE((void *)NULL, (void *)future);
-
-		EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
 
 		metacall_value_destroy(future);
 	}

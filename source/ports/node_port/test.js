@@ -41,7 +41,7 @@ const waitForMocha = async () => {
 	return new Promise((resolve, reject) => mocha.run(failures => failures ? reject(failures) : resolve()));
 };
 
-void (async () => {
+const main = async () => {
 	try {
 		// Run the tests
 		await waitForMocha();
@@ -51,5 +51,18 @@ void (async () => {
 		}
 	}
 
-	console.log('Tests passed without errors');
-})();
+	return 'Tests passed without errors';
+};
+
+/* Allow to execute the test on demand */
+if (process.env['NODE_PORT_TEST_EXPORTS']) {
+	/* Export the test as a function */
+	module.exports = {
+		main,
+	};
+} else {
+	/* Execute the test and print the result */
+	void (async () => {
+		console.log(await main());
+	})();
+}
