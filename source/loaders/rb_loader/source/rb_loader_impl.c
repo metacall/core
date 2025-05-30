@@ -1001,10 +1001,10 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 
-/* Register initialization */
-loader_initialization_register(impl);
+	/* Register initialization */
+	loader_initialization_register(impl);
 
-return (loader_impl_data)&rb_loader_impl_unused;
+	return (loader_impl_data)&rb_loader_impl_unused;
 
 error_initialize:
 	if (host == 0)

@@ -26,6 +26,7 @@
 
 __attribute__((weak)) void _Py_DECREF_DecRefTotal(void) {}
 __attribute__((weak)) void _Py_INCREF_IncRefTotal(void) {}
+__attribute__((weak)) Py_ssize_t _Py_RefTotal;
 
 		/* When Python has been compiled with tracing reference counting,
 		* provide fallback symbols for allowing it to compile properly */
