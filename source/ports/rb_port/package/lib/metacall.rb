@@ -5,6 +5,8 @@ require 'rbconfig'
 require 'fiddle'
 
 module MetaCall
+	extend self
+
 	private
 
 	def find_files_recursively(root_dir, pattern)
@@ -103,14 +105,24 @@ module MetaCall
 		end
 	end
 
-	# TODO: Load the port at startup
-	# port = metacall_module_load()
-
 	public
 
-	# TODO: API
-	# def method_a
-	# 	port.method_a
-	# end
+	def metacall_load_from_file(tag, paths)
+		metacall_module_load
+
+		MetaCallRbLoaderPort.metacall_load_from_file(tag, paths)
+	end
+
+	def metacall_load_from_memory(tag, script)
+		metacall_module_load
+
+		MetaCallRbLoaderPort.metacall_load_from_memory(tag, script)
+	end
+
+	def metacall(function_name, *args)
+		metacall_module_load
+
+		MetaCallRbLoaderPort.metacall(function_name, *args)
+	end
 
 end

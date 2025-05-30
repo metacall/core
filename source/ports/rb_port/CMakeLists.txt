@@ -25,8 +25,11 @@ set(target rb_port)
 message(STATUS "Port ${target}")
 
 
-
-
+# Check for test dependencies
+if(NOT OPTION_BUILD_LOADERS_PY)
+	message(WARNING "Enable Python Loader [-DOPTION_BUILD_LOADERS_PY=ON] for enabling tests for Ruby Port")
+	return()
+endif()
 
 #
 # Define test (CLI)
@@ -40,6 +43,7 @@ if(OPTION_BUILD_CLI)
 
 	add_test(NAME ${rb_port_test}
 		COMMAND $<TARGET_FILE:metacallcli> "${rb_port_test_path}"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test"
 	)
 
 	#
@@ -58,16 +62,13 @@ if(OPTION_BUILD_CLI)
 	)
 endif()
 
+#
+# Define test (Ruby)
+#
 
-
-
+set(rb_port_test_executable "${rb_port_test}_executable")
 
 # TODO
-
-# #
-# # Define test
-# #
-
 # if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 # 	# TODO: This test fails when run with sanitizers:
 # 	#
@@ -81,24 +82,26 @@ endif()
 # 	return()
 # endif()
 
-# set(rb_port_test "rb_port_test")
-# set(rb_port_test_path "${CMAKE_CURRENT_SOURCE_DIR}/test/run.rb")
+message(STATUS "Test ${rb_port_test_executable}")
 
-# add_test(NAME ${target}
-# 	COMMAND ${Ruby_EXECUTABLE} "${rb_port_test_path}"
-# )
+add_test(NAME ${rb_port_test_executable}
+	COMMAND ${Ruby_EXECUTABLE} "${rb_port_test_path}"
+	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test"
+)
 
-# #
-# # Define test labels
-# #
+#
+# Define test labels
+#
 
-# set_property(TEST ${target}
-# 	PROPERTY LABELS ${rb_port_test}
-# )
+set_property(TEST ${rb_port_test_executable}
+	PROPERTY LABELS ${rb_port_test_executable}
+)
 
-# include(TestEnvironmentVariables)
+include(TestEnvironmentVariables)
 
-# test_environment_variables(${target}
-# 	""
-# 	${TESTS_ENVIRONMENT_VARIABLES}
-# )
+test_environment_variables(${rb_port_test_executable}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
+	${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}
+)

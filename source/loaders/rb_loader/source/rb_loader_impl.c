@@ -955,58 +955,62 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 		}
 	}
 
+	if (host == 0)
 	{
 		RUBY_INIT_STACK;
 
 		ruby_init();
 
 		ruby_init_loadpath();
-
-		if (rb_loader_impl_initialize_types(impl) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the types");
-			goto error_initialize;
-		}
-
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the $VERBOSE variable");
-			goto error_initialize;
-		}
-#endif
-
-		/* Gem add home folder if any */
-		/*
-		{
-			const char * gem_home_env = getenv("GEM_HOME");
-
-			if (gem_home_env != NULL)
-			{
-				if (rb_loader_impl_execution_path(impl, gem_home_env) != 0)
-				{
-					log_write("metacall", LOG_LEVEL_WARNING, "Ruby GEM_HOME could not be added to execution path list");
-				}
-			}
-		}
-		*/
-
-		if (rb_loader_port_initialize(impl) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the port");
-			goto error_initialize;
-		}
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 	}
 
-	/* Register initialization */
-	loader_initialization_register(impl);
+	if (rb_loader_impl_initialize_types(impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the types");
+		goto error_initialize;
+	}
 
-	return (loader_impl_data)&rb_loader_impl_unused;
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the $VERBOSE variable");
+		goto error_initialize;
+	}
+#endif
+
+	/* Gem add home folder if any */
+	/*
+	{
+		const char * gem_home_env = getenv("GEM_HOME");
+
+		if (gem_home_env != NULL)
+		{
+			if (rb_loader_impl_execution_path(impl, gem_home_env) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_WARNING, "Ruby GEM_HOME could not be added to execution path list");
+			}
+		}
+	}
+	*/
+
+	if (rb_loader_port_initialize(impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the port");
+		goto error_initialize;
+	}
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
+
+/* Register initialization */
+loader_initialization_register(impl);
+
+return (loader_impl_data)&rb_loader_impl_unused;
 
 error_initialize:
-	ruby_cleanup(0);
+	if (host == 0)
+	{
+		ruby_cleanup(0);
+	}
 	return NULL;
 }
 
@@ -1722,10 +1726,15 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 int rb_loader_impl_destroy(loader_impl impl)
 {
-	(void)impl;
+	const int host = loader_impl_get_option_host(impl);
 
 	/* Destroy children loaders */
 	loader_unload_children(impl);
+
+	if (host == 1)
+	{
+		return 0;
+	}
 
 	return ruby_cleanup(0);
 }
