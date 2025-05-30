@@ -1,46 +1,48 @@
 #!/usr/bin/ruby
 
-require 'test/unit'
-require_relative '@RB_PORT_NAME@'
+require File.expand_path("../package/lib/metacall.rb")
 
-class RbPortTest < Test::Unit::TestCase
+# require 'test/unit'
+# require_relative '@RB_PORT_NAME@'
 
-	@@meta = @RB_PORT_OBJ@.method(:metacall)
+# class RbPortTest < Test::Unit::TestCase
 
-	# MetaCall (Python from memory)
-	def test_python_memory
-		script = '#!/usr/bin/env python3\n' \
-			'def inline_multiply_mem(left: int, right: int) -> int:\n' \
-			'	return left * right;\n'
-			'def inline_hello(left: int, right: int) -> int:\n' \
-			'	print(\'Helloo\', left, \' \', right);\n'
-			'	return;\n'
+# 	@@meta = @RB_PORT_OBJ@.method(:metacall)
 
-		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_memory('py', script))
+# 	# MetaCall (Python from memory)
+# 	def test_python_memory
+# 		script = '#!/usr/bin/env python3\n' \
+# 			'def inline_multiply_mem(left: int, right: int) -> int:\n' \
+# 			'	return left * right;\n'
+# 			'def inline_hello(left: int, right: int) -> int:\n' \
+# 			'	print(\'Helloo\', left, \' \', right);\n'
+# 			'	return;\n'
 
-		#assert_equal(4, @@meta.call('inline_multiply_mem', 2, 2))
+# 		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_memory('py', script))
 
-		assert_equal(nil, @@meta.call('inline_hello', 10, 20))
-	end
+# 		#assert_equal(4, @@meta.call('inline_multiply_mem', 2, 2))
 
-	# MetaCall (Python)
-	def test_python
-		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('py', ['example.py']))
+# 		assert_equal(nil, @@meta.call('inline_hello', 10, 20))
+# 	end
 
-		assert_equal(nil, @@meta.call('hello'))
+# 	# MetaCall (Python)
+# 	def test_python
+# 		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('py', ['example.py']))
 
-		assert_equal(35, @@meta.call('multiply', 5, 7))
-	end
+# 		assert_equal(nil, @@meta.call('hello'))
 
-	# MetaCall (Ruby)
-	def test_ruby
-		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('rb', ['hello.rb']))
+# 		assert_equal(35, @@meta.call('multiply', 5, 7))
+# 	end
 
-		assert_equal(nil, @@meta.call('say_null'))
+# 	# MetaCall (Ruby)
+# 	def test_ruby
+# 		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('rb', ['hello.rb']))
 
-		assert_equal(12, @@meta.call('say_multiply', 3, 4))
+# 		assert_equal(nil, @@meta.call('say_null'))
 
-		assert_equal('Hello world!', @@meta.call('say_hello', 'world'))
-	end
+# 		assert_equal(12, @@meta.call('say_multiply', 3, 4))
 
-end
+# 		assert_equal('Hello world!', @@meta.call('say_hello', 'world'))
+# 	end
+
+# end

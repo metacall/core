@@ -18,15 +18,18 @@
  *
  */
 
+#include <rb_loader/rb_loader_impl.h>
 #include <rb_loader/rb_loader_port.h>
-
-#include <ruby.h>
-
-#include <metacall/metacall.h>
 
 #include <format/format.h>
 
-VALUE rb_loader_port_load_from_file(int argc, VALUE *argv, VALUE self)
+#include <metacall/metacall.h>
+
+#include <rb_loader/rb_loader_include.h>
+
+static loader_impl rb_loader_impl = NULL;
+
+VALUE rb_loader_port_load_from_file(VALUE self, VALUE tag_value, VALUE paths_value)
 {
 	const char *tag;
 	const char **paths;
@@ -35,28 +38,23 @@ VALUE rb_loader_port_load_from_file(int argc, VALUE *argv, VALUE self)
 
 	(void)self;
 
-	if (argc != 2)
-	{
-		rb_raise(rb_eArgError, "Wrong # of arguments (expected 2, received %d)", argc);
-		return Qnil;
-	}
-
-	if (TYPE(argv[0]) != T_STRING)
+	/* Get tag */
+	if (TYPE(tag_value) != T_STRING)
 	{
 		rb_raise(rb_eArgError, "First parameter expected to be a string indicating the tag of the loader (py, node, c, ...)");
 		return Qnil;
 	}
 
-	tag = StringValuePtr(argv[0]);
+	tag = StringValuePtr(tag_value);
 
-	if (TYPE(argv[1]) != T_ARRAY)
+	/* Get array size */
+	if (TYPE(paths_value) != T_ARRAY)
 	{
 		rb_raise(rb_eArgError, "Second parameter expected to be an array of strings with the desired files to be loaded");
 		return Qnil;
 	}
 
-	/* Get array size */
-	size = RARRAY_LEN(argv[1]);
+	size = RARRAY_LEN(paths_value);
 
 	if (size == 0)
 	{
@@ -67,13 +65,13 @@ VALUE rb_loader_port_load_from_file(int argc, VALUE *argv, VALUE self)
 	/* Parse the array */
 	{
 		size_t iterator;
-		VALUE *array_ptr = RARRAY_PTR(argv[1]);
+		VALUE *array_ptr = RARRAY_PTR(paths_value);
 
 		paths = (const char **)malloc(sizeof(const char *) * size);
 
 		if (paths == NULL)
 		{
-			rb_raise(rb_eArgError, "Invalid file argument allocation");
+			rb_raise(rb_eArgError, "Invalid paths argument allocation");
 			return Qnil;
 		}
 
@@ -98,7 +96,7 @@ VALUE rb_loader_port_load_from_file(int argc, VALUE *argv, VALUE self)
 	return LONG2NUM(result);
 }
 
-VALUE rb_loader_port_load_from_memory(int argc, VALUE *argv, VALUE self)
+VALUE rb_loader_port_load_from_memory(VALUE self, VALUE tag_value, VALUE buffer_value)
 {
 	const char *tag;
 	const char *buffer;
@@ -107,28 +105,23 @@ VALUE rb_loader_port_load_from_memory(int argc, VALUE *argv, VALUE self)
 
 	(void)self;
 
-	if (argc != 2)
-	{
-		rb_raise(rb_eArgError, "Wrong # of arguments (expected 2, received %d)", argc);
-		return Qnil;
-	}
-
-	if (TYPE(argv[0]) != T_STRING)
+	/* Get tag */
+	if (TYPE(tag_value) != T_STRING)
 	{
 		rb_raise(rb_eArgError, "First parameter expected to be a string indicating the tag of the loader (py, node, c, ...)");
 		return Qnil;
 	}
 
-	tag = StringValuePtr(argv[0]);
+	tag = StringValuePtr(tag_value);
 
-	if (TYPE(argv[1]) != T_STRING)
+	/* Get buffer size */
+	if (TYPE(buffer_value) != T_STRING)
 	{
 		rb_raise(rb_eArgError, "Second parameter expected to be an string with the code to be loaded");
 		return Qnil;
 	}
 
-	/* Get buffer size */
-	size = RSTRING_LEN(argv[1]) + 1;
+	size = RSTRING_LEN(buffer_value) + 1;
 
 	if (size == 1)
 	{
@@ -136,18 +129,92 @@ VALUE rb_loader_port_load_from_memory(int argc, VALUE *argv, VALUE self)
 		return Qnil;
 	}
 
+	/* Get buffer */
+	buffer = StringValuePtr(buffer_value);
+
 	/* Execute load from memory */
 	result = metacall_load_from_memory(tag, buffer, size, NULL);
 
 	return LONG2NUM(result);
 }
 
-// TODO: Implement metacall function
-
-int rb_loader_port_initialize(void)
+VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 {
-	VALUE rb_loader_port = rb_define_module("metacall_rb_loader_port");
-	rb_define_module_function(mRb_portd, "metacall_detour", _wrap_metacall_detour, -1);
+	const char *function_name;
+	size_t args_size, iterator;
+	value *args, result;
+
+	(void)self;
+
+	if (argc <= 0)
+	{
+		rb_raise(rb_eArgError, "Wrong # of arguments (expected at least 1 argument, received 0)");
+		return Qnil;
+	}
+
+	/* Get function name */
+	if (TYPE(argv[0]) != T_STRING)
+	{
+		rb_raise(rb_eArgError, "First parameter expected to be a string indicating the function name to be called");
+		return Qnil;
+	}
+
+	function_name = StringValuePtr(argv[0]);
+
+	/* Allocate arguments */
+	args_size = argc - 1;
+
+	args = args_size > 0 ? (value *)malloc(sizeof(value) * args_size) : metacall_null_args;
+
+	if (args_size > 0 && args == NULL)
+	{
+		rb_raise(rb_eArgError, "Invalid arguments allocation");
+		return Qnil;
+	}
+
+	/* Convert the arguments into MetaCall values */
+	for (iterator = 0; iterator < args_size; ++iterator)
+	{
+		(void)rb_type_deserialize(rb_loader_impl, argv[iterator], &args[iterator]);
+	}
+
+	/* Execute the call */
+	result = metacallv_s(function_name, args, args_size);
+
+	/* Clear the arguments */
+	if (args_size > 0)
+	{
+		for (iterator = 0; iterator < args_size; ++iterator)
+		{
+			value_type_destroy(args[iterator]);
+		}
+
+		free(args);
+	}
+
+	return rb_type_serialize(result);
+}
+
+int rb_loader_port_initialize(loader_impl impl)
+{
+	VALUE rb_loader_port;
+
+	if (impl == NULL)
+	{
+		return 1;
+	}
+
+	if (rb_loader_impl != NULL)
+	{
+		return 0;
+	}
+
+	rb_loader_port = rb_define_module("MetaCallRbLoaderPort");
+	rb_define_module_function(rb_loader_port, "metacall_load_from_file", rb_loader_port_load_from_file, 2);
+	rb_define_module_function(rb_loader_port, "metacall_load_from_memory", rb_loader_port_load_from_memory, 2);
+	rb_define_module_function(rb_loader_port, "metacall", rb_loader_port_metacall, -1);
+
+	rb_loader_impl = impl;
 
 	return 0;
 }

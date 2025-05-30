@@ -23,11 +23,13 @@
 
 #include <rb_loader/rb_loader_api.h>
 
+#include <loader/loader_impl_interface.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-RB_LOADER_NO_EXPORT int rb_loader_port_initialize(void);
+RB_LOADER_NO_EXPORT int rb_loader_port_initialize(loader_impl impl);
 
 #ifdef __cplusplus
 }

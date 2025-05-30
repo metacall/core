@@ -79,6 +79,7 @@ target_include_directories(${target}
 	${PROJECT_BINARY_DIR}/source/include
 
 	# Ruby Loader headers
+	${CMAKE_BINARY_DIR}/source/loaders/rb_loader/include
 	${CMAKE_SOURCE_DIR}/source/loaders/rb_loader/include
 )
 

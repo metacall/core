@@ -27,6 +27,10 @@
 
 #include <configuration/configuration.h>
 
+#include <metacall/metacall.h>
+
+#include <rb_loader/rb_loader_include.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,6 +50,10 @@ RB_LOADER_API int rb_loader_impl_clear(loader_impl impl, loader_handle handle);
 RB_LOADER_API int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx);
 
 RB_LOADER_API int rb_loader_impl_destroy(loader_impl impl);
+
+RB_LOADER_NO_EXPORT const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result);
+
+RB_LOADER_NO_EXPORT VALUE rb_type_serialize(value v);
 
 #ifdef __cplusplus
 }

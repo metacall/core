@@ -8,6 +8,7 @@
 
 #include <rb_loader/rb_loader_impl.h>
 #include <rb_loader/rb_loader_impl_parser.h>
+#include <rb_loader/rb_loader_port.h>
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
@@ -25,68 +26,8 @@
 
 #include <log/log.h>
 
-#include <metacall/metacall.h>
-
 #include <stdio.h>
 #include <stdlib.h>
-
-#if (defined(_WIN32) || defined(_WIN64)) && !defined(_MSC_VER) && defined(boolean)
-	#undef boolean
-#endif
-
-/* Disable warnings from Ruby */
-#if defined(__clang__)
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wunused-parameter"
-#elif defined(__GNUC__)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wredundant-decls"
-	#pragma GCC diagnostic ignored "-Wpedantic"
-	#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-
-#include <ruby.h>
-
-/* Disable warnings from Ruby */
-#if defined(__clang__)
-	#pragma clang diagnostic pop
-#elif defined(__GNUC__)
-	#pragma GCC diagnostic pop
-#endif
-
-/* Backward compatible macros for Ruby < 2.7 */
-#ifndef RB_PASS_KEYWORDS
-	#define rb_funcallv_kw(o, m, c, v, kw)					 rb_funcallv(o, m, c, v)
-	#define rb_funcallv_public_kw(o, m, c, v, kw)			 rb_funcallv_public(o, m, c, v)
-	#define rb_funcall_passing_block_kw(o, m, c, v, kw)		 rb_funcall_passing_block(o, m, c, v)
-	#define rb_funcall_with_block_kw(o, m, c, v, b, kw)		 rb_funcall_with_block(o, m, c, v, b)
-	#define rb_scan_args_kw(kw, c, v, s, ...)				 rb_scan_args(c, v, s, __VA_ARGS__)
-	#define rb_call_super_kw(c, v, kw)						 rb_call_super(c, v)
-	#define rb_yield_values_kw(c, v, kw)					 rb_yield_values2(c, v)
-	#define rb_yield_splat_kw(a, kw)						 rb_yield_splat(a)
-	#define rb_block_call_kw(o, m, c, v, f, p, kw)			 rb_block_call(o, m, c, v, f, p)
-	#define rb_fiber_resume_kw(o, c, v, kw)					 rb_fiber_resume(o, c, v)
-	#define rb_fiber_yield_kw(c, v, kw)						 rb_fiber_yield(c, v)
-	#define rb_enumeratorize_with_size_kw(o, m, c, v, f, kw) rb_enumeratorize_with_size(o, m, c, v, f)
-	#define SIZED_ENUMERATOR_KW(obj, argc, argv, size_fn, kw_splat) \
-		rb_enumeratorize_with_size((obj), ID2SYM(rb_frame_this_func()), \
-			(argc), (argv), (size_fn))
-	#define RETURN_SIZED_ENUMERATOR_KW(obj, argc, argv, size_fn, kw_splat) \
-		do \
-		{ \
-			if (!rb_block_given_p()) \
-				return SIZED_ENUMERATOR(obj, argc, argv, size_fn); \
-		} while (0)
-	#define RETURN_ENUMERATOR_KW(obj, argc, argv, kw_splat) RETURN_SIZED_ENUMERATOR(obj, argc, argv, 0)
-	#define rb_check_funcall_kw(o, m, c, v, kw)				rb_check_funcall(o, m, c, v)
-	#define rb_obj_call_init_kw(o, c, v, kw)				rb_obj_call_init(o, c, v)
-	#define rb_class_new_instance_kw(c, v, k, kw)			rb_class_new_instance(c, v, k)
-	#define rb_proc_call_kw(p, a, kw)						rb_proc_call(p, a)
-	#define rb_proc_call_with_block_kw(p, c, v, b, kw)		rb_proc_call_with_block(p, c, v, b)
-	#define rb_method_call_kw(c, v, m, kw)					rb_method_call(c, v, m)
-	#define rb_method_call_with_block_kw(c, v, m, b, kw)	rb_method_call_with_block(c, v, m, b)
-	#define rb_eval_cmd_kwd(c, a, kw)						rb_eval_cmd(c, a, 0)
-#endif
 
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 #define LOADER_IMPL_RB_PROTECT_ARGS_SIZE  0x10
@@ -151,6 +92,10 @@ typedef struct loader_impl_rb_funcall_protect_type
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);
 static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method));
+
+/* Implements executing the file as main instead of a module */
+static int rb_loader_impl_run_main = 1;
+static char *rb_loader_impl_main_module = NULL;
 
 int function_rb_interface_create(function func, function_impl impl)
 {
@@ -985,6 +930,8 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 		NULL
 	};
 
+	const int host = loader_impl_get_option_host(impl);
+
 	/* Initialize Ruby */
 	char **argv = metacall_argv();
 	int argc = metacall_argc();
@@ -993,6 +940,21 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 	(void)config;
 
 	ruby_sysinit(&argc, &argv);
+
+	if (argv != NULL && argc > 1)
+	{
+		rb_loader_impl_main_module = argv[1];
+
+		/* If we are running on host, this means the main is already executed by the host, so we can skip it,
+		* otherwise if we are not in host and we run it for the first time, we can prepare the loader
+		* for running the file as script instead of like a module
+		*/
+		if (host == 0)
+		{
+			rb_loader_impl_run_main = 0;
+		}
+	}
+
 	{
 		RUBY_INIT_STACK;
 
@@ -1002,17 +964,15 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 
 		if (rb_loader_impl_initialize_types(impl) != 0)
 		{
-			ruby_cleanup(0);
-
-			return NULL;
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the types");
+			goto error_initialize;
 		}
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
 		{
-			ruby_cleanup(0);
-
-			return NULL;
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the $VERBOSE variable");
+			goto error_initialize;
 		}
 #endif
 
@@ -1031,6 +991,12 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 		}
 		*/
 
+		if (rb_loader_port_initialize(impl) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby loader failed to initialize the port");
+			goto error_initialize;
+		}
+
 		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 	}
 
@@ -1038,6 +1004,10 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 	loader_initialization_register(impl);
 
 	return (loader_impl_data)&rb_loader_impl_unused;
+
+error_initialize:
+	ruby_cleanup(0);
+	return NULL;
 }
 
 int rb_loader_impl_execution_path(loader_impl impl, const loader_path path)
@@ -1117,47 +1087,93 @@ VALUE rb_loader_impl_module_eval_protect(VALUE args)
 	return rb_mod_module_eval(protect->argc, protect->argv, protect->module);
 }
 
+void rb_loader_impl_print_exception(void)
+{
+	VALUE exception = rb_gv_get("$!");
+
+	if (RTEST(exception))
+	{
+		VALUE inspect, backtrace;
+
+		inspect = rb_inspect(exception);
+
+		rb_io_puts(1, &inspect, rb_stderr);
+
+		backtrace = rb_funcallv(exception, rb_intern("backtrace"), 0, NULL);
+
+		rb_io_puts(1, &backtrace, rb_stderr);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby module backtrace not available");
+	}
+}
+
 int rb_loader_impl_module_eval(VALUE module, VALUE module_data, VALUE *result)
 {
-	VALUE argv[1];
 	struct loader_impl_rb_module_eval_protect_type protect;
 	int state;
 
-	argv[0] = module_data;
-
 	protect.argc = 1;
-	protect.argv = argv;
+	protect.argv = &module_data;
 	protect.module = module;
 
 	*result = rb_protect(rb_loader_impl_module_eval_protect, (VALUE)&protect, &state);
 
 	if (state != 0)
 	{
-		VALUE exception;
-
 		log_write("metacall", LOG_LEVEL_ERROR, "Ruby module evaluation failed");
-
-		exception = rb_gv_get("$!");
-
-		if (RTEST(exception))
-		{
-			VALUE inspect, backtrace;
-
-			inspect = rb_inspect(exception);
-
-			rb_io_puts(1, &inspect, rb_stderr);
-
-			backtrace = rb_funcallv(exception, rb_intern("backtrace"), 0, NULL);
-
-			rb_io_puts(1, &backtrace, rb_stderr);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby module backtrace not available");
-		}
+		rb_loader_impl_print_exception();
 	}
 
 	return state;
+}
+
+loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE module, VALUE module_data, VALUE result)
+{
+	loader_impl_rb_module rb_module = malloc(sizeof(struct loader_impl_rb_module_type));
+
+	if (rb_module == NULL)
+	{
+		return NULL;
+	}
+
+	if (result != Qnil)
+	{
+		rb_module->empty = 1;
+		rb_module->id = rb_to_id(name_capitalized);
+		rb_module->module = module;
+		rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
+
+		rb_extend_object(rb_module->instance, rb_module->module);
+
+		rb_include_module(rb_module->instance, rb_module->module);
+
+		rb_module->function_map = set_create(&hash_callback_str, &comparable_callback_str);
+
+		if (!(rb_module->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), rb_module->function_map) == 0))
+		{
+			rb_loader_impl_key_clear(rb_module->function_map);
+
+			free(rb_module);
+
+			return NULL;
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", StringValuePtr(name_capitalized));
+
+		rb_loader_impl_key_print(rb_module->function_map);
+	}
+	else
+	{
+		rb_module->empty = 0;
+		rb_module->id = (ID)NULL;
+		rb_module->module = Qnil;
+		rb_module->instance = Qnil;
+		rb_module->function_map = NULL;
+	}
+
+	return rb_module;
 }
 
 loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_path path, const loader_name name)
@@ -1178,47 +1194,7 @@ loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, con
 
 			if (rb_loader_impl_module_eval(module, module_data, &result) == 0)
 			{
-				loader_impl_rb_module rb_module = malloc(sizeof(struct loader_impl_rb_module_type));
-
-				if (rb_module != NULL)
-				{
-					if (result != Qnil)
-					{
-						rb_module->empty = 1;
-						rb_module->id = rb_to_id(name_capitalized);
-						rb_module->module = module;
-						rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
-
-						rb_extend_object(rb_module->instance, rb_module->module);
-
-						rb_include_module(rb_module->instance, rb_module->module);
-
-						rb_module->function_map = set_create(&hash_callback_str, &comparable_callback_str);
-
-						if (!(rb_module->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), rb_module->function_map) == 0))
-						{
-							rb_loader_impl_key_clear(rb_module->function_map);
-
-							free(rb_module);
-
-							return NULL;
-						}
-
-						log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path);
-
-						rb_loader_impl_key_print(rb_module->function_map);
-					}
-					else
-					{
-						rb_module->empty = 0;
-						rb_module->id = (ID)NULL;
-						rb_module->module = Qnil;
-						rb_module->instance = Qnil;
-						rb_module->function_map = NULL;
-					}
-
-					return rb_module;
-				}
+				return rb_loader_impl_create_module(name_capitalized, module, module_data, result);
 			}
 		}
 	}
@@ -1230,12 +1206,9 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 {
 	loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
 
-	size_t iterator;
-
 	if (handle == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby handle allocation");
-
 		return NULL;
 	}
 
@@ -1244,29 +1217,66 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	if (handle->modules == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby modules vector allocation");
-
-		free(handle);
-
-		return NULL;
+		goto vector_error;
 	}
 
-	for (iterator = 0; iterator < size; ++iterator)
+	/* If we loaded one script and this script is the same as the one we passed to argv,
+	then we should set up this as a main script, only if only we set up the argv in MetaCall.
+	This should run only once, the first time after the initialization */
+	if (rb_loader_impl_run_main == 0 && size == 1 && strcmp(paths[0], rb_loader_impl_main_module) == 0)
 	{
-		static const char extension[] = "rb";
+		VALUE module_data, result, module_name;
+		int state;
 		loader_impl_rb_module rb_module;
-		loader_name module_name;
 
-		(void)portability_path_get_module_name(paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1, extension, sizeof(extension), module_name, LOADER_NAME_SIZE);
+		rb_loader_impl_run_main = 1;
 
-		rb_module = rb_loader_impl_load_from_file_module(impl, paths[iterator], module_name);
+		module_data = rb_loader_impl_load_data(impl, paths[0]);
+
+		result = rb_eval_string_protect(StringValuePtr(module_data), &state);
+
+		if (state != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby evaluation failed");
+			rb_loader_impl_print_exception();
+			goto load_error;
+		}
+
+		module_name = rb_funcall(result, rb_intern("name"), 0);
+
+		rb_module = rb_loader_impl_create_module(module_name, result, module_data, result);
 
 		if (rb_module == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby module loading %s", paths[iterator]);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby module loading %s", paths[0]);
 		}
 		else
 		{
 			vector_push_back(handle->modules, &rb_module);
+		}
+	}
+	else
+	{
+		size_t iterator;
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			static const char extension[] = "rb";
+			loader_impl_rb_module rb_module;
+			loader_name module_name;
+
+			(void)portability_path_get_module_name(paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1, extension, sizeof(extension), module_name, LOADER_NAME_SIZE);
+
+			rb_module = rb_loader_impl_load_from_file_module(impl, paths[iterator], module_name);
+
+			if (rb_module == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby module loading %s", paths[iterator]);
+			}
+			else
+			{
+				vector_push_back(handle->modules, &rb_module);
+			}
 		}
 	}
 
@@ -1274,15 +1284,16 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	if (vector_size(handle->modules) == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "No module could be loaded");
-
-		vector_destroy(handle->modules);
-
-		free(handle);
-
-		return NULL;
+		goto load_error;
 	}
 
 	return (loader_handle)handle;
+
+load_error:
+	vector_destroy(handle->modules);
+vector_error:
+	free(handle);
+	return NULL;
 }
 
 loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, const loader_name name, const char *buffer, size_t size)
@@ -1306,47 +1317,7 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 
 			if (rb_loader_impl_module_eval(module, module_data, &result) == 0)
 			{
-				loader_impl_rb_module rb_module = malloc(sizeof(struct loader_impl_rb_module_type));
-
-				if (rb_module != NULL)
-				{
-					if (result != Qnil)
-					{
-						rb_module->empty = 1;
-						rb_module->id = rb_to_id(name_capitalized);
-						rb_module->module = module;
-						rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
-
-						rb_extend_object(rb_module->instance, rb_module->module);
-
-						rb_include_module(rb_module->instance, rb_module->module);
-
-						rb_module->function_map = set_create(&hash_callback_str, &comparable_callback_str);
-
-						if (!(rb_module->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), rb_module->function_map) == 0))
-						{
-							set_destroy(rb_module->function_map);
-
-							free(rb_module);
-
-							return NULL;
-						}
-
-						log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", name);
-
-						rb_loader_impl_key_print(rb_module->function_map);
-					}
-					else
-					{
-						rb_module->empty = 0;
-						rb_module->id = (ID)NULL;
-						rb_module->module = Qnil;
-						rb_module->instance = Qnil;
-						rb_module->function_map = NULL;
-					}
-
-					return rb_module;
-				}
+				return rb_loader_impl_create_module(name_capitalized, module, module_data, result);
 			}
 		}
 	}

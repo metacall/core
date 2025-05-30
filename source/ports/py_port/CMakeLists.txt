@@ -45,8 +45,9 @@ endif()
 
 set(py_port_test "${target}_test")
 
-if(NOT OPTION_BUILD_CLI)
-	# Add test (CLI)
+if(OPTION_BUILD_CLI)
+	message(STATUS "Test ${py_port_test}")
+
 	add_test(NAME ${target}
 		COMMAND $<TARGET_FILE:metacallcli> ${CMAKE_CURRENT_SOURCE_DIR}/test.py
 	)

@@ -2691,7 +2691,15 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		}
 
 		py_loader_impl_main_module = argv[1];
-		py_loader_impl_run_main = 0;
+
+		/* If we are running on host, this means the main is already executed by the host, so we can skip it,
+		* otherwise if we are not in host and we run it for the first time, we can prepare the loader
+		* for running the main the first time
+		*/
+		if (host == 0)
+		{
+			py_loader_impl_run_main = 0;
+		}
 	}
 
 	/* Initialize stack trace module */
