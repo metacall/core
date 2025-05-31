@@ -72,6 +72,20 @@ typedef void (*dynlink_symbol_addr)(void);		  /**< Function pointer referring to
 \
 	} while (0)
 
+#define dynlink_symbol_uncast_type(fn, type, result) \
+	do \
+	{ \
+		union \
+		{ \
+			type ptr; \
+			dynlink_symbol_addr fn; \
+		} cast; \
+\
+		cast.fn = (fn); \
+		(result) = (type)cast.ptr; \
+\
+	} while (0)
+
 #ifdef __cplusplus
 }
 #endif

@@ -9,15 +9,45 @@ endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(Python3_FIND_ABI "ON" "ANY" "ANY")
-	find_package(Python3 COMPONENTS Development)
+	find_package(Python3 COMPONENTS Interpreter Development)
 
 	# Fallback to release if not found
 	if(NOT Python3_Development_FOUND)
 		set(Python3_FIND_ABI)
-		find_package(Python3 COMPONENTS Development REQUIRED)
+		find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 	endif()
 else()
-	find_package(Python3 COMPONENTS Development REQUIRED)
+	find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+endif()
+
+# Select the proper library
+if(NOT Python3_LIBRARY AND Python3_LIBRARIES)
+	# Go through the list and handle keyword-separated structure
+	set(index 0)
+	list(LENGTH Python3_LIBRARIES lib_len)
+	while(index LESS lib_len)
+		list(GET Python3_LIBRARIES ${index} item)
+
+		# Check if it's a keyword (debug/optimized)
+		if(item STREQUAL "debug" OR item STREQUAL "optimized" OR item STREQUAL "general")
+			set(keyword ${item})
+			math(EXPR next "${index} + 1")
+			list(GET Python3_LIBRARIES ${next} lib_path)
+
+			# Match the right keyword
+			if((CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "debug") OR
+			   (NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "optimized") OR
+			   (keyword STREQUAL "general"))  # general applies to all configs
+				set(Python3_LIBRARY ${lib_path})
+			endif()
+
+			math(EXPR index "${index} + 2")  # Skip keyword and path
+		else()
+			# Plain list without keywords (single-config or fallback)
+			set(Python3_LIBRARY ${item})
+			math(EXPR index "${index} + 1")
+		endif()
+	endwhile()
 endif()
 
 # Copy Python DLL into project output directory
@@ -25,30 +55,27 @@ endif()
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
 include(Portability)
 
-if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_LIBRARIES AND Python3_ROOT_DIR AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-	foreach(library ${Python3_LIBRARIES})
-		if(${library} MATCHES "[^_d][.]lib$")
-			# Get the library path with dll suffix
-			string(REGEX REPLACE "[.]lib$" ".dll" LIB_PATH ${library})
-			# Get the library name
-			get_filename_component(LIB_NAME "${LIB_PATH}" NAME)
-			# Find the library in the Python3 root path
-			find_file(Python3_LIBRARY_NAME_PATH ${LIB_NAME}
-				PATHS ${Python3_ROOT_DIR}
-				NO_DEFAULT_PATH
-			)
-			if(Python3_LIBRARY_NAME_PATH)
-				break()
-			endif()
-		endif()
-	endforeach()
+if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_LIBRARY)
+	# Get the library path with dll suffix
+	string(REGEX REPLACE "[.]lib$" ".dll" LIB_PATH "${Python3_LIBRARY}")
+	# Get the library name
+	get_filename_component(LIB_NAME "${LIB_PATH}" NAME)
+	# Get the python root folder
+	if(NOT Python3_ROOT_DIR)
+		get_filename_component(Python3_ROOT_DIR "${Python3_EXECUTABLE}" DIRECTORY)
+	endif()
+	# Find the library in the Python3 root path
+	find_file(Python3_LIBRARY_NAME_PATH "${LIB_NAME}"
+		PATHS "${Python3_ROOT_DIR}"
+		NO_DEFAULT_PATH
+	)
+	# Copy the DLL to the output directory
+	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_OUTPUT_DIR}")
+	file(COPY "${Python3_LIBRARY_NAME_PATH}" DESTINATION "${PROJECT_OUTPUT_DIR}")
 endif()
 
-if(Python3_LIBRARY_NAME_PATH)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-	file(COPY "${Python3_LIBRARY_NAME_PATH}" DESTINATION ${PROJECT_OUTPUT_DIR})
-else()
-	set(Python3_LIBRARY_NAME_PATH "${Python3_LIBRARIES}")
+if(NOT Python3_LIBRARY_NAME_PATH)
+	set(Python3_LIBRARY_NAME_PATH "${Python3_LIBRARY}")
 endif()
 
 #
@@ -91,6 +118,7 @@ set(headers
 	${include_path}/py_loader_port.h
 	${include_path}/py_loader_threading.h
 	${include_path}/py_loader_dict.h
+	${include_path}/py_loader_symbol_fallback.h
 )
 
 set(sources
@@ -174,7 +202,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
 	# Delay load for MSVC
-	$<$<CXX_COMPILER_ID:MSVC>:${Python3_LIBRARIES}> # Python library
+	$<$<CXX_COMPILER_ID:MSVC>:${Python3_LIBRARY}> # Python library
 	$<$<CXX_COMPILER_ID:MSVC>:delayimp>
 
 	PUBLIC

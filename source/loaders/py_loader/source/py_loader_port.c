@@ -23,45 +23,12 @@
 #include <py_loader/py_loader_dict.h>
 #include <py_loader/py_loader_impl.h>
 #include <py_loader/py_loader_port.h>
+#include <py_loader/py_loader_symbol_fallback.h>
 #include <py_loader/py_loader_threading.h>
 
 #include <loader/loader.h>
 
 static const loader_tag py_loader_tag = "py";
-
-static PyObject *py_loader_port_none(void)
-{
-	Py_RETURN_NONE;
-}
-
-#if defined(__clang__)
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wstrict-aliasing"
-#elif defined(__GNUC__)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-#elif defined(_MSC_VER)
-	#pragma warning(push)
-// TODO
-#endif
-
-static PyObject *py_loader_port_false(void)
-{
-	Py_RETURN_FALSE;
-}
-
-static PyObject *py_loader_port_true(void)
-{
-	Py_RETURN_TRUE;
-}
-
-#if defined(__clang__)
-	#pragma clang diagnostic pop
-#elif defined(__GNUC__)
-	#pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
 
 static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *args, void **handle)
 {
@@ -77,7 +44,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 	if (!PyArg_ParseTuple(args, (char *)format, &tag, &paths))
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_load_from_file('node', ['script.js']);");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 #if PY_MAJOR_VERSION == 2
@@ -87,13 +54,13 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 #endif
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: 'node', 'rb', 'ts', 'cs', 'js', 'cob'...)");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 	if (!PyList_Check(paths))
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in second argument (a list of strings indicating the paths must be used)");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 	paths_size = PyList_Size(paths);
@@ -101,7 +68,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 	if (paths_size == 0)
 	{
 		PyErr_SetString(PyExc_TypeError, "At least one path must be included in the paths list");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 /* Convert tag from unicode into a string */
@@ -121,7 +88,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 	if (tag_str == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid tag string conversion");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 	/* Convert paths list into an array of strings */
@@ -130,7 +97,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 	if (paths_str == NULL)
 	{
 		PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 	for (iterator = 0; iterator < paths_size; ++iterator)
@@ -165,7 +132,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 			if (str == NULL)
 			{
 				PyErr_SetString(PyExc_TypeError, "Invalid path string conversion");
-				result = py_loader_port_false();
+				result = Py_ReturnFalse();
 				goto clear;
 			}
 
@@ -174,7 +141,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 			if (paths_str[iterator] == NULL)
 			{
 				PyErr_SetString(PyExc_ValueError, "Invalid string path allocation");
-				result = py_loader_port_false();
+				result = Py_ReturnFalse();
 				goto clear;
 			}
 
@@ -193,7 +160,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 
 	if (ret != 0)
 	{
-		result = handle == NULL ? py_loader_port_false() : py_loader_port_none();
+		result = handle == NULL ? Py_ReturnFalse() : Py_ReturnNone();
 		goto clear;
 	}
 	else
@@ -211,7 +178,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 			if (wrapper == NULL)
 			{
 				Py_XDECREF(result);
-				result = py_loader_port_none();
+				result = Py_ReturnNone();
 			}
 			else
 			{
@@ -220,7 +187,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 		}
 		else
 		{
-			result = py_loader_port_true();
+			result = Py_ReturnTrue();
 		}
 	}
 
@@ -259,7 +226,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 	if (!PyArg_ParseTuple(args, (char *)format, &tag, &path))
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_load_from_package('cs', ['file.dll']);");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 #if PY_MAJOR_VERSION == 2
@@ -269,7 +236,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 #endif
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: 'node', 'rb', 'ts', 'cs', 'js', 'cob'...)");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 #if PY_MAJOR_VERSION == 2
@@ -279,7 +246,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 #endif
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in second argument (a string indicating the path must be used)");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 /* Convert tag from unicode into a string */
@@ -299,7 +266,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 	if (tag_str == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid tag string conversion");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 #if PY_MAJOR_VERSION == 2
@@ -325,7 +292,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 	if (path_str == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid path string conversion");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 	py_loader_thread_release();
@@ -337,7 +304,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 
 	if (ret != 0)
 	{
-		result = handle == NULL ? py_loader_port_false() : py_loader_port_none();
+		result = handle == NULL ? Py_ReturnFalse() : Py_ReturnNone();
 	}
 	else
 	{
@@ -354,7 +321,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 			if (wrapper == NULL)
 			{
 				Py_XDECREF(result);
-				result = py_loader_port_none();
+				result = Py_ReturnNone();
 			}
 			else
 			{
@@ -363,7 +330,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 		}
 		else
 		{
-			result = py_loader_port_true();
+			result = Py_ReturnTrue();
 		}
 	}
 
@@ -394,7 +361,7 @@ static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, (char *)format, &tag, &buffer))
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_load_from_memory('node', 'console.log(\"hello\")');");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 #if PY_MAJOR_VERSION == 2
@@ -404,7 +371,7 @@ static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 #endif
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: 'node', 'rb', 'ts', 'cs', 'js', 'cob'...)");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 #if PY_MAJOR_VERSION == 2
@@ -414,7 +381,7 @@ static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 #endif
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in second argument (a string indicating the tag of the loader must be used: 'console.log(\"hello\")')");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 /* Convert tag from unicode into a string */
@@ -434,7 +401,7 @@ static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 	if (tag_str == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid tag string conversion");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 /* Convert buffer from unicode into a string */
@@ -454,7 +421,7 @@ static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 	if (buffer_str == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid buffer string conversion");
-		return py_loader_port_false();
+		return Py_ReturnFalse();
 	}
 
 	/* Execute the load from memory call */
@@ -467,11 +434,11 @@ static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 
 		if (ret != 0)
 		{
-			return py_loader_port_false();
+			return Py_ReturnFalse();
 		}
 	}
 
-	return py_loader_port_true();
+	return Py_ReturnTrue();
 }
 
 static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
@@ -494,7 +461,7 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 	if (var_args_size == 0)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall('function_name', 'asd', 123, [7, 4]);");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	name = PyTuple_GetItem(var_args, 0);
@@ -515,7 +482,7 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 	if (name_str == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid function name string conversion, first parameter must be a string");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	/* Get variable arguments length */
@@ -529,7 +496,7 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 		if (value_args == NULL)
 		{
 			PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
-			return py_loader_port_none();
+			return Py_ReturnNone();
 		}
 
 		/* Parse variable arguments */
@@ -560,7 +527,7 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 
 		if (ret == NULL)
 		{
-			result = py_loader_port_none();
+			result = Py_ReturnNone();
 			goto clear;
 		}
 
@@ -572,7 +539,7 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 
 		if (result == NULL)
 		{
-			result = py_loader_port_none();
+			result = Py_ReturnNone();
 			goto clear;
 		}
 	}
@@ -617,7 +584,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 	if (var_args_size == 0)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall('function_name', 'asd', 123, [7, 4]);");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	name = PyTuple_GetItem(var_args, 0);
@@ -638,7 +605,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 	if (name_str == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid function name string conversion, first parameter must be a string");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	/* Get variable arguments length */
@@ -652,7 +619,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 		if (value_args == NULL)
 		{
 			PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
-			return py_loader_port_none();
+			return Py_ReturnNone();
 		}
 
 		/* Parse variable arguments */
@@ -686,7 +653,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 
 		if (ret == NULL)
 		{
-			result = py_loader_port_none();
+			result = Py_ReturnNone();
 			goto clear;
 		}
 
@@ -696,7 +663,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 
 		if (result == NULL)
 		{
-			result = py_loader_port_none();
+			result = Py_ReturnNone();
 			goto clear;
 		}
 	}
@@ -773,16 +740,16 @@ static PyObject *py_loader_port_value_create_ptr(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, (char *)format, &pointer))
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_value_create_ptr(None); or metacall_value_create_ptr(previous_allocated_ptr);");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
-	if (!PyCapsule_CheckExact(pointer) && pointer != Py_None)
+	if (!PyCapsule_CheckExact(pointer) && pointer != Py_NonePtr())
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument must be None or a PyCapsule (i.e a previously allocated pointer)");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
-	if (pointer == Py_None)
+	if (pointer == Py_NonePtr())
 	{
 		return py_loader_impl_capsule_new_null();
 	}
@@ -846,7 +813,7 @@ static PyObject *py_loader_port_value_reference(PyObject *self, PyObject *args)
 error_value:
 	metacall_value_destroy(v);
 error_none:
-	return py_loader_port_none();
+	return Py_ReturnNone();
 }
 
 static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args)
@@ -864,14 +831,14 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 	if (!PyArg_ParseTuple(args, (char *)format, &capsule))
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_value_dereference(ptr);");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	/* Check if it is a valid reference */
 	if (!PyCapsule_CheckExact(capsule))
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument must be a PyCapsule (i.e a previously allocated pointer)");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	/* Check if it is a valid MetaCall reference */
@@ -880,7 +847,7 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 	if (name != py_loader_capsule_reference_id)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid reference, argument must be a PyCapsule from MetaCall");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	/* Get the value */
@@ -888,7 +855,7 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 
 	if (v == NULL)
 	{
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	/* Obtain Python loader implementation */
@@ -899,7 +866,7 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 	if (result == NULL)
 	{
 		PyErr_SetString(PyExc_ValueError, "Failed to convert the MetaCall value to Python object.");
-		return py_loader_port_none();
+		return Py_ReturnNone();
 	}
 
 	return result;
@@ -920,7 +887,7 @@ static PyObject *py_loader_port_atexit(PyObject *self, PyObject *args)
 		}
 	}
 
-	return py_loader_port_none();
+	return Py_ReturnNone();
 }
 
 static PyMethodDef metacall_methods[] = {

@@ -21,6 +21,7 @@
 #include <py_loader/py_loader_dict.h>
 #include <py_loader/py_loader_impl.h>
 #include <py_loader/py_loader_port.h>
+#include <py_loader/py_loader_symbol_fallback.h>
 #include <py_loader/py_loader_threading.h>
 
 #include <loader/loader.h>
@@ -280,7 +281,7 @@ PyObject *py_loader_impl_capsule_new_null(void)
 	/* We want to create a new capsule with contents set to NULL, but PyCapsule
 	* does not allow that, instead we are going to identify our NULL capsule with
 	* this configuration (setting the capsule to Py_None) */
-	return PyCapsule_New(Py_None, py_loader_capsule_null_id, NULL);
+	return PyCapsule_New((void *)Py_NonePtr(), py_loader_capsule_null_id, NULL);
 }
 
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
@@ -918,7 +919,7 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	{
 		return TYPE_FUNCTION;
 	}
-	else if (obj == Py_None)
+	else if (obj == Py_NonePtr())
 	{
 		return TYPE_NULL;
 	}
@@ -1146,7 +1147,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		const char *name = PyCapsule_GetName(obj);
 		void *ptr = PyCapsule_GetPointer(obj, name);
 
-		if (ptr == Py_None && name == py_loader_capsule_null_id)
+		if (ptr == Py_NonePtr() && name == py_loader_capsule_null_id)
 		{
 			v = value_create_ptr(NULL);
 		}
@@ -1293,7 +1294,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	{
 		PyObject *tb = PyException_GetTraceback(obj);
 
-		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb ? tb : Py_None);
+		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb ? tb : Py_NonePtr());
 
 		Py_XDECREF(tb);
 	}
@@ -2668,6 +2669,12 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 			PyEval_InitThreads();
 		}
 #endif
+	}
+
+	/* Initialize symbol fallback */
+	if (py_loader_symbol_fallback_initialize(loader_impl_dependency(impl, "python")) != 0)
+	{
+		goto error_init_py;
 	}
 
 	/* Initialize threading */

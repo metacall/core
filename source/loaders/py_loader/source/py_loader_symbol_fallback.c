@@ -18,13 +18,210 @@
  *
  */
 
-#include <Python.h>
+#include <py_loader/py_loader_symbol_fallback.h>
 
-/* Required for when linking to Python in debug mode and loading with Python.exe in release mode */
+#include <dynlink/dynlink_type.h>
+
+/* Required for Windows due to DELAYLOAD not supporting delayed import of data symbols */
+
+#if defined(_WIN32) && defined(_MSC_VER)
+static PyTypeObject *PyBool_TypePtr = NULL;
+static PyTypeObject *PyFloat_TypePtr = NULL;
+static PyTypeObject *PyCapsule_TypePtr = NULL;
+static PyTypeObject *PyFunction_TypePtr = NULL;
+static PyTypeObject *PyCFunction_TypePtr = NULL;
+static PyTypeObject *PyModule_TypePtr = NULL;
+static PyObject *Py_NoneStructPtr = NULL;
+static PyObject *Py_FalseStructPtr = NULL;
+static PyObject *Py_TrueStructPtr = NULL;
+#endif
+
+int py_loader_symbol_fallback_initialize(dynlink py_library)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+	dynlink_symbol_addr address;
+
+	if (py_library == NULL)
+	{
+		return 1;
+	}
+
+	/* PyBool_Type */
+	if (dynlink_symbol(py_library, "PyBool_Type", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyBool_TypePtr);
+
+	/* PyFloat_Type */
+	if (dynlink_symbol(py_library, "PyFloat_Type", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyFloat_TypePtr);
+
+	/* PyCapsule_Type */
+	if (dynlink_symbol(py_library, "PyCapsule_Type", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyCapsule_TypePtr);
+
+	/* PyFunction_Type */
+	if (dynlink_symbol(py_library, "PyFunction_Type", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyFunction_TypePtr);
+
+	/* PyCFunction_Type */
+	if (dynlink_symbol(py_library, "PyCFunction_Type", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyCFunction_TypePtr);
+
+	/* PyModule_Type */
+	if (dynlink_symbol(py_library, "PyModule_Type", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyModule_TypePtr);
+
+	/* Py_None */
+	if (dynlink_symbol(py_library, "_Py_NoneStruct", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyObject *, Py_NoneStructPtr);
+
+	/* Py_False */
+	if (dynlink_symbol(py_library, "_Py_FalseStruct", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyObject *, Py_FalseStructPtr);
+
+	/* Py_True */
+	if (dynlink_symbol(py_library, "_Py_TrueStruct", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyObject *, Py_TrueStructPtr);
+
+	return 0;
+#else
+	(void)py_library;
+	return 0;
+#endif
+}
+
+#if defined(_WIN32) && defined(_MSC_VER)
+int PyBool_Check(const PyObject *ob)
+{
+	return Py_IS_TYPE(ob, PyBool_TypePtr);
+}
+
+int PyFloat_Check(const PyObject *ob)
+{
+	return Py_IS_TYPE(ob, PyFloat_TypePtr);
+}
+
+int PyCapsule_CheckExact(const PyObject *ob)
+{
+	return Py_IS_TYPE(ob, PyCapsule_TypePtr);
+}
+
+int PyFunction_Check(const PyObject *ob)
+{
+	return Py_IS_TYPE(ob, PyFunction_TypePtr);
+}
+
+int PyCFunction_Check(const PyObject *ob)
+{
+	return Py_IS_TYPE(ob, PyCFunction_TypePtr);
+}
+
+int PyModule_Check(const PyObject *ob)
+{
+	return Py_IS_TYPE(ob, PyModule_TypePtr);
+}
+#endif
+
+PyObject *Py_NonePtr(void)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+	return Py_NoneStructPtr;
+#else
+	return Py_None;
+#endif
+}
+
+PyObject *Py_ReturnNone(void)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+	Py_INCREF(Py_NoneStructPtr);
+	return Py_NoneStructPtr;
+#else
+	Py_RETURN_NONE;
+#endif
+}
+
+#if defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(_MSC_VER)
+	#pragma warning(push)
+// TODO
+#endif
+
+PyObject *Py_ReturnFalse(void)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+	Py_INCREF(Py_FalseStructPtr);
+	return Py_FalseStructPtr;
+#else
+	Py_RETURN_FALSE;
+#endif
+}
+
+PyObject *Py_ReturnTrue(void)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+	Py_INCREF(Py_TrueStructPtr);
+	return Py_TrueStructPtr;
+#else
+	Py_RETURN_TRUE;
+#endif
+}
+
+#if defined(__clang__)
+	#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+	#pragma warning(pop)
+#endif
+
+/* Required on GNU for when linking to Python in debug mode and loading with Python.elf in release mode */
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#if defined(__clang__) || defined(__GNUC__)
 
-__attribute__((weak)) void _Py_DECREF_DecRefTotal(void) {}
+__attribute__((weak)) void _Py_DECREF_DecRefTotal(void)
+{
+}
 __attribute__((weak)) void _Py_INCREF_IncRefTotal(void) {}
 __attribute__((weak)) Py_ssize_t _Py_RefTotal;
 
