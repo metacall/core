@@ -69,8 +69,10 @@ void py_loader_thread_initialize(const int host)
 
 	if (host == 1)
 	{
+		PyGILState_STATE gstate = PyGILState_Ensure();
 		main_thread_state = PyThreadState_Get();
 		main_thread_ref_count++;
+		PyGILState_Release(gstate);
 	}
 }
 

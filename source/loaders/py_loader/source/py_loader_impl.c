@@ -2678,6 +2678,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	/* Initialize symbol fallback */
 	if (py_loader_symbol_fallback_initialize(loader_impl_dependency(impl, "python")) != 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to initialize the Python Loader Symbol Fallback mechanism");
 		goto error_init_py;
 	}
 
