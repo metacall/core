@@ -36,11 +36,11 @@ static PyTypeObject *PyDict_TypePtr = NULL;
 static PyTypeObject *PyModule_TypePtr = NULL;
 static PyTypeObject *PyType_TypePtr = NULL;
 static PyObject *Py_NoneStructPtr = NULL;
-static PyObject *PyExc_ExceptionStructPtr = NULL;
-static PyObject *PyExc_FileNotFoundErrorStructPtr = NULL;
-static PyObject *PyExc_TypeErrorStructPtr = NULL;
-static PyObject *PyExc_ValueErrorStructPtr = NULL;
-static PyObject *PyExc_RuntimeErrorStructPtr = NULL;
+static PyObject **PyExc_ExceptionStructPtr = NULL;
+static PyObject **PyExc_FileNotFoundErrorStructPtr = NULL;
+static PyObject **PyExc_TypeErrorStructPtr = NULL;
+static PyObject **PyExc_ValueErrorStructPtr = NULL;
+static PyObject **PyExc_RuntimeErrorStructPtr = NULL;
 static PyObject *Py_FalseStructPtr = NULL;
 static PyObject *Py_TrueStructPtr = NULL;
 #endif
@@ -149,7 +149,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyObject *, PyExc_ExceptionStructPtr);
+	dynlink_symbol_uncast_type(address, PyObject **, PyExc_ExceptionStructPtr);
 
 	/* PyExc_FileNotFoundError */
 	if (dynlink_symbol(py_library, "PyExc_FileNotFoundError", &address) != 0)
@@ -157,7 +157,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyObject *, PyExc_FileNotFoundErrorStructPtr);
+	dynlink_symbol_uncast_type(address, PyObject **, PyExc_FileNotFoundErrorStructPtr);
 
 	/* PyExc_TypeError */
 	if (dynlink_symbol(py_library, "PyExc_TypeError", &address) != 0)
@@ -165,7 +165,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyObject *, PyExc_TypeErrorStructPtr);
+	dynlink_symbol_uncast_type(address, PyObject **, PyExc_TypeErrorStructPtr);
 
 	/* PyExc_ValueError */
 	if (dynlink_symbol(py_library, "PyExc_ValueError", &address) != 0)
@@ -173,7 +173,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyObject *, PyExc_ValueErrorStructPtr);
+	dynlink_symbol_uncast_type(address, PyObject **, PyExc_ValueErrorStructPtr);
 
 	/* PyExc_RuntimeError */
 	if (dynlink_symbol(py_library, "PyExc_RuntimeError", &address) != 0)
@@ -181,7 +181,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyObject *, PyExc_RuntimeErrorStructPtr);
+	dynlink_symbol_uncast_type(address, PyObject **, PyExc_RuntimeErrorStructPtr);
 
 	/* Py_False */
 	if (dynlink_symbol(py_library, "_Py_FalseStruct", &address) != 0)
@@ -295,7 +295,7 @@ PyObject *Py_NonePtr(void)
 PyObject *PyExc_ExceptionPtr(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	return PyExc_ExceptionStructPtr;
+	return *PyExc_ExceptionStructPtr;
 #else
 	return PyExc_Exception;
 #endif
@@ -304,7 +304,7 @@ PyObject *PyExc_ExceptionPtr(void)
 PyObject *PyExc_FileNotFoundErrorPtr(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	return PyExc_FileNotFoundErrorStructPtr;
+	return *PyExc_FileNotFoundErrorStructPtr;
 #else
 	return PyExc_FileNotFoundError;
 #endif
@@ -313,7 +313,7 @@ PyObject *PyExc_FileNotFoundErrorPtr(void)
 PyObject *PyExc_TypeErrorPtr(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	return PyExc_TypeErrorStructPtr;
+	return *PyExc_TypeErrorStructPtr;
 #else
 	return PyExc_TypeError;
 #endif
@@ -322,7 +322,7 @@ PyObject *PyExc_TypeErrorPtr(void)
 PyObject *PyExc_ValueErrorPtr(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	return PyExc_ValueErrorStructPtr;
+	return *PyExc_ValueErrorStructPtr;
 #else
 	return PyExc_ValueError;
 #endif
@@ -331,7 +331,7 @@ PyObject *PyExc_ValueErrorPtr(void)
 PyObject *PyExc_RuntimeErrorPtr(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	return PyExc_RuntimeErrorStructPtr;
+	return *PyExc_RuntimeErrorStructPtr;
 #else
 	return PyExc_RuntimeError;
 #endif
