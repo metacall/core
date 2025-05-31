@@ -3773,7 +3773,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 		Py_DECREF(nameobj);
 
 		/* Turns out __dict__ is not a PyDict but PyMapping */
-		if (!PyObject_TypeCheck(read_only_dict, &PyDictProxy_Type))
+		if (!PyObject_TypeCheck(read_only_dict, PyDictProxyTypePtr()))
 		{
 			Py_XDECREF(read_only_dict);
 			return 1;
