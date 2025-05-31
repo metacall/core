@@ -52,6 +52,8 @@
 	#endif
 #endif
 
+#include <py_loader/py_loader_symbol_fallback.h>
+
 struct py_loader_impl_dict_obj
 {
 	PyDictObject dict;
@@ -144,7 +146,7 @@ PyObject *py_loader_impl_dict_sizeof(struct py_loader_impl_dict_obj *self, void 
 
 int py_loader_impl_dict_init(struct py_loader_impl_dict_obj *self, PyObject *args, PyObject *kwds)
 {
-	if (PyDict_Type.tp_init((PyObject *)self, args, kwds) < 0)
+	if (PyDictTypePtr()->tp_init((PyObject *)self, args, kwds) < 0)
 		return -1;
 	self->v = NULL;
 	return 0;
@@ -155,13 +157,13 @@ void py_loader_impl_dict_dealloc(struct py_loader_impl_dict_obj *self)
 	metacall_value_destroy(self->v);
 	Py_DECREF(self->parent); /* TODO: Review if this is correct or this line is unnecessary */
 
-	PyDict_Type.tp_dealloc((PyObject *)self);
+	PyDictTypePtr()->tp_dealloc((PyObject *)self);
 }
 
 int py_loader_impl_dict_type_init(void)
 {
 	/* py_loader_impl_dict_type is derived from PyDict_Type */
-	py_loader_impl_dict_type.tp_base = &PyDict_Type;
+	py_loader_impl_dict_type.tp_base = PyDictTypePtr();
 
 	return PyType_Ready(&py_loader_impl_dict_type);
 }

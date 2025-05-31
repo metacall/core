@@ -231,12 +231,12 @@ PyObject *py_loader_impl_finalizer_object_impl(PyObject *self, PyObject *Py_UNUS
 	if (v == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error destroying a value, the metacall value attached to the python value is null");
-		Py_RETURN_NONE;
+		return Py_ReturnNone();
 	}
 
 	value_type_destroy(v);
 
-	Py_RETURN_NONE;
+	return Py_ReturnNone();
 }
 
 int py_loader_impl_finalizer_object(loader_impl impl, PyObject *obj, value v)
@@ -1453,7 +1453,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	{
 		/* TODO */
 		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python future not implemented yet for arguments");
-		Py_RETURN_NONE;
+		return Py_ReturnNone();
 	}
 	else if (id == TYPE_FUNCTION)
 	{
@@ -1481,7 +1481,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_NULL)
 	{
-		Py_RETURN_NONE;
+		return Py_ReturnNone();
 	}
 	else if (id == TYPE_CLASS)
 	{
@@ -1539,7 +1539,7 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 	{
 		py_loader_thread_release();
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid python capsule in task_callback_handler");
-		Py_RETURN_NONE;
+		return Py_ReturnNone();
 	}
 
 	loader_impl_py_await_invoke_callback_state callback_state = PyCapsule_GetPointer(capsule, NULL);
@@ -1610,7 +1610,7 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 
 	if (ret == NULL)
 	{
-		Py_RETURN_NONE;
+		return Py_ReturnNone();
 	}
 	else
 	{
@@ -1886,7 +1886,7 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error when invoking a function, state cannot be recovered, avoiding the function call");
 		py_loader_thread_release();
-		Py_RETURN_NONE;
+		return Py_ReturnNone();
 	}
 
 	Py_ssize_t callee_args_size = PyTuple_Size(args);
@@ -1897,7 +1897,7 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid allocation of arguments for callback");
 		py_loader_thread_release();
-		Py_RETURN_NONE;
+		return Py_ReturnNone();
 	}
 
 	/* Generate metacall values from python values */
@@ -1946,7 +1946,7 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 		return py_ret;
 	}
 
-	Py_RETURN_NONE;
+	return Py_ReturnNone();
 }
 
 int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, type_id id, const char *name)
@@ -2768,12 +2768,12 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 	/* Hook the deallocation of PyCFunction */
-	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
-	PyCFunction_Type.tp_dealloc = PyCFunction_dealloc;
+	py_loader_impl_pycfunction_dealloc = PyCFunctionTypePtr()->tp_dealloc;
+	PyCFunctionTypePtr()->tp_dealloc = PyCFunction_dealloc;
 
 	/* TODO: This does not work after 3.13, is it really needed for this hook? */
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 13
-	PyType_Modified(&PyCFunction_Type);
+	PyType_Modified(PyCFunctionTypePtr());
 #endif
 
 	/* Register initialization */
@@ -2997,7 +2997,7 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
+		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_ExceptionPtr()))
 		{
 			*exception = module->instance;
 			module->instance = NULL;
@@ -3054,7 +3054,7 @@ int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handl
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
+		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_ExceptionPtr()))
 		{
 			*exception = module->instance;
 			module->instance = NULL;
@@ -3079,7 +3079,7 @@ error_name_create:
 
 int py_loader_impl_import_exception(PyObject *exception)
 {
-	return /*PyErr_GivenExceptionMatches(exception, PyExc_ImportError) ||*/ PyErr_GivenExceptionMatches(exception, PyExc_FileNotFoundError);
+	return /*PyErr_GivenExceptionMatches(exception, PyExc_ImportErrorPtr()) ||*/ PyErr_GivenExceptionMatches(exception, PyExc_FileNotFoundErrorPtr());
 }
 
 int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception, int run_main)
@@ -3815,7 +3815,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 			Py_INCREF(tuple_key);
 			PyObject *method_static = PyObject_CallObject(py_impl->inspect_getattr_static, args);
 			Py_DECREF(args);
-			bool is_static_method = PyObject_TypeCheck(method_static, &PyStaticMethod_Type);
+			bool is_static_method = PyObject_TypeCheck(method_static, PyStaticMethodTypePtr());
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s, static method: %d",
 				PyUnicode_AsUTF8(tuple_key),
@@ -4311,7 +4311,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	if (host == 0)
 	{
 		/* Unhook the deallocation of PyCFunction */
-		PyCFunction_Type.tp_dealloc = py_loader_impl_pycfunction_dealloc;
+		PyCFunctionTypePtr()->tp_dealloc = py_loader_impl_pycfunction_dealloc;
 	}
 	else
 	{
