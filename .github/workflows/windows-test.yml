@@ -17,11 +17,12 @@ concurrency:
 jobs:
   windows-test:
     name: Windows MSVC Test
-    runs-on: windows-2019 # TODO: Implement matrix with windows 2019 and 2022
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-2019, windows-2022, windows-2025]
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
