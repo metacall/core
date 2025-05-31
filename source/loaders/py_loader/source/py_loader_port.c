@@ -177,7 +177,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 
 			if (wrapper == NULL)
 			{
-				Py_XDECREF(result);
+				Py_DecRef(result);
 				result = Py_ReturnNone();
 			}
 			else
@@ -320,7 +320,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 
 			if (wrapper == NULL)
 			{
-				Py_XDECREF(result);
+				Py_DecRef(result);
 				result = Py_ReturnNone();
 			}
 			else
