@@ -104,7 +104,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 	dynlink_symbol_uncast_type(address, PyTypeObject *, PyStaticMethod_TypePtr);
 
 	/* PyDict_TypePtr */
-	if (dynlink_symbol(py_library, "PyDict_TypePtr", &address) != 0)
+	if (dynlink_symbol(py_library, "PyDict_Type", &address) != 0)
 	{
 		return 1;
 	}
@@ -112,7 +112,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 	dynlink_symbol_uncast_type(address, PyTypeObject *, PyDict_TypePtr);
 
 	/* PyDictProxy_TypePtr */
-	if (dynlink_symbol(py_library, "PyDictProxy_TypePtr", &address) != 0)
+	if (dynlink_symbol(py_library, "PyDictProxy_Type", &address) != 0)
 	{
 		return 1;
 	}
@@ -125,7 +125,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyTypeObject *, PyCFunction_TypePtr);
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyModule_TypePtr);
 
 	/* PyType_Type */
 	if (dynlink_symbol(py_library, "PyType_Type", &address) != 0)

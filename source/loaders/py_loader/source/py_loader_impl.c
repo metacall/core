@@ -224,9 +224,11 @@ static void (*py_loader_impl_pycfunction_dealloc)(PyObject *) = NULL;
 /* Implements PyCapsules with null value internally */
 static const char py_loader_capsule_null_id[] = "__metacall_capsule_null__";
 
-PyObject *py_loader_impl_finalizer_object_impl(PyObject *self, PyObject *Py_UNUSED(args))
+PyObject *py_loader_impl_finalizer_object_impl(PyObject *self, PyObject *args)
 {
 	value v = PyCapsule_GetPointer(self, NULL);
+
+	(void)args;
 
 	if (v == NULL)
 	{
@@ -2154,9 +2156,11 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 	}
 
 	/* Start the asyncio thread */
-	PyObject *args_tuple = PyTuple_New(0);
-	py_impl->asyncio_loop = PyObject_Call(py_impl->thread_background_start, args_tuple, NULL);
-	Py_DecRef(args_tuple);
+	{
+		PyObject *args_tuple = PyTuple_New(0);
+		py_impl->asyncio_loop = PyObject_Call(py_impl->thread_background_start, args_tuple, NULL);
+		Py_DecRef(args_tuple);
+	}
 
 	if (py_impl->asyncio_loop == NULL)
 	{

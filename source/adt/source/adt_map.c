@@ -107,9 +107,9 @@ static int map_bucket_rehash(map m, map new_map)
 
 				size_t index = h % new_map->capacity;
 
-				bucket b = &new_map->buckets[index];
+				bucket new_bucket = &new_map->buckets[index];
 
-				if (bucket_insert(b, p->key, p->value) != 0)
+				if (bucket_insert(new_bucket, p->key, p->value) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Invalid map bucket realloc insertion");
 					return 1;
