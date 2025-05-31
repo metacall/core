@@ -3941,8 +3941,8 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 	while (PyDict_Next(module_dict, &position, &module_dict_key, &module_dict_val))
 	{
 		// Class is also PyCallable, so test for class first
-		if (PyObject_TypeCheck(module_dict_val, &PyType_Type))
-		// PyObject_IsSubclass(module_dict_val, (PyObject *)&PyType_Type) == 0
+		if (PyObject_TypeCheck(module_dict_val, PyTypeTypePtr()))
+		// PyObject_IsSubclass(module_dict_val, (PyObject *)PyTypeTypePtr()) == 0
 		{
 			const char *cls_name = PyUnicode_AsUTF8(module_dict_key);
 

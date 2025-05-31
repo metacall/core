@@ -48,6 +48,7 @@ PY_LOADER_NO_EXPORT int PyCFunction_Check(const PyObject *ob);
 PY_LOADER_NO_EXPORT int PyModule_Check(const PyObject *ob);
 #endif
 
+PY_LOADER_NO_EXPORT PyTypeObject *PyTypeTypePtr(void);
 PY_LOADER_NO_EXPORT PyObject *Py_NonePtr(void);
 PY_LOADER_NO_EXPORT PyObject *Py_ReturnNone(void);
 PY_LOADER_NO_EXPORT PyObject *Py_ReturnFalse(void);

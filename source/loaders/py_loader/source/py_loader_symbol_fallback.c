@@ -31,6 +31,7 @@ static PyTypeObject *PyCapsule_TypePtr = NULL;
 static PyTypeObject *PyFunction_TypePtr = NULL;
 static PyTypeObject *PyCFunction_TypePtr = NULL;
 static PyTypeObject *PyModule_TypePtr = NULL;
+static PyTypeObject *PyType_TypePtr = NULL;
 static PyObject *Py_NoneStructPtr = NULL;
 static PyObject *Py_FalseStructPtr = NULL;
 static PyObject *Py_TrueStructPtr = NULL;
@@ -92,7 +93,15 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyTypeObject *, PyModule_TypePtr);
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyCFunction_TypePtr);
+
+	/* PyType_Type */
+	if (dynlink_symbol(py_library, "PyType_Type", &address) != 0)
+	{
+		return 1;
+	}
+
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyType_TypePtr);
 
 	/* Py_None */
 	if (dynlink_symbol(py_library, "_Py_NoneStruct", &address) != 0)
@@ -156,6 +165,15 @@ int PyModule_Check(const PyObject *ob)
 	return Py_IS_TYPE(ob, PyModule_TypePtr);
 }
 #endif
+
+PyTypeObject *PyTypeTypePtr(void)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+	return PyType_TypePtr;
+#else
+	return &PyType_Type;
+#endif
+}
 
 PyObject *Py_NonePtr(void)
 {
