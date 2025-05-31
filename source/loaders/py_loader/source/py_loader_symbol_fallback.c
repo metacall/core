@@ -37,7 +37,7 @@ static PyTypeObject *PyModule_TypePtr = NULL;
 static PyTypeObject *PyType_TypePtr = NULL;
 static PyObject *Py_NoneStructPtr = NULL;
 static PyObject *PyExc_ExceptionStructPtr = NULL;
-static PyObject *PyExc_FileNotFoundErrorPtr = NULL;
+static PyObject *PyExc_FileNotFoundErrorStructPtr = NULL;
 static PyObject *PyExc_TypeErrorStructPtr = NULL;
 static PyObject *PyExc_ValueErrorStructPtr = NULL;
 static PyObject *PyExc_RuntimeErrorStructPtr = NULL;
@@ -109,7 +109,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyTypeObject *, PyDict_TypePtrPtr);
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyDict_TypePtr);
 
 	/* PyDictProxy_TypePtr */
 	if (dynlink_symbol(py_library, "PyDictProxy_TypePtr", &address) != 0)
@@ -117,7 +117,7 @@ int py_loader_symbol_fallback_initialize(dynlink py_library)
 		return 1;
 	}
 
-	dynlink_symbol_uncast_type(address, PyTypeObject *, PyDictProxy_TypePtrPtr);
+	dynlink_symbol_uncast_type(address, PyTypeObject *, PyDictProxy_TypePtr);
 
 	/* PyModule_Type */
 	if (dynlink_symbol(py_library, "PyModule_Type", &address) != 0)
