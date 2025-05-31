@@ -126,7 +126,7 @@ void py_loader_thread_delayed_destroy(PyObject *obj)
 	if (main_thread_id == current_thread_id)
 	{
 		py_loader_thread_acquire();
-		Py_DECREF(obj);
+		Py_DecRef(obj);
 		py_loader_thread_release();
 	}
 	else
@@ -141,7 +141,7 @@ void py_loader_thread_destroy(void)
 
 	for (auto obj : delayed_destructor)
 	{
-		Py_DECREF(obj);
+		Py_DecRef(obj);
 	}
 
 	py_loader_thread_release();

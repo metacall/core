@@ -259,7 +259,7 @@ int py_loader_impl_finalizer_object(loader_impl impl, PyObject *obj, value v)
 		if (destructor != NULL)
 		{
 			/* This will destroy the capsule too */
-			Py_DECREF(destructor);
+			Py_DecRef(destructor);
 		}
 		else
 		{
@@ -336,7 +336,7 @@ void type_py_interface_destroy(type t, type_impl impl)
 	if (Py_IsInitialized() != 0)
 	{
 		py_loader_thread_acquire();
-		Py_DECREF(builtin);
+		Py_DecRef(builtin);
 		py_loader_thread_release();
 	}
 }
@@ -463,7 +463,7 @@ int py_object_interface_set(object obj, object_impl impl, struct accessor_type *
 	PyObject *pyvalue = py_loader_impl_value_to_capi(py_object->impl, value_type_id(v), v);
 	int retval = PyObject_GenericSetAttr(pyobject_object, key_py_str, pyvalue);
 
-	Py_DECREF(key_py_str);
+	Py_DecRef(key_py_str);
 
 	py_loader_thread_release();
 
@@ -499,7 +499,7 @@ value py_object_interface_method_invoke(object obj, object_impl impl, method m, 
 
 	PyObject *python_object = PyObject_CallMethod(obj_impl->obj, method_name(m), "O", args_tuple, NULL);
 
-	Py_DECREF(args_tuple);
+	Py_DecRef(args_tuple);
 
 	if (python_object == NULL)
 	{
@@ -631,7 +631,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 	/* Calling the class will create an instance (object) */
 	PyObject *python_object = PyObject_CallObject(py_cls->cls, args_tuple);
 
-	Py_DECREF(args_tuple);
+	Py_DecRef(args_tuple);
 
 	if (python_object == NULL)
 	{
@@ -640,7 +640,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 		return NULL;
 	}
 
-	Py_INCREF(py_cls->cls);
+	Py_IncRef(py_cls->cls);
 	py_loader_thread_release();
 	py_obj->obj = python_object;
 
@@ -692,7 +692,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 	PyObject *key_py_str = PyUnicode_FromString(attr_name);
 	int result = PyObject_SetAttr(py_class->cls, key_py_str, py_value);
 
-	Py_DECREF(key_py_str);
+	Py_DecRef(key_py_str);
 
 	py_loader_thread_release();
 
@@ -736,8 +736,8 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 
 	PyObject *python_object = PyObject_Call(method, args_tuple, NULL);
 
-	Py_DECREF(args_tuple);
-	Py_DECREF(method);
+	Py_DecRef(args_tuple);
+	Py_DecRef(method);
 
 	if (python_object == NULL)
 	{
@@ -802,7 +802,7 @@ int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
 {
 	PyObject *args_tuple = PyTuple_New(1);
 
-	Py_INCREF(obj);
+	Py_IncRef(obj);
 
 	PyTuple_SetItem(args_tuple, 0, obj);
 
@@ -822,7 +822,7 @@ int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
 
 	int ret = PyObject_IsTrue(result);
 
-	Py_DECREF(result);
+	Py_DecRef(result);
 
 	return ret;
 }
@@ -843,7 +843,7 @@ int py_loader_impl_check_async(loader_impl_py py_impl, PyObject *func)
 
 	int ret = PyObject_IsTrue(result);
 
-	Py_DECREF(result);
+	Py_DecRef(result);
 
 	return ret;
 }
@@ -860,7 +860,7 @@ int py_loader_impl_check_class(loader_impl_py py_impl, PyObject *obj)
 
 	int result = !(PyObject_IsTrue(is_class) == 1);
 
-	Py_DECREF(is_class);
+	Py_DecRef(is_class);
 
 	return result;
 }
@@ -1171,7 +1171,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 			/* Move finalizers */
 			value_move(callback, invoke_state->callback);
 
-			Py_DECREF(invoke_state_capsule);
+			Py_DecRef(invoke_state_capsule);
 
 			return callback;
 		}
@@ -1187,7 +1187,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 			return NULL;
 		}
 
-		Py_INCREF(obj);
+		Py_IncRef(obj);
 		py_func->func = obj;
 		py_func->impl = impl;
 
@@ -1232,7 +1232,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		py_future->py_impl = py_impl;
 		py_future->future = obj;
 
-		Py_INCREF(obj);
+		Py_IncRef(obj);
 
 		v = value_create_future(f);
 	}
@@ -1240,7 +1240,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	{
 		loader_impl_py_class py_cls = malloc(sizeof(struct loader_impl_py_class_type));
 
-		Py_INCREF(obj);
+		Py_IncRef(obj);
 
 		PyObject *qualname = PyObject_GetAttrString(obj, "__qualname__");
 		klass c = class_create(PyUnicode_AsUTF8(qualname), ACCESSOR_TYPE_STATIC, py_cls, &py_class_interface_singleton);
@@ -1264,7 +1264,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	{
 		loader_impl_py_object py_obj = malloc(sizeof(struct loader_impl_py_object_type));
 
-		Py_INCREF(obj);
+		Py_IncRef(obj);
 
 		PyObject *object_class = PyObject_Type(obj); /* Increments the class reference count */
 
@@ -1304,7 +1304,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		v = value_create_ptr(obj);
 
 		/* Create reference to the value so it does not get garbage collected */
-		Py_INCREF(obj);
+		Py_IncRef(obj);
 
 		/* Set up finalizer in order to free the value */
 		value_finalizer(v, &py_loader_impl_value_ptr_finalize, impl);
@@ -1508,7 +1508,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 		/* TODO: The return value of object_impl_get may not be a loader_impl_py_object, it can be a loader_impl_node_node too */
 		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the object dynamically */
 		loader_impl_py_object obj_impl = object_impl_get(obj);
-		Py_INCREF(obj_impl->obj);
+		Py_IncRef(obj_impl->obj);
 
 		if (obj_impl == NULL)
 		{
@@ -1543,14 +1543,14 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 	}
 
 	loader_impl_py_await_invoke_callback_state callback_state = PyCapsule_GetPointer(capsule, NULL);
-	Py_DECREF(capsule);
+	Py_DecRef(capsule);
 
 	/* pyfuture should never raise InvalidStateError exception here */
 	/* because this is a callback set in Future.add_done_callback */
 
 	PyObject *result_str = PyUnicode_FromString("result");
 	PyObject *result = PyObject_CallMethodObjArgs(pyfuture, result_str, NULL);
-	Py_DECREF(result_str);
+	Py_DecRef(result_str);
 
 	value v = NULL, ret = NULL;
 
@@ -1559,7 +1559,7 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 		type_id id = py_loader_impl_capi_to_value_type(callback_state->impl, result);
 		v = py_loader_impl_capi_to_value(callback_state->impl, result, id);
 
-		Py_DECREF(result);
+		Py_DecRef(result);
 
 		py_loader_thread_release();
 		ret = callback_state->resolve_callback(v, callback_state->context);
@@ -1600,7 +1600,7 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 
 	loader_impl impl = callback_state->impl;
 
-	Py_DECREF(callback_state->coroutine);
+	Py_DecRef(callback_state->coroutine);
 
 	py_loader_thread_release();
 
@@ -1689,7 +1689,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	type_id id = ret_type == NULL ? py_loader_impl_capi_to_value_type(py_func->impl, result) : type_index(ret_type);
 	v = py_loader_impl_capi_to_value(py_func->impl, result, id);
 
-	Py_DECREF(result);
+	Py_DecRef(result);
 finalize:
 	py_loader_thread_release();
 	return v;
@@ -1750,7 +1750,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 	if (args_tuple == NULL)
 	{
-		Py_DECREF(coroutine);
+		Py_DecRef(coroutine);
 		goto error;
 	}
 
@@ -1759,8 +1759,8 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 	if (callback_state == NULL)
 	{
-		Py_DECREF(coroutine);
-		Py_DECREF(args_tuple);
+		Py_DecRef(coroutine);
+		Py_DecRef(args_tuple);
 		goto error;
 	}
 
@@ -1774,8 +1774,8 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 	if (callback_status == NULL)
 	{
-		Py_DECREF(coroutine);
-		Py_DECREF(args_tuple);
+		Py_DecRef(coroutine);
+		Py_DecRef(args_tuple);
 		free(callback_state);
 		goto error;
 	}
@@ -1783,10 +1783,10 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	/* Create a reference to the function so we avoid to delete it when destroying the event loop */
 	callback_state->func_val = value_create_function(func);
 
-	Py_INCREF(py_impl->asyncio_loop);
-	Py_INCREF(coroutine);
-	Py_INCREF(py_impl->py_task_callback_handler);
-	Py_INCREF(callback_status);
+	Py_IncRef(py_impl->asyncio_loop);
+	Py_IncRef(coroutine);
+	Py_IncRef(py_impl->py_task_callback_handler);
+	Py_IncRef(callback_status);
 
 	PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
 	PyTuple_SetItem(args_tuple, 1, coroutine);
@@ -1794,7 +1794,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	PyTuple_SetItem(args_tuple, 3, callback_status);
 
 	pyfuture = PyObject_Call(py_impl->thread_background_send, args_tuple, NULL);
-	Py_DECREF(args_tuple);
+	Py_DecRef(args_tuple);
 
 	/* Variable arguments */
 	if (args_size > signature_args_size)
@@ -1819,8 +1819,8 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 		v = py_loader_impl_capi_to_value(py_func->impl, pyfuture, id);
 
-		Py_DECREF(pyfuture);
-		Py_DECREF(tuple_args);
+		Py_DecRef(pyfuture);
+		Py_DecRef(tuple_args);
 
 		py_loader_thread_release();
 
@@ -1834,7 +1834,7 @@ error:
 	}
 
 	Py_XDECREF(pyfuture);
-	Py_DECREF(tuple_args);
+	Py_DecRef(tuple_args);
 
 	py_loader_thread_release();
 
@@ -1975,7 +1975,7 @@ int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, ty
 error_define_type:
 	type_destroy(builtin_type);
 error_create_type:
-	Py_DECREF(builtin);
+	Py_DecRef(builtin);
 error_get_builtin:
 	return 1;
 }
@@ -2043,7 +2043,7 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 	return 0;
 
 error_get_builtin_type:
-	Py_DECREF(py_impl->builtins_module);
+	Py_DecRef(py_impl->builtins_module);
 error_import_module:
 	return 1;
 }
@@ -2095,17 +2095,17 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 		return 0;
 	}
 
-	Py_DECREF(py_impl->inspect_isclass);
+	Py_DecRef(py_impl->inspect_isclass);
 error_inspect_isclass:
-	Py_DECREF(py_impl->inspect_ismethod);
+	Py_DecRef(py_impl->inspect_ismethod);
 error_inspect_ismethod:
-	Py_DECREF(py_impl->inspect_getfullargspec);
+	Py_DecRef(py_impl->inspect_getfullargspec);
 error_inspect_getfullargspec:
-	Py_DECREF(py_impl->inspect_getattr_static);
+	Py_DecRef(py_impl->inspect_getattr_static);
 error_inspect_getattr_static:
-	Py_DECREF(py_impl->inspect_signature);
+	Py_DecRef(py_impl->inspect_signature);
 error_inspect_signature:
-	Py_DECREF(py_impl->inspect_module);
+	Py_DecRef(py_impl->inspect_module);
 error_import_module:
 	return 1;
 }
@@ -2115,7 +2115,7 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 	PyObject *module_name = PyUnicode_DecodeFSDefault("asyncio");
 	py_impl->asyncio_module = PyImport_Import(module_name);
 
-	Py_DECREF(module_name);
+	Py_DecRef(module_name);
 
 	if (PyErr_Occurred() != NULL)
 	{
@@ -2169,7 +2169,7 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 	if (host == 1)
 	{
 		PyObject *args_tuple = PyTuple_New(1);
-		Py_INCREF(py_impl->asyncio_loop);
+		Py_IncRef(py_impl->asyncio_loop);
 		PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
 		PyObject_Call(py_impl->thread_background_register_atexit, args_tuple, NULL);
 		Py_XDECREF(args_tuple);
@@ -2178,11 +2178,11 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 	return 0;
 
 error_after_py_task_callback_handler:
-	Py_DECREF(py_impl->py_task_callback_handler);
+	Py_DecRef(py_impl->py_task_callback_handler);
 error_after_asyncio_iscoroutinefunction:
-	Py_DECREF(py_impl->asyncio_iscoroutinefunction);
+	Py_DecRef(py_impl->asyncio_iscoroutinefunction);
 error_after_asyncio_module:
-	Py_DECREF(py_impl->asyncio_module);
+	Py_DecRef(py_impl->asyncio_module);
 
 	return 1;
 }
@@ -2210,7 +2210,7 @@ int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl
 
 	Py_XDECREF(py_impl->traceback_format_exception);
 error_format_exception:
-	Py_DECREF(py_impl->traceback_module);
+	Py_DecRef(py_impl->traceback_module);
 error_import_module:
 	return 1;
 }
@@ -2244,7 +2244,7 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 		goto error_callable_check;
 	}
 
-	Py_INCREF(py_impl->gc_debug_leak);
+	Py_IncRef(py_impl->gc_debug_leak);
 
 	py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
 
@@ -2253,7 +2253,7 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 		goto error_debug_leak;
 	}
 
-	Py_INCREF(py_impl->gc_debug_stats);
+	Py_IncRef(py_impl->gc_debug_stats);
 
 	flags = PyNumber_Or(py_impl->gc_debug_leak, py_impl->gc_debug_stats);
 
@@ -2264,7 +2264,7 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 
 	PyObject_CallFunctionObjArgs(py_impl->gc_set_debug, flags, NULL);
 
-	Py_DECREF(flags);
+	Py_DecRef(flags);
 
 	if (PyErr_Occurred() != NULL)
 	{
@@ -2282,7 +2282,7 @@ error_debug_leak:
 error_callable_check:
 	Py_XDECREF(py_impl->gc_set_debug);
 error_set_debug:
-	Py_DECREF(py_impl->gc_module);
+	Py_DecRef(py_impl->gc_module);
 error_import_module:
 	return 1;
 }
@@ -2378,7 +2378,7 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 
 	return 0;
 error_import_function:
-	Py_DECREF(py_impl->import_module);
+	Py_DecRef(py_impl->import_module);
 error_import_compile:
 	py_loader_impl_error_print(py_impl);
 	return 1;
@@ -2551,7 +2551,7 @@ int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
 
 	int result = PySys_SetObject("executable", exe_path_obj);
 
-	Py_DECREF(exe_path_obj);
+	Py_DecRef(exe_path_obj);
 
 	if (result == -1)
 	{
@@ -2585,7 +2585,7 @@ int py_loader_impl_initialize_argv(loader_impl_py py_impl, int argc, char **argv
 
 	int result = PySys_SetObject("argv", list);
 
-	Py_DECREF(list);
+	Py_DecRef(list);
 
 	if (result == -1)
 	{
@@ -2601,7 +2601,7 @@ int py_loader_impl_initialize_argv(loader_impl_py py_impl, int argc, char **argv
 	return 0;
 
 error_set_item:
-	Py_DECREF(list);
+	Py_DecRef(list);
 	return 1;
 }
 
@@ -2625,7 +2625,7 @@ static void PyCFunction_dealloc(PyObject *obj)
 		value_type_destroy(invoke_state->callback);
 		py_loader_thread_acquire();
 
-		Py_DECREF(invoke_state_capsule);
+		Py_DecRef(invoke_state_capsule);
 
 		PyErr_Restore(error_type, error_value, error_traceback);
 	}
@@ -2784,37 +2784,37 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	return py_impl;
 
 error_after_asyncio_module:
-	Py_DECREF(py_impl->asyncio_iscoroutinefunction);
-	Py_DECREF(py_impl->asyncio_loop);
-	Py_DECREF(py_impl->asyncio_module);
+	Py_DecRef(py_impl->asyncio_iscoroutinefunction);
+	Py_DecRef(py_impl->asyncio_loop);
+	Py_DecRef(py_impl->asyncio_module);
 	Py_XDECREF(py_impl->py_task_callback_handler);
 error_after_thread_background_module:
-	Py_DECREF(py_impl->thread_background_module);
-	Py_DECREF(py_impl->thread_background_start);
-	Py_DECREF(py_impl->thread_background_send);
-	Py_DECREF(py_impl->thread_background_stop);
-	Py_DECREF(py_impl->thread_background_register_atexit);
-	Py_DECREF(py_impl->thread_background_future_check);
+	Py_DecRef(py_impl->thread_background_module);
+	Py_DecRef(py_impl->thread_background_start);
+	Py_DecRef(py_impl->thread_background_send);
+	Py_DecRef(py_impl->thread_background_stop);
+	Py_DecRef(py_impl->thread_background_register_atexit);
+	Py_DecRef(py_impl->thread_background_future_check);
 error_after_import:
-	Py_DECREF(py_impl->import_module);
-	Py_DECREF(py_impl->import_function);
+	Py_DecRef(py_impl->import_module);
+	Py_DecRef(py_impl->import_function);
 error_after_inspect:
-	Py_DECREF(py_impl->inspect_signature);
-	Py_DECREF(py_impl->inspect_module);
-	Py_DECREF(py_impl->builtins_module);
+	Py_DecRef(py_impl->inspect_signature);
+	Py_DecRef(py_impl->inspect_module);
+	Py_DecRef(py_impl->builtins_module);
 error_after_traceback_and_gc:
 	if (traceback_initialized == 0)
 	{
-		Py_DECREF(py_impl->traceback_format_exception);
-		Py_DECREF(py_impl->traceback_module);
+		Py_DecRef(py_impl->traceback_format_exception);
+		Py_DecRef(py_impl->traceback_module);
 	}
 #if DEBUG_ENABLED
 	if (gc_initialized == 0)
 	{
-		Py_DECREF(py_impl->gc_set_debug);
-		Py_DECREF(py_impl->gc_debug_leak);
-		Py_DECREF(py_impl->gc_debug_stats);
-		Py_DECREF(py_impl->gc_module);
+		Py_DecRef(py_impl->gc_set_debug);
+		Py_DecRef(py_impl->gc_debug_leak);
+		Py_DecRef(py_impl->gc_debug_stats);
+		Py_DecRef(py_impl->gc_module);
 	}
 #endif
 error_after_argv:
@@ -2864,7 +2864,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_path path)
 #endif
 
 clear_current_path:
-	Py_DECREF(current_path);
+	Py_DecRef(current_path);
 	py_loader_thread_release();
 	return result;
 }
@@ -2916,18 +2916,18 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 
 			if (item != NULL)
 			{
-				Py_DECREF(item);
+				Py_DecRef(item);
 				PyObject_DelItem(system_modules, module->name);
 			}
 		}
 
-		Py_DECREF(module->name);
+		Py_DecRef(module->name);
 		module->name = NULL;
 	}
 
 	if (module->instance != NULL)
 	{
-		Py_DECREF(module->instance);
+		Py_DecRef(module->instance);
 		module->instance = NULL;
 	}
 }
@@ -2990,8 +2990,8 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 
 	PyTuple_SetItem(args_tuple, 0, module->name);
 	PyTuple_SetItem(args_tuple, 1, py_path);
-	Py_INCREF(module->name);
-	Py_INCREF(py_path);
+	Py_IncRef(module->name);
+	Py_IncRef(py_path);
 
 	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
 
@@ -3006,15 +3006,15 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 		goto error_module_instance;
 	}
 
-	Py_DECREF(args_tuple);
-	Py_DECREF(py_path);
+	Py_DecRef(args_tuple);
+	Py_DecRef(py_path);
 
 	return 0;
 
 error_module_instance:
-	Py_DECREF(args_tuple);
+	Py_DecRef(args_tuple);
 error_tuple_create:
-	Py_DECREF(py_path);
+	Py_DecRef(py_path);
 error_path_create:
 	Py_XDECREF(module->name);
 	module->name = NULL;
@@ -3048,7 +3048,7 @@ int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handl
 	}
 
 	PyTuple_SetItem(args_tuple, 0, module->name);
-	Py_INCREF(module->name);
+	Py_IncRef(module->name);
 
 	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
 
@@ -3063,13 +3063,13 @@ int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handl
 		goto error_module_instance;
 	}
 
-	Py_INCREF(module->instance);
-	Py_DECREF(args_tuple);
+	Py_IncRef(module->instance);
+	Py_DecRef(args_tuple);
 
 	return 0;
 
 error_module_instance:
-	Py_DECREF(args_tuple);
+	Py_DecRef(args_tuple);
 error_tuple_create:
 	Py_XDECREF(module->name);
 	module->name = NULL;
@@ -3132,7 +3132,7 @@ static void py_loader_impl_load_from_file_exception(loader_impl_py py_impl, cons
 
 	PyErr_SetObject(exception_type, exception);
 
-	Py_DECREF(exception_type);
+	Py_DecRef(exception_type);
 
 	py_loader_impl_error_print(py_impl);
 
@@ -3266,7 +3266,7 @@ PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const 
 
 	PyObject *instance = PyImport_ExecCodeModule(name, compiled);
 
-	Py_DECREF(compiled);
+	Py_DecRef(compiled);
 
 	return instance;
 }
@@ -3385,7 +3385,7 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
 		}
 
-		Py_DECREF(annotation_qualname);
+		Py_DecRef(annotation_qualname);
 	}
 
 	return t;
@@ -3429,9 +3429,9 @@ size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObj
 		args_count--;
 	}
 
-	Py_DECREF(is_method);
+	Py_DecRef(is_method);
 clear_spec:
-	Py_DECREF(spec); /* The elements from the tuple (args) are cleaned here */
+	Py_DecRef(spec); /* The elements from the tuple (args) are cleaned here */
 unsupported_callable:
 	return args_count;
 }
@@ -3448,9 +3448,9 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 	}
 
 	PyTuple_SetItem(args, 0, func);
-	Py_INCREF(func);
+	Py_IncRef(func);
 	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
-	Py_DECREF(args);
+	Py_DecRef(args);
 
 	if (result != NULL)
 	{
@@ -3505,7 +3505,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
 
-		Py_DECREF(return_annotation);
+		Py_DecRef(return_annotation);
 
 		return 0;
 	}
@@ -3546,10 +3546,10 @@ int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method 
 	else
 	{
 		PyTuple_SetItem(args, 0, callable);
-		Py_INCREF(callable);
+		Py_IncRef(callable);
 	}
 	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
-	Py_DECREF(args);
+	Py_DecRef(args);
 
 	if (result != NULL)
 	{
@@ -3602,7 +3602,7 @@ int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method 
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, m_name, NULL));
 
-		Py_DECREF(return_annotation);
+		Py_DecRef(return_annotation);
 
 		return 0;
 	}
@@ -3659,7 +3659,7 @@ type py_loader_impl_get_type(loader_impl impl, PyObject *obj)
 			t = NULL;
 		}
 
-		Py_DECREF(t_name);
+		Py_DecRef(t_name);
 		return t;
 	}
 
@@ -3691,12 +3691,12 @@ int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_class, kl
 
 	PyObject *name_init = PyUnicode_FromString("__init__");
 	PyObject *init_method = PyObject_GenericGetAttr(py_class, name_init);
-	Py_DECREF(name_init);
+	Py_DecRef(name_init);
 
 	PyTuple_SetItem(args, 0, init_method);
 
 	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
-	Py_DECREF(args); /* Clears init_method reference */
+	Py_DecRef(args); /* Clears init_method reference */
 
 	if (result == NULL)
 	{
@@ -3770,7 +3770,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 	{
 		PyObject *nameobj = PyUnicode_FromString("__dict__");
 		PyObject *read_only_dict = PyObject_GenericGetAttr((PyObject *)py_class, nameobj);
-		Py_DECREF(nameobj);
+		Py_DecRef(nameobj);
 
 		/* Turns out __dict__ is not a PyDict but PyMapping */
 		if (!PyObject_TypeCheck(read_only_dict, PyDictProxyTypePtr()))
@@ -3810,11 +3810,11 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 			}
 
 			PyTuple_SetItem(args, 0, py_class); // class
-			Py_INCREF(py_class);
+			Py_IncRef(py_class);
 			PyTuple_SetItem(args, 1, tuple_key); // method
-			Py_INCREF(tuple_key);
+			Py_IncRef(tuple_key);
 			PyObject *method_static = PyObject_CallObject(py_impl->inspect_getattr_static, args);
-			Py_DECREF(args);
+			Py_DecRef(args);
 			bool is_static_method = PyObject_TypeCheck(method_static, PyStaticMethodTypePtr());
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s, static method: %d",
@@ -3831,7 +3831,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 				{
 					PyObject *func = PyObject_GetAttrString(tuple_val, "__func__");
 					args_count = py_loader_impl_discover_callable_args_count(py_impl, func);
-					Py_DECREF(func);
+					Py_DecRef(func);
 				}
 				else
 				{
@@ -3950,7 +3950,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 
 			loader_impl_py_class py_cls = malloc(sizeof(struct loader_impl_py_class_type));
 
-			Py_INCREF(module_dict_val);
+			Py_IncRef(module_dict_val);
 
 			klass c = class_create(cls_name, ACCESSOR_TYPE_STATIC, py_cls, &py_class_interface_singleton);
 
@@ -3987,7 +3987,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 				return 1;
 			}
 
-			Py_INCREF(module_dict_val);
+			Py_IncRef(module_dict_val);
 			py_func->func = module_dict_val;
 			py_func->impl = impl;
 
@@ -4079,7 +4079,7 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 	log_write("metacall", LOG_LEVEL_ERROR, error_format_str, type_str, value_str, traceback_str ? traceback_str : traceback_not_found);
 
 	Py_XDECREF(traceback_list);
-	Py_DECREF(separator);
+	Py_DecRef(separator);
 	Py_XDECREF(traceback_str_obj);
 
 	PyErr_Restore(type, value, traceback);
@@ -4135,7 +4135,7 @@ value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject
 	ret = value_create_throwable(th);
 
 	Py_XDECREF(traceback_list);
-	Py_DECREF(separator);
+	Py_DecRef(separator);
 	Py_XDECREF(traceback_str_obj);
 
 	return ret;
@@ -4170,9 +4170,9 @@ void py_loader_impl_gc_print(loader_impl_py py_impl)
 	log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, garbage_str);
 
 error_garbage_str:
-	Py_DECREF(garbage_repr);
+	Py_DecRef(garbage_repr);
 error_garbage_repr:
-	Py_DECREF(garbage_list);
+	Py_DecRef(garbage_list);
 error_garbage_list:
 	if (PyErr_Occurred() != NULL)
 	{
@@ -4255,7 +4255,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Stop event loop for async calls */
 	{
 		PyObject *args_tuple = PyTuple_New(2);
-		Py_INCREF(py_impl->asyncio_loop);
+		Py_IncRef(py_impl->asyncio_loop);
 		PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
 		/* If it is host, do not join the thread */
 		PyTuple_SetItem(args_tuple, 1, PyBool_FromLong(!host));
@@ -4272,17 +4272,17 @@ int py_loader_impl_destroy(loader_impl impl)
 	py_loader_thread_destroy();
 
 	/* Destroy all Python loader objects */
-	Py_DECREF(py_impl->inspect_signature);
-	Py_DECREF(py_impl->inspect_getattr_static);
-	Py_DECREF(py_impl->inspect_getfullargspec);
-	Py_DECREF(py_impl->inspect_ismethod);
-	Py_DECREF(py_impl->inspect_isclass);
-	Py_DECREF(py_impl->inspect_module);
-	Py_DECREF(py_impl->builtins_module);
-	Py_DECREF(py_impl->traceback_format_exception);
-	Py_DECREF(py_impl->traceback_module);
-	Py_DECREF(py_impl->import_function);
-	Py_DECREF(py_impl->import_module);
+	Py_DecRef(py_impl->inspect_signature);
+	Py_DecRef(py_impl->inspect_getattr_static);
+	Py_DecRef(py_impl->inspect_getfullargspec);
+	Py_DecRef(py_impl->inspect_ismethod);
+	Py_DecRef(py_impl->inspect_isclass);
+	Py_DecRef(py_impl->inspect_module);
+	Py_DecRef(py_impl->builtins_module);
+	Py_DecRef(py_impl->traceback_format_exception);
+	Py_DecRef(py_impl->traceback_module);
+	Py_DecRef(py_impl->import_function);
+	Py_DecRef(py_impl->import_module);
 
 	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
 	Py_XDECREF(py_impl->asyncio_loop);
@@ -4298,10 +4298,10 @@ int py_loader_impl_destroy(loader_impl impl)
 #if DEBUG_ENABLED
 	{
 		py_loader_impl_gc_print(py_impl);
-		Py_DECREF(py_impl->gc_set_debug);
-		Py_DECREF(py_impl->gc_debug_leak);
-		Py_DECREF(py_impl->gc_debug_stats);
-		Py_DECREF(py_impl->gc_module);
+		Py_DecRef(py_impl->gc_set_debug);
+		Py_DecRef(py_impl->gc_debug_leak);
+		Py_DecRef(py_impl->gc_debug_stats);
+		Py_DecRef(py_impl->gc_module);
 	}
 #endif
 

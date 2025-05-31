@@ -34,10 +34,6 @@ extern "C" {
 PY_LOADER_NO_EXPORT int py_loader_symbol_fallback_initialize(dynlink py_library);
 
 #if defined(_WIN32) && defined(_MSC_VER)
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-extern __declspec(selectany) Py_ssize_t _Py_RefTotal = 0;
-	#endif
-
 	#undef PyCFunction_GET_FUNCTION
 	#define PyCFunction_GET_FUNCTION(func) \
 		(((PyCFunctionObject *)func)->m_ml->ml_meth)

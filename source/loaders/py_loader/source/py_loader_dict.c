@@ -155,7 +155,7 @@ int py_loader_impl_dict_init(struct py_loader_impl_dict_obj *self, PyObject *arg
 void py_loader_impl_dict_dealloc(struct py_loader_impl_dict_obj *self)
 {
 	metacall_value_destroy(self->v);
-	Py_DECREF(self->parent); /* TODO: Review if this is correct or this line is unnecessary */
+	Py_DecRef(self->parent); /* TODO: Review if this is correct or this line is unnecessary */
 
 	PyDictTypePtr()->tp_dealloc((PyObject *)self);
 }
@@ -176,9 +176,9 @@ PyObject *py_loader_impl_finalizer_wrap_map(PyObject *obj, void *v)
 	union py_loader_impl_dict_cast dict_cast = { &py_loader_impl_dict_type };
 
 	PyTuple_SetItem(args, 0, obj);
-	Py_INCREF(obj);
+	Py_IncRef(obj);
 	PyObject *wrapper = PyObject_CallObject(dict_cast.object, args);
-	Py_DECREF(args);
+	Py_DecRef(args);
 
 	py_loader_thread_release();
 

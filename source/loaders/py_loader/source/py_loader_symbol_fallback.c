@@ -340,7 +340,7 @@ PyObject *PyExc_RuntimeErrorPtr(void)
 PyObject *Py_ReturnNone(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	Py_INCREF(Py_NoneStructPtr);
+	Py_IncRef(Py_NoneStructPtr);
 	return Py_NoneStructPtr;
 #else
 	Py_RETURN_NONE;
@@ -361,7 +361,7 @@ PyObject *Py_ReturnNone(void)
 PyObject *Py_ReturnFalse(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	Py_INCREF(Py_FalseStructPtr);
+	Py_IncRef(Py_FalseStructPtr);
 	return Py_FalseStructPtr;
 #else
 	Py_RETURN_FALSE;
@@ -371,7 +371,7 @@ PyObject *Py_ReturnFalse(void)
 PyObject *Py_ReturnTrue(void)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
-	Py_INCREF(Py_TrueStructPtr);
+	Py_IncRef(Py_TrueStructPtr);
 	return Py_TrueStructPtr;
 #else
 	Py_RETURN_TRUE;
