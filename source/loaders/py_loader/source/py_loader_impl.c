@@ -3001,7 +3001,7 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_ExceptionPtr()))
+		if (module->instance != NULL && PyExceptionInstance_Check(module->instance))
 		{
 			*exception = module->instance;
 			module->instance = NULL;
@@ -3058,7 +3058,7 @@ int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handl
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_ExceptionPtr()))
+		if (module->instance != NULL && PyExceptionInstance_Check(module->instance))
 		{
 			*exception = module->instance;
 			module->instance = NULL;
