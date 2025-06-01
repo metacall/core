@@ -4302,7 +4302,9 @@ int py_loader_impl_destroy(loader_impl impl)
 
 #if DEBUG_ENABLED
 	{
+	#if (defined(__ADDRESS_SANITIZER__) || defined(__MEMORY_SANITIZER__))
 		py_loader_impl_gc_print(py_impl);
+	#endif
 		Py_DecRef(py_impl->gc_set_debug);
 		Py_DecRef(py_impl->gc_debug_leak);
 		Py_DecRef(py_impl->gc_debug_stats);
