@@ -8,17 +8,19 @@ endif()
 #
 
 # PLTHook
-include(FetchContent)
+if(NOT PLTHook_SOURCE_DIR)
+	include(FetchContent)
 
-set(PLTHook_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/plthook")
+	set(PLTHook_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/plthook")
 
-FetchContent_Declare(PLTHook
-    GIT_REPOSITORY https://github.com/metacall/plthook.git
-    GIT_TAG master
-    SOURCE_DIR ${PLTHook_SOURCE_DIR}
-)
+	FetchContent_Declare(PLTHook
+		GIT_REPOSITORY https://github.com/metacall/plthook.git
+		GIT_TAG master
+		SOURCE_DIR ${PLTHook_SOURCE_DIR}
+	)
 
-FetchContent_MakeAvailable(PLTHook)
+	FetchContent_MakeAvailable(PLTHook)
+endif()
 
 set(PLTHook_INCLUDE_DIR "${PLTHook_SOURCE_DIR}")
 
