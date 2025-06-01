@@ -158,7 +158,8 @@ int portability_library_path_find(const char name[], portability_library_path_st
 	{
 		size_t iterator, size = modules_size / sizeof(HMODULE);
 
-		for (iterator = 0; iterator < size; ++iterator)
+		/* Start from 1 so we avoid the executable itself */
+		for (iterator = 1; iterator < size; ++iterator)
 		{
 			if (GetModuleFileNameEx(handle_process, handle_modules[iterator], path, PORTABILITY_PATH_SIZE))
 			{
@@ -267,7 +268,8 @@ int portability_library_path_list(portability_library_path_list_cb callback, voi
 			size_t iterator, size = modules_size / sizeof(HMODULE);
 			char module_name[MAX_PATH];
 
-			for (iterator = 0; iterator < size; ++iterator)
+			/* Start from 1 so we avoid the executable itself */
+			for (iterator = 1; iterator < size; ++iterator)
 			{
 				if (GetModuleFileNameExA(process, modules[iterator], module_name, sizeof(module_name) / sizeof(char)))
 				{
