@@ -182,7 +182,7 @@ function Set-Ruby {
 	if (!(Test-Path -Path "$DepsDir\ruby-mswin.7z")) {
 		# Download installer
 		Write-Output "Ruby not found downloading now..."
-		(New-Object Net.WebClient).DownloadFile("https://github.com/MSP-Greg/ruby-mswin/releases/download/ruby-mswin-builds/Ruby-$RUBY_VERSION-ms.7z", "$DepsDir\ruby-mswin.7z")
+		(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/ruby-mswin/releases/download/ruby-mswin-builds/Ruby-$RUBY_VERSION-ms.7z", "$DepsDir\ruby-mswin.7z")
 	}
 
 	mkdir "$DepsDir\Ruby31-ms"
