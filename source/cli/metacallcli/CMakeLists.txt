@@ -416,6 +416,21 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 	)
 endif()
 
+if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_RB)
+	add_test(NAME ${target}-rb-simplest
+		COMMAND $<TARGET_FILE:${target}> simplest.rb
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	set_tests_properties(${target}-rb-simplest PROPERTIES
+		LABELS ${target}-rb-simplest
+		PASS_REGULAR_EXPRESSION "Hello from Ruby"
+	)
+	test_environment_variables(${target}-rb-simplest
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+endif()
+
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_TS)
 	add_test(NAME ${target}-ts
 		COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-ts.txt" -P ${TEST_COMMAND_RUNNER}

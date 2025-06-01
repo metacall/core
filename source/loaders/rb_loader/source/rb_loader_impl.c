@@ -1237,6 +1237,12 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 
 		module_data = rb_loader_impl_load_data(impl, paths[0]);
 
+		if (module_data == Qnil)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby module not found: %s", paths[0]);
+			goto load_error;
+		}
+
 		result = rb_eval_string_protect(StringValuePtr(module_data), &state);
 
 		if (state != 0)
@@ -1246,7 +1252,17 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 			goto load_error;
 		}
 
-		module_name = rb_funcall(result, rb_intern("name"), 0);
+		if (result == Qnil)
+		{
+			loader_path name;
+			size_t size = portability_path_get_name(paths[0], strnlen(paths[0], LOADER_PATH_SIZE), name, LOADER_PATH_SIZE);
+
+			module_name = rb_str_new(name, size);
+		}
+		else
+		{
+			module_name = rb_funcall(result, rb_intern("name"), 0);
+		}
 
 		rb_module = rb_loader_impl_create_module(module_name, result, module_data, result);
 
