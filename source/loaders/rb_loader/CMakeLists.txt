@@ -14,12 +14,16 @@ if(NOT Ruby_FOUND)
 	return()
 endif()
 
+# TODO: Search Ruby_LIBRARY_NAME_PATH like in Python?
+set(Ruby_LIBRARY_NAME_PATH "${Ruby_LIBRARY_NAME}")
+get_filename_component(Ruby_LIBRARY_NAME "${Ruby_LIBRARY_NAME_PATH}" NAME)
+
 # Copy Ruby DLL into project output directory
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
-if(WIN32 AND Ruby_LIBRARY_NAME)
+if(Ruby_LIBRARY_NAME_PATH AND WIN32)
 	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-	file(COPY "${Ruby_LIBRARY_NAME}" DESTINATION ${PROJECT_OUTPUT_DIR})
+	file(COPY "${Ruby_LIBRARY_NAME_PATH}" DESTINATION ${PROJECT_OUTPUT_DIR})
 endif()
 
 #
@@ -142,7 +146,9 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
-	${Ruby_LIBRARY} # Ruby library
+	# Delay load for MSVC
+	$<$<CXX_COMPILER_ID:MSVC>:${Ruby_LIBRARY}> # Ruby library
+	$<$<CXX_COMPILER_ID:MSVC>:delayimp>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -191,6 +197,8 @@ endif()
 
 target_link_options(${target}
 	PRIVATE
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${Ruby_LIBRARY_NAME_PATH}>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
@@ -213,10 +221,29 @@ install(TARGETS ${target}
 # Runtime (pack Ruby DLL in windows)
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
-if(WIN32 AND Ruby_LIBRARY_NAME)
+set(Ruby_LIBRARY_DEVELOPMENT "${Ruby_LIBRARY_NAME_PATH}")
+
+if(Ruby_LIBRARY_NAME_PATH AND WIN32)
 	install(FILES
-		"${Ruby_LIBRARY_NAME}"
+		"${Ruby_LIBRARY_NAME_PATH}"
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)
+	set(Ruby_LIBRARY_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${Ruby_LIBRARY_NAME}")
+else()
+	set(Ruby_LIBRARY_INSTALL "${Ruby_LIBRARY_NAME_PATH}")
 endif()
+
+#
+# Configuration
+#
+
+# Development
+loader_configuration_begin(rb_loader)
+loader_configuration_deps(ruby "${Ruby_LIBRARY_DEVELOPMENT}")
+loader_configuartion_end_development()
+
+# Install
+loader_configuration_begin(rb_loader)
+loader_configuration_deps(ruby "${Ruby_LIBRARY_INSTALL}")
+loader_configuartion_end_install()
