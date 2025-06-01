@@ -31,6 +31,18 @@ if(NOT BackwardCpp_POPULATED OR NOT BackwardCpp_SOURCE)
 	message(STATUS "BackwardCpp could not be installed, trying to find it on the system")
 endif()
 
+find_package(Backward
+	CONFIG
+	PATHS ${BackwardCpp_SOURCE}
+)
+
+if(NOT BACKWARD_FOUND)
+	message(WARNING "BackwardCpp could not be found, skipping backtrace plugin compilation")
+	return()
+endif()
+
+include(${BackwardCpp_SOURCE}/BackwardConfig.cmake)
+
 #
 # Plugin name and options
 #
@@ -164,7 +176,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
-	Backward::Interface # Backward-cpp library
+	Backward::Backward # Backward-cpp library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
