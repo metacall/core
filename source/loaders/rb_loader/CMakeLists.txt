@@ -15,7 +15,11 @@ if(NOT Ruby_FOUND)
 endif()
 
 # TODO: Search Ruby_LIBRARY_NAME_PATH like in Python?
-set(Ruby_LIBRARY_NAME_PATH "${Ruby_LIBRARY_NAME}")
+if(Ruby_LIBRARY_NAME)
+	set(Ruby_LIBRARY_NAME_PATH "${Ruby_LIBRARY_NAME}")
+else()
+	set(Ruby_LIBRARY_NAME_PATH "${Ruby_LIBRARY}")
+endif()
 get_filename_component(Ruby_LIBRARY_NAME "${Ruby_LIBRARY_NAME_PATH}" NAME)
 
 # Copy Ruby DLL into project output directory
