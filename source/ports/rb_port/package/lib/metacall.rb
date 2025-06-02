@@ -105,24 +105,25 @@ module MetaCall
 		end
 	end
 
+	# Initialize the MetaCall Ruby Port
+	metacall_module_load
+
 	public
 
 	def metacall_load_from_file(tag, paths)
-		metacall_module_load
-
 		MetaCallRbLoaderPort.metacall_load_from_file(tag, paths)
 	end
 
 	def metacall_load_from_memory(tag, script)
-		metacall_module_load
-
 		MetaCallRbLoaderPort.metacall_load_from_memory(tag, script)
 	end
 
 	def metacall(function_name, *args)
-		metacall_module_load
-
 		MetaCallRbLoaderPort.metacall(function_name, *args)
+	end
+
+	def metacall_inspect()
+		MetaCallRbLoaderPort.metacall_inspect()
 	end
 
 end

@@ -7,19 +7,19 @@ class RbPortTest < Test::Unit::TestCase
 
 	# MetaCall (Python from memory)
 	def test_python_memory
-		script = '#!/usr/bin/env python3\n' \
-			'def inline_multiply_mem(left: int, right: int) -> int:\n' \
-			'	return left * right;\n'
-			'def inline_hello(left: int, right: int) -> int:\n' \
-			'	print(\'Helloo\', left, \' \', right);\n'
-			'	return;\n'
+		script = <<~SCRIPT
+def inline_multiply_mem(left: int, right: int) -> int:
+	return left * right
+def inline_hello(left: int, right: int) -> int:
+	print('Helloo', left, ' ', right)
+	return left * right
+SCRIPT
 
-		assert_equal(0, MetaCall.metacall_load_from_memory('py', script))
+		assert_equal(0, MetaCall::metacall_load_from_memory('py', script))
 
-		# TODO
-		# assert_equal(4, MetaCall::metacall('inline_multiply_mem', 2, 2))
+		assert_equal(4, MetaCall::metacall('inline_multiply_mem', 2, 2))
 
-		assert_equal(nil, MetaCall::metacall('inline_hello', 10, 20))
+		assert_equal(200, MetaCall::metacall('inline_hello', 10, 20))
 	end
 
 	# MetaCall (Python)
@@ -28,8 +28,7 @@ class RbPortTest < Test::Unit::TestCase
 
 		assert_equal(nil, MetaCall::metacall('hello'))
 
-		# TODO
-		# assert_equal(35, MetaCall::metacall('multiply', 5, 7))
+		assert_equal(35, MetaCall::metacall('multiply', 5, 7))
 	end
 
 	# MetaCall (Ruby)
@@ -38,11 +37,9 @@ class RbPortTest < Test::Unit::TestCase
 
 		assert_equal(nil, MetaCall::metacall('say_null'))
 
-		# TODO
-		# assert_equal(12, MetaCall::metacall('say_multiply', 3, 4))
+		assert_equal(12, MetaCall::metacall('say_multiply', 3, 4))
 
-		# TODO
-		# assert_equal('Hello world!', MetaCall::metacall('say_hello', 'world'))
+		assert_equal('Hello world!', MetaCall::metacall('say_hello', 'world'))
 	end
 
 end

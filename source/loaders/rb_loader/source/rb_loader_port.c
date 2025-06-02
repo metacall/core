@@ -175,7 +175,7 @@ VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 	/* Convert the arguments into MetaCall values */
 	for (iterator = 0; iterator < args_size; ++iterator)
 	{
-		(void)rb_type_deserialize(rb_loader_impl, argv[iterator], &args[iterator]);
+		(void)rb_type_deserialize(rb_loader_impl, argv[iterator + 1], &args[iterator]);
 	}
 
 	/* Execute the call */
@@ -193,6 +193,43 @@ VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 	}
 
 	return rb_type_serialize(result);
+}
+
+VALUE rb_loader_port_inspect(VALUE self)
+{
+	VALUE result;
+	size_t size = 0;
+	char *result_str = NULL, *inspect_str = NULL;
+	struct metacall_allocator_std_type std_ctx = { &malloc, &realloc, &free };
+
+	/* Create the allocator */
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	(void)self;
+
+	/* Retrieve inspect data */
+	result_str = inspect_str = metacall_inspect(&size, allocator);
+
+	if (inspect_str == NULL || size == 0)
+	{
+		static const char empty[] = "{}";
+
+		result_str = (char *)empty;
+		size = sizeof(empty);
+
+		rb_raise(rb_eArgError, "Inspect returned an invalid size or string");
+	}
+
+	result = rb_str_new(result_str, size - 1);
+
+	if (inspect_str != NULL && size > 0)
+	{
+		metacall_allocator_free(allocator, inspect_str);
+	}
+
+	metacall_allocator_destroy(allocator);
+
+	return result;
 }
 
 int rb_loader_port_initialize(loader_impl impl)
@@ -213,6 +250,7 @@ int rb_loader_port_initialize(loader_impl impl)
 	rb_define_module_function(rb_loader_port, "metacall_load_from_file", rb_loader_port_load_from_file, 2);
 	rb_define_module_function(rb_loader_port, "metacall_load_from_memory", rb_loader_port_load_from_memory, 2);
 	rb_define_module_function(rb_loader_port, "metacall", rb_loader_port_metacall, -1);
+	rb_define_module_function(rb_loader_port, "metacall_inspect", rb_loader_port_inspect, 0);
 
 	rb_loader_impl = impl;
 
