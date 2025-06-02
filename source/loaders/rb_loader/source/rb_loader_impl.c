@@ -1229,7 +1229,7 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	This should run only once, the first time after the initialization */
 	if (rb_loader_impl_run_main == 0 && size == 1 && strcmp(paths[0], rb_loader_impl_main_module) == 0)
 	{
-		VALUE module_data, result, module_name;
+		VALUE module_data, result, module_name, module;
 		int state;
 		loader_impl_rb_module rb_module;
 
@@ -1243,24 +1243,47 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 			goto load_error;
 		}
 
-		result = rb_eval_string_protect(StringValuePtr(module_data), &state);
-
-		if (state != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby evaluation failed");
-			rb_loader_impl_print_exception();
-			goto load_error;
-		}
-
 		/* Define module name */
 		{
 			loader_path name;
 			size_t size = portability_path_get_name(paths[0], strnlen(paths[0], LOADER_PATH_SIZE), name, LOADER_PATH_SIZE);
-
-			module_name = rb_str_new(name, size);
+			module_name = rb_str_new(name, size - 1);
+			module_name = rb_funcallv(module_name, rb_intern("capitalize"), 0, NULL);
 		}
 
-		rb_module = rb_loader_impl_create_module(module_name, result, module_data, result);
+		/* Define module that wraps the code */
+		{
+#define rb_str_new_static_size(str) rb_str_new_static(str, sizeof(str) - 1)
+
+			VALUE wrapped_code = rb_str_plus(rb_str_new_static_size("module "), module_name);
+			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("\n"));
+			wrapped_code = rb_str_plus(wrapped_code, module_data);
+			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("\nend"));
+
+#undef rb_str_new_static_size
+
+			module_data = wrapped_code;
+		}
+
+		result = rb_eval_string_protect(StringValuePtr(module_data), &state);
+
+		if (state != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby evaluation failed %s", paths[0]);
+			rb_loader_impl_print_exception();
+			goto load_error;
+		}
+
+		/* Get the module reference */
+		module = rb_const_get(rb_cObject, rb_intern_str(module_name));
+
+		if (module == Qnil)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby invalid module generation: %s", paths[0]);
+			goto load_error;
+		}
+
+		rb_module = rb_loader_impl_create_module(module_name, module, module_data, result);
 
 		if (rb_module == NULL)
 		{
@@ -1296,7 +1319,7 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 		}
 	}
 
-	// Do not load the handle in case there isn't modules
+	/* Do not load the handle in case there isn't modules */
 	if (vector_size(handle->modules) == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "No module could be loaded");
