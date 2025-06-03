@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019] # TODO: windows-2022, windows-2025
+        os: [windows-2019, windows-2022, windows-2025]
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
