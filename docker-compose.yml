@@ -22,6 +22,7 @@ services:
     image: metacall/core:deps
     container_name: metacall_core_deps
     build:
+      network: "host"
       context: .
       dockerfile: tools/deps/Dockerfile
       args:
@@ -46,6 +47,7 @@ services:
     image: metacall/core:dev
     container_name: metacall_core_dev
     build:
+      network: "host"
       context: .
       dockerfile: tools/dev/Dockerfile
       args:
@@ -69,6 +71,7 @@ services:
     image: metacall/core:runtime
     container_name: metacall_core_runtime
     build:
+      network: "host"
       context: .
       dockerfile: tools/runtime/Dockerfile
       args:
@@ -92,6 +95,7 @@ services:
     image: metacall/core:cli
     container_name: metacall_core_cli
     build:
+      network: "host"
       context: .
       dockerfile: tools/cli/Dockerfile
     environment:
