@@ -528,6 +528,9 @@ sub_nodejs(){
 		# Configure NPM path
 		echo "-DNPM_ROOT=$NODE_PREFIX/bin" >> $CMAKE_CONFIG_PATH
 
+		# Make npm available for subsequent calls
+		export PATH="$NODE_PREFIX/bin:$PATH"
+
 		# Build either using pre-compiled binaries or building node from source
 		if [ -z "${NodeJS_BUILD_FROM_SOURCE:-}" ]; then
 			# Define node location
