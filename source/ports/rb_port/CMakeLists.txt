@@ -68,20 +68,6 @@ endif()
 
 set(rb_port_test_executable "${rb_port_test}_executable")
 
-# TODO
-# if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
-# 	# TODO: This test fails when run with sanitizers:
-# 	#
-# 	# Sanitizer:
-# 	# ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
-# 	# For solving the issue compile the test with sanitizers when enabled or preload asan
-# 	#
-# 	# Thread Sanitizer:
-# 	# /usr/local/metacall/build/rb_port_test.rb:4:in `require_relative': /usr/lib/x86_64-linux-gnu/libtsan.so.2: cannot allocate memory in static TLS block - /usr/local/metacall/build/rb_portd.so (LoadError)
-# 	# from /usr/local/metacall/build/rb_port_test.rb:4:in `<main>'
-# 	return()
-# endif()
-
 message(STATUS "Test ${rb_port_test_executable}")
 
 add_test(NAME ${rb_port_test_executable}

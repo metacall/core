@@ -224,10 +224,22 @@ endif()
 
 set(node_port_test_exec "${node_port_test}_executable")
 
+# MacOS 14 does not support well NodeJS executable with preloaded sanitizers
+if(APPLE)
+	# Check if NodeJS is compiled with Address Sanitizer
+	if(OPTION_BUILD_ADDRESS_SANITIZER)
+		check_asan_executable("${NodeJS_EXECUTABLE}" NodeJS_ASAN)
+		if(NOT NodeJS_ASAN)
+			# Skip this test because it gives false positives if NodeJS is not compiled with ASan
+			return()
+		endif()
+	endif()
+endif()
+
 message(STATUS "Test ${node_port_test_exec}")
 
 add_test(NAME ${node_port_test_exec}
-	COMMAND ${NodeJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test.js
+	COMMAND ${NodeJS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test.js"
 )
 
 # Define test labels

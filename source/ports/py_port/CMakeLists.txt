@@ -84,9 +84,11 @@ if(OPTION_BUILD_ADDRESS_SANITIZER)
 	endif()
 endif()
 
+message(STATUS "Test ${py_port_test_exec}")
+
 # Add test (Python)
 add_test(NAME ${py_port_test_exec}
-	COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test.py
+	COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test.py"
 )
 
 #
