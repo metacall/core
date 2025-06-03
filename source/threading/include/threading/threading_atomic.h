@@ -35,8 +35,9 @@ extern "C" {
 	#if __STDC_VERSION__ - 0L >= 201112L
 		/* C11 support */
 		#if defined(__STDC_NO_ATOMICS__)
-			/* TODO: C11 atomics not supported, check the platform and implement support if needed */
+			/* TODO: Using C11 but atomics not supported, check the platform and implement support if needed */
 			#define THREADING_ATOMIC 0
+			#error "Using C11 but atomics not supported, check the platform and implement support"
 		#elif defined __has_include
 			#if __has_include(<stdatomic.h>)
 				#include <stdatomic.h>
@@ -49,6 +50,7 @@ extern "C" {
 	#else
 		/* TODO: C11 is not supported, check the platform and implement support if needed */
 		#define THREADING_ATOMIC 0
+		#error "C11 is not supported, check the platform and implement support"
 	#endif
 #elif defined(_WIN32) && defined(_MSC_VER)
 	#if (_MSC_VER < 1930)
