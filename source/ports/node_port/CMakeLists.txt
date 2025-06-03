@@ -224,13 +224,23 @@ endif()
 
 set(node_port_test_exec "${node_port_test}_executable")
 
-# MacOS 14 does not support well NodeJS executable with preloaded sanitizers
+# TODO: Since MacOS 14 with ARM64, it does not support well NodeJS executable with preloaded sanitizers
+# The NodeJS initalization fails with: Node Loader failed to hook napi_register_module_v1
 if(APPLE)
 	# Check if NodeJS is compiled with Address Sanitizer
 	if(OPTION_BUILD_ADDRESS_SANITIZER)
 		check_asan_executable("${NodeJS_EXECUTABLE}" NodeJS_ASAN)
 		if(NOT NodeJS_ASAN)
 			# Skip this test because it gives false positives if NodeJS is not compiled with ASan
+			return()
+		endif()
+	endif()
+
+	# Check if NodeJS is compiled with Thread Sanitizer
+	if(OPTION_BUILD_THREAD_SANITIZER)
+		check_tsan_executable("${NodeJS_EXECUTABLE}" NodeJS_TSAN)
+		if(NOT NodeJS_TSAN)
+			# Skip this test because it gives false positives if NodeJS is not compiled with TSan
 			return()
 		endif()
 	endif()
