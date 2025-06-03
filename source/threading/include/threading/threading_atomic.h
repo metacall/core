@@ -31,11 +31,19 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#if defined(__STDC_VERSION__)
-	#if __STDC_VERSION__ - 0L >= 201112L
+#if defined(_WIN32) && defined(_MSC_VER)
+	#if (_MSC_VER < 1930 || defined(__STDC_NO_ATOMICS__))
+		/* Before Visual Studio 2022 atomics are not supported, use fallback solution */
+		#include <threading/threading_atomic_win32.h>
+		#define THREADING_ATOMIC 1
+	#else
+		#include <stdatomic.h>
+		#define THREADING_ATOMIC 1
+	#endif
+#elif defined(__STDC_VERSION__)
+	#if (__STDC_VERSION__ - 0L) >= 201112L
 		/* C11 support */
 		#if defined(__STDC_NO_ATOMICS__)
-			/* TODO: Using C11 but atomics not supported, check the platform and implement support if needed */
 			#define THREADING_ATOMIC 0
 			#error "Using C11 but atomics not supported, check the platform and implement support"
 		#elif defined __has_include
@@ -48,18 +56,8 @@ extern "C" {
 			#define THREADING_ATOMIC 1
 		#endif
 	#else
-		/* TODO: C11 is not supported, check the platform and implement support if needed */
 		#define THREADING_ATOMIC 0
 		#error "C11 is not supported, check the platform and implement support"
-	#endif
-#elif defined(_WIN32) && defined(_MSC_VER)
-	#if (_MSC_VER < 1930)
-		/* Before Visual Studio 2022 atomics are not supported, use fallback solution */
-		#include <threading/threading_atomic_win32.h>
-		#define THREADING_ATOMIC 1
-	#else
-		#include <stdatomic.h>
-		#define THREADING_ATOMIC 1
 	#endif
 #else
 	/* TODO: Unknown compiler and platform, check the platform and compiler, then implement support if needed */
