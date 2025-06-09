@@ -173,7 +173,50 @@ function Set-Java {
 
 function Set-Ruby {
 	Write-Output "Install Ruby"
-	$RUBY_VERSION = "3.1.2"	
+
+	# Find vswhere in order to detect MSVC version
+	$vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+
+	if (Test-Path $vswherePath) {
+		$vsInfo = & $vswherePath -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json | ConvertFrom-Json
+
+		if ($vsInfo) {
+			$installationPath = $vsInfo[0].installationPath
+			$installationVersion = $vsInfo[0].installationVersion
+
+			# Determine major version
+			$majorVersion = [int]$installationVersion.Split('.')[0]
+		}
+	}
+
+	switch ($majorVersion) {
+		16 {
+			# MSVC 2019
+			$RUBY_VERSION = "3.1.2"
+			$RUBY_MAJOR_VERSION = "3.1.0"
+			$RUBY_FOLDER = "Ruby31-ms"
+			$RUBY_LIBRARY_NAME = "x64-vcruntime140-ruby310"
+		}
+		17 {
+			# MSVC 2022
+			$RUBY_VERSION = "3.2.1"
+			$RUBY_MAJOR_VERSION = "3.2.0"
+			$RUBY_FOLDER = "Ruby32-ms"
+			$RUBY_LIBRARY_NAME = "x64-vcruntime140-ruby320"
+		}
+		18 {
+			# TODO: For 2025 ruby-loco?
+			# MSVC 2025
+			$RUBY_VERSION = "3.2.1"
+			$RUBY_MAJOR_VERSION = "3.2.0"
+			$RUBY_FOLDER = "Ruby32-ms"
+			$RUBY_LIBRARY_NAME = "x64-vcruntime140-ruby320"
+		}
+		default {
+			Write-Error "Unknown or unsupported Visual Studio version for Ruby: $majorVersion"
+			exit 1
+		}
+	}
 
 	Set-Location $ROOT_DIR
 	$RuntimeDir = "$env:ProgramFiles\ruby"
@@ -185,10 +228,10 @@ function Set-Ruby {
 		(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/ruby-mswin/releases/download/ruby-mswin-builds/Ruby-$RUBY_VERSION-ms.7z", "$DepsDir\ruby-mswin.7z")
 	}
 
-	mkdir "$DepsDir\Ruby31-ms"
+	mkdir "$DepsDir\$RUBY_FOLDER"
 	7z x "$DepsDir\ruby-mswin.7z" -o"$DepsDir"
 
-	robocopy /move /e "$DepsDir\Ruby31-ms\" $RuntimeDir
+	robocopy /move /e "$DepsDir\$RUBY_FOLDER\" $RuntimeDir
 
 	Add-to-Path "$RuntimeDir\bin"
 
@@ -196,10 +239,10 @@ function Set-Ruby {
 	$RubyDir  = $RuntimeDir.Replace('\', '/')
 
 	Write-Output "-DRuby_VERSION_STRING=""$RUBY_VERSION""" >> $EnvOpts
-	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-3.1.0""" >> $EnvOpts
+	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-$RUBY_MAJOR_VERSION""" >> $EnvOpts
 	Write-Output "-DRuby_EXECUTABLE=""$RubyDir/bin/ruby.exe""" >> $EnvOpts
-	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby310.lib""" >> $EnvOpts
-	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/$RUBY_LIBRARY_NAME.lib""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/$RUBY_LIBRARY_NAME.dll""" >> $EnvOpts
 }
 
 function Set-TypeScript {
