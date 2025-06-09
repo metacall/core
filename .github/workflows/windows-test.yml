@@ -45,7 +45,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
-          vsversion: "${{ matrix.os }}"
+          # vsversion: "${{ matrix.os }}"
 
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
