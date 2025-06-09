@@ -18,7 +18,7 @@
 	expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__))
 #endif
 @PREPROCESSOR_FOR_EACH_IMPL_BODY@
-#if defined(__GNUC__) || defined(__clang__) || (defined(_MSC_VER) && _MSC_VER >= 1930)
+#if defined(__GNUC__) || defined(__clang__)
 #	define PREPROCESSOR_FOR_EACH(expr, ...) \
 		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
 			PREPROCESSOR_EMPTY_SYMBOL(), \
@@ -57,7 +57,7 @@
 	expr(context, iterator, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_1(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__))
 #endif
 @PREPROCESSOR_FOR_IMPL_BODY@
-#if defined(__GNUC__) || defined(__clang__) || (defined(_MSC_VER) && _MSC_VER >= 1930)
+#if defined(__GNUC__) || defined(__clang__)
 #	define PREPROCESSOR_FOR(expr, context, ...) \
 		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
 			PREPROCESSOR_EMPTY_SYMBOL(), \

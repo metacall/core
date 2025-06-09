@@ -115,7 +115,7 @@ extern "C" {
 #define PREPROCESSOR_FOR_EACH_IMPL_63(expr, element, ...) expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_62(expr, __VA_ARGS__))
 #define PREPROCESSOR_FOR_EACH_IMPL_64(expr, element, ...) expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_63(expr, __VA_ARGS__))
 
-#if defined(__GNUC__) || defined(__clang__) || (defined(_MSC_VER) && _MSC_VER >= 1930)
+#if defined(__GNUC__) || defined(__clang__)
 #	define PREPROCESSOR_FOR_EACH(expr, ...) \
 		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
 			PREPROCESSOR_EMPTY_SYMBOL(), \
@@ -222,7 +222,7 @@ extern "C" {
 #define PREPROCESSOR_FOR_IMPL_63(expr, context, iterator, element, ...) expr(context, iterator, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_62(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__))
 #define PREPROCESSOR_FOR_IMPL_64(expr, context, iterator, element, ...) expr(context, iterator, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_63(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__))
 
-#if defined(__GNUC__) || defined(__clang__) || (defined(_MSC_VER) && _MSC_VER >= 1930)
+#if defined(__GNUC__) || defined(__clang__)
 #	define PREPROCESSOR_FOR(expr, context, ...) \
 		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
 			PREPROCESSOR_EMPTY_SYMBOL(), \

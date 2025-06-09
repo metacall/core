@@ -104,7 +104,7 @@ extern "C" {
 		PREPROCESSOR_ARGS_COMMA(PREPROCESSOR_COMMA_VARIADIC __VA_ARGS__ ()) \
 	)
 
-#if defined(__GNUC__) || defined(__clang__) || (defined(_MSC_VER) && _MSC_VER >= 1930)
+#if defined(__GNUC__) || defined(__clang__)
 #	define PREPROCESSOR_ARGS_COUNT_IMPL(...) \
 		PREPROCESSOR_ARGS_N_IMPL(__VA_ARGS__)
 #	define PREPROCESSOR_ARGS_COUNT(...) \
