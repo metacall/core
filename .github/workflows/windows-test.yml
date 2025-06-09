@@ -17,16 +17,12 @@ concurrency:
 jobs:
   windows-test:
     name: Windows MSVC Test
-    runs-on: windows-${{ matrix.os.year }}
+    runs-on: windows-${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [
-          {year: 2019, version: "16.11"},
-          {year: 2022, version: "17.9"},
-          {year: 2025, version: "18.1"},
-        ]
+        os: [2019, 2022, 2025]
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
@@ -49,7 +45,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
-          vsversion: ${{ matrix.os.version }}
+          vsversion: "${{ matrix.os }}"
 
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
