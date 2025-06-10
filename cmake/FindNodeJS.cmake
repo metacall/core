@@ -453,7 +453,9 @@ if(NOT NodeJS_LIBRARY)
 				endif()
 
 				# Check for Visual Studio Version and configure the build command
-				if(MSVC_VERSION GREATER 1916)
+				if(MSVC_VERSION GREATER_EQUAL 1930)
+					set(NodeJS_MSVC_VER vs2022)
+				if(MSVC_VERSION GREATER_EQUAL 1920)
 					set(NodeJS_MSVC_VER vs2019)
 				elseif(MSVC_VERSION GREATER 1900)
 					set(NodeJS_MSVC_VER vs2017)

@@ -862,7 +862,8 @@ Where `script.js` is a script contained in host folder `$HOME/metacall` that wil
 | :-----------------: | :--------------------------------------------------: |
 | **`ubuntu-latest`** | https://metacall.github.io/core/bench/ubuntu-latest/ |
 | **`macos-latest`**  | https://metacall.github.io/core/bench/macos-latest/  |
-| **`windows-2019`**  | https://metacall.github.io/core/bench/windows-2019/  |
+| **`windows-2022`**  | https://metacall.github.io/core/bench/windows-2022/  |
+| **`windows-2025`**  | https://metacall.github.io/core/bench/windows-2025/  |
 
 ## 9. License
 
