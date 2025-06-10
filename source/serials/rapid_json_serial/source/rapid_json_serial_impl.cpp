@@ -297,7 +297,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 		static const char stacktrace_str[] = "stacktrace";
 
 		stacktrace_member.SetString(stacktrace_str, static_cast<rapidjson::SizeType>(sizeof(stacktrace_str) - 1));
-		stacktrace_value.SetString(exception_stacktrace(ex), strlen(exception_stacktrace(ex)));
+		stacktrace_value.SetString(exception_stacktrace(ex), static_cast<rapidjson::SizeType>(strlen(exception_stacktrace(ex))));
 		json_map.AddMember(stacktrace_member, stacktrace_value, rapid_json_allocator);
 	}
 	else if (id == TYPE_THROWABLE)
