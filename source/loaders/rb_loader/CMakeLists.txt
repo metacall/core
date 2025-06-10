@@ -20,15 +20,8 @@ if(Ruby_LIBRARY_NAME)
 else()
 	set(Ruby_LIBRARY_NAME_PATH "${Ruby_LIBRARY}")
 endif()
-get_filename_component(Ruby_LIBRARY_NAME "${Ruby_LIBRARY_NAME_PATH}" NAME)
 
-# Copy Ruby DLL into project output directory
-# TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
-# TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
-if(Ruby_LIBRARY_NAME_PATH AND WIN32)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
-	file(COPY "${Ruby_LIBRARY_NAME_PATH}" DESTINATION ${PROJECT_OUTPUT_DIR})
-endif()
+get_filename_component(Ruby_LIBRARY_NAME "${Ruby_LIBRARY_NAME_PATH}" NAME)
 
 #
 # Plugin name and options

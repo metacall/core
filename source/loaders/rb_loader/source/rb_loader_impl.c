@@ -1506,7 +1506,7 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 	for (method_index = 0; method_index < methods_size; ++method_index)
 	{
 		VALUE rb_method = rb_ary_entry(methods, method_index);
-		VALUE name = rb_funcallv(rb_method, rb_intern("id2name"), 0, NULL);
+		VALUE name = rb_sym2str(rb_method);
 		const char *method_name_str = RSTRING_PTR(name);
 
 		VALUE instance_method = rb_funcall(cls, rb_intern(method_type_str), 1, rb_method);
@@ -1551,7 +1551,7 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 			if (RARRAY_LEN(parameter_pair) == 2)
 			{
 				VALUE parameter_name_id = rb_ary_entry(parameter_pair, 1);
-				VALUE parameter_name = rb_funcallv(parameter_name_id, rb_intern("id2name"), 0, NULL);
+				VALUE parameter_name = rb_sym2str(parameter_name_id);
 				const char *parameter_name_str = RSTRING_PTR(parameter_name);
 
 				signature_set(s, args_it, parameter_name_str, NULL);
@@ -1572,7 +1572,7 @@ void rb_loader_impl_discover_attributes(klass c, const char *class_name_str, VAL
 	for (attributes_index = 0; attributes_index < attributes_size; ++attributes_index)
 	{
 		VALUE rb_attr = rb_ary_entry(attributes, attributes_index);
-		VALUE name = rb_funcallv(rb_attr, rb_intern("id2name"), 0, NULL);
+		VALUE name = rb_sym2str(rb_attr);
 		const char *attr_name_str = RSTRING_PTR(name);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Attribute '%s' inside '%s'", attr_name_str, class_name_str);
@@ -1606,12 +1606,9 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 
 		if (method != Qnil)
 		{
-			VALUE method_name = rb_funcallv(method, rb_intern("id2name"), 0, NULL);
-
+			VALUE method_name = rb_sym2str(method);
 			const char *method_name_str = RSTRING_PTR(method_name);
-
 			rb_function_parser function_parser = set_get(rb_module->function_map, (set_key)method_name_str);
-
 			loader_impl_rb_function rb_function = NULL;
 
 			if (function_parser == NULL)
@@ -1666,7 +1663,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 		{
 			if (RB_TYPE_P(constant, T_SYMBOL))
 			{
-				VALUE class_name = rb_funcallv(constant, rb_intern("id2name"), 0, NULL);
+				VALUE class_name = rb_sym2str(constant);
 				const char *class_name_str = RSTRING_PTR(class_name);
 				VALUE cls = rb_const_get_from(rb_module->module, rb_intern(class_name_str));
 				loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
