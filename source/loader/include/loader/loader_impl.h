@@ -45,7 +45,7 @@ LOADER_API loader_impl loader_impl_create(const loader_tag tag);
 
 LOADER_API loader_impl loader_impl_create_host(const loader_tag tag);
 
-LOADER_API int loader_impl_dependencies(loader_impl impl, detour d);
+LOADER_API int loader_impl_dependencies(loader_impl impl, detour d, const loader_tag tag);
 
 LOADER_API int loader_impl_link(plugin p, loader_impl impl);
 

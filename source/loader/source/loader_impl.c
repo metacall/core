@@ -370,7 +370,7 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 	return 1;
 }
 
-int loader_impl_dependencies(loader_impl impl, detour d)
+int loader_impl_dependencies(loader_impl impl, detour d, const loader_tag tag)
 {
 	/* Dependencies have the following format:
 	{
@@ -459,7 +459,7 @@ int loader_impl_dependencies(loader_impl impl, detour d)
 
 							if (loader_impl_dependencies_load(impl, key_str, paths_array, paths_size) != 0)
 							{
-								log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader configuration '%s.json'", key_str, plugin_name(impl->p));
+								log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader '%s' configuration", key_str, tag);
 								return 1;
 							}
 						}
@@ -469,7 +469,7 @@ int loader_impl_dependencies(loader_impl impl, detour d)
 						/* Otherwise try to find if the library is already loaded, and if not, load the process */
 						if (loader_impl_dependencies_self_find(impl, key_str, dependencies_self) != 0)
 						{
-							log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader '%s' as a host", key_str, plugin_name(impl->p));
+							log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader '%s' as a host", key_str, tag);
 							vector_destroy(dependencies_self);
 							return 1;
 						}

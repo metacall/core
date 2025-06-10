@@ -102,10 +102,7 @@ pid_t fork()
 
 	if (result == RTL_CLONE_PARENT)
 	{
-		HANDLE me = GetCurrentProcess();
-		pid_t child_pid;
-
-		child_pid = GetProcessId(process_info.Process);
+		pid_t child_pid = GetProcessId(process_info.Process);
 
 		ResumeThread(process_info.Thread);
 		CloseHandle(process_info.Process);

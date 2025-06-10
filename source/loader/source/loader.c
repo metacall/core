@@ -250,7 +250,7 @@ plugin loader_get_impl_plugin_options(const loader_tag tag, value options)
 	loader_impl_set_options(impl, options);
 
 	/* Dynamic link loader dependencies if it is not host */
-	if (loader_impl_dependencies(impl, plugin_manager_impl_type(&loader_manager, loader_manager_impl)->d) != 0)
+	if (loader_impl_dependencies(impl, plugin_manager_impl_type(&loader_manager, loader_manager_impl)->d, tag) != 0)
 	{
 		goto plugin_manager_create_error;
 	}
