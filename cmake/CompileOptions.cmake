@@ -300,15 +300,6 @@ if(WIN32 AND MSVC)
 	#add_compile_options(/wd4251 /wd4592)
 	#add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
-	# TODO: Preprocessor library not working after MSVC 2019 because they have replaced the implementation
-	# It seems they wanted to make it work as C99 standard but still seems to be problematic.
-	# The bug comes from multiple macros from preprocessor library, for more information here is the whole information:
-	# https://learn.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=msvc-170#rescanning-replacement-list-for-macros
-	# As a workaround, we disable the new preprocessor.
-	if(MSVC_VERSION GREATER_EQUAL 1930)
-		add_compile_options(/Zc:preprocessor-)
-	endif()
-
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		# Disable optimizations
 		add_compile_options(/Od)
@@ -328,14 +319,14 @@ if(WIN32 AND MSVC)
 		add_compile_options(/Oy)
 
 		# TODO: Disable runtime checks (not compatible with O2)
-		# foreach(FLAG_VAR
+		# foreach(COMPILER_FLAGS
 		# 	CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE
 		# 	CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
 		# 	CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE
 		# 	CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
 		# 	)
-		# 	string(REGEX REPLACE "/RTC[^ ]*" "" ${FLAG_VAR} "${${FLAG_VAR}}")
-		# endforeach(FLAG_VAR)
+		# 	string(REGEX REPLACE "/RTC[^ ]*" "" ${COMPILER_FLAGS} "${${COMPILER_FLAGS}}")
+		# endforeach(COMPILER_FLAGS)
 
 		if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 			# Enable debug symbols
@@ -357,6 +348,7 @@ if(WIN32 AND MSVC)
 		add_compile_options(/fsanitize=leak)
 		add_link_options(/INCREMENTAL:NO)
 	endif()
+
 endif()
 
 if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")

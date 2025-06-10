@@ -192,6 +192,33 @@ TEST_F(preprocessor_test, if_va_args)
 #undef PREPROCESSOR_TEST_IF_VA_ARGS
 }
 
+TEST_F(preprocessor_test, if_va_args_ext)
+{
+#define PREPROCESSOR_TEST_IF_VA_ARGS_PRINT(A, B, C) \
+	do \
+	{ \
+		printf("%d %d %d\n", A, B, C); \
+	} while (0)
+
+#define PREPROCESSOR_TEST_IF_VA_ARGS_PRINT_VA(A, B, C, ...) \
+	do \
+	{ \
+		printf(A, B, C, __VA_ARGS__); \
+	} while (0)
+
+#define PREPROCESSOR_TEST_IF_VA_ARGS(A, B, C, ...) \
+	PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
+		PREPROCESSOR_TEST_IF_VA_ARGS_PRINT(A, B, C), \
+		PREPROCESSOR_TEST_IF_VA_ARGS_PRINT_VA(A, B, C, __VA_ARGS__))
+
+	PREPROCESSOR_TEST_IF_VA_ARGS(1, 2, 3);
+	PREPROCESSOR_TEST_IF_VA_ARGS("%s %s %s\n", "B", "C", "D");
+	PREPROCESSOR_TEST_IF_VA_ARGS("%s %s %s %s\n", "B", "C", "D", "E");
+	PREPROCESSOR_TEST_IF_VA_ARGS("%s %s %s %s %s\n", "B", "C", "D", "E", "F");
+
+#undef PREPROCESSOR_TEST_IF_VA_ARGS
+}
+
 TEST_F(preprocessor_test, serial)
 {
 #define PREPROCSSOR_TEST_SERIAL_TAG abc
