@@ -238,16 +238,37 @@ else()
 	set(Ruby_LIBRARY_INSTALL "${Ruby_LIBRARY_NAME_PATH}")
 endif()
 
+# Define search paths
+set(Ruby_LIBRARY_SEARCH_PATHS_DEVELOPMENT "${Ruby_LIBRARY_SEARCH_PATHS}")
+
+if(Ruby_LIBRARY_SEARCH_PATHS AND WIN32)
+	set(Ruby_LIBRARY_SEARCH_PATHS_INSTALL "")
+
+	foreach(SEARCH_PATH IN LISTS Ruby_LIBRARY_SEARCH_PATHS)
+		install(DIRECTORY
+			"${SEARCH_PATH}"
+			DESTINATION ${INSTALL_LIB}
+			COMPONENT runtime
+		)
+
+		get_filename_component(SEARCH_PATH_FOLDER_NAME "${SEARCH_PATH}" NAME)
+
+		list(APPEND Ruby_LIBRARY_SEARCH_PATHS_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/${SEARCH_PATH_FOLDER_NAME}")
+	endforeach()
+endif()
+
 #
 # Configuration
 #
 
 # Development
 loader_configuration_begin(rb_loader)
+loader_configuration_paths("${Ruby_LIBRARY_SEARCH_PATHS_DEVELOPMENT}")
 loader_configuration_deps(ruby "${Ruby_LIBRARY_DEVELOPMENT}")
 loader_configuartion_end_development()
 
 # Install
 loader_configuration_begin(rb_loader)
+loader_configuration_paths("${Ruby_LIBRARY_SEARCH_PATHS_INSTALL}")
 loader_configuration_deps(ruby "${Ruby_LIBRARY_INSTALL}")
 loader_configuartion_end_install()

@@ -199,6 +199,7 @@ function Set-Ruby {
 	Write-Output "-DRuby_EXECUTABLE=""$RubyDir/bin/ruby.exe""" >> $EnvOpts
 	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby350.lib""" >> $EnvOpts
 	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby350.dll""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY_SEARCH_PATHS=""$RubyDir/bin/ruby_builtin_dlls""" >> $EnvOpts
 }
 
 function Set-TypeScript {
