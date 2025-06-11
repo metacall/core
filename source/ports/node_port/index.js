@@ -38,7 +38,13 @@ const findFilesRecursively = (directory, filePattern, depthLimit = Infinity) => 
 				continue;
 			}
 
-			const items = fs.readdirSync(dir);
+			const items = (() => {
+				try {
+					return fs.readdirSync(dir);
+				} catch (e) {
+					return [];
+				}
+			})();
 
 			for (const item of items) {
 				const fullPath = path.join(dir, item);
