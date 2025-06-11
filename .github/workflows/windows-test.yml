@@ -17,12 +17,12 @@ concurrency:
 jobs:
   windows-test:
     name: Windows MSVC Test
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, windows-2022, windows-2025]
+        os: [2022, 2025]
         options: [
           {build: debug, sanitizer: without-sanitizer},
           {build: debug, sanitizer: address-sanitizer},
@@ -32,7 +32,7 @@ jobs:
           # {build: debug, sanitizer: memory-sanitizer},
 
           # TODO: https://github.com/metacall/core/issues/461
-          # {build: release, sanitizer: without-sanitizer}
+          {build: release, sanitizer: without-sanitizer}
         ]
 
     steps:

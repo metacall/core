@@ -113,6 +113,10 @@ static int loader_impl_dependencies_self_find(loader_impl impl, const char *key_
 
 static int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *paths_array, size_t paths_size);
 
+#if defined(WIN32) || defined(_WIN32)
+static void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag tag);
+#endif
+
 static configuration loader_impl_initialize_configuration(const loader_tag tag);
 
 static int loader_impl_initialize_registered(plugin_manager manager, plugin p);
@@ -370,7 +374,40 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 	return 1;
 }
 
-int loader_impl_dependencies(loader_impl impl, detour d)
+#if defined(WIN32) || defined(_WIN32)
+void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag tag)
+{
+	/* Search paths have the following format and are only implemented for Windows:
+	{
+		"search_paths": ["C:\Program Files\ruby\bin\ruby_builtin_dlls"]
+	}
+	*/
+	value search_paths_value = configuration_value_type(impl->config, "search_paths", TYPE_ARRAY);
+
+	/* Check if the loader has search paths and initialize them */
+	if (search_paths_value != NULL)
+	{
+		size_t size = value_type_count(search_paths_value);
+		value *search_paths_array = value_to_array(search_paths_value);
+		size_t iterator;
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			if (value_type_id(search_paths_array[iterator]) == TYPE_STRING)
+			{
+				const char *key_str = value_to_string(search_paths_array[iterator]);
+
+				if (SetDllDirectoryA(key_str) == FALSE)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register the DLL directory %s in loader '%s'; dependencies with other dependant DLLs may fail to load", key_str, tag);
+				}
+			}
+		}
+	}
+}
+#endif
+
+int loader_impl_dependencies(loader_impl impl, detour d, const loader_tag tag)
 {
 	/* Dependencies have the following format:
 	{
@@ -411,6 +448,10 @@ int loader_impl_dependencies(loader_impl impl, detour d)
 
 	/* Initialize the loader detour */
 	impl->d = d;
+
+#if defined(WIN32) || defined(_WIN32)
+	loader_impl_dependencies_search_paths(impl, tag);
+#endif
 
 	/* Check if the loader has dependencies and load them */
 	if (dependencies_value != NULL)
@@ -459,7 +500,7 @@ int loader_impl_dependencies(loader_impl impl, detour d)
 
 							if (loader_impl_dependencies_load(impl, key_str, paths_array, paths_size) != 0)
 							{
-								log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader configuration '%s.json'", key_str, plugin_name(impl->p));
+								log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader '%s' configuration", key_str, tag);
 								return 1;
 							}
 						}
@@ -469,7 +510,7 @@ int loader_impl_dependencies(loader_impl impl, detour d)
 						/* Otherwise try to find if the library is already loaded, and if not, load the process */
 						if (loader_impl_dependencies_self_find(impl, key_str, dependencies_self) != 0)
 						{
-							log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader '%s' as a host", key_str, plugin_name(impl->p));
+							log_write("metacall", LOG_LEVEL_ERROR, "Failed to load dependency '%s' from loader '%s' as a host", key_str, tag);
 							vector_destroy(dependencies_self);
 							return 1;
 						}

@@ -179,6 +179,46 @@ TEST_F(preprocessor_test, if)
 	EXPECT_NE((int)0, PREPROCESSOR_IF(0, (int)0, (int)1));
 }
 
+TEST_F(preprocessor_test, if_va_args)
+{
+#define PREPROCESSOR_TEST_IF_VA_ARGS(A, B, C, ...) \
+	PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), 1, 0)
+
+	EXPECT_EQ((int)1, (int)PREPROCESSOR_TEST_IF_VA_ARGS(A, B, C));
+	EXPECT_EQ((int)0, (int)PREPROCESSOR_TEST_IF_VA_ARGS(A, B, C, D));
+	EXPECT_EQ((int)0, (int)PREPROCESSOR_TEST_IF_VA_ARGS(A, B, C, D, E));
+	EXPECT_EQ((int)0, (int)PREPROCESSOR_TEST_IF_VA_ARGS(A, B, C, D, E, F));
+
+#undef PREPROCESSOR_TEST_IF_VA_ARGS
+}
+
+TEST_F(preprocessor_test, if_va_args_ext)
+{
+#define PREPROCESSOR_TEST_IF_VA_ARGS_PRINT(A, B, C) \
+	do \
+	{ \
+		printf("%d %d %d\n", A, B, C); \
+	} while (0)
+
+#define PREPROCESSOR_TEST_IF_VA_ARGS_PRINT_VA(A, B, C, ...) \
+	do \
+	{ \
+		printf(A, B, C, __VA_ARGS__); \
+	} while (0)
+
+#define PREPROCESSOR_TEST_IF_VA_ARGS(A, B, C, ...) \
+	PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
+		PREPROCESSOR_TEST_IF_VA_ARGS_PRINT(A, B, C), \
+		PREPROCESSOR_TEST_IF_VA_ARGS_PRINT_VA(A, B, C, __VA_ARGS__))
+
+	PREPROCESSOR_TEST_IF_VA_ARGS(1, 2, 3);
+	PREPROCESSOR_TEST_IF_VA_ARGS("%s %s %s\n", "B", "C", "D");
+	PREPROCESSOR_TEST_IF_VA_ARGS("%s %s %s %s\n", "B", "C", "D", "E");
+	PREPROCESSOR_TEST_IF_VA_ARGS("%s %s %s %s %s\n", "B", "C", "D", "E", "F");
+
+#undef PREPROCESSOR_TEST_IF_VA_ARGS
+}
+
 TEST_F(preprocessor_test, serial)
 {
 #define PREPROCSSOR_TEST_SERIAL_TAG abc

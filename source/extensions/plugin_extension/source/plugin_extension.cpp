@@ -40,7 +40,7 @@ namespace fs = std::experimental::filesystem;
 
 static void *extension_loader = NULL;
 
-void *plugin_load_from_path(size_t argc, void *args[], void *data)
+static void *plugin_load_from_path(size_t argc, void *args[], void *data)
 {
 	/* TODO: Improve return values with throwable in the future */
 	(void)data;

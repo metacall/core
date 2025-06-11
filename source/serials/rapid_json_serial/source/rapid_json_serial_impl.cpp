@@ -135,7 +135,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		size_t size = value_type_size(v);
 
-		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+		rapidjson::SizeType length = size > 0 ? static_cast<rapidjson::SizeType>(size - 1) : 0;
 
 		json_v->SetString(str, length);
 	}
@@ -229,7 +229,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		size_t size = sizeof(str);
 
-		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+		rapidjson::SizeType length = size > 0 ? static_cast<rapidjson::SizeType>(size - 1) : 0;
 
 		json_v->SetString(str, length);
 	}
@@ -240,7 +240,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		size_t size = sizeof(str);
 
-		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+		rapidjson::SizeType length = size > 0 ? static_cast<rapidjson::SizeType>(size - 1) : 0;
 
 		json_v->SetString(str, length);
 	}
@@ -251,7 +251,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		size_t size = sizeof(str);
 
-		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+		rapidjson::SizeType length = size > 0 ? static_cast<rapidjson::SizeType>(size - 1) : 0;
 
 		json_v->SetString(str, length);
 	}
@@ -262,7 +262,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		size_t size = sizeof(str);
 
-		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+		rapidjson::SizeType length = size > 0 ? static_cast<rapidjson::SizeType>(size - 1) : 0;
 
 		json_v->SetString(str, length);
 	}
@@ -275,29 +275,29 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 		rapidjson::Value message_member, message_value;
 		static const char message_str[] = "message";
 
-		message_member.SetString(message_str, (rapidjson::SizeType)(sizeof(message_str) - 1));
-		message_value.SetString(exception_message(ex), strlen(exception_message(ex)));
+		message_member.SetString(message_str, static_cast<rapidjson::SizeType>(sizeof(message_str) - 1));
+		message_value.SetString(exception_message(ex), static_cast<rapidjson::SizeType>(strlen(exception_message(ex))));
 		json_map.AddMember(message_member, message_value, rapid_json_allocator);
 
 		rapidjson::Value label_member, label_value;
 		static const char label_str[] = "label";
 
-		label_member.SetString(label_str, (rapidjson::SizeType)(sizeof(label_str) - 1));
-		label_value.SetString(exception_label(ex), strlen(exception_label(ex)));
+		label_member.SetString(label_str, static_cast<rapidjson::SizeType>(sizeof(label_str) - 1));
+		label_value.SetString(exception_label(ex), static_cast<rapidjson::SizeType>(strlen(exception_label(ex))));
 		json_map.AddMember(label_member, label_value, rapid_json_allocator);
 
 		rapidjson::Value code_member, code_value;
 		static const char code_str[] = "code";
 
-		code_member.SetString(code_str, (rapidjson::SizeType)(sizeof(code_str) - 1));
+		code_member.SetString(code_str, static_cast<rapidjson::SizeType>(sizeof(code_str) - 1));
 		code_value.SetInt64(exception_error_code(ex));
 		json_map.AddMember(code_member, code_value, rapid_json_allocator);
 
 		rapidjson::Value stacktrace_member, stacktrace_value;
 		static const char stacktrace_str[] = "stacktrace";
 
-		stacktrace_member.SetString(stacktrace_str, (rapidjson::SizeType)(sizeof(stacktrace_str) - 1));
-		stacktrace_value.SetString(exception_stacktrace(ex), strlen(exception_stacktrace(ex)));
+		stacktrace_member.SetString(stacktrace_str, static_cast<rapidjson::SizeType>(sizeof(stacktrace_str) - 1));
+		stacktrace_value.SetString(exception_stacktrace(ex), static_cast<rapidjson::SizeType>(strlen(exception_stacktrace(ex))));
 		json_map.AddMember(stacktrace_member, stacktrace_value, rapid_json_allocator);
 	}
 	else if (id == TYPE_THROWABLE)
@@ -310,7 +310,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		size_t size = sizeof(str);
 
-		rapidjson::SizeType length = (rapidjson::SizeType)(size - 1);
+		rapidjson::SizeType length = static_cast<rapidjson::SizeType>(size - 1);
 
 		rapidjson::Value json_member, json_inner_value;
 
@@ -328,7 +328,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		std::string s = ostream.str();
 
-		json_v->SetString(s.c_str(), (rapidjson::SizeType)s.length());
+		json_v->SetString(s.c_str(), static_cast<rapidjson::SizeType>(s.length()));
 	}
 	else if (id == TYPE_NULL)
 	{

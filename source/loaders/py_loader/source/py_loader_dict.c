@@ -43,6 +43,7 @@
 		#define Py_BUILD_CORE
 	#endif
 	#include <internal/pycore_dict.h>
+	#undef Py_BUILD_CORE
 
 	/* Disable warnings from Python */
 	#if defined(__clang__)

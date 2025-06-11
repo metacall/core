@@ -87,6 +87,22 @@ macro(loader_configuration_begin TARGET)
 	set(LOADER_CONFIGURATION_TARGET "${TARGET}")
 endmacro()
 
+# Generate configuration with search paths for a loader
+#
+#	"search_paths": [ "C:/Program Files/ruby/bin/ruby_builtin_dlls" ],
+#
+macro(loader_configuration_paths LIBRARY_PATHS_LIST)
+	if(NOT "${LIBRARY_PATHS_LIST}" STREQUAL "")
+		# Normalize the paths
+		string(REPLACE "\\" "/" LIBRARY_PATHS "${LIBRARY_PATHS_LIST}")
+
+		# Convert to JSON
+		string(REPLACE ";" "\", \"" LOADER_SEARCH_PATHS "\"${LIBRARY_PATHS}\"")
+	else()
+		set(LOADER_SEARCH_PATHS)
+	endif()
+endmacro()
+
 # Generate configuration with dependencies for a loader
 #
 #	node_loader:

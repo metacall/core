@@ -173,7 +173,6 @@ function Set-Java {
 
 function Set-Ruby {
 	Write-Output "Install Ruby"
-	$RUBY_VERSION = "3.1.2"	
 
 	Set-Location $ROOT_DIR
 	$RuntimeDir = "$env:ProgramFiles\ruby"
@@ -182,24 +181,25 @@ function Set-Ruby {
 	if (!(Test-Path -Path "$DepsDir\ruby-mswin.7z")) {
 		# Download installer
 		Write-Output "Ruby not found downloading now..."
-		(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/ruby-mswin/releases/download/ruby-mswin-builds/Ruby-$RUBY_VERSION-ms.7z", "$DepsDir\ruby-mswin.7z")
+		(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/ruby-loco/releases/download/ruby-master/ruby-mswin.7z", "$DepsDir\ruby-mswin.7z")
 	}
 
-	mkdir "$DepsDir\Ruby31-ms"
+	mkdir "$DepsDir\ruby-mswin"
 	7z x "$DepsDir\ruby-mswin.7z" -o"$DepsDir"
 
-	robocopy /move /e "$DepsDir\Ruby31-ms\" $RuntimeDir
+	robocopy /move /e "$DepsDir\ruby-mswin\" $RuntimeDir
 
 	Add-to-Path "$RuntimeDir\bin"
 
 	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$RubyDir  = $RuntimeDir.Replace('\', '/')
 
-	Write-Output "-DRuby_VERSION_STRING=""$RUBY_VERSION""" >> $EnvOpts
-	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-3.1.0""" >> $EnvOpts
+	Write-Output "-DRuby_VERSION_STRING=""3.5.0""" >> $EnvOpts
+	Write-Output "-DRuby_INCLUDE_DIR=""$RubyDir/include/ruby-3.5.0+0""" >> $EnvOpts
 	Write-Output "-DRuby_EXECUTABLE=""$RubyDir/bin/ruby.exe""" >> $EnvOpts
-	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby310.lib""" >> $EnvOpts
-	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby310.dll""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY=""$RubyDir/lib/x64-vcruntime140-ruby350.lib""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY_NAME=""$RubyDir/bin/x64-vcruntime140-ruby350.dll""" >> $EnvOpts
+	Write-Output "-DRuby_LIBRARY_SEARCH_PATHS=""$RubyDir/bin/ruby_builtin_dlls""" >> $EnvOpts
 }
 
 function Set-TypeScript {

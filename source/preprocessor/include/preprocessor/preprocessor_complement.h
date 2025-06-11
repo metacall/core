@@ -24,7 +24,7 @@ extern "C" {
 
 /* -- Macros -- */
 
-#if defined(_MSC_VER) && !defined(__clang__)
+#if (defined(_MSC_VER) && (!defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL)) && !defined(__clang__)
 	#define PREPROCESSOR_COMPL_IMPL_EXPAND(expr) expr
 	#define PREPROCESSOR_COMPL_IMPL(expr)		 PREPROCESSOR_COMPL_IMPL_EXPAND(PREPROCESSOR_COMPL_IMPL_##expr)
 #else

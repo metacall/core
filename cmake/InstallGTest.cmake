@@ -35,6 +35,18 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		set(GTEST_DISABLE_PTHREADS OFF)
 	endif()
 
+	if(MSVC AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		if(OPTION_BUILD_THREAD_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=thread -DCMAKE_C_FLAGS=/fsanitize=thread)
+		endif()
+		if(OPTION_BUILD_ADDRESS_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=address -DCMAKE_C_FLAGS=/fsanitize=address)
+		endif()
+		if(OPTION_BUILD_MEMORY_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="/fsanitize=memory /fsanitize=leak" -DCMAKE_C_FLAGS="/fsanitize=memory /fsanitize=leak")
+		endif()
+	endif()
+
 	# Import Google Test Framework
 	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
@@ -48,6 +60,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 			-DINSTALL_GTEST=OFF
 			-DBUILD_GMOCK=ON
 			-Dgmock_build_tests=OFF
+			${SANITIZER_FLAGS}
 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
 		UPDATE_COMMAND ""
 		INSTALL_COMMAND ""

@@ -134,13 +134,18 @@ bool application::cmd(std::vector<std::string> &arguments)
 	/* Initialize CMD descriptors */
 	std::string plugin_path(metacall_plugin_path());
 
-	void *args[] = {
+	void *command_initialize_args[] = {
 		metacall_value_create_string(plugin_path.c_str(), plugin_path.length())
 	};
 
-	void *command_initialize_ret = metacallhv_s(plugin_cli_handle, "command_initialize", args, sizeof(args) / sizeof(args[0]));
+	void *command_initialize_ret = metacallhv_s(plugin_cli_handle, "command_initialize", command_initialize_args, sizeof(command_initialize_args) / sizeof(command_initialize_args[0]));
 
 	check_for_exception(command_initialize_ret);
+
+	for (void *arg : command_initialize_args)
+	{
+		metacall_value_destroy(arg);
+	}
 
 	/* Convert all arguments into metacall value strings */
 	std::vector<void *> arguments_values;
@@ -179,11 +184,11 @@ bool application::cmd(std::vector<std::string> &arguments)
 	{
 		void **command_pair = metacall_value_to_array(command_map[iterator]);
 
-		void *args[] = {
+		void *command_args[] = {
 			command_pair[0]
 		};
 
-		void *command_func = metacallfv_s(command_function_func, args, sizeof(args) / sizeof(args[0]));
+		void *command_func = metacallfv_s(command_function_func, command_args, sizeof(command_args) / sizeof(command_args[0]));
 
 		if (metacall_value_id(command_func) == METACALL_FUNCTION)
 		{
