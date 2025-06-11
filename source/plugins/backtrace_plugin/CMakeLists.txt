@@ -7,12 +7,12 @@ endif()
 # External dependencies
 #
 
-if(NOT OPTION_BUILD_GUIX)
+if(NOT (OPTION_BUILD_GUIX OR BackwardCpp_SOURCE))
 	include(FetchContent)
 
 	FetchContent_Declare(BackwardCpp
-		GIT_REPOSITORY https://github.com/bombela/backward-cpp
-		GIT_TAG 94718085efa256fb25a311a46b5948ee0d95890a
+		GIT_REPOSITORY https://github.com/metacall/backward-cpp
+		GIT_TAG 0bfd0a07a61551413ccd2ab9a9099af3bad40681
 	)
 
 	FetchContent_MakeAvailable(BackwardCpp)
