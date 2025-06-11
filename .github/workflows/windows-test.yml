@@ -64,7 +64,7 @@ jobs:
         working-directory: ./build
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests install
 
   windows-distributable:
     name: Windows Distributable Dispatch

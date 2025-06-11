@@ -93,7 +93,7 @@ jobs:
           . .env
           bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests install
 
   macos-distributable:
     name: MacOS Distributable Dispatch
