@@ -2396,7 +2396,6 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"import asyncio\n"
 		"import threading\n"
 		"import sys\n"
-		// "import atexit; atexit.register(getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None))\n"
 		"class ThreadLoop:\n"
 		"	def __init__(self, loop, t):\n"
 		"		self.loop = loop\n"
@@ -2433,9 +2432,7 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"		tl.t.join()\n"
 		"def atexit_background_loop(tl):\n"
 		/* Checks if py_port_impl_module contains py_loader_port_atexit and executes it */
-		// "	py_loader_port_atexit = getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)\n"
 		"	getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)()\n"
-		// "	tl.loop.call_soon_threadsafe(stop_background_loop, tl, False)\n"
 		"def register_atexit_background_loop(tl):\n"
 		"	threading._register_atexit(atexit_background_loop, tl)\n";
 

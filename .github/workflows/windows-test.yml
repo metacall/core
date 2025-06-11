@@ -32,7 +32,7 @@ jobs:
           # {build: debug, sanitizer: memory-sanitizer},
 
           # TODO: https://github.com/metacall/core/issues/461
-          # {build: release, sanitizer: without-sanitizer}
+          {build: release, sanitizer: without-sanitizer}
         ]
 
     steps:
