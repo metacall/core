@@ -337,7 +337,6 @@ if(WIN32 AND MSVC)
 	# Sanitizers
 	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(/fsanitize=thread)
-		# add_compile_options(/fsanitize=undefined)
 		add_link_options(/INCREMENTAL:NO)
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(/fsanitize=address)
