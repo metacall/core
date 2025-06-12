@@ -30,7 +30,7 @@ struct py_thread_state
 	PyGILState_STATE gstate;
 
 	py_thread_state() :
-		ref_count(0) {}
+		ref_count(0), gstate(PyGILState_UNLOCKED) {}
 
 	void ensure()
 	{
@@ -63,17 +63,30 @@ thread_local py_thread_state current_thread_state;
 thread_local uint64_t current_thread_id = thread_id_get_current();
 static std::vector<PyObject *> delayed_destructor;
 
-void py_loader_thread_initialize(const int host)
+int py_loader_thread_initialize(const int host)
 {
 	main_thread_id = thread_id_get_current();
 
 	if (host == 1)
 	{
+		int gil_status = PyGILState_Check();
+
 		PyGILState_STATE gstate = PyGILState_Ensure();
 		main_thread_state = PyThreadState_Get();
-		main_thread_ref_count++;
 		PyGILState_Release(gstate);
+
+		if (gil_status == 0)
+		{
+			py_loader_thread_acquire();
+			return 1;
+		}
+		else
+		{
+			main_thread_ref_count++;
+		}
 	}
+
+	return 0;
 }
 
 int py_loader_thread_is_main()

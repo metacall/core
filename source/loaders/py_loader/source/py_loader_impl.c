@@ -2651,6 +2651,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 #if DEBUG_ENABLED
 	int gc_initialized = 1;
 #endif
+	int gil_release;
 
 	if (py_impl == NULL)
 	{
@@ -2682,7 +2683,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 	/* Initialize threading */
-	py_loader_thread_initialize(host);
+	gil_release = py_loader_thread_initialize(host);
 
 	/* Initialize executable */
 	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
@@ -2780,6 +2781,11 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	PyType_Modified(PyCFunctionTypePtr());
 #endif
 
+	if (gil_release)
+	{
+		py_loader_thread_release();
+	}
+
 	/* Register initialization */
 	loader_initialization_register(impl);
 
@@ -2823,6 +2829,10 @@ error_after_traceback_and_gc:
 #endif
 error_after_argv:
 error_after_sys_executable:
+	if (gil_release)
+	{
+		py_loader_thread_release();
+	}
 	(void)py_loader_impl_finalize(py_impl, host);
 error_init_py:
 	free(py_impl);

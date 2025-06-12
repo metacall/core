@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-PY_LOADER_NO_EXPORT void py_loader_thread_initialize(const int host);
+PY_LOADER_NO_EXPORT int py_loader_thread_initialize(const int host);
 
 PY_LOADER_NO_EXPORT int py_loader_thread_is_main(void);
 
