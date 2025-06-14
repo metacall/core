@@ -94,9 +94,9 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	/* Initialize the library path */
 	if (manager->library_path == NULL)
 	{
-		const char library_name[] = "metacall"
+		static const char library_name[] = "metacall"
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-									"d"
+										   "d"
 #endif
 			;
 

@@ -28,6 +28,35 @@
 
 /* -- Methods -- */
 
+static int configuration_path_from_library_path(dynlink_path library_relative_path, const char relative_path[], size_t relative_path_size)
+{
+	static const char library_name[] = "metacall"
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+									   "d"
+#endif
+		;
+
+	dynlink_path library_path, join_path;
+
+	size_t size, length = 0;
+
+	if (dynlink_library_path(library_name, library_path, &length) != 0)
+	{
+		return 1;
+	}
+
+	/* Get the current folder without the library */
+	size = portability_path_get_directory_inplace(library_path, length + 1);
+
+	/* Append the relative path */
+	size = portability_path_join(library_path, size, relative_path, relative_path_size, join_path, PORTABILITY_PATH_SIZE);
+
+	/* Make it cannonical */
+	size = portability_path_canonical(join_path, size, library_relative_path, PORTABILITY_PATH_SIZE);
+
+	return size == 0;
+}
+
 int configuration_initialize(const char *reader, const char *path, void *allocator)
 {
 	configuration global = NULL;
@@ -39,11 +68,19 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 		return 1;
 	}
 
+	/* The order of precedence is:
+	* 1) Environment variable
+	* 2) Default relative path to metacall library
+	* 3) Locate it relative to metacall library install path
+	* 4) Default installation path (if any)
+	*/
 	if (path == NULL)
 	{
 		static const char configuration_path[] = CONFIGURATION_PATH;
 
 		const char *env_path = environment_variable_get(configuration_path, NULL);
+
+		dynlink_path library_relative_path;
 
 		if (env_path != NULL)
 		{
@@ -56,9 +93,24 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 		{
 			static const char configuration_default_path[] = CONFIGURATION_DEFAULT_PATH;
 
-			global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, configuration_default_path, NULL);
+			if (configuration_path_from_library_path(library_relative_path, configuration_default_path, sizeof(configuration_default_path)) == 0)
+			{
+				global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, library_relative_path, NULL);
 
-			path = configuration_default_path;
+				path = library_relative_path;
+			}
+		}
+
+		if (global == NULL)
+		{
+			static const char relative_path[] = ".." ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR "share" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR "metacall" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR CONFIGURATION_DEFAULT_PATH;
+
+			if (configuration_path_from_library_path(library_relative_path, relative_path, sizeof(relative_path)) == 0)
+			{
+				global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, library_relative_path, NULL);
+
+				path = library_relative_path;
+			}
 		}
 
 #if defined(CONFIGURATION_INSTALL_PATH)
