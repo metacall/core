@@ -106,5 +106,33 @@ test_environment_variables(${py_port_test_exec}
 	${TESTS_ENVIRONMENT_VARIABLES}
 	${TESTS_ENVIRONMENT_VARIABLES_RS}
 	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
-	${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}
+)
+
+#
+# Define test (Python standalone)
+#
+
+set(py_port_test_exec_alone "${py_port_test}_executable_standalone")
+
+message(STATUS "Test ${py_port_test_exec_alone}")
+
+# Add test (Python standalone)
+add_test(NAME ${py_port_test_exec_alone}
+	COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test.py"
+)
+
+#
+# Define test labels
+#
+
+set_property(TEST ${py_port_test_exec_alone}
+	PROPERTY LABELS ${py_port_test_exec_alone}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${py_port_test_exec_alone}
+	""
+	"LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH}"
+	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
 )
