@@ -122,6 +122,8 @@ static int portability_library_path_list_phdr_callback(struct dl_phdr_info *info
 
 #endif
 
+#include <stdio.h>
+
 int portability_library_path_find(const char name[], portability_library_path_str path, size_t *length)
 {
 #if defined(unix) || defined(__unix__) || defined(__unix) || \
