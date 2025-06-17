@@ -189,8 +189,9 @@ int portability_library_path_find(const char name[], portability_library_path_st
 
 	if (portability_library_path_ends_with(name, "so") == 0 && name_dylib_length < PORTABILITY_PATH_SIZE)
 	{
-		memcpy(path, name, sizeof(char) * (name_length - 2));
-		memcpy(path, dylib_suffix, sizeof(dylib_suffix));
+		const size_t base_length = sizeof(char) * (name_length - 2);
+		memcpy(path, name, base_length);
+		memcpy(&path[base_length], dylib_suffix, sizeof(dylib_suffix));
 	}
 
 	/* Start from 1 so we avoid the executable itself */
@@ -206,7 +207,7 @@ int portability_library_path_find(const char name[], portability_library_path_st
 		printf("Debug ends with: %s | %s\n", image_name, name);
 		fflush(stdout);
 
-		if (portability_library_path_ends_with(image_name, name) == 0)
+		if (portability_library_path_ends_with(image_name, path) == 0)
 		{
 			size_t image_length = strnlen(image_name, PORTABILITY_PATH_SIZE);
 
@@ -222,7 +223,7 @@ int portability_library_path_find(const char name[], portability_library_path_st
 				*length = image_length;
 			}
 
-			printf("Debug ended with: %s | %s => %s\n", image_name, path, name);
+			printf("------------------------------- Debug ended with: %s | %s => %s\n", image_name, path, name);
 			fflush(stdout);
 
 			return 0;
