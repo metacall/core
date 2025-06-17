@@ -45,6 +45,8 @@ static int configuration_path_from_library_path(dynlink_path library_relative_pa
 		return 1;
 	}
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "Finding configuration relative path %s to %s", relative_path, library_path);
+
 	/* Get the current folder without the library */
 	size = portability_path_get_directory_inplace(library_path, length + 1);
 
@@ -102,7 +104,7 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 		}
 
 #if (defined(WIN32) || defined(_WIN32)) && defined(_MSC_VER)
-		/* Windows MSVC stores the build folder in Debug/Release folders, so we must also check in the parent folder */
+		/* Windows MSVC when running the tests, it has the binaries in Debug / Release folders, so we must also check in the parent folder */
 		if (global == NULL)
 		{
 			static const char configuration_default_path_win32[] = ".." ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR CONFIGURATION_DEFAULT_PATH;
