@@ -196,6 +196,10 @@ int portability_library_path_find(const char name[], portability_library_path_st
 	{
 		const char *image_name = _dyld_get_image_name(image_index);
 
+		// TODO: Delete this
+		printf("Debug: %s\n", image_name);
+		fflush(stdout);
+
 		if (portability_library_path_ends_with(image_name, path) == 0)
 		{
 			size_t image_length = strnlen(image_name, PORTABILITY_PATH_SIZE);
