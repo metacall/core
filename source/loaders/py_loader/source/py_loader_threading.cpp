@@ -69,7 +69,7 @@ int py_loader_thread_initialize(const int host)
 
 	if (host == 1)
 	{
-		int gil_status = PyGILState_Check();
+		const int gil_status = PyGILState_Check();
 
 		PyGILState_STATE gstate = PyGILState_Ensure();
 		main_thread_state = PyThreadState_Get();

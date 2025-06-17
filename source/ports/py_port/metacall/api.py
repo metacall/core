@@ -95,7 +95,14 @@ def metacall_module_load():
 
 	# Python Port must have been loaded at this point
 	if 'py_port_impl_module' in sys.modules:
-		return sys.modules['py_port_impl_module']
+		port = sys.modules['py_port_impl_module']
+
+		# For some reason, Windows deadlocks on initializing asyncio
+		# but if it is delayed, it works, so we initialize it after here
+		if sys.platform == 'win32':
+			port.py_loader_port_asyncio_initialize()
+
+		return port
 	else:
 		raise ImportError(
 			'MetaCall was found but failed to load'

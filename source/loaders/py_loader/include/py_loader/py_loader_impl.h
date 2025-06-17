@@ -62,6 +62,8 @@ PY_LOADER_NO_EXPORT int py_loader_impl_finalizer_object(loader_impl impl, PyObje
 
 PY_LOADER_NO_EXPORT PyObject *py_loader_impl_capsule_new_null(void);
 
+PY_LOADER_NO_EXPORT int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int host);
+
 #ifdef __cplusplus
 }
 #endif

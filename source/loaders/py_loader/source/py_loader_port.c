@@ -890,6 +890,26 @@ static PyObject *py_loader_port_atexit(PyObject *self, PyObject *args)
 	return Py_ReturnNone();
 }
 
+static PyObject *py_loader_port_asyncio_initialize(PyObject *self, PyObject *args)
+{
+	loader_impl impl = loader_get_impl(py_loader_tag);
+	const int host = loader_impl_get_option_host(impl);
+	loader_impl_py py_impl = loader_impl_get(impl);
+
+	(void)self;
+	(void)args;
+
+	if (impl != NULL)
+	{
+		if (py_loader_impl_initialize_asyncio_module(py_impl, host) != 0)
+		{
+			PyErr_SetString(PyExc_RuntimeErrorPtr(), "Failed to initialize asyncio module of Python Loader on MetaCall.");
+		}
+	}
+
+	return Py_ReturnNone();
+}
+
 static PyMethodDef metacall_methods[] = {
 	{ "metacall_load_from_file", py_loader_port_load_from_file, METH_VARARGS,
 		"Loads a script from file." },
@@ -913,6 +933,8 @@ static PyMethodDef metacall_methods[] = {
 		"Get the data which a value of type Pointer is pointing to." },
 	{ "py_loader_port_atexit", py_loader_port_atexit, METH_NOARGS,
 		"At exit function that will be executed when Python is host, for internal cleanup purposes." },
+	{ "py_loader_port_asyncio_initialize", py_loader_port_asyncio_initialize, METH_NOARGS,
+		"Initialization function that will be executed when Python is host, for internal initialization purposes." },
 	{ NULL, NULL, 0, NULL }
 };
 

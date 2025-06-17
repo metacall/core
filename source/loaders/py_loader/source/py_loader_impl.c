@@ -2610,7 +2610,12 @@ error_set_item:
 
 static void PyCFunction_dealloc(PyObject *obj)
 {
-	py_loader_thread_acquire();
+	const int gil_status = PyGILState_Check();
+
+	if (gil_status == 0)
+	{
+		py_loader_thread_acquire();
+	}
 
 	/* Check if we are passing our own hook to the callback */
 	if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
@@ -2624,6 +2629,7 @@ static void PyCFunction_dealloc(PyObject *obj)
 
 		loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(invoke_state_capsule, NULL);
 
+		/* Release the GIL and let the destroy be executed outside of Python (if it belongs to another language) */
 		py_loader_thread_release();
 		value_type_destroy(invoke_state->callback);
 		py_loader_thread_acquire();
@@ -2636,7 +2642,10 @@ static void PyCFunction_dealloc(PyObject *obj)
 	/* Call to the original meth_dealloc function */
 	py_loader_impl_pycfunction_dealloc(obj);
 
-	py_loader_thread_release();
+	if (gil_status == 0)
+	{
+		py_loader_thread_release();
+	}
 }
 
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
@@ -2760,10 +2769,16 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_import;
 	}
 
-	/* Initialize asyncio module for supporting async */
-	if (py_loader_impl_initialize_asyncio_module(py_impl, host) != 0)
+#if defined(WIN32) || defined(_WIN32)
+	/* On Windows, the initialization of this module deadlocks, we delay it to the port on this case */
+	if (host == 0)
+#endif
 	{
-		goto error_after_thread_background_module;
+		/* Initialize asyncio module for supporting async */
+		if (py_loader_impl_initialize_asyncio_module(py_impl, host) != 0)
+		{
+			goto error_after_thread_background_module;
+		}
 	}
 
 	/* Initialize custom dict type */
