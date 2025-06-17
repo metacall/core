@@ -194,7 +194,7 @@ int portability_library_path_find(const char name[], portability_library_path_st
 	}
 
 	/* Start from 1 so we avoid the executable itself */
-	for (image_index = 1; image_index < size; ++image_index)
+	for (image_index = 0; image_index < size; ++image_index)
 	{
 		const char *image_name = _dyld_get_image_name(image_index);
 
