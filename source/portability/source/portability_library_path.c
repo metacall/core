@@ -194,7 +194,7 @@ int portability_library_path_find(const char name[], portability_library_path_st
 	}
 
 	/* Start from 1 so we avoid the executable itself */
-	for (image_index = 0; image_index < size; ++image_index)
+	for (image_index = 1; image_index < size; ++image_index)
 	{
 		const char *image_name = _dyld_get_image_name(image_index);
 
@@ -202,7 +202,11 @@ int portability_library_path_find(const char name[], portability_library_path_st
 		printf("Debug: #%d / %d => %s\n", image_index, size, image_name);
 		fflush(stdout);
 
-		if (portability_library_path_ends_with(image_name, path) == 0)
+		printf("Debug ends with: %s | %s\n", image_name, path);
+		printf("Debug ends with: %s | %s\n", image_name, name);
+		fflush(stdout);
+
+		if (portability_library_path_ends_with(image_name, name) == 0)
 		{
 			size_t image_length = strnlen(image_name, PORTABILITY_PATH_SIZE);
 
@@ -217,6 +221,9 @@ int portability_library_path_find(const char name[], portability_library_path_st
 			{
 				*length = image_length;
 			}
+
+			printf("Debug ended with: %s | %s => %s\n", image_name, path, name);
+			fflush(stdout);
 
 			return 0;
 		}
