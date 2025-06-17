@@ -122,8 +122,6 @@ static int portability_library_path_list_phdr_callback(struct dl_phdr_info *info
 
 #endif
 
-#include <stdio.h>
-
 int portability_library_path_find(const char name[], portability_library_path_str path, size_t *length)
 {
 #if defined(unix) || defined(__unix__) || defined(__unix) || \
@@ -199,14 +197,6 @@ int portability_library_path_find(const char name[], portability_library_path_st
 	{
 		const char *image_name = _dyld_get_image_name(image_index);
 
-		// TODO: Delete this
-		printf("Debug: #%d / %d => %s\n", image_index, size, image_name);
-		fflush(stdout);
-
-		printf("Debug ends with: %s | %s\n", image_name, path);
-		printf("Debug ends with: %s | %s\n", image_name, name);
-		fflush(stdout);
-
 		if (portability_library_path_ends_with(image_name, path) == 0)
 		{
 			size_t image_length = strnlen(image_name, PORTABILITY_PATH_SIZE);
@@ -222,9 +212,6 @@ int portability_library_path_find(const char name[], portability_library_path_st
 			{
 				*length = image_length;
 			}
-
-			printf("------------------------------- Debug ended with: %s | %s => %s\n", image_name, path, name);
-			fflush(stdout);
 
 			return 0;
 		}
