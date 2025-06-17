@@ -101,6 +101,21 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 			}
 		}
 
+#if (defined(WIN32) || defined(_WIN32)) && defined(_MSC_VER)
+		/* Windows MSVC stores the build folder in Debug/Release folders, so we must also check in the parent folder */
+		if (global == NULL)
+		{
+			static const char configuration_default_path_win32[] = ".." ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR CONFIGURATION_DEFAULT_PATH;
+
+			if (configuration_path_from_library_path(library_relative_path, configuration_default_path_win32, sizeof(configuration_default_path_win32)) == 0)
+			{
+				global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, library_relative_path, NULL);
+
+				path = library_relative_path;
+			}
+		}
+#endif
+
 		if (global == NULL)
 		{
 			static const char relative_path[] = ".." ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR "share" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR "metacall" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR CONFIGURATION_DEFAULT_PATH;

@@ -96,6 +96,8 @@ configuration configuration_object_initialize(const char *name, const char *path
 
 	if (path != NULL)
 	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Trying to load configuration from %s", path);
+
 		config->source = configuration_object_read(path);
 
 		if (config->source == NULL)
