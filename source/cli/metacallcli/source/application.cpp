@@ -49,7 +49,7 @@ void application::repl()
 	}
 
 	/* Register exit function */
-	auto exit = [](size_t argc, void *args[], void *data) -> void * {
+	auto exit_command = [](size_t argc, void *args[], void *data) -> void * {
 		(void)args;
 		(void)data;
 
@@ -67,11 +67,12 @@ void application::repl()
 		return NULL;
 	};
 
-	int result = metacall_register_loaderv(metacall_loader("ext"), plugin_repl_handle, "exit", exit, METACALL_INVALID, 0, NULL);
+	int result = metacall_register_loaderv(metacall_loader("ext"), plugin_repl_handle, "exit", exit_command, METACALL_INVALID, 0, NULL);
 
 	if (result != 0)
 	{
 		std::cout << "Exit function was not registered properly, return code: " << result << std::endl;
+		exit(1);
 	}
 	else
 	{
@@ -268,7 +269,7 @@ application::application(int argc, char *argv[]) :
 	if (metacall_initialize() != 0)
 	{
 		/* Exit from application */
-		return;
+		exit(1);
 	}
 
 	/* Initialize MetaCall arguments */
@@ -372,7 +373,7 @@ void application::arguments_parse(std::vector<std::string> &arguments)
 		{
 			/* Stop loading more scripts */
 			std::cout << "Error: Failed to load script '" << script << "' with loader '" << safe_tag << "'" << std::endl;
-			return;
+			exit(1);
 		}
 	}
 }
