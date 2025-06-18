@@ -2396,6 +2396,13 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"import asyncio\n"
 		"import threading\n"
 		"import sys\n"
+#if DEBUG_ENABLED
+		"def trace_calls(frame, event, arg):\n"
+		"	t = threading.current_thread()\n"
+		"	print(f\"[{t.native_id}] {t.name}: {event} {frame.f_code.co_name}\")\n"
+		"threading.settrace(trace_calls)\n"
+		"sys.settrace(trace_calls)\n"
+#endif
 		"class ThreadLoop:\n"
 		"	def __init__(self, loop, t):\n"
 		"		self.loop = loop\n"
@@ -2410,13 +2417,26 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"	tl.loop.call_soon_threadsafe(f.set_exception, exception)\n"
 		"def background_loop(loop):\n"
 		"	asyncio.set_event_loop(loop)\n"
-		"	loop.run_forever()\n"
-		"	loop.run_until_complete(loop.shutdown_asyncgens())\n"
-		"	loop.stop()\n"
-		"	loop.close()\n"
+		"	try:\n"
+		"		loop.run_forever()\n"
+		"	finally:\n"
+#if DEBUG_ENABLED
+		"		print('Loop stopping, cleaning up...', flush=True)\n"
+#endif
+		"		try:\n"
+		"			loop.run_until_complete(loop.shutdown_asyncgens())\n"
+		"		except Exception as e:\n"
+		"			print(f\"Error during shutdown_asyncgens: {e}\", flush=True)\n"
+		"		loop.close()\n"
+#if DEBUG_ENABLED
+		"		print('Event loop closed', flush=True)\n"
+#endif
 		"def start_background_loop():\n"
 		"	loop = asyncio.new_event_loop()\n"
-		"	t = threading.Thread(target=background_loop, name='MetaCall asyncio event loop', args=(loop,), daemon=False)\n"
+#if DEBUG_ENABLED
+		"	loop.set_debug(True)\n"
+#endif
+		"	t = threading.Thread(target=background_loop, name='MetaCallEventLoop', args=(loop,), daemon=False)\n"
 		"	t.start()\n"
 		"	return ThreadLoop(loop, t)\n"
 		"def send_background_loop(tl, coro, callback, capsule):\n"
@@ -2427,9 +2447,18 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		/* Stop background loop enqueues at the end of the event loop
 		the task to be finished, so effectively it waits until the event loop finishes */
 		"def stop_background_loop(tl, join):\n"
+#if DEBUG_ENABLED
+		"	print('Requesting loop to stop', flush=True)\n"
+#endif
 		"	tl.loop.call_soon_threadsafe(tl.loop.stop)\n"
 		"	if join:\n"
+#if DEBUG_ENABLED
+		"		print('Waiting for thread to join', flush=True)\n"
+#endif
 		"		tl.t.join()\n"
+#if DEBUG_ENABLED
+		"		print('Background loop stopped', flush=True)\n"
+#endif
 		"def atexit_background_loop(tl):\n"
 		/* Checks if py_port_impl_module contains py_loader_port_atexit and executes it */
 		"	getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)()\n"
