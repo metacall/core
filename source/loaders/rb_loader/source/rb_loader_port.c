@@ -29,7 +29,7 @@
 
 static loader_impl rb_loader_impl = NULL;
 
-VALUE rb_loader_port_load_from_file(VALUE self, VALUE tag_value, VALUE paths_value)
+static VALUE rb_loader_port_load_from_file(VALUE self, VALUE tag_value, VALUE paths_value)
 {
 	const char *tag;
 	const char **paths;
@@ -96,7 +96,7 @@ VALUE rb_loader_port_load_from_file(VALUE self, VALUE tag_value, VALUE paths_val
 	return LONG2NUM(result);
 }
 
-VALUE rb_loader_port_load_from_memory(VALUE self, VALUE tag_value, VALUE buffer_value)
+static VALUE rb_loader_port_load_from_memory(VALUE self, VALUE tag_value, VALUE buffer_value)
 {
 	const char *tag;
 	const char *buffer;
@@ -138,7 +138,7 @@ VALUE rb_loader_port_load_from_memory(VALUE self, VALUE tag_value, VALUE buffer_
 	return LONG2NUM(result);
 }
 
-VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
+static VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 {
 	const char *function_name;
 	size_t args_size, iterator;
@@ -195,7 +195,7 @@ VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 	return rb_type_serialize(result);
 }
 
-VALUE rb_loader_port_inspect(VALUE self)
+static VALUE rb_loader_port_inspect(VALUE self)
 {
 	VALUE result;
 	size_t size = 0;
@@ -232,6 +232,22 @@ VALUE rb_loader_port_inspect(VALUE self)
 	return result;
 }
 
+static VALUE rb_loader_port_atexit(VALUE self)
+{
+	static int atexit_executed = 0;
+
+	(void)self;
+
+	if (atexit_executed == 0 && rb_loader_impl_destroy(rb_loader_impl) != 0)
+	{
+		rb_raise(rb_eSystemExit, "Failed to destroy Ruby Loader from MetaCall");
+	}
+
+	atexit_executed = 1;
+
+	return Qnil;
+}
+
 int rb_loader_port_initialize(loader_impl impl)
 {
 	VALUE rb_loader_port;
@@ -251,6 +267,7 @@ int rb_loader_port_initialize(loader_impl impl)
 	rb_define_module_function(rb_loader_port, "metacall_load_from_memory", rb_loader_port_load_from_memory, 2);
 	rb_define_module_function(rb_loader_port, "metacall", rb_loader_port_metacall, -1);
 	rb_define_module_function(rb_loader_port, "metacall_inspect", rb_loader_port_inspect, 0);
+	rb_define_module_function(rb_loader_port, "rb_loader_port_atexit", rb_loader_port_atexit, 0);
 
 	rb_loader_impl = impl;
 

@@ -99,6 +99,8 @@ module MetaCall
 
 		# Check again if the port was loaded
 		if defined?(MetaCallRbLoaderPort)
+
+
 			return MetaCallRbLoaderPort
 		else
 			raise LoadError, 'MetaCall was found but failed to load MetaCallRbLoaderPort'
@@ -107,6 +109,28 @@ module MetaCall
 
 	# Initialize the MetaCall Ruby Port
 	metacall_module_load
+
+	# When we are running MetaCall with Ruby, we should hook the at exit method
+	if ENV.key?('METACALL_HOST')
+		module Kernel
+			alias_method :original_exit, :exit
+			alias_method :original_exit_bang, :exit!
+
+			def exit(status = true)
+				if defined?(MetaCallRbLoaderPort) && MetaCall.respond_to?(:rb_loader_port_atexit)
+					MetaCallRbLoaderPort.rb_loader_port_atexit
+				end
+				original_exit(status)
+			end
+
+			def exit!(status = true)
+				if defined?(MetaCallRbLoaderPort) && MetaCall.respond_to?(:rb_loader_port_atexit)
+					MetaCallRbLoaderPort.rb_loader_port_atexit
+				end
+				original_exit_bang(status)
+			end
+		end
+	end
 
 	public
 

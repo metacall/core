@@ -89,6 +89,13 @@ typedef struct loader_impl_rb_funcall_protect_type
 	ID id;
 } * loader_impl_rb_funcall_protect;
 
+typedef struct loader_impl_rb_discover_module_protect_type
+{
+	loader_impl impl;
+	loader_impl_rb_module rb_module;
+	context ctx;
+} * loader_impl_rb_discover_module_protect;
+
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);
 static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method));
@@ -1255,7 +1262,9 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 		{
 #define rb_str_new_static_size(str) rb_str_new_static(str, sizeof(str) - 1)
 
-			VALUE wrapped_code = rb_str_plus(rb_str_new_static_size("module "), module_name);
+			VALUE wrapped_code = rb_str_new_static_size("require 'rubygems'\n");
+			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("module "));
+			wrapped_code = rb_str_plus(wrapped_code, module_name);
 			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("\n"));
 			wrapped_code = rb_str_plus(wrapped_code, module_data);
 			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("\nend"));
@@ -1509,58 +1518,61 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 		VALUE name = rb_sym2str(rb_method);
 		const char *method_name_str = RSTRING_PTR(name);
 
-		VALUE instance_method = rb_funcall(cls, rb_intern(method_type_str), 1, rb_method);
-		VALUE parameters = rb_funcallv(instance_method, rb_intern("parameters"), 0, NULL);
-		size_t args_it, args_count = RARRAY_LEN(parameters);
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Method '%s' inside '%s' of type %s with %" PRIuS " parameters", method_name_str, class_name_str, method_type_str, args_count);
-
-		/*
-		* TODO:
-		* Another alternative (for supporting types), which is not used in the current implementation,
-		* but it can simplify the parser, it's the following:
-		*
-		*   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
-		*   - For plain functions: origin_file, definition_line = method(:foo).source_location
-		*
-		* Then:
-		* method_signature = IO.readlines(origin_file)[definition_line.pred]
-		*
-		* Now we have only the method signature, this is going to be less problematic than parsing
-		* the whole file as we are doing now (although for multi-line signatures it's going to be
-		* a little bit more complicated...)
-		*
-		* We can switch to completely duck typed approach (refactoring the tests) or we can use this
-		* simplified parsing approach and maintain types
-		*/
-
-		method m = method_create(c,
-			method_name_str,
-			args_count,
-			(method_impl)instance_method,
-			visibility,
-			SYNCHRONOUS, /* There is not async functions in Ruby */
-			NULL);
-
-		signature s = method_signature(m);
-
-		for (args_it = 0; args_it < args_count; ++args_it)
+		if (rb_respond_to(cls, RB_SYM2ID(rb_method)))
 		{
-			VALUE parameter_pair = rb_ary_entry(parameters, args_it);
+			VALUE instance_method = rb_funcall(cls, rb_intern(method_type_str), 1, rb_method);
+			VALUE parameters = rb_funcallv(instance_method, rb_intern("parameters"), 0, NULL);
+			size_t args_it, args_count = RARRAY_LEN(parameters);
 
-			if (RARRAY_LEN(parameter_pair) == 2)
+			log_write("metacall", LOG_LEVEL_DEBUG, "Method '%s' inside '%s' of type %s with %" PRIuS " parameters", method_name_str, class_name_str, method_type_str, args_count);
+
+			/*
+			* TODO:
+			* Another alternative (for supporting types), which is not used in the current implementation,
+			* but it can simplify the parser, it's the following:
+			*
+			*   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
+			*   - For plain functions: origin_file, definition_line = method(:foo).source_location
+			*
+			* Then:
+			* method_signature = IO.readlines(origin_file)[definition_line.pred]
+			*
+			* Now we have only the method signature, this is going to be less problematic than parsing
+			* the whole file as we are doing now (although for multi-line signatures it's going to be
+			* a little bit more complicated...)
+			*
+			* We can switch to completely duck typed approach (refactoring the tests) or we can use this
+			* simplified parsing approach and maintain types
+			*/
+
+			method m = method_create(c,
+				method_name_str,
+				args_count,
+				(method_impl)instance_method,
+				visibility,
+				SYNCHRONOUS, /* There is not async functions in Ruby */
+				NULL);
+
+			signature s = method_signature(m);
+
+			for (args_it = 0; args_it < args_count; ++args_it)
 			{
-				VALUE parameter_name_id = rb_ary_entry(parameter_pair, 1);
-				VALUE parameter_name = rb_sym2str(parameter_name_id);
-				const char *parameter_name_str = RSTRING_PTR(parameter_name);
+				VALUE parameter_pair = rb_ary_entry(parameters, args_it);
 
-				signature_set(s, args_it, parameter_name_str, NULL);
+				if (RARRAY_LEN(parameter_pair) == 2)
+				{
+					VALUE parameter_name_id = rb_ary_entry(parameter_pair, 1);
+					VALUE parameter_name = rb_sym2str(parameter_name_id);
+					const char *parameter_name_str = RSTRING_PTR(parameter_name);
+
+					signature_set(s, args_it, parameter_name_str, NULL);
+				}
 			}
-		}
 
-		if (register_method(c, m) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s' in class '%s'", method_name_str, class_name_str);
+			if (register_method(c, m) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s' in class '%s'", method_name_str, class_name_str);
+			}
 		}
 	}
 }
@@ -1587,15 +1599,12 @@ void rb_loader_impl_discover_attributes(klass c, const char *class_name_str, VAL
 	}
 }
 
-int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_module, context ctx)
+static VALUE rb_loader_impl_discover_module_protect(VALUE args)
 {
-	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader discovering:");
-
-	if (rb_module->empty == 0)
-	{
-		return 0;
-	}
-
+	loader_impl_rb_discover_module_protect protect = (loader_impl_rb_discover_module_protect)args;
+	loader_impl impl = protect->impl;
+	loader_impl_rb_module rb_module = protect->rb_module;
+	context ctx = protect->ctx;
 	VALUE instance_methods = rb_funcallv(rb_module->module, rb_intern("instance_methods"), 0, NULL);
 	VALUE methods_size = rb_funcallv(instance_methods, rb_intern("size"), 0, NULL);
 	int index, size = FIX2INT(methods_size);
@@ -1630,7 +1639,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 					if (scope_define(sp, function_name(f), v) != 0)
 					{
 						value_type_destroy(v);
-						return 1;
+						return INT2NUM(1);
 					}
 					else
 					{
@@ -1640,12 +1649,12 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				}
 				else
 				{
-					return 1;
+					return INT2NUM(1);
 				}
 			}
 			else
 			{
-				return 1;
+				return INT2NUM(1);
 			}
 		}
 	}
@@ -1659,80 +1668,106 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 	{
 		VALUE constant = rb_ary_entry(constants, index);
 
-		if (constant != Qnil)
+		if (constant != Qnil && RB_TYPE_P(constant, T_SYMBOL))
 		{
-			if (RB_TYPE_P(constant, T_SYMBOL))
-			{
-				VALUE class_name = rb_sym2str(constant);
-				const char *class_name_str = RSTRING_PTR(class_name);
-				VALUE cls = rb_const_get_from(rb_module->module, rb_intern(class_name_str));
-				loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
-				klass c = class_create(class_name_str, ACCESSOR_TYPE_DYNAMIC, rb_cls, &rb_class_interface_singleton);
+			VALUE class_name = rb_sym2str(constant);
+			const char *class_name_str = RSTRING_PTR(class_name);
+			VALUE cls = rb_const_get_from(rb_module->module, rb_intern(class_name_str));
+			loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
+			klass c = class_create(class_name_str, ACCESSOR_TYPE_DYNAMIC, rb_cls, &rb_class_interface_singleton);
 
-				rb_cls->class = cls;
-				rb_cls->impl = impl;
+			rb_cls->class = cls;
+			rb_cls->impl = impl;
 
-				/* Discover methods */
-				VALUE argv[1] = { Qtrue };										/* include_superclasses ? Qtrue : Qfalse; */
-				VALUE methods = rb_class_public_instance_methods(1, argv, cls); /* argc, argv, cls */
-				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "instance_method", methods, &class_register_method);
+			/* Discover methods */
+			VALUE argv[1] = { Qtrue };										/* include_superclasses ? Qtrue : Qfalse; */
+			VALUE methods = rb_class_public_instance_methods(1, argv, cls); /* argc, argv, cls */
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "instance_method", methods, &class_register_method);
 
-				methods = rb_class_protected_instance_methods(1, argv, cls);
-				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "instance_method", methods, &class_register_method);
+			methods = rb_class_protected_instance_methods(1, argv, cls);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "instance_method", methods, &class_register_method);
 
-				methods = rb_class_private_instance_methods(1, argv, cls);
-				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "instance_method", methods, &class_register_method);
+			methods = rb_class_private_instance_methods(1, argv, cls);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "instance_method", methods, &class_register_method);
 
 #if RUBY_VERSION_MAJOR == 3 && RUBY_VERSION_MINOR >= 0
-				methods = rb_obj_public_methods(1, argv, cls);
-				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "singleton_method", methods, &class_register_static_method);
+			methods = rb_obj_public_methods(1, argv, cls);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "singleton_method", methods, &class_register_static_method);
 
-				methods = rb_obj_protected_methods(1, argv, cls);
-				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "singleton_method", methods, &class_register_static_method);
+			methods = rb_obj_protected_methods(1, argv, cls);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "singleton_method", methods, &class_register_static_method);
 
-				methods = rb_obj_private_methods(1, argv, cls);
-				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "singleton_method", methods, &class_register_static_method);
+			methods = rb_obj_private_methods(1, argv, cls);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "singleton_method", methods, &class_register_static_method);
 #else
-				methods = rb_obj_singleton_methods(1, argv, cls);
-				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "singleton_method", methods, &class_register_static_method);
+			methods = rb_obj_singleton_methods(1, argv, cls);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "method", methods, &class_register_static_method);
 #endif
 
-				/* Discover attributes */
-				VALUE static_attributes = rb_mod_class_variables(1, argv, cls);
-				rb_loader_impl_discover_attributes(c, class_name_str, static_attributes, &class_register_static_attribute);
+			/* Discover attributes */
+			VALUE static_attributes = rb_mod_class_variables(1, argv, cls);
+			rb_loader_impl_discover_attributes(c, class_name_str, static_attributes, &class_register_static_attribute);
 
-				VALUE instance_attributes = rb_obj_instance_variables(cls);
-				rb_loader_impl_discover_attributes(c, class_name_str, instance_attributes, &class_register_attribute);
+			VALUE instance_attributes = rb_obj_instance_variables(cls);
+			rb_loader_impl_discover_attributes(c, class_name_str, instance_attributes, &class_register_attribute);
 
-				/* Define default constructor. Ruby only supports one constructor, a
-				* method called 'initialize'. It can have arguments but when inspected via
-				* reflection, the signature is variadic arguments and cannot be inspected:
-				*
-				* MyClass.methods(:initialize).parameters = [[:rest]] # variadic args notation in Ruby
-				*
-				* Due to this, we will always register only one default constructor without arguments
-				* which will take all the arguments when invoking 'new' and apply them as variadic.
-				*/
-				constructor ctor = constructor_create(0, VISIBILITY_PUBLIC);
+			/* Define default constructor. Ruby only supports one constructor, a
+			* method called 'initialize'. It can have arguments but when inspected via
+			* reflection, the signature is variadic arguments and cannot be inspected:
+			*
+			* MyClass.methods(:initialize).parameters = [[:rest]] # variadic args notation in Ruby
+			*
+			* Due to this, we will always register only one default constructor without arguments
+			* which will take all the arguments when invoking 'new' and apply them as variadic.
+			*/
+			constructor ctor = constructor_create(0, VISIBILITY_PUBLIC);
 
-				if (class_register_constructor(c, ctor) != 0)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register default constructor in class %s", class_name_str);
-				}
+			if (class_register_constructor(c, ctor) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to register default constructor in class %s", class_name_str);
+			}
 
-				scope sp = context_scope(ctx);
-				value v = value_create_class(c);
+			scope sp = context_scope(ctx);
+			value v = value_create_class(c);
 
-				if (scope_define(sp, class_name_str, v) != 0)
-				{
-					value_type_destroy(v);
-					return 1;
-				}
+			if (scope_define(sp, class_name_str, v) != 0)
+			{
+				value_type_destroy(v);
+				return INT2NUM(1);
 			}
 		}
 	}
 
-	return 0;
+	return INT2NUM(0);
+}
+
+int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_module, context ctx)
+{
+	struct loader_impl_rb_discover_module_protect_type protect;
+	int state;
+	VALUE result;
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader discovering:");
+
+	if (rb_module->empty == 0)
+	{
+		return 0;
+	}
+
+	protect.impl = impl;
+	protect.rb_module = rb_module;
+	protect.ctx = ctx;
+
+	result = rb_protect(rb_loader_impl_discover_module_protect, (VALUE)&protect, &state);
+
+	if (state != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby module discover failed");
+		rb_loader_impl_print_exception();
+		return 1;
+	}
+
+	return NUM2INT(result);
 }
 
 int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
