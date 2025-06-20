@@ -54,6 +54,12 @@
 	#define DEBUG_ENABLED 0
 #endif
 
+/* Set this variable to 1 in order to debug garbage collection data
+* and threading flow for improving the debug of memory leaks and async bugs.
+* Set it to 0 in order to remove all the noise.
+*/
+#define DEBUG_PRINT_ENABLED 1
+
 typedef struct loader_impl_py_function_type
 {
 	PyObject *func;
@@ -160,7 +166,7 @@ static value py_loader_impl_error_value(loader_impl_py py_impl);
 
 static value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj);
 
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	#if (defined(__ADDRESS_SANITIZER__) || defined(__MEMORY_SANITIZER__))
 static void py_loader_impl_gc_print(loader_impl_py py_impl);
 	#endif
@@ -2221,7 +2227,7 @@ error_import_module:
 	return 1;
 }
 
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 {
 	PyObject *flags;
@@ -2396,10 +2402,10 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"import asyncio\n"
 		"import threading\n"
 		"import sys\n"
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 		"def trace_calls(frame, event, arg):\n"
 		"	t = threading.current_thread()\n"
-		"	print(f\"[{t.native_id}] {t.name}: {event} {frame.f_code.co_name}\")\n"
+		"	print(f\"[{t.native_id}] {t.name}: {event} {frame.f_code.co_name}\", flush=True)\n"
 		"threading.settrace(trace_calls)\n"
 		"sys.settrace(trace_calls)\n"
 #endif
@@ -2686,7 +2692,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
 	int traceback_initialized = 1;
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	int gc_initialized = 1;
 #endif
 	int gil_release;
@@ -2762,7 +2768,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		traceback_initialized = 0;
 	}
 
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	/* Initialize GC module */
 	{
 		gc_initialized = py_loader_impl_initialize_gc(py_impl);
@@ -2862,7 +2868,7 @@ error_after_traceback_and_gc:
 		Py_DecRef(py_impl->traceback_format_exception);
 		Py_DecRef(py_impl->traceback_module);
 	}
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	if (gc_initialized == 0)
 	{
 		Py_DecRef(py_impl->gc_set_debug);
@@ -2917,7 +2923,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_path path)
 		goto clear_current_path;
 	}
 
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	py_loader_impl_sys_path_print(system_paths);
 #endif
 
@@ -4199,7 +4205,7 @@ value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject
 	return ret;
 }
 
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	#if (defined(__ADDRESS_SANITIZER__) || defined(__MEMORY_SANITIZER__))
 void py_loader_impl_gc_print(loader_impl_py py_impl)
 {
@@ -4355,7 +4361,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DecRef(py_impl->thread_background_stop);
 	Py_DecRef(py_impl->thread_background_register_atexit);
 
-#if DEBUG_ENABLED
+#if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	{
 	#if (defined(__ADDRESS_SANITIZER__) || defined(__MEMORY_SANITIZER__))
 		py_loader_impl_gc_print(py_impl);
