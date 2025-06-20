@@ -968,7 +968,12 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 
 		ruby_init();
 
-		ruby_init_loadpath();
+		/* Apparently ruby_init_loadpath is not enough to initialize the builtins and gems,
+		* so we use ruby_options instead
+		*/
+		/* ruby_init_loadpath(); */
+
+		ruby_options(argc, argv);
 	}
 
 	if (rb_loader_impl_initialize_types(impl) != 0)
@@ -1098,7 +1103,7 @@ VALUE rb_loader_impl_module_eval_protect(VALUE args)
 	return rb_mod_module_eval(protect->argc, protect->argv, protect->module);
 }
 
-void rb_loader_impl_print_exception(void)
+static void rb_loader_impl_print_exception(void)
 {
 	VALUE exception = rb_gv_get("$!");
 
@@ -1262,12 +1267,43 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 		{
 #define rb_str_new_static_size(str) rb_str_new_static(str, sizeof(str) - 1)
 
-			VALUE wrapped_code = rb_str_new_static_size("require 'rubygems'\n");
+			static const char header[] =
+				/* AtExitInterceptor is needed due to Ruby's nature, it calls
+				* at_exit during ruby_cleanup and due to this, scripts depending on
+				* this feature like unit tests will run after MetaCall has started
+				* to destroy the objects of reflect associated to the loader.
+				* In order to avoid this, we hook into at_exit and we execute at
+				* the end of the main script execution.
+				*/
+				"module AtExitInterceptor\n"
+				"	@captured_exit_procs = []\n"
+				"	def self.captured_exit_procs\n"
+				"		@captured_exit_procs\n"
+				"	end\n"
+				/* Replace Kernel.at_exit */
+				"	module ::Kernel\n"
+				"		alias_method :__original_at_exit, :at_exit\n"
+				"		def at_exit(&block)\n"
+				"			AtExitInterceptor.captured_exit_procs << block\n"
+				"			nil\n"
+				"		end\n"
+				"	end\n"
+				/* Manual runner */
+				"	def self.run_all\n"
+				/* Run in reverse order to match Ruby's actual behavior */
+				"		@captured_exit_procs.reverse_each do |proc|\n"
+				"			proc.call\n"
+				"		end\n"
+				"	end\n"
+				"end\n";
+
+			VALUE wrapped_code = rb_str_new_static_size(header);
 			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("module "));
 			wrapped_code = rb_str_plus(wrapped_code, module_name);
 			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("\n"));
 			wrapped_code = rb_str_plus(wrapped_code, module_data);
-			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("\nend"));
+			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("\nend\n"));
+			wrapped_code = rb_str_plus(wrapped_code, rb_str_new_static_size("AtExitInterceptor.run_all\n"));
 
 #undef rb_str_new_static_size
 
@@ -1278,9 +1314,28 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path 
 
 		if (state != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby evaluation failed %s", paths[0]);
-			rb_loader_impl_print_exception();
-			goto load_error;
+			VALUE err = rb_errinfo();
+			VALUE system_exit_class = rb_const_get(rb_cObject, rb_intern("SystemExit"));
+
+			/* Check if the script exited */
+			if (rb_obj_is_kind_of(err, system_exit_class))
+			{
+				VALUE status = rb_funcall(err, rb_intern("status"), 0);
+				int exit_status = NUM2INT(status);
+
+				if (exit_status != 0)
+				{
+					exit(exit_status);
+				}
+
+				rb_set_errinfo(Qnil);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Ruby evaluation failed %s", paths[0]);
+				rb_loader_impl_print_exception();
+				goto load_error;
+			}
 		}
 
 		/* Get the module reference */
@@ -1518,61 +1573,58 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 		VALUE name = rb_sym2str(rb_method);
 		const char *method_name_str = RSTRING_PTR(name);
 
-		if (rb_respond_to(cls, RB_SYM2ID(rb_method)))
+		VALUE instance_method = rb_funcall(cls, rb_intern(method_type_str), 1, rb_method);
+		VALUE parameters = rb_funcallv(instance_method, rb_intern("parameters"), 0, NULL);
+		size_t args_it, args_count = RARRAY_LEN(parameters);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Method '%s' inside '%s' of type %s with %" PRIuS " parameters", method_name_str, class_name_str, method_type_str, args_count);
+
+		/*
+		* TODO:
+		* Another alternative (for supporting types), which is not used in the current implementation,
+		* but it can simplify the parser, it's the following:
+		*
+		*   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
+		*   - For plain functions: origin_file, definition_line = method(:foo).source_location
+		*
+		* Then:
+		* method_signature = IO.readlines(origin_file)[definition_line.pred]
+		*
+		* Now we have only the method signature, this is going to be less problematic than parsing
+		* the whole file as we are doing now (although for multi-line signatures it's going to be
+		* a little bit more complicated...)
+		*
+		* We can switch to completely duck typed approach (refactoring the tests) or we can use this
+		* simplified parsing approach and maintain types
+		*/
+
+		method m = method_create(c,
+			method_name_str,
+			args_count,
+			(method_impl)instance_method,
+			visibility,
+			SYNCHRONOUS, /* There is not async functions in Ruby */
+			NULL);
+
+		signature s = method_signature(m);
+
+		for (args_it = 0; args_it < args_count; ++args_it)
 		{
-			VALUE instance_method = rb_funcall(cls, rb_intern(method_type_str), 1, rb_method);
-			VALUE parameters = rb_funcallv(instance_method, rb_intern("parameters"), 0, NULL);
-			size_t args_it, args_count = RARRAY_LEN(parameters);
+			VALUE parameter_pair = rb_ary_entry(parameters, args_it);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Method '%s' inside '%s' of type %s with %" PRIuS " parameters", method_name_str, class_name_str, method_type_str, args_count);
-
-			/*
-			* TODO:
-			* Another alternative (for supporting types), which is not used in the current implementation,
-			* but it can simplify the parser, it's the following:
-			*
-			*   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
-			*   - For plain functions: origin_file, definition_line = method(:foo).source_location
-			*
-			* Then:
-			* method_signature = IO.readlines(origin_file)[definition_line.pred]
-			*
-			* Now we have only the method signature, this is going to be less problematic than parsing
-			* the whole file as we are doing now (although for multi-line signatures it's going to be
-			* a little bit more complicated...)
-			*
-			* We can switch to completely duck typed approach (refactoring the tests) or we can use this
-			* simplified parsing approach and maintain types
-			*/
-
-			method m = method_create(c,
-				method_name_str,
-				args_count,
-				(method_impl)instance_method,
-				visibility,
-				SYNCHRONOUS, /* There is not async functions in Ruby */
-				NULL);
-
-			signature s = method_signature(m);
-
-			for (args_it = 0; args_it < args_count; ++args_it)
+			if (RARRAY_LEN(parameter_pair) == 2)
 			{
-				VALUE parameter_pair = rb_ary_entry(parameters, args_it);
+				VALUE parameter_name_id = rb_ary_entry(parameter_pair, 1);
+				VALUE parameter_name = rb_sym2str(parameter_name_id);
+				const char *parameter_name_str = RSTRING_PTR(parameter_name);
 
-				if (RARRAY_LEN(parameter_pair) == 2)
-				{
-					VALUE parameter_name_id = rb_ary_entry(parameter_pair, 1);
-					VALUE parameter_name = rb_sym2str(parameter_name_id);
-					const char *parameter_name_str = RSTRING_PTR(parameter_name);
-
-					signature_set(s, args_it, parameter_name_str, NULL);
-				}
+				signature_set(s, args_it, parameter_name_str, NULL);
 			}
+		}
 
-			if (register_method(c, m) != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s' in class '%s'", method_name_str, class_name_str);
-			}
+		if (register_method(c, m) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s' in class '%s'", method_name_str, class_name_str);
 		}
 	}
 }
@@ -1680,7 +1732,7 @@ static VALUE rb_loader_impl_discover_module_protect(VALUE args)
 			rb_cls->impl = impl;
 
 			/* Discover methods */
-			VALUE argv[1] = { Qtrue };										/* include_superclasses ? Qtrue : Qfalse; */
+			VALUE argv[1] = { Qfalse /* include_superclasses ? Qtrue : Qfalse; */ };
 			VALUE methods = rb_class_public_instance_methods(1, argv, cls); /* argc, argv, cls */
 			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "instance_method", methods, &class_register_method);
 
@@ -1692,13 +1744,13 @@ static VALUE rb_loader_impl_discover_module_protect(VALUE args)
 
 #if RUBY_VERSION_MAJOR == 3 && RUBY_VERSION_MINOR >= 0
 			methods = rb_obj_public_methods(1, argv, cls);
-			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "singleton_method", methods, &class_register_static_method);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "method", methods, &class_register_static_method);
 
 			methods = rb_obj_protected_methods(1, argv, cls);
-			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "singleton_method", methods, &class_register_static_method);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "method", methods, &class_register_static_method);
 
 			methods = rb_obj_private_methods(1, argv, cls);
-			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "singleton_method", methods, &class_register_static_method);
+			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "method", methods, &class_register_static_method);
 #else
 			methods = rb_obj_singleton_methods(1, argv, cls);
 			rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "method", methods, &class_register_static_method);

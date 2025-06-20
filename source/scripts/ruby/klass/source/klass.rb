@@ -39,6 +39,4 @@ def return_class_function()
 	return MyClass
 end
 
-
 #p return_class_function()::CLASS_CONSTANT
-

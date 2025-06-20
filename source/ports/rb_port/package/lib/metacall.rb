@@ -99,8 +99,6 @@ module MetaCall
 
 		# Check again if the port was loaded
 		if defined?(MetaCallRbLoaderPort)
-
-
 			return MetaCallRbLoaderPort
 		else
 			raise LoadError, 'MetaCall was found but failed to load MetaCallRbLoaderPort'
