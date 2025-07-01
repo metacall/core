@@ -1,0 +1,26 @@
+name: Release NodeJS Package
+
+on:
+  push:
+    branches: [ master, develop ]
+    paths:
+      - 'source/ports/node_port/package.json'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release NodeJS Port
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Release the port
+        working-directory: source/ports/node_port
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: ./upload.sh

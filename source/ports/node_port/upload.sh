@@ -19,8 +19,24 @@
 #	limitations under the License.
 #
 
-# TODO: Update version in package.json
-# TODO: Automate for CD/CI
+set -euxo pipefail
+
+NPM_VERSION=$(npm view metacall version)
+PORT_VERSION=$(node -p "require('./package.json').version")
+
+if [[ "$NPM_VERSION" == "$PORT_VERSION" ]]; then
+	echo "Current package version is the same as NPM version, skipping upload."
+	exit 0
+fi
+
+if [[ -z "${NPM_TOKEN:-}" ]]; then
+	echo "NPM_TOKEN environment variable is not set or empty, skipping upload"
+	exit 1
+fi
+
+# Register the token
+echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 
 # Publish
-npm login && npm publish
+npm login
+npm publish
