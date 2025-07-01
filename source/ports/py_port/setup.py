@@ -71,9 +71,6 @@ options = {
 		'Intended Audience :: Developers',
 		'Topic :: Software Development :: Interpreters',
 
-		# License
-		'License :: OSI Approved :: Apache Software License',
-
 		# Python versions support
 		#'Programming Language :: Python :: 2',
 		#'Programming Language :: Python :: 2.6',
