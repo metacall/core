@@ -110,7 +110,7 @@ jobs:
           workflow_file_name: test.yml
           wait_workflow: true
           client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: main
       - name: MacOS Workflow Dispatch
         uses: convictional/trigger-workflow-and-wait@v1.6.1
         with:
