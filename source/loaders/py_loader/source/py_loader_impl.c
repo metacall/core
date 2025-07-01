@@ -4302,6 +4302,80 @@ int py_loader_impl_finalize(loader_impl_py py_impl, const int host)
 	return 0;
 }
 
+#if defined(WIN32) || defined(_WIN32)
+/* On Windows, threads are destroyed when atexit is executed, we should control this in order to avoid deadlocks */
+static long py_loader_impl_asyncio_thread_native_id(loader_impl_py py_impl)
+{
+	PyObject *thread_obj = PyObject_GetAttrString(py_impl->asyncio_loop, "t");
+
+	if (thread_obj == NULL)
+	{
+		return -1;
+	}
+
+	PyObject *native_id_obj = PyObject_GetAttrString(thread_obj, "native_id");
+	Py_DecRef(thread_obj);
+
+	if (thread_obj == NULL)
+	{
+		return -1;
+	}
+
+	long native_id = PyLong_AsLong(native_id_obj);
+	Py_DecRef(native_id_obj);
+
+	if (PyErr_Occurred())
+	{
+		py_loader_impl_error_print(py_impl);
+		return -1;
+	}
+
+	return native_id;
+}
+
+static int py_loader_impl_check_thread(loader_impl_py py_impl)
+{
+	long thread_id = py_loader_impl_asyncio_thread_native_id(py_impl);
+
+	if (thread_id == -1)
+	{
+		return -1;
+	}
+
+	HANDLE thread_handle = OpenThread(THREAD_QUERY_INFORMATION | SYNCHRONIZE, FALSE, thread_id);
+
+	if (thread_handle == NULL)
+	{
+		return 1;
+	}
+
+	DWORD result = WaitForSingleObject(thread_handle, 0);
+
+	CloseHandle(thread_handle);
+
+	if (result == WAIT_TIMEOUT)
+	{
+		return 0;
+	}
+	else if (result == WAIT_OBJECT_0)
+	{
+		/* This workaround forces to skip thread waiting, so it avoids deadlocks */
+		PyObject *sys_modules = PyImport_GetModuleDict();
+
+		if (PyDict_DelItemString(sys_modules, "threading") < 0)
+		{
+			PyErr_Print();
+		}
+
+		return 1;
+	}
+	else
+	{
+		return -1;
+	}
+}
+#endif
+
 int py_loader_impl_destroy(loader_impl impl)
 {
 	const int host = loader_impl_get_option_host(impl);
@@ -4319,6 +4393,9 @@ int py_loader_impl_destroy(loader_impl impl)
 	py_loader_thread_acquire();
 
 	/* Stop event loop for async calls */
+#if defined(WIN32) || defined(_WIN32)
+	if (py_loader_impl_check_thread(py_impl) == 0)
+#endif
 	{
 		PyObject *args_tuple = PyTuple_New(2);
 		Py_IncRef(py_impl->asyncio_loop);
