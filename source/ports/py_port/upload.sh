@@ -29,6 +29,9 @@ if [[ "$PYPI_VERSION" == "$PORT_VERSION" ]]; then
 	exit 0
 fi
 
+# Delete previous build
+rm -rf dist build *.egg-info
+
 # Install dependencies and upload MetaCall package
 python3 -m pip install --user --upgrade twine setuptools wheel build
 python3 -m build
@@ -36,4 +39,4 @@ python3 -m twine check dist/*
 python3 -m twine upload dist/*
 
 # Delete output
-rm -rf dist/* build/*
+rm -rf dist build *.egg-info
