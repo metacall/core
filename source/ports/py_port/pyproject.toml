@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -39,6 +39,3 @@ Issues = "https://github.com/metacall/core/issues"
 
 [tool.setuptools]
 packages = ["metacall"]
-
-[tool.setuptools.package-data]
-"metacall" = ["*"]
