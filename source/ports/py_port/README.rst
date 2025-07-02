@@ -51,6 +51,26 @@ Calling Ruby from Python
 
    metacall('multiply', 3, 4); # 12
 
+Calling NodeJS from Python (MonkeyPatch API)
+------------------------
+
+``sum.js``
+
+.. code:: js
+
+    module.exports = {
+        sum: (x, y) => x + y,
+    };
+
+``main.py``
+
+.. code:: python
+
+   import metacall
+   from sum.js import sum
+
+   sum(3, 4); # 7
+
 Running the example:
 
 .. code:: console
