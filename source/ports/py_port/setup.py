@@ -32,10 +32,6 @@ current_path = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(current_path, 'README.rst'), encoding='utf-8') as f:
 	long_description = f.read()
 
-# Get the version
-with open(os.path.join(current_path, 'VERSION')) as f:
-	version = f.read()
-
 # Define set up options
 options = {
 	'name': 'metacall',
@@ -43,7 +39,7 @@ options = {
 	# Versions should comply with PEP440.  For a discussion on single-sourcing
 	# the version across setup.py and the project code, see
 	# https://packaging.python.org/en/latest/single_source_version.html
-	'version': version,
+	'version': '0.5.2',
 
 	'description': 'A library for providing inter-language foreign function interface calls',
 	'long_description': long_description,
