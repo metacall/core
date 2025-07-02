@@ -3,8 +3,8 @@ name: Release NodeJS Package
 on:
   push:
     branches: [ master, develop ]
-    paths:
-      - 'source/ports/node_port/**'
+    # paths:
+    #   - 'source/ports/node_port/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
