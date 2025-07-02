@@ -6,6 +6,10 @@ on:
     paths:
       - 'source/ports/py_port/**'
 
+permissions:
+  id-token: write
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
