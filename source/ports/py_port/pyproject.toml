@@ -9,7 +9,8 @@ description = "A library for providing inter-language foreign function interface
 keywords = ["metacall", "python", "port", "ffi", "polyglot", "faas", "serverless"]
 readme = "README.rst"
 requires-python = ">=3.3"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE.txt"]
 authors = [{ name = "Vicente Eduardo Ferrer Garcia", email = "vic798@gmail.com" }]
 classifiers = [
     "Development Status :: 4 - Beta",
