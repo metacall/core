@@ -22,7 +22,7 @@
 set -exuo pipefail
 
 PYPI_VERSION=$(curl -s https://pypi.org/rss/project/metacall/releases.xml | sed -n 's/\s*<title>\([0-9.]*\).*/\1/p' | sed -n '2 p')
-PORT_VERSION=$(python3 setup.py --version)
+PORT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
 
 if [[ "$PYPI_VERSION" == "$PORT_VERSION" ]]; then
 	echo "Current package version is the same as PyPI version, skipping upload."
