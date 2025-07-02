@@ -52,7 +52,7 @@ Calling Ruby from Python
    metacall('multiply', 3, 4); # 12
 
 Calling NodeJS from Python (MonkeyPatch API)
-------------------------
+--------------------------------------------
 
 ``sum.js``
 
