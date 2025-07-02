@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #
 #	MetaCall NodeJS Port Deploy Script by Parra Studios
