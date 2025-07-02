@@ -31,7 +31,7 @@ fi
 
 # Install dependencies and upload MetaCall package
 python3 -m pip install --user --upgrade twine setuptools wheel build
-# python3 -m build
+python3 -m build
 python3 setup.py sdist bdist_wheel
 python3 -m twine check dist/*
 python3 -m twine upload dist/*
