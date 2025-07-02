@@ -6,8 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "metacall"
 version = "0.5.2"
 description = "A library for providing inter-language foreign function interface calls"
+keywords = ["metacall", "python", "port", "ffi", "polyglot", "faas", "serverless"]
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.3"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Vicente Eduardo Ferrer Garcia", email = "vic798@gmail.com" }]
 classifiers = [
@@ -28,6 +29,12 @@ classifiers = [
     "Programming Language :: Python :: 3.13"
 ]
 dependencies = []
+
+[project.urls]
+Homepage = "https://metacall.io"
+Repository = "https://github.com/metacall/core"
+Documentation = "https://core.metacall.io/"
+Issues = "https://github.com/metacall/core/issues"
 
 [tool.setuptools]
 packages = ["metacall"]
