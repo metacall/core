@@ -54,7 +54,6 @@ options = {
 
 	# License
 	'license': 'Apache License 2.0',
-	'license_files': ['LICENSE.txt'],
 
 	# See https://pypi.python.org/pypi?%3Aaction=list_classifiers
 	'classifiers': [
