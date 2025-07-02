@@ -25,7 +25,7 @@ Then install MetaCall Python package through MetaCall:
 
 .. code:: console
 
-   metacall pip3 install metacall
+   pip3 install metacall
 
 Example
 =======
@@ -55,7 +55,7 @@ Running the example:
 
 .. code:: console
 
-   metacall main.py
+   python3 main.py
 
 Using pointers (calling to a C library)
 ---------------------------------------
