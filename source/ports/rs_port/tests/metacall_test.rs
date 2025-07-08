@@ -92,6 +92,7 @@ fn test_mixed_numbers() {
     );
 
     assert!(result.is_ok());
+
     if let Ok(ret) = result {
         assert_eq!(ret, 6_i64)
     }
