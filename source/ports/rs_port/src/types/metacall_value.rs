@@ -429,3 +429,36 @@ impl MetaCallValue for MetaCallThrowable {
         self.into_raw()
     }
 }
+/// Just a Rust barrier made for easier polymorphism.
+impl MetaCallValue for Box<dyn MetaCallValue> {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_INVALID
+    }
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
+        Ok(cast::raw_to_metacallobj_untyped_leak(v))
+    }
+    fn into_metacall_raw(self) -> *mut c_void {
+        match_metacall_value!(self, {
+            bool: bool => bool.into_metacall_raw(),
+            char: char => char.into_metacall_raw(),
+            num: i16 => num.into_metacall_raw(),
+            num: i32 => num.into_metacall_raw(),
+            num: i64 => num.into_metacall_raw(),
+            num: f32 => num.into_metacall_raw(),
+            num: f64 => num.into_metacall_raw(),
+            str: String => str.into_metacall_raw(),
+            buf: Vec<i8> => buf.into_metacall_raw(),
+            arr: Vec<Box<dyn MetaCallValue>> => arr.into_metacall_raw(),
+            map: HashMap<String, Box<dyn MetaCallValue>> => map.into_metacall_raw(),
+            ptr: MetaCallPointer => ptr.into_metacall_raw(),
+            fut: MetaCallFuture => fut.into_metacall_raw(),
+            fun: MetaCallFunction => fun.into_metacall_raw(),
+            null: MetaCallNull => null.into_metacall_raw(),
+            cls: MetaCallClass => cls.into_metacall_raw(),
+            obj: MetaCallObject => obj.into_metacall_raw(),
+            exc: MetaCallException => exc.into_metacall_raw(),
+            thr: MetaCallThrowable => thr.into_metacall_raw(),
+            _ => MetaCallNull().into_metacall_raw()
+        })
+    }
+}
