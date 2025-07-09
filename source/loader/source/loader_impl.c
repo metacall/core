@@ -35,6 +35,7 @@
 #include <log/log.h>
 
 #include <configuration/configuration.h>
+#include <configuration/configuration_object.h>
 
 #include <portability/portability_library_path.h>
 
@@ -282,16 +283,13 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 		{
 			if (value_type_id(execution_paths_array[iterator]) == TYPE_STRING)
 			{
-				const char *str = value_to_string(execution_paths_array[iterator]);
-				size_t str_size = value_type_size(execution_paths_array[iterator]);
+				loader_path execution_path;
 
-				if (str != NULL)
+				configuration_object_child_path(impl->config, execution_paths_array[iterator], execution_path);
+
+				if (iface->execution_path(impl, execution_path) != 0)
 				{
-					loader_path execution_path;
-
-					strncpy(execution_path, str, str_size > LOADER_PATH_SIZE ? LOADER_PATH_SIZE : str_size);
-
-					iface->execution_path(impl, execution_path);
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load execution path %s in configuration %s", execution_path, configuration_object_name(impl->config));
 				}
 			}
 		}

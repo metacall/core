@@ -1,0 +1,3 @@
+{
+	"py_loader":"@PY_CONFIGURATION_PATH@/py_loader.json"
+}

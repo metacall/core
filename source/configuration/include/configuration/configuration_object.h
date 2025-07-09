@@ -78,6 +78,27 @@ CONFIGURATION_API int configuration_object_childs(configuration config, vector c
 
 /**
 *  @brief
+*    Get an absolute path from the value @v which is a string representing a path,
+*    if the path is absolute, store it in @path as it is, otherwise, join the @config
+*    path to the value string @v and make it canonical
+*
+*  @param[in] config
+*    Pointer to configuration object
+*
+*  @param[in] v
+*    The value representing the path
+*
+*  @param[out] path
+*    The string where it is going to be store the path
+*
+*  @return
+*    Returns the size of the path
+*
+*/
+CONFIGURATION_API size_t configuration_object_child_path(configuration config, value v, char *path);
+
+/**
+*  @brief
 *    Set value of configuration object @config
 *
 *  @param[in] config

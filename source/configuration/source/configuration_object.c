@@ -13,6 +13,8 @@
 
 #include <log/log.h>
 
+#include <portability/portability_path.h>
+
 #include <string.h>
 
 /* -- Member Data -- */
@@ -102,6 +104,8 @@ configuration configuration_object_initialize(const char *name, const char *path
 
 		if (config->source == NULL)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to load configuration %s from %s", name, path);
+
 			free(config);
 
 			return NULL;
@@ -216,6 +220,31 @@ int configuration_object_childs_valid(set_key key, set_value val)
 	return 1;
 }
 
+size_t configuration_object_child_path(configuration config, value v, char *path)
+{
+	const char *value_path = value_to_string(v);
+	size_t size = value_type_size(v);
+
+	if (portability_path_is_absolute(value_path, size) == 0)
+	{
+		memcpy(path, value_path, size);
+	}
+	else
+	{
+		char absolute_path[PORTABILITY_PATH_SIZE];
+
+		size_t absolute_path_size = portability_path_get_directory(config->path, strnlen(config->path, PORTABILITY_PATH_SIZE), absolute_path, PORTABILITY_PATH_SIZE);
+
+		char join_path[PORTABILITY_PATH_SIZE];
+
+		size_t join_path_size = portability_path_join(absolute_path, absolute_path_size, value_path, size, join_path, PORTABILITY_PATH_SIZE);
+
+		size = portability_path_canonical(join_path, join_path_size, path, PORTABILITY_PATH_SIZE);
+	}
+
+	return size;
+}
+
 int configuration_object_childs(configuration config, vector childs, set storage)
 {
 	struct set_iterator_type it;
@@ -229,11 +258,13 @@ int configuration_object_childs(configuration config, vector childs, set storage
 		{
 			if (set_get(storage, key) == NULL)
 			{
-				value v = val;
+				char path[PORTABILITY_PATH_SIZE];
 
-				const char *path = value_to_string(v);
+				configuration child;
 
-				configuration child = configuration_object_initialize(key, path, config);
+				configuration_object_child_path(config, val, path);
+
+				child = configuration_object_initialize(key, path, config);
 
 				if (child == NULL)
 				{

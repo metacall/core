@@ -1,0 +1,8 @@
+{
+	"execution_paths": [
+		"@PY_EXECUTION_PATH@"
+	],
+	"dependencies": {
+		"python": ["@Python3_LIBRARY_NAME_PATH@"]
+	}
+}
