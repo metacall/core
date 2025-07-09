@@ -633,10 +633,14 @@ ffi_type *c_loader_impl_ffi_type(type_id id)
 			return &ffi_type_float;
 		case TYPE_DOUBLE:
 			return &ffi_type_double;
+		case TYPE_STRING:
+			return &ffi_type_pointer;
 		case TYPE_PTR:
 			return &ffi_type_pointer;
 		case TYPE_FUNCTION:
 			return &ffi_type_pointer;
+		case TYPE_NULL:
+			return &ffi_type_void;
 	}
 
 	return &ffi_type_void;
@@ -683,6 +687,11 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
+		else if (id == TYPE_STRING)
+		{
+			char *str = value_to_string((value)args[args_count]);
+			c_function->values[args_count] = &str;
+		}
 		else
 		{
 			c_function->values[args_count] = value_data((value)args[args_count]);
@@ -693,9 +702,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	size_t ret_size = value_type_id_size(ret_id);
 	void *ret = NULL;
 
-	/* TODO: This if is not correct because the sizes of strings, objects, etc are
-	relative to the pointer, not the value contents, we should review this */
-	if (ret_size <= sizeof(ffi_arg))
+	if (ret_size <= sizeof(ffi_arg) && ret_id < TYPE_STRING)
 	{
 		ffi_arg result;
 
@@ -705,9 +712,26 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	}
 	else
 	{
-		ret = value_type_create(NULL, ret_size, ret_id);
+		void *result = NULL;
+		void *result_ptr = &result;
 
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), value_data(ret), c_function->values);
+		if (ret_id == TYPE_NULL)
+		{
+			result = value_create_null();
+			result_ptr = NULL;
+		}
+		else if (ret_id != TYPE_STRING)
+		{
+			result = ret = value_type_create(NULL, ret_size, ret_id);
+		}
+
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), result_ptr, c_function->values);
+
+		if (ret_id == TYPE_STRING)
+		{
+			char *str = (char *)result;
+			ret = value_create_string(str, strlen(str));
+		}
 	}
 
 	/* Clear allocated closures if any */
@@ -837,6 +861,11 @@ int c_loader_impl_initialize_types(loader_impl impl)
 
 		{ TYPE_FLOAT, "float" },
 		{ TYPE_DOUBLE, "double" },
+
+		{ TYPE_STRING, "unsigned char *" },
+		{ TYPE_STRING, "char *" },
+		{ TYPE_STRING, "const unsigned char *" },
+		{ TYPE_STRING, "const char *" },
 
 		{ TYPE_NULL, "void" }
 
