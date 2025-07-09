@@ -64,7 +64,6 @@ services:
       CONFIGURATION_PATH: $METACALL_PATH/build/configurations/global.json
       SERIAL_LIBRARY_PATH: $METACALL_PATH/build
       DETOUR_LIBRARY_PATH: $METACALL_PATH/build
-      PORT_LIBRARY_PATH: $METACALL_PATH/build
       NODE_PATH: /usr/lib/node_modules
 
   runtime:
@@ -88,7 +87,6 @@ services:
       CONFIGURATION_PATH: /usr/local/share/metacall/configurations/global.json
       SERIAL_LIBRARY_PATH: /usr/local/lib
       DETOUR_LIBRARY_PATH: /usr/local/lib
-      PORT_LIBRARY_PATH: /usr/local/lib
       NODE_PATH: /usr/local/lib/node_modules
 
   cli:
@@ -108,5 +106,4 @@ services:
       CONFIGURATION_PATH: /usr/local/share/metacall/configurations/global.json
       SERIAL_LIBRARY_PATH: /usr/local/lib
       DETOUR_LIBRARY_PATH: /usr/local/lib
-      PORT_LIBRARY_PATH: /usr/local/lib
       NODE_PATH: /usr/local/lib/node_modules

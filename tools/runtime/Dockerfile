@@ -61,7 +61,6 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	CONFIGURATION_PATH=/usr/local/share/metacall/configurations/global.json \
 	SERIAL_LIBRARY_PATH=/usr/local/lib \
 	DETOUR_LIBRARY_PATH=/usr/local/lib \
-	PORT_LIBRARY_PATH=/usr/local/lib \
 	DEBIAN_FRONTEND=noninteractive \
 	NODE_PATH=/usr/local/lib/node_modules \
 	DOTNET_CLI_TELEMETRY_OPTOUT=true

@@ -44,7 +44,6 @@ export LOADER_SCRIPT_PATH="${BUILD_DIR}/scripts"
 export CONFIGURATION_PATH="${BUILD_DIR}/configurations/global.json"
 export SERIAL_LIBRARY_PATH="${BUILD_DIR}"
 export DETOUR_LIBRARY_PATH="${BUILD_DIR}"
-export PORT_LIBRARY_PATH="${BUILD_DIR}"
 
 BUILD_OPTIONS=(
 	${BUILD_SANITIZER} debug ${BUILD_LANGUAGES[@]} examples tests scripts ports install pack benchmarks
