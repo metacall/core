@@ -28,7 +28,7 @@ void process_text(char *input)
 typedef struct data_t
 {
 	int value;
-} *data_ptr_t;
+} * data_ptr_t;
 
 data_ptr_t alloc_data(void)
 {
