@@ -1442,14 +1442,13 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	}
 	else if (valuetype == napi_external)
 	{
-		/* Returns the previously allocated copy */
 		void *c = nullptr;
 
 		status = napi_get_value_external(env, v, &c);
 
 		node_loader_impl_exception(env, status);
 
-		return c;
+		return value_create_ptr(c);
 	}
 
 	return ret;
@@ -1635,10 +1634,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 	else if (id == TYPE_PTR)
 	{
-		/* Copy value and set the ownership, the old value will be deleted after the call */
-		void *c = value_copy(arg_value);
-
-		value_move(arg_value, c);
+		void *c = value_to_ptr(arg_value);
 
 		status = napi_create_external(env, c, nullptr, nullptr, &v);
 

@@ -720,7 +720,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 			ret = value_create_null();
 			result_ptr = NULL;
 		}
-		else if (ret_id != TYPE_STRING)
+		else if (ret_id != TYPE_STRING && ret_id != TYPE_PTR)
 		{
 			result = ret = value_type_create(NULL, ret_size, ret_id);
 		}
@@ -731,6 +731,10 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		{
 			char *str = (char *)result;
 			ret = value_create_string(str, strlen(str));
+		}
+		else if (ret_id == TYPE_PTR)
+		{
+			ret = value_create_ptr(result);
 		}
 	}
 
@@ -836,6 +840,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_BOOL, "bool" },
 
 		{ TYPE_CHAR, "char" },
+		{ TYPE_CHAR, "unsigned char" },
 		{ TYPE_CHAR, "int8_t" },
 		{ TYPE_CHAR, "uint8_t" },
 		{ TYPE_CHAR, "int_least8_t" },
@@ -844,6 +849,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_CHAR, "uint_fast8_t" },
 
 		{ TYPE_SHORT, "short" },
+		{ TYPE_SHORT, "unsigned short" },
 		{ TYPE_SHORT, "int16_t" },
 		{ TYPE_SHORT, "uint16_t" },
 		{ TYPE_SHORT, "int_least16_t" },
@@ -852,6 +858,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_SHORT, "uint_fast16_t" },
 
 		{ TYPE_INT, "int" },
+		{ TYPE_INT, "unsigned int" },
 		{ TYPE_INT, "uint32_t" },
 		{ TYPE_INT, "int32_t" },
 		{ TYPE_INT, "int_least32_t" },
@@ -860,7 +867,9 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_INT, "uint_fast32_t" },
 
 		{ TYPE_LONG, "long" },
+		{ TYPE_LONG, "unsigned long" },
 		{ TYPE_LONG, "long long" },
+		{ TYPE_LONG, "unsigned long long" },
 		{ TYPE_LONG, "uint64_t" },
 		{ TYPE_LONG, "int64_t" },
 		{ TYPE_LONG, "int_least64_t" },
@@ -1005,7 +1014,12 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 		case CXType_Bool:
 			return TYPE_BOOL;
 
+		case CXType_Short:
+		case CXType_UShort:
+			return TYPE_SHORT;
+
 		case CXType_Int:
+		case CXType_UInt:
 			return TYPE_INT;
 
 		case CXType_Void:

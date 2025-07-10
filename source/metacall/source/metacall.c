@@ -1119,8 +1119,15 @@ void *metacallfv_s(void *func, void *args[], size_t size)
 		{
 			if (value_validate(args[iterator]) != 0)
 			{
+				const char *name = function_name(f);
+
+				if (name == NULL)
+				{
+					name = "anonymous";
+				}
+
 				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallfv_s", iterator);
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallfv_s with function <%s> and value <%p>", iterator, name, args[iterator]);
 				return NULL;
 			}
 
@@ -2120,8 +2127,15 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 	{
 		if (value_validate(args[iterator]) != 0)
 		{
+			const char *name = method_name(m);
+
+			if (name == NULL)
+			{
+				name = "anonymous";
+			}
+
 			// TODO: Implement type error return a value
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallv_method", iterator);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallv_method with method <%s> and value <%p>", iterator, name, args[iterator]);
 			vector_destroy(v);
 			return NULL;
 		}

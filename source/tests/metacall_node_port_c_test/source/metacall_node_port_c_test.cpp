@@ -38,12 +38,20 @@ TEST_F(metacall_node_port_c_test, DefaultConstructor)
 	static const char buffer[] =
 		"const assert = require('assert');\n"
 		"const { metacall_load_from_file_export } = require('" METACALL_NODE_PORT_PATH "');\n"
-		"const { return_text, process_text } = metacall_load_from_file_export('c', ['compiled.c']);\n"
+		"const { return_text, process_text, alloc_data, alloc_data_args, set_data_value, get_data_value, free_data } = metacall_load_from_file_export('c', ['compiled.c']);\n"
+		// Test strings
 		"const result = return_text();\n"
 		"console.log(`'${result}'`);\n"
 		"assert(result == 'hello');\n"
 		"console.log(result);\n"
 		"process_text('test_test');\n"
+		// Test return pointers
+		"data_ptr = alloc_data();\n"
+		"console.log(data_ptr);\n"
+		"set_data_value(data_ptr, 12);\n"
+		"assert(get_data_value(data_ptr) == 12);\n"
+		"free_data(data_ptr);\n"
+		// TODO: Implement passing reference by arguments (alloc_data_args)
 		"\n";
 
 	ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
