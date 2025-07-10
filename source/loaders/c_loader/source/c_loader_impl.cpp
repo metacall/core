@@ -689,8 +689,8 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		}
 		else if (id == TYPE_STRING)
 		{
-			char *str = value_to_string((value)args[args_count]);
-			c_function->values[args_count] = &str;
+			/* String requires to be pointer to a string */
+			c_function->values[args_count] = value_create_ptr((value)args[args_count]);
 		}
 		else
 		{
@@ -717,7 +717,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 		if (ret_id == TYPE_NULL)
 		{
-			result = value_create_null();
+			ret = value_create_null();
 			result_ptr = NULL;
 		}
 		else if (ret_id != TYPE_STRING)
@@ -731,6 +731,18 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		{
 			char *str = (char *)result;
 			ret = value_create_string(str, strlen(str));
+		}
+	}
+
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
+	{
+		type t = signature_get_type(s, args_count);
+		type_id id = type_index(t);
+
+		if (id == TYPE_STRING)
+		{
+			/* Clear the pointer to string allocated before */
+			value_type_destroy(c_function->values[args_count]);
 		}
 	}
 

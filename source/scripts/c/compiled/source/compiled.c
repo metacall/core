@@ -20,6 +20,6 @@ char *return_text(void)
 
 void process_text(char *input)
 {
-	printf("'%s'\n", input);
+	printf("inside of compiled script '%s'\n", input);
 	assert(strcmp(input, "test_test") == 0);
 }
