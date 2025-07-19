@@ -37,8 +37,8 @@ TEST_F(metacall_node_port_c_test, DefaultConstructor)
 
 	static const char buffer[] =
 		"const assert = require('assert');\n"
-		"const { metacall_load_from_file_export } = require('" METACALL_NODE_PORT_PATH "');\n"
-		"const { return_text, process_text, alloc_data, alloc_data_args, set_data_value, get_data_value, free_data } = metacall_load_from_file_export('c', ['compiled.c']);\n"
+		"const { metacall_load_from_file_export, metacall_value_create_ptr, metacall_value_reference, metacall_value_dereference } = require('" METACALL_NODE_PORT_PATH "');\n"
+		"const { return_text, process_text, modify_int_ptr, compare_data_value, alloc_data, alloc_data_args, set_data_value, get_data_value, free_data } = metacall_load_from_file_export('c', ['compiled.c']);\n"
 		// Test strings
 		"const result = return_text();\n"
 		"console.log(`'${result}'`);\n"
@@ -51,7 +51,49 @@ TEST_F(metacall_node_port_c_test, DefaultConstructor)
 		"set_data_value(data_ptr, 12);\n"
 		"assert(get_data_value(data_ptr) == 12);\n"
 		"free_data(data_ptr);\n"
-		// TODO: Implement passing reference by arguments (alloc_data_args)
+		// Test passing reference by arguments
+		"int_val = 324444;\n"
+		"int_val_ref = metacall_value_reference(int_val);\n"
+		"modify_int_ptr(int_val_ref);\n"
+		"int_val_deref = metacall_value_dereference(int_val_ref);\n"
+		"assert(int_val_deref == 111);\n"
+		// Test passing reference of structs by arguments (with no args on create ptr)
+		"data_ptr = metacall_value_create_ptr();\n"
+		"data_ptr_ref = metacall_value_reference(data_ptr);\n"
+		"console.log(data_ptr);\n"
+		"console.log(data_ptr_ref);\n"
+		"alloc_data_args(data_ptr_ref);\n"
+		"alloc_data_ptr = metacall_value_dereference(data_ptr_ref);\n"
+		"console.log(alloc_data_ptr);\n"
+		"set_data_value(alloc_data_ptr, 12);\n"
+		"assert(get_data_value(alloc_data_ptr) == 12);\n"
+		"free_data(alloc_data_ptr);\n"
+		// Test passing reference of structs by arguments (with undefined arg on create ptr)
+		"data_ptr = metacall_value_create_ptr(undefined);\n"
+		"data_ptr_ref = metacall_value_reference(data_ptr);\n"
+		"console.log(data_ptr);\n"
+		"console.log(data_ptr_ref);\n"
+		"alloc_data_args(data_ptr_ref);\n"
+		"alloc_data_ptr = metacall_value_dereference(data_ptr_ref);\n"
+		"console.log(alloc_data_ptr);\n"
+		"set_data_value(alloc_data_ptr, 12);\n"
+		"assert(get_data_value(alloc_data_ptr) == 12);\n"
+		"free_data(alloc_data_ptr);\n"
+		// Test passing reference of structs by arguments (with another pointer arg on create ptr)
+		"data_ptr = metacall_value_create_ptr(undefined);\n"
+		"copy_data_ptr = metacall_value_create_ptr(data_ptr);\n"
+		"console.log(data_ptr);\n"
+		"console.log(copy_data_ptr);\n"
+		"assert(compare_data_value(data_ptr, copy_data_ptr));\n"
+		"data_ptr_ref = metacall_value_reference(copy_data_ptr);\n"
+		"console.log(data_ptr);\n"
+		"console.log(data_ptr_ref);\n"
+		"alloc_data_args(data_ptr_ref);\n"
+		"alloc_data_ptr = metacall_value_dereference(data_ptr_ref);\n"
+		"console.log(alloc_data_ptr);\n"
+		"set_data_value(alloc_data_ptr, 12);\n"
+		"assert(get_data_value(alloc_data_ptr) == 12);\n"
+		"free_data(alloc_data_ptr);\n"
 		"\n";
 
 	ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
