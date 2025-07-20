@@ -60,8 +60,9 @@ TEST_F(metacall_python_port_pointer_test, DefaultConstructor)
 	static const char buffer[] =
 		"import sys\n"
 		"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
-		"from metacall import metacall_load_from_package, metacall, metacall_value_create_ptr, metacall_value_reference, metacall_value_dereference\n"
+		"from metacall import metacall_load_from_package, metacall_load_from_file, metacall, metacall_value_create_ptr, metacall_value_reference, metacall_value_dereference\n"
 		"metacall_load_from_package('c', 'loadtest')\n"
+		"metacall_load_from_file('c', ['compiled.c'])\n"
 
 		"def test_int_ptr() -> int:\n"
 		"	print('Test start')\n"
@@ -80,6 +81,24 @@ TEST_F(metacall_python_port_pointer_test, DefaultConstructor)
 		"	sys.stdout.flush()\n"
 
 		"	return int_val_deref\n"
+
+		"def test_str_ptr() -> str:\n"
+		"	print('Test start')\n"
+		"	sys.stdout.flush()\n"
+
+		"	str_val = 'asd'\n"
+		"	str_val_ref = metacall_value_reference(str_val)\n"
+
+		"	print(str_val_ref)\n"
+		"	sys.stdout.flush()\n"
+
+		"	metacall('modify_str_ptr', str_val_ref)\n"
+		"	str_val_deref = metacall_value_dereference(str_val_ref)\n"
+
+		"	print(str_val, '!=', str_val_deref)\n"
+		"	sys.stdout.flush()\n"
+
+		"	return str_val_deref\n"
 
 		"def test_struct_ptr() -> float:\n"
 		"	print('Test start')\n"
@@ -107,6 +126,14 @@ TEST_F(metacall_python_port_pointer_test, DefaultConstructor)
 	ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
 
 	EXPECT_EQ((long)111L, (long)metacall_value_to_long(ret));
+
+	metacall_value_destroy(ret);
+
+	ret = metacall("test_str_ptr");
+
+	ASSERT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
+
+	EXPECT_STREQ("yeet", metacall_value_to_string(ret));
 
 	metacall_value_destroy(ret);
 

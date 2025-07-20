@@ -516,6 +516,19 @@ public:
 	}
 };
 
+class c_loader_pointer_type : public c_loader_type_impl
+{
+protected:
+	loader_impl impl;
+	CXType cx_type;
+
+public:
+	c_loader_pointer_type(loader_impl impl, CXType cx_type) :
+		impl(impl), cx_type(cx_type) {}
+
+	~c_loader_pointer_type() {}
+};
+
 std::string c_loader_impl_cxstring_to_str(const CXString &s)
 {
 	std::string result = clang_getCString(s);
@@ -662,6 +675,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
 		type t = signature_get_type(s, args_count);
+		type_impl impl_type = type_derived(t);
 		type_id id = type_index(t);
 		type_id value_id = value_type_id((value)args[args_count]);
 
@@ -687,13 +701,22 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
-		else if (id == TYPE_STRING)
+		else if (id == TYPE_STRING || (id == TYPE_PTR && impl_type != nullptr))
 		{
-			/* String requires to be pointer to a string */
+			/* String requires to be pointer to a string and
+			Pointer requires to be pointer to pointer */
 			c_function->values[args_count] = value_create_ptr((value)args[args_count]);
 		}
 		else
 		{
+			/* In case of (id == TYPE_PTR && impl_type == nullptr it means that
+			the parameter is normally int*, long*, etc... we just let the pointer
+			be passed as it is because it cannot output a pointer, only modify the contents
+			*/
+
+			/* TODO: Check if types are not equal and do a casting?
+			Note: It will involve destroying the new casted values */
+
 			c_function->values[args_count] = value_data((value)args[args_count]);
 		}
 	}
@@ -741,9 +764,27 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
 		type t = signature_get_type(s, args_count);
+		type_impl impl_type = type_derived(t);
 		type_id id = type_index(t);
 
-		if (id == TYPE_STRING)
+		/* This is very tricky, if the type was a pointer to pointer, if it
+		replaced the target pointer we have to update it in the MetaCall value,
+		for example:
+			void f(char **str_ptr)
+			{
+				*str_ptr = "aaa";
+			}
+		In order to make it work we have to recreate the metacall value, this is
+		highly unsafe if we mix types because we will use the type info of the
+		underlaying type in order to recreate it, in this example, a string
+		*/
+		if (id == TYPE_PTR && impl_type != nullptr)
+		{
+			// TODO: Reconstruct the pointer value from the type info
+
+			value_type_destroy(c_function->values[args_count]);
+		}
+		else if (id == TYPE_STRING)
 		{
 			/* Clear the pointer to string allocated before */
 			value_type_destroy(c_function->values[args_count]);
@@ -977,6 +1018,13 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 			else if (pointee_type.kind == CXType_FunctionProto || pointee_type.kind == CXType_FunctionNoProto)
 			{
 				return c_loader_impl_clang_type(impl, cursor, pointee_type, impl_type);
+			}
+			/* Check for pointers to pointers, in this case we need the type info for reconstructing the data */
+			else if (pointee_type.kind == CXType_Pointer)
+			{
+				c_loader_pointer_type *pointer_type = new c_loader_pointer_type(impl, cx_type);
+
+				*impl_type = static_cast<c_loader_pointer_type *>(pointer_type);
 			}
 
 			return TYPE_PTR;

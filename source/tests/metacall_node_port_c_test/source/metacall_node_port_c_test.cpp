@@ -38,7 +38,7 @@ TEST_F(metacall_node_port_c_test, DefaultConstructor)
 	static const char buffer[] =
 		"const assert = require('assert');\n"
 		"const { metacall_load_from_file_export, metacall_value_create_ptr, metacall_value_reference, metacall_value_dereference } = require('" METACALL_NODE_PORT_PATH "');\n"
-		"const { return_text, process_text, modify_int_ptr, compare_data_value, alloc_data, alloc_data_args, set_data_value, get_data_value, free_data } = metacall_load_from_file_export('c', ['compiled.c']);\n"
+		"const { return_text, process_text, modify_double_ptr, modify_str_ptr, compare_data_value, alloc_data, alloc_data_args, set_data_value, get_data_value, free_data } = metacall_load_from_file_export('c', ['compiled.c']);\n"
 		// Test strings
 		"const result = return_text();\n"
 		"console.log(`'${result}'`);\n"
@@ -52,11 +52,19 @@ TEST_F(metacall_node_port_c_test, DefaultConstructor)
 		"assert(get_data_value(data_ptr) == 12);\n"
 		"free_data(data_ptr);\n"
 		// Test passing reference by arguments
-		"int_val = 324444;\n"
-		"int_val_ref = metacall_value_reference(int_val);\n"
-		"modify_int_ptr(int_val_ref);\n"
-		"int_val_deref = metacall_value_dereference(int_val_ref);\n"
-		"assert(int_val_deref == 111);\n"
+		"double_val = 324444.0;\n"
+		"double_val_ref = metacall_value_reference(double_val);\n"
+		"modify_double_ptr(double_val_ref);\n"
+		"double_val_deref = metacall_value_dereference(double_val_ref);\n"
+		"assert(double_val_deref == 111.0);\n"
+		// Test passing reference by arguments string
+		"str_val = 'asd';\n"
+		"str_val_ref = metacall_value_reference(str_val);\n"
+		"console.log(str_val);\n"
+		"console.log(str_val_ref);\n"
+		"modify_str_ptr(str_val_ref);\n"
+		"str_val_deref = metacall_value_dereference(str_val_ref);\n"
+		"assert(str_val_deref == 'yeet');\n"
 		// Test passing reference of structs by arguments (with no args on create ptr)
 		"data_ptr = metacall_value_create_ptr();\n"
 		"data_ptr_ref = metacall_value_reference(data_ptr);\n"
