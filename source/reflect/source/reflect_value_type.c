@@ -525,15 +525,29 @@ value value_from_double(value v, double d)
 
 value value_from_string(value v, const char *str, size_t length)
 {
-	if (v != NULL && str != NULL && length > 0)
+	if (v != NULL)
 	{
-		size_t current_size = value_size(v);
+		if (str == NULL || length == 0)
+		{
+			return value_from(v, NULL, 1);
+		}
+		else
+		{
+			size_t current_size = value_type_size(v);
 
-		size_t bytes = length + 1;
+			size_t bytes = length + 1;
 
-		size_t size = (bytes <= current_size) ? bytes : current_size;
+			size_t size = (bytes <= current_size) ? bytes : current_size;
 
-		return value_from(v, str, size);
+			value_from(v, str, size);
+
+			if (bytes > current_size)
+			{
+				char *str = value_to_string(v);
+
+				str[size - 1] = '\0';
+			}
+		}
 	}
 
 	return v;
@@ -543,7 +557,7 @@ value value_from_buffer(value v, const void *buffer, size_t size)
 {
 	if (v != NULL && buffer != NULL && size > 0)
 	{
-		size_t current_size = value_size(v);
+		size_t current_size = value_type_size(v);
 
 		size_t bytes = sizeof(char) * size;
 
@@ -557,7 +571,7 @@ value value_from_array(value v, const value *values, size_t size)
 {
 	if (v != NULL && values != NULL && size > 0)
 	{
-		size_t current_size = value_size(v);
+		size_t current_size = value_type_size(v);
 
 		size_t bytes = sizeof(const value) * size;
 
@@ -571,7 +585,7 @@ value value_from_map(value v, const value *tuples, size_t size)
 {
 	if (v != NULL && tuples != NULL && size > 0)
 	{
-		size_t current_size = value_size(v);
+		size_t current_size = value_type_size(v);
 
 		size_t bytes = sizeof(const value) * size;
 
