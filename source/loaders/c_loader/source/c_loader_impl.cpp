@@ -519,12 +519,80 @@ public:
 class c_loader_pointer_type : public c_loader_type_impl
 {
 protected:
-	loader_impl impl;
 	CXType cx_type;
 
 public:
-	c_loader_pointer_type(loader_impl impl, CXType cx_type) :
-		impl(impl), cx_type(cx_type) {}
+	c_loader_pointer_type(CXType cx_type) :
+		cx_type(cx_type) {}
+
+	void *to_value(void *arg_ptr)
+	{
+		// TODO: This may be too tricky to implement because it is impossible to reconstruct the pointer from the type
+		// easily, as C does not mantain the true memory layout, pointers can be arrays or single elements and we cannot know
+		// We should review this carefully
+#if 0
+		CXType type_iterator = cx_type;
+		value prev_value = value_create_ptr(NULL);
+		void *current_ptr = arg_ptr;
+
+		while (type_iterator.kind == CXType_Pointer)
+		{
+			value new_value = value_create_ptr(NULL);
+
+			if (prev_value != NULL)
+			{
+				value_from_ptr(prev_value, )
+			}
+
+			type_iterator = clang_getPointeeType(type_iterator);
+			prev_ptr = current_ptr;
+		}
+
+		std::vector<enum CXTypeKind> type_info;
+		std::vector<void *> ptr_info;
+		void *arg_it_ptr = arg_ptr;
+		void *result = NULL;
+
+		while (type_iterator.kind == CXType_Pointer)
+		{
+			type_info.push_back(type_iterator.kind);
+			ptr_info.push_back(arg_it_ptr);
+			type_iterator = clang_getPointeeType(type_iterator);
+			arg_it_ptr = *(static_cast<void **>(arg_it_ptr));
+		}
+
+		type_info.push_back(type_iterator.kind);
+		ptr_info.push_back(arg_it_ptr); // TODO: is this safe?
+
+		for (auto type_iterator = type_info.rbegin(); type_iterator != type_info.rend(); ++type_iterator)
+		{
+			switch (*type_iterator)
+			{
+				case CXType_Pointer:
+				{
+					break;
+				}
+
+				case CXType_String:
+				{
+					break;
+				}
+
+	#if 0
+							if (pointee_type.kind == CXType_Char_S || pointee_type.kind == CXType_SChar ||
+				pointee_type.kind == CXType_Char_U || pointee_type.kind == CXType_UChar)
+			{
+				return TYPE_STRING;
+			}
+			/* Support for function pointers */
+			else if (pointee_type.kind == CXType_FunctionProto || pointee_type.kind == CXType_FunctionNoProto)
+	#endif
+			}
+		}
+#endif
+
+		return NULL;
+	}
 
 	~c_loader_pointer_type() {}
 };
@@ -780,7 +848,15 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		*/
 		if (id == TYPE_PTR && impl_type != nullptr)
 		{
-			// TODO: Reconstruct the pointer value from the type info
+			// TODO: This may be too tricky to implement because it is impossible to reconstruct the pointer from the type
+			// easily, as C does not mantain the true memory layout, pointers can be arrays or single elements and we cannot know
+			// We should review this carefully
+#if 0
+			/* Reconstruct the pointer value from the type info */
+			c_loader_pointer_type *pointer_type = static_cast<c_loader_pointer_type *>(impl_type);
+
+			void *arg_value = pointer_type->to_value(value_to_ptr(c_function->values[args_count]));
+#endif
 
 			value_type_destroy(c_function->values[args_count]);
 		}
@@ -1022,7 +1098,7 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 			/* Check for pointers to pointers, in this case we need the type info for reconstructing the data */
 			else if (pointee_type.kind == CXType_Pointer)
 			{
-				c_loader_pointer_type *pointer_type = new c_loader_pointer_type(impl, cx_type);
+				c_loader_pointer_type *pointer_type = new c_loader_pointer_type(cx_type);
 
 				*impl_type = static_cast<c_loader_pointer_type *>(pointer_type);
 			}
