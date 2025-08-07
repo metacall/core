@@ -530,6 +530,7 @@ public:
 		// TODO: This may be too tricky to implement because it is impossible to reconstruct the pointer from the type
 		// easily, as C does not mantain the true memory layout, pointers can be arrays or single elements and we cannot know
 		// We should review this carefully
+		(void)arg_ptr;
 #if 0
 		CXType type_iterator = cx_type;
 		value prev_value = value_create_ptr(NULL);
@@ -743,7 +744,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
 		type t = signature_get_type(s, args_count);
-		type_impl impl_type = type_derived(t);
+		/* type_impl impl_type = type_derived(t); */
 		type_id id = type_index(t);
 		type_id value_id = value_type_id((value)args[args_count]);
 
@@ -769,7 +770,10 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
+#if 0
 		else if (id == TYPE_STRING || (id == TYPE_PTR && impl_type != nullptr))
+#endif
+		else if (id == TYPE_STRING)
 		{
 			/* String requires to be pointer to a string and
 			Pointer requires to be pointer to pointer */
@@ -832,7 +836,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
 		type t = signature_get_type(s, args_count);
-		type_impl impl_type = type_derived(t);
+		/* type_impl impl_type = type_derived(t); */
 		type_id id = type_index(t);
 
 		/* This is very tricky, if the type was a pointer to pointer, if it
@@ -846,21 +850,24 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		highly unsafe if we mix types because we will use the type info of the
 		underlaying type in order to recreate it, in this example, a string
 		*/
+#if 0
 		if (id == TYPE_PTR && impl_type != nullptr)
 		{
 			// TODO: This may be too tricky to implement because it is impossible to reconstruct the pointer from the type
 			// easily, as C does not mantain the true memory layout, pointers can be arrays or single elements and we cannot know
 			// We should review this carefully
-#if 0
+	#if 0
 			/* Reconstruct the pointer value from the type info */
 			c_loader_pointer_type *pointer_type = static_cast<c_loader_pointer_type *>(impl_type);
 
 			void *arg_value = pointer_type->to_value(value_to_ptr(c_function->values[args_count]));
-#endif
+	#endif
 
 			value_type_destroy(c_function->values[args_count]);
 		}
-		else if (id == TYPE_STRING)
+		else
+#endif
+		if (id == TYPE_STRING)
 		{
 			/* Clear the pointer to string allocated before */
 			value_type_destroy(c_function->values[args_count]);

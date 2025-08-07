@@ -51,6 +51,9 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	ret = metacallv("pair_list_init", args_init);
 
+	std::cout << "args_init: " << args_init[0] << std::endl;
+	std::cout << "args_init: *(" << pair_list << ")" << std::endl;
+
 	EXPECT_NE((void *)NULL, (void *)ret);
 
 	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
