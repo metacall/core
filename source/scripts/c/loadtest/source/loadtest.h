@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include <cstdint>
+#include <stdint.h>
 
 typedef struct
 {

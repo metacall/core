@@ -516,6 +516,88 @@ public:
 	}
 };
 
+class c_loader_pointer_type : public c_loader_type_impl
+{
+protected:
+	CXType cx_type;
+
+public:
+	c_loader_pointer_type(CXType cx_type) :
+		cx_type(cx_type) {}
+
+	void *to_value(void *arg_ptr)
+	{
+		// TODO: This may be too tricky to implement because it is impossible to reconstruct the pointer from the type
+		// easily, as C does not mantain the true memory layout, pointers can be arrays or single elements and we cannot know
+		// We should review this carefully
+		(void)arg_ptr;
+#if 0
+		CXType type_iterator = cx_type;
+		value prev_value = value_create_ptr(NULL);
+		void *current_ptr = arg_ptr;
+
+		while (type_iterator.kind == CXType_Pointer)
+		{
+			value new_value = value_create_ptr(NULL);
+
+			if (prev_value != NULL)
+			{
+				value_from_ptr(prev_value, )
+			}
+
+			type_iterator = clang_getPointeeType(type_iterator);
+			prev_ptr = current_ptr;
+		}
+
+		std::vector<enum CXTypeKind> type_info;
+		std::vector<void *> ptr_info;
+		void *arg_it_ptr = arg_ptr;
+		void *result = NULL;
+
+		while (type_iterator.kind == CXType_Pointer)
+		{
+			type_info.push_back(type_iterator.kind);
+			ptr_info.push_back(arg_it_ptr);
+			type_iterator = clang_getPointeeType(type_iterator);
+			arg_it_ptr = *(static_cast<void **>(arg_it_ptr));
+		}
+
+		type_info.push_back(type_iterator.kind);
+		ptr_info.push_back(arg_it_ptr); // TODO: is this safe?
+
+		for (auto type_iterator = type_info.rbegin(); type_iterator != type_info.rend(); ++type_iterator)
+		{
+			switch (*type_iterator)
+			{
+				case CXType_Pointer:
+				{
+					break;
+				}
+
+				case CXType_String:
+				{
+					break;
+				}
+
+	#if 0
+							if (pointee_type.kind == CXType_Char_S || pointee_type.kind == CXType_SChar ||
+				pointee_type.kind == CXType_Char_U || pointee_type.kind == CXType_UChar)
+			{
+				return TYPE_STRING;
+			}
+			/* Support for function pointers */
+			else if (pointee_type.kind == CXType_FunctionProto || pointee_type.kind == CXType_FunctionNoProto)
+	#endif
+			}
+		}
+#endif
+
+		return NULL;
+	}
+
+	~c_loader_pointer_type() {}
+};
+
 std::string c_loader_impl_cxstring_to_str(const CXString &s)
 {
 	std::string result = clang_getCString(s);
@@ -633,10 +715,14 @@ ffi_type *c_loader_impl_ffi_type(type_id id)
 			return &ffi_type_float;
 		case TYPE_DOUBLE:
 			return &ffi_type_double;
+		case TYPE_STRING:
+			return &ffi_type_pointer;
 		case TYPE_PTR:
 			return &ffi_type_pointer;
 		case TYPE_FUNCTION:
 			return &ffi_type_pointer;
+		case TYPE_NULL:
+			return &ffi_type_void;
 	}
 
 	return &ffi_type_void;
@@ -658,6 +744,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
 		type t = signature_get_type(s, args_count);
+		/* type_impl impl_type = type_derived(t); */
 		type_id id = type_index(t);
 		type_id value_id = value_type_id((value)args[args_count]);
 
@@ -683,8 +770,25 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
+#if 0
+		else if (id == TYPE_STRING || (id == TYPE_PTR && impl_type != nullptr))
+#endif
+		else if (id == TYPE_STRING)
+		{
+			/* String requires to be pointer to a string and
+			Pointer requires to be pointer to pointer */
+			c_function->values[args_count] = value_create_ptr((value)args[args_count]);
+		}
 		else
 		{
+			/* In case of (id == TYPE_PTR && impl_type == nullptr it means that
+			the parameter is normally int*, long*, etc... we just let the pointer
+			be passed as it is because it cannot output a pointer, only modify the contents
+			*/
+
+			/* TODO: Check if types are not equal and do a casting?
+			Note: It will involve destroying the new casted values */
+
 			c_function->values[args_count] = value_data((value)args[args_count]);
 		}
 	}
@@ -693,9 +797,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	size_t ret_size = value_type_id_size(ret_id);
 	void *ret = NULL;
 
-	/* TODO: This if is not correct because the sizes of strings, objects, etc are
-	relative to the pointer, not the value contents, we should review this */
-	if (ret_size <= sizeof(ffi_arg))
+	if (ret_size <= sizeof(ffi_arg) && ret_id < TYPE_STRING)
 	{
 		ffi_arg result;
 
@@ -705,9 +807,71 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	}
 	else
 	{
-		ret = value_type_create(NULL, ret_size, ret_id);
+		void *result = NULL;
+		void *result_ptr = &result;
 
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), value_data(ret), c_function->values);
+		if (ret_id == TYPE_NULL)
+		{
+			ret = value_create_null();
+			result_ptr = NULL;
+		}
+		else if (ret_id != TYPE_STRING && ret_id != TYPE_PTR)
+		{
+			result = ret = value_type_create(NULL, ret_size, ret_id);
+		}
+
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), result_ptr, c_function->values);
+
+		if (ret_id == TYPE_STRING)
+		{
+			char *str = (char *)result;
+			ret = value_create_string(str, strlen(str));
+		}
+		else if (ret_id == TYPE_PTR)
+		{
+			ret = value_create_ptr(result);
+		}
+	}
+
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
+	{
+		type t = signature_get_type(s, args_count);
+		/* type_impl impl_type = type_derived(t); */
+		type_id id = type_index(t);
+
+		/* This is very tricky, if the type was a pointer to pointer, if it
+		replaced the target pointer we have to update it in the MetaCall value,
+		for example:
+			void f(char **str_ptr)
+			{
+				*str_ptr = "aaa";
+			}
+		In order to make it work we have to recreate the metacall value, this is
+		highly unsafe if we mix types because we will use the type info of the
+		underlaying type in order to recreate it, in this example, a string
+		*/
+#if 0
+		if (id == TYPE_PTR && impl_type != nullptr)
+		{
+			// TODO: This may be too tricky to implement because it is impossible to reconstruct the pointer from the type
+			// easily, as C does not mantain the true memory layout, pointers can be arrays or single elements and we cannot know
+			// We should review this carefully
+	#if 0
+			/* Reconstruct the pointer value from the type info */
+			c_loader_pointer_type *pointer_type = static_cast<c_loader_pointer_type *>(impl_type);
+
+			void *arg_value = pointer_type->to_value(value_to_ptr(c_function->values[args_count]));
+	#endif
+
+			value_type_destroy(c_function->values[args_count]);
+		}
+		else
+#endif
+		if (id == TYPE_STRING)
+		{
+			/* Clear the pointer to string allocated before */
+			value_type_destroy(c_function->values[args_count]);
+		}
 	}
 
 	/* Clear allocated closures if any */
@@ -800,6 +964,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_BOOL, "bool" },
 
 		{ TYPE_CHAR, "char" },
+		{ TYPE_CHAR, "unsigned char" },
 		{ TYPE_CHAR, "int8_t" },
 		{ TYPE_CHAR, "uint8_t" },
 		{ TYPE_CHAR, "int_least8_t" },
@@ -808,6 +973,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_CHAR, "uint_fast8_t" },
 
 		{ TYPE_SHORT, "short" },
+		{ TYPE_SHORT, "unsigned short" },
 		{ TYPE_SHORT, "int16_t" },
 		{ TYPE_SHORT, "uint16_t" },
 		{ TYPE_SHORT, "int_least16_t" },
@@ -816,6 +982,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_SHORT, "uint_fast16_t" },
 
 		{ TYPE_INT, "int" },
+		{ TYPE_INT, "unsigned int" },
 		{ TYPE_INT, "uint32_t" },
 		{ TYPE_INT, "int32_t" },
 		{ TYPE_INT, "int_least32_t" },
@@ -824,7 +991,9 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_INT, "uint_fast32_t" },
 
 		{ TYPE_LONG, "long" },
+		{ TYPE_LONG, "unsigned long" },
 		{ TYPE_LONG, "long long" },
+		{ TYPE_LONG, "unsigned long long" },
 		{ TYPE_LONG, "uint64_t" },
 		{ TYPE_LONG, "int64_t" },
 		{ TYPE_LONG, "int_least64_t" },
@@ -837,6 +1006,11 @@ int c_loader_impl_initialize_types(loader_impl impl)
 
 		{ TYPE_FLOAT, "float" },
 		{ TYPE_DOUBLE, "double" },
+
+		{ TYPE_STRING, "unsigned char *" },
+		{ TYPE_STRING, "char *" },
+		{ TYPE_STRING, "const unsigned char *" },
+		{ TYPE_STRING, "const char *" },
 
 		{ TYPE_NULL, "void" }
 
@@ -928,6 +1102,13 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 			{
 				return c_loader_impl_clang_type(impl, cursor, pointee_type, impl_type);
 			}
+			/* Check for pointers to pointers, in this case we need the type info for reconstructing the data */
+			else if (pointee_type.kind == CXType_Pointer)
+			{
+				c_loader_pointer_type *pointer_type = new c_loader_pointer_type(cx_type);
+
+				*impl_type = static_cast<c_loader_pointer_type *>(pointer_type);
+			}
 
 			return TYPE_PTR;
 		}
@@ -964,7 +1145,12 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 		case CXType_Bool:
 			return TYPE_BOOL;
 
+		case CXType_Short:
+		case CXType_UShort:
+			return TYPE_SHORT;
+
 		case CXType_Int:
+		case CXType_UInt:
 			return TYPE_INT;
 
 		case CXType_Void:

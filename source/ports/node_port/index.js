@@ -300,6 +300,21 @@ const metacall_inspect = () => {
 	return {};
 };
 
+/* Value API for handling pointers */
+const metacall_value_create_ptr = (ptr) => {
+	return addon.metacall_value_create_ptr(ptr);
+};
+
+/* Value API for getting the pointer to a value */
+const metacall_value_reference = (v) => {
+	return addon.metacall_value_reference(v);
+};
+
+/* Value API for getting the value of a pointer */
+const metacall_value_dereference = (ptr) => {
+	return addon.metacall_value_dereference(ptr);
+};
+
 const metacall_handle = (tag, name) => {
 	// TODO: This can be implemented with metacall_handle C API, meanwhile we use this trick
 	const inspect = metacall_inspect();
@@ -337,6 +352,9 @@ const module_exports = {
 	metacall_load_from_configuration,
 	metacall_load_from_configuration_export,
 	metacall_handle,
+	metacall_value_create_ptr,
+	metacall_value_reference,
+	metacall_value_dereference,
 
 	/* TODO: Remove this from user or provide better ways of configuring logs */
 	metacall_logs: () => {

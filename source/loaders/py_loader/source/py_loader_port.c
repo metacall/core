@@ -846,7 +846,7 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 
 	if (name != py_loader_capsule_reference_id)
 	{
-		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid reference, argument must be a PyCapsule from MetaCall");
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid reference, argument must be a PyCapsule containing a MetaCall value, use it only with values returned by metacall_value_reference");
 		return Py_ReturnNone();
 	}
 

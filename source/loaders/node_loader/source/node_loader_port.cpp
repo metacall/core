@@ -34,9 +34,12 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <set>
+
 #include <node_api.h>
 
 static const loader_tag node_loader_tag = "node";
+static std::set<value> metacall_value_reference_pointers;
 
 napi_value node_loader_port_metacall(napi_env env, napi_callback_info info)
 {
@@ -1044,7 +1047,6 @@ napi_value node_loader_port_metacall_inspect(napi_env env, napi_callback_info)
 	return result;
 }
 
-/* TODO: Add documentation */
 napi_value node_loader_port_metacall_logs(napi_env env, napi_callback_info)
 {
 	struct metacall_log_stdio_type log_stdio = { stdout };
@@ -1055,6 +1057,172 @@ napi_value node_loader_port_metacall_logs(napi_env env, napi_callback_info)
 	}
 
 	return nullptr;
+}
+
+/* TODO: Add documentation */
+napi_value node_loader_port_metacall_value_create_ptr(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 1;
+	size_t argc = args_size;
+	napi_value argv[args_size];
+	void *v;
+
+	// Get arguments
+	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc == 0)
+	{
+		v = NULL;
+	}
+	else if (argc == 1)
+	{
+		napi_valuetype arg_type;
+
+		status = napi_typeof(env, argv[0], &arg_type);
+
+		node_loader_impl_exception(env, status);
+
+		if (arg_type == napi_undefined)
+		{
+			v = NULL;
+		}
+		else if (arg_type == napi_external)
+		{
+			// Copy the external pointer
+			status = napi_get_value_external(env, argv[0], &v);
+
+			node_loader_impl_exception(env, status);
+		}
+		else
+		{
+			napi_throw_type_error(env, nullptr, "Invalid MetaCall value create pointer, you need to pass undefined or external as a parameter");
+		}
+	}
+	else
+	{
+		napi_throw_error(env, nullptr, "Invalid MetaCall value create pointer, you need to pass 0 or 1 parameters");
+	}
+
+	napi_value result_external;
+
+	status = napi_create_external(env, &v, NULL, NULL, &result_external);
+
+	node_loader_impl_exception(env, status);
+
+	return result_external;
+}
+
+static void metacall_value_reference_finalize(napi_env env, void *finalize_data, void *finalize_hint)
+{
+	value v = finalize_data;
+	(void)env;
+	(void)finalize_hint;
+	metacall_value_destroy(v);
+	metacall_value_reference_pointers.erase(v);
+}
+
+/* TODO: Add documentation */
+napi_value node_loader_port_metacall_value_reference(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 1;
+	size_t argc = args_size;
+	napi_value recv;
+	napi_value argv[args_size];
+	value v;
+
+	// Get arguments
+	napi_status status = napi_get_cb_info(env, info, &argc, argv, &recv, nullptr);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc != 1)
+	{
+		napi_throw_type_error(env, NULL, "Invalid number of arguments, use it like: metacall_value_reference(obj);");
+		return nullptr;
+	}
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl(node_loader_tag);
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	v = node_loader_impl_napi_to_value(node_impl, env, recv, argv[0]);
+
+	if (v == NULL)
+	{
+		napi_throw_error(env, NULL, "Failed to convert the JavaScript object to MetaCall value.");
+		return nullptr;
+	}
+
+	napi_value result_external;
+
+	status = napi_create_external(env, v, &metacall_value_reference_finalize, nullptr, &result_external);
+
+	node_loader_impl_exception(env, status);
+
+	metacall_value_reference_pointers.insert(v);
+
+	return result_external;
+}
+
+/* TODO: Add documentation */
+napi_value node_loader_port_metacall_value_dereference(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 1;
+	size_t argc = args_size;
+	napi_value recv;
+	napi_value argv[args_size];
+	value v;
+
+	// Get arguments
+	napi_status status = napi_get_cb_info(env, info, &argc, argv, &recv, nullptr);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc != 1)
+	{
+		napi_throw_type_error(env, NULL, "Invalid number of arguments, use it like: metacall_value_dereference(ptr);");
+		return nullptr;
+	}
+
+	napi_valuetype type;
+
+	status = napi_typeof(env, argv[0], &type);
+	node_loader_impl_exception(env, status);
+
+	if (type != napi_external)
+	{
+		napi_throw_type_error(env, NULL, "Invalid parameter type in first argument must be a PyCapsule (i.e a previously allocated pointer)");
+		return NULL;
+	}
+
+	// Get the external pointer
+	status = napi_get_value_external(env, argv[0], &v);
+
+	node_loader_impl_exception(env, status);
+
+	// If it is not contained in the set, it is not a valid value
+	if (metacall_value_reference_pointers.find(v) == metacall_value_reference_pointers.end())
+	{
+		napi_throw_type_error(env, NULL, "Invalid reference, argument must be a PyCapsule containing a MetaCall value, use it only with values returned by metacall_value_reference");
+		return NULL;
+	}
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl(node_loader_tag);
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	/* Get the N-API value */
+	napi_value result = node_loader_impl_value_to_napi(node_impl, env, v);
+
+	return result;
 }
 
 napi_value node_loader_port_register_bootstrap_startup(napi_env env, napi_callback_info)
@@ -1097,6 +1265,9 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 	x(metacall_load_from_configuration); \
 	x(metacall_load_from_configuration_export); \
 	x(metacall_inspect); \
+	x(metacall_value_create_ptr); \
+	x(metacall_value_reference); \
+	x(metacall_value_dereference); \
 	x(metacall_logs); \
 	x(register_bootstrap_startup);
 

@@ -41,96 +41,210 @@ void *sum_callback(size_t argc, void *args[], void *data)
 	return metacall_value_create_int(result);
 }
 
+void *test_string_reference(size_t argc, void *args[], void *data)
+{
+	printf("ptr %p\n", args[0]);
+	fflush(stdout);
+
+	void *string_value = metacall_value_to_ptr(args[0]);
+
+	printf("string ptr %p\n", string_value);
+	printf("type id %s\n", metacall_value_type_name(string_value));
+	fflush(stdout);
+
+	char *str = metacall_value_to_string(string_value);
+
+	(void)argc;
+	(void)data;
+
+	printf("native string %s\n", str);
+
+	EXPECT_STREQ("asd", str);
+
+	static const char yeet[] = "yeet";
+
+	metacall_value_from_string(string_value, yeet, sizeof(yeet) - 1);
+
+	printf("type id %s\n", metacall_value_type_name(string_value));
+	printf("native string %s\n", str);
+	fflush(stdout);
+
+	return metacall_value_create_null();
+}
+
 TEST_F(metacall_c_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
+	void *ret = NULL;
+
 	/* File */
-	const char *c_scripts[] = {
-		"compiled.c"
-	};
+	{
+		const char *c_scripts[] = {
+			"compiled.c"
+		};
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 
-	void *ret = metacall("compiled_sum", 3, 4);
+		ret = metacall("compiled_sum", 3, 4);
 
-	EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
 
-	metacall_value_destroy(ret);
+		metacall_value_destroy(ret);
+	}
 
 	/* File with dependencies */
-	const char *c_dep_scripts[] = {
-		"ffi.c",
-		"ffi.ld"
-	};
+	{
+		const char *c_dep_scripts[] = {
+			"ffi.c",
+			"ffi.ld"
+		};
 
-	/* Set dependency paths */
-	EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_INCLUDE_DIR));
-	EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_LIBRARY));
+		/* Set dependency paths */
+		EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_INCLUDE_DIR));
+		EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_LIBRARY));
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
 
-	ret = metacall("call_fp_address");
+		ret = metacall("call_fp_address");
 
-	EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_PTR);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_PTR);
 
-	EXPECT_NE((void *)metacall_value_to_ptr(ret), (void *)NULL);
+		EXPECT_NE((void *)metacall_value_to_ptr(ret), (void *)NULL);
 
-	metacall_value_destroy(ret);
+		metacall_value_destroy(ret);
 
-	ret = metacall("int_type_renaming");
+		ret = metacall("int_type_renaming");
 
-	EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
 
-	EXPECT_EQ((int)metacall_value_to_int(ret), (int)345);
+		EXPECT_EQ((int)metacall_value_to_int(ret), (int)345);
 
-	metacall_value_destroy(ret);
+		metacall_value_destroy(ret);
+	}
 
 	/* Native register */
-	metacall_register("sum_callback", sum_callback, NULL, METACALL_INT, 2, METACALL_INT, METACALL_INT);
+	{
+		metacall_register("sum_callback", sum_callback, NULL, METACALL_INT, 2, METACALL_INT, METACALL_INT);
 
-	void *func = metacall_function("sum_callback");
+		void *func = metacall_function("sum_callback");
 
-	EXPECT_NE((void *)NULL, (void *)func);
+		EXPECT_NE((void *)NULL, (void *)func);
 
-	void *args[] = {
-		metacall_value_create_function(func)
-	};
+		void *args[] = {
+			metacall_value_create_function(func)
+		};
 
-	ret = metacallv_s("c_callback", args, 1);
+		ret = metacallv_s("c_callback", args, 1);
 
-	EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
 
-	EXPECT_EQ((int)metacall_value_to_int(ret), (int)7);
+		EXPECT_EQ((int)metacall_value_to_int(ret), (int)7);
 
-	metacall_value_destroy(ret);
+		metacall_value_destroy(ret);
 
-	metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[0]);
+	}
 
 	/* Memory */
-	// TODO
-	// const char c_buffer[] = {
-	// 	"int compiled_mult(int a, int b) { return a * b; }"
-	// };
+	{
+		// TODO
+		// const char c_buffer[] = {
+		// 	"int compiled_mult(int a, int b) { return a * b; }"
+		// };
 
-	// EXPECT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
+		// EXPECT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
 
-	// TODO
-	// void *ret = metacall("compiled_mult", 3, 4);
+		// TODO
+		// void *ret = metacall("compiled_mult", 3, 4);
 
-	// EXPECT_NE((void *)NULL, (void *)ret);
+		// EXPECT_NE((void *)NULL, (void *)ret);
 
-	// EXPECT_EQ((int)metacall_value_to_int(ret), (int)0);
+		// EXPECT_EQ((int)metacall_value_to_int(ret), (int)0);
 
-	// metacall_value_destroy(ret);
+		// metacall_value_destroy(ret);
+	}
+
+	/* References (native) */
+	{
+		static const char str[] = "asd";
+		void *str_value = metacall_value_create_string(str, sizeof(str) - 1);
+		void *str_value_ref = metacall_value_reference(str_value);
+
+		printf("ptr %p\n", str_value_ref);
+		printf("string %p\n", str_value);
+		printf("string str %s\n", metacall_value_to_string(str_value));
+		fflush(stdout);
+
+		{
+			void *new_str_value = metacall_value_to_ptr(str_value_ref);
+			char *new_str = metacall_value_to_string(new_str_value);
+
+			EXPECT_STREQ("asd", new_str);
+		}
+
+		void *args[] = {
+			str_value_ref
+		};
+
+		metacall_register("test_string_reference", test_string_reference, NULL, METACALL_NULL, 1, METACALL_PTR);
+
+		ret = metacallv_s("test_string_reference", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+		metacall_value_destroy(ret);
+
+		printf("type id %s\n", metacall_value_type_name(str_value));
+		fflush(stdout);
+
+		// It chops the string because it has a fixed size from 'asd'
+		EXPECT_STREQ(metacall_value_to_string(str_value), "yee");
+
+		metacall_value_destroy(str_value);
+		metacall_value_destroy(str_value_ref);
+	}
+
+	/* References (c) */
+	{
+		static const char str[] = "asd";
+		void *str_value = metacall_value_create_string(str, sizeof(str) - 1);
+		void *str_value_ref = metacall_value_reference(str_value);
+
+		printf("(R) ptr %p\n", str_value_ref);
+		printf("(R) string ptr %p\n", str_value);
+		printf("(R) string str %s\n", metacall_value_to_string(str_value));
+		fflush(stdout);
+
+		void *args[] = {
+			str_value_ref
+		};
+
+		ret = metacallv_s("modify_str_ptr", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+		metacall_value_destroy(ret);
+
+		char *str_value_deref = static_cast<char *>(metacall_value_dereference(str_value_ref));
+
+		EXPECT_STREQ(str_value_deref, "yeet");
+
+		metacall_value_destroy(str_value);
+		metacall_value_destroy(str_value_ref);
+	}
 
 	/* Print inspect information */
 	{
