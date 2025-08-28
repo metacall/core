@@ -28,6 +28,41 @@
 
 /* -- Methods -- */
 
+void *metacall_error_throw(const char *label, int64_t code, const char *stacktrace, const char *message, ...)
+{
+	va_list args, args_copy;
+	int length;
+	char *buffer;
+	exception ex;
+	throwable th;
+
+	va_start(args, message);
+	va_copy(args_copy, args);
+	length = vsnprintf(NULL, 0, message, args_copy);
+	va_end(args_copy);
+
+	if (length < 0)
+	{
+		va_end(args);
+		return NULL; /* TODO: Return a generic static error here */
+	}
+
+	buffer = malloc(length + 1);
+
+	if (!buffer)
+	{
+		va_end(args);
+		return NULL; /* TODO: Return a generic static error here */
+	}
+
+	vsnprintf(buffer, length + 1, message, args);
+	va_end(args);
+
+	ex = exception_create_message_const(buffer, label, code, stacktrace);
+	th = throwable_create(value_create_exception(ex));
+	return value_create_throwable(th);
+}
+
 int metacall_error_from_value(void *v, metacall_exception ex)
 {
 	if (v == NULL || ex == NULL)

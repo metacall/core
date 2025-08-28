@@ -51,6 +51,30 @@ typedef struct metacall_exception_type *metacall_exception;
 
 /**
 *  @brief
+*    Create an throwable value from an exception with a simple API in a single instruction
+*
+*  @param[in] label
+*    Label of the exception
+*
+*  @param[in] code
+*    Error code of the exception
+*
+*  @param[in] stacktrace
+*    Stack trace of the exception
+*
+*  @param[in] message
+*    Message of the exception to be formatted with the variable arguments
+*
+*  @param[in] va_args
+*    Arguments for formatting the message
+*
+*  @return
+*    The value of type throwable containing the exception created
+*/
+METACALL_API void *metacall_error_throw(const char *label, int64_t code, const char *stacktrace, const char *message, ...);
+
+/**
+*  @brief
 *    Retrieve the exception from a value, it can be either a throwable value with an exception inside or an exception itself
 *
 *  @param[in] v
