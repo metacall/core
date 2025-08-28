@@ -55,6 +55,7 @@ namespace fs = std::experimental::filesystem;
 #include <string>
 #include <vector>
 
+#include <cassert>
 #include <cstring>
 
 /* LibFFI */
@@ -633,10 +634,18 @@ ffi_type *c_loader_impl_ffi_type(type_id id)
 			return &ffi_type_float;
 		case TYPE_DOUBLE:
 			return &ffi_type_double;
+		case TYPE_STRING:
+			return &ffi_type_pointer;
+		case TYPE_BUFFER:
+			return &ffi_type_pointer;
+		case TYPE_ARRAY:
+			return &ffi_type_pointer;
 		case TYPE_PTR:
 			return &ffi_type_pointer;
 		case TYPE_FUNCTION:
 			return &ffi_type_pointer;
+		case TYPE_NULL:
+			return &ffi_type_void;
 	}
 
 	return &ffi_type_void;
@@ -648,8 +657,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 	if (args_size != signature_count(s))
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid number of arguments when calling %s (canceling call in order to avoid a segfault)", function_name(func));
-		return NULL;
+		return metacall_error_throw("C Loader Error", 0, "", "Invalid number of arguments when calling %s (canceling call in order to avoid a segfault)", function_name(func));
 	}
 
 	loader_impl_c_function c_function = static_cast<loader_impl_c_function>(impl);
@@ -663,7 +671,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 		if (id != value_id)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR,
+			return metacall_error_throw("C Loader Error", 0, "",
 				"Type mismatch in when calling %s in argument number %" PRIuS
 				" (expected %s of type %s and received %s)."
 				" Canceling call in order to avoid a segfault.",
@@ -672,7 +680,6 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 				type_name(t),
 				type_id_name(id),
 				type_id_name(value_id));
-			return NULL;
 		}
 
 		if (id == TYPE_FUNCTION)
@@ -683,9 +690,31 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
+		else if (id == TYPE_STRING || id == TYPE_BUFFER || id == TYPE_ARRAY || id == TYPE_PTR)
+		{
+			/*
+			String, buffer requires to be pointer to a string
+			Array requires to be pointer to a array
+			Pointer requires to be pointer to pointer
+			*/
+
+			/* In order to work, this must be true */
+			assert(args[args_count] == value_data(args[args_count]));
+
+			c_function->values[args_count] = (void *)&args[args_count];
+		}
+		else if (type_id_integer(id) == 0 || type_id_decimal(id) == 0)
+		{
+			/* Primitive types already have the pointer indirection */
+			c_function->values[args_count] = value_data((value)args[args_count]);
+		}
 		else
 		{
-			c_function->values[args_count] = value_data((value)args[args_count]);
+			return metacall_error_throw("C Loader Error", 0, "",
+				"Type %s in argument number %" PRIuS " of function %s is not supported.",
+				type_id_name(id),
+				args_count,
+				function_name(func));
 		}
 	}
 
@@ -693,9 +722,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	size_t ret_size = value_type_id_size(ret_id);
 	void *ret = NULL;
 
-	/* TODO: This if is not correct because the sizes of strings, objects, etc are
-	relative to the pointer, not the value contents, we should review this */
-	if (ret_size <= sizeof(ffi_arg))
+	if (ret_size <= sizeof(ffi_arg) && (type_id_integer(ret_id) == 0 || type_id_decimal(ret_id) == 0))
 	{
 		ffi_arg result;
 
@@ -705,9 +732,50 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	}
 	else
 	{
-		ret = value_type_create(NULL, ret_size, ret_id);
+		void *result = NULL;
+		void *result_ptr = &result;
 
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), value_data(ret), c_function->values);
+		if (ret_id == TYPE_NULL)
+		{
+			ret = value_create_null();
+			result_ptr = NULL;
+		}
+		else if (ret_id != TYPE_STRING && ret_id != TYPE_BUFFER && ret_id != TYPE_ARRAY && ret_id != TYPE_PTR)
+		{
+			/* TODO: This is not tested and we do not know how to handle it */
+			/* TODO: result = ret = value_type_create(NULL, ret_size, ret_id); */
+
+			return metacall_error_throw("C Loader Error", 0, "",
+				"Return type %s in of function %s is not supported.",
+				type_id_name(ret_id),
+				function_name(func));
+		}
+
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), result_ptr, c_function->values);
+
+		if (ret_id == TYPE_STRING)
+		{
+			char *str = (char *)result;
+			ret = value_create_string(str, strlen(str));
+		}
+		else if (ret_id == TYPE_BUFFER)
+		{
+			return metacall_error_throw("C Loader Error", 0, "",
+				"Return type %s in of function %s is not supported, buffer is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
+				type_id_name(ret_id),
+				function_name(func));
+		}
+		else if (ret_id == TYPE_ARRAY)
+		{
+			return metacall_error_throw("C Loader Error", 0, "",
+				"Return type %s in of function %s is not supported, array is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
+				type_id_name(ret_id),
+				function_name(func));
+		}
+		else if (ret_id == TYPE_PTR)
+		{
+			ret = value_create_ptr(result);
+		}
 	}
 
 	/* Clear allocated closures if any */
@@ -800,6 +868,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_BOOL, "bool" },
 
 		{ TYPE_CHAR, "char" },
+		{ TYPE_CHAR, "unsigned char" },
 		{ TYPE_CHAR, "int8_t" },
 		{ TYPE_CHAR, "uint8_t" },
 		{ TYPE_CHAR, "int_least8_t" },
@@ -808,6 +877,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_CHAR, "uint_fast8_t" },
 
 		{ TYPE_SHORT, "short" },
+		{ TYPE_SHORT, "unsigned short" },
 		{ TYPE_SHORT, "int16_t" },
 		{ TYPE_SHORT, "uint16_t" },
 		{ TYPE_SHORT, "int_least16_t" },
@@ -816,6 +886,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_SHORT, "uint_fast16_t" },
 
 		{ TYPE_INT, "int" },
+		{ TYPE_INT, "unsigned int" },
 		{ TYPE_INT, "uint32_t" },
 		{ TYPE_INT, "int32_t" },
 		{ TYPE_INT, "int_least32_t" },
@@ -824,7 +895,9 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_INT, "uint_fast32_t" },
 
 		{ TYPE_LONG, "long" },
+		{ TYPE_LONG, "unsigned long" },
 		{ TYPE_LONG, "long long" },
+		{ TYPE_LONG, "unsigned long long" },
 		{ TYPE_LONG, "uint64_t" },
 		{ TYPE_LONG, "int64_t" },
 		{ TYPE_LONG, "int_least64_t" },
@@ -837,6 +910,11 @@ int c_loader_impl_initialize_types(loader_impl impl)
 
 		{ TYPE_FLOAT, "float" },
 		{ TYPE_DOUBLE, "double" },
+
+		{ TYPE_STRING, "unsigned char *" },
+		{ TYPE_STRING, "char *" },
+		{ TYPE_STRING, "const unsigned char *" },
+		{ TYPE_STRING, "const char *" },
 
 		{ TYPE_NULL, "void" }
 
@@ -932,6 +1010,10 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 			return TYPE_PTR;
 		}
 
+		case CXType_ConstantArray:
+		case CXType_IncompleteArray:
+			return TYPE_ARRAY;
+
 		case CXType_FunctionProto:
 		case CXType_FunctionNoProto: {
 			c_loader_closure_type *closure_type = new c_loader_closure_type(impl);
@@ -964,7 +1046,12 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 		case CXType_Bool:
 			return TYPE_BOOL;
 
+		case CXType_Short:
+		case CXType_UShort:
+			return TYPE_SHORT;
+
 		case CXType_Int:
+		case CXType_UInt:
 			return TYPE_INT;
 
 		case CXType_Void:

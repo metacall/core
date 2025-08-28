@@ -1,4 +1,5 @@
 #include "loadtest.h"
+#include <iostream>
 #include <vector>
 
 long call_cpp_func(void)
@@ -22,6 +23,9 @@ int pair_list_init(pair_list **t)
 		(*t)->pairs[i].i = i;
 		(*t)->pairs[i].d = (double)(((double)i) * 1.0);
 	}
+
+	std::cout << "pair_list_init: " << t << std::endl;
+	std::cout << "pair_list_init: *(" << *t << ")" << std::endl;
 
 	return 0;
 }
