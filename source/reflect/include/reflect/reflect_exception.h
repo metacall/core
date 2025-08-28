@@ -37,6 +37,8 @@ REFLECT_API exception exception_create(char *message, char *label, int64_t code,
 
 REFLECT_API exception exception_create_const(const char *message, const char *label, int64_t code, const char *stacktrace);
 
+REFLECT_API exception exception_create_message_const(char *message, const char *label, int64_t code, const char *stacktrace);
+
 REFLECT_API int exception_increment_reference(exception ex);
 
 REFLECT_API int exception_decrement_reference(exception ex);

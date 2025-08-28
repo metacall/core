@@ -153,6 +153,73 @@ exception_bad_alloc:
 	return NULL;
 }
 
+exception exception_create_message_const(char *message, const char *label, int64_t code, const char *stacktrace)
+{
+	exception ex = malloc(sizeof(struct exception_type));
+
+	if (ex == NULL)
+	{
+		goto exception_bad_alloc;
+	}
+
+	ex->message = message;
+
+	if (label != NULL)
+	{
+		size_t label_size = strlen(label) + 1;
+
+		ex->label = malloc(sizeof(char) * label_size);
+
+		if (ex->label == NULL)
+		{
+			goto label_bad_alloc;
+		}
+
+		memcpy(ex->label, label, label_size);
+	}
+	else
+	{
+		ex->label = NULL;
+	}
+
+	if (stacktrace != NULL)
+	{
+		size_t stacktrace_size = strlen(stacktrace) + 1;
+
+		ex->stacktrace = malloc(sizeof(char) * stacktrace_size);
+
+		if (ex->stacktrace == NULL)
+		{
+			goto stacktrace_bad_alloc;
+		}
+
+		memcpy(ex->stacktrace, stacktrace, stacktrace_size);
+	}
+	else
+	{
+		ex->stacktrace = NULL;
+	}
+
+	ex->code = code;
+	ex->id = thread_id_get_current();
+
+	threading_atomic_ref_count_initialize(&ex->ref);
+
+	reflect_memory_tracker_allocation(exception_stats);
+
+	return ex;
+
+stacktrace_bad_alloc:
+	if (ex->label != NULL)
+	{
+		free(ex->label);
+	}
+label_bad_alloc:
+	free(ex);
+exception_bad_alloc:
+	return NULL;
+}
+
 int exception_increment_reference(exception ex)
 {
 	if (ex == NULL)
