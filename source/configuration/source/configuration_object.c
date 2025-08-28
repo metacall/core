@@ -104,8 +104,6 @@ configuration configuration_object_initialize(const char *name, const char *path
 
 		if (config->source == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to load configuration %s from %s", name, path);
-
 			free(config);
 
 			return NULL;
@@ -268,6 +266,8 @@ int configuration_object_childs(configuration config, vector childs, set storage
 
 				if (child == NULL)
 				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load configuration %s from %s", (char *)key, path);
+
 					return 1;
 				}
 
