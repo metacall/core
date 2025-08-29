@@ -517,6 +517,95 @@ public:
 	}
 };
 
+static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_type, c_loader_type_impl **impl_type);
+
+class c_loader_array_type : public c_loader_type_impl
+{
+public:
+	std::optional<long long> size;
+	type_id id;
+
+	c_loader_array_type(loader_impl impl, CXCursor cursor, CXType cx_type, c_loader_type_impl **impl_type)
+	{
+		CXType element_cx_type = clang_getArrayElementType(cx_type);
+
+		id = c_loader_impl_clang_type(impl, cursor, element_cx_type, impl_type);
+
+		if (cx_type.kind == CXType_ConstantArray)
+		{
+			size = clang_getArraySize(cx_type);
+
+			if (size < 0)
+			{
+				size = 0;
+			}
+		}
+	}
+
+	~c_loader_array_type() {}
+
+	void *generate_c_array(void *array, size_t args_count, function func, void **error)
+	{
+		size_t count = metacall_value_count(array);
+
+		/* Check if array size is correct */
+		if (size.has_value())
+		{
+			if (count != static_cast<size_t>(*size))
+			{
+				*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " of type array with different size when calling %s (expecting an array of size %d, received an array of size %" PRIuS ")", args_count, function_name(func), *size, count);
+				return NULL;
+			}
+		}
+
+		/* Check if array type is correct */
+		void **array_ptr = metacall_value_to_array(array);
+
+		for (size_t it = 0; it < count; ++it)
+		{
+			if (metacall_value_id(array_ptr[it]) != id)
+			{
+				*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " of type array with different type when calling %s (expecting an array of type %s, received an array of type %s in the element %" PRIuS ")", args_count, function_name(func), type_id_name(id), metacall_value_type_name(array_ptr[it]), it);
+				return NULL;
+			}
+		}
+
+		/* Allocate temporal memory */
+		size_t type_size = value_type_id_size(id);
+		void **memory_ptr = static_cast<void **>(malloc(sizeof(void **)));
+
+		if (memory_ptr == NULL)
+		{
+			*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " failed to allocate memory pointer for the array when calling %s", args_count, function_name(func));
+			return NULL;
+		}
+
+		void *memory = malloc(count * type_size);
+
+		if (memory == NULL)
+		{
+			*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " failed to allocate memory for the array when calling %s", args_count, function_name(func));
+			free(memory_ptr);
+			return NULL;
+		}
+
+		for (size_t it = 0; it < count; ++it)
+		{
+			std::memcpy(&((unsigned char *)memory)[it * type_size], array_ptr[it], type_size);
+		}
+
+		*memory_ptr = memory;
+
+		return memory_ptr;
+	}
+
+	static void free_c_array(void **memory_ptr)
+	{
+		free(*memory_ptr);
+		free(memory_ptr);
+	}
+};
+
 std::string c_loader_impl_cxstring_to_str(const CXString &s)
 {
 	std::string result = clang_getCString(s);
@@ -690,11 +779,10 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
-		else if (id == TYPE_STRING || id == TYPE_BUFFER || id == TYPE_ARRAY || id == TYPE_PTR)
+		else if (id == TYPE_STRING || id == TYPE_BUFFER || id == TYPE_PTR)
 		{
 			/*
 			String, buffer requires to be pointer to a string
-			Array requires to be pointer to a array
 			Pointer requires to be pointer to pointer
 			*/
 
@@ -702,6 +790,19 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 			assert(args[args_count] == value_data(args[args_count]));
 
 			c_function->values[args_count] = (void *)&args[args_count];
+		}
+		else if (id == TYPE_ARRAY)
+		{
+			c_loader_array_type *array = static_cast<c_loader_array_type *>(type_derived(t));
+			void *error = NULL;
+			void *array_ptr = array->generate_c_array(args[args_count], args_count, func, &error);
+
+			if (error != NULL)
+			{
+				return error;
+			}
+
+			c_function->values[args_count] = array_ptr;
 		}
 		else if (type_id_integer(id) == 0 || type_id_decimal(id) == 0)
 		{
@@ -775,6 +876,17 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		else if (ret_id == TYPE_PTR)
 		{
 			ret = value_create_ptr(result);
+		}
+	}
+
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
+	{
+		type t = signature_get_type(s, args_count);
+		type_id id = type_index(t);
+
+		if (id == TYPE_ARRAY)
+		{
+			c_loader_array_type::free_c_array(static_cast<void **>(c_function->values[args_count]));
 		}
 	}
 
@@ -984,7 +1096,7 @@ int c_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	return 0;
 }
 
-static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_type, c_loader_type_impl **impl_type)
+type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_type, c_loader_type_impl **impl_type)
 {
 	switch (cx_type.kind)
 	{
@@ -1011,8 +1123,18 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 		}
 
 		case CXType_ConstantArray:
-		case CXType_IncompleteArray:
-			return TYPE_ARRAY;
+		case CXType_IncompleteArray: {
+			c_loader_array_type *array_type = new c_loader_array_type(impl, cursor, cx_type, impl_type);
+
+			if (array_type != nullptr)
+			{
+				*impl_type = static_cast<c_loader_array_type *>(array_type);
+
+				return TYPE_ARRAY;
+			}
+
+			return TYPE_INVALID;
+		}
 
 		case CXType_FunctionProto:
 		case CXType_FunctionNoProto: {

@@ -77,6 +77,37 @@ void free_data(data_ptr_t ptr)
 	free(ptr);
 }
 
+/* https://github.com/metacall/core/issues/570 */
+void apply_blur_filter(int pixels[], int width, int height)
+{
+	int size = width * height;
+
+	printf("pixels == %p\n", pixels);
+	fflush(stdout);
+
+	for (int i = 0; i < size; i++)
+	{
+		printf("pixels[%d] == %d\n", pixels[i], i);
+		fflush(stdout);
+		assert(pixels[i] == i);
+		pixels[i] = pixels[i] / 2;
+	}
+	printf("C: Blur filter applied on %d pixels\n", size);
+}
+
+double calculate_brightness(int pixels[], int size)
+{
+	long sum = 0;
+	for (int i = 0; i < size; i++)
+	{
+		assert(pixels[i] == i);
+		sum += pixels[i];
+	}
+	double avg = (double)sum / (double)size;
+	printf("C: Average brightness = %f\n", avg);
+	return avg;
+}
+
 // TODO: When calling from NodeJS it does not work,
 // NodeJS emmits double as a call, and this expects long, it needs a casting
 void modify_int_ptr(long *l)

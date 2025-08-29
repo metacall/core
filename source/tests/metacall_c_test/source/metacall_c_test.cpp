@@ -60,6 +60,70 @@ TEST_F(metacall_c_test, DefaultConstructor)
 
 	metacall_value_destroy(ret);
 
+	/* https://github.com/metacall/core/issues/570 */
+	{
+		/* Call by array */
+		{
+			void *args[] = {
+				metacall_value_create_array(NULL, 100),
+				metacall_value_create_int(10),
+				metacall_value_create_int(10)
+			};
+
+			void **array_ptr = metacall_value_to_array(args[0]);
+
+			for (int i = 0; i < 100; ++i)
+			{
+				array_ptr[i] = metacall_value_create_int(i);
+			}
+
+			std::cout << "value: " << args[0] << std::endl;
+			std::cout << "array: " << array_ptr << std::endl;
+
+			ret = metacallv("apply_blur_filter", args);
+
+			EXPECT_NE((void *)NULL, (void *)ret);
+
+			EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+			metacall_value_destroy(ret);
+
+			metacall_value_destroy(args[0]);
+			metacall_value_destroy(args[1]);
+			metacall_value_destroy(args[2]);
+		}
+
+		/* Call by pointer */
+		{
+			int array[100];
+
+			void *args[] = {
+				metacall_value_create_ptr(array),
+				metacall_value_create_int(10),
+				metacall_value_create_int(10)
+			};
+
+			for (int i = 0; i < 100; ++i)
+			{
+				array[i] = i;
+			}
+
+			ret = metacallv("apply_blur_filter", args);
+
+			EXPECT_NE((void *)NULL, (void *)ret);
+
+			EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+			metacall_value_destroy(ret);
+
+			metacall_value_destroy(args[0]);
+			metacall_value_destroy(args[1]);
+			metacall_value_destroy(args[2]);
+		}
+
+		// TODO: double calculate_brightness(int pixels[], int size)
+	}
+
 	/* File with dependencies */
 	const char *c_dep_scripts[] = {
 		"ffi.c",
