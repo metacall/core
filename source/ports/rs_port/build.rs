@@ -53,8 +53,6 @@ fn find_files_recursively<P: AsRef<Path>>(
 }
 
 fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
-    // let platform = env::var("PLATFORM");
-
     if cfg!(target_os = "windows") {
         // defaults to path:
         // C:\Users\Default\AppData\Local
@@ -156,8 +154,11 @@ fn find_metacall_library() -> Result<PathBuf, Box<dyn std::error::Error>> {
 }
 
 fn main() {
+    println!("------------ BEGIN ------------");
+
     // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
+        println!("cargo:warning=Using CMake build path: {}", val);
         println!("cargo:rustc-link-search=native={val}");
 
         match env::var("CMAKE_BUILD_TYPE") {
@@ -170,6 +171,8 @@ fn main() {
         }
         return;
     }
+
+    println!("cargo:warning=Using pure Cargo build, searching for MetaCall...");
 
     // When building from Cargo - try to find MetaCall
     match find_metacall_library() {
