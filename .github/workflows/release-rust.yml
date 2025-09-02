@@ -2,9 +2,9 @@ name: Release Rust Crates
 
 on:
   workflow_dispatch:
-  push:
 
-    branches: [ master, develop ]
+  push:
+    branches: [ master, develop, update-rust-port-ci ]
     # branches: [ master, develop ]
     # paths:
     #   - 'source/ports/rs_port/Cargo.toml'
