@@ -759,7 +759,8 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		type_id id = type_index(t);
 		type_id value_id = value_type_id((value)args[args_count]);
 
-		if (id != value_id)
+		/* We can accept pointers if we pass to an array, it is unsafe but it improves efficiency */
+		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY))
 		{
 			return metacall_error_throw("C Loader Error", 0, "",
 				"Type mismatch in when calling %s in argument number %" PRIuS
@@ -772,7 +773,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 				type_id_name(value_id));
 		}
 
-		if (id == TYPE_FUNCTION)
+		if (value_id == TYPE_FUNCTION)
 		{
 			c_loader_closure_value *closure = new c_loader_closure_value(static_cast<c_loader_closure_type *>(type_derived(t)));
 
@@ -780,7 +781,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
-		else if (id == TYPE_STRING || id == TYPE_BUFFER)
+		else if (value_id == TYPE_STRING || value_id == TYPE_BUFFER)
 		{
 			/* String, buffer requires to be pointer to a string */
 
@@ -789,11 +790,11 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			c_function->values[args_count] = (void *)&args[args_count];
 		}
-		else if (id == TYPE_PTR)
+		else if (value_id == TYPE_PTR)
 		{
 			c_function->values[args_count] = args[args_count];
 		}
-		else if (id == TYPE_ARRAY)
+		else if (value_id == TYPE_ARRAY)
 		{
 			c_loader_array_type *array = static_cast<c_loader_array_type *>(type_derived(t));
 			void *error = NULL;
@@ -806,7 +807,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			c_function->values[args_count] = array_ptr;
 		}
-		else if (type_id_integer(id) == 0 || type_id_decimal(id) == 0)
+		else if (type_id_integer(value_id) == 0 || type_id_decimal(value_id) == 0)
 		{
 			/* Primitive types already have the pointer indirection */
 			c_function->values[args_count] = value_data((value)args[args_count]);
@@ -883,10 +884,9 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
-		type t = signature_get_type(s, args_count);
-		type_id id = type_index(t);
+		type_id value_id = value_type_id((value)args[args_count]);
 
-		if (id == TYPE_ARRAY)
+		if (value_id == TYPE_ARRAY)
 		{
 			c_loader_array_type::free_c_array(static_cast<void **>(c_function->values[args_count]));
 		}
@@ -1352,6 +1352,68 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 		includes.push_back("-I" + exec_path);
 		command_line_args.push_back(includes.back().c_str());
 	}
+
+	/* TODO: Load from memory (discover from memory) */
+	/*
+	#include <clang-c/Index.h>
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	int main() {
+		const char *source_code =
+			"int add(int a, int b) {\n"
+			"    return a + b;\n"
+			"}";
+
+		// Simulate an in-memory file
+		CXUnsavedFile unsaved_file;
+		unsaved_file.Filename = "example.c";
+		unsaved_file.Contents = source_code;
+		unsaved_file.Length = (unsigned long)strlen(source_code);
+
+		// Create index
+		CXIndex index = clang_createIndex(0, 0);
+
+		// Parse translation unit from buffer (unsaved file)
+		CXTranslationUnit tu;
+		CXErrorCode err = clang_parseTranslationUnit2(
+			index,
+			"example.c",                    // filename for context (matches unsaved file)
+			NULL, 0,                        // command line args
+			&unsaved_file, 1,              // unsaved files
+			CXTranslationUnit_None,        // options
+			&tu
+		);
+
+		if (err != CXError_Success) {
+			fprintf(stderr, "Failed to parse translation unit.\n");
+			return 1;
+		}
+
+		// Get the cursor to the root of the translation unit
+		CXCursor cursor = clang_getTranslationUnitCursor(tu);
+
+		// Visit each AST node
+		clang_visitChildren(
+			cursor,
+			[](CXCursor c, CXCursor parent, CXClientData client_data) {
+				CXString spelling = clang_getCursorSpelling(c);
+				CXString kind = clang_getCursorKindSpelling(clang_getCursorKind(c));
+				printf("Cursor: %s (%s)\n", clang_getCString(spelling), clang_getCString(kind));
+				clang_disposeString(spelling);
+				clang_disposeString(kind);
+				return CXChildVisit_Recurse;
+			},
+			NULL
+		);
+
+		// Clean up
+		clang_disposeTranslationUnit(tu);
+		clang_disposeIndex(index);
+
+		return 0;
+	}
+	*/
 
 	for (std::string file : c_handle->files)
 	{

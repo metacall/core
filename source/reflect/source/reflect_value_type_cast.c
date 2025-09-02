@@ -36,6 +36,12 @@ value value_type_cast(value v, type_id id)
 		return v;
 	}
 
+	/* Exception raised, avoid casting */
+	if (type_id_throwable(src_id) == 0)
+	{
+		return v;
+	}
+
 	/* Cast from string to any type */
 	if (type_id_string(src_id) == 0)
 	{
