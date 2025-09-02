@@ -52,6 +52,7 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -779,17 +780,18 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 			closures.push_back(closure);
 		}
-		else if (id == TYPE_STRING || id == TYPE_BUFFER || id == TYPE_PTR)
+		else if (id == TYPE_STRING || id == TYPE_BUFFER)
 		{
-			/*
-			String, buffer requires to be pointer to a string
-			Pointer requires to be pointer to pointer
-			*/
+			/* String, buffer requires to be pointer to a string */
 
 			/* In order to work, this must be true */
 			assert(args[args_count] == value_data(args[args_count]));
 
 			c_function->values[args_count] = (void *)&args[args_count];
+		}
+		else if (id == TYPE_PTR)
+		{
+			c_function->values[args_count] = args[args_count];
 		}
 		else if (id == TYPE_ARRAY)
 		{

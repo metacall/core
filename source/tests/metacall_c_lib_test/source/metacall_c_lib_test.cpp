@@ -43,13 +43,19 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	metacall_value_destroy(ret);
 
-	void *pair_list = NULL;
+	void *pair_list_ptr = metacall_value_create_ptr(NULL);
 
 	void *args_init[] = {
-		metacall_value_create_ptr(&pair_list),
+		metacall_value_create_ptr(pair_list_ptr),
 	};
 
+	std::cout << "pair_list_ptr: " << pair_list_ptr << std::endl;
+	std::cout << "pair_list_ptr: *(" << metacall_value_to_ptr(pair_list_ptr) << ")" << std::endl;
+
 	ret = metacallv("pair_list_init", args_init);
+
+	std::cout << "pair_list_ptr: " << pair_list_ptr << std::endl;
+	std::cout << "pair_list_ptr: *(" << metacall_value_to_ptr(pair_list_ptr) << ")" << std::endl;
 
 	EXPECT_NE((void *)NULL, (void *)ret);
 
@@ -62,7 +68,7 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 	metacall_value_destroy(args_init[0]);
 
 	void *args_value[] = {
-		metacall_value_create_ptr(pair_list),
+		pair_list_ptr,
 		metacall_value_create_int(2)
 	};
 
@@ -76,11 +82,10 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	metacall_value_destroy(ret);
 
-	metacall_value_destroy(args_value[0]);
 	metacall_value_destroy(args_value[1]);
 
 	void *args_destroy[] = {
-		metacall_value_create_ptr(pair_list),
+		pair_list_ptr,
 	};
 
 	ret = metacallv("pair_list_destroy", args_destroy);
@@ -91,7 +96,7 @@ TEST_F(metacall_c_lib_test, DefaultConstructor)
 
 	metacall_value_destroy(ret);
 
-	metacall_value_destroy(args_destroy[0]);
+	metacall_value_destroy(pair_list_ptr);
 
 	metacall_destroy();
 }

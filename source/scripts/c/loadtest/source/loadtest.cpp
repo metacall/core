@@ -13,6 +13,9 @@ int pair_list_init(pair_list **t)
 {
 	static const uint32_t size = 3;
 
+	std::cout << "pair_list_init: " << t << std::endl;
+	std::cout << "pair_list_init: *(" << *t << ")" << std::endl;
+
 	*t = new pair_list();
 
 	(*t)->size = size;
@@ -37,6 +40,7 @@ double pair_list_value(pair_list *t, uint32_t id)
 
 void pair_list_destroy(pair_list *t)
 {
+	std::cout << "pair_list_destroy: *(" << t << ")" << std::endl;
 	delete[] t->pairs;
 	delete t;
 }
