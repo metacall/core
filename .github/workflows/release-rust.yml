@@ -15,6 +15,31 @@ env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
 jobs:
+  test:
+    name: Rust Port Tests
+    runs-on: ubnutu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: install metacall
+        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --update --yes
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1 
+        with:
+          toolchain: stable
+          override: trueq
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1 
+        with:
+          toolchain: stable
+          override: true
+      - name: Build and test the port
+        working-directory: source/ports/rs_port
+        run: |
+          cargo build --verbose
+          cargo test --verbose
   release:
     name: Release Rust Port
     runs-on: ubuntu-latest
