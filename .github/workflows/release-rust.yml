@@ -1,12 +1,14 @@
 name: Release Rust Crates
 
 on:
+  workflow_dispatch:
   push:
+
     branches: [ master, develop ]
+    # branches: [ master, develop ]
     # paths:
     #   - 'source/ports/rs_port/Cargo.toml'
     #   - 'source/ports/rs_port/inline/Cargo.toml'
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
