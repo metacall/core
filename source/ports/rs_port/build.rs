@@ -12,7 +12,7 @@ use std::{
 /// Represents the install paths for a platform
 struct InstallPath {
     paths: Vec<PathBuf>,
-    name: String,
+    names: Vec<&'static str>,
 }
 
 /// Find files recursively in a directory matching a pattern
@@ -54,32 +54,28 @@ fn find_files_recursively<P: AsRef<Path>>(
 
 fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
     if cfg!(target_os = "windows") {
-        // defaults to path:
-        // C:\Users\Default\AppData\Local
+        // Defaults to path: C:\Users\Default\AppData\Local
         let local_app_data = env::var("LOCALAPPDATA")
             .unwrap_or_else(|_| String::from("C:\\Users\\Default\\AppData\\Local"));
 
-        println!("windows");
         Ok(InstallPath {
             paths: vec![PathBuf::from(local_app_data)
                 .join("MetaCall")
                 .join("metacall")],
-            name: "metacall.dll".to_string(),
+            names: vec!["metacall.dll"],
         })
     } else if cfg!(target_os = "macos") {
-        println!("macos");
         Ok(InstallPath {
             paths: vec![
                 PathBuf::from("/opt/homebrew/lib/"),
                 PathBuf::from("/usr/local/lib/"),
             ],
-            name: "metacall.dylib".to_string(),
+            names: vec!["metacall.dylib"],
         })
     } else if cfg!(target_os = "linux") {
-        println!("linux");
         Ok(InstallPath {
             paths: vec![PathBuf::from("/usr/local/lib/"), PathBuf::from("/gnu/lib/")],
-            name: "libmetacall.so".to_string(),
+            names: vec!["libmetacall.so"],
         })
     } else {
         Err(format!("Platform {} not supported", env::consts::OS).into())
@@ -93,7 +89,7 @@ fn get_search_config() -> Result<InstallPath, Box<dyn std::error::Error>> {
         // For custom paths, we need to search for any metacall library variant
         return Ok(InstallPath {
             paths: vec![PathBuf::from(custom_path)],
-            name: r"^(lib)?metacall(d)?\.(so|dylib|dll)$".to_string(),
+            names: vec!["libmetacall.so", "libmetacalld.so", "libmetacall.dylib", "libmetacalld.dylib", "metacall.dll", "metacalld.dll"]
         });
     }
 
@@ -108,32 +104,26 @@ fn find_metacall_library() -> Result<PathBuf, Box<dyn std::error::Error>> {
 
     // Search in each configured path
     for search_path in &search_config.paths {
-        println!(
-            "cargo:warning=Searching for MetaCall in: {}",
-            search_path.display()
-        );
+        for name in &search_config.names {
+            // Search with no limit in depth
+            match find_files_recursively(search_path, &name.to_string(), None) {
+                Ok(files) if !files.is_empty() => {
+                    let found_lib = fs::canonicalize(&files[0])?;
 
-        // Only search at depth 0 (current directory)
-        match find_files_recursively(search_path, &search_config.name, Some(0)) {
-            Ok(files) if !files.is_empty() => {
-                let found_lib = fs::canonicalize(&files[0])?;
-                println!(
-                    "cargo:warning=Found MetaCall library: {}",
-                    found_lib.display()
-                );
-                return Ok(found_lib.clone());
-            }
-            Ok(_) => {
-                // No files found in this path, continue searching
-                continue;
-            }
-            Err(e) => {
-                println!(
-                    "cargo:warning=Error searching in {}: {}",
-                    search_path.display(),
-                    e
-                );
-                continue;
+                    return Ok(found_lib.clone());
+                }
+                Ok(_) => {
+                    // No files found in this path, continue searching
+                    continue;
+                }
+                Err(e) => {
+                    eprintln!(
+                        "Error searching in {}: {}",
+                        search_path.display(),
+                        e
+                    );
+                    continue;
+                }
             }
         }
     }
@@ -154,49 +144,43 @@ fn find_metacall_library() -> Result<PathBuf, Box<dyn std::error::Error>> {
 }
 
 fn main() {
-    println!("------------ BEGIN ------------");
-
     // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
-        println!("cargo:warning=Using CMake build path: {}", val);
+        // Link search path to build folder
         println!("cargo:rustc-link-search=native={val}");
 
+        // Link against correct version of metacall
         match env::var("CMAKE_BUILD_TYPE") {
-            Ok(val) if val == "Debug" => {
-                println!("cargo:rustc-link-lib=dylib=metacalld");
+            Ok(val) => {
+                if val == "Debug" {
+                    // Try to link the debug version when running tests
+                    println!("cargo:rustc-link-lib=dylib=metacalld");
+                } else {
+                    println!("cargo:rustc-link-lib=dylib=metacall");
+                }
             }
-            _ => {
+            Err(_) => {
                 println!("cargo:rustc-link-lib=dylib=metacall");
             }
         }
-        return;
-    }
-
-    println!("cargo:warning=Using pure Cargo build, searching for MetaCall...");
-
-    // When building from Cargo - try to find MetaCall
-    match find_metacall_library() {
-        Ok(lib_path) => {
-            // Extract the directory containing the library
-            if let Some(lib_dir) = lib_path.parent() {
-                println!("cargo:rustc-link-search=native={}", lib_dir.display());
-            }
-
-            // Link against the library
-            let profile = env::var("PROFILE").unwrap_or_else(|_| "release".to_string());
-            match profile.as_str() {
-                "debug" | "release" => {
-                    println!("cargo:rustc-link-lib=dylib=metacall");
-                }
-                _ => {
+    } else {
+        // When building from Cargo, try to find MetaCall
+        match find_metacall_library() {
+            Ok(lib_path) => {
+                // Extract the directory containing the library
+                if let Some(lib_dir) = lib_path.parent() {
+                    println!("cargo:rustc-link-search=native={}", lib_dir.display());
                     println!("cargo:rustc-link-lib=dylib=metacall");
                 }
             }
-        }
-        Err(e) => {
-            println!("cargo:warning={e}");
-            // Still try to link in case the library is in system paths
-            println!("cargo:rustc-link-lib=dylib=metacall");
+            Err(e) => {
+                // Print the error
+                eprintln!("Failed to find MetaCall library with: {e} \
+                    Still trying to link in case the library is in system paths");
+
+                // Still try to link in case the library is in system paths
+                println!("cargo:rustc-link-lib=dylib=metacall")
+            }
         }
     }
 }
