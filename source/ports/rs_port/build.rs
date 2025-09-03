@@ -62,7 +62,7 @@ fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
         println!("windows");
         Ok(InstallPath {
             paths: vec![PathBuf::from(local_app_data)
-                .join("Metacall")
+                .join("MetaCall")
                 .join("metacall")],
             name: "metacall.dll".to_string(),
         })
@@ -116,7 +116,7 @@ fn find_metacall_library() -> Result<PathBuf, Box<dyn std::error::Error>> {
         // Only search at depth 0 (current directory)
         match find_files_recursively(search_path, &search_config.name, Some(0)) {
             Ok(files) if !files.is_empty() => {
-                let found_lib = &files[0];
+                let found_lib = fs::canonicalize(&files[0])?;
                 println!(
                     "cargo:warning=Found MetaCall library: {}",
                     found_lib.display()
