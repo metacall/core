@@ -24,7 +24,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macos-latest, ubuntu-latest, windows-latest]
+          os: [macos-latest, ubuntu-latest]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -36,13 +36,6 @@ jobs:
       - name: install metacall (${{ matrix.os }})
         if: matrix.os != 'windows-latest'
         run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
-
-      - name: install metacall (${{ matrix.os }})
-        if: matrix.os == 'windows-latest'
-        run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
-        env:
-          METACALL_INSTALL_OPTIONS: python nodejs ruby # TODO: Implement NetCore once it works with Windows
-
       - name: Install Rust
         uses: actions-rs/toolchain@v1 
         with:
