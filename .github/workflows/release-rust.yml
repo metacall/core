@@ -20,14 +20,29 @@ env:
 jobs:
   test:
     name: Rust Port Tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: install metacall
+      - name: Export XCode SDK Root
+        if: matrix.os == 'macos-latest'
+        run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+      - name: install metacall (${{ matrix.os }})
+        if: matrix.os != 'windows-latest'
         run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
+
+      - name: install metacall (${{ matrix.os }})
+        if: matrix.os == 'windows-latest'
+        run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
+        env:
+          METACALL_INSTALL_OPTIONS: python nodejs ruby # TODO: Implement NetCore once it works with Windows
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1 
         with:
