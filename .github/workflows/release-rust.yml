@@ -1,11 +1,14 @@
 name: Release Rust Crates
 
 on:
+  workflow_dispatch:
+  pull_request:
   push:
-    branches: [ master, develop ]
-    paths:
-      - 'source/ports/rs_port/Cargo.toml'
-      - 'source/ports/rs_port/inline/Cargo.toml'
+    branches: [ master, develop, ]
+    # branches: [ master, develop ]
+    # paths:
+    #   - 'source/ports/rs_port/Cargo.toml'
+    #   - 'source/ports/rs_port/inline/Cargo.toml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -15,15 +18,40 @@ env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
 jobs:
-  release:
-    name: Release Rust Port
+  test:
+    name: Rust Port Tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Release the port
+      - name: install metacall
+        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1 
+        with:
+          toolchain: stable
+          override: true
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1 
+        with:
+          toolchain: stable
+          override: true
+      - name: Build and test the port
+        working-directory: source/ports/rs_port
         run: |
-          cd source/ports/rs_port
-          bash ./upload.sh
+          cargo build --verbose
+          cargo test --verbose
+  # release:
+  #   name: Release Rust Port
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Release the port
+  #       run: |
+  #         cd source/ports/rs_port
+  #         bash ./upload.sh
