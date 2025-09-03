@@ -114,6 +114,7 @@ void modify_int_ptr(long *l)
 {
 	printf("l %p\n", l);
 	printf("value %d\n", *l);
+	fflush(stdout);
 	assert(*l == 324444L);
 	*l = 111L;
 }
@@ -122,6 +123,7 @@ void modify_double_ptr(double *d)
 {
 	printf("d %p\n", d);
 	printf("value %f\n", *d);
+	fflush(stdout);
 	assert(*d == 324444.0);
 	*d = 111.0;
 }
@@ -130,7 +132,9 @@ void modify_str_ptr(char **str_ptr)
 {
 	static char new_str[] = "yeet";
 	printf("(C) pointer %p\n", str_ptr);
+	fflush(stdout);
 	printf("(C) string %p\n", (*str_ptr));
+	fflush(stdout);
 	printf("(C) string value %s\n", *str_ptr);
 	fflush(stdout);
 	assert(strcmp("asd", *str_ptr) == 0);

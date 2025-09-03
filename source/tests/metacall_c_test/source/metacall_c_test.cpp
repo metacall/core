@@ -43,6 +43,10 @@ void *sum_callback(size_t argc, void *args[], void *data)
 
 void *test_string_reference(size_t argc, void *args[], void *data)
 {
+	(void)argc;
+	(void)data;
+
+	/* Get string from pointer */
 	printf("ptr %p\n", args[0]);
 	fflush(stdout);
 
@@ -54,13 +58,12 @@ void *test_string_reference(size_t argc, void *args[], void *data)
 
 	char *str = metacall_value_to_string(string_value);
 
-	(void)argc;
-	(void)data;
-
 	printf("native string %s\n", str);
 
+	/* Check it is a valid string */
 	EXPECT_STREQ("asd", str);
 
+	/* Replace the string, it will be choped by the previous length */
 	static const char yeet[] = "yeet";
 
 	metacall_value_from_string(string_value, yeet, sizeof(yeet) - 1);
@@ -68,6 +71,13 @@ void *test_string_reference(size_t argc, void *args[], void *data)
 	printf("type id %s\n", metacall_value_type_name(string_value));
 	printf("native string %s\n", str);
 	fflush(stdout);
+
+	EXPECT_STREQ("yee", str);
+
+	/* Define a new string in the pointer value */
+	static const char hello[] = "hello world";
+
+	metacall_value_from_ptr(args[0], metacall_value_create_string(hello, sizeof(hello) - 1));
 
 	return metacall_value_create_null();
 }
@@ -325,18 +335,26 @@ TEST_F(metacall_c_test, DefaultConstructor)
 		printf("type id %s\n", metacall_value_type_name(str_value));
 		fflush(stdout);
 
-		// It chops the string because it has a fixed size from 'asd'
+		/* It chops the string because it has a fixed size from 'asd' */
 		EXPECT_STREQ(metacall_value_to_string(str_value), "yee");
 
 		metacall_value_destroy(str_value);
+
+		/* It should contain the new string */
+		void *new_str = metacall_value_dereference(str_value_ref);
+
+		EXPECT_STREQ(metacall_value_to_string(new_str), "hello world");
+
+		metacall_value_destroy(new_str);
 		metacall_value_destroy(str_value_ref);
 	}
 
-	/* References (C) */
+	/* References (C: string) */
 	{
 		static const char str[] = "asd";
 		void *str_value = metacall_value_create_string(str, sizeof(str) - 1);
 		void *str_value_ref = metacall_value_reference(str_value);
+		void *str_value_ref_ref = metacall_value_reference(str_value_ref);
 
 		printf("(R) ptr %p\n", str_value_ref);
 		printf("(R) string ptr %p\n", str_value);
@@ -344,7 +362,7 @@ TEST_F(metacall_c_test, DefaultConstructor)
 		fflush(stdout);
 
 		void *args[] = {
-			str_value_ref
+			str_value_ref_ref
 		};
 
 		ret = metacallv_s("modify_str_ptr", args, 1);
@@ -361,6 +379,35 @@ TEST_F(metacall_c_test, DefaultConstructor)
 
 		metacall_value_destroy(str_value);
 		metacall_value_destroy(str_value_ref);
+		metacall_value_destroy(str_value_ref_ref);
+	}
+
+	/* References (C: int) */
+	{
+		void *int_value = metacall_value_create_long(324444L);
+		void *int_value_ref = metacall_value_reference(int_value);
+
+		printf("(R) ptr %p\n", int_value_ref);
+		printf("(R) int ptr %p\n", int_value);
+		printf("(R) int value %ld\n", metacall_value_to_long(int_value));
+		fflush(stdout);
+
+		void *args[] = {
+			int_value_ref
+		};
+
+		ret = metacallv_s("modify_int_ptr", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+		metacall_value_destroy(ret);
+
+		EXPECT_EQ((long)metacall_value_to_long(int_value), (long)111L);
+
+		metacall_value_destroy(int_value);
+		metacall_value_destroy(int_value_ref);
 	}
 
 	/* Print inspect information */
