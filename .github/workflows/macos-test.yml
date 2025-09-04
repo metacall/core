@@ -40,6 +40,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Uninstall CMake
+        run: |
+          brew uninstall --force cmake
+
       - name: Uninstall NodeJS and NPM
         run: |
           npm uninstall npm -g
