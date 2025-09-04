@@ -5,10 +5,8 @@ on:
   pull_request:
   push:
     branches: [ master, develop ]
-    # branches: [ master, develop ]
-    # paths:
-    #   - 'source/ports/rs_port/Cargo.toml'
-    #   - 'source/ports/rs_port/inline/Cargo.toml'
+    paths:
+      - 'source/ports/rs_port/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -46,16 +44,17 @@ jobs:
         run: |
           cargo build --verbose
           cargo test --verbose
-  # release:
-  #   name: Release Rust Port
-  #   runs-on: ubuntu-latest
-  #   needs: test
-  #   steps:
-  #     - name: Check out the repo
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #     - name: Release the port
-  #       run: |
-  #         cd source/ports/rs_port
-  #         bash ./upload.sh
+
+  release:
+    name: Release Rust Port
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Release the port
+        run: |
+          cd source/ports/rs_port
+          bash ./upload.sh
