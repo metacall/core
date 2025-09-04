@@ -15,6 +15,12 @@ struct InstallPath {
     names: Vec<&'static str>,
 }
 
+/// Represents the match of a library when it's found
+struct LibraryPath {
+    path: PathBuf,
+    library: String,
+}
+
 /// Find files recursively in a directory matching a pattern
 fn find_files_recursively<P: AsRef<Path>>(
     root_dir: P,
@@ -70,7 +76,7 @@ fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
                 PathBuf::from("/opt/homebrew/lib/"),
                 PathBuf::from("/usr/local/lib/"),
             ],
-            names: vec!["metacall.dylib"],
+            names: vec!["libmetacall.dylib"],
         })
     } else if cfg!(target_os = "linux") {
         Ok(InstallPath {
@@ -89,7 +95,14 @@ fn get_search_config() -> Result<InstallPath, Box<dyn std::error::Error>> {
         // For custom paths, we need to search for any metacall library variant
         return Ok(InstallPath {
             paths: vec![PathBuf::from(custom_path)],
-            names: vec!["libmetacall.so", "libmetacalld.so", "libmetacall.dylib", "libmetacalld.dylib", "metacall.dll", "metacalld.dll"]
+            names: vec![
+                "libmetacall.so",
+                "libmetacalld.so",
+                "libmetacall.dylib",
+                "libmetacalld.dylib",
+                "metacall.dll",
+                "metacalld.dll",
+            ],
         });
     }
 
@@ -97,31 +110,48 @@ fn get_search_config() -> Result<InstallPath, Box<dyn std::error::Error>> {
     platform_install_paths()
 }
 
+/// Get the parent path and library name
+fn get_parent_and_library(path: &Path) -> Option<(PathBuf, String)> {
+    let parent = path.parent()?.to_path_buf();
+
+    // Get the file stem (filename without extension)
+    let stem = path.file_stem()?.to_str()?;
+
+    // Remove "lib" prefix if present
+    let cleaned_stem = stem.strip_prefix("lib").unwrap_or(stem).to_string();
+
+    Some((parent, cleaned_stem))
+}
+
 /// Find the MetaCall library
 /// This orchestrates the search process
-fn find_metacall_library() -> Result<PathBuf, Box<dyn std::error::Error>> {
+fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
     let search_config = get_search_config()?;
 
     // Search in each configured path
     for search_path in &search_config.paths {
         for name in &search_config.names {
             // Search with no limit in depth
-            match find_files_recursively(search_path, &name.to_string(), None) {
+            match find_files_recursively(search_path, name, None) {
                 Ok(files) if !files.is_empty() => {
                     let found_lib = fs::canonicalize(&files[0])?;
 
-                    return Ok(found_lib.clone());
+                    match get_parent_and_library(&found_lib) {
+                        Some((parent, name)) => {
+                            return Ok(LibraryPath {
+                                path: parent,
+                                library: name,
+                            })
+                        }
+                        None => continue,
+                    };
                 }
                 Ok(_) => {
                     // No files found in this path, continue searching
                     continue;
                 }
                 Err(e) => {
-                    eprintln!(
-                        "Error searching in {}: {}",
-                        search_path.display(),
-                        e
-                    );
+                    eprintln!("Error searching in {}: {}", search_path.display(), e);
                     continue;
                 }
             }
@@ -167,16 +197,15 @@ fn main() {
         // When building from Cargo, try to find MetaCall
         match find_metacall_library() {
             Ok(lib_path) => {
-                // Extract the directory containing the library
-                if let Some(lib_dir) = lib_path.parent() {
-                    println!("cargo:rustc-link-search=native={}", lib_dir.display());
-                    println!("cargo:rustc-link-lib=dylib=metacall");
-                }
+                println!("cargo:rustc-link-search=native={}", lib_path.path.display());
+                println!("cargo:rustc-link-lib=dylib={}", lib_path.library);
             }
             Err(e) => {
                 // Print the error
-                eprintln!("Failed to find MetaCall library with: {e} \
-                    Still trying to link in case the library is in system paths");
+                eprintln!(
+                    "Failed to find MetaCall library with: {e} \
+                    Still trying to link in case the library is in system paths"
+                );
 
                 // Still try to link in case the library is in system paths
                 println!("cargo:rustc-link-lib=dylib=metacall")
