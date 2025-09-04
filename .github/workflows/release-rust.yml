@@ -1,11 +1,12 @@
 name: Release Rust Crates
 
 on:
+  workflow_dispatch:
+  pull_request:
   push:
     branches: [ master, develop ]
     paths:
-      - 'source/ports/rs_port/Cargo.toml'
-      - 'source/ports/rs_port/inline/Cargo.toml'
+      - 'source/ports/rs_port/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -15,9 +16,39 @@ env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
 jobs:
+  test:
+    name: Rust Port Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install MetaCall Unix
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
+      - name: Install MetaCall Windows
+        if: matrix.os == 'windows-latest'
+        run: powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build and Test the Rust Port
+        working-directory: source/ports/rs_port
+        run: |
+          cargo build --verbose
+          cargo test --verbose
+
   release:
     name: Release Rust Port
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
