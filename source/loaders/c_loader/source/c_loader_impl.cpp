@@ -1443,6 +1443,15 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 	return data.result;
 }
 
+static int c_loader_impl_tcc_relocate(TCCState *state)
+{
+#ifdef TCC_RELOCATE_AUTO
+	return tcc_relocate(state, TCC_RELOCATE_AUTO);
+#else
+	return tcc_relocate(state);
+#endif
+}
+
 loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
@@ -1497,7 +1506,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 		}
 	}
 
-	if (tcc_relocate(c_handle->state) == -1)
+	if (c_loader_impl_tcc_relocate(c_handle->state) == -1)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
 		goto error;
@@ -1529,7 +1538,7 @@ loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name
 		goto error;
 	}
 
-	if (tcc_relocate(c_handle->state) == -1)
+	if (c_loader_impl_tcc_relocate(c_handle->state) == -1)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
 		goto error;
