@@ -32,9 +32,41 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Export XCode SDK Root
+      - name: Prepare MacOS Installation
         if: matrix.os == 'macos-latest'
-        run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+        run: |
+          echo "Uninstall CMake"
+          brew uninstall --force cmake
+
+          echo "Uninstall NodeJS and NPM"
+          npm uninstall npm -g
+          rm -rf /usr/local/lib/node_modules/npm
+
+          echo "Uninstall Ruby"
+          brew uninstall --force --ignore-dependencies ruby
+          brew cleanup -s ruby
+          brew cleanup --prune-prefix
+          RUBY_FRAMEWORK_DIR=$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/Ruby.framework
+          sudo rm -rf $RUBY_FRAMEWORK_DIR
+
+          echo "Uninstall Go"
+          brew uninstall --force go
+          brew autoremove
+          sudo rm -rf /usr/local/Cellar/go
+          sudo rm -rf /usr/local/go
+          sudo rm -rf /usr/local/opt/go
+          sudo rm -rf /etc/paths.d/go
+          sudo rm -rf /usr/local/bin/go
+          sudo rm -rf /usr/local/bin/gofmt
+
+          echo "Uninstall Java"
+          sudo rm -rf /Library/Java/JavaVirtualMachines/*
+          sudo rm -rf /Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin
+          sudo rm -rf /Library/PreferencePanes/JavaControlPanel.prefPane
+          unset JAVA_HOME
+
+          echo "Export XCode SDK Root"
+          echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
 
       # TODO: Add support for NetCore Bench
       - name: Set up the environment
