@@ -197,8 +197,25 @@ fn main() {
         // When building from Cargo, try to find MetaCall
         match find_metacall_library() {
             Ok(lib_path) => {
+                // Define linker flags
                 println!("cargo:rustc-link-search=native={}", lib_path.path.display());
                 println!("cargo:rustc-link-lib=dylib={}", lib_path.library);
+
+                // Set the runtime environment variable for finding the library during tests
+                #[cfg(target_os = "linux")]
+                println!(
+                    "cargo:rustc-env=LD_LIBRARY_PATH={}",
+                    lib_path.path.display()
+                );
+
+                #[cfg(target_os = "macos")]
+                println!(
+                    "cargo:rustc-env=DYLD_LIBRARY_PATH={}",
+                    lib_path.path.display()
+                );
+
+                #[cfg(target_os = "windows")]
+                println!("cargo:rustc-env=PATH={}", lib_path.path.display());
             }
             Err(e) => {
                 // Print the error
