@@ -284,21 +284,21 @@ TEST_F(metacall_c_test, DefaultConstructor)
 	metacall_value_destroy(args[0]);
 
 	/* Memory */
-	// TODO
-	// const char c_buffer[] = {
-	// 	"int compiled_mult(int a, int b) { return a * b; }"
-	// };
+	{
+		const char c_buffer[] = {
+			"int compiled_mult_memory(int a, int b) { return a * b; }"
+		};
 
-	// EXPECT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
 
-	// TODO
-	// void *ret = metacall("compiled_mult", 3, 4);
+		void *ret = metacall("compiled_mult_memory", 3, 4);
 
-	// EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-	// EXPECT_EQ((int)metacall_value_to_int(ret), (int)0);
+		EXPECT_EQ((int)metacall_value_to_int(ret), (int)12);
 
-	// metacall_value_destroy(ret);
+		metacall_value_destroy(ret);
+	}
 
 	/* References (Native) */
 	{

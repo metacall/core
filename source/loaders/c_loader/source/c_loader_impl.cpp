@@ -76,11 +76,24 @@ typedef struct loader_impl_c_type
 
 } * loader_impl_c;
 
+struct loader_impl_c_handle_base_type;
+
+typedef struct loader_impl_c_handle_base_type *loader_impl_c_handle_base;
+
+typedef struct c_loader_impl_discover_visitor_data_type
+{
+	loader_impl impl;
+	loader_impl_c_handle_base c_handle;
+	scope sp;
+	int result;
+
+} * c_loader_impl_discover_visitor_data;
+
+static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data);
+
 typedef struct loader_impl_c_handle_base_type
 {
 public:
-	std::vector<std::string> files;
-
 	virtual ~loader_impl_c_handle_base_type() {}
 
 	virtual bool recursive_includes() = 0;
@@ -88,6 +101,55 @@ public:
 	virtual int discover(loader_impl impl, context ctx) = 0;
 
 	virtual const void *symbol(std::string &name) = 0;
+
+	virtual int discover_visitor(std::vector<const char *> &command_line_args, void *data) = 0;
+
+} * loader_impl_c_handle_base;
+
+typedef struct loader_impl_c_handle_file_type : loader_impl_c_handle_base_type
+{
+public:
+	std::vector<std::string> files;
+
+	virtual ~loader_impl_c_handle_file_type() {}
+
+	virtual bool recursive_includes() = 0;
+
+	virtual int discover(loader_impl impl, context ctx) = 0;
+
+	virtual const void *symbol(std::string &name) = 0;
+
+	int discover_visitor(std::vector<const char *> &command_line_args, void *data)
+	{
+		for (std::string file : this->files)
+		{
+			/* Define the command line arguments (simulating compiler flags) */
+			CXIndex index = clang_createIndex(0, 1);
+			CXTranslationUnit unit = NULL;
+			CXErrorCode error = clang_parseTranslationUnit2(
+				index,
+				file.c_str(),
+				command_line_args.data(), command_line_args.size(),
+				nullptr, 0,
+				CXTranslationUnit_None,
+				&unit);
+
+			if (error != CXError_Success)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit of: %s with error code %d", file.c_str(), error);
+				clang_disposeIndex(index);
+				return -1;
+			}
+
+			CXCursor cursor = clang_getTranslationUnitCursor(unit);
+			clang_visitChildren(cursor, c_loader_impl_discover_visitor, data);
+
+			clang_disposeTranslationUnit(unit);
+			clang_disposeIndex(index);
+		}
+
+		return 0;
+	}
 
 	void add(const loader_path path, size_t size)
 	{
@@ -118,12 +180,65 @@ private:
 		return true;
 	}
 
-} * loader_impl_c_handle_base;
+} * loader_impl_c_handle_file;
+
+typedef struct loader_impl_c_handle_memory_type : loader_impl_c_handle_base_type
+{
+public:
+	std::string name;
+	std::string buffer;
+
+	virtual ~loader_impl_c_handle_memory_type() {}
+
+	virtual bool recursive_includes() = 0;
+
+	virtual int discover(loader_impl impl, context ctx) = 0;
+
+	virtual const void *symbol(std::string &name) = 0;
+
+	int discover_visitor(std::vector<const char *> &command_line_args, void *data)
+	{
+		CXUnsavedFile unsaved_file;
+
+		/* Simulate an in-memory file */
+		unsaved_file.Filename = this->name.c_str();
+		unsaved_file.Contents = this->buffer.c_str();
+		unsaved_file.Length = this->buffer.length();
+
+		/* Define the command line arguments (simulating compiler flags) */
+		CXIndex index = clang_createIndex(0, 1);
+		CXTranslationUnit unit = NULL;
+		CXErrorCode error = clang_parseTranslationUnit2(
+			index,
+			this->name.c_str(),
+			command_line_args.data(), command_line_args.size(),
+			&unsaved_file, 1,
+			CXTranslationUnit_None,
+			&unit);
+
+		if (error != CXError_Success)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit of: %s with error code %d", this->name.c_str(), error);
+			clang_disposeIndex(index);
+			return -1;
+		}
+
+		CXCursor cursor = clang_getTranslationUnitCursor(unit);
+		clang_visitChildren(cursor, c_loader_impl_discover_visitor, data);
+
+		clang_disposeTranslationUnit(unit);
+		clang_disposeIndex(index);
+
+		return 0;
+	}
+
+} * loader_impl_c_handle_memory;
 
 static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr);
 static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_base c_handle, context ctx);
 
-typedef struct loader_impl_c_handle_tcc_type : loader_impl_c_handle_base_type
+template <typename T>
+struct loader_impl_c_handle_tcc_type : T
 {
 public:
 	TCCState *state;
@@ -207,7 +322,7 @@ public:
 	virtual int discover(loader_impl impl, context ctx)
 	{
 		/* Get all symbols */
-		tcc_list_symbols(this->state, static_cast<void *>(this), &c_loader_impl_discover_symbols);
+		tcc_list_symbols(this->state, static_cast<void *>(&symbols), &c_loader_impl_discover_symbols);
 
 		/* Parse the AST and register functions */
 		return c_loader_impl_discover_ast(impl, this, ctx);
@@ -222,10 +337,15 @@ public:
 
 		return this->symbols[name];
 	}
+};
 
-} * loader_impl_c_handle_tcc;
+typedef struct loader_impl_c_handle_tcc_type<loader_impl_c_handle_file_type> loader_impl_c_handle_tcc_file_type;
+typedef loader_impl_c_handle_tcc_file_type *loader_impl_c_handle_tcc_file;
 
-typedef struct loader_impl_c_handle_dynlink_type : loader_impl_c_handle_base_type
+typedef struct loader_impl_c_handle_tcc_type<loader_impl_c_handle_memory_type> loader_impl_c_handle_tcc_memory_type;
+typedef loader_impl_c_handle_tcc_memory_type *loader_impl_c_handle_tcc_memory;
+
+typedef struct loader_impl_c_handle_dynlink_type : loader_impl_c_handle_file_type
 {
 public:
 	dynlink lib;
@@ -384,15 +504,6 @@ typedef struct loader_impl_c_function_type
 	const void *address;
 
 } * loader_impl_c_function;
-
-typedef struct c_loader_impl_discover_visitor_data_type
-{
-	loader_impl impl;
-	loader_impl_c_handle_base c_handle;
-	scope sp;
-	int result;
-
-} * c_loader_impl_discover_visitor_data;
 
 /* Retrieve the equivalent FFI type from type id */
 static ffi_type *c_loader_impl_ffi_type(type_id id);
@@ -681,9 +792,9 @@ void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void 
 
 static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr)
 {
-	loader_impl_c_handle_tcc c_handle = static_cast<loader_impl_c_handle_tcc>(ctx);
+	std::map<std::string, const void *> *symbols = static_cast<std::map<std::string, const void *> *>(ctx);
 
-	c_handle->symbols.insert(std::pair<std::string, const void *>(name, addr));
+	symbols->insert(std::pair<std::string, const void *>(name, addr));
 }
 
 static bool c_loader_impl_file_exists(const loader_path path)
@@ -1305,7 +1416,7 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 	return 0;
 }
 
-static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data)
+CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data)
 {
 	c_loader_impl_discover_visitor_data visitor_data = static_cast<c_loader_impl_discover_visitor_data>(data);
 
@@ -1353,91 +1464,9 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 		command_line_args.push_back(includes.back().c_str());
 	}
 
-	/* TODO: Load from memory (discover from memory) */
-	/*
-	#include <clang-c/Index.h>
-	#include <stdio.h>
-	#include <stdlib.h>
-
-	int main() {
-		const char *source_code =
-			"int add(int a, int b) {\n"
-			"    return a + b;\n"
-			"}";
-
-		// Simulate an in-memory file
-		CXUnsavedFile unsaved_file;
-		unsaved_file.Filename = "example.c";
-		unsaved_file.Contents = source_code;
-		unsaved_file.Length = (unsigned long)strlen(source_code);
-
-		// Create index
-		CXIndex index = clang_createIndex(0, 0);
-
-		// Parse translation unit from buffer (unsaved file)
-		CXTranslationUnit tu;
-		CXErrorCode err = clang_parseTranslationUnit2(
-			index,
-			"example.c",                    // filename for context (matches unsaved file)
-			NULL, 0,                        // command line args
-			&unsaved_file, 1,              // unsaved files
-			CXTranslationUnit_None,        // options
-			&tu
-		);
-
-		if (err != CXError_Success) {
-			fprintf(stderr, "Failed to parse translation unit.\n");
-			return 1;
-		}
-
-		// Get the cursor to the root of the translation unit
-		CXCursor cursor = clang_getTranslationUnitCursor(tu);
-
-		// Visit each AST node
-		clang_visitChildren(
-			cursor,
-			[](CXCursor c, CXCursor parent, CXClientData client_data) {
-				CXString spelling = clang_getCursorSpelling(c);
-				CXString kind = clang_getCursorKindSpelling(clang_getCursorKind(c));
-				printf("Cursor: %s (%s)\n", clang_getCString(spelling), clang_getCString(kind));
-				clang_disposeString(spelling);
-				clang_disposeString(kind);
-				return CXChildVisit_Recurse;
-			},
-			NULL
-		);
-
-		// Clean up
-		clang_disposeTranslationUnit(tu);
-		clang_disposeIndex(index);
-
-		return 0;
-	}
-	*/
-
-	for (std::string file : c_handle->files)
+	if (c_handle->discover_visitor(command_line_args, static_cast<void *>(&data)) != 0)
 	{
-		/* Define the command line arguments (simulating compiler flags) */
-		CXIndex index = clang_createIndex(0, 1);
-		CXTranslationUnit unit = clang_parseTranslationUnit(
-			index,
-			file.c_str(),
-			command_line_args.data(), command_line_args.size(),
-			nullptr, 0,
-			CXTranslationUnit_None);
-
-		if (unit == nullptr)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit of: %s", file.c_str());
-			clang_disposeIndex(index);
-			return -1;
-		}
-
-		CXCursor cursor = clang_getTranslationUnitCursor(unit);
-		clang_visitChildren(cursor, c_loader_impl_discover_visitor, static_cast<void *>(&data));
-
-		clang_disposeTranslationUnit(unit);
-		clang_disposeIndex(index);
+		return 1;
 	}
 
 	return data.result;
@@ -1455,7 +1484,7 @@ static int c_loader_impl_tcc_relocate(TCCState *state)
 loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
-	loader_impl_c_handle_tcc c_handle = new loader_impl_c_handle_tcc_type();
+	loader_impl_c_handle_tcc_file c_handle = new loader_impl_c_handle_tcc_file_type();
 
 	if (c_handle->initialize(c_impl) == false)
 	{
@@ -1522,7 +1551,7 @@ error:
 loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
-	loader_impl_c_handle_tcc c_handle = new loader_impl_c_handle_tcc_type();
+	loader_impl_c_handle_tcc_memory c_handle = new loader_impl_c_handle_tcc_memory_type();
 
 	/* Apparently TCC has an unsafe API for compiling strings */
 	(void)size;
@@ -1544,7 +1573,9 @@ loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name
 		goto error;
 	}
 
-	/* TODO: Load the buffer with the parser while iterating after loading it with TCC */
+	c_handle->name = name;
+	c_handle->name.append(".c");
+	c_handle->buffer.assign(buffer, size);
 
 	return c_handle;
 
