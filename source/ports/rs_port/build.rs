@@ -68,7 +68,7 @@ fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
             paths: vec![PathBuf::from(local_app_data)
                 .join("MetaCall")
                 .join("metacall")],
-            names: vec!["metacall.dll"],
+            names: vec!["metacall.lib"],
         })
     } else if cfg!(target_os = "macos") {
         Ok(InstallPath {
@@ -100,8 +100,8 @@ fn get_search_config() -> Result<InstallPath, Box<dyn std::error::Error>> {
                 "libmetacalld.so",
                 "libmetacall.dylib",
                 "libmetacalld.dylib",
-                "metacall.dll",
-                "metacalld.dll",
+                "metacall.lib",
+                "metacalld.lib",
             ],
         });
     }
