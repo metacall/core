@@ -162,10 +162,10 @@ impl MetaCallValue for i64 {
     fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         let value = unsafe { metacall_value_to_long(v) };
 
-        Ok(value)
+        Ok(value as i64)
     }
     fn into_metacall_raw(self) -> *mut c_void {
-        unsafe { metacall_value_create_long(self) }
+        unsafe { metacall_value_create_long(self.try_into().unwrap()) }
     }
 }
 /// Equivalent to MetaCall float type.
