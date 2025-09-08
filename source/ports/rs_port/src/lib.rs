@@ -41,11 +41,11 @@
 //! Now let's jump into Rust:
 //!
 //! ```
-//! use metacall::{switch, metacall, loaders};
+//! use metacall::{initialize, metacall, load};
 //!
 //! fn main() {
 //!     // Initialize MetaCall at the top
-//!     let _metacall = switch::initialize().unwrap();
+//!     let _metacall = initialize().unwrap();
 //!     
 //!     // Load the file (Checkout the loaders module for loading multiple files
 //!     // or loading from string)
