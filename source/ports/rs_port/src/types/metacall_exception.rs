@@ -180,7 +180,7 @@ impl MetaCallThrowable {
             Ok(mut value) => {
                 value.leak = true;
 
-                cast::metacall_box(value)
+                cast::metacall_implementer_to_traitobj(value)
             }
             Err(original) => original,
         }

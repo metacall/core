@@ -88,7 +88,6 @@ pub use types::*;
 #[doc(hidden)]
 mod init;
 
-pub use cast::metacall_box;
 pub use init::initialize;
 pub use init::is_initialized;
 

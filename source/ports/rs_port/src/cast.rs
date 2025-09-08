@@ -235,6 +235,6 @@ pub fn metacallobj_untyped_to_raw(ret: Box<dyn MetaCallValue>) -> Option<*mut c_
     None
 }
 
-pub fn metacall_box(v: impl MetaCallValue) -> Box<dyn MetaCallValue> {
+pub fn metacall_implementer_to_traitobj(v: impl MetaCallValue) -> Box<dyn MetaCallValue> {
     Box::new(v) as Box<dyn MetaCallValue>
 }
