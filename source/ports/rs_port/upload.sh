@@ -31,6 +31,8 @@ function publish() {
 }
 
 # Publish
+cd sys
+publish metacall-sys
 cd inline
 publish metacall-inline
 cd ..

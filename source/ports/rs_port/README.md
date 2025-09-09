@@ -15,6 +15,24 @@ MetaCall is a C plugin based library. This crate wraps the C library into Rust, 
 curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
 ```
 
+# Linking
+
+If your project uses MetaCall in a folder that is not in the system path, we encourage to use `metacall-sys` crate as a `build-dependecy`. By this way you will be able to locate and link MetaCall directly in your build system. For example:
+
+`Cargo.toml`:
+```toml
+[build-dependencies]
+metacall-sys = { path = "./sys", version = "0.1.0" }
+```
+
+`build.rs`:
+```rust
+fn main() {
+    // Find MetaCall library
+    metacall_sys::build();
+}
+```
+
 # Example
 
 `sum.ts`
