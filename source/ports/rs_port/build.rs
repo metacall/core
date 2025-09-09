@@ -173,7 +173,7 @@ fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
     .into())
 }
 
-fn define_library_search_path(env_var: &str, separator: &str, path: &PathBuf) -> String {
+fn define_library_search_path(env_var: &str, separator: &str, path: &Path) -> String {
     // Get the current value of the env var, if any
     let existing = env::var(env_var).unwrap_or_default();
     let path_str: String = String::from(path.to_str().unwrap());
