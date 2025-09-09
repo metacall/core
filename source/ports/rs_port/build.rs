@@ -173,6 +173,21 @@ fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
     .into())
 }
 
+fn define_library_search_path(env_var: &str, separator: &str, path: &PathBuf) -> String {
+    // Get the current value of the env var, if any
+    let existing = env::var(env_var).unwrap_or_default();
+    let path_str: String = String::from(path.to_str().unwrap());
+
+    // Append to it
+    let combined = if existing.is_empty() {
+        path_str
+    } else {
+        format!("{}{}{}", existing, separator, path_str)
+    };
+
+    format!("{}={}", env_var, combined)
+}
+
 fn main() {
     // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
@@ -203,19 +218,27 @@ fn main() {
 
                 // Set the runtime environment variable for finding the library during tests
                 #[cfg(target_os = "linux")]
-                println!(
-                    "cargo:rustc-env=LD_LIBRARY_PATH={}",
-                    lib_path.path.display()
-                );
+                const ENV_VAR: &str = "LD_LIBRARY_PATH";
 
                 #[cfg(target_os = "macos")]
-                println!(
-                    "cargo:rustc-env=DYLD_LIBRARY_PATH={}",
-                    lib_path.path.display()
-                );
+                const ENV_VAR: &str = "DYLD_LIBRARY_PATH";
 
                 #[cfg(target_os = "windows")]
-                println!("cargo:rustc-env=PATH={}", lib_path.path.display());
+                const ENV_VAR: &str = "PATH";
+
+                #[cfg(target_os = "aix")]
+                const ENV_VAR: &str = "LIBPATH";
+
+                #[cfg(any(target_os = "linux", target_os = "macos", target_os = "aix"))]
+                const SEPARATOR: &str = ":";
+
+                #[cfg(target_os = "windows")]
+                const SEPARATOR: &str = ";";
+
+                println!(
+                    "cargo:rustc-env={}",
+                    define_library_search_path(ENV_VAR, SEPARATOR, &lib_path.path)
+                );
             }
             Err(e) => {
                 // Print the error
