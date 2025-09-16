@@ -188,11 +188,48 @@ fn define_library_search_path(env_var: &str, separator: &str, path: &Path) -> St
     format!("{}={}", env_var, combined)
 }
 
+/// Set RPATH for runtime library discovery
+/// This binaries work outside cargo
+fn set_rpath(lib_path: &Path) {
+    let path_str = lib_path.to_str().unwrap();
+
+    #[cfg(target_os = "linux")]
+    {
+        // On Linux, use RPATH with $ORIGIN for relocatable binaries
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path_str);
+        // Also set a backup rpath relative to the executable location
+        println!("cargo:rustc-link-arg=-Wl,-rpath,$ORIGIN");
+        println!("cargo:rustc-link-arg=-Wl,-rpath,$ORIGIN/../lib");
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        // On macOS, use @rpath and @loader_path
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path_str);
+        // Also set loader-relative paths for relocatable binaries
+        println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path");
+        println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path/../lib");
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // Windows doesn't use RPATH, but we can inform the user
+        println!(
+            "cargo:warning=On Windows, make sure {} is in your PATH or next to your executable",
+            path_str
+        );
+    }
+}
+
 pub fn build() {
     // When running tests from CMake
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
         // Link search path to build folder
         println!("cargo:rustc-link-search=native={val}");
+
+        // Set RPATH for CMake builds too
+        #[cfg(not(target_os = "windows"))]
+        set_rpath(&PathBuf::from(&val));
 
         // Link against correct version of metacall
         match env::var("CMAKE_BUILD_TYPE") {
@@ -215,6 +252,10 @@ pub fn build() {
                 // Define linker flags
                 println!("cargo:rustc-link-search=native={}", lib_path.path.display());
                 println!("cargo:rustc-link-lib=dylib={}", lib_path.library);
+
+                // Set RPATH so the binary can find libraries at runtime
+                #[cfg(not(target_os = "windows"))]
+                set_rpath(&lib_path.path);
 
                 // Set the runtime environment variable for finding the library during tests
                 #[cfg(target_os = "linux")]

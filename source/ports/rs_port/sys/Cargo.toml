@@ -1,7 +1,16 @@
 [package]
 name = "metacall-sys"
-version = "0.1.0"
-repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
+version = "0.2.0"
+repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port/sys"
+keywords = ["ffi", "bindings", "metacall",]
 edition = "2021"
 license = "Apache-2.0"
 description = "Crate for finding metacall library in the system."
+readme = "README.md"
+
+[lib]
+crate-type = ["lib"]
+doctest = false
+edition = "2021"
+name = "metacall_sys"
+path = "src/lib.rs"
