@@ -211,6 +211,12 @@ fn set_rpath(lib_path: &Path) {
         println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path/../lib");
     }
 
+    #[cfg(target_os = "aix")]
+    {
+        // Add default system library paths to avoid breaking standard lookup
+        println!("cargo:rustc-link-arg=-Wl,-blibpath:{}:/usr/lib:/lib", path_str);
+    }
+
     #[cfg(target_os = "windows")]
     {
         // Windows doesn't use RPATH, but we can inform the user
@@ -226,10 +232,6 @@ pub fn build() {
     if let Ok(val) = env::var("PROJECT_OUTPUT_DIR") {
         // Link search path to build folder
         println!("cargo:rustc-link-search=native={val}");
-
-        // Set RPATH for CMake builds too
-        #[cfg(not(target_os = "windows"))]
-        set_rpath(&PathBuf::from(&val));
 
         // Link against correct version of metacall
         match env::var("CMAKE_BUILD_TYPE") {
@@ -254,7 +256,6 @@ pub fn build() {
                 println!("cargo:rustc-link-lib=dylib={}", lib_path.library);
 
                 // Set RPATH so the binary can find libraries at runtime
-                #[cfg(not(target_os = "windows"))]
                 set_rpath(&lib_path.path);
 
                 // Set the runtime environment variable for finding the library during tests
