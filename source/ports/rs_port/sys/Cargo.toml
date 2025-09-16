@@ -6,7 +6,6 @@ keywords = ["ffi", "bindings", "metacall"]
 edition = "2021"
 license = "Apache-2.0"
 description = "Crate for finding metacall library in the system."
-readme = "README.md"
 
 [lib]
 crate-type = ["lib"]
