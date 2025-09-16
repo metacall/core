@@ -17,12 +17,12 @@ curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | 
 
 # Linking
 
-If your project uses MetaCall in a folder that is not in the system path, we encourage to use `metacall-sys` crate as a `build-dependecy`. By this way you will be able to locate and link MetaCall directly in your build system. For example:
+If your project uses MetaCall in a folder that is not in the system path, we encourage to use [`metacall-sys`](https://crates.io/crates/metacall-sys) crate as a [`build-dependecy`](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#build-dependencies). By this way you will be able to locate and link MetaCall directly in your build system. For example:
 
 `Cargo.toml`:
 ```toml
 [build-dependencies]
-metacall-sys = { path = "./sys", version = "0.1.0" }
+metacall-sys = "0.1.1"
 ```
 
 `build.rs`:
