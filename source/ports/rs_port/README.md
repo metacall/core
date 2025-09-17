@@ -22,7 +22,7 @@ If your project uses MetaCall in a folder that is not in the system path, we enc
 `Cargo.toml`:
 ```toml
 [build-dependencies]
-metacall-sys = "0.1.1"
+metacall-sys = "0.1.2"
 ```
 
 `build.rs`:
