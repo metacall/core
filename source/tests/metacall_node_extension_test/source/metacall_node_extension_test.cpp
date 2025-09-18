@@ -52,7 +52,7 @@ TEST_F(metacall_node_extension_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp("world", metacall_value_to_string(ret)));
+		EXPECT_STREQ("world", metacall_value_to_string(ret));
 
 		metacall_value_destroy(ret);
 	}

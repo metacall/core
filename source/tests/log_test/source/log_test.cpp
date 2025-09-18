@@ -85,7 +85,7 @@ TEST_F(log_test, DefaultConstructor)
 
 			unsigned int value = *((unsigned int *)value_ptr);
 
-			EXPECT_EQ((int)0, (int)strcmp(log_name_list[value].name, key));
+			EXPECT_STREQ(log_name_list[value].name, key);
 		}
 
 		EXPECT_EQ((int)log_map_destroy(map), (int)0);

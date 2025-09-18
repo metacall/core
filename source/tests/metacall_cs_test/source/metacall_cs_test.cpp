@@ -81,7 +81,7 @@ TEST_F(metacall_cs_test, Concat)
 
 	EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((int)0, (int)strcmp((const char *)metacall_value_to_string(ret), "Hello World"));
+	EXPECT_STREQ((const char *)metacall_value_to_string(ret), "Hello World");
 
 	metacall_value_destroy(ret);
 }

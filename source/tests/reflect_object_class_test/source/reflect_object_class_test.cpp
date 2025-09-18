@@ -500,7 +500,7 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 		ASSERT_NE((value)NULL, (value)ret);
 
-		ASSERT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello World"));
+		ASSERT_STREQ(value_to_string(ret), "Hello World");
 
 		value_type_destroy(ret);
 
@@ -557,7 +557,7 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 		ASSERT_NE((value)NULL, (value)ret);
 
-		ASSERT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello World"));
+		ASSERT_STREQ(value_to_string(ret), "Hello World");
 
 		value_type_destroy(ret);
 

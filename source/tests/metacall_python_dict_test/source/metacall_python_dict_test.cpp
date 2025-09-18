@@ -61,7 +61,7 @@ TEST_F(metacall_python_dict_test, DefaultConstructor)
 			}
 			else if (strcmp(key, "hello") == 0)
 			{
-				EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(array[1]), "world"));
+				EXPECT_STREQ(metacall_value_to_string(array[1]), "world");
 			}
 			else if (strcmp(key, "efg") == 0)
 			{
@@ -134,14 +134,14 @@ TEST_F(metacall_python_dict_test, DefaultConstructor)
 		char *ret_key0 = metacall_value_to_string(ret_pair0[0]);
 		long ret_value0 = metacall_value_to_long(ret_pair0[1]);
 
-		EXPECT_EQ((int)0, (int)strcmp(ret_key0, "new"));
+		EXPECT_STREQ(ret_key0, "new");
 		EXPECT_EQ((long)5, (long)ret_value0);
 
 		void **ret_pair1 = metacall_value_to_array(ret_map[1]);
 		char *ret_key1 = metacall_value_to_string(ret_pair1[0]);
 		long ret_value1 = metacall_value_to_long(ret_pair1[1]);
 
-		EXPECT_EQ((int)0, (int)strcmp(ret_key1, "whatever"));
+		EXPECT_STREQ(ret_key1, "whatever");
 		EXPECT_EQ((long)7, (long)ret_value1);
 
 		metacall_value_destroy(ret);

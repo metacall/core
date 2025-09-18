@@ -96,7 +96,7 @@ static void *hello_world_await_ok(void *result, void *data)
 
 	fflush(stdout);
 
-	EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(result), "Hello World"));
+	EXPECT_STREQ(metacall_value_to_string(result), "Hello World");
 
 	++success_callbacks;
 

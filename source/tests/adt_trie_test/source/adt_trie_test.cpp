@@ -123,7 +123,7 @@ TEST_F(adt_trie_test, DefaultConstructor)
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "%" PRIuS " -> %s", iterator, value_str);
 
-		EXPECT_EQ((int)0, (int)strcmp(values_str[keys_size - iterator - 1], value_str));
+		EXPECT_STREQ(values_str[keys_size - iterator - 1], value_str);
 
 		vector_pop_back(keys_copy);
 	}
@@ -144,7 +144,7 @@ TEST_F(adt_trie_test, DefaultConstructor)
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "%s/", key_str);
 
-		EXPECT_EQ((int)0, (int)strcmp(keys_str[iterator], key_str));
+		EXPECT_STREQ(keys_str[iterator], key_str);
 	}
 
 	vector_pop_back(keys);

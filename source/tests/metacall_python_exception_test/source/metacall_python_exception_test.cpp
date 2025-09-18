@@ -54,9 +54,9 @@ TEST_F(metacall_python_exception_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
 
-		EXPECT_EQ((int)0, (int)strcmp("yeet", ex.message));
+		EXPECT_STREQ("yeet", ex.message);
 
-		EXPECT_EQ((int)0, (int)strcmp("TypeError", ex.label));
+		EXPECT_STREQ("TypeError", ex.label);
 
 		metacall_value_destroy(ret);
 
@@ -64,9 +64,9 @@ TEST_F(metacall_python_exception_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
 
-		EXPECT_EQ((int)0, (int)strcmp("asdf", ex.message));
+		EXPECT_STREQ("asdf", ex.message);
 
-		EXPECT_EQ((int)0, (int)strcmp("BaseException", ex.label));
+		EXPECT_STREQ("BaseException", ex.label);
 
 		metacall_value_destroy(ret);
 	}

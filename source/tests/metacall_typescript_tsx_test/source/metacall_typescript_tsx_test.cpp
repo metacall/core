@@ -52,7 +52,7 @@ TEST_F(metacall_tsx_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "<h1 data-reactroot=\"\">Hello metaprogrammer</h1>"));
+		EXPECT_STREQ(metacall_value_to_string(ret), "<h1 data-reactroot=\"\">Hello metaprogrammer</h1>");
 
 		metacall_value_destroy(ret);
 	}

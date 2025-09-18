@@ -59,7 +59,7 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 			struct await_data_type *await_data = static_cast<struct await_data_type *>(data);
 			std::unique_lock<std::mutex> lock(await_data->m);
 			const char *str = metacall_value_to_string(v);
-			EXPECT_EQ((int)0, (int)strcmp(str, "Tests passed without errors"));
+			EXPECT_STREQ(str, "Tests passed without errors");
 			await_data->c.notify_one();
 			return NULL;
 		};

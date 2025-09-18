@@ -49,7 +49,7 @@ TEST_F(metacall_python_open_test, DefaultConstructor)
 
 		const char *result = metacall_value_to_string(ret);
 
-		EXPECT_NE((int)0, (int)strcmp(result, "<html><head></head><body>Error</body></html>"));
+		EXPECT_STRNE(result, "<html><head></head><body>Error</body></html>");
 
 		metacall_value_destroy(ret);
 
@@ -65,7 +65,7 @@ TEST_F(metacall_python_open_test, DefaultConstructor)
 
 		const char *token = metacall_value_to_string(ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(token, "eyJhbGciOiJIUzI1NiJ9.SGVsbG8gV29ybGQ.Iyc6PWVbK538giVdaInTeIO3jvvC1Vuy_czZUzoRRec"));
+		EXPECT_STREQ(token, "eyJhbGciOiJIUzI1NiJ9.SGVsbG8gV29ybGQ.Iyc6PWVbK538giVdaInTeIO3jvvC1Vuy_czZUzoRRec");
 
 		metacall_value_destroy(args[0]);
 

@@ -123,7 +123,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_cast_string(&ret), "Hello Universe"));
+		EXPECT_STREQ(metacall_value_cast_string(&ret), "Hello Universe");
 
 		metacall_value_destroy(ret);
 
@@ -209,7 +209,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_cast_string(&ret), "PepicoWalas"));
+		EXPECT_STREQ(metacall_value_cast_string(&ret), "PepicoWalas");
 
 		metacall_value_destroy(ret);
 		metacall_value_destroy(args[0]);
@@ -260,7 +260,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_cast_string(&ret), "Hello meta-programmer!"));
+		EXPECT_STREQ(metacall_value_cast_string(&ret), "Hello meta-programmer!");
 
 		metacall_value_destroy(ret);
 
@@ -344,7 +344,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_cast_string(&ret), "abcdef"));
+		EXPECT_STREQ(metacall_value_cast_string(&ret), "abcdef");
 
 		metacall_value_destroy(ret);
 

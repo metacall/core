@@ -39,7 +39,7 @@ TEST_F(environment_test, variable_text)
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_text);
 
-	EXPECT_EQ((int)0, (int)strcmp(variable_text, "abcd"));
+	EXPECT_STREQ(variable_text, "abcd");
 
 	environment_variable_destroy(variable_text);
 }
@@ -52,7 +52,7 @@ TEST_F(environment_test, variable_text_default)
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_text);
 
-	EXPECT_EQ((int)0, (int)strcmp(variable_text, "default"));
+	EXPECT_STREQ(variable_text, "default");
 
 	environment_variable_destroy(variable_text);
 }
@@ -63,7 +63,7 @@ TEST_F(environment_test, variable_static)
 
 	const char *variable_text_static = environment_variable_get(variable_text_name, "default");
 
-	EXPECT_EQ((int)0, (int)strcmp(variable_text_static, "abcd"));
+	EXPECT_STREQ(variable_text_static, "abcd");
 }
 
 TEST_F(environment_test, variable_path)
@@ -74,7 +74,7 @@ TEST_F(environment_test, variable_path)
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_path);
 
-	EXPECT_EQ((int)0, (int)strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR));
+	EXPECT_STREQ(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR);
 
 	environment_variable_path_destroy(variable_path);
 }
@@ -87,7 +87,7 @@ TEST_F(environment_test, variable_path_default)
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_path);
 
-	EXPECT_EQ((int)0, (int)strcmp(variable_path, "default_path" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR));
+	EXPECT_STREQ(variable_path, "default_path" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR);
 
 	environment_variable_path_destroy(variable_path);
 }
@@ -100,7 +100,7 @@ TEST_F(environment_test, variable_path_sanitized)
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_path);
 
-	EXPECT_EQ((int)0, (int)strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR));
+	EXPECT_STREQ(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR);
 
 	environment_variable_path_destroy(variable_path);
 }
