@@ -131,7 +131,7 @@ TEST_F(metacall_loader_test, Python)
 
 	EXPECT_NE((value)NULL, (value)ret);
 
-	EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello Universe"));
+	EXPECT_STREQ(value_to_string(ret), "Hello Universe");
 
 	value_destroy(ret);
 }
@@ -167,7 +167,7 @@ TEST_F(metacall_loader_test, Ruby)
 
 	EXPECT_NE((value)NULL, (value)ret);
 
-	EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello meta-programmer!"));
+	EXPECT_STREQ(value_to_string(ret), "Hello meta-programmer!");
 
 	value_destroy(ret);
 }
@@ -207,7 +207,7 @@ TEST_F(metacall_loader_test, JavascriptV8)
 
 	EXPECT_NE((value)NULL, (value)ret);
 
-	EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "abcdef"));
+	EXPECT_STREQ(value_to_string(ret), "abcdef");
 
 	value_destroy(ret);
 }
@@ -251,7 +251,7 @@ TEST_F(metacall_loader_test, Mock)
 
 	EXPECT_NE((value)NULL, (value)ret);
 
-	EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello World"));
+	EXPECT_STREQ(value_to_string(ret), "Hello World");
 
 	value_destroy(ret);
 
@@ -259,7 +259,7 @@ TEST_F(metacall_loader_test, Mock)
 
 	EXPECT_NE((value)NULL, (value)ret);
 
-	EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello World"));
+	EXPECT_STREQ(value_to_string(ret), "Hello World");
 
 	value_destroy(ret);
 }

@@ -113,7 +113,7 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Hello from s1"));
+		EXPECT_STREQ(metacall_value_to_string(ret), "Hello from s1");
 
 		metacall_value_destroy(ret);
 
@@ -135,7 +135,7 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Hello from s2"));
+		EXPECT_STREQ(metacall_value_to_string(ret), "Hello from s2");
 
 		metacall_value_destroy(ret);
 	}

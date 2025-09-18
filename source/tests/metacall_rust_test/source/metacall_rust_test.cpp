@@ -94,13 +94,13 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 	// 	void *ret = metacall("string_len", "Test String");
 	// 	EXPECT_EQ((long)11, (long)metacall_value_to_long(ret));
 	// 	ret = metacall("new_string", 123);
-	// 	EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "get number 123"));
+	// 	EXPECT_STREQ(metacall_value_to_string(ret), "get number 123");
 	// 	metacall_value_destroy(ret);
 	// }
 
 	{
 		void *ret = metacall("str_slice", "hellow");
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "hel"));
+		EXPECT_STREQ(metacall_value_to_string(ret), "hel");
 		metacall_value_destroy(ret);
 	}
 

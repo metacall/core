@@ -37,7 +37,7 @@ void *callback_host(size_t argc, void *args[], void *data)
 
 	printf("Host callback: %s\n", str);
 
-	EXPECT_EQ((int)0, (int)strcmp(str, "some text"));
+	EXPECT_STREQ(str, "some text");
 
 	return metacall_value_create_int(25);
 }
@@ -86,7 +86,7 @@ TEST_F(metacall_python_loader_port_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_cast_string(&ret), "Hello meta-programmer!"));
+		EXPECT_STREQ(metacall_value_cast_string(&ret), "Hello meta-programmer!");
 
 		metacall_value_destroy(ret);
 

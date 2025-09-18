@@ -221,7 +221,7 @@ TEST_F(metacall_function_test, DefaultConstructor)
 
 		EXPECT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((int)0, (int)strcmp("hello world", metacall_value_to_string(ret)));
+		EXPECT_STREQ("hello world", metacall_value_to_string(ret));
 
 		metacall_value_destroy(ret);
 

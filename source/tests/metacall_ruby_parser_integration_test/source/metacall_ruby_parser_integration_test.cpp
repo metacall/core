@@ -74,7 +74,7 @@ TEST_F(metacall_ruby_parser_integration_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "call"));
+		EXPECT_STREQ(metacall_value_to_string(ret), "call");
 
 		metacall_value_destroy(ret);
 	}

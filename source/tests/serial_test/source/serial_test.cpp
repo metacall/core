@@ -35,9 +35,9 @@ public:
 
 		ASSERT_NE((serial)NULL, (serial)s);
 
-		EXPECT_EQ((int)0, (int)strcmp(name, serial_name(s)));
+		EXPECT_STREQ(name, serial_name(s));
 
-		EXPECT_EQ((int)0, (int)strcmp(extension, serial_extension(s)));
+		EXPECT_STREQ(extension, serial_extension(s));
 	}
 
 	const char *rapid_json_name()
@@ -140,7 +140,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 		EXPECT_EQ((size_t)sizeof(value_list_str), (size_t)serialize_size);
 		EXPECT_NE((char *)NULL, (char *)buffer);
-		EXPECT_EQ((int)0, (int)strcmp(buffer, value_list_str));
+		EXPECT_STREQ(buffer, value_list_str);
 
 		value_destroy(v);
 
@@ -161,7 +161,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 		EXPECT_EQ((size_t)sizeof(value_map_str), (size_t)serialize_size);
 		EXPECT_NE((value)NULL, (value)v);
-		EXPECT_EQ((int)0, (int)strcmp(buffer, value_map_str));
+		EXPECT_STREQ(buffer, value_map_str);
 
 		value *v_map = value_to_map(v);
 
@@ -189,7 +189,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 		EXPECT_EQ((size_t)sizeof(json_empty_array), (size_t)serialize_size);
 		EXPECT_NE((value)NULL, (value)v);
-		EXPECT_EQ((int)0, (int)strcmp(buffer, json_empty_array));
+		EXPECT_STREQ(buffer, json_empty_array);
 
 		value_destroy(v);
 
@@ -206,7 +206,7 @@ TEST_F(serial_test, DefaultConstructor)
 		EXPECT_NE((value *)NULL, (value *)v_array);
 
 		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(v_array[0]));
-		EXPECT_EQ((int)0, (int)strcmp(value_to_string(v_array[0]), "asdf"));
+		EXPECT_STREQ(value_to_string(v_array[0]), "asdf");
 
 		EXPECT_EQ((type_id)TYPE_INT, (type_id)value_type_id(v_array[1]));
 		EXPECT_EQ((int)443, (int)value_to_int(v_array[1]));
@@ -237,7 +237,7 @@ TEST_F(serial_test, DefaultConstructor)
 		value *tupla = value_to_array(v_map[0]);
 
 		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(tupla[0]));
-		EXPECT_EQ((int)0, (int)strcmp(value_to_string(tupla[0]), "abc"));
+		EXPECT_STREQ(value_to_string(tupla[0]), "abc");
 
 		EXPECT_EQ((type_id)TYPE_FLOAT, (type_id)value_type_id(tupla[1]));
 		EXPECT_EQ((float)9.9f, (float)value_to_float(tupla[1]));
@@ -250,7 +250,7 @@ TEST_F(serial_test, DefaultConstructor)
 		tupla = value_to_array(v_map[1]);
 
 		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(tupla[0]));
-		EXPECT_EQ((int)0, (int)strcmp(value_to_string(tupla[0]), "cde"));
+		EXPECT_STREQ(value_to_string(tupla[0]), "cde");
 
 		EXPECT_EQ((type_id)TYPE_FLOAT, (type_id)value_type_id(tupla[1]));
 		EXPECT_EQ((float)1.5f, (float)value_to_float(tupla[1]));

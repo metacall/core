@@ -53,7 +53,7 @@ TEST_F(metacall_node_exception_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
 
-		EXPECT_EQ((int)0, (int)strcmp("Yeet", ex.message));
+		EXPECT_STREQ("Yeet", ex.message);
 
 		metacall_value_destroy(ret);
 
@@ -61,7 +61,7 @@ TEST_F(metacall_node_exception_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
 
-		EXPECT_EQ((int)0, (int)strcmp("YeetThrown", ex.message));
+		EXPECT_STREQ("YeetThrown", ex.message);
 
 		metacall_value_destroy(ret);
 

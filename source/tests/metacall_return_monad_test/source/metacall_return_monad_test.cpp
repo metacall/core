@@ -78,7 +78,7 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 
 		EXPECT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((int)0, (int)strcmp("asd", metacall_value_to_string(ret)));
+		EXPECT_STREQ("asd", metacall_value_to_string(ret));
 
 		value_str = metacall_serialize(metacall_serial(), ret, &size, allocator);
 

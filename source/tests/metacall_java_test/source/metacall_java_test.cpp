@@ -102,8 +102,8 @@ TEST_F(metacall_java_test, DefaultConstructor)
 			{ //GET ARRAYS
 				void *str_test = metacall_class_static_get(myclass, "STRING_TEST_Arr");
 				void **str_test_arr = metacall_value_to_array(str_test);
-				ASSERT_EQ((int)0, (int)strcmp(metacall_value_to_string(str_test_arr[0]), "Hello"));
-				ASSERT_EQ((int)0, (int)strcmp(metacall_value_to_string(str_test_arr[1]), "world"));
+				ASSERT_STREQ(metacall_value_to_string(str_test_arr[0]), "Hello");
+				ASSERT_STREQ(metacall_value_to_string(str_test_arr[1]), "world");
 				metacall_value_destroy(str_test);
 
 				void *class_test = metacall_class_static_get(myclass, "CLASS_TEST_Arr");

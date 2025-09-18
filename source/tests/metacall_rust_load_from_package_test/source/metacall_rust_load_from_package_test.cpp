@@ -93,7 +93,7 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 	// 	void *ret = metacall("string_len", "Test String");
 	// 	EXPECT_EQ((long)11, (long)metacall_value_to_long(ret));
 	// 	ret = metacall("new_string", 123);
-	// 	EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "get number 123"));
+	// 	EXPECT_STREQ(metacall_value_to_string(ret), "get number 123");
 	// 	metacall_value_destroy(ret);
 	// }
 

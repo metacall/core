@@ -111,7 +111,7 @@ TEST_F(detour_test, DefaultConstructor)
 
 	ASSERT_NE((detour)NULL, (detour)d);
 
-	EXPECT_EQ((int)0, (int)strcmp(name, detour_name(d)));
+	EXPECT_STREQ(name, detour_name(d));
 
 	/* Load detour of detour library */
 	handle = detour_load_file(d, NULL);

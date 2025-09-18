@@ -31,7 +31,7 @@ TEST_F(metacall_version_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int)0, (int)strcmp(METACALL_VERSION, metacall_version_str()));
+	ASSERT_STREQ(METACALL_VERSION, metacall_version_str());
 
 	/* TODO: Test other version functions */
 }
