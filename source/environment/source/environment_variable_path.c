@@ -43,61 +43,32 @@
 
 /* -- Methods -- */
 
-char *environment_variable_path_create(const char *name, const char *default_path, size_t default_path_size, size_t *env_size)
+char *environment_variable_path_create(const char *const name, const char *const default_path, const size_t default_path_size, size_t *const env_size)
 {
-	const char *path_ptr = getenv(name);
-	char *path;
-	size_t length, size, last, end;
-
-	if (path_ptr == NULL)
+	const char *value = getenv(name);
+	size_t size;
+	if (value)
+		size = strlen(value) + 1;
+	else if (default_path)
 	{
-		if (default_path == NULL)
-		{
-			static const char empty_path[] = "";
-
-			default_path = empty_path;
-			default_path_size = sizeof(empty_path);
-		}
-
-		path_ptr = default_path;
-		length = default_path_size - 1;
+		value = default_path;
+		size = default_path_size;
 	}
 	else
 	{
-		length = strlen(path_ptr);
+		value = ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR;
+		size = sizeof(ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR);
 	}
-
-	last = length - 1;
-
-	if (ENVIRONMENT_VARIABLE_PATH_SEPARATOR(path_ptr[last]))
-	{
-		end = length;
-		size = length + 1;
-	}
-	else
-	{
-		last = length;
-		end = length + 1;
-		size = length + 2;
-	}
-
-	path = malloc(sizeof(char) * size);
-
-	if (path == NULL)
-	{
-		return NULL;
-	}
-
-	strncpy(path, path_ptr, length);
-
-	path[last] = ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C;
-	path[end] = '\0';
-
-	if (env_size != NULL)
-	{
-		*env_size = size;
-	}
-
+	size_t alloc_size = size;
+	if (size > 1)
+		alloc_size += !ENVIRONMENT_VARIABLE_PATH_SEPARATOR(value[size - 2]);
+	char *const path = malloc(sizeof(char) * alloc_size);
+	memcpy(path, value, sizeof(char) * size);
+	if (size > 1)
+		path[alloc_size - 2] = ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C;
+	path[alloc_size - 1] = '\0';
+	if (env_size)
+		*env_size = alloc_size;
 	return path;
 }
 

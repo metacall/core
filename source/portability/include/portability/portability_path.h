@@ -109,9 +109,55 @@ extern "C" {
 
 /* -- Methods -- */
 
-PORTABILITY_API size_t portability_path_get_name(const char *path, size_t path_size, char *name, size_t name_size);
+/**
+ * @brief
+ *   Get the file name portion out of a path and strip away the file extension if any.
+ *
+ *   If `path` is NULL this will return an empty string.
+ *
+ *   If `name` is NULL or `name_size is 0 this will return the size it requires in order to write `name`.
+ *
+ *   If `path` or `name` are not NULL, then `path_size` or `name_size`, respectively, must be set to <= the length (including 0-terminator) of the memory regions pointed to by `path` and `name`.
+ * @param[in] path
+ *   The full path to extract the name from.
+ * @param[in] path_size
+ *   The length (including 0-terminator) of `path` in chars.
+ * @param[out] name
+ *   The memory location to write the extracted name to. If `NULL` the size required will be returned instead of the size written.
+ * @param[in] name_size
+ *   The size of the memory location pointed to by `name`.
+ * @return
+ *   The size of the name.
+ */
+PORTABILITY_API size_t portability_path_get_name(const char *const path, const size_t path_size, char *const name, const size_t name_size);
 
-PORTABILITY_API size_t portability_path_get_name_canonical(const char *path, size_t path_size, char *name, size_t name_size);
+/**
+ * @brief
+ *   Get the file name portion out of a path and strip away any amount of file extensions.
+ *
+ *   When called with `"/foo/bar.baz.qux"`:
+ *
+ *     - `portability_path_get_name` will produce the string `"bar.baz"`
+ *
+ *     - `portability_path_get_name_canonical` will produce the string `"bar"`
+ *
+ *   If `path` is NULL this will return an empty string.
+ *
+ *   If `name` is NULL or `name_size is 0 this will return the size it requires in order to write `name`.
+ *
+ *   If `path` or `name` are not NULL, then `path_size` or `name_size`, respectively, must be set to <= the length (including 0-terminator) of the memory regions pointed to by `path` and `name`.
+ * @param[in] path
+ *   The full path to extract the name from.
+ * @param[in] path_size
+ *   The length (including 0-terminator) of `path` in chars.
+ * @param[out] name
+ *   The memory location to write the extracted name to. If `NULL` the size required will be returned instead of the size written.
+ * @param[in] name_size
+ *   The size of the memory location pointed to by `name`.
+ * @return
+ *   The size of the name.
+ */
+PORTABILITY_API size_t portability_path_get_name_canonical(const char *const path, const size_t path_size, char *const name, const size_t name_size);
 
 PORTABILITY_API size_t portability_path_get_fullname(const char *path, size_t path_size, char *name, size_t name_size);
 
