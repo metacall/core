@@ -9,17 +9,14 @@ endif()
 
 # Target name
 set(target cxx_port)
-string(TOLOWER ${META_PROJECT_NAME} target_name)
-
-set(target_export "${META_PROJECT_NAME}-cxx")
 
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
 # Set API export file and macro
-string(TOUPPER ${target_name} target_name_upper)
-set(export_file  "include/${target_name}/${target_name}_api.hpp")
-set(export_macro "${target_name_upper}_API")
+string(TOUPPER ${target} target_upper)
+set(export_file  "include/${target}/${target}_api.h")
+set(export_macro "${target_upper}_API")
 
 #
 # Compiler warnings
@@ -37,8 +34,8 @@ include(SecurityFlags)
 # Sources
 #
 
-set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/${target_name}")
-set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target_name}")
+set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/metacall")
+set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/metacall")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(inlines
@@ -79,7 +76,7 @@ add_library(${target}
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 # Export library for downstream projects
-export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target_name}/${target_export}-export.cmake)
+export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
 
 # Create API export header
 generate_export_header(${target}
@@ -100,12 +97,16 @@ set_target_properties(${target}
 #
 # Include directories
 #
+
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
+
+	${PROJECT_BINARY_DIR}/source/inline
 	${CMAKE_CURRENT_SOURCE_DIR}/inline
+	${CMAKE_CURRENT_BINARY_DIR}/inline
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -114,6 +115,26 @@ target_include_directories(${target}
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 	$<INSTALL_INTERFACE:include>
+
+
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inline>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/inline>
+	$<INSTALL_INTERFACE:inline>
+)
+
+#
+# Libraries
+#
+
+target_link_libraries(${target}
+	PRIVATE
+	${META_PROJECT_NAME}::metacall
+
+	PUBLIC
+	${DEFAULT_LIBRARIES}
+
+	INTERFACE
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -122,9 +143,10 @@ target_include_directories(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	${target_upper}_EXPORTS # Export API
 
 	PUBLIC
-	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_name_upper}_STATIC_DEFINE>
+	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
 
 	INTERFACE
@@ -155,72 +177,3 @@ target_link_options(${target}
 
 	INTERFACE
 )
-
-#
-# Deployment
-#
-
-# Library
-install(TARGETS ${target}
-	EXPORT  "${target_export}-export"		COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
-)
-
-# Inline files
-install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/inline/${target_name} DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# Header files
-install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/include/${target_name} DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# Generated header files
-install(DIRECTORY
-	${CMAKE_CURRENT_BINARY_DIR}/include/${target_name} DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# CMake config
-install(EXPORT	${target_export}-export
-	NAMESPACE	${META_PROJECT_NAME}::
-	DESTINATION	${INSTALL_CMAKE}/${target_name}
-	COMPONENT	dev
-)
-
-# TODO
-
-# #
-# # Configure test
-# #
-
-# set(metacall_cxx_test "${target}_test")
-# set(metacall_cxx_test_path "${CMAKE_CURRENT_BINARY_DIR}/${metacall_cxx_test}.cpp")
-
-# #
-# # Define test
-# #
-
-# add_test(NAME ${metacall_cxx_test}
-# 	COMMAND $<TARGET_FILE:${metacall_cxx_test}>
-# )
-
-# #
-# # Define test labels
-# #
-
-# set_property(TEST ${metacall_cxx_test}
-# 	PROPERTY LABELS ${metacall_cxx_test}
-# )
-
-# include(TestEnvironmentVariables)
-
-# test_environment_variables(${metacall_cxx_test}
-# 	""
-# 	${TESTS_ENVIRONMENT_VARIABLES}
-# )

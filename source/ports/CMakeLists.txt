@@ -28,7 +28,7 @@ endif()
 
 # Project options
 option(OPTION_BUILD_PORTS_CS	"Build C# port."				OFF)
-option(OPTION_BUILD_PORTS_CXX	"Build C++ port."				OFF)
+option(OPTION_BUILD_PORTS_CXX	"Build C++ port."				ON)
 option(OPTION_BUILD_PORTS_D		"Build D port."					OFF)
 option(OPTION_BUILD_PORTS_GO	"Build Go port."				OFF)
 option(OPTION_BUILD_PORTS_JAVA	"Build Java port."				OFF)

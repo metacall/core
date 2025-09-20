@@ -23,7 +23,7 @@
 
 /* -- Headers -- */
 
-#include <metacall/metacall_api.hpp>
+#include <metacall/metacall_api.h>
 
 #include <string>
 
