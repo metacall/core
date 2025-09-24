@@ -177,3 +177,19 @@ target_link_options(${target}
 
 	INTERFACE
 )
+
+#
+# Deployment
+#
+
+# Header files
+install(DIRECTORY
+	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
+)
+
+# Inline files
+install(DIRECTORY
+	${CMAKE_CURRENT_SOURCE_DIR}/inline/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
+)

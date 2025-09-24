@@ -46,6 +46,23 @@ void *cxx_map_test(size_t argc, void *args[], void *data)
 	return metacall_value_create_null();
 }
 
+void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
+{
+	map<std::string, float> m(args[0]);
+
+	(void)argc;
+	(void)data;
+
+	EXPECT_EQ((float)m["hello"], (float)3.0f);
+	EXPECT_EQ((float)m["world"], (float)4.0f);
+
+	printf("hello => %f\n", m["hello"]);
+	printf("world => %f\n", m["world"]);
+	fflush(stdout);
+
+	return metacall_value_create_null();
+}
+
 TEST_F(metacall_cxx_port_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
@@ -70,6 +87,28 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
+
+	/*
+	{
+		map<std::string, map<std::string, float>> m = {
+			{ "hello", { "world", 4.0f } },
+		};
+
+		void *args[] = {
+			m.to_raw()
+		};
+
+		metacall_register("cxx_recursive_map_test", cxx_recursive_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+
+		void *ret = metacallv_s("cxx_recursive_map_test", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+		metacall_value_destroy(ret);
+	}
+	*/
 
 	/* Print inspect information */
 	{

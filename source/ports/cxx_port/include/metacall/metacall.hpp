@@ -53,11 +53,8 @@ public:
 protected:
 	std::unique_ptr<void, void (*)(void *)> value_ptr;
 
-	explicit value_base(void *value_ptr, void (*destructor)(void *) = &noop_destructor) :
-		// TODO: &metacall_value_destroy
-		value_ptr(value_ptr, destructor)
-	{
-	}
+	explicit value_base(void *value_ptr, void (*destructor)(void *) = &metacall_value_destroy) :
+		value_ptr(value_ptr, destructor) {}
 
 	static void noop_destructor(void *) {}
 };
@@ -66,8 +63,8 @@ template <typename T>
 class METACALL_API value : public value_base
 {
 public:
-	explicit value(const T &v) :
-		value_base(create(v))
+	explicit value(const T &v, void (*destructor)(void *) = &metacall_value_destroy) :
+		value_base(create(v), destructor)
 	{
 		if (value_ptr == nullptr)
 		{
@@ -365,7 +362,7 @@ public:
 			void **tuple_array = metacall_value_to_array(tuple);
 
 			// Create the pair
-			auto value_pair = std::make_pair(value<K>(pair.first), value<V>(pair.second));
+			auto value_pair = std::make_pair(value<K>(pair.first, &value_base::noop_destructor), value<V>(pair.second, &value_base::noop_destructor));
 
 			// Insert into metacall value map
 			tuple_array[0] = value_pair.first.to_raw();
