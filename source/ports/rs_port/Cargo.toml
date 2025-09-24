@@ -17,7 +17,13 @@ name = "metacall"
 path = "src/lib.rs"
 
 [dependencies]
-metacall-inline = { path = "./inline", version = "0.2.0" }
+metacall-inline = { path = "./inline" }
 
 [build-dependencies]
-metacall-sys = { path = "./sys", version = "0.1.2" }
+metacall-sys = { path = "./sys" }
+
+[workspace]
+members = [
+    "inline",
+    "sys",
+]
