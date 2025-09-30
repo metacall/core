@@ -184,12 +184,12 @@ target_link_options(${target}
 
 # Header files
 install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	${CMAKE_CURRENT_SOURCE_DIR}/include/metacall DESTINATION ${INSTALL_INCLUDE}
 	COMPONENT dev
 )
 
 # Inline files
 install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/inline/${target} DESTINATION ${INSTALL_INCLUDE}
+	${CMAKE_CURRENT_SOURCE_DIR}/inline/metacall DESTINATION ${INSTALL_INCLUDE}
 	COMPONENT dev
 )

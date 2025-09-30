@@ -42,7 +42,7 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Build Test the Rust Port
+      - name: Build the Rust Port
         working-directory: source/ports/rs_port
         run: cargo build --verbose
 
