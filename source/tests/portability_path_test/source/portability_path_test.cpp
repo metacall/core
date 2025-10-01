@@ -68,6 +68,33 @@ TEST_F(portability_path_test, portability_path_test_path_get_module_name_with_ra
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
+TEST_F(portability_path_test, portability_path_test_path_get_name_null)
+{
+	static const char result[] = "";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(NULL, 0, name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_path_get_name_empty)
+{
+	static const char base[] = "";
+	static const char result[] = "";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
 TEST_F(portability_path_test, portability_path_test_path_get_name)
 {
 	static const char base[] = "/a/b/c/asd.txt";
@@ -99,6 +126,34 @@ TEST_F(portability_path_test, portability_path_test_path_get_name_end_dot)
 TEST_F(portability_path_test, portability_path_test_path_get_name_without_dot)
 {
 	static const char base[] = "/a/b/c/asd";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_path_get_name_dot_in_path)
+{
+	static const char base[] = "/a/b.c/d/asd";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_path_get_name_dot_in_path_and_name)
+{
+	static const char base[] = "/a/b.c/d/asd.txt";
 	static const char result[] = "asd";
 
 	string_name name;

@@ -25,107 +25,81 @@
 /* Define separator checking for any platform */
 #define PORTABILITY_PATH_SEPARATOR_ALL(chr) (chr == '\\' || chr == '/')
 
-size_t portability_path_get_name(const char *path, size_t path_size, char *name, size_t name_size)
+static size_t basename_offset(const char *const path, const size_t path_size)
 {
-	size_t i, count, last;
-
-	if (path == NULL || name == NULL)
-	{
-		return 0;
-	}
-
-	for (i = 0, count = 0, last = 0; path[i] != '\0' && i < path_size && count < name_size; ++i)
-	{
-		name[count++] = path[i];
-
-		if (PORTABILITY_PATH_SEPARATOR(path[i]))
-		{
-			count = 0;
-		}
-		else if (path[i] == '.')
-		{
-			if (i > 0 && path[i - 1] == '.')
-			{
-				last = 0;
-				count = 0;
-			}
-			else
-			{
-				if (count > 0)
-				{
-					last = count - 1;
-				}
-				else
-				{
-					last = 0;
-				}
-			}
-		}
-	}
-
-	if ((last == 0 && count > 1) || last > count)
-	{
-		last = count;
-	}
-
-	name[last] = '\0';
-
-	return last + 1;
+	size_t offset = path_size;
+	for (; offset != 0; offset--)
+		if (PORTABILITY_PATH_SEPARATOR(path[offset - 1]))
+			break;
+	return offset;
 }
 
-size_t portability_path_get_name_canonical(const char *path, size_t path_size, char *name, size_t name_size)
+size_t portability_path_get_name(const char *const path, const size_t path_size, char *const name, const size_t name_size)
 {
-	if (path == NULL || name == NULL)
+	if (path == NULL)
 	{
-		return 0;
+		if (name == NULL || name_size == 0)
+			return 0;
+		name[0] = '\0';
+		return 1;
 	}
+	// find rightmost path separator
+	const size_t name_start = basename_offset(path, path_size);
+	// Find rightmost dot
+	size_t rightmost_dot = path_size;
+	for (; rightmost_dot != name_start; rightmost_dot--)
+		if (path[rightmost_dot - 1] == '.')
+			break;
+	// No dots found, or name starts with dot and is non-empty, use whole name
+	if (rightmost_dot == name_start || (rightmost_dot == name_start + 1 && rightmost_dot != path_size - 1))
+		rightmost_dot = path_size - 1;
+	// remove all consecutive dots at the end
+	while (rightmost_dot != name_start && path[rightmost_dot - 1] == '.')
+		rightmost_dot--;
+	const size_t length = rightmost_dot - name_start;
+	const size_t size = length + 1;
+	// Return required size
+	if (name == NULL || size > name_size)
+		return size;
+	if (length)
+		memcpy(name, path + name_start, length);
+	name[length] = '\0';
+	return size;
+}
 
-	size_t i, count, last;
-
-	for (i = 0, count = 0, last = 0; path[i] != '\0' && i < path_size && count < name_size; ++i)
+size_t portability_path_get_name_canonical(const char *const path, const size_t path_size, char *const name, const size_t name_size)
+{
+	if (path == NULL)
 	{
-		name[count++] = path[i];
-
-		if (PORTABILITY_PATH_SEPARATOR(path[i]))
-		{
-			count = 0;
-		}
-		else if (path[i] == '.')
-		{
-			if (i > 0 && path[i - 1] == '.')
-			{
-				last = 0;
-				count = 0;
-			}
-			else
-			{
-				if (count > 0)
-				{
-					last = count - 1;
-				}
-				else
-				{
-					last = 0;
-				}
-
-				/* This function is the same as portability_path_get_name but
-				returns the name of the file without any extension, for example:
-					- portability_path_get_name of libnode.so.72 is libnode.so
-					- portability_path_get_name_canonical of libnode.so.72 is libnode
-				*/
+		if (name == NULL || name_size == 0)
+			return 0;
+		name[0] = '\0';
+		return 1;
+	}
+	// find rightmost path separator
+	const size_t name_start = basename_offset(path, path_size);
+	// find leftmost dot
+	size_t leftmost_dot = name_start;
+	for (; leftmost_dot < path_size; leftmost_dot++)
+		if (path[leftmost_dot] == '.')
+			break;
+	// No dots found, use whole name
+	if (leftmost_dot == path_size)
+		leftmost_dot--;
+	// name starts with dot, use the following dot instead
+	if (leftmost_dot == name_start)
+		for (leftmost_dot = name_start + 1; leftmost_dot < path_size; leftmost_dot++)
+			if (path[leftmost_dot] == '.')
 				break;
-			}
-		}
-	}
-
-	if (last == 0 && count > 1)
-	{
-		last = count;
-	}
-
-	name[last] = '\0';
-
-	return last + 1;
+	const size_t length = leftmost_dot - name_start;
+	const size_t size = length + 1;
+	// Return required size
+	if (name == NULL || size > name_size)
+		return size;
+	if (length)
+		memcpy(name, path + name_start, length);
+	name[length] = '\0';
+	return size;
 }
 
 size_t portability_path_get_fullname(const char *path, size_t path_size, char *name, size_t name_size)

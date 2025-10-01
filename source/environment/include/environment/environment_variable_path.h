@@ -52,7 +52,31 @@ extern "C" {
 
 /* -- Methods -- */
 
-ENVIRONMENT_API char *environment_variable_path_create(const char *name, const char *default_path, size_t default_path_size, size_t *env_size);
+/**
+ * @brief
+ *   If the value of `name` exists as an environment variable, return a live string of its value, otherwise return a live value of `default_path` or "/".
+ *
+ *   `name` should not be `NULL`.
+ *
+ *   If `default_path` is not `NULL`, `default_path_size` must be set to <= the length (including 0-terminator) of the `default_path` string.
+ *
+ *   If `env_size` is not `NULL`, the length (including 0-terminator) of the returned string will be set to it
+ * @param[in] name
+ *   The environment variable name to look up.
+ *
+ * @param[in] default_path
+ *   If the environment variable value is not found, the value to return instead.
+ *
+ * @param[in] default_path_size
+ *   The length (including 0-terminator) of `default_path` in chars.
+ *
+ * @param[out] env_size
+ *   Pointer to a size_t to write the length of the returned string to (optional).
+ *
+ * @return
+ *   The allocated string containing the environment variable value or the default or "/".
+ */
+ENVIRONMENT_API char *environment_variable_path_create(const char *const name, const char *const default_path, const size_t default_path_size, size_t *const env_size);
 
 ENVIRONMENT_API void environment_variable_path_destroy(char *variable_path);
 
