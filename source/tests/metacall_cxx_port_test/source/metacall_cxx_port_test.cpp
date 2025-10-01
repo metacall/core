@@ -46,22 +46,23 @@ void *cxx_map_test(size_t argc, void *args[], void *data)
 	return metacall_value_create_null();
 }
 
+// TODO:
+/*
 void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
 {
-	map<std::string, float> m(args[0]);
+	map<std::string, map<std::string, float>> m(args[0]);
 
 	(void)argc;
 	(void)data;
 
-	EXPECT_EQ((float)m["hello"], (float)3.0f);
-	EXPECT_EQ((float)m["world"], (float)4.0f);
+	EXPECT_EQ((float)m["hello"]["world"], (float)4.0f);
 
-	printf("hello => %f\n", m["hello"]);
-	printf("world => %f\n", m["world"]);
+	printf("hello => %f\n", m["hello"]["world"]);
 	fflush(stdout);
 
 	return metacall_value_create_null();
 }
+*/
 
 TEST_F(metacall_cxx_port_test, DefaultConstructor)
 {
@@ -88,10 +89,11 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 	}
 
+	// TODO:
 	/*
 	{
 		map<std::string, map<std::string, float>> m = {
-			{ "hello", { "world", 4.0f } },
+			{ "hello", { "world", 4.0f } }
 		};
 
 		void *args[] = {

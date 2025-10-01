@@ -336,7 +336,7 @@ inline std::nullptr_t value<std::nullptr_t>::to_value() const
 	return nullptr;
 }
 
-// TODO: Array, Map, Future, Function, Class, Object, Exception, Throwable...
+// TODO: Future, Function, Class, Object, Exception, Throwable...
 
 template <typename K, typename V>
 class METACALL_API map : public value_base
@@ -386,6 +386,17 @@ public:
 		rehash();
 	}
 
+	V operator[](const K &key) const
+	{
+		return m.at(key).second.to_value();
+	}
+
+	static enum metacall_value_id id()
+	{
+		return METACALL_MAP;
+	}
+
+protected:
 	void rehash()
 	{
 		void *ptr = value_ptr.get();
@@ -406,31 +417,7 @@ public:
 		}
 	}
 
-	V operator[](const K &key) const
-	{
-		return m.at(key).second.to_value();
-	}
-
 private:
-	/*
-	// Case 1: value is value_base (e.g. nested metacall map value)
-	template <typename T>
-	static typename std::enable_if<std::is_base_of<value_base, T>::value, value<T>>::type
-	wrap_value(const T &v)
-	{
-		return const_cast<T &>(v);
-	}
-
-	// Case 2: value is a plain type
-	template <typename T>
-	static typename std::enable_if<!std::is_base_of<value_base, T>::value, value<T>>::type
-	wrap_value(const T &v)
-	{
-		value<T> val(v);
-		return val;
-	}
-	*/
-
 	std::unordered_map<K, pair_value_type> m;
 };
 
