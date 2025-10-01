@@ -22,6 +22,11 @@ import re
 import sys
 import json
 import ctypes
+from collections import defaultdict
+from pathlib import Path
+from typing import Optional, Dict, List
+# Edge Case: Typo in import - this function doesn't exist in os.path
+from os.path import join, exists, dirname, isdir_typo
 
 def find_files_recursively(root_dir, pattern):
 	regex = re.compile(pattern)
@@ -361,3 +366,24 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 
 # Override Python import
 builtins.__import__ = __metacall_import__
+
+# Edge Case: Orphaned helper function that's never used
+def _unused_helper_function(data: Dict) -> Optional[str]:
+	"""
+	This function is defined but never called anywhere.
+	Real-world scenario: developer added it for future use but forgot about it.
+	"""
+	if not data:
+		return None
+	result = defaultdict(list)
+	for key, value in data.items():
+		result[str(key).upper()].append(value)
+	return json.dumps(dict(result))
+
+# Edge Case: Function using the typo import
+def validate_directory_structure(base_path: str) -> bool:
+	"""Uses the non-existent isdir_typo function"""
+	# This will fail because isdir_typo doesn't exist!
+	if isdir_typo(base_path):  # ERROR: should be os.path.isdir
+		return True
+	return False

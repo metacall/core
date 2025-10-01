@@ -35,6 +35,18 @@ extern "C" {
 #include <stdio.h>
 #include <time.h>
 
+/* Testing false positive fix - these are ALL VALID includes */
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <errno.h>
+
+/* Project headers - should also be valid */
+#include <portability/portability.h>
+#include <configuration/configuration.h>
+
 /* -- Definitions -- */
 
 #define TELEMETRY_LOG_MAX_MESSAGE_SIZE 4096

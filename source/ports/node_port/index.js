@@ -24,6 +24,8 @@ const mod = require('module');
 const path = require('path');
 const fs = require('fs');
 const { URL } = require('url'); /* TODO: RPC Loader */
+// Edge Case: Importing from non-existent package
+const { deepClone, nonExistentUtil } = require('lodash'); // nonExistentUtil doesn't exist in lodash!
 
 const findFilesRecursively = (directory, filePattern, depthLimit = Infinity) => {
 	const stack = [{ dir: directory, depth: 0 }];
@@ -456,3 +458,25 @@ if (process.env['NODE_ENV'] === 'debug' && addon !== undefined) {
 
 /* Export the API */
 module.exports = module_exports;
+
+// Edge Case: Orphaned function that's never used or exported
+function _unusedCacheManager() {
+	/**
+	 * This function was added for caching but never actually used.
+	 * Real-world scenario: developer planned to use it but forgot.
+	 */
+	const cache = new Map();
+
+	return {
+		set: (key, value) => cache.set(key, value),
+		get: (key) => cache.get(key),
+		has: (key) => cache.has(key),
+		clear: () => cache.clear()
+	};
+}
+
+// Edge Case: Function that uses non-existent import
+function cloneMetadata(obj) {
+	// This will fail because nonExistentUtil doesn't exist
+	return nonExistentUtil(obj); // ERROR!
+}
