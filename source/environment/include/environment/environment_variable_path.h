@@ -54,13 +54,11 @@ extern "C" {
 
 /**
  * @brief
- *   If the value of `name` exists as an environment variable, return a live string of its value, otherwise return a live value of `default_path` or "/".
+ *   If the value of @name exists as an environment variable, return a live string of its value, otherwise return a live value of @default_path or "/".
+ *   @name should not be NULL.
+ *   If @default_path is not NULL, @default_path_size must be set to <= the length (including null-terminator) of the @default_path string.
+ *   If @env_size is not NULL, the length (including null-terminator) of the returned string will be set to it.
  *
- *   `name` should not be `NULL`.
- *
- *   If `default_path` is not `NULL`, `default_path_size` must be set to <= the length (including 0-terminator) of the `default_path` string.
- *
- *   If `env_size` is not `NULL`, the length (including 0-terminator) of the returned string will be set to it
  * @param[in] name
  *   The environment variable name to look up.
  *
@@ -68,7 +66,7 @@ extern "C" {
  *   If the environment variable value is not found, the value to return instead.
  *
  * @param[in] default_path_size
- *   The length (including 0-terminator) of `default_path` in chars.
+ *   The length (including null-terminator) of @default_path in chars.
  *
  * @param[out] env_size
  *   Pointer to a size_t to write the length of the returned string to (optional).
