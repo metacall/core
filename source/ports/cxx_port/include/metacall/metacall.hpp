@@ -86,7 +86,6 @@ public:
 		throw std::runtime_error("Unsupported MetaCall value");
 	}
 
-private:
 	// Type-specific creation (calls specialized version below)
 	static void *create(const T &v);
 
@@ -338,6 +337,123 @@ inline std::nullptr_t value<std::nullptr_t>::to_value() const
 
 // TODO: Future, Function, Class, Object, Exception, Throwable...
 
+class METACALL_API value_ref
+{
+public:
+	explicit value_ref(void *ptr) :
+		ptr(ptr) {}
+
+	template <typename T>
+	T as() const
+	{
+		return value<T>(ptr).to_value();
+	}
+
+private:
+	void *ptr;
+};
+
+class METACALL_API array : public value_base
+{
+public:
+	template <typename... Args>
+	explicit array(Args &&...args) :
+		value_base(create(std::forward<Args>(args)...), &metacall_value_destroy)
+	{
+		if (value_ptr == nullptr)
+		{
+			throw std::runtime_error("Failed to create MetaCall array");
+		}
+	}
+
+	explicit array(void *array_value) :
+		value_base(array_value, &value_base::noop_destructor) {}
+
+	void **to_value() const
+	{
+		void **array_ptr = metacall_value_to_array(value_ptr.get());
+
+		if (array_ptr == NULL)
+		{
+			throw std::runtime_error("Invalid MetaCall array");
+		}
+
+		return array_ptr;
+	}
+
+	template <typename T>
+	T get(std::size_t index) const
+	{
+		void **array_ptr = to_value();
+
+		return value<T>(array_ptr[index]).to_value();
+	}
+
+	value_ref operator[](std::size_t index) const
+	{
+		void **array_ptr = to_value();
+
+		return value_ref(array_ptr[index]);
+	}
+
+	static enum metacall_value_id id()
+	{
+		return METACALL_ARRAY;
+	}
+
+private:
+	// Recursive function to create and fill the MetaCall array
+	template <typename... Args>
+	static void *create(Args &&...args)
+	{
+		constexpr std::size_t size = sizeof...(Args);
+
+		// Create the array with null data initially
+		void *array_value = metacall_value_create_array(NULL, size);
+
+		if (array_value == NULL)
+		{
+			throw std::runtime_error("Failed to create MetaCall value array");
+		}
+
+		// Get the internal C array
+		void **array_ptr = metacall_value_to_array(array_value);
+
+		// Helper to unpack the args into array
+		create_array(array_ptr, 0, std::forward<Args>(args)...);
+
+		return array_value;
+	}
+
+	// Recursive unpacking using fold expression (C++17+)
+	template <typename... Args>
+	static void create_array(void **array_ptr, std::size_t index, Args &&...args)
+	{
+		// Use initializer list trick to expand the pack
+		((
+			 array_ptr[index++] = value<std::decay_t<Args>>::create(std::forward<Args>(args))),
+			...);
+	}
+};
+
+template <>
+inline void *value<array>::create(const array &v)
+{
+	return metacall_value_copy(v.to_raw());
+}
+
+template <>
+inline enum metacall_value_id value<array>::id()
+{
+	return METACALL_ARRAY;
+}
+
+template <>
+inline array value<array>::to_value() const
+{
+	return array(to_raw());
+}
+
 template <typename K, typename V>
 class METACALL_API map : public value_base
 {
@@ -422,12 +538,11 @@ private:
 };
 
 template <typename... Ts>
-METACALL_API int metacall(std::string name, Ts... ts);
+METACALL_API int metacall(std::string name, Ts... ts)
+{
+	return 0;
+}
 
 } /* namespace metacall */
-
-// TODO: Move everything to metacall.inl
-
-#include <metacall/metacall.inl>
 
 #endif /* METACALL_HPP */

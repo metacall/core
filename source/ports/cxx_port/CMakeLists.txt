@@ -34,13 +34,8 @@ include(SecurityFlags)
 # Sources
 #
 
-set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/metacall")
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/metacall")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
-
-set(inlines
-	${inline_path}/metacall.inl
-)
 
 set(headers
 	${include_path}/metacall.hpp
@@ -51,11 +46,8 @@ set(sources
 )
 
 # Group source files
-set(inline_group "Inline Files")
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
-source_group_by_path(${inline_path} "\\\\.inl$"
-	${inline_group} ${inlines})
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 	${header_group} ${headers})
 source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
@@ -67,7 +59,6 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Build library
 add_library(${target}
-	${inlines}
 	${sources}
 	${headers}
 )
@@ -104,10 +95,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${PROJECT_BINARY_DIR}/source/inline
-	${CMAKE_CURRENT_SOURCE_DIR}/inline
-	${CMAKE_CURRENT_BINARY_DIR}/inline
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -115,11 +102,6 @@ target_include_directories(${target}
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 	$<INSTALL_INTERFACE:include>
-
-
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inline>
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/inline>
-	$<INSTALL_INTERFACE:inline>
 )
 
 #
@@ -166,6 +148,15 @@ target_compile_options(${target}
 )
 
 #
+# Compile features
+#
+
+target_compile_features(${target}
+	PRIVATE
+	cxx_std_17
+)
+
+#
 # Linker options
 #
 
@@ -185,11 +176,5 @@ target_link_options(${target}
 # Header files
 install(DIRECTORY
 	${CMAKE_CURRENT_SOURCE_DIR}/include/metacall DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# Inline files
-install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/inline/metacall DESTINATION ${INSTALL_INCLUDE}
 	COMPONENT dev
 )

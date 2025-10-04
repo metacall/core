@@ -46,6 +46,48 @@ void *cxx_map_test(size_t argc, void *args[], void *data)
 	return metacall_value_create_null();
 }
 
+void *cxx_array_test(size_t argc, void *args[], void *data)
+{
+	array a(args[0]);
+
+	(void)argc;
+	(void)data;
+
+	EXPECT_EQ((float)a[0].as<int>(), (int)3);
+	EXPECT_EQ((float)a[1].as<float>(), (float)4.0f);
+
+	EXPECT_EQ((float)a.get<int>(0), (int)3);
+	EXPECT_EQ((float)a.get<float>(1), (float)4.0f);
+
+	printf("a[0] => %d\n", a[0].as<int>());
+	printf("a[1] => %f\n", a[1].as<float>());
+	fflush(stdout);
+
+	return metacall_value_create_null();
+}
+
+void *cxx_map_array_test(size_t argc, void *args[], void *data)
+{
+	map<std::string, array> m(args[0]);
+
+	(void)argc;
+	(void)data;
+
+	EXPECT_STREQ(m["includes"][0].as<std::string>().c_str(), "/a/path");
+	EXPECT_STREQ(m["includes"][1].as<std::string>().c_str(), "/another/path");
+
+	EXPECT_STREQ(m["libraries"][0].as<std::string>().c_str(), "/a/path");
+	EXPECT_STREQ(m["libraries"][1].as<std::string>().c_str(), "/another/path");
+
+	printf("m['includes'][0] => %s\n", m["includes"][0].as<std::string>().c_str());
+	printf("m['includes'][1] => %s\n", m["includes"][1].as<std::string>().c_str());
+
+	printf("m['libraries'][0] => %s\n", m["libraries"][0].as<std::string>().c_str());
+	printf("m['libraries'][1] => %s\n", m["libraries"][1].as<std::string>().c_str());
+
+	return metacall_value_create_null();
+}
+
 // TODO:
 /*
 void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
@@ -81,6 +123,45 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		metacall_register("cxx_map_test", cxx_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
 
 		void *ret = metacallv_s("cxx_map_test", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+		metacall_value_destroy(ret);
+	}
+
+	{
+		array a(3, 4.0f);
+
+		void *args[] = {
+			a.to_raw()
+		};
+
+		metacall_register("cxx_array_test", cxx_array_test, NULL, METACALL_NULL, 1, METACALL_ARRAY);
+
+		void *ret = metacallv_s("cxx_array_test", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
+
+		metacall_value_destroy(ret);
+	}
+
+	{
+		map<std::string, array> m = {
+			{ "includes", array("/a/path", "/another/path") },
+			{ "libraries", array("/a/path", "/another/path") }
+		};
+
+		void *args[] = {
+			m.to_raw()
+		};
+
+		metacall_register("cxx_map_array_test", cxx_map_array_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+
+		void *ret = metacallv_s("cxx_map_array_test", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
