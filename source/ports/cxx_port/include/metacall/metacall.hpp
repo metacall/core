@@ -72,8 +72,8 @@ public:
 		}
 	}
 
-	explicit value(void *value_ptr) :
-		value_base(value_ptr, &value_base::noop_destructor)
+	explicit value(void *value_ptr, void (*destructor)(void *) = &value_base::noop_destructor) :
+		value_base(value_ptr, destructor)
 	{
 		if (metacall_value_id(value_ptr) != id())
 		{
@@ -537,12 +537,53 @@ private:
 	std::unordered_map<K, pair_value_type> m;
 };
 
-template <typename... Ts>
-METACALL_API int metacall(std::string name, Ts... ts)
+namespace detail
 {
-	return 0;
+template <typename T>
+constexpr bool is_value_base = std::is_base_of_v<value_base, std::remove_cv_t<std::remove_reference_t<T>>>;
+
+template <typename T>
+value_base to_value_base(T &&arg)
+{
+	if constexpr (is_value_base<T>)
+	{
+		return std::move(arg);
+	}
+	else
+	{
+		return value<std::decay_t<T>>(std::forward<T>(arg));
+	}
+}
+
+} /* namespace detail */
+
+template <typename Ret, typename... Args>
+METACALL_API Ret metacall(std::string name, Args &&...args)
+{
+	constexpr std::size_t size = sizeof...(Args);
+	std::array<value_base, size> value_args = { { detail::to_value_base(std::forward<Args>(args))... } };
+	void *raw_args[size];
+
+	for (std::size_t i = 0; i < size; ++i)
+	{
+		raw_args[i] = value_args[i].to_raw();
+	}
+
+	void *ret = metacallv_s(name.c_str(), raw_args, size);
+
+	if (ret == NULL)
+	{
+		throw std::runtime_error("MetaCall invokation to '" + name + "' has failed by returning NULL");
+	}
+
+	value<Ret> result(ret, &metacall_value_destroy);
+
+	return result.to_value();
 }
 
 } /* namespace metacall */
+
+// TODO: Move implementations to metacall.inl
+#include <metacall/metacall.inl>
 
 #endif /* METACALL_HPP */

@@ -106,6 +106,20 @@ void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
 }
 */
 
+void *cxx_float_int_int_test(size_t argc, void *args[], void *data)
+{
+	value<int> a0(args[0]);
+	value<int> a1(args[1]);
+
+	(void)argc;
+	(void)data;
+
+	EXPECT_EQ(a0.to_value(), 7);
+	EXPECT_EQ(a1.to_value(), 8);
+
+	return metacall_value_create_float(3.0f);
+}
+
 TEST_F(metacall_cxx_port_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
@@ -116,37 +130,17 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "world", 4.0f }
 		};
 
-		void *args[] = {
-			m.to_raw()
-		};
-
 		metacall_register("cxx_map_test", cxx_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
 
-		void *ret = metacallv_s("cxx_map_test", args, 1);
-
-		EXPECT_NE((void *)NULL, (void *)ret);
-
-		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
-
-		metacall_value_destroy(ret);
+		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_test", m));
 	}
 
 	{
 		array a(3, 4.0f);
 
-		void *args[] = {
-			a.to_raw()
-		};
-
 		metacall_register("cxx_array_test", cxx_array_test, NULL, METACALL_NULL, 1, METACALL_ARRAY);
 
-		void *ret = metacallv_s("cxx_array_test", args, 1);
-
-		EXPECT_NE((void *)NULL, (void *)ret);
-
-		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
-
-		metacall_value_destroy(ret);
+		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_array_test", a));
 	}
 
 	{
@@ -155,19 +149,9 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "libraries", array("/a/path", "/another/path") }
 		};
 
-		void *args[] = {
-			m.to_raw()
-		};
-
 		metacall_register("cxx_map_array_test", cxx_map_array_test, NULL, METACALL_NULL, 1, METACALL_MAP);
 
-		void *ret = metacallv_s("cxx_map_array_test", args, 1);
-
-		EXPECT_NE((void *)NULL, (void *)ret);
-
-		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
-
-		metacall_value_destroy(ret);
+		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_array_test", m));
 	}
 
 	// TODO:
@@ -177,21 +161,17 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "hello", { "world", 4.0f } }
 		};
 
-		void *args[] = {
-			m.to_raw()
-		};
-
 		metacall_register("cxx_recursive_map_test", cxx_recursive_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
 
-		void *ret = metacallv_s("cxx_recursive_map_test", args, 1);
-
-		EXPECT_NE((void *)NULL, (void *)ret);
-
-		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_NULL);
-
-		metacall_value_destroy(ret);
+		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_recursive_map_test", m));
 	}
 	*/
+
+	{
+		metacall_register("cxx_float_int_int_test", cxx_float_int_int_test, NULL, METACALL_FLOAT, 2, METACALL_INT, METACALL_INT);
+
+		EXPECT_EQ(3.0f, metacall::metacall<float>("cxx_float_int_int_test", 7, 8));
+	}
 
 	/* Print inspect information */
 	{

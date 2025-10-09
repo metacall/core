@@ -41,15 +41,22 @@ set(headers
 	${include_path}/metacall.hpp
 )
 
+set(inline
+	${include_path}/metacall.inl
+)
+
 set(sources
 	${source_path}/metacall.cpp
 )
 
 # Group source files
 set(header_group "Header Files (API)")
+set(inline_group "Inline Files")
 set(source_group "Source Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 	${header_group} ${headers})
+source_group_by_path(${include_path} "\\\\.inl$"
+	${inline_group} ${inlines})
 source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 	${source_group} ${sources})
 
@@ -61,6 +68,7 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 add_library(${target}
 	${sources}
 	${headers}
+	${inline}
 )
 
 # Create namespaced alias
