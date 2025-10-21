@@ -16,9 +16,9 @@ use std::{
 /// ```
 pub fn from_single_file(
     tag: impl ToString,
-    script: impl AsRef<Path>,
+    path: impl AsRef<Path>,
 ) -> Result<(), MetaCallLoaderError> {
-    from_file(tag, [script])
+    from_file(tag, [path])
 }
 /// Loads a script from file. Usage example: ...
 /// ```
@@ -27,14 +27,14 @@ pub fn from_single_file(
 /// ```
 pub fn from_file(
     tag: impl ToString,
-    scripts: impl IntoIterator<Item = impl AsRef<Path>>,
+    paths: impl IntoIterator<Item = impl AsRef<Path>>,
 ) -> Result<(), MetaCallLoaderError> {
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
     let mut c_script: CString;
 
     let mut new_scripts: Vec<*const i8> = Vec::new();
-    for script in scripts.into_iter() {
-        let script_as_pathbuf = PathBuf::from(script.as_ref());
+    for path in paths.into_iter() {
+        let script_as_pathbuf = PathBuf::from(path.as_ref());
         let script_as_str = script_as_pathbuf.to_str().unwrap();
 
         if !script_as_pathbuf.exists() {
