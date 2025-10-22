@@ -30,7 +30,7 @@ pub fn from_file(
     paths: impl IntoIterator<Item = impl AsRef<Path>>,
 ) -> Result<(), MetaCallLoaderError> {
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
-    let mut c_script: CString;
+    let mut c_path: CString;
 
     let mut new_paths: Vec<*const i8> = Vec::new();
     for path in paths.into_iter() {
@@ -46,9 +46,9 @@ pub fn from_file(
             ));
         }
 
-        c_script = cstring_enum!(path_as_str, MetaCallLoaderError)?;
+        c_path = cstring_enum!(path_as_str, MetaCallLoaderError)?;
 
-        new_paths.push(c_script.as_ptr());
+        new_paths.push(c_path.as_ptr());
     }
 
     if unsafe {
