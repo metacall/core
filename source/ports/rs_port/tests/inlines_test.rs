@@ -1,7 +1,8 @@
 use metacall::{
     initialize,
     inline::{node, py, ts},
-    is_initialized, load,
+    is_initialized,
+    load::{self, Tag},
 };
 
 #[test]
@@ -10,30 +11,30 @@ fn inlines() {
 
     assert!(is_initialized());
 
-    if load::from_memory("py", "").is_ok() {
+    if load::from_memory(Tag::Python, "").is_ok() {
         py! {
             print("hello world")
         }
     }
-    if load::from_memory("py", "").is_ok() {
+    if load::from_memory(Tag::Python, "").is_ok() {
         py! {print("hello world")}
     }
 
-    if load::from_memory("node", "").is_ok() {
+    if load::from_memory(Tag::NodeJS, "").is_ok() {
         node! {
             console.log("hello world");
         }
     }
-    if load::from_memory("node", "").is_ok() {
+    if load::from_memory(Tag::NodeJS, "").is_ok() {
         node! {console.log("hello world")}
     }
 
-    if load::from_memory("ts", "").is_ok() {
+    if load::from_memory(Tag::TypeScript, "").is_ok() {
         ts! {
             console.log("hello world");
         }
     }
-    if load::from_memory("ts", "").is_ok() {
+    if load::from_memory(Tag::TypeScript, "").is_ok() {
         ts! {console.log("hello world")}
     }
 }
