@@ -51,7 +51,7 @@ fn main() {
     let _metacall = initialize().unwrap();
      
     // Load the file
-    load::from_single_file("ts", "sum.ts").unwrap();
+    load::from_single_file(load::Tag::TypeScript, "sum.ts").unwrap();
 
     // Call the sum function
     let sum = metacall::<f64>("sum", [1.0, 2.0]).unwrap();

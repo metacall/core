@@ -5,9 +5,66 @@ use crate::{
 };
 use std::{
     ffi::CString,
+    fmt,
     path::{Path, PathBuf},
     ptr,
 };
+
+pub enum Tag {
+    C,
+    Cobol,
+    Crystal,
+    CSharp,
+    Dart,
+    Deno,
+    Extension,
+    File,
+    Java,
+    Julia,
+    JavaScript,
+    JSM,
+    Kind,
+    LLVM,
+    Lua,
+    Mock,
+    NodeJS,
+    Python,
+    Ruby,
+    RPC,
+    Rust,
+    TypeScript,
+    Wasm,
+}
+
+impl fmt::Display for Tag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Tag::C => write!(f, "c"),
+            Tag::Cobol => write!(f, "cob"),
+            Tag::Crystal => write!(f, "cr"),
+            Tag::CSharp => write!(f, "cs"),
+            Tag::Dart => write!(f, "dart"),
+            Tag::Deno => write!(f, "deno"),
+            Tag::Extension => write!(f, "ext"),
+            Tag::File => write!(f, "file"),
+            Tag::Java => write!(f, "java"),
+            Tag::Julia => write!(f, "jl"),
+            Tag::JavaScript => write!(f, "js"),
+            Tag::JSM => write!(f, "jsm"),
+            Tag::Kind => write!(f, "kind"),
+            Tag::LLVM => write!(f, "llvm"),
+            Tag::Lua => write!(f, "lua"),
+            Tag::Mock => write!(f, "mock"),
+            Tag::NodeJS => write!(f, "node"),
+            Tag::Python => write!(f, "py"),
+            Tag::Ruby => write!(f, "rb"),
+            Tag::RPC => write!(f, "rpc"),
+            Tag::Rust => write!(f, "rs"),
+            Tag::TypeScript => write!(f, "ts"),
+            Tag::Wasm => write!(f, "wasm"),
+        }
+    }
+}
 
 /// Loads a file from a single file. Usage example: ...
 /// ```
@@ -20,13 +77,14 @@ pub fn from_single_file(
 ) -> Result<(), MetaCallLoaderError> {
     from_file(tag, [path])
 }
+
 /// Loads a path from file. Usage example: ...
 /// ```
-/// // A Nodejs path
-/// metacall::load::from_file("node", ["index.js", "main.js"]).unwrap();
+/// // A Nodejs script
+/// metacall::load::from_file(Tag::NodeJS, ["index.js", "main.js"]).unwrap();
 /// ```
 pub fn from_file(
-    tag: impl ToString,
+    tag: Tag,
     paths: impl IntoIterator<Item = impl AsRef<Path>>,
 ) -> Result<(), MetaCallLoaderError> {
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
@@ -71,9 +129,9 @@ pub fn from_file(
 /// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
 ///
 /// // A Nodejs script
-/// metacall::load::from_memory("node", script).unwrap();
+/// metacall::load::from_memory(Tag::NodeJS, script).unwrap();
 /// ```
-pub fn from_memory(tag: impl ToString, script: impl ToString) -> Result<(), MetaCallLoaderError> {
+pub fn from_memory(tag: Tag, script: impl ToString) -> Result<(), MetaCallLoaderError> {
     let script = script.to_string();
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
     let c_script = cstring_enum!(script, MetaCallLoaderError)?;

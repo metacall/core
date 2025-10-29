@@ -49,7 +49,7 @@
 //!     
 //!     // Load the file (Checkout the loaders module for loading multiple files
 //!     // or loading from string)
-//!     load::from_single_file("ts", "sum.ts").unwrap();
+//!     load::from_single_file(load::Tag::TypeScript, "sum.ts").unwrap();
 //!
 //!     // Call the sum function (Also checkout other metacall functions)
 //!     let sum = metacall::<f64>("sum", [1.0, 2.0]).unwrap();
@@ -66,14 +66,14 @@ pub(crate) use macros::private_macros::*;
 /// Contains MetaCall loaders from file and memory. Usage example: ...
 /// ```
 /// // Loading a single file with Nodejs.
-/// metacall::load::from_single_file("node", "index.js").unwrap();
+/// metacall::load::from_single_file(metacall::load::Tag::NodeJS, "index.js").unwrap();
 ///
 /// // Loading multiple files with Nodejs.
-/// metacall::load::from_file("node", ["index.js", "main.js"]).unwrap();
+/// metacall::load::from_file(metacall::load::Tag::NodeJS, ["index.js", "main.js"]).unwrap();
 ///
 /// // Loading a string with Nodejs.
 /// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
-/// metacall::load::from_memory("node", script).unwrap();
+/// metacall::load::from_memory(metacall::load::Tag::NodeJS, script).unwrap();
 /// ```
 pub mod load;
 

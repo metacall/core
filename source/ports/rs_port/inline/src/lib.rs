@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 
 macro_rules! gen_inline_macro {
-    ($($name:ident),*) => (
+    ($($name:ident => $tag:ident),*) => (
         $(
             #[proc_macro]
             pub fn $name(input: TokenStream) -> TokenStream {
@@ -10,7 +10,7 @@ macro_rules! gen_inline_macro {
                 let buffer = token_stream_input.to_string();
 
                 let result = quote! {{
-                    ::metacall::load::from_memory(stringify!($name), #buffer.to_string()).unwrap()
+                    ::metacall::load::from_memory(::metacall::load::Tag::$tag, #buffer.to_string()).unwrap()
                 }};
 
                 result.into()
@@ -19,4 +19,14 @@ macro_rules! gen_inline_macro {
     )
 }
 
-gen_inline_macro!(py, node, ts, cs, rb, cob, rpc, java, wasm);
+gen_inline_macro!(
+    py => Python,
+    node => NodeJS,
+    ts => TypeScript,
+    cs => CSharp,
+    rb => Ruby,
+    cob => Cobol,
+    rpc => RPC,
+    java => Java,
+    wasm => Wasm
+);
