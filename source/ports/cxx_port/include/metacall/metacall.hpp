@@ -60,7 +60,7 @@ protected:
 };
 
 template <typename T>
-class METACALL_API value : public value_base
+class value : public value_base
 {
 public:
 	explicit value(const T &v, void (*destructor)(void *) = &metacall_value_destroy) :
@@ -337,7 +337,7 @@ inline std::nullptr_t value<std::nullptr_t>::to_value() const
 
 // TODO: Future, Function, Class, Object, Exception, Throwable...
 
-class METACALL_API value_ref
+class value_ref
 {
 public:
 	explicit value_ref(void *ptr) :
@@ -353,7 +353,7 @@ private:
 	void *ptr;
 };
 
-class METACALL_API array : public value_base
+class array : public value_base
 {
 public:
 	template <typename... Args>
@@ -455,7 +455,7 @@ inline array value<array>::to_value() const
 }
 
 template <typename K, typename V>
-class METACALL_API map : public value_base
+class map : public value_base
 {
 public:
 	using pair_type = std::pair<K, V>;
@@ -558,7 +558,7 @@ value_base to_value_base(T &&arg)
 } /* namespace detail */
 
 template <typename Ret, typename... Args>
-METACALL_API Ret metacall(std::string name, Args &&...args)
+Ret metacall(std::string name, Args &&...args)
 {
 	constexpr std::size_t size = sizeof...(Args);
 	std::array<value_base, size> value_args = { { detail::to_value_base(std::forward<Args>(args))... } };
