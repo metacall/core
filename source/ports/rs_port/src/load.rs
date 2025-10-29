@@ -72,7 +72,7 @@ impl fmt::Display for Tag {
 /// metacall::load::from_single_file("node", "index.js").unwrap();
 /// ```
 pub fn from_single_file(
-    tag: impl ToString,
+    tag: Tag,
     path: impl AsRef<Path>,
 ) -> Result<(), MetaCallLoaderError> {
     from_file(tag, [path])

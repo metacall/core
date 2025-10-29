@@ -13,7 +13,7 @@ fn invalid_loaders() {
 
     let scripts_dir = env::current_dir().unwrap().join("tests/scripts");
     let inavlid_file = scripts_dir.join("whatever.yeet");
-    let js_file = scripts_dir.join("script.js");
+    let valid_file = scripts_dir.join("script.js");
 
     if let Err(MetaCallLoaderError::FileNotFound(_)) =
         load::from_single_file(load::Tag::NodeJS, inavlid_file)
@@ -23,7 +23,8 @@ fn invalid_loaders() {
         panic!("Expected the loader fail with `FileNotFound` error variant!");
     }
 
-    if let Err(MetaCallLoaderError::FromFileFailure) = load::from_single_file(Tag::Lua, js_file) {
+    // We use JSM here because it is not implemented, it should fail
+    if let Err(MetaCallLoaderError::FromFileFailure) = load::from_single_file(Tag::JSM, valid_file) {
         // Everything Ok
     } else {
         panic!("Expected the loader fail with `FromFileFailure` error variant!");
