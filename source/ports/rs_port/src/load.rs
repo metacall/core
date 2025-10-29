@@ -9,7 +9,7 @@ use std::{
     ptr,
 };
 
-/// Loads a path from a single file. Usage example: ...
+/// Loads a file from a single file. Usage example: ...
 /// ```
 /// // A Nodejs path
 /// metacall::load::from_single_file("node", "index.js").unwrap();
