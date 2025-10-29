@@ -7,7 +7,7 @@ license = "Apache-2.0"
 name = "metacall"
 readme = "README.md"
 repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
-version = "0.5.2"
+version = "0.5.3"
 
 [lib]
 crate-type = ["lib"]

@@ -19,7 +19,8 @@ use std::{
 /// and the second argument is the data that you may want to access when the function gets called.
 /// Checkout [MetaCallFuture resolve](MetaCallFuture#method.then) or
 /// [MetaCallFuture reject](MetaCallFuture#method.catch) for usage.
-pub type MetaCallFutureHandler = fn(Box<dyn MetaCallValue>, Box<dyn Any>) -> Box<dyn MetaCallValue>;
+pub type MetaCallFutureHandler =
+    fn(Box<dyn MetaCallValue>, Option<Box<dyn Any>>) -> Box<dyn MetaCallValue>;
 
 /// Represents MetaCallFuture. Keep in mind that it's not supported to pass a future as an argument.
 ///
@@ -118,7 +119,12 @@ type MetaCallFutureFFIData = (
 
 unsafe extern "C" fn resolver(resolve_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
     let (resolve, _, data) = *Box::from_raw(upper_data as *mut MetaCallFutureFFIData);
-    let user_data = Box::from_raw(data);
+
+    let user_data = if !data.is_null() {
+        Some(Box::from_raw(data))
+    } else {
+        None
+    };
 
     let result = (resolve.unwrap())(
         cast::raw_to_metacallobj_untyped_leak(resolve_data),
@@ -133,7 +139,12 @@ unsafe extern "C" fn resolver(resolve_data: *mut c_void, upper_data: *mut c_void
 }
 unsafe extern "C" fn rejecter(reject_data: *mut c_void, upper_data: *mut c_void) -> *mut c_void {
     let (_, reject, data) = *Box::from_raw(upper_data as *mut MetaCallFutureFFIData);
-    let user_data = Box::from_raw(data);
+
+    let user_data = if !data.is_null() {
+        Some(Box::from_raw(data))
+    } else {
+        None
+    };
 
     let result = (reject.unwrap())(
         cast::raw_to_metacallobj_untyped_leak(reject_data),
@@ -273,28 +284,6 @@ impl MetaCallFuture {
                     None
                 },
                 if reject_is_some { Some(rejecter) } else { None },
-                // TODO: Solve the memory leak that happens here
-                // For reproducing the error, use the following commands:
-                // cargo test --no-run
-                // valgrind --trace-children=yes --leak-check=full --tool=memcheck --suppressions=../../../source/tests/memcheck/valgrind-node.supp ./target/debug/deps/metacall_test-248af33824f71bd1 &> output
-                // ==20664== 60 (32 direct, 28 indirect) bytes in 1 blocks are definitely lost in loss record 11 of 35
-                // ==20664==    at 0x4842839: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-                // ==20664==    by 0x17B549: alloc (alloc.rs:93)
-                // ==20664==    by 0x17B549: alloc::alloc::Global::alloc_impl (alloc.rs:175)
-                // ==20664==    by 0x17B342: allocate (alloc.rs:235)
-                // ==20664==    by 0x17B342: alloc::alloc::exchange_malloc (alloc.rs:324)
-                // ==20664==    by 0x1873D0: new<(core::option::Option<fn(alloc::boxed::Box<dyn metacall::types::metacall_value::MetaCallValue, alloc::alloc::Global>, alloc::boxed::Box<dyn metacall::types::metacall_value::MetaCallValue, alloc::alloc::Global>)>, core::option::Option<fn(alloc::boxed::Box<dyn metacall::types::metacall_value::MetaCallValue, alloc::alloc::Global>, alloc::boxed::Box<dyn metacall::types::metacall_value::MetaCallValue, alloc::alloc::Global>)>, *mut dyn metacall::types::metacall_value::MetaCallValue)> (boxed.rs:217)
-                // ==20664==    by 0x1873D0: metacall::types::metacall_future::MetaCallFuture::await_fut (metacall_future.rs:182)
-                // ==20664==    by 0x1296E6: metacall_test::test_future::{{closure}} (metacall_test.rs:202)
-                // ==20664==    by 0x1286A2: metacall_test::generate_test_custom_validation (metacall_test.rs:42)
-                // ==20664==    by 0x12625A: metacall_test::test_future (metacall_test.rs:193)
-                // ==20664==    by 0x126954: metacall_test::metacall (metacall_test.rs:368)
-                // ==20664==    by 0x129736: metacall_test::metacall::{{closure}} (metacall_test.rs:337)
-                // ==20664==    by 0x1256B4: core::ops::function::FnOnce::call_once (function.rs:250)
-                // ==20664==    by 0x166EBE: call_once<fn() -> core::result::Result<(), alloc::string::String>, ()> (function.rs:250)
-                // ==20664==    by 0x166EBE: test::__rust_begin_short_backtrace (lib.rs:655)
-                // ==20664==    by 0x13456B: {closure#1} (lib.rs:646)
-                // ==20664==    by 0x13456B: core::ops::function::FnOnce::call_once{{vtable-shim}} (function.rs:250)
                 Box::into_raw(Box::new((self.resolve, self.reject, self.data))) as *mut c_void,
             ))
         };

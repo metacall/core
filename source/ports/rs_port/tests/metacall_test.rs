@@ -172,16 +172,21 @@ fn test_pointer() {
     );
 }
 fn test_future() {
-    fn validate(upper_result: Box<dyn MetaCallValue>, upper_data: Box<dyn Any>) {
-        match upper_data.downcast::<String>() {
-            Ok(ret) => {
-                if ret.as_str() != "data" {
-                    invalid_return_value("data", ret)
+    fn validate(upper_result: Box<dyn MetaCallValue>, upper_data: Option<Box<dyn Any>>) {
+        match upper_data {
+            Some(data) => {
+                match data.downcast::<String>() {
+                    Ok(ret) => {
+                        if ret.as_str() != "data" {
+                            invalid_return_value("data", ret)
+                        }
+                    }
+                    Err(original) => {
+                        invalid_return_type("'string' for the data", original);
+                    }
                 }
-            }
-            Err(original) => {
-                invalid_return_type("'string' for the data", original);
-            }
+            },
+            None => println!("user_data is None."),
         }
 
         match upper_result.downcast::<String>() {
@@ -203,7 +208,7 @@ fn test_future() {
         move |future| {
             fn resolve(
                 result: Box<dyn MetaCallValue>,
-                data: Box<dyn Any>,
+                data: Option<Box<dyn Any>>,
             ) -> Box<dyn MetaCallValue> {
                 validate(result.clone(), data);
                 result.clone()
@@ -219,7 +224,7 @@ fn test_future() {
         move |future| {
             fn reject(
                 result: Box<dyn MetaCallValue>,
-                data: Box<dyn Any>,
+                data: Option<Box<dyn Any>>,
             ) -> Box<dyn MetaCallValue> {
                 validate(result.clone(), data);
                 result.clone()
