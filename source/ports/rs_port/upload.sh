@@ -21,7 +21,7 @@
 
 function publish() {
     local crate_version=`cargo search --quiet $1 | grep "$1" | head -n 1 | awk '{ print $3 }'`
-    local project_version=`cargo metadata --format-version=1 --no-deps | jq '.packages[0].version'`
+    local project_version=`cargo metadata --format-version=1 --no-deps | jq ".packages[] | select(.name == \"$1\") | .version"`
 
     # Check if versions do not match, and if so, publish them
     if [ ! "${crate_version}" = "${project_version}" ]; then
@@ -30,10 +30,15 @@ function publish() {
     fi
 }
 
-# Publish
-cd sys
+# Publish sys crate
+pushd sys
 publish metacall-sys
-cd inline
+popd
+
+# Publish inline crate
+pushd inline
 publish metacall-inline
-cd ..
+popd
+
+# Publish metacall crate
 publish metacall
