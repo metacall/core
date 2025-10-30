@@ -128,7 +128,7 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "world", 4.0f }
 		};
 
-		metacall::metacall_register("cxx_map_test", cxx_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+		metacall::metacall_register("cxx_map_test", cxx_map_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_MAP);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_test", m));
 	}
@@ -136,7 +136,7 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 	{
 		metacall::array a(3, 4.0f);
 
-		metacall::metacall_register("cxx_array_test", cxx_array_test, NULL, METACALL_NULL, 1, METACALL_ARRAY);
+		metacall::metacall_register("cxx_array_test", cxx_array_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_ARRAY);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_array_test", a));
 	}
@@ -147,7 +147,7 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "libraries", metacall::array("/a/path", "/another/path") }
 		};
 
-		metacall::metacall_register("cxx_map_array_test", cxx_map_array_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+		metacall::metacall_register("cxx_map_array_test", cxx_map_array_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_MAP);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_array_test", m));
 	}
@@ -159,14 +159,14 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "hello", { "world", 4.0f } }
 		};
 
-		metacall::metacall_register("cxx_recursive_map_test", cxx_recursive_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+		metacall::metacall_register("cxx_recursive_map_test", cxx_recursive_map_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_MAP);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_recursive_map_test", m));
 	}
 	*/
 
 	{
-		metacall::metacall_register("cxx_float_int_int_test", cxx_float_int_int_test, NULL, METACALL_FLOAT, 2, METACALL_INT, METACALL_INT);
+		metacall::metacall_register("cxx_float_int_int_test", cxx_float_int_int_test, NULL, metacall::METACALL_FLOAT, 2, metacall::METACALL_INT, metacall::METACALL_INT);
 
 		EXPECT_EQ(3.0f, metacall::metacall<float>("cxx_float_int_int_test", 7, 8));
 	}
