@@ -22,8 +22,6 @@
 
 #include <metacall/metacall.hpp>
 
-using namespace metacall;
-
 class metacall_cxx_port_test : public testing::Test
 {
 protected:
@@ -31,7 +29,7 @@ protected:
 
 void *cxx_map_test(size_t argc, void *args[], void *data)
 {
-	map<std::string, float> m(args[0]);
+	metacall::map<std::string, float> m(args[0]);
 
 	(void)argc;
 	(void)data;
@@ -43,12 +41,12 @@ void *cxx_map_test(size_t argc, void *args[], void *data)
 	printf("world => %f\n", m["world"]);
 	fflush(stdout);
 
-	return metacall_value_create_null();
+	return metacall::metacall_value_create_null();
 }
 
 void *cxx_array_test(size_t argc, void *args[], void *data)
 {
-	array a(args[0]);
+	metacall::array a(args[0]);
 
 	(void)argc;
 	(void)data;
@@ -63,12 +61,12 @@ void *cxx_array_test(size_t argc, void *args[], void *data)
 	printf("a[1] => %f\n", a[1].as<float>());
 	fflush(stdout);
 
-	return metacall_value_create_null();
+	return metacall::metacall_value_create_null();
 }
 
 void *cxx_map_array_test(size_t argc, void *args[], void *data)
 {
-	map<std::string, array> m(args[0]);
+	metacall::map<std::string, metacall::array> m(args[0]);
 
 	(void)argc;
 	(void)data;
@@ -85,14 +83,14 @@ void *cxx_map_array_test(size_t argc, void *args[], void *data)
 	printf("m['libraries'][0] => %s\n", m["libraries"][0].as<std::string>().c_str());
 	printf("m['libraries'][1] => %s\n", m["libraries"][1].as<std::string>().c_str());
 
-	return metacall_value_create_null();
+	return metacall::metacall_value_create_null();
 }
 
 // TODO:
 /*
 void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
 {
-	map<std::string, map<std::string, float>> m(args[0]);
+	metacall::map<std::string, metacall::map<std::string, float>> m(args[0]);
 
 	(void)argc;
 	(void)data;
@@ -108,8 +106,8 @@ void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
 
 void *cxx_float_int_int_test(size_t argc, void *args[], void *data)
 {
-	value<int> a0(args[0]);
-	value<int> a1(args[1]);
+	metacall::value<int> a0(args[0]);
+	metacall::value<int> a1(args[1]);
 
 	(void)argc;
 	(void)data;
@@ -117,39 +115,39 @@ void *cxx_float_int_int_test(size_t argc, void *args[], void *data)
 	EXPECT_EQ(a0.to_value(), 7);
 	EXPECT_EQ(a1.to_value(), 8);
 
-	return metacall_value_create_float(3.0f);
+	return metacall::metacall_value_create_float(3.0f);
 }
 
 TEST_F(metacall_cxx_port_test, DefaultConstructor)
 {
-	ASSERT_EQ((int)0, (int)metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall::metacall_initialize());
 
 	{
-		map<std::string, float> m = {
+		metacall::map<std::string, float> m = {
 			{ "hello", 3.0f },
 			{ "world", 4.0f }
 		};
 
-		metacall_register("cxx_map_test", cxx_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+		metacall::metacall_register("cxx_map_test", cxx_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_test", m));
 	}
 
 	{
-		array a(3, 4.0f);
+		metacall::array a(3, 4.0f);
 
-		metacall_register("cxx_array_test", cxx_array_test, NULL, METACALL_NULL, 1, METACALL_ARRAY);
+		metacall::metacall_register("cxx_array_test", cxx_array_test, NULL, METACALL_NULL, 1, METACALL_ARRAY);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_array_test", a));
 	}
 
 	{
-		map<std::string, array> m = {
-			{ "includes", array("/a/path", "/another/path") },
-			{ "libraries", array("/a/path", "/another/path") }
+		metacall::map<std::string, metacall::array> m = {
+			{ "includes", metacall::array("/a/path", "/another/path") },
+			{ "libraries", metacall::array("/a/path", "/another/path") }
 		};
 
-		metacall_register("cxx_map_array_test", cxx_map_array_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+		metacall::metacall_register("cxx_map_array_test", cxx_map_array_test, NULL, METACALL_NULL, 1, METACALL_MAP);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_array_test", m));
 	}
@@ -157,18 +155,18 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 	// TODO:
 	/*
 	{
-		map<std::string, map<std::string, float>> m = {
+		metacall::map<std::string, metacall::map<std::string, float>> m = {
 			{ "hello", { "world", 4.0f } }
 		};
 
-		metacall_register("cxx_recursive_map_test", cxx_recursive_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
+		metacall::metacall_register("cxx_recursive_map_test", cxx_recursive_map_test, NULL, METACALL_NULL, 1, METACALL_MAP);
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_recursive_map_test", m));
 	}
 	*/
 
 	{
-		metacall_register("cxx_float_int_int_test", cxx_float_int_int_test, NULL, METACALL_FLOAT, 2, METACALL_INT, METACALL_INT);
+		metacall::metacall_register("cxx_float_int_int_test", cxx_float_int_int_test, NULL, METACALL_FLOAT, 2, METACALL_INT, METACALL_INT);
 
 		EXPECT_EQ(3.0f, metacall::metacall<float>("cxx_float_int_int_test", 7, 8));
 	}
@@ -177,11 +175,11 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 	{
 		size_t size = 0;
 
-		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+		metacall::metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(metacall::METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char *inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall::metacall_inspect(&size, allocator);
 
 		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
@@ -189,10 +187,10 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 
 		std::cout << inspect_str << std::endl;
 
-		metacall_allocator_free(allocator, inspect_str);
+		metacall::metacall_allocator_free(allocator, inspect_str);
 
-		metacall_allocator_destroy(allocator);
+		metacall::metacall_allocator_destroy(allocator);
 	}
 
-	metacall_destroy();
+	metacall::metacall_destroy();
 }
