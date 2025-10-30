@@ -73,7 +73,7 @@ pub(crate) use macros::private_macros::*;
 ///
 /// // Loading a string with Nodejs.
 /// let script = "function greet() { return 'hi there!' }; module.exports = { greet };";
-/// metacall::load::from_memory(metacall::load::Tag::NodeJS, script).unwrap();
+/// metacall::load::from_memory(metacall::load::Tag::NodeJS, script, None).unwrap();
 /// ```
 pub mod load;
 

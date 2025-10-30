@@ -1,6 +1,7 @@
 use crate::{
-    bindings::{metacall_function, metacall_value_destroy, metacallfv_s},
+    bindings::{metacall_function, metacall_value_destroy, metacallfv_s, metacallhv_s},
     cast, cstring_enum,
+    load::Handle,
     types::{MetaCallError, MetaCallNull, MetaCallValue},
 };
 use std::ffi::c_void;
@@ -31,6 +32,33 @@ fn metacall_inner(
 
     Ok(ret)
 }
+
+fn metacall_inner_handle(
+    handle: &mut Handle,
+    func: impl ToString,
+    args: impl IntoIterator<Item = impl MetaCallValue>,
+) -> Result<*mut c_void, MetaCallError> {
+    let c_function = cstring_enum!(func, MetaCallError)?;
+
+    let mut c_args = cast::metacallobj_to_raw_args(args);
+    let args_length = c_args.len();
+
+    let ret = unsafe {
+        metacallhv_s(
+            handle.as_mut_raw_ptr(),
+            c_function.as_ptr(),
+            c_args.as_mut_ptr(),
+            args_length,
+        )
+    };
+
+    for c_arg in c_args {
+        unsafe { metacall_value_destroy(c_arg) };
+    }
+
+    Ok(ret)
+}
+
 /// Calls a function same as [metacall](metacall) but returns a trait object
 /// of [MetaCallValue](MetaCallValue). This is useful when you don't know the return
 /// type of that function or the function may return multiple types. Checkout
@@ -70,10 +98,39 @@ pub fn metacall<T: MetaCallValue>(
         Err(original) => Err(MetaCallError::FailedCasting(original)),
     }
 }
+
+/// Calls a function with arguments. The generic parameter is the return type of the function
+/// you're calling. Checkout [MetaCallValue](MetaCallValue) for possible types.
+/// For example: ...
+/// ```
+/// let sum = metacall::metacall_handle::<i32>(handle, "sum", [1, 2]).unwrap();
+/// ```
+pub fn metacall_handle<T: MetaCallValue>(
+    handle: &mut Handle,
+    func: impl ToString,
+    args: impl IntoIterator<Item = impl MetaCallValue>,
+) -> Result<T, MetaCallError> {
+    match cast::raw_to_metacallobj::<T>(metacall_inner_handle(handle, func, args)?) {
+        Ok(ret) => Ok(ret),
+        Err(original) => Err(MetaCallError::FailedCasting(original)),
+    }
+}
+
 /// Calls a function same as [metacall](metacall) without passing any arguments. For example: ...
 /// ```
 /// let greet = metacall::metacall_no_arg::<String>("greet").unwrap();
 /// ```
 pub fn metacall_no_arg<T: MetaCallValue>(func: impl ToString) -> Result<T, MetaCallError> {
     metacall::<T>(func, [] as [MetaCallNull; 0])
+}
+
+/// Calls a function same as [metacall](metacall) without passing any arguments. For example: ...
+/// ```
+/// let greet = metacall::metacall_no_arg::<String>("greet").unwrap();
+/// ```
+pub fn metacall_handle_no_arg<T: MetaCallValue>(
+    handle: &mut Handle,
+    func: impl ToString,
+) -> Result<T, MetaCallError> {
+    metacall_handle::<T>(handle, func, [] as [MetaCallNull; 0])
 }

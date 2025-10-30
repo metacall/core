@@ -11,30 +11,30 @@ fn inlines() {
 
     assert!(is_initialized());
 
-    if load::from_memory(Tag::Python, "").is_ok() {
+    if load::from_memory(Tag::Python, "", None).is_ok() {
         py! {
             print("hello world")
         }
     }
-    if load::from_memory(Tag::Python, "").is_ok() {
+    if load::from_memory(Tag::Python, "", None).is_ok() {
         py! {print("hello world")}
     }
 
-    if load::from_memory(Tag::NodeJS, "").is_ok() {
+    if load::from_memory(Tag::NodeJS, "", None).is_ok() {
         node! {
             console.log("hello world");
         }
     }
-    if load::from_memory(Tag::NodeJS, "").is_ok() {
+    if load::from_memory(Tag::NodeJS, "", None).is_ok() {
         node! {console.log("hello world")}
     }
 
-    if load::from_memory(Tag::TypeScript, "").is_ok() {
+    if load::from_memory(Tag::TypeScript, "", None).is_ok() {
         ts! {
             console.log("hello world");
         }
     }
-    if load::from_memory(Tag::TypeScript, "").is_ok() {
+    if load::from_memory(Tag::TypeScript, "", None).is_ok() {
         ts! {console.log("hello world")}
     }
 }

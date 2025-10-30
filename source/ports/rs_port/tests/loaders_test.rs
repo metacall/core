@@ -15,16 +15,18 @@ use std::{
 const SCRIPT1: &str = "function greet1() { return 'hi there!' } \nmodule.exports = { greet1 }";
 const SCRIPT2: &str = "function greet2() { return 'hi there!' } \nmodule.exports = { greet2 };";
 const SCRIPT3: &str = "console.log('Hello world')";
+
 fn call_greet(test: &str, num: u32) {
     let out = metacall_no_arg::<String>(format!("greet{}", num)).unwrap();
     assert_eq!(out.as_str(), "hi there!", "Testing {}", test);
 }
 
 fn load_from_memory_test() {
-    load::from_memory(Tag::NodeJS, SCRIPT1).unwrap();
+    load::from_memory(Tag::NodeJS, SCRIPT1, None).unwrap();
+
     call_greet("load_from_memory", 1);
 
-    load::from_memory(Tag::NodeJS, SCRIPT3).unwrap();
+    load::from_memory(Tag::NodeJS, SCRIPT3, None).unwrap();
 }
 
 fn load_from_file_test() {
@@ -38,7 +40,7 @@ fn load_from_file_test() {
     temp_js.write_all(SCRIPT2.as_bytes()).unwrap();
     temp_js.flush().unwrap();
 
-    load::from_single_file(Tag::NodeJS, temp_js_path).unwrap();
+    load::from_single_file(Tag::NodeJS, temp_js_path, None).unwrap();
 
     call_greet("load_from_file", 2);
 

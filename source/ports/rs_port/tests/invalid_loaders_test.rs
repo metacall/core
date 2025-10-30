@@ -16,7 +16,7 @@ fn invalid_loaders() {
     let valid_file = scripts_dir.join("script.js");
 
     if let Err(MetaCallLoaderError::FileNotFound(_)) =
-        load::from_single_file(load::Tag::NodeJS, inavlid_file)
+        load::from_single_file(load::Tag::NodeJS, inavlid_file, None)
     {
         // Everything Ok
     } else {
@@ -24,14 +24,16 @@ fn invalid_loaders() {
     }
 
     // We use JSM here because it is not implemented, it should fail
-    if let Err(MetaCallLoaderError::FromFileFailure) = load::from_single_file(Tag::JSM, valid_file) {
+    if let Err(MetaCallLoaderError::FromFileFailure) =
+        load::from_single_file(Tag::JSM, valid_file, None)
+    {
         // Everything Ok
     } else {
         panic!("Expected the loader fail with `FromFileFailure` error variant!");
     }
 
     if let Err(MetaCallLoaderError::FromMemoryFailure) =
-        load::from_memory(load::Tag::NodeJS, "Invalid code!")
+        load::from_memory(load::Tag::NodeJS, "Invalid code!", None)
     {
         // Everything Ok
     } else {

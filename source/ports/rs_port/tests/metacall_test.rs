@@ -174,16 +174,14 @@ fn test_pointer() {
 fn test_future() {
     fn validate(upper_result: Box<dyn MetaCallValue>, upper_data: Option<Box<dyn Any>>) {
         match upper_data {
-            Some(data) => {
-                match data.downcast::<String>() {
-                    Ok(ret) => {
-                        if ret.as_str() != "data" {
-                            invalid_return_value("data", ret)
-                        }
+            Some(data) => match data.downcast::<String>() {
+                Ok(ret) => {
+                    if ret.as_str() != "data" {
+                        invalid_return_value("data", ret)
                     }
-                    Err(original) => {
-                        invalid_return_type("'string' for the data", original);
-                    }
+                }
+                Err(original) => {
+                    invalid_return_type("'string' for the data", original);
                 }
             },
             None => println!("user_data is None."),
@@ -374,7 +372,7 @@ fn metacall() {
     let js_test_file = tests_dir.join("script.js");
     let c_test_file = tests_dir.join("script.c");
     let py_test_file = tests_dir.join("script.py");
-    let py_loaded = load::from_single_file(Tag::Python, py_test_file).is_ok();
+    let py_loaded = load::from_single_file(Tag::Python, py_test_file, None).is_ok();
 
     if py_loaded {
         test_buffer();
@@ -387,7 +385,7 @@ fn metacall() {
         test_string();
         test_null();
     }
-    if load::from_single_file(load::Tag::C, c_test_file).is_ok() {
+    if load::from_single_file(load::Tag::C, c_test_file, None).is_ok() {
         test_char();
         test_double();
         test_float();
@@ -396,7 +394,7 @@ fn metacall() {
         test_short();
         test_mixed_numbers();
     }
-    if load::from_single_file(load::Tag::NodeJS, js_test_file).is_ok() {
+    if load::from_single_file(load::Tag::NodeJS, js_test_file, None).is_ok() {
         test_exception();
         test_throwable();
         test_future();
