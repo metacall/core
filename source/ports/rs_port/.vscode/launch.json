@@ -103,6 +103,26 @@
             "args": [],
             "envFile": "${workspaceFolder}${/}.vscode${/}.env",
             "cwd": "${workspaceFolder}"
-        }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'metacall_handle_test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=metacall_handle_test",
+                    "--package=metacall"
+                ],
+                "filter": {
+                    "name": "metacall_handle_test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "envFile": "${workspaceFolder}${/}.vscode${/}.env",
+            "cwd": "${workspaceFolder}"
+        },
     ]
 }

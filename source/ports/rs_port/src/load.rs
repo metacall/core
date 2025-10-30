@@ -74,10 +74,6 @@ impl Handle {
         Self(null_mut())
     }
 
-    pub fn from_mut_raw_ptr(&mut self, ptr: *mut c_void) {
-        self.0 = ptr
-    }
-
     pub fn as_mut_raw_ptr(&mut self) -> *mut c_void {
         self.0
     }
@@ -145,10 +141,8 @@ pub fn from_file(
         new_paths.push(c_path.as_ptr());
     }
 
-    let mut handle_ptr: *mut c_void = null_mut();
-
     let handle_ref = match handle {
-        Some(_) => &mut handle_ptr,
+        Some(handle_ptr) => &mut handle_ptr.0,
         None => null_mut(),
     };
 
@@ -162,10 +156,6 @@ pub fn from_file(
     } != 0
     {
         return Err(MetaCallLoaderError::FromFileFailure);
-    }
-
-    if let Some(handle_ref) = handle {
-        handle_ref.from_mut_raw_ptr(handle_ptr);
     }
 
     Ok(())
@@ -187,10 +177,8 @@ pub fn from_memory(
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
     let c_script = cstring_enum!(script, MetaCallLoaderError)?;
 
-    let mut handle_ptr: *mut c_void = null_mut();
-
     let handle_ref = match handle {
-        Some(_) => &mut handle_ptr,
+        Some(handle_ptr) => &mut handle_ptr.0,
         None => null_mut(),
     };
 
@@ -204,10 +192,6 @@ pub fn from_memory(
     } != 0
     {
         return Err(MetaCallLoaderError::FromMemoryFailure);
-    }
-
-    if let Some(handle_ref) = handle {
-        handle_ref.from_mut_raw_ptr(handle_ptr);
     }
 
     Ok(())
