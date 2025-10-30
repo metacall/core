@@ -76,5 +76,51 @@ TEST_F(metacall_clear_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
+	{
+		static const char script1[] = "function greet() { return 1 }\nmodule.exports = { greet }";
+		static const char script2[] = "function greet() { return 2 }\nmodule.exports = { greet }";
+		static const char script3[] = "function yeet() { return 3 }\nmodule.exports = { yeet }";
+
+		void *handle1 = NULL;
+		void *handle2 = NULL;
+
+		void *ret;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", script1, sizeof(script1), &handle1));
+
+		ret = metacallhv(handle1, "greet", metacall_null_args);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((double)1.0, (double)metacall_value_to_double(ret));
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", script2, sizeof(script2), &handle2));
+
+		ret = metacallhv(handle2, "greet", metacall_null_args);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((double)2.0, (double)metacall_value_to_double(ret));
+
+		metacall_value_destroy(ret);
+
+		// Now load script number 3 into handle number 2
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", script3, sizeof(script3), &handle2));
+
+		ret = metacallhv(handle2, "yeet", metacall_null_args);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((double)3.0, (double)metacall_value_to_double(ret));
+
+		metacall_value_destroy(ret);
+
+		EXPECT_EQ((int)0, (int)metacall_clear(handle1));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle2));
+	}
+#endif /* OPTION_BUILD_LOADERS_NODE */
+
 	metacall_destroy();
 }

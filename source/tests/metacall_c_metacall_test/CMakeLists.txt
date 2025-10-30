@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_NODE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_C OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_C)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-clear-test)
+set(target metacall-c-metacall-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_clear_test.cpp
+	${source_path}/metacall_c_metacall_test.cpp
 )
 
 # Group source files
@@ -54,14 +54,6 @@ add_executable(${target}
 
 # Create namespaced alias
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
-
-#
-# Dependecies
-#
-
-add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall
-)
 
 #
 # Project options
@@ -103,6 +95,10 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	METACALL_INCLUDE_DIR="${CMAKE_SOURCE_DIR}/source/metacall/include"
+	METACALL_API_INCLUDE_DIR="${CMAKE_BINARY_DIR}/source/metacall/include"
+	METACALL_LIBRARY="${PROJECT_OUTPUT_DIR}"
 )
 
 #
@@ -145,8 +141,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	py_loader
-	node_loader
+	c_loader
 )
 
 #

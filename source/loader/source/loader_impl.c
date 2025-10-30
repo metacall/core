@@ -1150,7 +1150,8 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 		{
 			loader_handle handle;
 			loader_path path;
-			size_t init_order;
+			size_t init_order = 0;
+			int init_order_not_initialized = !(handle_ptr != NULL && *handle_ptr != NULL);
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
 			{
@@ -1164,9 +1165,12 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 				return 1;
 			}
 
-			init_order = vector_size(impl->handle_impl_init_order);
+			if (init_order_not_initialized)
+			{
+				init_order = vector_size(impl->handle_impl_init_order);
 
-			vector_push_back_empty(impl->handle_impl_init_order);
+				vector_push_back_empty(impl->handle_impl_init_order);
+			}
 
 			handle = iface->load_from_file(impl, paths, size);
 
@@ -1192,7 +1196,10 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 							{
 								if (loader_impl_handle_register(manager, impl, path, handle_impl, handle_ptr) == 0)
 								{
-									vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+									if (init_order_not_initialized)
+									{
+										vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+									}
 
 									return 0;
 								}
@@ -1204,7 +1211,10 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 						set_remove(impl->handle_impl_path_map, handle_impl->path);
 					}
 
+					if (init_order_not_initialized)
 					{
+						/* Here we delete all the subsequent loaded scripts because this script can load others,
+						and once it is destroyed it must clear all of them */
 						size_t iterator;
 
 						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
@@ -1224,16 +1234,21 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 			}
 			else
 			{
-				size_t iterator;
-
-				for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+				if (init_order_not_initialized)
 				{
-					loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+					/* Here we delete all the subsequent loaded scripts because this script can load others,
+					and once it is destroyed it must clear all of them */
+					size_t iterator;
 
-					loader_impl_destroy_handle(iterator_handle_impl);
+					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+					{
+						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+						loader_impl_destroy_handle(iterator_handle_impl);
+					}
+
+					vector_pop_back(impl->handle_impl_init_order);
 				}
-
-				vector_pop_back(impl->handle_impl_init_order);
 			}
 		}
 	}
@@ -1276,7 +1291,8 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 		{
 			loader_name name;
 			loader_handle handle = NULL;
-			size_t init_order;
+			size_t init_order = 0;
+			int init_order_not_initialized = !(handle_ptr != NULL && *handle_ptr != NULL);
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
 			{
@@ -1297,9 +1313,12 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 				return 1;
 			}
 
-			init_order = vector_size(impl->handle_impl_init_order);
+			if (init_order_not_initialized)
+			{
+				init_order = vector_size(impl->handle_impl_init_order);
 
-			vector_push_back_empty(impl->handle_impl_init_order);
+				vector_push_back_empty(impl->handle_impl_init_order);
+			}
 
 			handle = iface->load_from_memory(impl, name, buffer, size);
 
@@ -1322,7 +1341,10 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 							{
 								if (loader_impl_handle_register(manager, impl, name, handle_impl, handle_ptr) == 0)
 								{
-									vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+									if (init_order_not_initialized)
+									{
+										vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+									}
 
 									return 0;
 								}
@@ -1334,7 +1356,10 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 						set_remove(impl->handle_impl_path_map, handle_impl->path);
 					}
 
+					if (init_order_not_initialized)
 					{
+						/* Here we delete all the subsequent loaded scripts because this script can load others,
+						and once it is destroyed it must clear all of them */
 						size_t iterator;
 
 						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
@@ -1354,16 +1379,21 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 			}
 			else
 			{
-				size_t iterator;
-
-				for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+				if (init_order_not_initialized)
 				{
-					loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+					/* Here we delete all the subsequent loaded scripts because this script can load others,
+						and once it is destroyed it must clear all of them */
+					size_t iterator;
 
-					loader_impl_destroy_handle(iterator_handle_impl);
+					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+					{
+						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+						loader_impl_destroy_handle(iterator_handle_impl);
+					}
+
+					vector_pop_back(impl->handle_impl_init_order);
 				}
-
-				vector_pop_back(impl->handle_impl_init_order);
 			}
 		}
 	}
@@ -1377,7 +1407,8 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 	{
 		loader_impl_interface iface = loader_iface(p);
 		loader_path subpath;
-		size_t init_order;
+		size_t init_order = 0;
+		int init_order_not_initialized = !(handle_ptr != NULL && *handle_ptr != NULL);
 
 		if (iface != NULL && loader_impl_handle_name(manager, path, subpath) > 1)
 		{
@@ -1395,9 +1426,12 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 				return 1;
 			}
 
-			init_order = vector_size(impl->handle_impl_init_order);
+			if (init_order_not_initialized)
+			{
+				init_order = vector_size(impl->handle_impl_init_order);
 
-			vector_push_back_empty(impl->handle_impl_init_order);
+				vector_push_back_empty(impl->handle_impl_init_order);
+			}
 
 			handle = iface->load_from_package(impl, path);
 
@@ -1420,7 +1454,10 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 							{
 								if (loader_impl_handle_register(manager, impl, subpath, handle_impl, handle_ptr) == 0)
 								{
-									vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+									if (init_order_not_initialized)
+									{
+										vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+									}
 
 									return 0;
 								}
@@ -1432,7 +1469,10 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 						set_remove(impl->handle_impl_path_map, handle_impl->path);
 					}
 
+					if (init_order_not_initialized)
 					{
+						/* Here we delete all the subsequent loaded scripts because this script can load others,
+						and once it is destroyed it must clear all of them */
 						size_t iterator;
 
 						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
@@ -1452,16 +1492,21 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 			}
 			else
 			{
-				size_t iterator;
-
-				for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+				if (init_order_not_initialized)
 				{
-					loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+					/* Here we delete all the subsequent loaded scripts because this script can load others,
+						and once it is destroyed it must clear all of them */
+					size_t iterator;
 
-					loader_impl_destroy_handle(iterator_handle_impl);
+					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+					{
+						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+						loader_impl_destroy_handle(iterator_handle_impl);
+					}
+
+					vector_pop_back(impl->handle_impl_init_order);
 				}
-
-				vector_pop_back(impl->handle_impl_init_order);
 			}
 		}
 	}

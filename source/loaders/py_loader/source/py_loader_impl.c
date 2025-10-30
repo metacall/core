@@ -58,7 +58,7 @@
 * and threading flow for improving the debug of memory leaks and async bugs.
 * Set it to 0 in order to remove all the noise.
 */
-#define DEBUG_PRINT_ENABLED 1
+#define DEBUG_PRINT_ENABLED 0
 
 typedef struct loader_impl_py_function_type
 {

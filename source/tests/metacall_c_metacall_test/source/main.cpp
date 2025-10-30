@@ -1,6 +1,6 @@
 /*
- *	Format Library by Parra Studios
- *	A cross-platform library for supporting formatted input / output.
+ *	Loader Library by Parra Studios
+ *	A plugin for loading ruby code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,13 +18,11 @@
  *
  */
 
-#ifndef METACALL_INL
-#define METACALL_INL 1
+#include <gtest/gtest.h>
 
-/* -- Headers -- */
-
-namespace metacall
+int main(int argc, char *argv[])
 {
-} /* namespace metacall */
+	::testing::InitGoogleTest(&argc, argv);
 
-#endif /* METACALL_INL */
+	return RUN_ALL_TESTS();
+}
