@@ -23,6 +23,7 @@
 
 /* -- Headers -- */
 
+#include <array>
 #include <cstring>
 #include <memory>
 #include <stdexcept>
