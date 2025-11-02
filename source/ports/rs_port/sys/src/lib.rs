@@ -214,7 +214,10 @@ fn set_rpath(lib_path: &Path) {
     #[cfg(target_os = "aix")]
     {
         // Add default system library paths to avoid breaking standard lookup
-        println!("cargo:rustc-link-arg=-Wl,-blibpath:{}:/usr/lib:/lib", path_str);
+        println!(
+            "cargo:rustc-link-arg=-Wl,-blibpath:{}:/usr/lib:/lib",
+            path_str
+        );
     }
 
     #[cfg(target_os = "windows")]
