@@ -1,13 +1,23 @@
 [package]
-authors = ["Mahdi Sharifi <devraymondsh@gmail.com>", "Vicente Eduardo Ferrer Garcia <vic798@gmail.com>", "Swarnim Arun <swarnimarun11@gmail.com>"]
+authors = [
+  "Mahdi Sharifi <devraymondsh@gmail.com>",
+  "Vicente Eduardo Ferrer Garcia <vic798@gmail.com>",
+  "Swarnim Arun <swarnimarun11@gmail.com>",
+]
 description = "Call NodeJS, TypeScript, Python, C#, Ruby... functions from Rust (a Rust Port for MetaCall)."
 edition = "2021"
-keywords = ["ffi", "polyglot", "metacall", "inter-language", "polyglot-programming"]
+keywords = [
+  "ffi",
+  "polyglot",
+  "metacall",
+  "inter-language",
+  "polyglot-programming",
+]
 license = "Apache-2.0"
 name = "metacall"
 readme = "README.md"
 repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
-version = "0.5.3"
+version = "0.5.5"
 
 [lib]
 crate-type = ["lib"]
@@ -23,7 +33,4 @@ metacall-inline = { version = "0.2.0", path = "./inline" }
 metacall-sys = { version = "0.1.2", path = "./sys" }
 
 [workspace]
-members = [
-    "inline",
-    "sys",
-]
+members = ["inline", "sys"]
