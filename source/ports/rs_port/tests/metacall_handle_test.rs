@@ -16,8 +16,8 @@ fn metacall_handle() {
     let mut handle1 = Handle::new();
     let mut handle2 = Handle::new();
 
-    let result1 = load::from_memory(load::LoaderTag::NodeJS, SCRIPT1, Some(&mut handle1));
-    let result2 = load::from_memory(load::LoaderTag::NodeJS, SCRIPT2, Some(&mut handle2));
+    let result1 = load::from_memory(load::Tag::NodeJS, SCRIPT1, Some(&mut handle1));
+    let result2 = load::from_memory(load::Tag::NodeJS, SCRIPT2, Some(&mut handle2));
 
     assert!(result1.is_ok());
     assert!(result2.is_ok());

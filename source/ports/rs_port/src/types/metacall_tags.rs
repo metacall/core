@@ -1,4 +1,4 @@
-pub enum LoaderTag {
+pub enum Tag {
     C,
     Cobol,
     Crystal,

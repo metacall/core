@@ -10,34 +10,34 @@ use std::{
     path::{Path, PathBuf},
     ptr::null_mut,
 };
-pub use types::LoaderTag;
+pub use types::Tag;
 
-impl fmt::Display for LoaderTag {
+impl fmt::Display for Tag {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LoaderTag::C => write!(f, "c"),
-            LoaderTag::Cobol => write!(f, "cob"),
-            LoaderTag::Crystal => write!(f, "cr"),
-            LoaderTag::CSharp => write!(f, "cs"),
-            LoaderTag::Dart => write!(f, "dart"),
-            LoaderTag::Deno => write!(f, "deno"),
-            LoaderTag::Extension => write!(f, "ext"),
-            LoaderTag::File => write!(f, "file"),
-            LoaderTag::Java => write!(f, "java"),
-            LoaderTag::Julia => write!(f, "jl"),
-            LoaderTag::JavaScript => write!(f, "js"),
-            LoaderTag::JSM => write!(f, "jsm"),
-            LoaderTag::Kind => write!(f, "kind"),
-            LoaderTag::LLVM => write!(f, "llvm"),
-            LoaderTag::Lua => write!(f, "lua"),
-            LoaderTag::Mock => write!(f, "mock"),
-            LoaderTag::NodeJS => write!(f, "node"),
-            LoaderTag::Python => write!(f, "py"),
-            LoaderTag::Ruby => write!(f, "rb"),
-            LoaderTag::RPC => write!(f, "rpc"),
-            LoaderTag::Rust => write!(f, "rs"),
-            LoaderTag::TypeScript => write!(f, "ts"),
-            LoaderTag::Wasm => write!(f, "wasm"),
+            Tag::C => write!(f, "c"),
+            Tag::Cobol => write!(f, "cob"),
+            Tag::Crystal => write!(f, "cr"),
+            Tag::CSharp => write!(f, "cs"),
+            Tag::Dart => write!(f, "dart"),
+            Tag::Deno => write!(f, "deno"),
+            Tag::Extension => write!(f, "ext"),
+            Tag::File => write!(f, "file"),
+            Tag::Java => write!(f, "java"),
+            Tag::Julia => write!(f, "jl"),
+            Tag::JavaScript => write!(f, "js"),
+            Tag::JSM => write!(f, "jsm"),
+            Tag::Kind => write!(f, "kind"),
+            Tag::LLVM => write!(f, "llvm"),
+            Tag::Lua => write!(f, "lua"),
+            Tag::Mock => write!(f, "mock"),
+            Tag::NodeJS => write!(f, "node"),
+            Tag::Python => write!(f, "py"),
+            Tag::Ruby => write!(f, "rb"),
+            Tag::RPC => write!(f, "rpc"),
+            Tag::Rust => write!(f, "rs"),
+            Tag::TypeScript => write!(f, "ts"),
+            Tag::Wasm => write!(f, "wasm"),
         }
     }
 }
@@ -81,7 +81,7 @@ impl Drop for Handle {
 /// metacall::load::from_single_file("node", "index.js").unwrap();
 /// ```
 pub fn from_single_file(
-    tag: LoaderTag,
+    tag: Tag,
     path: impl AsRef<Path>,
     handle: Option<&mut Handle>,
 ) -> Result<(), MetaCallLoaderError> {
@@ -94,7 +94,7 @@ pub fn from_single_file(
 /// metacall::load::from_file(Tag::NodeJS, ["index.js", "main.js"]).unwrap();
 /// ```
 pub fn from_file(
-    tag: LoaderTag,
+    tag: Tag,
     paths: impl IntoIterator<Item = impl AsRef<Path>>,
     handle: Option<&mut Handle>,
 ) -> Result<(), MetaCallLoaderError> {
@@ -154,7 +154,7 @@ pub fn from_file(
 /// metacall::load::from_memory(Tag::NodeJS, script).unwrap();
 /// ```
 pub fn from_memory(
-    tag: LoaderTag,
+    tag: Tag,
     script: impl ToString,
     handle: Option<&mut Handle>,
 ) -> Result<(), MetaCallLoaderError> {

@@ -371,7 +371,7 @@ fn metacall() {
     let js_test_file = tests_dir.join("script.js");
     let c_test_file = tests_dir.join("script.c");
     let py_test_file = tests_dir.join("script.py");
-    let py_loaded = load::from_single_file(load::LoaderTag::Python, py_test_file, None).is_ok();
+    let py_loaded = load::from_single_file(load::Tag::Python, py_test_file, None).is_ok();
 
     if py_loaded {
         test_buffer();
@@ -384,7 +384,7 @@ fn metacall() {
         test_string();
         test_null();
     }
-    if load::from_single_file(load::LoaderTag::C, c_test_file, None).is_ok() {
+    if load::from_single_file(load::Tag::C, c_test_file, None).is_ok() {
         test_char();
         test_double();
         test_float();
@@ -393,7 +393,7 @@ fn metacall() {
         test_short();
         test_mixed_numbers();
     }
-    if load::from_single_file(load::LoaderTag::NodeJS, js_test_file, None).is_ok() {
+    if load::from_single_file(load::Tag::NodeJS, js_test_file, None).is_ok() {
         test_exception();
         test_throwable();
         test_future();

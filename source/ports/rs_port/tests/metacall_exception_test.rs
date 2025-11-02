@@ -10,7 +10,7 @@ fn metacall_exception() {
     let tests_dir = env::current_dir().unwrap().join("tests/scripts");
     let js_test_file = tests_dir.join("script.js");
 
-    if load::from_single_file(load::LoaderTag::NodeJS, js_test_file, None).is_ok() {
+    if load::from_single_file(load::Tag::NodeJS, js_test_file, None).is_ok() {
         // This should not generate a segmentation fault
         let val =
             metacall::metacall_no_arg::<metacall::MetaCallException>("test_exception").unwrap();
