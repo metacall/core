@@ -16,26 +16,26 @@ pub enum LoadingMethod {
 }
 
 impl LoadingMethod {
-    pub fn consume_dlib(self) -> Result<compiler::DlopenLibrary, String> {
+    pub fn consume_dlib(self) -> Result<compiler::DynlinkLibrary, String> {
         match self {
-            Self::File(FileRegistration { mut dlopen, .. }) => match dlopen {
+            Self::File(FileRegistration { mut dynlink, .. }) => match dynlink {
                 Some(_) => {
-                    let dl = std::mem::replace(&mut dlopen, None);
-                    Ok(dl.expect("Unexpected: dlopen is None"))
+                    let dl = std::mem::replace(&mut dynlink, None);
+                    Ok(dl.expect("Unexpected: Dynlink library is None"))
                 }
                 None => Err(String::from("consume_dlib was called more than once")),
             },
-            Self::Package(PackageRegistration { mut dlopen, .. }) => match dlopen {
+            Self::Package(PackageRegistration { mut dynlink, .. }) => match dynlink {
                 Some(_) => {
-                    let dl = std::mem::replace(&mut dlopen, None);
-                    Ok(dl.expect("Unexpected: dlopen is None"))
+                    let dl = std::mem::replace(&mut dynlink, None);
+                    Ok(dl.expect("Unexpected: Dynlink library is None"))
                 }
                 None => Err(String::from("consume_dlib was called more than once")),
             },
-            Self::Memory(MemoryRegistration { mut dlopen, .. }) => match dlopen {
+            Self::Memory(MemoryRegistration { mut dynlink, .. }) => match dynlink {
                 Some(_) => {
-                    let dl = std::mem::replace(&mut dlopen, None);
-                    Ok(dl.expect("Unexpected: dlopen is None"))
+                    let dl = std::mem::replace(&mut dynlink, None);
+                    Ok(dl.expect("Unexpected: Dynlink library is None"))
                 }
                 None => Err(String::from("consume_dlib was called more than once")),
             },

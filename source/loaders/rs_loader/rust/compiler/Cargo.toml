@@ -7,9 +7,4 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
-dlopen = "0.1.8"
-libffi = "3.0.0"
-cargo_toml = "0.11.5"
-lazy_static = "1.4.0"
-itertools = "0.10.3"
-fastrand = "1.4"
+fastrand = "=2.3.0"

@@ -2,13 +2,13 @@ use crate::{compile, CompilerState, RegistrationError, Source};
 
 use std::{ffi::c_void};
 
-use crate::{registrator, DlopenLibrary};
+use crate::{registrator, DynlinkLibrary};
 
 #[derive(Debug)]
 pub struct MemoryRegistration {
     pub name: String,
     pub state: CompilerState,
-    pub dlopen: Option<DlopenLibrary>,
+    pub dynlink: Option<DynlinkLibrary>,
 }
 impl MemoryRegistration {
     pub fn new(name: String, code: String) -> Result<MemoryRegistration, RegistrationError> {
@@ -24,9 +24,9 @@ impl MemoryRegistration {
                 ))))
             }
         };
-        let dlopen = match DlopenLibrary::new(&state.output) {
+        let dynlink = match DynlinkLibrary::new(&state.output) {
             Ok(instance) => instance,
-            Err(error) => return Err(RegistrationError::DlopenError(error)),
+            Err(error) => return Err(RegistrationError::DynlinkError(error)),
         };
         // cleanup temp dir
         let mut destination = state.output.clone();
@@ -36,17 +36,17 @@ impl MemoryRegistration {
         Ok(MemoryRegistration {
             name,
             state,
-            dlopen: Some(dlopen),
+            dynlink: Some(dynlink),
         })
     }
 
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
-        match &self.dlopen {
+        match &self.dynlink {
             Some(dl) => {
                 registrator::register(&self.state, &dl, loader_impl, ctx);
                 Ok(())
             }
-            None => Err(String::from("The dlopen_lib is None")),
+            None => Err(String::from("The Dynlink library is None")),
         }
     }
 }

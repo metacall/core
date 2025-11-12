@@ -24,8 +24,8 @@ pub extern "C" fn rs_loader_impl_load_from_memory(
             RegistrationError::CompilationError(analysis_error) => {
                 return loader::load_on_error(analysis_error);
             }
-            RegistrationError::DlopenError(dlopen_error) => {
-                return loader::load_on_error(dlopen_error);
+            RegistrationError::DynlinkError(dynlink_error) => {
+                return loader::load_on_error(dynlink_error);
             }
         },
     });

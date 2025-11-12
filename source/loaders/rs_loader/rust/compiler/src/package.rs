@@ -1,4 +1,4 @@
-use crate::{compile, registrator, CompilerState, DlopenLibrary, RegistrationError, Source};
+use crate::{compile, registrator, CompilerState, DynlinkLibrary, RegistrationError, Source};
 
 use std::{ffi::c_void, path::PathBuf};
 
@@ -6,7 +6,7 @@ use std::{ffi::c_void, path::PathBuf};
 pub struct PackageRegistration {
     pub path_to_file: PathBuf,
     pub state: CompilerState,
-    pub dlopen: Option<DlopenLibrary>,
+    pub dynlink: Option<DynlinkLibrary>,
 }
 
 impl PackageRegistration {
@@ -22,25 +22,25 @@ impl PackageRegistration {
                 ))))
             }
         };
-        let dlopen = match DlopenLibrary::new(&state.output) {
+        let dynlink = match DynlinkLibrary::new(&state.output) {
             Ok(instance) => instance,
-            Err(error) => return Err(RegistrationError::DlopenError(error)),
+            Err(error) => return Err(RegistrationError::DynlinkError(error)),
         };
 
         Ok(PackageRegistration {
             path_to_file,
             state,
-            dlopen: Some(dlopen),
+            dynlink: Some(dynlink),
         })
     }
 
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
-        match &self.dlopen {
+        match &self.dynlink {
             Some(dl) => {
                 registrator::register(&self.state, &dl, loader_impl, ctx);
                 Ok(())
             }
-            None => Err(String::from("The dlopen_lib is None")),
+            None => Err(String::from("The Dynlink library is None")),
         }
     }
 }

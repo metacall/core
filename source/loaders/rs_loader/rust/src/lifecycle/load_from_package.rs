@@ -22,8 +22,8 @@ pub extern "C" fn rs_loader_impl_load_from_package(
                         RegistrationError::CompilationError(analysis_error) => {
                             return Err(load_on_error(analysis_error))
                         }
-                        RegistrationError::DlopenError(dlopen_error) => {
-                            return Err(load_on_error(dlopen_error))
+                        RegistrationError::DynlinkError(dynlink_error) => {
+                            return Err(load_on_error(dynlink_error))
                         }
                     },
                 },

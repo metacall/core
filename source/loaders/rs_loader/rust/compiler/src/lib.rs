@@ -20,8 +20,6 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 
-use dlopen;
-use itertools::Itertools;
 use rustc_ast::{visit, Impl, Item, ItemKind, VariantData};
 use rustc_hir::def::{DefKind, Res};
 use rustc_hir::def_id::DefId;
@@ -42,6 +40,10 @@ use std::{
     path::PathBuf,
     sync,
 };
+
+use std::ffi::{CString};
+use std::os::raw::c_char;
+
 mod ast;
 pub mod file;
 pub mod memory;
@@ -53,7 +55,7 @@ use wrapper::generate_wrapper;
 pub mod api;
 pub enum RegistrationError {
     CompilationError(String),
-    DlopenError(String),
+    DynlinkError(String),
 }
 
 struct SourceInput(config::Input);
@@ -226,56 +228,70 @@ fn compiler_source() -> Option<PathBuf> {
     }
 }
 
-#[derive(Debug)]
-pub struct DlopenLibrary {
-    pub instance: dlopen::raw::Library,
-}
-impl DlopenLibrary {
-    pub fn new(path_to_dll: &PathBuf) -> Result<DlopenLibrary, String> {
-        match match dlopen::raw::Library::open(path_to_dll.clone()) {
-            Ok(instance) => return Ok(DlopenLibrary { instance }),
-            Err(error) => match error {
-                dlopen::Error::NullCharacter(null_error) => {
-                    Err(format!(
-                        "Provided string could not be coverted into `{}` because it contained null character. IoError: {}",
-                        "std::ffi::CString",
-                        null_error
-                    ))
-                }
-                dlopen::Error::OpeningLibraryError(io_error) => {
-                    Err(format!(
-                        "The dll could not be opened. IoError: {}",
-                        io_error
-                    ))
-                }
-                dlopen::Error::SymbolGettingError(io_error) => {
-                    Err(format!(
-                        "The symbol could not be obtained. IoError: {}",
-                        io_error
-                    ))
-                }
-                dlopen::Error::NullSymbol => {
-                    Err(format!(
-                        "Value of the symbol was null.",
-                    ))
-                }
-                dlopen::Error::AddrNotMatchingDll(io_error) => {
-                    Err(format!(
-                        "Address could not be matched to a dynamic link library. IoError: {}",
-                        io_error
-                    ))
-                }
-            },
-        } {
-            Ok(dlopen_library_instance) => return Ok(dlopen_library_instance),
-            Err(error) => {
-                let dll_opening_error = format!(
-                    "{}\nrs_loader was unable to open the dll with the following path: `{}`", 
-                    error,
-                    path_to_dll.to_str().expect("Unable to cast pathbuf to str")
-                );
+// Define the opaque pointer (C type: dynlink)
+type Dynlink = *mut std::ffi::c_void;
+type DynlinkSymbolAddr = unsafe extern "C" fn();
 
-                return Err(dll_opening_error)
+// Define flags as constants (mimicking the C #define values)
+// const DYNLINK_FLAGS_BIND_NOW: u32 = 0x01 << 0;       // Inmediate loading bind flag
+const DYNLINK_FLAGS_BIND_LAZY: u32 = 0x01 << 1;      // Lazy loading bind flag
+const DYNLINK_FLAGS_BIND_LOCAL: u32 = 0x01 << 2;     // Private visibility bind flag
+// const DYNLINK_FLAGS_BIND_GLOBAL: u32 = 0x01 << 3;    // Public visibility bind flag
+// const DYNLINK_FLAGS_BIND_SELF: u32 = 0x01 << 16;     // Private flag for when loading the current process
+
+// FFI declaration for the `dynlink_load_absolute` function (C function)
+extern "C" {
+    pub fn dynlink_load_absolute(path: *const c_char, flags: u32) -> Dynlink;
+    pub fn dynlink_symbol(dynlink: Dynlink, symbol_name: *const c_char, symbol_address: *mut DynlinkSymbolAddr) -> i32;
+    pub fn dynlink_unload(dynlink: Dynlink);
+}
+
+#[derive(Debug)]
+pub struct DynlinkLibrary {
+    pub instance: Dynlink,
+}
+
+impl DynlinkLibrary {
+    pub fn new(path: &PathBuf) -> Result<DynlinkLibrary, String> {
+        let c_path = CString::new(path.to_str().unwrap()).expect("CString::new failed");
+
+        unsafe {
+            let instance = dynlink_load_absolute(c_path.as_ptr(), DYNLINK_FLAGS_BIND_LOCAL | DYNLINK_FLAGS_BIND_LAZY);
+
+            if instance.is_null() {
+                Err("Failed to load library: ".to_owned() + path.to_str().unwrap())
+            } else {
+                Ok(DynlinkLibrary { instance })
+            }
+        }
+    }
+
+    pub fn symbol(&self, symbol_name: &str) -> Result<DynlinkSymbolAddr, String> {
+        let c_symbol_name = CString::new(symbol_name).expect("CString::new failed");
+        let fn_null_addr = unsafe { std::mem::transmute(std::ptr::null::<()>()) };
+        let mut symbol_address: DynlinkSymbolAddr = fn_null_addr;
+
+        unsafe {
+            let result = dynlink_symbol(self.instance, c_symbol_name.as_ptr(), &mut symbol_address);
+
+            if result == 0 && symbol_address != fn_null_addr {
+                Ok(symbol_address)
+            } else {
+                Err(format!("Failed to find symbol: {}", symbol_name))
+            }
+        }
+    }
+}
+
+impl Drop for DynlinkLibrary {
+    fn drop(&mut self) {
+        unsafe {
+            if !self.instance.is_null() {
+                // Call the C function to unload the dynamic library
+                dynlink_unload(self.instance);
+
+                // Set the instance to null for safety
+                self.instance = std::ptr::null_mut();
             }
         }
     }
@@ -426,9 +442,10 @@ impl CompilerCallbacks {
                 // find our krate
                 let crate_num = krates
                     .iter()
-                    .find_or_first(|&&x| {
+                    .find(|&&x| {
                         ctxt.crate_name(x) == rustc_span::Symbol::intern(crate_name)
                     })
+                    .or_else(|| krates.iter().next())
                     .expect("unable to find crate");
                 // parse public functions and structs
                 for child in ctxt.item_children(crate_num.as_def_id()) {
@@ -510,16 +527,20 @@ impl CompilerCallbacks {
     }
 }
 
+static CHARSET_STR: &str = "abcdefghijklmnopqrstuvwxyz";
+static METACALL_STR: &str = "metacall";
+
 fn generate_random_string(length: usize) -> String {
-    let charset_str = "abcdefghijklmnopqrstuvwxyz";
-    let chars: Vec<char> = charset_str.chars().collect();
-    let mut result = String::with_capacity(length + 8);
-    result.push_str("metacall");
-    unsafe {
-        for _ in 0..length {
-            result.push(*chars.get_unchecked(fastrand::usize(8..chars.len())));
-        }
+    let chars: Vec<char> = CHARSET_STR.chars().collect();
+    let mut result = String::with_capacity(length + METACALL_STR.len());
+
+    result.push_str(METACALL_STR);
+
+    for _ in 0..length {
+        let random_index = fastrand::usize(..chars.len());
+        result.push(chars[random_index]);
     }
+
     result
 }
 
