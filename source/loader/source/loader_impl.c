@@ -124,9 +124,15 @@ static int loader_impl_initialize_registered(plugin_manager manager, plugin p);
 
 static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size);
 
-static int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr, int populated);
+static int loader_impl_handle_init(loader_impl impl, loader_handle_impl handle_impl, void **handle_ptr, int populated);
 
-static int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr);
+static int loader_impl_handle_register(plugin_manager manager, loader_impl impl, loader_handle_impl handle_impl, void **handle_ptr);
+
+static int loader_impl_handle_init_order(loader_impl impl, void **handle_ptr, size_t *init_order_ptr);
+
+static int loader_impl_handle_discover_impl(plugin_manager manager, loader_impl impl, loader_impl_interface iface, loader_handle handle, const char *path, void **handle_ptr, size_t init_order, int init_order_not_initialized);
+
+static int loader_impl_handle_discover(plugin_manager manager, loader_impl impl, loader_impl_interface iface, loader_handle handle, const char *path, void **handle_ptr, size_t init_order, int init_order_not_initialized);
 
 static size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, loader_path result);
 
@@ -139,6 +145,8 @@ static value loader_impl_metadata_handle_context(loader_handle_impl handle_impl)
 static value loader_impl_metadata_handle(loader_handle_impl handle_impl);
 
 static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
+
+static void loader_impl_destroy_handle_children(loader_impl impl, size_t init_order);
 
 /* -- Private Member Data -- */
 
@@ -869,7 +877,7 @@ loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interfa
 
 	handle_impl->impl = impl;
 	handle_impl->iface = iface;
-	strncpy(handle_impl->path, path, size);
+	strncpy(handle_impl->path, path, size - 1);
 	handle_impl->module = module;
 	handle_impl->ctx = context_create(handle_impl->path);
 
@@ -944,6 +952,22 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 
 		free(handle_impl);
 	}
+}
+
+void loader_impl_destroy_handle_children(loader_impl impl, size_t init_order)
+{
+	/* Here we delete all the subsequent loaded scripts because this script can load others,
+	and once it is destroyed it must clear all of them */
+	size_t iterator, size = vector_size(impl->handle_impl_init_order);
+
+	for (iterator = init_order + 1; iterator < size; ++iterator)
+	{
+		loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+		loader_impl_destroy_handle(iterator_handle_impl);
+	}
+
+	vector_pop_back(impl->handle_impl_init_order);
 }
 
 int loader_impl_execution_path(plugin p, loader_impl impl, const loader_path path)
@@ -1023,7 +1047,7 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 	return 0;
 }
 
-int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr, int populated)
+int loader_impl_handle_init(loader_impl impl, loader_handle_impl handle_impl, void **handle_ptr, int populated)
 {
 	static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
 
@@ -1033,7 +1057,7 @@ int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_im
 
 	if (result != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error when calling to init hook function (" LOADER_IMPL_FUNCTION_INIT ") of handle: %s", path);
+		log_write("metacall", LOG_LEVEL_ERROR, "Error when calling to init hook function (" LOADER_IMPL_FUNCTION_INIT ") of handle: %s", handle_impl->path);
 	}
 
 	if (handle_ptr != NULL)
@@ -1044,7 +1068,7 @@ int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_im
 	return result;
 }
 
-int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr)
+int loader_impl_handle_register(plugin_manager manager, loader_impl impl, loader_handle_impl handle_impl, void **handle_ptr)
 {
 	/* If there's no handle input/output pointer passed as input parameter, then propagate the handle symbols to the loader context */
 	if (handle_ptr == NULL)
@@ -1061,14 +1085,14 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const 
 			/* This checks if there are duplicated keys between all loaders and the current handle context */
 			if (context_contains(other_impl->ctx, handle_impl->ctx, &duplicated_key) == 0 && duplicated_key != NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", duplicated_key, path);
+				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", duplicated_key, handle_impl->path);
 				return 1;
 			}
 		}
 
 		if (context_append(impl->ctx, handle_impl->ctx) == 0)
 		{
-			return loader_impl_handle_init(impl, path, handle_impl, handle_ptr, 0);
+			return loader_impl_handle_init(impl, handle_impl, handle_ptr, 0);
 		}
 	}
 	else
@@ -1081,22 +1105,117 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const 
 
 			if (context_contains(handle_impl->ctx, target_handle->ctx, &duplicated_key) == 0 && duplicated_key != NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, path);
+				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, handle_impl->path);
 				return 1;
 			}
 			else if (context_append(target_handle->ctx, handle_impl->ctx) == 0)
 			{
 				vector_push_back_var(handle_impl->populated_handles, target_handle);
 
-				return loader_impl_handle_init(impl, path, handle_impl, NULL, 1);
+				return loader_impl_handle_init(impl, handle_impl, NULL, 1);
 			}
 		}
 		else
 		{
 			/* Otherwise, initialize the handle and do not propagate the symbols, keep it private to the handle instance */
-			return loader_impl_handle_init(impl, path, handle_impl, handle_ptr, 1);
+			return loader_impl_handle_init(impl, handle_impl, handle_ptr, 1);
 		}
 	}
+
+	return 1;
+}
+
+int loader_impl_handle_init_order(loader_impl impl, void **handle_ptr, size_t *init_order_ptr)
+{
+	size_t init_order = 0;
+	int init_order_not_initialized = !(handle_ptr != NULL && *handle_ptr != NULL);
+
+	if (init_order_not_initialized)
+	{
+		init_order = vector_size(impl->handle_impl_init_order);
+
+		vector_push_back_empty(impl->handle_impl_init_order);
+	}
+
+	*init_order_ptr = init_order;
+
+	return init_order_not_initialized;
+}
+
+int loader_impl_handle_discover(plugin_manager manager, loader_impl impl, loader_impl_interface iface, loader_handle handle, const char *path, void **handle_ptr, size_t init_order, int init_order_not_initialized)
+{
+	/* if the handle has failed to be loaded, clean all the loaded children */
+	if (handle == NULL)
+	{
+		if (init_order_not_initialized)
+		{
+			loader_impl_destroy_handle_children(impl, init_order);
+		}
+
+		return 1;
+	}
+
+	return loader_impl_handle_discover_impl(manager, impl, iface, handle, path, handle_ptr, init_order, init_order_not_initialized);
+}
+
+int loader_impl_handle_discover_impl(plugin_manager manager, loader_impl impl, loader_impl_interface iface, loader_handle handle, const char *path, void **handle_ptr, size_t init_order, int init_order_not_initialized)
+{
+	loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, path, LOADER_PATH_SIZE);
+
+	if (handle_impl == NULL)
+	{
+		return 1;
+	}
+
+	handle_impl->populated = 1;
+
+	if (set_insert(impl->handle_impl_path_map, handle_impl->path, handle_impl) != 0)
+	{
+		goto insert_handle_path_map_error;
+	}
+
+	if (handle_impl->module != NULL)
+	{
+		if (set_insert(impl->handle_impl_map, handle_impl->module, handle_impl) != 0)
+		{
+			goto insert_handle_map_error;
+		}
+	}
+
+	if (iface != NULL)
+	{
+		if (iface->discover(impl, handle_impl->module, handle_impl->ctx) != 0)
+		{
+			goto discover_handle_error;
+		}
+	}
+
+	if (loader_impl_handle_register(manager, impl, handle_impl, handle_ptr) == 0)
+	{
+		if (init_order_not_initialized)
+		{
+			vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
+		}
+
+		return 0;
+	}
+
+discover_handle_error:
+	if (handle_impl->module != NULL)
+	{
+		set_remove(impl->handle_impl_map, handle_impl->module);
+	}
+insert_handle_map_error:
+	set_remove(impl->handle_impl_path_map, handle_impl->path);
+insert_handle_path_map_error:
+	if (init_order_not_initialized)
+	{
+		loader_impl_destroy_handle_children(impl, init_order);
+	}
+
+	log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", handle_impl->path);
+
+	loader_impl_destroy_handle(handle_impl);
 
 	return 1;
 }
@@ -1150,8 +1269,8 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 		{
 			loader_handle handle;
 			loader_path path;
-			size_t init_order = 0;
-			int init_order_not_initialized = !(handle_ptr != NULL && *handle_ptr != NULL);
+			size_t init_order;
+			int init_order_not_initialized;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
 			{
@@ -1165,91 +1284,14 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 				return 1;
 			}
 
-			if (init_order_not_initialized)
-			{
-				init_order = vector_size(impl->handle_impl_init_order);
-
-				vector_push_back_empty(impl->handle_impl_init_order);
-			}
+			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
 			handle = iface->load_from_file(impl, paths, size);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
 
-			if (handle != NULL)
-			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, path, LOADER_PATH_SIZE);
-
-				/* TODO: Disable logs here until log is completely thread safe and async signal safe */
-				/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle impl: %p", (void *)handle_impl); */
-
-				if (handle_impl != NULL)
-				{
-					handle_impl->populated = 1;
-
-					if (set_insert(impl->handle_impl_path_map, handle_impl->path, handle_impl) == 0)
-					{
-						if (set_insert(impl->handle_impl_map, handle_impl->module, handle_impl) == 0)
-						{
-							if (iface->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
-							{
-								if (loader_impl_handle_register(manager, impl, path, handle_impl, handle_ptr) == 0)
-								{
-									if (init_order_not_initialized)
-									{
-										vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
-									}
-
-									return 0;
-								}
-							}
-
-							set_remove(impl->handle_impl_map, handle_impl->module);
-						}
-
-						set_remove(impl->handle_impl_path_map, handle_impl->path);
-					}
-
-					if (init_order_not_initialized)
-					{
-						/* Here we delete all the subsequent loaded scripts because this script can load others,
-						and once it is destroyed it must clear all of them */
-						size_t iterator;
-
-						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
-						{
-							loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
-
-							loader_impl_destroy_handle(iterator_handle_impl);
-						}
-
-						vector_pop_back(impl->handle_impl_init_order);
-					}
-
-					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", path);
-
-					loader_impl_destroy_handle(handle_impl);
-				}
-			}
-			else
-			{
-				if (init_order_not_initialized)
-				{
-					/* Here we delete all the subsequent loaded scripts because this script can load others,
-					and once it is destroyed it must clear all of them */
-					size_t iterator;
-
-					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
-					{
-						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
-
-						loader_impl_destroy_handle(iterator_handle_impl);
-					}
-
-					vector_pop_back(impl->handle_impl_init_order);
-				}
-			}
+			return loader_impl_handle_discover(manager, impl, iface, handle, path, handle_ptr, init_order, init_order_not_initialized);
 		}
 	}
 
@@ -1291,8 +1333,8 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 		{
 			loader_name name;
 			loader_handle handle = NULL;
-			size_t init_order = 0;
-			int init_order_not_initialized = !(handle_ptr != NULL && *handle_ptr != NULL);
+			size_t init_order;
+			int init_order_not_initialized;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
 			{
@@ -1313,88 +1355,14 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 				return 1;
 			}
 
-			if (init_order_not_initialized)
-			{
-				init_order = vector_size(impl->handle_impl_init_order);
-
-				vector_push_back_empty(impl->handle_impl_init_order);
-			}
+			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
 			handle = iface->load_from_memory(impl, name, buffer, size);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
 
-			if (handle != NULL)
-			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, name, LOADER_NAME_SIZE);
-
-				if (handle_impl != NULL)
-				{
-					handle_impl->populated = 1;
-
-					if (set_insert(impl->handle_impl_path_map, handle_impl->path, handle_impl) == 0)
-					{
-						if (set_insert(impl->handle_impl_map, handle_impl->module, handle_impl) == 0)
-						{
-							if (iface->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
-							{
-								if (loader_impl_handle_register(manager, impl, name, handle_impl, handle_ptr) == 0)
-								{
-									if (init_order_not_initialized)
-									{
-										vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
-									}
-
-									return 0;
-								}
-							}
-
-							set_remove(impl->handle_impl_map, handle_impl->module);
-						}
-
-						set_remove(impl->handle_impl_path_map, handle_impl->path);
-					}
-
-					if (init_order_not_initialized)
-					{
-						/* Here we delete all the subsequent loaded scripts because this script can load others,
-						and once it is destroyed it must clear all of them */
-						size_t iterator;
-
-						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
-						{
-							loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
-
-							loader_impl_destroy_handle(iterator_handle_impl);
-						}
-
-						vector_pop_back(impl->handle_impl_init_order);
-					}
-
-					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", name);
-
-					loader_impl_destroy_handle(handle_impl);
-				}
-			}
-			else
-			{
-				if (init_order_not_initialized)
-				{
-					/* Here we delete all the subsequent loaded scripts because this script can load others,
-						and once it is destroyed it must clear all of them */
-					size_t iterator;
-
-					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
-					{
-						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
-
-						loader_impl_destroy_handle(iterator_handle_impl);
-					}
-
-					vector_pop_back(impl->handle_impl_init_order);
-				}
-			}
+			return loader_impl_handle_discover(manager, impl, iface, handle, name, handle_ptr, init_order, init_order_not_initialized);
 		}
 	}
 
@@ -1407,8 +1375,8 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 	{
 		loader_impl_interface iface = loader_iface(p);
 		loader_path subpath;
-		size_t init_order = 0;
-		int init_order_not_initialized = !(handle_ptr != NULL && *handle_ptr != NULL);
+		size_t init_order;
+		int init_order_not_initialized;
 
 		if (iface != NULL && loader_impl_handle_name(manager, path, subpath) > 1)
 		{
@@ -1426,88 +1394,14 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 				return 1;
 			}
 
-			if (init_order_not_initialized)
-			{
-				init_order = vector_size(impl->handle_impl_init_order);
-
-				vector_push_back_empty(impl->handle_impl_init_order);
-			}
+			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
 			handle = iface->load_from_package(impl, path);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
 
-			if (handle != NULL)
-			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, subpath, LOADER_PATH_SIZE);
-
-				if (handle_impl != NULL)
-				{
-					handle_impl->populated = 1;
-
-					if (set_insert(impl->handle_impl_path_map, handle_impl->path, handle_impl) == 0)
-					{
-						if (set_insert(impl->handle_impl_map, handle_impl->module, handle_impl) == 0)
-						{
-							if (iface->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
-							{
-								if (loader_impl_handle_register(manager, impl, subpath, handle_impl, handle_ptr) == 0)
-								{
-									if (init_order_not_initialized)
-									{
-										vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
-									}
-
-									return 0;
-								}
-							}
-
-							set_remove(impl->handle_impl_map, handle_impl->module);
-						}
-
-						set_remove(impl->handle_impl_path_map, handle_impl->path);
-					}
-
-					if (init_order_not_initialized)
-					{
-						/* Here we delete all the subsequent loaded scripts because this script can load others,
-						and once it is destroyed it must clear all of them */
-						size_t iterator;
-
-						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
-						{
-							loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
-
-							loader_impl_destroy_handle(iterator_handle_impl);
-						}
-
-						vector_pop_back(impl->handle_impl_init_order);
-					}
-
-					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", subpath);
-
-					loader_impl_destroy_handle(handle_impl);
-				}
-			}
-			else
-			{
-				if (init_order_not_initialized)
-				{
-					/* Here we delete all the subsequent loaded scripts because this script can load others,
-						and once it is destroyed it must clear all of them */
-					size_t iterator;
-
-					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
-					{
-						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
-
-						loader_impl_destroy_handle(iterator_handle_impl);
-					}
-
-					vector_pop_back(impl->handle_impl_init_order);
-				}
-			}
+			return loader_impl_handle_discover(manager, impl, iface, handle, subpath, handle_ptr, init_order, init_order_not_initialized);
 		}
 	}
 
@@ -1579,70 +1473,31 @@ int loader_impl_get_option_host(loader_impl impl)
 
 int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr)
 {
-	if (impl != NULL)
+	loader_path path;
+	size_t init_order;
+	int init_order_not_initialized;
+
+	if (impl == NULL)
 	{
-		loader_impl_interface iface = loader_iface(p);
-
-		if (iface != NULL)
-		{
-			loader_path path;
-			size_t init_order;
-
-			if (loader_impl_initialize(manager, p, impl) != 0)
-			{
-				return 1;
-			}
-
-			if (loader_impl_handle_name(manager, name, path) > 1 && loader_impl_get_handle(impl, path) != NULL)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Initialize handle failed, handle with name %s already loaded", path);
-
-				return 1;
-			}
-
-			init_order = vector_size(impl->handle_impl_init_order);
-
-			vector_push_back_empty(impl->handle_impl_init_order);
-
-			loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, NULL, path, LOADER_PATH_SIZE);
-
-			if (handle_impl != NULL)
-			{
-				handle_impl->populated = 1;
-
-				if (set_insert(impl->handle_impl_path_map, handle_impl->path, handle_impl) == 0)
-				{
-					if (loader_impl_handle_register(manager, impl, path, handle_impl, handle_ptr) == 0)
-					{
-						vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
-
-						return 0;
-					}
-
-					set_remove(impl->handle_impl_path_map, handle_impl->path);
-				}
-
-				{
-					size_t iterator;
-
-					for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
-					{
-						loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
-
-						loader_impl_destroy_handle(iterator_handle_impl);
-					}
-
-					vector_pop_back(impl->handle_impl_init_order);
-				}
-
-				log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", path);
-
-				loader_impl_destroy_handle(handle_impl);
-			}
-		}
+		return 1;
 	}
 
-	return 1;
+	if (loader_impl_initialize(manager, p, impl) != 0)
+	{
+		return 1;
+	}
+
+	if (loader_impl_handle_name(manager, name, path) > 1 && loader_impl_get_handle(impl, path) != NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Initialize handle failed, handle with name %s already loaded", path);
+
+		return 1;
+	}
+
+	init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
+
+	/* We pass module and iface as null so we skip the discover step, it is not needed here because we manually initialize it */
+	return loader_impl_handle_discover_impl(manager, impl, NULL, NULL, path, handle_ptr, init_order, init_order_not_initialized);
 }
 
 vector loader_impl_handle_populated(void *handle)
