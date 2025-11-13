@@ -9,6 +9,7 @@ use std::fmt;
 use std::sync::Arc;
 type Result<T, E = i32> = core::result::Result<T, E>;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
+
 extern "C" {
     fn value_type_count(v: *mut c_void) -> c_int;
     fn value_type_id(v: *mut c_void) -> c_int;
@@ -89,6 +90,7 @@ pub struct ClassBuilder<T> {
     /// A type marker. Used to ensure methods have the correct type.
     ty: std::marker::PhantomData<T>,
 }
+
 impl<T> ClassBuilder<T>
 where
     T: 'static,
@@ -186,6 +188,7 @@ where
         self
     }
 }
+
 #[derive(Clone)]
 pub struct Instance {
     inner: Arc<RefCell<dyn std::any::Any + Send + Sync>>,

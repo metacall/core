@@ -6,7 +6,7 @@ fn generate_function_wrapper(functions: &Vec<Function>) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
-            "#[no_mangle]\nunsafe fn metacall_register_fn_{}() -> *mut NormalFunction {{\n",
+            "#[no_mangle]\npub unsafe extern \"C\" fn metacall_register_fn_{}() -> *mut NormalFunction {{\n",
             func.name
         ));
         ret.push_str(&format!("\tlet f = NormalFunction::new({});\n", func.name));
@@ -19,7 +19,7 @@ fn generate_class_wrapper(classes: &Vec<&crate::Class>) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
-            "#[no_mangle]\nunsafe fn metacall_register_class_{}() -> *mut Class {{\n",
+            "#[no_mangle]\npub unsafe extern \"C\" fn metacall_register_class_{}() -> *mut Class {{\n",
             class.name
         ));
         ret.push_str(&format!(
@@ -68,7 +68,7 @@ fn generate_function_wrapper_for_package(functions: &Vec<Function>) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
-            "#[no_mangle]\nunsafe fn metacall_register_fn_{}() -> *mut NormalFunction {{\n",
+            "#[no_mangle]\npub unsafe extern \"C\" fn metacall_register_fn_{}() -> *mut NormalFunction {{\n",
             func.name
         ));
         ret.push_str(&format!(
@@ -83,7 +83,7 @@ fn generate_class_wrapper_for_package(classes: &Vec<&crate::Class>) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
-            "#[no_mangle]\nunsafe fn metacall_register_class_{}() -> *mut Class {{\n",
+            "#[no_mangle]\npub unsafe extern \"C\" fn metacall_register_class_{}() -> *mut Class {{\n",
             class.name
         ));
         ret.push_str(&format!(

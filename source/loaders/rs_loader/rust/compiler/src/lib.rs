@@ -924,11 +924,13 @@ fn run_compiler(
 pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let destination = std::env::temp_dir().join(generate_random_string(5));
     let result = std::fs::create_dir(&destination);
+
+    // Handle the case that tempdir doesn't exist
     if result.is_err() {
-        // handle the case that tempdir doesn't exist
-        let destination = source.input_path.join(generate_random_string(5));
+        let destination = source.input_path.join(generate_random_string(10));
         std::fs::create_dir(&destination).expect("Unable to create temp folder");
     }
+
     let mut callbacks = CompilerCallbacks {
         source,
         is_parsing: true,
@@ -940,7 +942,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
     let errors_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
 
-    // parse and generate wrapper
+    // Parse and generate wrapper
     let parsing_result: Result<(), CompilerError> = match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
     })
@@ -1049,7 +1051,7 @@ mod tests {
             match compile(Source::new(Source::Memory {
                 name: String::from("test.rs"),
                 code: String::from(
-                    "#[no_mangle]\npub extern \"C\" fn add(a: i32, b: i32) -> i32 { a + b }",
+                    "pub fn add(a: i32, b: i32) -> i32 { a + b }",
                 ),
             })) {
                 Err(comp_err) => assert!(false, "compilation failed: {}", comp_err.errors),

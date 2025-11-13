@@ -29,6 +29,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(WIN32) || defined(_WIN32)
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
+
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+
+	#include <windows.h>
+#else
+	#include <unistd.h>
+#endif
+
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 #define LOADER_IMPL_RB_PROTECT_ARGS_SIZE  0x10
 
@@ -99,6 +113,7 @@ typedef struct loader_impl_rb_discover_module_protect_type
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);
 static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method));
+static int rb_loader_impl_interactive_terminal(void);
 
 /* Implements executing the file as main instead of a module */
 static int rb_loader_impl_run_main = 1;
@@ -927,6 +942,23 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
+int rb_loader_impl_interactive_terminal(void)
+{
+#if defined(WIN32) || defined(_WIN32)
+	HANDLE std_input_handle = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD mode;
+
+	if (std_input_handle == INVALID_HANDLE_VALUE)
+	{
+		return 0;
+	}
+
+	return (GetConsoleMode(std_input_handle, &mode) == TRUE);
+#else
+	return isatty(fileno(stdin));
+#endif
+}
+
 loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	static struct rb_loader_impl_type
@@ -971,30 +1003,30 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 			ruby_init();
 
 			/* Apparently ruby_init_loadpath is not enough to initialize the builtins and gems,
-			* so we use ruby_options instead
+			* so we use ruby_options instead.
 			*/
 			/* ruby_init_loadpath(); */
 
-			/* Since version 3.3 Ruby has introduced process_script inside process_options which
-			* generates an ast for printing it later on, the main issue of this is that if you
-			* do not pass any file inside argv, it tries to read from stdin and then blocks everything
-			* normally this is unnecesary if you are embedding but this is a nasty behavior introduced
-			* recently, in order to avoid this, we check if ruby is being embedded and we have no argv
-			* available, and then we provide dummy arguments to skip the problem, this is still better
-			* than using ruby_ini_loadpath because it initializes properly all ruby gems paths and builtins.
+			/* When using ruby_options (tested on version 2.7 and 3.3), Ruby tries to parse the
+			* command line arguments and run it like a CLI, so basically it is expecting a file to
+			* be run (ruby ./script.rb) or inline code (ruby -e "<code>"). The main issue of this
+			* is that if you do not pass any file inside argv, it tries to read from stdin because it
+			* wants to launch the REPL and then blocks everything. Normally this is unnecesary if
+			* you are embedding. In order to avoid this, we check if ruby is being embedded (i.e is not host)
+			* and also we have no argv available, and then we provide dummy arguments to skip the problem,
+			* this nasty but is still better than using ruby_ini_loadpath because it initializes properly
+			* all ruby gems paths and builtins.
 			*
 			* We check against argc equal to 1 because it still can pass an argument like the executable name
 			* and this will generate the same issue, it requires at least two arguments for skipping it,
 			* i.e ruby ./script.rb
 			*/
-#if RUBY_VERSION_MAJOR == 3 && RUBY_VERSION_MINOR >= 3
-			if (argv == NULL || argc <= 1)
+			if (rb_loader_impl_interactive_terminal() && (argv == NULL || argc <= 1))
 			{
 				static char *proxy_argv[] = { "ruby", "-e", "\"\"" };
 				ruby_options(3, proxy_argv);
 			}
 			else
-#endif
 			{
 				ruby_options(argc, argv);
 			}
