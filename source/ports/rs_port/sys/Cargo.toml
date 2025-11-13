@@ -10,6 +10,5 @@ description = "Crate for finding metacall library in the system."
 [lib]
 crate-type = ["lib"]
 doctest = false
-edition = "2021"
 name = "metacall_sys"
 path = "src/lib.rs"

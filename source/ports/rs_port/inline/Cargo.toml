@@ -7,7 +7,7 @@ license = "Apache-2.0"
 description = "Inline macros for metacall crate."
 
 [lib]
-proc_macro = true
+proc-macro = true
 
 [dependencies]
 proc-macro2 = { version = "1.0.36", features = ["span-locations"] }

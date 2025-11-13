@@ -12,7 +12,6 @@ version = "0.5.4"
 [lib]
 crate-type = ["lib"]
 doctest = false
-edition = "2021"
 name = "metacall"
 path = "src/lib.rs"
 

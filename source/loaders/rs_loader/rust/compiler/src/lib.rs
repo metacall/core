@@ -528,7 +528,7 @@ impl CompilerCallbacks {
 }
 
 static CHARSET_STR: &str = "abcdefghijklmnopqrstuvwxyz";
-static METACALL_STR: &str = "metacall";
+static METACALL_STR: &str = "metacall-";
 
 fn generate_random_string(length: usize) -> String {
     let chars: Vec<char> = CHARSET_STR.chars().collect();
@@ -571,7 +571,8 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
             }
 
             config.opts.externs = Externs::new(externs);
-            // we hardcode the dependency path for now.
+
+            // We hardcode the dependency path for now
             let dep_path = self
                 .source
                 .input_path
@@ -974,14 +975,15 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
             });
         }
     };
-    // parse fails, stop
+
+    // Parse fails, stop
     if let Err(e) = parsing_result {
         return Err(e);
     }
 
     let mut patched_callback = generate_wrapper(callbacks).expect("Unable to generate wrapper");
 
-    // generate binary
+    // Generate binary
     match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut patched_callback, &diagnostics_buffer, &errors_buffer)
     })
