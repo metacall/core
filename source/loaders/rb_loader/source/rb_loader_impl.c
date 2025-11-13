@@ -946,10 +946,9 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 	(void)impl;
 	(void)config;
 
-	ruby_sysinit(&argc, &argv);
-
 	if (argv != NULL && argc > 1)
 	{
+		/* TODO: We are assuming here that the first argument is a file, we should check that in detail and detect if it's a file or not */
 		rb_loader_impl_main_module = argv[1];
 
 		/* If we are running on host, this means the main is already executed by the host, so we can skip it,
@@ -964,16 +963,40 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 
 	if (host == 0)
 	{
-		RUBY_INIT_STACK;
+		ruby_sysinit(&argc, &argv);
 
-		ruby_init();
+		{
+			RUBY_INIT_STACK;
 
-		/* Apparently ruby_init_loadpath is not enough to initialize the builtins and gems,
-		* so we use ruby_options instead
-		*/
-		/* ruby_init_loadpath(); */
+			ruby_init();
 
-		ruby_options(argc, argv);
+			/* Apparently ruby_init_loadpath is not enough to initialize the builtins and gems,
+			* so we use ruby_options instead
+			*/
+			/* ruby_init_loadpath(); */
+
+			/* Since version 3.3 Ruby has introduced process_script inside process_options which
+			* generates an ast for printing it later on, the main issue of this is that if you
+			* do not pass any file inside argv, it tries to read from stdin and then blocks everything
+			* normally this is unnecesary if you are embedding but this is a nasty behavior introduced
+			* recently, in order to avoid this, we check if ruby is being embedded and we have no argv
+			* available, and then we provide dummy arguments to skip the problem, this is still better
+			* than using ruby_ini_loadpath because it initializes properly all ruby gems paths and builtins.
+			*
+			* We check against argc equal to 1 because it still can pass an argument like the executable name
+			* and this will generate the same issue, it requires at least two arguments for skipping it,
+			* i.e ruby ./script.rb
+			*/
+			if (argv == NULL || argc <= 1)
+			{
+				static char *proxy_argv[] = { "ruby", "-e", "\"\"" };
+				ruby_options(3, proxy_argv);
+			}
+			else
+			{
+				ruby_options(argc, argv);
+			}
+		}
 	}
 
 	if (rb_loader_impl_initialize_types(impl) != 0)
