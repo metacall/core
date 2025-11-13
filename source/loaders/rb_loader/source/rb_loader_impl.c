@@ -987,12 +987,14 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 			* and this will generate the same issue, it requires at least two arguments for skipping it,
 			* i.e ruby ./script.rb
 			*/
+#if RUBY_VERSION_MAJOR == 3 && RUBY_VERSION_MINOR >= 3
 			if (argv == NULL || argc <= 1)
 			{
 				static char *proxy_argv[] = { "ruby", "-e", "\"\"" };
 				ruby_options(3, proxy_argv);
 			}
 			else
+#endif
 			{
 				ruby_options(argc, argv);
 			}
