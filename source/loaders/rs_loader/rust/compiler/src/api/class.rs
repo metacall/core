@@ -29,7 +29,6 @@ pub struct ClassInterface {
 
 #[no_mangle]
 extern "C" fn class_singleton_create(_klass: OpaqueType, _class_impl: OpaqueType) -> c_int {
-    println!("create class");
     0
 }
 #[no_mangle]
@@ -41,7 +40,6 @@ extern "C" fn class_singleton_constructor(
     class_args: OpaqueTypeList,
     size: usize,
 ) -> OpaqueType {
-    println!("invoke class constructor");
     unsafe {
         let class_impl_ptr = class_impl as *mut class::Class;
         let class = Box::from_raw(class_impl_ptr);
@@ -63,7 +61,7 @@ extern "C" fn class_singleton_static_set(
     _accessor: OpaqueType,
     _value: OpaqueType,
 ) -> c_int {
-    println!("class static set");
+    eprintln!("Rust Loader: Class static set not implemented");
     0
 }
 
@@ -73,7 +71,7 @@ extern "C" fn class_singleton_static_get(
     _class_impl: OpaqueType,
     _accessor: OpaqueType,
 ) -> OpaqueType {
-    println!("class static get");
+    eprintln!("Rust Loader: Class static get not implemented");
     0 as OpaqueType
 }
 
@@ -85,7 +83,6 @@ extern "C" fn class_singleton_static_invoke(
     args_p: OpaqueTypeList,
     size: usize,
 ) -> OpaqueType {
-    println!("class static invoke");
     let ret = unsafe {
         let class_impl_ptr = class_impl as *mut class::Class;
         let class = Box::from_raw(class_impl_ptr);
@@ -113,19 +110,20 @@ extern "C" fn class_singleton_static_await(
     _args_p: OpaqueTypeList,
     _size: usize,
 ) -> OpaqueType {
-    println!("class static await");
+    eprintln!("Rust Loader: Class static await not implemented");
     0 as OpaqueType
 }
 
 #[no_mangle]
 extern "C" fn class_singleton_destroy(_klass: OpaqueType, class_impl: OpaqueType) {
-    if !class_impl.is_null() {
-        unsafe {
-            let class = Box::from_raw(class_impl as *mut class::Class);
-            drop(class);
+    if !rs_loader_destroyed() {
+        if !class_impl.is_null() {
+            unsafe {
+                let class = Box::from_raw(class_impl as *mut class::Class);
+                drop(class);
+            }
         }
     }
-    println!("class destroy");
 }
 
 #[no_mangle]
@@ -164,10 +162,9 @@ pub fn register_class(class_registration: ClassRegistration) {
         class_info,
     } = class_registration.class_create;
     let name = CString::new(name).expect("Failed to convert function name to C string");
-    // dbg!(&class_info);
     let class = unsafe { class_create(name.as_ptr(), 0, class_impl, singleton) };
 
-    // register ctor:
+    // Register ctor
     if let Some(constructor) = class_info.constructor {
         let ctor = unsafe { constructor_create(constructor.args.len(), 0) };
         for (idx, arg) in constructor.args.iter().enumerate() {
@@ -188,9 +185,10 @@ pub fn register_class(class_registration: ClassRegistration) {
         unsafe { class_register_constructor(class, ctor) };
     } else {
         // TODO: add default constructor
-        println!("should add default constructor");
+        eprintln!("Rust Loader: Class default constructor not implemented");
     }
-    // register attrs
+
+    // Register attrs
     for attr in class_info.attributes.iter() {
         let name =
             CString::new(attr.name.clone()).expect("Failed to convert function name to C string");
@@ -208,11 +206,13 @@ pub fn register_class(class_registration: ClassRegistration) {
         };
         unsafe { class_register_attribute(class, attribute) };
     }
-    // we don't have static attributes in rust for now.
+
+    // TODO: We don't have static attributes in rust for now.
     // for attr in class_info.static_attributes.iter() {
     //     let static_attribute = unsafe { attribute_create(class, name, ty, null, 0, null) };
     //     unsafe { class_register_static_attribute(class, static_attribute) };
     // }
+
     for method in class_info.methods.iter() {
         let name =
             CString::new(method.name.clone()).expect("Failed to convert function name to C string");

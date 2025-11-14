@@ -48,7 +48,7 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                     if let GenericArgKind::Type(ty) = gen_arg.unpack() {
                         result.generic.push(handle_ty(ty));
                     } else {
-                        println!("expect generic arg, get nothing");
+                        eprintln!("Rust Loader: Expect generic arg, get nothing");
                     }
                 }
                 "std::collections::HashMap" => {
@@ -57,13 +57,13 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                     if let GenericArgKind::Type(ty) = key.unpack() {
                         result.generic.push(handle_ty(ty));
                     } else {
-                        println!("expect key, get nothing");
+                        eprintln!("Rust Loader: Expect key, get nothing");
                     }
                     let value = gen[1];
                     if let GenericArgKind::Type(ty) = value.unpack() {
                         result.generic.push(handle_ty(ty));
                     } else {
-                        println!("expect value, get nothing");
+                        eprintln!("Rust Loader: Expect value, get nothing");
                     }
                 }
                 "std::string::String" => result.ty = FunctionType::String,

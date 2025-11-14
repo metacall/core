@@ -14,7 +14,7 @@ pub extern "C" fn rs_loader_impl_clear(loader_impl: *mut c_void, handle: *mut c_
     for loading_method in *methods {
         match loading_method.consume_dlib() {
             Ok(lib) => {
-                // extend the lifetime of library
+                // Extend the lifetime of library
                 loader_lifecycle_state.destroy_list.push(lib);
             }
             Err(err) => {

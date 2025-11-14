@@ -73,7 +73,6 @@ extern "C" {
     fn loader_impl_type(loader_impl: OpaqueType, name: *const c_char) -> OpaqueType;
 
     fn scope_define(scope: OpaqueType, key: *mut c_char, value: OpaqueType) -> c_int;
-    // REFLECT_API klass class_create(const char *name, enum accessor_type_id accessor, class_impl impl, class_impl_interface_singleton singleton);
     fn class_create(
         name: *const c_char,
         accessor_type_id: c_int,
@@ -82,7 +81,6 @@ extern "C" {
     ) -> OpaqueType;
     fn value_create_class(class: OpaqueType) -> OpaqueType;
     fn class_name(class: OpaqueType) -> *mut c_char;
-    // constructor constructor_create(size_t count, enum class_visibility_id visibility);
     fn constructor_create(count: usize, visibility: c_int) -> OpaqueType;
     fn constructor_set(ctor: OpaqueType, index: usize, name: *const c_char, t: OpaqueType);
     fn class_register_constructor(class: OpaqueType, ctor: OpaqueType) -> c_int;
@@ -118,6 +116,8 @@ extern "C" {
         class: OpaqueType,
     ) -> OpaqueType;
 
+    fn metacall_loader(tag: *const c_char) -> OpaqueType;
+    fn loader_is_destroyed(loader_impl: OpaqueType) -> i32;
 }
 
 pub fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecycleState {
@@ -127,12 +127,22 @@ pub fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecyc
     loader_lifecycle_state
 }
 
+static mut RS_LOADER_PTR: *mut c_void = std::ptr::null_mut();
+
 pub fn loader_lifecycle_register(loader_impl: OpaqueType) {
-    unsafe { loader_initialization_register(loader_impl) };
+    const TAG: *const c_char = "rs\0".as_ptr() as *const c_char;
+    unsafe {
+        loader_initialization_register(loader_impl);
+
+        // Get rust loader pointer
+        if RS_LOADER_PTR.is_null() {
+            RS_LOADER_PTR = metacall_loader(TAG);
+        }
+    }
 }
 
 pub fn loader_lifecycle_unload_children(loader_impl: OpaqueType) {
-    unsafe { loader_unload_children(loader_impl) };
+    unsafe { loader_unload_children(loader_impl); }
 }
 
 pub enum PrimitiveMetacallProtocolTypes {
@@ -169,4 +179,10 @@ pub fn define_type(
 
         loader_impl_type_define(loader_impl, type_name(t), t)
     };
+}
+
+pub fn rs_loader_destroyed() -> bool {
+    unsafe {
+        loader_is_destroyed(RS_LOADER_PTR) == 0
+    }
 }

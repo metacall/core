@@ -34,7 +34,8 @@ pub extern "C" fn rs_loader_impl_discover(
             }
         }
     }
-    // avoid dropping handle_shared_objects
+
+    // Avoid dropping handle_shared_objects
     std::mem::forget(handle_shared_objects);
     0 as c_int
 }

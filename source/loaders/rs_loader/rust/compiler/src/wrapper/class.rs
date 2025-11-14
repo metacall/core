@@ -509,7 +509,6 @@ impl ToMetaResult for char {
 
 impl ToMetaResult for usize {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        println!("get usize: {self}");
         // FIXME: convert usize to i32?
         Ok(unsafe { metacall_value_create_int(self as i32) })
     }
@@ -697,7 +696,7 @@ macro_rules! convert_to {
                     Ok(metacall_value_to_double($val) as $t)
                 }
                 Err(_) => {
-                    println!("receive id: {}, should be [2-6]", id);
+                    eprintln!("Rust Loader: Return type with id #{} is not implemented, ", id);
                     panic!("received mismatch type");
                 }
             }
@@ -809,7 +808,6 @@ where
 //                 .iter()
 //                 .map(|p| metacall_value_to_int(*p))
 //                 .collect::<Vec<i32>>();
-//             println!("{:?}", vec);
 //             vec
 //         })
 //     }

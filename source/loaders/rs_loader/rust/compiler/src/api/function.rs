@@ -50,16 +50,19 @@ extern "C" fn function_singleton_await(
     _reject: extern "C" fn(OpaqueType, OpaqueType) -> OpaqueType,
     _data: OpaqueType,
 ) -> OpaqueType {
-    println!("rs_loader: await function");
+    eprintln!("Rust Loader: Function await not implemented");
     0 as OpaqueType
 }
 
+
 #[no_mangle]
 extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueType) {
-    if !func_impl.is_null() {
-        unsafe {
-            let func_ptr = Box::from_raw(func_impl as *mut class::Function);
-            drop(func_ptr);
+    if !rs_loader_destroyed() {
+        if !func_impl.is_null() {
+            unsafe {
+                let func_ptr = Box::from_raw(func_impl as *mut class::Function);
+                drop(func_ptr);
+            }
         }
     }
 }

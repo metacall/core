@@ -23,7 +23,6 @@ pub struct Object {
 
 #[no_mangle]
 extern "C" fn object_singleton_create(_object: OpaqueType, _object_impl: OpaqueType) -> c_int {
-    println!("object create");
     0
 }
 
@@ -41,7 +40,6 @@ extern "C" fn object_singleton_set(
         let name = CStr::from_ptr(get_attr_name(accessor))
             .to_str()
             .expect("Unable to get attr name");
-        println!("object set attr: {}", name);
         obj.instance.set_attr(name, value, &class);
 
         std::mem::forget(class);
@@ -64,7 +62,6 @@ extern "C" fn object_singleton_get(
         let name = CStr::from_ptr(get_attr_name(accessor))
             .to_str()
             .expect("Unable to get attr name");
-        println!("object get attr: {}", name);
         let ret = obj.instance.get_attr(name, &class);
 
         std::mem::forget(class);
@@ -95,7 +92,6 @@ extern "C" fn object_singleton_method_invoke(
         let name = CStr::from_ptr(method_name(method))
             .to_str()
             .expect("Unable to get method name");
-        println!("object invoke: {}", name);
         let ret = obj.instance.call(name, args, &class);
 
         std::mem::forget(class);
@@ -118,23 +114,25 @@ extern "C" fn object_singleton_method_await(
     _args_p: OpaqueTypeList,
     _size: usize,
 ) -> OpaqueType {
-    println!("object await");
+    eprintln!("Rust Loader: Object await not implemented");
     0 as OpaqueType
 }
 #[no_mangle]
-extern "C" fn object_singleton_destructor(_object: OpaqueType, object_impl: OpaqueType) -> c_int {
-    if !object_impl.is_null() {
-        unsafe {
-            let object = Box::from_raw(object_impl as *mut Object);
-            drop(object);
-        }
-    }
-    println!("destruct object");
+extern "C" fn object_singleton_destructor(_object: OpaqueType, _object_impl: OpaqueType) -> c_int {
+    eprintln!("Rust Loader: Object destructor not implemented");
     0
 }
+
 #[no_mangle]
-extern "C" fn object_singleton_destroy(_object: OpaqueType, _object_impl: OpaqueType) {
-    println!("destroy object");
+extern "C" fn object_singleton_destroy(_object: OpaqueType, object_impl: OpaqueType) {
+    if !rs_loader_destroyed() {
+        if !object_impl.is_null() {
+            unsafe {
+                let object = Box::from_raw(object_impl as *mut Object);
+                drop(object);
+            }
+        }
+    }
 }
 
 #[no_mangle]

@@ -26,13 +26,15 @@ fn generate_class_wrapper(classes: &Vec<&crate::Class>) -> String {
             "\tlet class = Class::builder::<{}>()\n",
             class.name
         ));
-        // set constructor
+
+        // Set constructor
         if let Some(_ctor) = &class.constructor {
             ret.push_str(&format!("\t\t.set_constructor({}::new)\n", class.name));
         } else {
-            println!("there's no constructor in class: {}", class.name);
+            println!("Rust Loader: Class {} does not contain a constructor", class.name);
         }
-        // set attributes
+
+        // Set attributes
         for attr in &class.attributes {
             ret.push_str(&format!(
                 "\t\t.add_attribute_getter(\"{}\", |f| f.{})\n",
@@ -43,21 +45,24 @@ fn generate_class_wrapper(classes: &Vec<&crate::Class>) -> String {
                 attr.name, attr.name
             ));
         }
-        // set methods
+
+        // Set methods
         for method in &class.methods {
             ret.push_str(&format!(
                 "\t\t.add_method(\"{}\", {}::{})\n",
                 method.name, class.name, method.name
             ));
         }
-        // set static methods
+
+        // Set static methods
         for method in &class.static_methods {
             ret.push_str(&format!(
                 "\t\t.add_class_method(\"{}\", {}::{})\n",
                 method.name, class.name, method.name
             ));
         }
-        // no need to set destructor
+
+        // No need to set destructor
         ret.push_str("\t\t.build();\n");
         ret.push_str("\tBox::into_raw(Box::new(class))\n}\n");
     }
@@ -90,13 +95,15 @@ fn generate_class_wrapper_for_package(classes: &Vec<&crate::Class>) -> String {
             "\tuse metacall_package::*;\nlet class = Class::builder::<{}>()\n",
             class.name
         ));
-        // set constructor
+
+        // Set constructor
         if let Some(_ctor) = &class.constructor {
             ret.push_str(&format!("\t\t.set_constructor({}::new)\n", class.name));
         } else {
-            println!("there's no constructor in class: {}", class.name);
+            println!("Rust Loader: Class {} does not contain a constructor", class.name);
         }
-        // set attributes
+
+        // Set attributes
         for attr in &class.attributes {
             ret.push_str(&format!(
                 "\t\t.add_attribute_getter(\"{}\", |f| f.{})\n",
@@ -107,21 +114,24 @@ fn generate_class_wrapper_for_package(classes: &Vec<&crate::Class>) -> String {
                 attr.name, attr.name
             ));
         }
-        // set methods
+
+        // Set methods
         for method in &class.methods {
             ret.push_str(&format!(
                 "\t\t.add_method(\"{}\", {}::{})\n",
                 method.name, class.name, method.name
             ));
         }
-        // set static methods
+
+        // Set static methods
         for method in &class.static_methods {
             ret.push_str(&format!(
                 "\t\t.add_class_method(\"{}\", {}::{})\n",
                 method.name, class.name, method.name
             ));
         }
-        // no need to set destructor
+
+        // No need to set destructor
         ret.push_str("\t\t.build();\n");
         ret.push_str("\tBox::into_raw(Box::new(class))\n}\n");
     }
@@ -137,19 +147,17 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                 generate_class_wrapper_for_package(&callbacks.classes.iter().collect());
             content.push_str(&class_wrapper);
 
-            // use temp_dir instead.
+            // Create metacall_class file
             let temp_dir = callbacks.destination.clone();
-
-            // create metacall_class file
-            // println!("create: {:?}", source_dir.join("metacall_class.rs"));
             let mut class_file = File::create(temp_dir.join("metacall_class.rs"))?;
             let bytes = include_bytes!("class.rs");
             class_file.write_all(bytes)?;
-            // println!("open: {:?}", source_dir.join("metacall_wrapped_package.rs"));
+
             let mut wrapper_file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(temp_dir.join("metacall_wrapped_package.rs"))?;
-            // include class module
+
+            // Include class module
             wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
             wrapper_file.write_all(content.as_bytes())?;
 
@@ -157,7 +165,8 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                 path: path.to_path_buf(),
             });
             source.output = callbacks.source.output;
-            // construct new callback
+
+            // Construct new callback
             Ok(CompilerCallbacks {
                 source,
                 is_parsing: false,
@@ -174,22 +183,22 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             match callbacks.source.input.0 {
                 Input::File(input_path) => {
                     let temp_dir = callbacks.destination.clone();
-                    // generate wrappers to a file source_wrapper.rs
+                    // Generate wrappers to a file source_wrapper.rs
                     let source_file = input_path
                         .file_name()
-                        .expect("not a file")
+                        .expect("Not a file")
                         .to_str()
                         .expect("Unable to cast OsStr to str")
                         .to_owned();
 
-                    // create metacall_class file
+                    // Create metacall_class file
                     let mut class_file = File::create(temp_dir.join("metacall_class.rs"))?;
                     let bytes = include_bytes!("class.rs");
                     class_file.write_all(bytes)?;
 
+                    // Include class module
                     let mut wrapper_file =
                         File::create(&temp_dir.join("wrapped_".to_owned() + &source_file))?;
-                    // include class module
                     wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
                     wrapper_file.write_all(content.as_bytes())?;
                     let dst = format!("include!({:?});", callbacks.source.input_path);
@@ -198,7 +207,8 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                         path: temp_dir.join("wrapped_".to_owned() + &source_file),
                     });
                     source.output = callbacks.source.output;
-                    // construct new callback
+
+                    // Construct new callback
                     Ok(CompilerCallbacks {
                         source,
                         is_parsing: false,
@@ -208,18 +218,21 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                 Input::Str { name, input } => match name {
                     Custom(_name) => {
                         let source_path = callbacks.destination.clone();
-                        // write code to script
+
+                        // Write code to script
                         let mut source_file = File::create(source_path.join("script.rs"))?;
                         source_file.write_all(input.as_bytes())?;
-                        // create metacall_class file
+
+                        // Create metacall_class file
                         let mut class_file = File::create(source_path.join("metacall_class.rs"))?;
                         let bytes = include_bytes!("class.rs");
                         class_file.write_all(bytes)?;
 
-                        // in order to solve the dependencies conflict,
-                        // we use modules instead of putting them into a single file.
+                        // In order to solve the dependencies conflict,
+                        // we use modules instead of putting them into a single file
                         let mut wrapper_file = File::create(source_path.join("wrapped_script.rs"))?;
-                        // include class module
+
+                        // Include class module
                         wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
                         wrapper_file.write_all(content.as_bytes())?;
                         let dst = format!("include!({:?});", source_path.join("script.rs"));
@@ -228,7 +241,8 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                             path: source_path.join("wrapped_script.rs"),
                         });
                         source.output = callbacks.source.output;
-                        // construct new callback
+
+                        // Construct new callback
                         Ok(CompilerCallbacks {
                             source,
                             is_parsing: false,

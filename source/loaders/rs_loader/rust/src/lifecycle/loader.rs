@@ -57,7 +57,6 @@ pub type LoadOnErrorPointer = fn(error: String) -> *mut c_void;
 
 pub fn load_on_error<T: Display>(error: T) -> *mut c_void {
     eprintln!("{}", error);
-
     0 as c_int as *mut c_void
 }
 

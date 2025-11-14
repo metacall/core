@@ -286,7 +286,7 @@ impl Drop for DynlinkLibrary {
     fn drop(&mut self) {
         unsafe {
             if !self.instance.is_null() {
-                // Call the C function to unload the dynamic library
+                // Unload the dynamic library
                 dynlink_unload(self.instance);
 
                 // Set the instance to null for safety
