@@ -268,13 +268,12 @@ impl DynlinkLibrary {
 
     pub fn symbol(&self, symbol_name: &str) -> Result<DynlinkSymbolAddr, String> {
         let c_symbol_name = CString::new(symbol_name).expect("CString::new failed");
-        let fn_null_addr = unsafe { std::mem::transmute(std::ptr::null::<()>()) };
-        let mut symbol_address: DynlinkSymbolAddr = fn_null_addr;
 
         unsafe {
+            let mut symbol_address: DynlinkSymbolAddr = std::mem::transmute(std::ptr::null::<DynlinkSymbolAddr>());
             let result = dynlink_symbol(self.instance, c_symbol_name.as_ptr(), &mut symbol_address);
 
-            if result == 0 && symbol_address != fn_null_addr {
+            if result == 0 {
                 Ok(symbol_address)
             } else {
                 Err(format!("Failed to find symbol: {}", symbol_name))

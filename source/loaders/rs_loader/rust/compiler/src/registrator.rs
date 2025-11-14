@@ -8,9 +8,8 @@ use crate::{Class, CompilerState, DynlinkLibrary, Function};
 fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate {
     let name = func.name.clone();
     let args_count = func.args.len();
-
-    let register_func_name = format!("metacall_register_fn_{}", name);
-    let register_func: unsafe extern "C" fn() -> *mut class::NormalFunction =
+    let register_func_name = format!("rs_loader_impl_register_fn_{}", name);
+    let register_func: unsafe extern "C" fn() -> *mut class::Function =
         unsafe {
             std::mem::transmute(
                 dynlink.symbol(&register_func_name[..])
@@ -29,7 +28,7 @@ fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate 
 
 fn class_create(class: &Class, dynlink: &DynlinkLibrary) -> ClassCreate {
     let name = class.name.clone();
-    let register_func_name = format!("metacall_register_class_{}", name);
+    let register_func_name = format!("rs_loader_impl_register_class_{}", name);
     let register_func: unsafe extern "C" fn() -> *mut class::Class =
         unsafe {
             std::mem::transmute(
@@ -53,7 +52,7 @@ pub fn register(
     loader_impl: OpaqueType,
     ctx: OpaqueType,
 ) {
-    // register functions
+    // Register functions
     for func in state.functions.iter() {
         let function_registration = FunctionRegistration {
             ctx,
@@ -76,7 +75,7 @@ pub fn register(
         register_function(function_registration);
     }
 
-    // register classes
+    // Register classes
     for class in state.classes.iter() {
         let class_registration = ClassRegistration {
             ctx,

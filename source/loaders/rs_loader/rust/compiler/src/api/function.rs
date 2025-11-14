@@ -32,7 +32,7 @@ extern "C" fn function_singleton_invoke(
 ) -> OpaqueType {
     unsafe {
         let args = std::slice::from_raw_parts(args_p, size).to_vec();
-        let nf = Box::from_raw(func_impl as *mut class::NormalFunction);
+        let nf = Box::from_raw(func_impl as *mut class::Function);
         let res = nf.invoke(args).expect("Function return error");
 
         std::mem::forget(nf);
@@ -58,7 +58,7 @@ extern "C" fn function_singleton_await(
 extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueType) {
     if !func_impl.is_null() {
         unsafe {
-            let func_ptr = Box::from_raw(func_impl as *mut class::NormalFunction);
+            let func_ptr = Box::from_raw(func_impl as *mut class::Function);
             drop(func_ptr);
         }
     }

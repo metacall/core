@@ -41,10 +41,11 @@ extern "C" {
 
 type Attributes = HashMap<&'static str, AttributeGetter>;
 type AttributeSetters = HashMap<&'static str, AttributeSetter>;
-type ClassMethods = HashMap<&'static str, ClassMethod>;
 type InstanceMethods = HashMap<&'static str, InstanceMethod>;
+type ClassMethods = HashMap<&'static str, ClassMethod>;
 pub type MetacallValue = *mut c_void;
 
+#[repr(C)]
 #[derive(Clone)]
 pub struct Class {
     /// The class name. Defaults to the `std::any::type_name`
@@ -147,7 +148,7 @@ where
 
     pub fn with_constructor<F, Args>(f: F) -> Self
     where
-        F: Function<Args, Result = T>,
+        F: Functor<Args, Result = T>,
         T: Send + Sync,
         Args: FromMetaList,
     {
@@ -158,7 +159,7 @@ where
 
     pub fn set_constructor<F, Args>(mut self, f: F) -> Self
     where
-        F: Function<Args, Result = T>,
+        F: Functor<Args, Result = T>,
         T: Send + Sync,
         Args: FromMetaList,
     {
@@ -180,7 +181,7 @@ where
 
     pub fn add_class_method<F, Args, R>(mut self, name: &'static str, f: F) -> Self
     where
-        F: Function<Args, Result = R>,
+        F: Functor<Args, Result = R>,
         Args: FromMetaList + std::fmt::Debug,
         R: ToMetaResult + std::fmt::Debug + 'static,
     {
@@ -189,6 +190,7 @@ where
     }
 }
 
+#[repr(C)]
 #[derive(Clone)]
 pub struct Instance {
     inner: Arc<RefCell<dyn std::any::Any + Send + Sync>>,
@@ -263,13 +265,13 @@ impl Instance {
     }
 }
 
-pub trait Function<Args = ()>: Send + Sync + 'static {
+pub trait Functor<Args = ()>: Send + Sync + 'static {
     type Result;
 
     fn invoke(&self, args: Args) -> Self::Result;
 }
 
-/// Similar to a `Function` but also takes an explicit `receiver`
+/// Similar to a `Functor` but also takes an explicit `receiver`
 /// parameter than is the first argument of the call (i.e. the `self` param);
 pub trait Method<Receiver, Args = ()>: Send + Sync + 'static {
     type Result;
@@ -279,7 +281,7 @@ pub trait Method<Receiver, Args = ()>: Send + Sync + 'static {
 
 macro_rules! tuple_impls {
     ( $( $name:ident )* ) => {
-        impl<Fun, Res, $($name),*> Function<($($name,)*)> for Fun
+        impl<Fun, Res, $($name),*> Functor<($($name,)*)> for Fun
         where
             Fun: Fn($($name),*) -> Res + Send + Sync + 'static
         {
@@ -332,6 +334,7 @@ fn join<A, B>(left: Result<A>, right: Result<B>) -> Result<(A, B)> {
 type TypeErasedFunction<R> = Arc<dyn Fn(Vec<MetacallValue>) -> Result<R> + Send + Sync>;
 type TypeErasedMethod<R> = Arc<dyn Fn(&Instance, Vec<MetacallValue>) -> Result<R> + Send + Sync>;
 
+#[repr(C)]
 #[derive(Clone)]
 pub struct Constructor(TypeErasedFunction<Instance>);
 
@@ -339,7 +342,7 @@ impl Constructor {
     pub fn new<Args, F>(f: F) -> Self
     where
         Args: FromMetaList,
-        F: Function<Args>,
+        F: Functor<Args>,
         F::Result: Send + Sync + 'static,
     {
         Constructor(Arc::new(move |args: Vec<MetacallValue>| {
@@ -436,7 +439,7 @@ impl ClassMethod {
     pub fn new<F, Args>(f: F) -> Self
     where
         Args: FromMetaList + std::fmt::Debug,
-        F: Function<Args>,
+        F: Functor<Args>,
         F::Result: ToMetaResult + std::fmt::Debug,
     {
         Self(Arc::new(move |args: Vec<MetacallValue>| {
@@ -452,14 +455,15 @@ impl ClassMethod {
     }
 }
 
+#[repr(C)]
 #[derive(Clone)]
-pub struct NormalFunction(TypeErasedFunction<MetacallValue>);
+pub struct Function(TypeErasedFunction<MetacallValue>);
 
-impl NormalFunction {
+impl Function {
     pub fn new<F, Args>(f: F) -> Self
     where
         Args: FromMetaList + std::fmt::Debug,
-        F: Function<Args>,
+        F: Functor<Args>,
         F::Result: ToMetaResult + std::fmt::Debug,
     {
         Self(Arc::new(move |args: Vec<MetacallValue>| {
@@ -627,12 +631,25 @@ impl FromMeta for MetacallValue {
 //     }
 // }
 
+// TODO: Finish the whole list of types
 enum PrimitiveMetacallProtocolTypes {
+    // Bool = 0,
+    // Char = 1,
     Short = 2,
     Int = 3,
     Long = 4,
     Float = 5,
     Double = 6,
+    // String = 7,
+    // Buffer = 8,
+    // Array = 9,
+    // Map = 10,
+    // Pointer = 11,
+    // Future = 12,
+    // Function = 13,
+    // Null = 14,
+    // Class = 15,
+    // Object = 16,
 }
 
 use std::convert::TryFrom;
