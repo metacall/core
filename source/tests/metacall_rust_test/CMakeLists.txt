@@ -148,6 +148,11 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
 
+# Extend timeout when using thread sanitizer
+if(OPTION_BUILD_THREAD_SANITIZER)
+	set_tests_properties(${target} PROPERTIES TIMEOUT 7200)
+endif()
+
 include(TestEnvironmentVariables)
 
 test_environment_variables(${target}

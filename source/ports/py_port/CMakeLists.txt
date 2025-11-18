@@ -60,6 +60,11 @@ if(OPTION_BUILD_CLI)
 		PROPERTY LABELS ${py_port_test}
 	)
 
+	# Extend timeout when using thread sanitizer and rust
+	if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_RS)
+		set_tests_properties(${target} PROPERTIES TIMEOUT 7200)
+	endif()
+
 	include(TestEnvironmentVariables)
 
 	test_environment_variables(${target}
@@ -98,6 +103,11 @@ add_test(NAME ${py_port_test_exec}
 set_property(TEST ${py_port_test_exec}
 	PROPERTY LABELS ${py_port_test_exec}
 )
+
+# Extend timeout when using thread sanitizer and rust
+if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_RS)
+	set_tests_properties(${py_port_test_exec} PROPERTIES TIMEOUT 7200)
+endif()
 
 include(TestEnvironmentVariables)
 

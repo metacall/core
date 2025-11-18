@@ -135,10 +135,15 @@ add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
 
-# Enable rust test if it is built (address sanitizer does not work with Rust on Linux)
-if(OPTION_BUILD_LOADERS_RS AND NOT (OPTION_BUILD_ADDRESS_SANITIZER AND PROJECT_OS_LINUX))
+# Enable rust test if it is built
+if(OPTION_BUILD_LOADERS_RS)
 	set(RS_DEPENDENCY rs_loader)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
+
+	# Extend timeout when using thread sanitizer and rust
+	if(OPTION_BUILD_THREAD_SANITIZER)
+		set_tests_properties(${target} PROPERTIES TIMEOUT 7200)
+	endif()
 endif()
 
 #
