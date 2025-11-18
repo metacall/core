@@ -326,8 +326,9 @@ template <typename T>
 struct loader_impl_threadsafe_type
 {
 	napi_threadsafe_function threadsafe_function;
+	std::atomic<bool> threadsafe_function_released;
 
-	void initialize(napi_env env, std::string name, void (*safe_func_ptr)(napi_env, T *))
+	void initialize(napi_env env, std::string name, void (*safe_func_ptr)(napi_env, T *), bool release_safe = false)
 	{
 		napi_value func_safe_ptr;
 
@@ -346,13 +347,23 @@ struct loader_impl_threadsafe_type
 		/* Use the amoun of available threads as initial thread count */
 		unsigned int processor_count = std::thread::hardware_concurrency();
 
+		/* Register safety function for controlling release of thread safe function */
+		threadsafe_function_released.store(false);
+
+		auto finalize_callback = [](napi_env, void *finalize_data, void *) {
+			loader_impl_threadsafe_type *threadsafe_function = static_cast<loader_impl_threadsafe_type *>(finalize_data);
+			threadsafe_function->threadsafe_function_released.store(true);
+		};
+
+		auto finalize_cb_null = static_cast<void (*)(napi_env, void *, void *)>(nullptr);
+
 		/* Cast the safe function */
 		node_loader_impl_func_call_js_safe_cast<T> safe_cast(safe_func_ptr);
 
 		status = napi_create_threadsafe_function(env, func_safe_ptr,
 			nullptr, threadsafe_func_name,
 			0, processor_count,
-			nullptr, nullptr,
+			this, release_safe ? finalize_callback : finalize_cb_null,
 			safe_cast.context, &node_loader_impl_func_call_js_safe<T>,
 			&threadsafe_function);
 
@@ -395,6 +406,23 @@ struct loader_impl_threadsafe_type
 		if (status != napi_ok)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function invoke function in NodeJS loader");
+		}
+	}
+
+	void release_safe(loader_impl_async_safe_type<T> &async_safe)
+	{
+		/* Unlock the mutex */
+		async_safe.unlock();
+
+		if (!threadsafe_function_released.load())
+		{
+			/* Release call safe function */
+			napi_status status = napi_release_threadsafe_function(threadsafe_function, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function invoke function in NodeJS loader");
+			}
 		}
 	}
 
@@ -1773,6 +1801,24 @@ struct loader_impl_threadsafe_invoke_type
 	~loader_impl_threadsafe_invoke_type()
 	{
 		threadsafe_func.release(async_safe);
+	}
+};
+
+template <typename T>
+struct loader_impl_threadsafe_invoke_safe_type
+{
+	loader_impl_threadsafe_type<T> &threadsafe_func;
+	loader_impl_async_safe_type<T> async_safe;
+
+	loader_impl_threadsafe_invoke_safe_type(loader_impl_threadsafe_type<T> &threadsafe_func, T &func_safe) :
+		threadsafe_func(threadsafe_func), async_safe(func_safe)
+	{
+		threadsafe_func.invoke(async_safe);
+	}
+
+	~loader_impl_threadsafe_invoke_safe_type()
+	{
+		threadsafe_func.release_safe(async_safe);
 	}
 };
 
@@ -3634,7 +3680,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		node_impl->threadsafe_func_destroy.initialize(env, "node_loader_impl_async_func_destroy_safe", &node_loader_impl_func_destroy_safe);
 		node_impl->threadsafe_future_await.initialize(env, "node_loader_impl_async_future_await_safe", &node_loader_impl_future_await_safe);
 		node_impl->threadsafe_future_delete.initialize(env, "node_loader_impl_async_future_delete_safe", &node_loader_impl_future_delete_safe);
-		node_impl->threadsafe_destroy.initialize(env, "node_loader_impl_async_destroy_safe", &node_loader_impl_destroy_safe);
+		node_impl->threadsafe_destroy.initialize(env, "node_loader_impl_async_destroy_safe", &node_loader_impl_destroy_safe, true);
 	}
 
 /* Run test function, this one can be called without thread safe mechanism */
@@ -4645,7 +4691,7 @@ void node_loader_impl_try_destroy(loader_impl_node node_impl)
 	else
 	{
 		/* Submit the task to the async queue */
-		loader_impl_threadsafe_invoke_type<loader_impl_async_destroy_safe_type> invoke(node_impl->threadsafe_destroy, destroy_safe);
+		loader_impl_threadsafe_invoke_safe_type<loader_impl_async_destroy_safe_type> invoke(node_impl->threadsafe_destroy, destroy_safe);
 	}
 
 	if (loader_impl_get_option_host(node_impl->impl) == 0)
