@@ -226,7 +226,7 @@ set(node_port_test_exec "${node_port_test}_executable")
 
 # TODO: Since MacOS 14 with ARM64, it does not support well NodeJS executable with preloaded sanitizers
 # The NodeJS initalization fails with: Node Loader failed to hook napi_register_module_v1
-if(APPLE)
+if(PROJECT_OS_FAMILY STREQUAL macos)
 	# Check if NodeJS is compiled with Address Sanitizer
 	if(OPTION_BUILD_ADDRESS_SANITIZER)
 		check_asan_executable("${NodeJS_EXECUTABLE}" NodeJS_ASAN)
@@ -244,6 +244,11 @@ if(APPLE)
 			return()
 		endif()
 	endif()
+endif()
+
+# Address sanitizer does not work with Rust on Linux in NodeJS executable test
+if(PROJECT_OS_LINUX AND OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_RS)
+	set(TESTS_ENVIRONMENT_VARIABLES_RS)
 endif()
 
 message(STATUS "Test ${node_port_test_exec}")

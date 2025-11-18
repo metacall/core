@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Disable warnings for unused code
+
 use std::any::*;
 use std::cell::Ref;
 use std::cell::RefCell;

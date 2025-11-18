@@ -1,10 +1,10 @@
 #![feature(rustc_private)]
 #![feature(once_cell)]
-// allow us to match on Box<T>s:
+// Allow us to match on Box<T>s:
 #![feature(box_patterns)]
 #![feature(let_else)]
 #![feature(iter_zip)]
-// allow us to get file prefix
+// Allow us to get file prefix
 #![feature(path_file_prefix)]
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
@@ -329,7 +329,7 @@ pub enum FunctionType {
     Ptr,
     Null,
     Complex,
-    This, // self in struct method
+    This, // Self in struct method
 }
 
 impl fmt::Display for FunctionType {
@@ -374,11 +374,11 @@ pub struct Attribute {
 pub struct Class {
     name: String,
     constructor: Option<Function>,
-    destructor: Option<Function>, // maybe we don't need destructor. just drop the variable
+    destructor: Option<Function>, // TODO: Maybe we don't need destructor, just drop the variable (review)
     methods: Vec<Function>,
     static_methods: Vec<Function>,
     attributes: Vec<Attribute>,
-    // static_attributes: Vec<Attribute>, // we don't handle static attrs in rust
+    // static_attributes: Vec<Attribute>, // We don't handle static attrs in rust
 }
 #[derive(Clone, Debug)]
 pub struct CompilerState {
@@ -430,7 +430,7 @@ impl CompilerCallbacks {
             .expect("Unable to get global ctxt")
             .peek_mut()
             .enter(|ctxt| {
-                // since we are loading a package, input_path should be lib<crate_name>.rlib
+                // Since we are loading a package, input_path should be lib<crate_name>.rlib
                 let crate_name = &self
                     .source
                     .input_path
@@ -438,7 +438,7 @@ impl CompilerCallbacks {
                     .expect("Unable to get file prefix.")
                     .to_str()
                     .expect("Unable to cast OsStr to str")[3..];
-                // find our krate
+                // Find our crate
                 let crate_num = krates
                     .iter()
                     .find(|&&x| {
@@ -446,12 +446,12 @@ impl CompilerCallbacks {
                     })
                     .or_else(|| krates.iter().next())
                     .expect("unable to find crate");
-                // parse public functions and structs
+                // Parse public functions and structs
                 for child in ctxt.item_children(crate_num.as_def_id()) {
                     let Export {
                         ident, res, vis, ..
                     } = child;
-                    // skip non-public items
+                    // Skip non-public items
                     if !matches!(vis, Visibility::Public) {
                         continue;
                     }
@@ -499,7 +499,7 @@ impl CompilerCallbacks {
                         _ => {}
                     }
                 }
-                // after parsing all structs, parse tarit implementations.
+                // After parsing all structs, parse tarit implementations
                 for trait_impl in ctxt.all_trait_implementations(*crate_num) {
                     use rustc_middle::ty::fast_reject::SimplifiedTypeGen::AdtSimplifiedType;
                     if let Some(AdtSimplifiedType(def_id)) = trait_impl.1 {
@@ -710,7 +710,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                     let name = item.ident.to_string();
                     match &item.kind {
                         rustc_ast::AssocItemKind::Fn(box rustc_ast::Fn { sig, .. }) => {
-                            // function has self in parameters
+                            // Function has self in parameters
                             if sig.decl.has_self() {
                                 match impl_kind {
                                     ImplKind::Drop => {
@@ -721,7 +721,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                                     }
                                 }
                             } else {
-                                // static method
+                                // Static method
                                 match &sig.decl.output {
                                     rustc_ast::FnRetTy::Ty(p) => match &**p {
                                         rustc_ast::Ty { kind, .. } => match kind {
