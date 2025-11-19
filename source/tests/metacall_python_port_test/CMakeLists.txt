@@ -139,11 +139,6 @@ add_test(NAME ${target}
 if(OPTION_BUILD_LOADERS_RS)
 	set(RS_DEPENDENCY rs_loader)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
-
-	# Extend timeout when using thread sanitizer and rust
-	if(OPTION_BUILD_THREAD_SANITIZER)
-		set_tests_properties(${target} PROPERTIES TIMEOUT 7200)
-	endif()
 endif()
 
 #
