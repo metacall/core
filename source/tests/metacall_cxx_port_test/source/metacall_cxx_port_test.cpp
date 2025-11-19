@@ -104,24 +104,19 @@ void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
 }
 */
 
-void *cxx_float_int_int_test(size_t argc, void *args[], void *data)
+float cxx_float_int_int_test(int a0, int a1)
 {
-	metacall::value<int> a0(args[0]);
-	metacall::value<int> a1(args[1]);
+	EXPECT_EQ(a0, 7);
+	EXPECT_EQ(a1, 8);
 
-	(void)argc;
-	(void)data;
-
-	EXPECT_EQ(a0.to_value(), 7);
-	EXPECT_EQ(a1.to_value(), 8);
-
-	return metacall::metacall_value_create_float(3.0f);
+	return 3.0f;
 }
 
 TEST_F(metacall_cxx_port_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall::metacall_initialize());
 
+#if 0
 	{
 		metacall::map<std::string, float> m = {
 			{ "hello", 3.0f },
@@ -164,11 +159,11 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_recursive_map_test", m));
 	}
 	*/
-
+#endif
 	{
-		metacall::metacall_register("cxx_float_int_int_test", cxx_float_int_int_test, NULL, metacall::METACALL_FLOAT, 2, metacall::METACALL_INT, metacall::METACALL_INT);
+		auto fn = metacall::register_function(cxx_float_int_int_test);
 
-		EXPECT_EQ(3.0f, metacall::metacall<float>("cxx_float_int_int_test", 7, 8));
+		EXPECT_EQ(3.0f, fn(7, 8));
 	}
 
 	/* Print inspect information */

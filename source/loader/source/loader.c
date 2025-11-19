@@ -192,16 +192,16 @@ int loader_is_initialized(const loader_tag tag)
 	return loader_impl_is_initialized(plugin_impl_type(p, loader_impl));
 }
 
-int loader_register(const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[])
+int loader_register(const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[], void *data)
 {
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 
-	return loader_host_register(plugin_impl_type(manager_impl->host, loader_impl), NULL, name, invoke, func, return_type, arg_size, args_type_id);
+	return loader_host_register(plugin_impl_type(manager_impl->host, loader_impl), NULL, name, invoke, func, return_type, arg_size, args_type_id, data);
 }
 
-int loader_register_impl(void *impl, void *handle, const char *name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[])
+int loader_register_handle(void *impl, void *handle, const char *name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[], void *data)
 {
-	return loader_host_register((loader_impl)impl, loader_impl_handle_context(handle), name, invoke, NULL, return_type, arg_size, args_type_id);
+	return loader_host_register((loader_impl)impl, loader_impl_handle_context(handle), name, invoke, NULL, return_type, arg_size, args_type_id, data);
 }
 
 void loader_detour(detour d)

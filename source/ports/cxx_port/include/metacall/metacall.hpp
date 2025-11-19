@@ -556,7 +556,154 @@ value_base to_value_base(T &&arg)
 	}
 }
 
+template <typename... Args, auto... Is>
+auto register_function_args_tuple(void *args[], std::index_sequence<Is...>)
+{
+	return std::tuple{ metacall::value<Args>(args[Is]).to_value()... };
+}
+
+template <typename... Args>
+auto register_function_args(void *args[])
+{
+	return register_function_args_tuple<Args...>(args, std::make_index_sequence<sizeof...(Args)>());
+}
+
+template <typename Ret>
+int register_function(const char *name, Ret (*func)(void), void **func_ptr)
+{
+	auto invoke = [](size_t argc, void *[], void *data) -> void * {
+		// Check for correct argument size
+		if (argc != 0)
+		{
+			// TODO: This must be: return metacall::value<error>
+			throw std::invalid_argument(
+				"Incorrect number of arguments. Expected no arguments, received " +
+				std::to_string(argc) +
+				" arguments.");
+		}
+
+		// Get target function from closure
+		auto func = (Ret(*)(void))(data);
+
+		// Execute the call
+		auto result = func();
+
+		// Generate return value
+		return value<Ret>::create(result);
+	};
+
+	enum metacall_value_id types[] = { METACALL_INVALID };
+
+	return metacall::metacall_registerv_closure(
+		name,
+		invoke,
+		func_ptr,
+		value<Ret>::id(),
+		0,
+		types,
+		(void *)(func));
+}
+
+template <typename Ret, typename... Args>
+int register_function(const char *name, Ret (*func)(Args...), void **func_ptr)
+{
+	auto invoke = [](size_t argc, void *args[], void *data) -> void * {
+		// Check for correct argument size
+		if (argc != sizeof...(Args))
+		{
+			// TODO: This must be: return metacall::value<error>
+			throw std::invalid_argument(
+				"Incorrect number of arguments. Expected " +
+				std::to_string(sizeof...(Args)) +
+				" arguments, received " +
+				std::to_string(argc) +
+				" arguments.");
+		}
+
+		// Convert arguments from the void* array to a typed tuple of metacall values
+		auto tuple_args = register_function_args<Args...>(args);
+
+		// Get target function from closure
+		auto func = (Ret(*)(Args...))(data);
+
+		// Apply the function to the unpacked arguments
+		auto result = std::apply(func, tuple_args);
+
+		// Generate return value
+		return value<Ret>::create(result);
+	};
+
+	enum metacall_value_id types[] = { value<Args>::id()... };
+
+	return metacall::metacall_registerv_closure(
+		name,
+		invoke,
+		func_ptr,
+		value<Ret>::id(),
+		sizeof...(Args),
+		types,
+		(void *)(func));
+}
+
 } /* namespace detail */
+
+template <typename Ret, typename... Args>
+class function
+{
+public:
+	explicit function(void *func) :
+		func(func) {}
+
+	~function() {}
+
+	Ret operator()(Args &&...args) const
+	{
+		constexpr std::size_t size = sizeof...(Args);
+		std::array<value_base, size> value_args = { { detail::to_value_base(std::forward<Args>(args))... } };
+		void *raw_args[size];
+
+		for (std::size_t i = 0; i < size; ++i)
+		{
+			raw_args[i] = value_args[i].to_raw();
+		}
+
+		void *ret = metacallfv_s(func, raw_args, size);
+
+		if (ret == NULL)
+		{
+			throw std::runtime_error("MetaCall invokation has failed by returning NULL");
+		}
+
+		value<Ret> result(ret, &metacall_value_destroy);
+
+		return result.to_value();
+	}
+
+private:
+	void *func;
+};
+
+template <typename Ret, typename... Args>
+void register_function(const char *name, Ret (*func)(Args...), void **func_ptr = nullptr)
+{
+	if (detail::register_function(name, func, func_ptr) != 0)
+	{
+		throw std::runtime_error("Function '" + std::string(name) + "' failed to be registered.");
+	}
+}
+
+template <typename Ret, typename... Args>
+function<Ret, Args...> register_function(Ret (*func)(Args...))
+{
+	void *func_ptr = nullptr;
+
+	if (detail::register_function(NULL, func, &func_ptr) != 0)
+	{
+		throw std::runtime_error("Function failed to be registered.");
+	}
+
+	return function<Ret, Args...>(func_ptr);
+}
 
 template <typename Ret, typename... Args>
 Ret metacall(std::string name, Args &&...args)

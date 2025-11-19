@@ -38,7 +38,7 @@
 #define EXTENSION_FUNCTION_IMPL_VOID(ret, name) \
 	do \
 	{ \
-		if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, 0, NULL) != 0) \
+		if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, 0, NULL, NULL) != 0) \
 		{ \
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name)); \
 			return 1; \
@@ -49,7 +49,7 @@
 	do \
 	{ \
 		enum metacall_value_id arg_types[] = { __VA_ARGS__ }; \
-		if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), arg_types) != 0) \
+		if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), arg_types, NULL) != 0) \
 		{ \
 			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name)); \
 			return 1; \

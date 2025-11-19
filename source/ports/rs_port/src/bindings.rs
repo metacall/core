@@ -1071,6 +1071,7 @@ unsafe extern "C" {
         return_type: metacall_value_id,
         size: usize,
         types: *mut metacall_value_id,
+        data: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {

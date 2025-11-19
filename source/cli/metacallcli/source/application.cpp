@@ -67,7 +67,7 @@ void application::repl()
 		return NULL;
 	};
 
-	int result = metacall_register_loaderv(metacall_loader("ext"), plugin_repl_handle, "exit", exit_command, METACALL_INVALID, 0, NULL);
+	int result = metacall_register_loaderv(metacall_loader("ext"), plugin_repl_handle, "exit", exit_command, METACALL_INVALID, 0, NULL, NULL);
 
 	if (result != 0)
 	{

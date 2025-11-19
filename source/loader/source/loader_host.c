@@ -156,7 +156,7 @@ plugin loader_host_get(void)
 	return loader_host_plugin;
 }
 
-int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[])
+int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[], void *data)
 {
 	void **invoke_ptr = (void *)&invoke;
 
@@ -203,6 +203,8 @@ int loader_host_register(loader_impl host, context ctx, const char *name, loader
 			return 1;
 		}
 	}
+
+	function_bind(f, data);
 
 	if (func != NULL)
 	{
