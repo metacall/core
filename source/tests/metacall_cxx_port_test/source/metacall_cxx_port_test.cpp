@@ -44,13 +44,8 @@ void *cxx_map_test(size_t argc, void *args[], void *data)
 	return metacall::metacall_value_create_null();
 }
 
-void *cxx_array_test(size_t argc, void *args[], void *data)
+std::nullptr_t cxx_array_test(metacall::array &a)
 {
-	metacall::array a(args[0]);
-
-	(void)argc;
-	(void)data;
-
 	EXPECT_EQ((float)a[0].as<int>(), (int)3);
 	EXPECT_EQ((float)a[1].as<float>(), (float)4.0f);
 
@@ -61,7 +56,7 @@ void *cxx_array_test(size_t argc, void *args[], void *data)
 	printf("a[1] => %f\n", a[1].as<float>());
 	fflush(stdout);
 
-	return metacall::metacall_value_create_null();
+	return nullptr;
 }
 
 void *cxx_map_array_test(size_t argc, void *args[], void *data)
@@ -127,15 +122,15 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 
 		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_test", m));
 	}
-
+#endif
 	{
 		metacall::array a(3, 4.0f);
 
-		metacall::metacall_register("cxx_array_test", cxx_array_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_ARRAY);
+		auto fn = metacall::register_function(cxx_array_test);
 
-		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_array_test", a));
+		EXPECT_EQ(nullptr, fn(a));
 	}
-
+#if 0
 	{
 		metacall::map<std::string, metacall::array> m = {
 			{ "includes", metacall::array("/a/path", "/another/path") },

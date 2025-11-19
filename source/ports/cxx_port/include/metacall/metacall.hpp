@@ -87,6 +87,11 @@ public:
 		throw std::runtime_error("Unsupported MetaCall value");
 	}
 
+	T to_value()
+	{
+		throw std::runtime_error("Unsupported MetaCall value");
+	}
+
 	// Type-specific creation (calls specialized version below)
 	static void *create(const T &v);
 
@@ -109,7 +114,7 @@ inline enum metacall_value_id value<bool>::id()
 template <>
 inline bool value<bool>::to_value() const
 {
-	return metacall_value_to_bool(value_ptr.get());
+	return metacall_value_to_bool(to_raw());
 }
 
 template <>
@@ -127,7 +132,7 @@ inline enum metacall_value_id value<char>::id()
 template <>
 inline char value<char>::to_value() const
 {
-	return metacall_value_to_char(value_ptr.get());
+	return metacall_value_to_char(to_raw());
 }
 
 template <>
@@ -145,7 +150,7 @@ inline enum metacall_value_id value<short>::id()
 template <>
 inline short value<short>::to_value() const
 {
-	return metacall_value_to_short(value_ptr.get());
+	return metacall_value_to_short(to_raw());
 }
 
 template <>
@@ -163,7 +168,7 @@ inline enum metacall_value_id value<int>::id()
 template <>
 inline int value<int>::to_value() const
 {
-	return metacall_value_to_int(value_ptr.get());
+	return metacall_value_to_int(to_raw());
 }
 
 template <>
@@ -181,7 +186,7 @@ inline enum metacall_value_id value<long>::id()
 template <>
 inline long value<long>::to_value() const
 {
-	return metacall_value_to_long(value_ptr.get());
+	return metacall_value_to_long(to_raw());
 }
 
 template <>
@@ -199,7 +204,7 @@ inline enum metacall_value_id value<float>::id()
 template <>
 inline float value<float>::to_value() const
 {
-	return metacall_value_to_float(value_ptr.get());
+	return metacall_value_to_float(to_raw());
 }
 
 template <>
@@ -217,7 +222,7 @@ inline enum metacall_value_id value<double>::id()
 template <>
 inline double value<double>::to_value() const
 {
-	return metacall_value_to_double(value_ptr.get());
+	return metacall_value_to_double(to_raw());
 }
 
 template <>
@@ -235,7 +240,7 @@ inline enum metacall_value_id value<std::string>::id()
 template <>
 inline std::string value<std::string>::to_value() const
 {
-	return metacall_value_to_string(value_ptr.get());
+	return metacall_value_to_string(to_raw());
 }
 
 template <>
@@ -253,7 +258,7 @@ inline enum metacall_value_id value<const char *>::id()
 template <>
 inline const char *value<const char *>::to_value() const
 {
-	return metacall_value_to_string(value_ptr.get());
+	return metacall_value_to_string(to_raw());
 }
 
 template <>
@@ -271,7 +276,7 @@ inline enum metacall_value_id value<std::vector<char>>::id()
 template <>
 inline std::vector<char> value<std::vector<char>>::to_value() const
 {
-	void *ptr = value_ptr.get();
+	void *ptr = to_raw();
 	char *buffer = static_cast<char *>(metacall_value_to_buffer(ptr));
 	std::vector<char> buffer_vector(buffer, buffer + metacall_value_count(ptr));
 
@@ -293,7 +298,7 @@ inline enum metacall_value_id value<std::vector<unsigned char>>::id()
 template <>
 inline std::vector<unsigned char> value<std::vector<unsigned char>>::to_value() const
 {
-	void *ptr = value_ptr.get();
+	void *ptr = to_raw();
 	unsigned char *buffer = static_cast<unsigned char *>(metacall_value_to_buffer(ptr));
 	std::vector<unsigned char> buffer_vector(buffer, buffer + metacall_value_count(ptr));
 
@@ -315,7 +320,7 @@ inline enum metacall_value_id value<void *>::id()
 template <>
 inline void *value<void *>::to_value() const
 {
-	return metacall_value_to_ptr(value_ptr.get());
+	return metacall_value_to_ptr(to_raw());
 }
 
 template <>
@@ -370,29 +375,25 @@ public:
 	explicit array(void *array_value) :
 		value_base(array_value, &value_base::noop_destructor) {}
 
-	void **to_value() const
+	array(array &arr) :
+		value_base(arr.to_raw(), &value_base::noop_destructor) {}
+
+	array &to_value()
 	{
-		void **array_ptr = metacall_value_to_array(value_ptr.get());
-
-		if (array_ptr == NULL)
-		{
-			throw std::runtime_error("Invalid MetaCall array");
-		}
-
-		return array_ptr;
+		return *this;
 	}
 
 	template <typename T>
 	T get(std::size_t index) const
 	{
-		void **array_ptr = to_value();
+		void **array_ptr = to_array();
 
 		return value<T>(array_ptr[index]).to_value();
 	}
 
 	value_ref operator[](std::size_t index) const
 	{
-		void **array_ptr = to_value();
+		void **array_ptr = to_array();
 
 		return value_ref(array_ptr[index]);
 	}
@@ -403,6 +404,18 @@ public:
 	}
 
 private:
+	void **to_array() const
+	{
+		void **array_ptr = metacall_value_to_array(to_raw());
+
+		if (array_ptr == NULL)
+		{
+			throw std::runtime_error("Invalid MetaCall array");
+		}
+
+		return array_ptr;
+	}
+
 	// Recursive function to create and fill the MetaCall array
 	template <typename... Args>
 	static void *create(Args &&...args)
@@ -450,6 +463,12 @@ inline enum metacall_value_id value<array>::id()
 }
 
 template <>
+inline enum metacall_value_id value<array &>::id()
+{
+	return METACALL_ARRAY;
+}
+
+template <>
 inline array value<array>::to_value() const
 {
 	return array(to_raw());
@@ -470,7 +489,7 @@ public:
 			throw std::runtime_error("Failed to create MetaCall map value");
 		}
 
-		void **map_array = metacall_value_to_map(value_ptr.get());
+		void **map_array = metacall_value_to_map(to_raw());
 		size_t index = 0;
 
 		for (const auto &pair : list)
@@ -516,7 +535,7 @@ public:
 protected:
 	void rehash()
 	{
-		void *ptr = value_ptr.get();
+		void *ptr = to_raw();
 		void **map_array = metacall_value_to_map(ptr);
 		const size_t size = metacall_value_count(ptr);
 
