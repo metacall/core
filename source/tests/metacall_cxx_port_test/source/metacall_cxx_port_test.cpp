@@ -1,6 +1,6 @@
 /*
- *	Loader Library by Parra Studios
- *	A plugin for loading ruby code at run-time into a process.
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -27,13 +27,19 @@ class metacall_cxx_port_test : public testing::Test
 protected:
 };
 
-void *cxx_map_test(size_t argc, void *args[], void *data)
+// TODO:
+/*
+static bool cxx_void_test_called = false;
+
+void cxx_void_test(void)
 {
-	metacall::map<std::string, float> m(args[0]);
+	printf("hello from void\n");
+	cxx_void_test_called = true;
+}
+*/
 
-	(void)argc;
-	(void)data;
-
+std::nullptr_t cxx_map_test(metacall::map<std::string, float> &m)
+{
 	EXPECT_EQ((float)m["hello"], (float)3.0f);
 	EXPECT_EQ((float)m["world"], (float)4.0f);
 
@@ -41,7 +47,7 @@ void *cxx_map_test(size_t argc, void *args[], void *data)
 	printf("world => %f\n", m["world"]);
 	fflush(stdout);
 
-	return metacall::metacall_value_create_null();
+	return nullptr;
 }
 
 std::nullptr_t cxx_array_test(metacall::array &a)
@@ -59,13 +65,15 @@ std::nullptr_t cxx_array_test(metacall::array &a)
 	return nullptr;
 }
 
-void *cxx_map_array_test(size_t argc, void *args[], void *data)
+metacall::array cxx_array_ret_test()
 {
-	metacall::map<std::string, metacall::array> m(args[0]);
+	metacall::array a(3, 4.0f);
 
-	(void)argc;
-	(void)data;
+	return a;
+}
 
+std::nullptr_t cxx_map_array_test(metacall::map<std::string, metacall::array> &m)
+{
 	EXPECT_STREQ(m["includes"][0].as<std::string>().c_str(), "/a/path");
 	EXPECT_STREQ(m["includes"][1].as<std::string>().c_str(), "/another/path");
 
@@ -78,24 +86,19 @@ void *cxx_map_array_test(size_t argc, void *args[], void *data)
 	printf("m['libraries'][0] => %s\n", m["libraries"][0].as<std::string>().c_str());
 	printf("m['libraries'][1] => %s\n", m["libraries"][1].as<std::string>().c_str());
 
-	return metacall::metacall_value_create_null();
+	return nullptr;
 }
 
 // TODO:
 /*
-void *cxx_recursive_map_test(size_t argc, void *args[], void *data)
+std::nullptr_t cxx_recursive_map_test(metacall::map<std::string, metacall::map<std::string, float>> &m)
 {
-	metacall::map<std::string, metacall::map<std::string, float>> m(args[0]);
-
-	(void)argc;
-	(void)data;
-
 	EXPECT_EQ((float)m["hello"]["world"], (float)4.0f);
 
 	printf("hello => %f\n", m["hello"]["world"]);
 	fflush(stdout);
 
-	return metacall_value_create_null();
+	return nullptr;
 }
 */
 
@@ -111,25 +114,55 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall::metacall_initialize());
 
-#if 0
+	// TODO:
+	/*
+	{
+		metacall::array a(3, 4.0f);
+
+		auto fn = metacall::register_function(cxx_void_test);
+
+		EXPECT_EQ(nullptr, fn().to_value());
+		EXPECT_EQ(cxx_void_test_called, true);
+	}
+	*/
+
 	{
 		metacall::map<std::string, float> m = {
 			{ "hello", 3.0f },
 			{ "world", 4.0f }
 		};
 
-		metacall::metacall_register("cxx_map_test", cxx_map_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_MAP);
+		auto fn = metacall::register_function(cxx_map_test);
+		auto v = fn(m);
 
-		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_test", m));
+		EXPECT_EQ(nullptr, v.to_value());
 	}
-#endif
+
 	{
 		metacall::array a(3, 4.0f);
 
 		auto fn = metacall::register_function(cxx_array_test);
 
-		EXPECT_EQ(nullptr, fn(a));
+		EXPECT_EQ(nullptr, fn(a).to_value());
 	}
+
+	{
+		auto fn = metacall::register_function(cxx_array_ret_test);
+
+		auto v = fn();
+		auto a = v.to_value();
+
+		EXPECT_EQ((float)a[0].as<int>(), (int)3);
+		EXPECT_EQ((float)a[1].as<float>(), (float)4.0f);
+
+		EXPECT_EQ((float)a.get<int>(0), (int)3);
+		EXPECT_EQ((float)a.get<float>(1), (float)4.0f);
+
+		printf("a[0] => %d\n", a[0].as<int>());
+		printf("a[1] => %f\n", a[1].as<float>());
+		fflush(stdout);
+	}
+
 #if 0
 	{
 		metacall::map<std::string, metacall::array> m = {
@@ -137,10 +170,11 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "libraries", metacall::array("/a/path", "/another/path") }
 		};
 
-		metacall::metacall_register("cxx_map_array_test", cxx_map_array_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_MAP);
+		auto fn = metacall::register_function(cxx_map_array_test);
 
-		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_map_array_test", m));
+		EXPECT_EQ(nullptr, fn(m).to_value());
 	}
+#endif
 
 	// TODO:
 	/*
@@ -149,16 +183,16 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 			{ "hello", { "world", 4.0f } }
 		};
 
-		metacall::metacall_register("cxx_recursive_map_test", cxx_recursive_map_test, NULL, metacall::METACALL_NULL, 1, metacall::METACALL_MAP);
+		auto fn = metacall::register_function(cxx_recursive_map_test);
 
-		EXPECT_EQ(nullptr, metacall::metacall<std::nullptr_t>("cxx_recursive_map_test", m));
+		EXPECT_EQ(nullptr, fn(m));
 	}
 	*/
-#endif
+
 	{
 		auto fn = metacall::register_function(cxx_float_int_int_test);
 
-		EXPECT_EQ(3.0f, fn(7, 8));
+		EXPECT_EQ(3.0f, fn(7, 8).to_value());
 	}
 
 	/* Print inspect information */

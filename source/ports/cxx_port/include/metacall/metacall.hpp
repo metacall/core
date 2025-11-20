@@ -51,6 +51,12 @@ public:
 		return value_ptr.get();
 	}
 
+	// Release the unique pointer and return its contents
+	void *release()
+	{
+		return value_ptr.release();
+	}
+
 protected:
 	std::unique_ptr<void, void (*)(void *)> value_ptr;
 
@@ -82,23 +88,23 @@ public:
 		}
 	}
 
-	T to_value() const
-	{
-		throw std::runtime_error("Unsupported MetaCall value");
-	}
-
-	T to_value()
+	T to_value() const &
 	{
 		throw std::runtime_error("Unsupported MetaCall value");
 	}
 
 	// Type-specific creation (calls specialized version below)
-	static void *create(const T &v);
+	template <typename U = T, typename = std::enable_if_t<!std::is_base_of_v<value_base, U>>>
+	static void *create(const U &v);
+
+	template <typename U = T, typename = std::enable_if_t<std::is_base_of_v<value_base, U>>>
+	static void *create(U &v);
 
 	// Type-specific type id
 	static enum metacall_value_id id();
 };
 
+template <>
 template <>
 inline void *value<bool>::create(const bool &v)
 {
@@ -112,11 +118,12 @@ inline enum metacall_value_id value<bool>::id()
 }
 
 template <>
-inline bool value<bool>::to_value() const
+inline bool value<bool>::to_value() const &
 {
 	return metacall_value_to_bool(to_raw());
 }
 
+template <>
 template <>
 inline void *value<char>::create(const char &v)
 {
@@ -130,11 +137,12 @@ inline enum metacall_value_id value<char>::id()
 }
 
 template <>
-inline char value<char>::to_value() const
+inline char value<char>::to_value() const &
 {
 	return metacall_value_to_char(to_raw());
 }
 
+template <>
 template <>
 inline void *value<short>::create(const short &v)
 {
@@ -148,11 +156,12 @@ inline enum metacall_value_id value<short>::id()
 }
 
 template <>
-inline short value<short>::to_value() const
+inline short value<short>::to_value() const &
 {
 	return metacall_value_to_short(to_raw());
 }
 
+template <>
 template <>
 inline void *value<int>::create(const int &v)
 {
@@ -166,11 +175,12 @@ inline enum metacall_value_id value<int>::id()
 }
 
 template <>
-inline int value<int>::to_value() const
+inline int value<int>::to_value() const &
 {
 	return metacall_value_to_int(to_raw());
 }
 
+template <>
 template <>
 inline void *value<long>::create(const long &v)
 {
@@ -184,11 +194,12 @@ inline enum metacall_value_id value<long>::id()
 }
 
 template <>
-inline long value<long>::to_value() const
+inline long value<long>::to_value() const &
 {
 	return metacall_value_to_long(to_raw());
 }
 
+template <>
 template <>
 inline void *value<float>::create(const float &v)
 {
@@ -202,11 +213,12 @@ inline enum metacall_value_id value<float>::id()
 }
 
 template <>
-inline float value<float>::to_value() const
+inline float value<float>::to_value() const &
 {
 	return metacall_value_to_float(to_raw());
 }
 
+template <>
 template <>
 inline void *value<double>::create(const double &v)
 {
@@ -220,11 +232,12 @@ inline enum metacall_value_id value<double>::id()
 }
 
 template <>
-inline double value<double>::to_value() const
+inline double value<double>::to_value() const &
 {
 	return metacall_value_to_double(to_raw());
 }
 
+template <>
 template <>
 inline void *value<std::string>::create(const std::string &v)
 {
@@ -238,11 +251,12 @@ inline enum metacall_value_id value<std::string>::id()
 }
 
 template <>
-inline std::string value<std::string>::to_value() const
+inline std::string value<std::string>::to_value() const &
 {
 	return metacall_value_to_string(to_raw());
 }
 
+template <>
 template <>
 inline void *value<const char *>::create(const char *const &v)
 {
@@ -256,11 +270,12 @@ inline enum metacall_value_id value<const char *>::id()
 }
 
 template <>
-inline const char *value<const char *>::to_value() const
+inline const char *value<const char *>::to_value() const &
 {
 	return metacall_value_to_string(to_raw());
 }
 
+template <>
 template <>
 inline void *value<std::vector<char>>::create(const std::vector<char> &v)
 {
@@ -274,7 +289,7 @@ inline enum metacall_value_id value<std::vector<char>>::id()
 }
 
 template <>
-inline std::vector<char> value<std::vector<char>>::to_value() const
+inline std::vector<char> value<std::vector<char>>::to_value() const &
 {
 	void *ptr = to_raw();
 	char *buffer = static_cast<char *>(metacall_value_to_buffer(ptr));
@@ -283,6 +298,7 @@ inline std::vector<char> value<std::vector<char>>::to_value() const
 	return buffer_vector;
 }
 
+template <>
 template <>
 inline void *value<std::vector<unsigned char>>::create(const std::vector<unsigned char> &v)
 {
@@ -296,7 +312,7 @@ inline enum metacall_value_id value<std::vector<unsigned char>>::id()
 }
 
 template <>
-inline std::vector<unsigned char> value<std::vector<unsigned char>>::to_value() const
+inline std::vector<unsigned char> value<std::vector<unsigned char>>::to_value() const &
 {
 	void *ptr = to_raw();
 	unsigned char *buffer = static_cast<unsigned char *>(metacall_value_to_buffer(ptr));
@@ -305,6 +321,7 @@ inline std::vector<unsigned char> value<std::vector<unsigned char>>::to_value() 
 	return buffer_vector;
 }
 
+template <>
 template <>
 inline void *value<void *>::create(void *const &v)
 {
@@ -318,11 +335,12 @@ inline enum metacall_value_id value<void *>::id()
 }
 
 template <>
-inline void *value<void *>::to_value() const
+inline void *value<void *>::to_value() const &
 {
 	return metacall_value_to_ptr(to_raw());
 }
 
+template <>
 template <>
 inline void *value<std::nullptr_t>::create(const std::nullptr_t &)
 {
@@ -336,7 +354,7 @@ inline enum metacall_value_id value<std::nullptr_t>::id()
 }
 
 template <>
-inline std::nullptr_t value<std::nullptr_t>::to_value() const
+inline std::nullptr_t value<std::nullptr_t>::to_value() const &
 {
 	return nullptr;
 }
@@ -362,6 +380,11 @@ private:
 class array : public value_base
 {
 public:
+	explicit array(void *array_value) :
+		value_base(array_value, &value_base::noop_destructor)
+	{
+	}
+
 	template <typename... Args>
 	explicit array(Args &&...args) :
 		value_base(create(std::forward<Args>(args)...), &metacall_value_destroy)
@@ -372,16 +395,11 @@ public:
 		}
 	}
 
-	explicit array(void *array_value) :
-		value_base(array_value, &value_base::noop_destructor) {}
-
 	array(array &arr) :
 		value_base(arr.to_raw(), &value_base::noop_destructor) {}
 
-	array &to_value()
-	{
-		return *this;
-	}
+	array(array &&arr) noexcept :
+		value_base(arr.value_ptr.release(), arr.value_ptr.get_deleter()) {}
 
 	template <typename T>
 	T get(std::size_t index) const
@@ -451,9 +469,10 @@ private:
 };
 
 template <>
-inline void *value<array>::create(const array &v)
+template <>
+inline void *value<array>::create(array &v)
 {
-	return metacall_value_copy(v.to_raw());
+	return v.release();
 }
 
 template <>
@@ -463,13 +482,7 @@ inline enum metacall_value_id value<array>::id()
 }
 
 template <>
-inline enum metacall_value_id value<array &>::id()
-{
-	return METACALL_ARRAY;
-}
-
-template <>
-inline array value<array>::to_value() const
+inline array value<array>::to_value() const &
 {
 	return array(to_raw());
 }
@@ -478,6 +491,8 @@ template <typename K, typename V>
 class map : public value_base
 {
 public:
+	using key_type = K;
+	using value_type = V;
 	using pair_type = std::pair<K, V>;
 	using pair_value_type = std::pair<value<K>, value<V>>;
 
@@ -557,15 +572,67 @@ private:
 	std::unordered_map<K, pair_value_type> m;
 };
 
+// Partial specialization of map for value
+template <typename K, typename V>
+class value<map<K, V>> : public value_base
+{
+public:
+	using map_type = map<K, V>;
+
+	explicit value(void *ptr, void (*destructor)(void *) = &metacall_value_destroy) :
+		value_base(ptr, destructor) {}
+
+	static void *create(map_type &v)
+	{
+		return v.release();
+	}
+
+	static enum metacall_value_id id()
+	{
+		return METACALL_MAP;
+	}
+
+	map_type to_value() const &
+	{
+		return map_type(to_raw());
+	}
+};
+
 namespace detail
 {
 template <typename T>
-constexpr bool is_value_base = std::is_base_of_v<value_base, std::remove_cv_t<std::remove_reference_t<T>>>;
+constexpr bool is_value_base_v = std::is_base_of_v<value_base, std::remove_cv_t<std::remove_reference_t<T>>>;
+
+template <typename T>
+struct is_array : std::false_type
+{
+};
+
+template <>
+struct is_array<metacall::array> : std::true_type
+{
+};
+
+template <typename T>
+inline constexpr bool is_array_v = is_array<std::remove_cv_t<std::remove_reference_t<T>>>::value;
+
+template <typename T>
+struct is_map : std::false_type
+{
+};
+
+template <typename K, typename V>
+struct is_map<metacall::map<K, V>> : std::true_type
+{
+};
+
+template <typename T>
+inline constexpr bool is_map_v = is_map<std::remove_cv_t<std::remove_reference_t<T>>>::value;
 
 template <typename T>
 value_base to_value_base(T &&arg)
 {
-	if constexpr (is_value_base<T>)
+	if constexpr (is_value_base_v<T>)
 	{
 		return std::move(arg);
 	}
@@ -575,10 +642,27 @@ value_base to_value_base(T &&arg)
 	}
 }
 
+template <typename Arg>
+auto arg_to_value(void *arg)
+{
+	if constexpr (is_array_v<Arg>)
+	{
+		return metacall::array(arg);
+	}
+	else if constexpr (is_map_v<Arg>)
+	{
+		return metacall::map<typename Arg::key_type, typename Arg::value_type>(arg);
+	}
+	else
+	{
+		return metacall::value<Arg>(arg).to_value();
+	}
+}
+
 template <typename... Args, auto... Is>
 auto register_function_args_tuple(void *args[], std::index_sequence<Is...>)
 {
-	return std::tuple{ metacall::value<Args>(args[Is]).to_value()... };
+	return std::tuple{ arg_to_value<std::remove_cv_t<std::remove_reference_t<Args>>>(args[Is])... };
 }
 
 template <typename... Args>
@@ -617,7 +701,7 @@ int register_function(const char *name, Ret (*func)(void), void **func_ptr)
 		name,
 		invoke,
 		func_ptr,
-		value<Ret>::id(),
+		value<std::remove_cv_t<std::remove_reference_t<Ret>>>::id(),
 		0,
 		types,
 		(void *)(func));
@@ -652,16 +736,21 @@ int register_function(const char *name, Ret (*func)(Args...), void **func_ptr)
 		return value<Ret>::create(result);
 	};
 
-	enum metacall_value_id types[] = { value<Args>::id()... };
+	enum metacall_value_id types[] = { value<std::remove_cv_t<std::remove_reference_t<Args>>>::id()... };
 
 	return metacall::metacall_registerv_closure(
 		name,
 		invoke,
 		func_ptr,
-		value<Ret>::id(),
+		value<std::remove_cv_t<std::remove_reference_t<Ret>>>::id(),
 		sizeof...(Args),
 		types,
 		(void *)(func));
+}
+
+inline void **null_safe_args(void *args[])
+{
+	return args ? args : metacall_null_args;
 }
 
 } /* namespace detail */
@@ -675,27 +764,25 @@ public:
 
 	~function() {}
 
-	Ret operator()(Args &&...args) const
+	value<Ret> operator()(Args &&...args) const
 	{
 		constexpr std::size_t size = sizeof...(Args);
 		std::array<value_base, size> value_args = { { detail::to_value_base(std::forward<Args>(args))... } };
-		void *raw_args[size];
+		std::array<void *, size> raw_args;
 
 		for (std::size_t i = 0; i < size; ++i)
 		{
 			raw_args[i] = value_args[i].to_raw();
 		}
 
-		void *ret = metacallfv_s(func, raw_args, size);
+		void *ret = metacallfv_s(func, detail::null_safe_args(raw_args.data()), size);
 
 		if (ret == NULL)
 		{
 			throw std::runtime_error("MetaCall invokation has failed by returning NULL");
 		}
 
-		value<Ret> result(ret, &metacall_value_destroy);
-
-		return result.to_value();
+		return value<Ret>(ret, &metacall_value_destroy);
 	}
 
 private:
@@ -725,27 +812,25 @@ function<Ret, Args...> register_function(Ret (*func)(Args...))
 }
 
 template <typename Ret, typename... Args>
-Ret metacall(std::string name, Args &&...args)
+value<Ret> metacall(std::string name, Args &&...args)
 {
 	constexpr std::size_t size = sizeof...(Args);
 	std::array<value_base, size> value_args = { { detail::to_value_base(std::forward<Args>(args))... } };
-	void *raw_args[size];
+	std::array<void *, size> raw_args;
 
 	for (std::size_t i = 0; i < size; ++i)
 	{
 		raw_args[i] = value_args[i].to_raw();
 	}
 
-	void *ret = metacallv_s(name.c_str(), raw_args, size);
+	void *ret = metacallv_s(name.c_str(), null_safe_args(raw_args.data()), size);
 
 	if (ret == NULL)
 	{
 		throw std::runtime_error("MetaCall invokation to '" + name + "' has failed by returning NULL");
 	}
 
-	value<Ret> result(ret, &metacall_value_destroy);
-
-	return result.to_value();
+	return value<Ret>(ret, &metacall_value_destroy);
 }
 
 } /* namespace metacall */

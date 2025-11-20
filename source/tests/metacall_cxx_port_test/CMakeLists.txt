@@ -95,9 +95,6 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
-
-	LIBFFI_INCLUDE_DIR="${LIBFFI_INCLUDE_DIR}"
-	LIBFFI_LIBRARY="${LIBFFI_LIBRARY}"
 )
 
 #

@@ -2186,9 +2186,12 @@ type_id *metacall_type_ids(void *args[], size_t size)
 	{
 		ids = (type_id *)malloc(sizeof(type_id) * size);
 
-		for (size_t iterator = 0; iterator < size; ++iterator)
+		if (ids != NULL)
 		{
-			ids[iterator] = metacall_value_id(args[iterator]);
+			for (size_t iterator = 0; iterator < size; ++iterator)
+			{
+				ids[iterator] = metacall_value_id(args[iterator]);
+			}
 		}
 	}
 
@@ -2228,9 +2231,12 @@ void *metacallt_object(void *obj, const char *name, const enum metacall_value_id
 	{
 		ids = (type_id *)malloc(sizeof(type_id) * size);
 
-		for (size_t iterator = 0; iterator < size; ++iterator)
+		if (ids != NULL)
 		{
-			ids[iterator] = metacall_value_id(args[iterator]);
+			for (size_t iterator = 0; iterator < size; ++iterator)
+			{
+				ids[iterator] = metacall_value_id(args[iterator]);
+			}
 		}
 	}
 

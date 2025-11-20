@@ -169,18 +169,15 @@ int loader_host_register(loader_impl host, context ctx, const char *name, loader
 
 	signature s = function_signature(f);
 
-	if (arg_size > 0)
+	size_t iterator;
+
+	for (iterator = 0; iterator < arg_size; ++iterator)
 	{
-		size_t iterator;
+		static const char empty_argument_name[] = "";
 
-		for (iterator = 0; iterator < arg_size; ++iterator)
-		{
-			static const char empty_argument_name[] = "";
+		type t = loader_impl_type(host, type_id_name(args_type_id[iterator]));
 
-			type t = loader_impl_type(host, type_id_name(args_type_id[iterator]));
-
-			signature_set(s, iterator, empty_argument_name, t);
-		}
+		signature_set(s, iterator, empty_argument_name, t);
 	}
 
 	type t = loader_impl_type(host, type_id_name(return_type));
