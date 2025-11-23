@@ -1,0 +1,754 @@
+==123902== Memcheck, a memory error detector
+==123902== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==123902== Using Valgrind-3.25.1 and LibVEX; rerun with -h for copyright info
+==123902== Command: ./target/debug/deps/metacall_test-986f63f5b5ba9f82
+==123902== 
+
+running 1 test
+[32mDebug[0m: MetaCall default logger to stdout initialized
+[32mDebug[0m: Initializing MetaCall
+[32mDebug[0m: Finding configuration relative path configurations/global.json to /home/fahd/metacall-core/build/
+[32mDebug[0m: Trying to load configuration from /home/fahd/metacall-core/build/configurations/global.json
+[32mDebug[0m: Global configuration loaded from /home/fahd/metacall-core/build/configurations/global.json
+[32mDebug[0m: Loading plugin: rapid_json_seriald
+[32mDebug[0m: Loading plugin symbol: rapid_json_serial_impl_interface_singleton
+[32mDebug[0m: Trying to load configuration from /home/fahd/metacall-core/build/configurations/py_loader.json
+[32mDebug[0m: Set MetaCall log level to Debug
+[32mDebug[0m: Loader script path: /home/fahd/metacall-core/source/ports/rs_port/
+[32mDebug[0m: Loading plugin: plthook_detourd
+[32mDebug[0m: Loading plugin symbol: plthook_detour_impl_interface_singleton
+[32mDebug[0m: Loading plugin: ext_loaderd
+[32mDebug[0m: Loading plugin symbol: ext_loader_impl_interface_singleton
+[32mDebug[0m: Loading plugin: py_loaderd
+[32mDebug[0m: Loading plugin symbol: py_loader_impl_interface_singleton
+[32mDebug[0m: Python loader initialized correctly
+[32mDebug[0m: Introspection: class name TestClass
+[32mDebug[0m: Introspection: class member __module__, type String, static method: 0
+[32mDebug[0m: Introspection: class member __firstlineno__, type Long, static method: 0
+[32mDebug[0m: Introspection: class member hi, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi2, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi_function, type Object, static method: 1
+[32mDebug[0m: Introspection: class member get_hi, type Function, static method: 0
+[32mDebug[0m: Introspection: class member __static_attributes__, type Array, static method: 0
+[32mDebug[0m: Introspection: function test_class, args count 0
+[32mDebug[0m: Introspection: function test_object, args count 0
+[32mDebug[0m: Introspection: function return_the_argument_py, args count 1
+[32mDebug[0m: Introspection: function test_future_resolve, args count 0
+[32mDebug[0m: Introspection: function test_future_reject, args count 0
+[32mDebug[0m: Introspection: class member __module__, type String, static method: 0
+[32mDebug[0m: Introspection: class member __firstlineno__, type Long, static method: 0
+[32mDebug[0m: Introspection: class member hi, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi2, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi_function, type Object, static method: 1
+[32mDebug[0m: Introspection: class member get_hi, type Function, static method: 0
+[32mDebug[0m: Introspection: class member __static_attributes__, type Array, static method: 0
+[32mDebug[0m: Introspection: class member __module__, type String, static method: 0
+[32mDebug[0m: Introspection: class member __firstlineno__, type Long, static method: 0
+[32mDebug[0m: Introspection: class member hi, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi2, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi_function, type Object, static method: 1
+[32mDebug[0m: Introspection: class member get_hi, type Function, static method: 0
+[32mDebug[0m: Introspection: class member __static_attributes__, type Array, static method: 0
+[32mDebug[0m: Introspection: class member __module__, type String, static method: 0
+[32mDebug[0m: Introspection: class member __firstlineno__, type Long, static method: 0
+[32mDebug[0m: Introspection: class member hi, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi2, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi_function, type Object, static method: 1
+[32mDebug[0m: Introspection: class member get_hi, type Function, static method: 0
+[32mDebug[0m: Introspection: class member __static_attributes__, type Array, static method: 0
+[32mDebug[0m: Introspection: class member __module__, type String, static method: 0
+[32mDebug[0m: Introspection: class member __firstlineno__, type Long, static method: 0
+[32mDebug[0m: Introspection: class member hi, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi2, type String, static method: 0
+[32mDebug[0m: Introspection: class member hi_function, type Object, static method: 1
+[32mDebug[0m: Introspection: class member get_hi, type Function, static method: 0
+[32mDebug[0m: Introspection: class member __static_attributes__, type Array, static method: 0
+[32mDebug[0m: Loading plugin: c_loaderd
+[32mError[0m: DynLink error: /home/fahd/metacall-core/build/libc_loaderd.so: cannot open shared object file: No such file or directory
+[32mError[0m: Failed to load library from plugin descriptor
+[32mError[0m: Plugin loader from manager 'loader' failed to load plugin: c
+[32mError[0m: Failed to create loader: c
+[32mError[0m: Tried to load 1 file(s) from non existent loader (c): /home/fahd/metacall-core/source/ports/rs_port/tests/scripts/script.c
+[32mDebug[0m: Loading plugin: node_loaderd
+[32mError[0m: DynLink error: /home/fahd/metacall-core/build/libnode_loaderd.so: cannot open shared object file: No such file or directory
+[32mError[0m: Failed to load library from plugin descriptor
+[32mError[0m: Plugin loader from manager 'loader' failed to load plugin: node
+[32mError[0m: Failed to create loader: node
+[32mError[0m: Tried to load 1 file(s) from non existent loader (node): /home/fahd/metacall-core/source/ports/rs_port/tests/scripts/script.js
+Requesting loop to stop
+Waiting for thread to join
+Loop stopping, cleaning up...
+Event loop closed
+Background loop stopped
+[32mDebug[0m: Storing handle: plugin_extension <0x5029610> in destroy list
+[32mDebug[0m: Unloading handle: plugin_extension <0x5029610>
+----------------- FUNCTIONS -----------------
+Allocations: 6
+Deallocations: 6
+Increments: 6
+Decrements: 6
+----------------- CLASSES -----------------
+Allocations: 5
+Deallocations: 5
+Increments: 5
+Decrements: 5
+----------------- OBJECTS -----------------
+Allocations: 4
+Deallocations: 4
+Increments: 4
+Decrements: 4
+----------------- EXCEPTIONS -----------------
+Allocations: 0
+Deallocations: 0
+Increments: 0
+Decrements: 0
+test metacall ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.54s
+
+==123902== 
+==123902== HEAP SUMMARY:
+==123902==     in use at exit: 518,651 bytes in 184 blocks
+==123902==   total heap usage: 13,536 allocs, 13,352 frees, 47,126,194 bytes allocated
+==123902== 
+==123902== 32 bytes in 1 blocks are still reachable in loss record 2 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578420F: _PyMem_DefaultRawWcsdup (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58F7844: _PyPathConfig_UpdateGlobal (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59079A2: init_interp_main.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59095A9: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902==    by 0x49F9B03: loader_impl_load_from_file (loader_impl.c:1155)
+==123902==    by 0x49FC124: metacall_load_from_file (metacall.c:448)
+==123902==    by 0x407CFC6: metacall::load::from_file (load.rs:55)
+==123902==    by 0x407CA99: metacall::load::from_single_file (load.rs:21)
+==123902== 
+==123902== 48 bytes in 1 blocks are possibly lost in loss record 3 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x41279D3: alloc (alloc.rs:94)
+==123902==    by 0x41279D3: alloc_impl (alloc.rs:189)
+==123902==    by 0x41279D3: allocate (alloc.rs:250)
+==123902==    by 0x41279D3: {closure#0}<std::thread::Inner> (sync.rs:504)
+==123902==    by 0x41279D3: allocate_for_layout<core::mem::maybe_uninit::MaybeUninit<std::thread::Inner>, alloc::sync::{impl#14}::new_uninit::{closure_env#0}<std::thread::Inner>, fn(*mut u8) -> *mut alloc::sync::ArcInner<core::mem::maybe_uninit::MaybeUninit<std::thread::Inner>>> (sync.rs:1984)
+==123902==    by 0x41279D3: new_uninit<std::thread::Inner> (sync.rs:502)
+==123902==    by 0x41279D3: std::thread::Thread::new (mod.rs:1453)
+==123902==    by 0x412700F: std::thread::current::init_current (current.rs:227)
+==123902==    by 0x4130595: current_or_unnamed (current.rs:184)
+==123902==    by 0x4130595: std::sync::mpmc::context::Context::new (context.rs:72)
+==123902==    by 0x409D2EA: __init (context.rs:43)
+==123902==    by 0x409D2EA: call_once<fn() -> core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()> (function.rs:253)
+==123902==    by 0x409D2EA: unwrap_or_else<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, fn() -> core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>> (option.rs:1060)
+==123902==    by 0x409D2EA: std::sys::thread_local::native::lazy::Storage<T,D>::get_or_init_slow (lazy.rs:78)
+==123902==    by 0x409E95A: get_or_init<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, (), fn() -> core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>> (lazy.rs:60)
+==123902==    by 0x409E95A: {closure#0} (mod.rs:94)
+==123902==    by 0x409E95A: call_once<std::sync::mpmc::context::{impl#0}::with::CONTEXT::{constant#0}::{closure_env#0}, (core::option::Option<&mut core::option::Option<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>>>)> (function.rs:253)
+==123902==    by 0x409E95A: try_with<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, std::sync::mpmc::context::{impl#0}::with::{closure_env#1}<std::sync::mpmc::list::{impl#3}::recv::{closure_env#1}<test::event::CompletedTest>, ()>, ()> (local.rs:314)
+==123902==    by 0x409E95A: with<std::sync::mpmc::list::{impl#3}::recv::{closure_env#1}<test::event::CompletedTest>, ()> (context.rs:53)
+==123902==    by 0x409E95A: std::sync::mpmc::list::Channel<T>::recv (list.rs:442)
+==123902==    by 0x40B7B1A: recv_deadline<test::event::CompletedTest> (mod.rs:1119)
+==123902==    by 0x40B7B1A: recv_timeout<test::event::CompletedTest> (mod.rs:1051)
+==123902==    by 0x40B7B1A: recv_timeout<test::event::CompletedTest> (mpsc.rs:905)
+==123902==    by 0x40B7B1A: run_tests<test::console::run_tests_console::{closure_env#2}> (lib.rs:441)
+==123902==    by 0x40B7B1A: test::console::run_tests_console (console.rs:323)
+==123902==    by 0x40D4985: test_main_with_exit_callback<test::test_main::{closure_env#0}> (lib.rs:160)
+==123902==    by 0x40D4985: test::test_main (lib.rs:101)
+==123902==    by 0x40D51EA: test::test_main_static (lib.rs:183)
+==123902==    by 0x409B972: metacall_test::main (metacall_test.rs:0)
+==123902==    by 0x407E1FA: core::ops::function::FnOnce::call_once (function.rs:253)
+==123902==    by 0x409167D: std::sys::backtrace::__rust_begin_short_backtrace (backtrace.rs:158)
+==123902== 
+==123902== 64 bytes in 2 blocks are still reachable in loss record 4 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x4178103: decompose_rpath (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417A654: _dl_map_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417497C: openaux (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4174E14: _dl_map_object_deps (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E334: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902== 
+==123902== 144 bytes in 1 blocks are still reachable in loss record 5 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578420F: _PyMem_DefaultRawWcsdup (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58F78A8: _PyPathConfig_UpdateGlobal (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59079A2: init_interp_main.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59095A9: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902==    by 0x49F9B03: loader_impl_load_from_file (loader_impl.c:1155)
+==123902==    by 0x49FC124: metacall_load_from_file (metacall.c:448)
+==123902==    by 0x407CFC6: metacall::load::from_file (load.rs:55)
+==123902==    by 0x407CA99: metacall::load::from_single_file (load.rs:21)
+==123902== 
+==123902== 160 bytes in 1 blocks are still reachable in loss record 6 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x417DC0F: add_to_global_resize (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417EAC7: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173698: _dl_catch_error (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB1E2: _dlerror_run (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4ADB82E: dlopen@@GLIBC_2.34 (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902== 
+==123902== 220 bytes in 3 blocks are still reachable in loss record 7 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x417728B: open_path (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417A820: _dl_map_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417497C: openaux (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4174E14: _dl_map_object_deps (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E334: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902== 
+==123902== 220 bytes in 3 blocks are still reachable in loss record 8 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x417D770: _dl_new_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4178A29: _dl_map_object_from_fd (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417A415: _dl_map_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417497C: openaux (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4174E14: _dl_map_object_deps (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E334: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902== 
+==123902== 248 bytes in 1 blocks are still reachable in loss record 9 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x58F772F: _PyPathConfig_UpdateGlobal (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59079A2: init_interp_main.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59095A9: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902==    by 0x49F9B03: loader_impl_load_from_file (loader_impl.c:1155)
+==123902==    by 0x49FC124: metacall_load_from_file (metacall.c:448)
+==123902==    by 0x407CFC6: metacall::load::from_file (load.rs:55)
+==123902==    by 0x407CA99: metacall::load::from_single_file (load.rs:21)
+==123902==    by 0x409B68D: metacall_test::metacall (metacall_test.rs:371)
+==123902== 
+==123902== 248 bytes in 1 blocks are still reachable in loss record 10 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x58F7798: _PyPathConfig_UpdateGlobal (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59079A2: init_interp_main.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59095A9: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902==    by 0x49F9B03: loader_impl_load_from_file (loader_impl.c:1155)
+==123902==    by 0x49FC124: metacall_load_from_file (metacall.c:448)
+==123902==    by 0x407CFC6: metacall::load::from_file (load.rs:55)
+==123902==    by 0x407CA99: metacall::load::from_single_file (load.rs:21)
+==123902==    by 0x409B68D: metacall_test::metacall (metacall_test.rs:371)
+==123902== 
+==123902== 308 bytes in 1 blocks are still reachable in loss record 11 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x58F7801: _PyPathConfig_UpdateGlobal (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59079A2: init_interp_main.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59095A9: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902==    by 0x49F9B03: loader_impl_load_from_file (loader_impl.c:1155)
+==123902==    by 0x49FC124: metacall_load_from_file (metacall.c:448)
+==123902==    by 0x407CFC6: metacall::load::from_file (load.rs:55)
+==123902==    by 0x407CA99: metacall::load::from_single_file (load.rs:21)
+==123902==    by 0x409B68D: metacall_test::metacall (metacall_test.rs:371)
+==123902== 
+==123902== 456 bytes in 1 blocks are still reachable in loss record 12 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x41342BA: alloc (alloc.rs:94)
+==123902==    by 0x41342BA: alloc_impl (alloc.rs:189)
+==123902==    by 0x41342BA: allocate (alloc.rs:250)
+==123902==    by 0x41342BA: try_new_uninit_in<alloc::collections::btree::node::LeafNode<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo>, alloc::alloc::Global> (boxed.rs:508)
+==123902==    by 0x41342BA: new_uninit_in<alloc::collections::btree::node::LeafNode<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo>, alloc::alloc::Global> (boxed.rs:474)
+==123902==    by 0x41342BA: new<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (node.rs:83)
+==123902==    by 0x41342BA: new_leaf<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (node.rs:217)
+==123902==    by 0x41342BA: insert_entry<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (entry.rs:404)
+==123902==    by 0x41342BA: insert<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (entry.rs:377)
+==123902==    by 0x41342BA: insert<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (map.rs:1030)
+==123902==    by 0x41342BA: std::sys::pal::unix::stack_overflow::thread_info::set_current_info (thread_info.rs:118)
+==123902==    by 0x4126A53: init (stack_overflow.rs:165)
+==123902==    by 0x4126A53: init (mod.rs:48)
+==123902==    by 0x4126A53: init (rt.rs:114)
+==123902==    by 0x4126A53: {closure#0} (rt.rs:173)
+==123902==    by 0x4126A53: do_call<std::rt::lang_start_internal::{closure_env#0}, isize> (panicking.rs:589)
+==123902==    by 0x4126A53: catch_unwind<isize, std::rt::lang_start_internal::{closure_env#0}> (panicking.rs:552)
+==123902==    by 0x4126A53: catch_unwind<std::rt::lang_start_internal::{closure_env#0}, isize> (panic.rs:359)
+==123902==    by 0x4126A53: std::rt::lang_start_internal (rt.rs:171)
+==123902==    by 0x4084176: std::rt::lang_start (rt.rs:205)
+==123902==    by 0x409B99D: main (in /home/fahd/metacall-core/source/ports/rs_port/target/debug/deps/metacall_test-986f63f5b5ba9f82)
+==123902== 
+==123902== 568 bytes in 1 blocks are still reachable in loss record 13 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3AC87: new_keys_object.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3B730: dictresize.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3ECCB: insertdict.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B6563: add_subclass.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B8242: type_ready.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B1D30: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B43F2: tp_new_wrapper.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5775E4B: cfunction_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F5D2D: _PyObject_Call (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 594 bytes in 1 blocks are still reachable in loss record 14 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B19C9: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B43F2: tp_new_wrapper.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5775E4B: cfunction_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F5D2D: _PyObject_Call (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x588A286: _PyEval_Vector (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57C970F: slot_tp_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57ADC8E: type_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F45C6: _PyObject_MakeTpCall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 695 bytes in 1 blocks are still reachable in loss record 15 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A1F11E: PyBytes_FromStringAndSize.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FCB37: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC2C8: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDF49: PyMarshal_ReadObjectFromString (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58D7DCF: _imp_get_frozen_object (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 768 bytes in 1 blocks are still reachable in loss record 16 of 44
+==123902==    at 0x49BEE4F: realloc (vg_replace_malloc.c:1801)
+==123902==    by 0x578E1EB: allocate_from_new_pool (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x578E4D7: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58C818E: _PyObject_GC_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x575A0FB: PyDict_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59043BB: pycore_interp_init.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A133B7: pyinit_core.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59094EB: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902==    by 0x49F9B03: loader_impl_load_from_file (loader_impl.c:1155)
+==123902== 
+==123902== 988 bytes in 1 blocks are still reachable in loss record 17 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x58F794F: _PyPathConfig_UpdateGlobal (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59079A2: init_interp_main.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59095A9: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902==    by 0x49F9B03: loader_impl_load_from_file (loader_impl.c:1155)
+==123902==    by 0x49FC124: metacall_load_from_file (metacall.c:448)
+==123902==    by 0x407CFC6: metacall::load::from_file (load.rs:55)
+==123902==    by 0x407CA99: metacall::load::from_single_file (load.rs:21)
+==123902==    by 0x409B68D: metacall_test::metacall (metacall_test.rs:371)
+==123902== 
+==123902== 1,056 bytes in 12 blocks are still reachable in loss record 18 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x417C6E4: _dl_lookup_symbol_x (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4180615: _dl_relocate_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E599: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173698: _dl_catch_error (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB1E2: _dlerror_run (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902== 
+==123902== 1,184 bytes in 2 blocks are still reachable in loss record 19 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x577546C: _PyObject_NewVar (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F9B87: _PyCode_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC3B0: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDF49: PyMarshal_ReadObjectFromString (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DBDA2: PyImport_ImportFrozenModuleObject (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DEEF1: _PyImport_InitCore (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 1,393 bytes in 1 blocks are still reachable in loss record 20 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B19C9: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57ADC8E: type_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F45C6: _PyObject_MakeTpCall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5871DBF: builtin___build_class__.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4BF7: PyObject_Vectorcall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587DAE2: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5874AB7: PyEval_EvalCode (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DBB2C: exec_code_in_module (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 1,433 bytes in 1 blocks are still reachable in loss record 21 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5810C59: PyUnicode_New.part.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5811D5C: _PyUnicode_FromUCS1.part.0.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC760: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDF49: PyMarshal_ReadObjectFromString (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DBDA2: PyImport_ImportFrozenModuleObject (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DEEF1: _PyImport_InitCore (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 1,520 bytes in 1 blocks are still reachable in loss record 22 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3AC87: new_keys_object.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3B730: dictresize.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3ECCB: insertdict.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5883B89: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5874AB7: PyEval_EvalCode (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DBB2C: exec_code_in_module (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DBE66: PyImport_ImportFrozenModuleObject (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58DEEF1: _PyImport_InitCore (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5907200: pycore_interp_init.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 1,520 bytes in 1 blocks are still reachable in loss record 23 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3AC87: new_keys_object.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3B730: dictresize.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3ECCB: insertdict.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5883B89: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5874AB7: PyEval_EvalCode (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x586EABD: builtin_exec.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4BF7: PyObject_Vectorcall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587DAE2: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x588A286: _PyEval_Vector (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 1,545 bytes in 2 blocks are still reachable in loss record 24 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5810C59: PyUnicode_New.part.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5811D5C: _PyUnicode_FromUCS1.part.0.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC760: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDBE8: read_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 1,634 bytes in 13 blocks are still reachable in loss record 25 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x419A2CF: strdup (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417A373: _dl_map_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E2CB: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173698: _dl_catch_error (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB1E2: _dlerror_run (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902== 
+==123902== 1,634 bytes in 13 blocks are still reachable in loss record 26 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x417D770: _dl_new_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4178A29: _dl_map_object_from_fd (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417A415: _dl_map_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E2CB: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173698: _dl_catch_error (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902== 
+==123902== 2,304 bytes in 3 blocks are still reachable in loss record 27 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5758928: clone_combined_dict_keys.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x576352C: copy_lock_held.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B0F7A: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57ADC8E: type_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F45C6: _PyObject_MakeTpCall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5871DBF: builtin___build_class__.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4BF7: PyObject_Vectorcall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587DAE2: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 2,365 bytes in 3 blocks are still reachable in loss record 28 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B19C9: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57ADC8E: type_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F45C6: _PyObject_MakeTpCall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5871DBF: builtin___build_class__.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4BF7: PyObject_Vectorcall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587DAE2: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5874AB7: PyEval_EvalCode (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x586EABD: builtin_exec.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 2,447 bytes in 2 blocks are still reachable in loss record 29 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A1F11E: PyBytes_FromStringAndSize.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FCB37: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC2C8: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDBE8: read_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58F53D7: marshal_loads.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F92C: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 2,824 bytes in 3 blocks are still reachable in loss record 30 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x577546C: _PyObject_NewVar (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F9B87: _PyCode_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC3B0: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDF49: PyMarshal_ReadObjectFromString (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58D7DCF: _imp_get_frozen_object (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 3,119 bytes in 4 blocks are still reachable in loss record 31 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5810C59: PyUnicode_New.part.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5811D5C: _PyUnicode_FromUCS1.part.0.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC760: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDBE8: read_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58F53D7: marshal_loads.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F92C: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 3,296 bytes in 3 blocks are still reachable in loss record 32 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57A828A: _PyType_AllocNoTrack (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57A840E: PyType_GenericAlloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B1646: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57ADC8E: type_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F45C6: _PyObject_MakeTpCall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5871DBF: builtin___build_class__.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4BF7: PyObject_Vectorcall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587DAE2: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 3,757 bytes in 3 blocks are still reachable in loss record 33 of 44
+==123902==    at 0x49BEC13: calloc (vg_replace_malloc.c:1675)
+==123902==    by 0x417D47D: _dl_new_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4178A29: _dl_map_object_from_fd (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417A415: _dl_map_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417497C: openaux (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4174E14: _dl_map_object_deps (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E334: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902== 
+==123902== 3,840 bytes in 5 blocks are still reachable in loss record 34 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5758928: clone_combined_dict_keys.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x576352C: copy_lock_held.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B0F7A: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B43F2: tp_new_wrapper.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5775E4B: cfunction_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F5D2D: _PyObject_Call (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x588A286: _PyEval_Vector (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57C970F: slot_tp_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 3,840 bytes in 5 blocks are still reachable in loss record 35 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3AC87: new_keys_object.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57BAB57: type_ready.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B1D30: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B43F2: tp_new_wrapper.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5775E4B: cfunction_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F5D2D: _PyObject_Call (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x588A286: _PyEval_Vector (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57C970F: slot_tp_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 4,008 bytes in 16 blocks are still reachable in loss record 36 of 44
+==123902==    at 0x49BEC13: calloc (vg_replace_malloc.c:1675)
+==123902==    by 0x4185F3F: _dl_check_map_versions (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E3B2: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173698: _dl_catch_error (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB1E2: _dlerror_run (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4ADB82E: dlopen@@GLIBC_2.34 (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902== 
+==123902== 4,960 bytes in 5 blocks are still reachable in loss record 37 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57A828A: _PyType_AllocNoTrack (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57A840E: PyType_GenericAlloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B16BB: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B43F2: tp_new_wrapper.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5775E4B: cfunction_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F5D2D: _PyObject_Call (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x588A286: _PyEval_Vector (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57C970F: slot_tp_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 8,448 bytes in 11 blocks are still reachable in loss record 38 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3AC87: new_keys_object.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57BAB57: type_ready.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B1D30: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57ADC8E: type_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F45C6: _PyObject_MakeTpCall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5871DBF: builtin___build_class__.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4BF7: PyObject_Vectorcall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587DAE2: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 9,552 bytes in 3 blocks are still reachable in loss record 39 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3AC87: new_keys_object.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3B730: dictresize.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A3ECCB: insertdict.isra.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5883B89: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5874AB7: PyEval_EvalCode (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x586EABD: builtin_exec.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F631: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x588A286: _PyEval_Vector (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F696E: object_vacall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 11,904 bytes in 12 blocks are still reachable in loss record 40 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57A828A: _PyType_AllocNoTrack (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57A840E: PyType_GenericAlloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57B16BB: type_new.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x57ADC8E: type_call.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F45C6: _PyObject_MakeTpCall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4805: _PyObject_VectorcallDictTstate (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5871DBF: builtin___build_class__.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F4BF7: PyObject_Vectorcall (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587DAE2: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A2A0B4: _PyEval_Vector.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 17,754 bytes in 13 blocks are still reachable in loss record 41 of 44
+==123902==    at 0x49BEC13: calloc (vg_replace_malloc.c:1675)
+==123902==    by 0x417D47D: _dl_new_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4178A29: _dl_map_object_from_fd (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417A415: _dl_map_object (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417E2CB: dl_open_worker_begin (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DA2F: dl_open_worker (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x417DE43: _dl_open (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4ADB763: dlopen_doit (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/libc.so.6)
+==123902==    by 0x4173542: _dl_catch_exception (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902==    by 0x4173698: _dl_catch_error (in /nix/store/776irwlgfb65a782cxmyk61pck460fs9-glibc-2.40-66/lib/ld-linux-x86-64.so.2)
+==123902== 
+==123902== 22,312 bytes in 23 blocks are still reachable in loss record 42 of 44
+==123902==    at 0x49B77A8: malloc (vg_replace_malloc.c:446)
+==123902==    by 0x578E4BB: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x577546C: _PyObject_NewVar (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x56F9B87: _PyCode_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC3B0: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC122: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FC208: r_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58FDBE8: read_object.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58F53D7: marshal_loads.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x587F92C: _PyEval_EvalFrameDefault (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902== 
+==123902== 131,072 bytes in 1 blocks are still reachable in loss record 43 of 44
+==123902==    at 0x49BEC13: calloc (vg_replace_malloc.c:1675)
+==123902==    by 0x577F3A6: arena_map_mark_used (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x578DF89: allocate_from_new_pool (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x578E4D7: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58C818E: _PyObject_GC_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x575A0FB: PyDict_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59043BB: pycore_interp_init.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A133B7: pyinit_core.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59094EB: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902== 
+==123902== 262,144 bytes in 1 blocks are still reachable in loss record 44 of 44
+==123902==    at 0x49BEC13: calloc (vg_replace_malloc.c:1675)
+==123902==    by 0x577F43E: arena_map_mark_used (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x578DF89: allocate_from_new_pool (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x578E4D7: _PyObject_Malloc (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x58C818E: _PyObject_GC_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x575A0FB: PyDict_New (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59043BB: pycore_interp_init.lto_priv.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5A133B7: pyinit_core.constprop.0 (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x59094EB: Py_InitializeFromConfig (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5909826: Py_InitializeEx (in /nix/store/jba0sr0sjfcinxbh7dicqa65vr8whyg3-python3-3.14.0rc3/lib/libpython3.14.so.1.0)
+==123902==    by 0x5D04036: ???
+==123902==    by 0x49F9890: loader_impl_initialize (loader_impl.c:700)
+==123902== 
+==123902== LEAK SUMMARY:
+==123902==    definitely lost: 0 bytes in 0 blocks
+==123902==    indirectly lost: 0 bytes in 0 blocks
+==123902==      possibly lost: 48 bytes in 1 blocks
+==123902==    still reachable: 518,578 bytes in 182 blocks
+==123902==         suppressed: 25 bytes in 1 blocks
+==123902== 
+==123902== For lists of detected and suppressed errors, rerun with: -s
+==123902== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
