@@ -174,10 +174,10 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 	/* Create an invokable function to initialization register */
-	void *func_register_cb = NULL;
+	void *func_register_cb_value = NULL;
 	enum metacall_value_id arg_types[] = { METACALL_PTR };
 
-	if (metacall_registerv(NULL, &ts_loader_impl_initialize_register_cb, &func_register_cb, METACALL_BOOL, 1, arg_types) != 0 || func_register_cb == NULL)
+	if (metacall_registerv(NULL, &ts_loader_impl_initialize_register_cb, &func_register_cb_value, METACALL_BOOL, 1, arg_types) != 0 || func_register_cb_value == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to create the register function");
 		return NULL;
@@ -185,7 +185,7 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 
 	/* Initialize bootstrap */
 	void *args[2] = {
-		metacall_value_create_function(func_register_cb),
+		func_register_cb_value,
 		metacall_value_create_ptr(impl)
 	};
 
@@ -419,10 +419,10 @@ int ts_loader_impl_destroy(loader_impl impl)
 	}
 
 	/* Create an invokable function to destroy unload children */
-	void *func_unload_children_cb = NULL;
+	void *func_unload_children_cb_value = NULL;
 	enum metacall_value_id arg_types[] = { METACALL_PTR };
 
-	if (metacall_registerv(NULL, &ts_loader_impl_destroy_unload_children_cb, &func_unload_children_cb, METACALL_BOOL, 1, arg_types) != 0 || func_unload_children_cb == NULL)
+	if (metacall_registerv(NULL, &ts_loader_impl_destroy_unload_children_cb, &func_unload_children_cb_value, METACALL_BOOL, 1, arg_types) != 0 || func_unload_children_cb_value == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to create the unload children function");
 		return 1;
@@ -430,7 +430,7 @@ int ts_loader_impl_destroy(loader_impl impl)
 
 	/* Destroy bootstrap */
 	void *args[2] = {
-		metacall_value_create_function(func_unload_children_cb),
+		func_unload_children_cb_value,
 		metacall_value_create_ptr(impl)
 	};
 

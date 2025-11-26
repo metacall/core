@@ -192,7 +192,7 @@ int loader_is_initialized(const loader_tag tag)
 	return loader_impl_is_initialized(plugin_impl_type(p, loader_impl));
 }
 
-int loader_register(const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[], void *data)
+int loader_register(const char *name, loader_register_invoke invoke, void **func, type_id return_type, size_t arg_size, type_id args_type_id[], void *data)
 {
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 

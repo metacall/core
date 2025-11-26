@@ -38,6 +38,11 @@ void cxx_void_test(void)
 }
 */
 
+int cxx_register_by_name(void)
+{
+	return 78;
+}
+
 std::nullptr_t cxx_map_test(metacall::map<std::string, float> &m)
 {
 	EXPECT_EQ((float)m["hello"], (float)3.0f);
@@ -125,6 +130,12 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		EXPECT_EQ(cxx_void_test_called, true);
 	}
 	*/
+
+	{
+		auto fn = metacall::register_function("cxx_register_by_name", cxx_register_by_name);
+
+		EXPECT_EQ(78, fn().to_value());
+	}
 
 	{
 		metacall::map<std::string, float> m = {
