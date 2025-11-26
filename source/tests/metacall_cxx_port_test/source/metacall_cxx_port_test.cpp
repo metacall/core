@@ -126,7 +126,8 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 
 		auto fn = metacall::register_function(cxx_void_test);
 
-		EXPECT_EQ(nullptr, fn().to_value());
+		fn(); // no return value
+
 		EXPECT_EQ(cxx_void_test_called, true);
 	}
 	*/

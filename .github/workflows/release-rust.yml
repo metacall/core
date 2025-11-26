@@ -23,7 +23,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [ubuntu-latest, macos-latest] # TODO: , windows-latest]
+          os: [ubuntu-latest] # TODO: , macos-latest, windows-latest]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
