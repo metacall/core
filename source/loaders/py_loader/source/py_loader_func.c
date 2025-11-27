@@ -187,6 +187,18 @@ int py_loader_impl_func_check(PyObject *obj)
 	return PyObject_TypeCheck(obj, &py_loader_impl_func_type);
 }
 
+void *py_loader_impl_func_copy(PyObject *obj)
+{
+	struct py_loader_impl_func_obj *wrapped = (struct py_loader_impl_func_obj *)obj;
+
+	if (wrapped == NULL)
+	{
+		return NULL;
+	}
+
+	return metacall_value_copy(wrapped->callback);
+}
+
 PyObject *py_loader_impl_func_new(loader_impl impl, loader_impl_py py_impl, value callback)
 {
 	struct py_loader_impl_func_obj *wrapped = PyObject_New(struct py_loader_impl_func_obj, &py_loader_impl_func_type);

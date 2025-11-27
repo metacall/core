@@ -1064,49 +1064,38 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-/* Check if we are passing our own hook to the callback */
-#if 0 /* TODO: This optimization does not work properly (check metacall-node-port-test for implementing it) */
-		if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
+		/* Check if we are passing our own hook to the callback */
+		if (py_loader_impl_func_check(obj))
 		{
-			PyObject *invoke_state_capsule = PyCFunction_GET_SELF(obj);
-
-			loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(invoke_state_capsule, NULL);
-
-			value callback = value_type_copy(invoke_state->callback);
-
-			/* Move finalizers */
-			value_move(callback, invoke_state->callback);
-
-			Py_DecRef(invoke_state_capsule);
-
-			return callback;
+			return py_loader_impl_func_copy(obj);
 		}
-#endif
-
-		loader_impl_py py_impl = loader_impl_get(impl);
-		size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, obj);
-		loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
-		function f = NULL;
-
-		if (py_func == NULL)
+		else
 		{
-			return NULL;
+			loader_impl_py py_impl = loader_impl_get(impl);
+			size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, obj);
+			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
+			function f = NULL;
+
+			if (py_func == NULL)
+			{
+				return NULL;
+			}
+
+			Py_IncRef(obj);
+			py_func->func = obj;
+			py_func->impl = impl;
+
+			f = function_create(NULL, args_count, py_func, &function_py_singleton);
+
+			if (py_loader_impl_discover_func(impl, obj, f) != 0)
+			{
+				function_destroy(f);
+
+				return NULL;
+			}
+
+			return value_create_function(f);
 		}
-
-		Py_IncRef(obj);
-		py_func->func = obj;
-		py_func->impl = impl;
-
-		f = function_create(NULL, args_count, py_func, &function_py_singleton);
-
-		if (py_loader_impl_discover_func(impl, obj, f) != 0)
-		{
-			function_destroy(f);
-
-			return NULL;
-		}
-
-		return value_create_function(f);
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -3794,6 +3783,20 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 			{
 				py_loader_thread_release();
 				class_destroy(c);
+				return 1;
+			}
+		}
+		else if (py_loader_impl_func_check(module_dict_val))
+		{
+			/* This special case for our own functions skips the introspection phase */
+			const char *func_name = PyUnicode_AsUTF8(module_dict_key);
+			scope sp = context_scope(ctx);
+			value v = py_loader_impl_func_copy(module_dict_val);
+
+			if (scope_define(sp, func_name, v) != 0)
+			{
+				py_loader_thread_release();
+				value_type_destroy(v);
 				return 1;
 			}
 		}

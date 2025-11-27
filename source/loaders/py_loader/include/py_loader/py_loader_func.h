@@ -35,6 +35,8 @@ PY_LOADER_NO_EXPORT int py_loader_impl_func_type_init(void);
 
 PY_LOADER_NO_EXPORT int py_loader_impl_func_check(PyObject *obj);
 
+PY_LOADER_NO_EXPORT void *py_loader_impl_func_copy(PyObject *obj);
+
 PY_LOADER_NO_EXPORT PyObject *py_loader_impl_func_new(loader_impl impl, loader_impl_py py_impl, value callback);
 
 #ifdef __cplusplus
