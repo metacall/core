@@ -35,6 +35,19 @@ extern "C" {
 
 	#include <stdio.h>
 
+	/* Enabling this asserts that any test has no memory leaks */
+	#define REFLECT_MEMORY_TRACKER_ASSERT 0
+
+	#if REFLECT_MEMORY_TRACKER_ASSERT == 1
+		#include <assert.h>
+		#define reflect_memory_tracker_assert(cond) assert(cond)
+	#else
+		#define reflect_memory_tracker_assert(cond) \
+			do \
+			{ \
+			} while (0)
+	#endif
+
 	#define reflect_memory_tracker(name) \
 		static struct \
 		{ \
@@ -60,12 +73,20 @@ extern "C" {
 		#define reflect_memory_tracker_print(name, title) \
 			do \
 			{ \
+				uintmax_t allocations = atomic_load_explicit(&name.allocations, memory_order_relaxed); \
+				uintmax_t deallocations = atomic_load_explicit(&name.deallocations, memory_order_relaxed); \
+				uintmax_t increments = atomic_load_explicit(&name.increments, memory_order_relaxed); \
+				uintmax_t decrements = atomic_load_explicit(&name.decrements, memory_order_relaxed); \
+\
 				printf("----------------- " title " -----------------\n"); \
-				printf("Allocations: %" PRIuMAX "\n", atomic_load_explicit(&name.allocations, memory_order_relaxed)); \
-				printf("Deallocations: %" PRIuMAX "\n", atomic_load_explicit(&name.deallocations, memory_order_relaxed)); \
-				printf("Increments: %" PRIuMAX "\n", atomic_load_explicit(&name.increments, memory_order_relaxed)); \
-				printf("Decrements: %" PRIuMAX "\n", atomic_load_explicit(&name.decrements, memory_order_relaxed)); \
+				printf("Allocations: %" PRIuMAX "\n", allocations); \
+				printf("Deallocations: %" PRIuMAX "\n", deallocations); \
+				printf("Increments: %" PRIuMAX "\n", increments); \
+				printf("Decrements: %" PRIuMAX "\n", decrements); \
 				fflush(stdout); \
+\
+				reflect_memory_tracker_assert(allocations == deallocations && increments == decrements); \
+\
 			} while (0)
 	#else
 		#define reflect_memory_tracker_print(name, title) \
