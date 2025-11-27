@@ -19,6 +19,7 @@
  */
 
 #include <py_loader/py_loader_dict.h>
+#include <py_loader/py_loader_func.h>
 #include <py_loader/py_loader_impl.h>
 #include <py_loader/py_loader_port.h>
 #include <py_loader/py_loader_symbol_fallback.h>
@@ -44,9 +45,6 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-
-#define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
-#define PY_LOADER_IMPL_FINALIZER_FUNC			 "__py_loader_impl_finalizer__"
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define DEBUG_ENABLED 1
@@ -139,14 +137,6 @@ struct loader_impl_py_type
 #endif
 };
 
-typedef struct loader_impl_py_function_type_invoke_state_type
-{
-	loader_impl impl;
-	loader_impl_py py_impl;
-	value callback;
-
-} * loader_impl_py_function_type_invoke_state;
-
 typedef struct loader_impl_py_await_invoke_callback_state_type
 {
 	loader_impl impl;
@@ -174,10 +164,6 @@ static void py_loader_impl_gc_print(loader_impl_py py_impl);
 static void py_loader_impl_sys_path_print(PyObject *sys_path_list);
 #endif
 
-static PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args);
-
-static PyObject *py_loader_impl_finalizer_object_impl(PyObject *self, PyObject *args);
-
 static function_interface function_py_singleton(void);
 
 static type_interface type_py_singleton(void);
@@ -198,93 +184,18 @@ static int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_cl
 
 static int py_loader_impl_discover_class(loader_impl impl, PyObject *read_only_dict, klass c);
 
-static void py_loader_impl_value_invoke_state_finalize(value v, void *data);
-
 static void py_loader_impl_value_ptr_finalize(value v, void *data);
 
 static int py_loader_impl_finalize(loader_impl_py py_impl, const int host);
 
 static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_name name, const char *buffer);
 
-static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
-	{ PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC,
-		py_loader_impl_function_type_invoke,
-		METH_VARARGS,
-		PyDoc_STR("Implements a trampoline for functions as values in the type system.") },
-	{ NULL, NULL, 0, NULL }
-};
-
-static PyMethodDef py_loader_impl_finalizer_defs[] = {
-	{ PY_LOADER_IMPL_FINALIZER_FUNC,
-		py_loader_impl_finalizer_object_impl,
-		METH_NOARGS,
-		PyDoc_STR("Implements custom destructor for values.") },
-	{ NULL, NULL, 0, NULL }
-};
-
 /* Implements: if __name__ == "__main__": */
 static int py_loader_impl_run_main = 1;
 static char *py_loader_impl_main_module = NULL;
 
-/* Holds reference to the original PyCFunction.tp_dealloc method */
-static void (*py_loader_impl_pycfunction_dealloc)(PyObject *) = NULL;
-
 /* Implements PyCapsules with null value internally */
 static const char py_loader_capsule_null_id[] = "__metacall_capsule_null__";
-
-PyObject *py_loader_impl_finalizer_object_impl(PyObject *self, PyObject *args)
-{
-	value v = PyCapsule_GetPointer(self, NULL);
-
-	(void)args;
-
-	if (v == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error destroying a value, the metacall value attached to the python value is null");
-		return Py_ReturnNone();
-	}
-
-	value_type_destroy(v);
-
-	return Py_ReturnNone();
-}
-
-int py_loader_impl_finalizer_object(loader_impl impl, PyObject *obj, value v)
-{
-	py_loader_thread_acquire();
-
-	/* This can be only used for non-builtin modules, any builtin will fail to overwrite the destructor */
-	PyObject *v_capsule = PyCapsule_New(v, NULL, NULL);
-	PyObject *destructor = PyCFunction_New(py_loader_impl_finalizer_defs, v_capsule);
-
-	if (PyObject_SetAttrString(obj, "__del__", destructor) != 0)
-	{
-		loader_impl_py py_impl = loader_impl_get(impl);
-		py_loader_impl_error_print(py_impl);
-		PyErr_Clear();
-
-		log_write("metacall", LOG_LEVEL_ERROR, "Trying to attach a destructor to (probably) a built-in type, "
-											   "implement this type for the py_loader_impl_finalizer in order to solve this error");
-
-		if (destructor != NULL)
-		{
-			/* This will destroy the capsule too */
-			Py_DecRef(destructor);
-		}
-		else
-		{
-			Py_DecRef(v_capsule);
-		}
-
-		py_loader_thread_release();
-
-		return 1;
-	}
-
-	py_loader_thread_release();
-
-	return 0;
-}
 
 PyObject *py_loader_impl_capsule_new_null(void)
 {
@@ -292,21 +203,6 @@ PyObject *py_loader_impl_capsule_new_null(void)
 	* does not allow that, instead we are going to identify our NULL capsule with
 	* this configuration (setting the capsule to Py_None) */
 	return PyCapsule_New((void *)Py_NonePtr(), py_loader_capsule_null_id, NULL);
-}
-
-void py_loader_impl_value_invoke_state_finalize(value v, void *data)
-{
-	PyObject *capsule = (PyObject *)data;
-	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)PyCapsule_GetPointer(capsule, NULL);
-
-	(void)v;
-
-	if (loader_is_destroyed(invoke_state->impl) != 0 && capsule != NULL)
-	{
-		py_loader_thread_delayed_destroy(capsule);
-	}
-
-	free(invoke_state);
 }
 
 void py_loader_impl_value_ptr_finalize(value v, void *data)
@@ -925,7 +821,7 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	{
 		return TYPE_PTR;
 	}
-	else if (PyFunction_Check(obj) || PyCFunction_Check(obj))
+	else if (PyFunction_Check(obj) || PyCFunction_Check(obj) || py_loader_impl_func_check(obj))
 	{
 		return TYPE_FUNCTION;
 	}
@@ -1467,27 +1363,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-		loader_impl_py_function_type_invoke_state invoke_state = malloc(sizeof(struct loader_impl_py_function_type_invoke_state_type));
-
-		PyObject *invoke_state_capsule;
-
-		if (invoke_state == NULL)
-		{
-			return NULL;
-		}
-
-		invoke_state->impl = impl;
-		invoke_state->py_impl = loader_impl_get(impl);
-		invoke_state->callback = value_type_copy(v);
-
-		invoke_state_capsule = PyCapsule_New(invoke_state, NULL, NULL);
-
-		Py_IncRef(invoke_state_capsule);
-
-		/* Set up finalizer in order to free the invoke state */
-		value_finalizer(invoke_state->callback, &py_loader_impl_value_invoke_state_finalize, invoke_state_capsule);
-
-		return PyCFunction_New(py_loader_impl_function_type_invoke_defs, invoke_state_capsule);
+		return py_loader_impl_func_new(impl, loader_impl_get(impl), v);
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -1882,81 +1758,6 @@ function_interface function_py_singleton(void)
 	};
 
 	return &py_function_interface;
-}
-
-PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
-{
-	static void *null_args[1] = { NULL };
-
-	py_loader_thread_acquire();
-
-	loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(self, NULL);
-
-	if (invoke_state == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error when invoking a function, state cannot be recovered, avoiding the function call");
-		py_loader_thread_release();
-		return Py_ReturnNone();
-	}
-
-	Py_ssize_t callee_args_size = PyTuple_Size(args);
-	size_t args_size = callee_args_size < 0 ? 0 : (size_t)callee_args_size;
-	void **value_args = args_size == 0 ? null_args : malloc(sizeof(void *) * args_size);
-
-	if (value_args == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid allocation of arguments for callback");
-		py_loader_thread_release();
-		return Py_ReturnNone();
-	}
-
-	/* Generate metacall values from python values */
-	for (size_t args_count = 0; args_count < args_size; ++args_count)
-	{
-		PyObject *arg = PyTuple_GetItem(args, (Py_ssize_t)args_count);
-		type_id id = py_loader_impl_capi_to_value_type(invoke_state->impl, arg);
-		value_args[args_count] = py_loader_impl_capi_to_value(invoke_state->impl, arg, id);
-	}
-
-	py_loader_thread_release();
-
-	int thread_state_saved = py_loader_thread_is_main() && PyGILState_Check();
-
-	if (thread_state_saved)
-	{
-		py_loader_thread_release();
-	}
-
-	/* Execute the callback */
-	value ret = (value)function_call(value_to_function(invoke_state->callback), value_args, args_size);
-
-	/* Destroy argument values */
-	for (size_t args_count = 0; args_count < args_size; ++args_count)
-	{
-		value_type_destroy(value_args[args_count]);
-	}
-
-	if (value_args != null_args)
-	{
-		free(value_args);
-	}
-
-	if (thread_state_saved)
-	{
-		py_loader_thread_acquire();
-	}
-
-	/* Transform the return value into a python value */
-	if (ret != NULL)
-	{
-		py_loader_thread_acquire();
-		PyObject *py_ret = py_loader_impl_value_to_capi(invoke_state->impl, value_type_id(ret), ret);
-		py_loader_thread_release();
-		value_type_destroy(ret);
-		return py_ret;
-	}
-
-	return Py_ReturnNone();
 }
 
 int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, type_id id, const char *name)
@@ -2643,46 +2444,6 @@ error_set_item:
 	return 1;
 }
 
-static void PyCFunction_dealloc(PyObject *obj)
-{
-	const int gil_status = PyGILState_Check();
-
-	if (gil_status == 0)
-	{
-		py_loader_thread_acquire();
-	}
-
-	/* Check if we are passing our own hook to the callback */
-	if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
-	{
-		PyObject *error_type, *error_value, *error_traceback;
-
-		/* Save the current exception if any */
-		PyErr_Fetch(&error_type, &error_value, &error_traceback);
-
-		PyObject *invoke_state_capsule = PyCFunction_GET_SELF(obj);
-
-		loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(invoke_state_capsule, NULL);
-
-		/* Release the GIL and let the destroy be executed outside of Python (if it belongs to another language) */
-		py_loader_thread_release();
-		value_type_destroy(invoke_state->callback);
-		py_loader_thread_acquire();
-
-		Py_DecRef(invoke_state_capsule);
-
-		PyErr_Restore(error_type, error_value, error_traceback);
-	}
-
-	/* Call to the original meth_dealloc function */
-	py_loader_impl_pycfunction_dealloc(obj);
-
-	if (gil_status == 0)
-	{
-		py_loader_thread_release();
-	}
-}
-
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	const int host = loader_impl_get_option_host(impl);
@@ -2822,14 +2583,11 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_asyncio_module;
 	}
 
-	/* Hook the deallocation of PyCFunction */
-	py_loader_impl_pycfunction_dealloc = PyCFunctionTypePtr()->tp_dealloc;
-	PyCFunctionTypePtr()->tp_dealloc = PyCFunction_dealloc;
-
-	/* TODO: This does not work after 3.13, is it really needed for this hook? */
-#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 13
-	PyType_Modified(PyCFunctionTypePtr());
-#endif
+	/* Initialize custom function type */
+	if (py_loader_impl_func_type_init() < 0)
+	{
+		goto error_after_asyncio_module;
+	}
 
 	if (gil_release)
 	{
@@ -4453,12 +4211,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Destroy Python runtime itself (only when it is not the host) */
 	result = py_loader_impl_finalize(py_impl, host);
 
-	if (host == 0)
-	{
-		/* Unhook the deallocation of PyCFunction */
-		PyCFunctionTypePtr()->tp_dealloc = py_loader_impl_pycfunction_dealloc;
-	}
-	else
+	if (host == 1)
 	{
 		/* On host, release the GIL and let Python continue until it calls Py_Finalize by itself */
 		py_loader_thread_release();

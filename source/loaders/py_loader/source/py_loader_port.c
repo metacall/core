@@ -173,7 +173,7 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 
 			result = py_loader_impl_value_to_capi(impl, value_type_id(exports), exports);
 
-			PyObject *wrapper = py_loader_impl_finalizer_wrap_map(result, exports);
+			PyObject *wrapper = py_loader_impl_finalizer_wrap_dict(result, exports);
 
 			if (wrapper == NULL)
 			{
@@ -316,7 +316,7 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 
 			result = py_loader_impl_value_to_capi(impl, value_type_id(exports), exports);
 
-			PyObject *wrapper = py_loader_impl_finalizer_wrap_map(result, exports);
+			PyObject *wrapper = py_loader_impl_finalizer_wrap_dict(result, exports);
 
 			if (wrapper == NULL)
 			{

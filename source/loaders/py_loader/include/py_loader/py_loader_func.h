@@ -18,10 +18,12 @@
  *
  */
 
-#ifndef PY_LOADER_DICT_H
-#define PY_LOADER_DICT_H 1
+#ifndef PY_LOADER_FUNC_H
+#define PY_LOADER_FUNC_H 1
 
 #include <py_loader/py_loader_api.h>
+
+#include <py_loader/py_loader_impl.h>
 
 #include <Python.h>
 
@@ -29,14 +31,14 @@
 extern "C" {
 #endif
 
-PY_LOADER_NO_EXPORT int py_loader_impl_dict_type_init(void);
+PY_LOADER_NO_EXPORT int py_loader_impl_func_type_init(void);
 
-PY_LOADER_NO_EXPORT PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v);
+PY_LOADER_NO_EXPORT int py_loader_impl_func_check(PyObject *obj);
 
-PY_LOADER_NO_EXPORT void py_loader_impl_dict_debug(PyObject *py_dict);
+PY_LOADER_NO_EXPORT PyObject *py_loader_impl_func_new(loader_impl impl, loader_impl_py py_impl, value callback);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PY_LOADER_DICT_H */
+#endif /* PY_LOADER_FUNC_H */

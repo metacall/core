@@ -118,6 +118,7 @@ set(headers
 	${include_path}/py_loader_port.h
 	${include_path}/py_loader_threading.h
 	${include_path}/py_loader_dict.h
+	${include_path}/py_loader_func.h
 	${include_path}/py_loader_symbol_fallback.h
 )
 
@@ -127,6 +128,7 @@ set(sources
 	${source_path}/py_loader_port.c
 	${source_path}/py_loader_threading.cpp
 	${source_path}/py_loader_dict.c
+	${source_path}/py_loader_func.c
 	${source_path}/py_loader_symbol_fallback.c
 )
 
