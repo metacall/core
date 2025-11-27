@@ -168,6 +168,8 @@ void py_loader_impl_dict_debug(PyObject *py_dict)
 		return;
 	}
 
+	printf("Dictionary %p:\n", (void *)py_dict);
+
 	while (PyDict_Next(py_dict, &pos, &key, &value))
 	{
 		printf("Key: ");
@@ -175,7 +177,6 @@ void py_loader_impl_dict_debug(PyObject *py_dict)
 		printf("#%ld, Value: ", Py_REFCNT(key));
 		PyObject_Print(value, stdout, 0);
 		printf(" #%ld\n", Py_REFCNT(value));
-		printf("\n");
 		fflush(stdout);
 	}
 }
@@ -202,6 +203,8 @@ PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v)
 	union py_loader_impl_dict_cast dict_cast = { &py_loader_impl_dict_type };
 	PyObject *args, *wrapper;
 	struct py_loader_impl_dict_obj *wrapper_obj;
+	PyObject *key, *value;
+	Py_ssize_t pos = 0;
 
 	py_loader_thread_acquire();
 
@@ -224,6 +227,13 @@ PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v)
 
 	wrapper_obj->v = v;
 	wrapper_obj->parent = obj;
+
+	/* At this point the references are incremented due to the copy, so we need to decrement them */
+	while (PyDict_Next(obj, &pos, &key, &value))
+	{
+		Py_DecRef(key);
+		Py_DecRef(value);
+	}
 
 	return wrapper;
 }
