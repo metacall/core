@@ -164,7 +164,7 @@ void py_loader_impl_dict_debug(PyObject *py_dict)
 
 	if (!PyDict_Check(py_dict))
 	{
-		PyErr_SetString(PyExc_TypeError, "Provided object is not a dictionary.");
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Provided object is not a dictionary.");
 		return;
 	}
 
@@ -174,9 +174,9 @@ void py_loader_impl_dict_debug(PyObject *py_dict)
 	{
 		printf("Key: ");
 		PyObject_Print(key, stdout, 0);
-		printf("#%ld, Value: ", Py_REFCNT(key));
+		printf("#%" PY_FORMAT_SIZE_T "d, Value: ", Py_REFCNT(key));
 		PyObject_Print(value, stdout, 0);
-		printf(" #%ld\n", Py_REFCNT(value));
+		printf(" #%" PY_FORMAT_SIZE_T "d\n", Py_REFCNT(value));
 		fflush(stdout);
 	}
 }
