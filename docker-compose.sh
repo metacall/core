@@ -212,7 +212,7 @@ sub_platform() {
 	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
 	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
 		source .env
-		export METACALL_BASE_IMAGE="ghcr.io/loong64/${METACALL_BASE_IMAGE}"
+		export METACALL_BASE_IMAGE="ghcr.io/loongnix/${METACALL_BASE_IMAGE}"
 	fi
 
 	# Generate the docker compose file with all .env variables substituted (bake seems not to support this)
