@@ -209,10 +209,10 @@ sub_platform() {
 	# Initialize QEMU for Buildkit
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
-	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
+	# Debian in Docker Hub does not support LoongArch64 yet, let's use Loongnix repository instead
 	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
-		source .env
-		export METACALL_BASE_IMAGE="ghcr.io/loongnix/${METACALL_BASE_IMAGE}"
+		# Use loongnix/debian from Docker Hub (more accessible than ghcr.io)
+		export METACALL_BASE_IMAGE="loongnix/debian:trixie-slim"
 	fi
 
 	# Generate the docker compose file with all .env variables substituted (bake seems not to support this)
