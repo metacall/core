@@ -69,17 +69,17 @@ const platformInstallPaths = () => {
 		case 'win32':
 			return {
 				paths: [ path.join(process.env['LOCALAPPDATA'], 'MetaCall', 'metacall') ],
-				name: 'metacall.dll'
+				name: /^metacall(d)?\.dll$/
 			}
 		case 'darwin':
 			return {
 				paths: [ '/opt/homebrew/lib/', '/usr/local/lib/' ],
-				name: 'libmetacall.dylib'
+				name: /^libmetacall(d)?\.dylib$/
 			}
 		case 'linux':
 			return {
 				paths: [ '/usr/local/lib/', '/gnu/lib/' ],
-				name: 'libmetacall.so'
+				name: /^libmetacall(d)?\.so$/
 			}
 	}
 

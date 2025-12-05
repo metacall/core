@@ -148,15 +148,44 @@ PyObject *py_loader_impl_dict_sizeof(struct py_loader_impl_dict_obj *self, void 
 int py_loader_impl_dict_init(struct py_loader_impl_dict_obj *self, PyObject *args, PyObject *kwds)
 {
 	if (PyDictTypePtr()->tp_init((PyObject *)self, args, kwds) < 0)
+	{
 		return -1;
+	}
+
 	self->v = NULL;
+
 	return 0;
+}
+
+void py_loader_impl_dict_debug(PyObject *py_dict)
+{
+	PyObject *key, *value;
+	Py_ssize_t pos = 0;
+
+	if (!PyDict_Check(py_dict))
+	{
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Provided object is not a dictionary.");
+		return;
+	}
+
+	printf("Dictionary %p:\n", (void *)py_dict);
+
+	while (PyDict_Next(py_dict, &pos, &key, &value))
+	{
+		printf("Key: ");
+		PyObject_Print(key, stdout, 0);
+		printf("#%" PY_FORMAT_SIZE_T "d, Value: ", Py_REFCNT(key));
+		PyObject_Print(value, stdout, 0);
+		printf(" #%" PY_FORMAT_SIZE_T "d\n", Py_REFCNT(value));
+		fflush(stdout);
+	}
 }
 
 void py_loader_impl_dict_dealloc(struct py_loader_impl_dict_obj *self)
 {
 	metacall_value_destroy(self->v);
-	Py_DecRef(self->parent); /* TODO: Review if this is correct or this line is unnecessary */
+
+	Py_DecRef(self->parent);
 
 	PyDictTypePtr()->tp_dealloc((PyObject *)self);
 }
@@ -169,16 +198,21 @@ int py_loader_impl_dict_type_init(void)
 	return PyType_Ready(&py_loader_impl_dict_type);
 }
 
-PyObject *py_loader_impl_finalizer_wrap_map(PyObject *obj, void *v)
+PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v)
 {
+	union py_loader_impl_dict_cast dict_cast = { &py_loader_impl_dict_type };
+	PyObject *args, *wrapper;
+	struct py_loader_impl_dict_obj *wrapper_obj;
+	PyObject *key, *value;
+	Py_ssize_t pos = 0;
+
 	py_loader_thread_acquire();
 
-	PyObject *args = PyTuple_New(1);
-	union py_loader_impl_dict_cast dict_cast = { &py_loader_impl_dict_type };
-
+	/* Call to the constructor of base class Dict */
+	args = PyTuple_New(1);
 	PyTuple_SetItem(args, 0, obj);
 	Py_IncRef(obj);
-	PyObject *wrapper = PyObject_CallObject(dict_cast.object, args);
+	wrapper = PyObject_CallObject(dict_cast.object, args);
 	Py_DecRef(args);
 
 	py_loader_thread_release();
@@ -188,10 +222,18 @@ PyObject *py_loader_impl_finalizer_wrap_map(PyObject *obj, void *v)
 		return NULL;
 	}
 
-	struct py_loader_impl_dict_obj *wrapper_obj = (struct py_loader_impl_dict_obj *)wrapper;
+	/* Initialize the constructor of the child class DictWrapper */
+	wrapper_obj = (struct py_loader_impl_dict_obj *)wrapper;
 
 	wrapper_obj->v = v;
 	wrapper_obj->parent = obj;
+
+	/* At this point the references are incremented due to the copy, so we need to decrement them */
+	while (PyDict_Next(obj, &pos, &key, &value))
+	{
+		Py_DecRef(key);
+		Py_DecRef(value);
+	}
 
 	return wrapper;
 }

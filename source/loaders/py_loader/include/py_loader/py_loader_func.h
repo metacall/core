@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	A library for loading executable code at run-time into a process.
+ *	A plugin for loading python code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,36 +18,29 @@
  *
  */
 
-#ifndef LOADER_HOST_H
-#define LOADER_HOST_H 1
+#ifndef PY_LOADER_FUNC_H
+#define PY_LOADER_FUNC_H 1
 
-/* -- Headers -- */
+#include <py_loader/py_loader_api.h>
 
-#include <loader/loader_api.h>
+#include <py_loader/py_loader_impl.h>
 
-#include <loader/loader.h>
-#include <loader/loader_impl.h>
-
-#include <reflect/reflect_context.h>
-
-#include <portability/portability_assert.h>
-
-#include <plugin/plugin_impl.h>
+#include <Python.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Methods  -- */
+PY_LOADER_NO_EXPORT int py_loader_impl_func_type_init(void);
 
-LOADER_API plugin loader_host_initialize(void);
+PY_LOADER_NO_EXPORT int py_loader_impl_func_check(PyObject *obj);
 
-LOADER_API plugin loader_host_get(void);
+PY_LOADER_NO_EXPORT void *py_loader_impl_func_copy(PyObject *obj);
 
-LOADER_API int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, void **func, type_id return_type, size_t arg_size, type_id args_type_id[], void *data);
+PY_LOADER_NO_EXPORT PyObject *py_loader_impl_func_new(loader_impl impl, loader_impl_py py_impl, value callback);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LOADER_HOST_H */
+#endif /* PY_LOADER_FUNC_H */

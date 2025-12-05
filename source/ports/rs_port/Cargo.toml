@@ -7,7 +7,7 @@ license = "Apache-2.0"
 name = "metacall"
 readme = "README.md"
 repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
-version = "0.5.4"
+version = "0.5.5"
 
 [lib]
 crate-type = ["lib"]
@@ -19,7 +19,7 @@ path = "src/lib.rs"
 metacall-inline = { version = "0.2.0", path = "./inline" }
 
 [build-dependencies]
-metacall-sys = { version = "0.1.2", path = "./sys" }
+metacall-sys = { version = "0.1.3", path = "./sys" }
 
 [workspace]
 members = [

@@ -68,7 +68,7 @@ fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
             paths: vec![PathBuf::from(local_app_data)
                 .join("MetaCall")
                 .join("metacall")],
-            names: vec!["metacall.lib"],
+            names: vec!["metacall.lib", "metacalld.lib"],
         })
     } else if cfg!(target_os = "macos") {
         Ok(InstallPath {
@@ -76,12 +76,12 @@ fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
                 PathBuf::from("/opt/homebrew/lib/"),
                 PathBuf::from("/usr/local/lib/"),
             ],
-            names: vec!["libmetacall.dylib"],
+            names: vec!["libmetacall.dylib, libmetacalld.dylib"],
         })
     } else if cfg!(target_os = "linux") {
         Ok(InstallPath {
             paths: vec![PathBuf::from("/usr/local/lib/"), PathBuf::from("/gnu/lib/")],
-            names: vec!["libmetacall.so"],
+            names: vec!["libmetacall.so", "libmetacalld.so"],
         })
     } else {
         Err(format!("Platform {} not supported", env::consts::OS).into())

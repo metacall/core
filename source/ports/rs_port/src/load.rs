@@ -11,6 +11,7 @@ use std::{
     ptr::null_mut,
 };
 
+#[derive(Debug, Clone, Copy)]
 pub enum Tag {
     C,
     Cobol,

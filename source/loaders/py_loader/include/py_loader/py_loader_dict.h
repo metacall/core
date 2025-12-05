@@ -31,7 +31,9 @@ extern "C" {
 
 PY_LOADER_NO_EXPORT int py_loader_impl_dict_type_init(void);
 
-PY_LOADER_NO_EXPORT PyObject *py_loader_impl_finalizer_wrap_map(PyObject *obj, void *v);
+PY_LOADER_NO_EXPORT PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v);
+
+PY_LOADER_NO_EXPORT void py_loader_impl_dict_debug(PyObject *py_dict);
 
 #ifdef __cplusplus
 }

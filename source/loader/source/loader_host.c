@@ -156,10 +156,17 @@ plugin loader_host_get(void)
 	return loader_host_plugin;
 }
 
-int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[], void *data)
+int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, void **func, type_id return_type, size_t arg_size, type_id args_type_id[], void *data)
 {
+	if (name == NULL && func == NULL)
+	{
+		/* It must have a function pointer to set if the name is null otherwise it creates memory leak */
+		return 1;
+	}
+
 	void **invoke_ptr = (void *)&invoke;
 
+	/* Create function */
 	function f = function_create(name, arg_size, *invoke_ptr, &function_host_singleton);
 
 	if (f == NULL)
@@ -167,6 +174,7 @@ int loader_host_register(loader_impl host, context ctx, const char *name, loader
 		return 1;
 	}
 
+	/* Set signature */
 	signature s = function_signature(f);
 
 	size_t iterator;
@@ -184,6 +192,18 @@ int loader_host_register(loader_impl host, context ctx, const char *name, loader
 
 	signature_set_return(s, t);
 
+	/* Set closure */
+	function_bind(f, data);
+
+	/* Create the function value */
+	value v = value_create_function(f);
+
+	if (v == NULL)
+	{
+		return 1;
+	}
+
+	/* Register into context by name */
 	if (name != NULL)
 	{
 		if (ctx == NULL)
@@ -192,7 +212,6 @@ int loader_host_register(loader_impl host, context ctx, const char *name, loader
 		}
 
 		scope sp = context_scope(ctx);
-		value v = value_create_function(f);
 
 		if (scope_define(sp, name, v) != 0)
 		{
@@ -201,11 +220,9 @@ int loader_host_register(loader_impl host, context ctx, const char *name, loader
 		}
 	}
 
-	function_bind(f, data);
-
 	if (func != NULL)
 	{
-		*func = f;
+		*func = v;
 	}
 
 	return 0;

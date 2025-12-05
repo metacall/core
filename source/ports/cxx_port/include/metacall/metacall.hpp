@@ -756,11 +756,14 @@ inline void **null_safe_args(void *args[])
 } /* namespace detail */
 
 template <typename Ret, typename... Args>
-class function
+class function : public value_base
 {
 public:
-	explicit function(void *func) :
-		func(func) {}
+	explicit function(const char *name, void *func_value) :
+		value_base(func_value, value_base::noop_destructor), name(name), func(metacall_value_to_function(func_value)) {}
+
+	explicit function(void *func_value) :
+		value_base(func_value), name(nullptr), func(metacall_value_to_function(func_value)) {}
 
 	~function() {}
 
@@ -786,16 +789,21 @@ public:
 	}
 
 private:
+	const char *name;
 	void *func;
 };
 
 template <typename Ret, typename... Args>
-void register_function(const char *name, Ret (*func)(Args...), void **func_ptr = nullptr)
+function<Ret, Args...> register_function(const char *name, Ret (*func)(Args...))
 {
-	if (detail::register_function(name, func, func_ptr) != 0)
+	void *func_ptr = nullptr;
+
+	if (detail::register_function(name, func, &func_ptr) != 0)
 	{
 		throw std::runtime_error("Function '" + std::string(name) + "' failed to be registered.");
 	}
+
+	return function<Ret, Args...>(name, func_ptr);
 }
 
 template <typename Ret, typename... Args>

@@ -36,17 +36,17 @@ def platform_install_paths():
 	if sys.platform == 'win32':
 		return {
 			'paths': [ os.path.join(os.environ.get('LOCALAPPDATA', ''), 'MetaCall', 'metacall') ],
-			'name': r'metacall\.dll'
+			'name': r'^metacall(d)?\.dll$'
 		}
 	elif sys.platform == 'darwin':
 		return {
 			'paths': [ '/opt/homebrew/lib/', '/usr/local/lib/' ],
-			'name': r'libmetacall\.dylib'
+			'name': r'^libmetacall(d)?\.dylib$'
 		}
 	elif sys.platform == 'linux':
 		return {
 			'paths': [ '/usr/local/lib/', '/gnu/lib/' ],
-			'name': r'libmetacall\.so'
+			'name': r'^libmetacall(d)?\.so$'
 		}
 	else:
 		raise RuntimeError(f"Platform {sys.platform} not supported")

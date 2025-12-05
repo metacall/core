@@ -767,7 +767,9 @@ METACALL_API void *metacallfms(void *func, const char *buffer, size_t size, void
 *    Pointer to function invoke interface (argc, argv, data)
 *
 *  @param[out] func
-*    Will set the pointer to the function if the parameter is not null
+*    Will set the pointer to the function value if the parameter is not null
+*    (required for anonymous functions with no name), if the function is anonymous
+*    it must be destroyed, otherwise it's destroyed at the end by metacall
 *
 *  @param[in] return_type
 *    Type of return value
@@ -794,7 +796,9 @@ METACALL_API int metacall_register(const char *name, void *(*invoke)(size_t, voi
  *    Pointer to function invoke interface (argc, argv, data)
  *
  *  @param[out] func
- *    Will set the pointer to the function if the parameter is not null
+ *    Will set the pointer to the function value if the parameter is not null
+ *    (required for anonymous functions with no name), if the function is anonymous
+ *    it must be destroyed, otherwise it's destroyed at the end by metacall
  *
  *  @param[in] return_type
  *    Type of return value
@@ -821,7 +825,9 @@ METACALL_API int metacall_registerv(const char *name, void *(*invoke)(size_t, vo
  *    Pointer to function invoke interface (argc, argv, data)
  *
  *  @param[out] func
- *    Will set the pointer to the function if the parameter is not null
+ *    Will set the pointer to the function value if the parameter is not null
+ *    (required for anonymous functions with no name), if the function is anonymous
+ *    it must be destroyed, otherwise it's destroyed at the end by metacall
  *
  *  @param[in] return_type
  *    Type of return value

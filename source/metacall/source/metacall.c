@@ -1600,17 +1600,17 @@ int metacall_register(const char *name, void *(*invoke)(size_t, void *[], void *
 
 	va_end(va);
 
-	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types, NULL);
+	return loader_register(name, (loader_register_invoke)invoke, func, (type_id)return_type, size, (type_id *)types, NULL);
 }
 
 int metacall_registerv(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[])
 {
-	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types, NULL);
+	return loader_register(name, (loader_register_invoke)invoke, func, (type_id)return_type, size, (type_id *)types, NULL);
 }
 
 int metacall_registerv_closure(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[], void *data)
 {
-	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types, data);
+	return loader_register(name, (loader_register_invoke)invoke, func, (type_id)return_type, size, (type_id *)types, data);
 }
 
 void *metacall_loader(const char *tag)
