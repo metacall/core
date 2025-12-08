@@ -46,6 +46,8 @@ services:
   dev:
     image: metacall/core:dev
     container_name: metacall_core_dev
+    depends_on:
+      - deps
     build:
       network: "host"
       context: .
@@ -69,6 +71,8 @@ services:
   runtime:
     image: metacall/core:runtime
     container_name: metacall_core_runtime
+    depends_on:
+      - dev
     build:
       network: "host"
       context: .
@@ -92,6 +96,8 @@ services:
   cli:
     image: metacall/core:cli
     container_name: metacall_core_cli
+    depends_on:
+      - runtime
     build:
       network: "host"
       context: .
