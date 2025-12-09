@@ -602,7 +602,7 @@ static void *py_loader_port_await_resolve(void *result, void *data)
 		PyObject *args = PyTuple_Pack(3, asyncio_loop, ctx->future, py_result);
 		PyObject *call_result = PyObject_Call(future_resolve_func, args, NULL);
 
-		Py_XDecRef(call_result);
+		Py_DecRef(call_result);
 		Py_DecRef(args);
 		Py_DecRef(future_resolve_func);
 	}
@@ -660,7 +660,7 @@ static void *py_loader_port_await_reject(void *result, void *data)
 		PyObject *args = PyTuple_Pack(3, asyncio_loop, ctx->future, py_exception);
 		PyObject *call_result = PyObject_Call(future_reject_func, args, NULL);
 
-		Py_XDecRef(call_result);
+		Py_DecRef(call_result);
 		Py_DecRef(args);
 		Py_DecRef(future_reject_func);
 	}
@@ -761,7 +761,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 	if (future_create_func == NULL || !PyCallable_Check(future_create_func))
 	{
 		PyErr_SetString(PyExc_RuntimeErrorPtr(), "Failed to get future_create function");
-		Py_XDecRef(future_create_func);
+		Py_DecRef(future_create_func);
 		goto cleanup_args;
 	}
 
