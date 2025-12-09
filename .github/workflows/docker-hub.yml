@@ -100,19 +100,16 @@ jobs:
           DOCKER_BUILDKIT: 1
         run: |
           set -exuo pipefail
+          # Verify the image was built for the correct platform
           docker image inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:cli --format='{{.Os}}/{{.Architecture}}'
-          cat <<EOF > Dockerfile.test
-          FROM ${DOCKER_USERNAME}/${IMAGE_NAME}:cli
-          RUN apt-get update && apt-get install -y file
-          RUN file /usr/local/bin/metacallcli && ldd /usr/local/bin/metacallcli
-          RUN echo "console.log('0123456789abcdef')" > script.js
-          RUN metacallcli script.js | tee output.txt
-          RUN grep 0123456789abcdef output.txt
-          EOF
 
-          docker buildx build --progress=plain --platform ${{ matrix.platform }} \
-            --build-context "${DOCKER_USERNAME}/${IMAGE_NAME}:cli=docker-image://${DOCKER_USERNAME}/${IMAGE_NAME}:cli" \
-            -f Dockerfile.test -t test-image .
+          # Run tests directly in the container (QEMU is already set up from bake)
+          # This avoids the buildx cross-platform base image resolution issues
+          docker run --rm --platform ${{ matrix.platform }} ${DOCKER_USERNAME}/${IMAGE_NAME}:cli sh -c '
+            echo "console.log('"'"'0123456789abcdef'"'"')" > script.js
+            metacallcli script.js | tee output.txt
+            grep 0123456789abcdef output.txt
+          '
 
       - name: Tag & Push Platform Images
         # Only run when master or when tagging a version
