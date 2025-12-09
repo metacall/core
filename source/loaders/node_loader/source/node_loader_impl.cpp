@@ -59,9 +59,11 @@ extern char **environ;
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
+#include <reflect/reflect_class.h>
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_future.h>
+#include <reflect/reflect_object.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
 
@@ -192,6 +194,23 @@ typedef struct loader_impl_node_future_type
 	napi_ref promise_ref;
 
 } * loader_impl_node_future;
+
+typedef struct loader_impl_node_class_type
+{
+	loader_impl impl;
+	loader_impl_node node_impl;
+	napi_ref class_ref;
+
+} * loader_impl_node_class;
+
+typedef struct loader_impl_node_object_type
+{
+	loader_impl impl;
+	loader_impl_node node_impl;
+	napi_ref object_ref;
+	value class_value; /* Value wrapping the class this object belongs to */
+
+} * loader_impl_node_object;
 
 template <typename T>
 struct loader_impl_async_safe_type
@@ -856,6 +875,40 @@ static future_return future_node_interface_await(future f, future_impl impl, fut
 static void future_node_interface_destroy(future f, future_impl impl);
 
 static future_interface future_node_singleton(void);
+
+/* Class */
+static int node_class_interface_create(klass cls, class_impl impl);
+
+static object node_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc);
+
+static value node_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor);
+
+static int node_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v);
+
+static value node_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc);
+
+static value node_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t argc, class_resolve_callback resolve, class_reject_callback reject, void *ctx);
+
+static void node_class_interface_destroy(klass cls, class_impl impl);
+
+static class_interface node_class_interface_singleton(void);
+
+/* Object */
+static int node_object_interface_create(object obj, object_impl impl);
+
+static value node_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor);
+
+static int node_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v);
+
+static value node_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc);
+
+static value node_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t argc, object_resolve_callback resolve, object_reject_callback reject, void *ctx);
+
+static int node_object_interface_destructor(object obj, object_impl impl);
+
+static void node_object_interface_destroy(object obj, object_impl impl);
+
+static object_interface node_object_interface_singleton(void);
 
 /* JavaScript Thread Safe */
 static void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe_type *initialize_safe);
@@ -1694,19 +1747,35 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 	else if (id == TYPE_CLASS)
 	{
-		/* TODO */
-		/* napi_throw_error(env, nullptr, "NodeJS Loader class is not implemented"); */
-
-		/*
 		klass cls = value_to_class(arg_value);
+		loader_impl_node_class node_class = static_cast<loader_impl_node_class>(class_impl_get(cls));
 
-		napi_define_class(env, cls->name, NAPI_AUTO_LENGTH, )
-		*/
+		if (node_class != nullptr && node_class->class_ref != nullptr)
+		{
+			status = napi_get_reference_value(env, node_class->class_ref, &v);
+			node_loader_impl_exception(env, status);
+		}
+		else
+		{
+			status = napi_get_undefined(env, &v);
+			node_loader_impl_exception(env, status);
+		}
 	}
 	else if (id == TYPE_OBJECT)
 	{
-		/* TODO */
-		napi_throw_error(env, nullptr, "NodeJS Loader object is not implemented");
+		object obj = value_to_object(arg_value);
+		loader_impl_node_object node_object = static_cast<loader_impl_node_object>(object_impl_get(obj));
+
+		if (node_object != nullptr && node_object->object_ref != nullptr)
+		{
+			status = napi_get_reference_value(env, node_object->object_ref, &v);
+			node_loader_impl_exception(env, status);
+		}
+		else
+		{
+			status = napi_get_undefined(env, &v);
+			node_loader_impl_exception(env, status);
+		}
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -1999,6 +2068,650 @@ future_interface future_node_singleton()
 	};
 
 	return &node_future_interface;
+}
+
+/* Class Interface Implementation */
+int node_class_interface_create(klass cls, class_impl impl)
+{
+	(void)cls;
+
+	loader_impl_node_class node_class = static_cast<loader_impl_node_class>(impl);
+
+	node_class->class_ref = nullptr;
+	node_class->impl = nullptr;
+	node_class->node_impl = nullptr;
+
+	return 0;
+}
+
+object node_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
+{
+	(void)ctor;
+
+	loader_impl_node_class node_class = static_cast<loader_impl_node_class>(impl);
+	loader_impl_node node_impl = node_class->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return nullptr;
+	}
+
+	/* Create the object implementation struct */
+	loader_impl_node_object node_object = new loader_impl_node_object_type();
+
+	if (node_object == nullptr)
+	{
+		return nullptr;
+	}
+
+	/* Create the metacall object */
+	object obj = object_create(name, ACCESSOR_TYPE_STATIC, node_object, &node_object_interface_singleton, cls);
+
+	if (obj == nullptr)
+	{
+		delete node_object;
+		return nullptr;
+	}
+
+	node_object->impl = node_class->impl;
+	node_object->node_impl = node_impl;
+	node_object->class_value = nullptr;
+	node_object->object_ref = nullptr;
+
+	/* Get the class constructor and call it with 'new' */
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the class from reference */
+	napi_value class_value;
+	status = napi_get_reference_value(env, node_class->class_ref, &class_value);
+	node_loader_impl_exception(env, status);
+
+	/* Convert arguments to napi values */
+	napi_value *argv = nullptr;
+	if (argc > 0)
+	{
+		argv = new napi_value[argc];
+		for (size_t i = 0; i < argc; ++i)
+		{
+			argv[i] = node_loader_impl_value_to_napi(node_impl, env, args[i]);
+		}
+	}
+
+	/* Call the constructor with 'new' */
+	napi_value instance;
+	status = napi_new_instance(env, class_value, argc, argv, &instance);
+
+	/* Clean up argument array */
+	if (argv != nullptr)
+	{
+		delete[] argv;
+	}
+
+	if (status != napi_ok)
+	{
+		node_loader_impl_exception(env, status);
+		napi_close_handle_scope(env, handle_scope);
+		object_destroy(obj);
+		return nullptr;
+	}
+
+	/* Create reference to the instance */
+	status = napi_create_reference(env, instance, 1, &node_object->object_ref);
+	node_loader_impl_exception(env, status);
+
+	napi_close_handle_scope(env, handle_scope);
+
+	return obj;
+}
+
+value node_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
+{
+	(void)cls;
+
+	loader_impl_node_class node_class = static_cast<loader_impl_node_class>(impl);
+	loader_impl_node node_impl = node_class->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return nullptr;
+	}
+
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the class from reference */
+	napi_value class_value;
+	status = napi_get_reference_value(env, node_class->class_ref, &class_value);
+	node_loader_impl_exception(env, status);
+
+	/* Get the attribute name */
+	const char *attr_name = attribute_name(accessor->data.attr);
+
+	/* Get the property */
+	napi_value key;
+	status = napi_create_string_utf8(env, attr_name, NAPI_AUTO_LENGTH, &key);
+	node_loader_impl_exception(env, status);
+
+	napi_value result;
+	status = napi_get_property(env, class_value, key, &result);
+	node_loader_impl_exception(env, status);
+
+	/* Convert to metacall value */
+	value v = node_loader_impl_napi_to_value(node_impl, env, class_value, result);
+
+	napi_close_handle_scope(env, handle_scope);
+
+	return v;
+}
+
+int node_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
+{
+	(void)cls;
+
+	loader_impl_node_class node_class = static_cast<loader_impl_node_class>(impl);
+	loader_impl_node node_impl = node_class->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return 1;
+	}
+
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the class from reference */
+	napi_value class_value;
+	status = napi_get_reference_value(env, node_class->class_ref, &class_value);
+	node_loader_impl_exception(env, status);
+
+	/* Get the attribute name */
+	const char *attr_name = attribute_name(accessor->data.attr);
+
+	/* Create key */
+	napi_value key;
+	status = napi_create_string_utf8(env, attr_name, NAPI_AUTO_LENGTH, &key);
+	node_loader_impl_exception(env, status);
+
+	/* Convert value to napi */
+	napi_value napi_val = node_loader_impl_value_to_napi(node_impl, env, v);
+
+	/* Set the property */
+	status = napi_set_property(env, class_value, key, napi_val);
+	node_loader_impl_exception(env, status);
+
+	napi_close_handle_scope(env, handle_scope);
+
+	return 0;
+}
+
+value node_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
+{
+	(void)cls;
+
+	loader_impl_node_class node_class = static_cast<loader_impl_node_class>(impl);
+	loader_impl_node node_impl = node_class->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return nullptr;
+	}
+
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the class from reference */
+	napi_value class_value;
+	status = napi_get_reference_value(env, node_class->class_ref, &class_value);
+	node_loader_impl_exception(env, status);
+
+	/* Get the method name */
+	const char *method_name = method_name_get(m);
+
+	/* Get the static method from the class */
+	napi_value method_key;
+	status = napi_create_string_utf8(env, method_name, NAPI_AUTO_LENGTH, &method_key);
+	node_loader_impl_exception(env, status);
+
+	napi_value method_value;
+	status = napi_get_property(env, class_value, method_key, &method_value);
+	node_loader_impl_exception(env, status);
+
+	/* Convert arguments */
+	napi_value *argv = nullptr;
+	if (argc > 0)
+	{
+		argv = new napi_value[argc];
+		for (size_t i = 0; i < argc; ++i)
+		{
+			argv[i] = node_loader_impl_value_to_napi(node_impl, env, args[i]);
+		}
+	}
+
+	/* Call the static method */
+	napi_value result;
+	status = napi_call_function(env, class_value, method_value, argc, argv, &result);
+
+	/* Clean up */
+	if (argv != nullptr)
+	{
+		delete[] argv;
+	}
+
+	if (status != napi_ok)
+	{
+		node_loader_impl_exception(env, status);
+		napi_close_handle_scope(env, handle_scope);
+		return nullptr;
+	}
+
+	/* Convert result */
+	value ret = node_loader_impl_napi_to_value(node_impl, env, class_value, result);
+
+	napi_close_handle_scope(env, handle_scope);
+
+	return ret;
+}
+
+value node_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t argc, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+{
+	/* TODO: Implement async static method invocation */
+	(void)cls;
+	(void)impl;
+	(void)m;
+	(void)args;
+	(void)argc;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return nullptr;
+}
+
+void node_class_interface_destroy(klass cls, class_impl impl)
+{
+	(void)cls;
+
+	loader_impl_node_class node_class = static_cast<loader_impl_node_class>(impl);
+
+	if (node_class == nullptr)
+	{
+		return;
+	}
+
+	if (node_class->node_impl != nullptr && node_class->class_ref != nullptr)
+	{
+		napi_env env = node_class->node_impl->env;
+
+		/* Delete the reference */
+		napi_status status = napi_delete_reference(env, node_class->class_ref);
+		node_loader_impl_exception(env, status);
+	}
+
+	delete node_class;
+}
+
+class_interface node_class_interface_singleton(void)
+{
+	static struct class_interface_type node_class_interface = {
+		&node_class_interface_create,
+		&node_class_interface_constructor,
+		&node_class_interface_static_get,
+		&node_class_interface_static_set,
+		&node_class_interface_static_invoke,
+		&node_class_interface_static_await,
+		&node_class_interface_destroy
+	};
+
+	return &node_class_interface;
+}
+
+/* Object Interface Implementation */
+int node_object_interface_create(object obj, object_impl impl)
+{
+	(void)obj;
+
+	loader_impl_node_object node_object = static_cast<loader_impl_node_object>(impl);
+
+	node_object->object_ref = nullptr;
+	node_object->impl = nullptr;
+	node_object->node_impl = nullptr;
+	node_object->class_value = nullptr;
+
+	return 0;
+}
+
+value node_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
+{
+	(void)obj;
+
+	loader_impl_node_object node_object = static_cast<loader_impl_node_object>(impl);
+	loader_impl_node node_impl = node_object->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return nullptr;
+	}
+
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the object from reference */
+	napi_value object_value;
+	status = napi_get_reference_value(env, node_object->object_ref, &object_value);
+	node_loader_impl_exception(env, status);
+
+	/* Get the attribute name */
+	const char *attr_name = attribute_name(accessor->data.attr);
+
+	/* Get the property */
+	napi_value key;
+	status = napi_create_string_utf8(env, attr_name, NAPI_AUTO_LENGTH, &key);
+	node_loader_impl_exception(env, status);
+
+	napi_value result;
+	status = napi_get_property(env, object_value, key, &result);
+	node_loader_impl_exception(env, status);
+
+	/* Convert to metacall value */
+	value v = node_loader_impl_napi_to_value(node_impl, env, object_value, result);
+
+	napi_close_handle_scope(env, handle_scope);
+
+	return v;
+}
+
+int node_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
+{
+	(void)obj;
+
+	loader_impl_node_object node_object = static_cast<loader_impl_node_object>(impl);
+	loader_impl_node node_impl = node_object->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return 1;
+	}
+
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the object from reference */
+	napi_value object_value;
+	status = napi_get_reference_value(env, node_object->object_ref, &object_value);
+	node_loader_impl_exception(env, status);
+
+	/* Get the attribute name */
+	const char *attr_name = attribute_name(accessor->data.attr);
+
+	/* Create key */
+	napi_value key;
+	status = napi_create_string_utf8(env, attr_name, NAPI_AUTO_LENGTH, &key);
+	node_loader_impl_exception(env, status);
+
+	/* Convert value to napi */
+	napi_value napi_val = node_loader_impl_value_to_napi(node_impl, env, v);
+
+	/* Set the property */
+	status = napi_set_property(env, object_value, key, napi_val);
+	node_loader_impl_exception(env, status);
+
+	napi_close_handle_scope(env, handle_scope);
+
+	return 0;
+}
+
+value node_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
+{
+	(void)obj;
+
+	loader_impl_node_object node_object = static_cast<loader_impl_node_object>(impl);
+	loader_impl_node node_impl = node_object->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return nullptr;
+	}
+
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the object from reference */
+	napi_value object_value;
+	status = napi_get_reference_value(env, node_object->object_ref, &object_value);
+	node_loader_impl_exception(env, status);
+
+	/* Get the method name */
+	const char *method_name = method_name_get(m);
+
+	/* Get the method from the object */
+	napi_value method_key;
+	status = napi_create_string_utf8(env, method_name, NAPI_AUTO_LENGTH, &method_key);
+	node_loader_impl_exception(env, status);
+
+	napi_value method_value;
+	status = napi_get_property(env, object_value, method_key, &method_value);
+	node_loader_impl_exception(env, status);
+
+	/* Convert arguments */
+	napi_value *argv = nullptr;
+	if (argc > 0)
+	{
+		argv = new napi_value[argc];
+		for (size_t i = 0; i < argc; ++i)
+		{
+			argv[i] = node_loader_impl_value_to_napi(node_impl, env, args[i]);
+		}
+	}
+
+	/* Call the method with 'this' as the object */
+	napi_value result;
+	status = napi_call_function(env, object_value, method_value, argc, argv, &result);
+
+	/* Clean up */
+	if (argv != nullptr)
+	{
+		delete[] argv;
+	}
+
+	if (status != napi_ok)
+	{
+		node_loader_impl_exception(env, status);
+		napi_close_handle_scope(env, handle_scope);
+		return nullptr;
+	}
+
+	/* Convert result */
+	value ret = node_loader_impl_napi_to_value(node_impl, env, object_value, result);
+
+	napi_close_handle_scope(env, handle_scope);
+
+	return ret;
+}
+
+value node_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t argc, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+{
+	(void)obj;
+
+	loader_impl_node_object node_object = static_cast<loader_impl_node_object>(impl);
+	loader_impl_node node_impl = node_object->node_impl;
+
+	if (node_impl == nullptr)
+	{
+		return nullptr;
+	}
+
+	napi_env env = node_impl->env;
+	napi_handle_scope handle_scope;
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+	node_loader_impl_exception(env, status);
+
+	/* Get the object from reference */
+	napi_value object_value;
+	status = napi_get_reference_value(env, node_object->object_ref, &object_value);
+	node_loader_impl_exception(env, status);
+
+	/* Get the method name */
+	const char *method_name = method_name_get(m);
+
+	/* Get the method from the object */
+	napi_value method_key;
+	status = napi_create_string_utf8(env, method_name, NAPI_AUTO_LENGTH, &method_key);
+	node_loader_impl_exception(env, status);
+
+	napi_value method_value;
+	status = napi_get_property(env, object_value, method_key, &method_value);
+	node_loader_impl_exception(env, status);
+
+	/* Convert arguments */
+	napi_value *argv = nullptr;
+	if (argc > 0)
+	{
+		argv = new napi_value[argc];
+		for (size_t i = 0; i < argc; ++i)
+		{
+			argv[i] = node_loader_impl_value_to_napi(node_impl, env, args[i]);
+		}
+	}
+
+	/* Call the method with 'this' as the object - this should return a promise */
+	napi_value promise_result;
+	status = napi_call_function(env, object_value, method_value, argc, argv, &promise_result);
+
+	/* Clean up */
+	if (argv != nullptr)
+	{
+		delete[] argv;
+	}
+
+	if (status != napi_ok)
+	{
+		node_loader_impl_exception(env, status);
+		napi_close_handle_scope(env, handle_scope);
+		return nullptr;
+	}
+
+	/* Check if the result is a promise */
+	bool is_promise = false;
+	status = napi_is_promise(env, promise_result, &is_promise);
+	node_loader_impl_exception(env, status);
+
+	if (is_promise)
+	{
+		/* Create a future from the promise and use future_await */
+		loader_impl_node_future node_future = new loader_impl_node_future_type();
+
+		if (node_future == nullptr)
+		{
+			napi_close_handle_scope(env, handle_scope);
+			return nullptr;
+		}
+
+		future f = future_create(node_future, &future_node_singleton);
+
+		if (f == NULL)
+		{
+			delete node_future;
+			napi_close_handle_scope(env, handle_scope);
+			return nullptr;
+		}
+
+		/* Create reference to promise */
+		node_future->node_impl = node_impl;
+		node_future->impl = node_impl->impl;
+
+		status = napi_create_reference(env, promise_result, 1, &node_future->promise_ref);
+		node_loader_impl_exception(env, status);
+
+		napi_close_handle_scope(env, handle_scope);
+
+		/* Use future_await to wait for the promise */
+		value ret = future_await(f, (future_resolve_callback)resolve, (future_reject_callback)reject, ctx);
+
+		/* The future will be destroyed by the caller or when done */
+		return ret;
+	}
+	else
+	{
+		/* Not a promise, just convert the result directly */
+		value ret = node_loader_impl_napi_to_value(node_impl, env, object_value, promise_result);
+		napi_close_handle_scope(env, handle_scope);
+
+		/* Call resolve with the value */
+		if (resolve != nullptr)
+		{
+			resolve(ret, ctx);
+		}
+
+		return ret;
+	}
+}
+
+int node_object_interface_destructor(object obj, object_impl impl)
+{
+	/* JavaScript objects are garbage collected, no explicit destructor needed */
+	(void)obj;
+	(void)impl;
+
+	return 0;
+}
+
+void node_object_interface_destroy(object obj, object_impl impl)
+{
+	(void)obj;
+
+	loader_impl_node_object node_object = static_cast<loader_impl_node_object>(impl);
+
+	if (node_object == nullptr)
+	{
+		return;
+	}
+
+	if (node_object->node_impl != nullptr && node_object->object_ref != nullptr)
+	{
+		napi_env env = node_object->node_impl->env;
+
+		/* Delete the reference */
+		napi_status status = napi_delete_reference(env, node_object->object_ref);
+		node_loader_impl_exception(env, status);
+	}
+
+	/* Destroy class value if we own it */
+	if (node_object->class_value != nullptr)
+	{
+		value_type_destroy(node_object->class_value);
+	}
+
+	delete node_object;
+}
+
+object_interface node_object_interface_singleton(void)
+{
+	static struct object_interface_type node_object_interface = {
+		&node_object_interface_create,
+		&node_object_interface_get,
+		&node_object_interface_set,
+		&node_object_interface_method_invoke,
+		&node_object_interface_method_await,
+		&node_object_interface_destructor,
+		&node_object_interface_destroy
+	};
+
+	return &node_object_interface;
 }
 
 void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe_type *initialize_safe)
