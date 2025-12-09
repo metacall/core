@@ -215,18 +215,11 @@ PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v)
 	wrapper = PyObject_CallObject(dict_cast.object, args);
 	Py_DecRef(args);
 
-	py_loader_thread_release();
-
 	if (wrapper == NULL)
 	{
+		py_loader_thread_release();
 		return NULL;
 	}
-
-	/* Initialize the constructor of the child class DictWrapper */
-	wrapper_obj = (struct py_loader_impl_dict_obj *)wrapper;
-
-	wrapper_obj->v = v;
-	wrapper_obj->parent = obj;
 
 	/* At this point the references are incremented due to the copy, so we need to decrement them */
 	while (PyDict_Next(obj, &pos, &key, &value))
@@ -234,6 +227,14 @@ PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v)
 		Py_DecRef(key);
 		Py_DecRef(value);
 	}
+
+	py_loader_thread_release();
+
+	/* Initialize the constructor of the child class DictWrapper */
+	wrapper_obj = (struct py_loader_impl_dict_obj *)wrapper;
+
+	wrapper_obj->v = v;
+	wrapper_obj->parent = obj;
 
 	return wrapper;
 }
