@@ -17,8 +17,6 @@ path = "src/lib.rs"
 
 [dependencies]
 metacall-inline = { version = "0.2.0", path = "./inline" }
-
-[build-dependencies]
 metacall-sys = { version = "0.1.2", path = "./sys" }
 
 [workspace]
