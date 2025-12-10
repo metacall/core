@@ -44,10 +44,16 @@ jobs:
 
       - name: Build the Rust Port
         working-directory: source/ports/rs_port
+        env:
+          RUST_BACKTRACE: 1
+          RUSTFLAGS: "-g"
         run: cargo build --verbose
 
       - name: Test the Rust Port
         working-directory: source/ports/rs_port
+        env:
+          RUST_BACKTRACE: 1
+          RUSTFLAGS: "-g"
         run: cargo test --verbose
 
   release:
