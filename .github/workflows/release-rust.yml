@@ -15,8 +15,6 @@ concurrency:
 
 env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-  RUST_BACKTRACE: "full"
-  RUSTFLAGS: "-Zsanitize=address"
 
 jobs:
   test:
@@ -41,19 +39,18 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
 
       - name: Build the Rust Port
         working-directory: source/ports/rs_port
-        run: |
-          rustup default nightly
-          cargo build --verbose
+        run: cargo build --verbose
 
       - name: Test the Rust Port
         working-directory: source/ports/rs_port
-        run: cargo +nightly test --verbose
-        # run: cargo test --verbose
+        env:
+          RUST_BACKTRACE: full
+        run: cargo test --verbose
 
   release:
     name: Release Rust Port
