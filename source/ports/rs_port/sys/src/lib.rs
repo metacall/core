@@ -53,6 +53,13 @@ fn find_files_recursively<P: AsRef<Path>>(
 
                     // Simple filename comparison instead of regex
                     if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
+
+                        println!(
+                            "cargo:warning={} == {}",
+                            file_name.display(),
+                            filename.display(),
+                        );
+
                         if file_name == filename {
                             matches.push(path);
                         }
