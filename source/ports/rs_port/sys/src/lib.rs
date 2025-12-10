@@ -25,7 +25,7 @@ struct LibraryPath {
     search: PathBuf,
 }
 
-/// Find files recursively in a directory matching a pattern
+/// Find files recursively in a directory matching filename
 fn find_files_recursively<P: AsRef<Path>>(
     root_dir: P,
     filename: &str,
@@ -51,13 +51,13 @@ fn find_files_recursively<P: AsRef<Path>>(
                         path.display(),
                     );
 
-                    // Simple filename comparison instead of regex
+                    // Simple filename comparison
                     if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
 
                         println!(
                             "cargo:warning={} == {}",
-                            file_name.display(),
-                            filename.display(),
+                            file_name,
+                            filename,
                         );
 
                         if file_name == filename {
