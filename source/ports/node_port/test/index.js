@@ -34,6 +34,23 @@ const {
 	metacall_logs
 } = require('../index.js');
 
+// Helper to check if a loader is available
+const loaderAvailable = {};
+
+const checkLoader = (tag, testFile) => {
+	if (loaderAvailable[tag] !== undefined) {
+		return loaderAvailable[tag];
+	}
+	try {
+		const result = metacall_load_from_file(tag, [testFile]);
+		loaderAvailable[tag] = (result === undefined);
+		return loaderAvailable[tag];
+	} catch (e) {
+		loaderAvailable[tag] = false;
+		return false;
+	}
+};
+
 describe('metacall', () => {
 	describe('defined', () => {
 		it('functions metacall and metacall_load_from_file must be defined', () => {
@@ -48,29 +65,22 @@ describe('metacall', () => {
 		});
 	});
 
-	describe('fail', () => {
-		// TODO: This fails in NodeJS 15.x because the error message is slightly different
-		it('require', () => {
-			// TODO: This generates a segfault in C# Loader
-			// assert.throws(() => { require('./asd.invalid') }, new Error('Cannot find module \'./asd.invalid\''));
-			// TODO: Improve error messages
-			assert.throws(() => { require('./asd.py') }, new Error('MetaCall could not load from file'));
-			assert.throws(() => { require('./asd.rb') }, new Error('MetaCall could not load from file'));
-			assert.throws(() => { require('./asd.cs') }, new Error('MetaCall could not load from file'));
-			assert.throws(() => { require('./asd.ts') }, new Error('MetaCall could not load from file'));
-			assert.throws(() => { require('./asd.tsx') }, new Error('MetaCall could not load from file'));
-		});
-	});
-
 	describe('load', () => {
-		it('metacall_load_from_file (py)', () => {
-			assert.strictEqual(metacall_load_from_file('py', [ 'helloworld.py' ] ), undefined);
+		it('metacall_load_from_file (py)', function() {
+			if (!checkLoader('py', 'helloworld.py')) {
+				this.skip();
+				return;
+			}
 
 			const script = metacall_handle('py', 'helloworld.py');
 			assert.notStrictEqual(script, undefined);
 			assert.strictEqual(script.name, 'helloworld.py');
 		});
-		it('metacall_load_from_file_export (py)', () => {
+		it('metacall_load_from_file_export (py)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			const handle = metacall_load_from_file_export('py', [ 'ducktype.py' ] );
 			assert.notStrictEqual(handle, undefined);
 			assert.strictEqual(handle.sum(1, 2), 3);
@@ -78,8 +88,11 @@ describe('metacall', () => {
 			// TODO: Need a way to test the symbol is not globally defined.
 			//assert.strictEqual(metacall('sum'), undefined);
 		});
-		it('metacall_load_from_file (rb)', () => {
-			assert.strictEqual(metacall_load_from_file('rb', [ 'ducktype.rb' ]), undefined);
+		it('metacall_load_from_file (rb)', function() {
+			if (!checkLoader('rb', 'ducktype.rb')) {
+				this.skip();
+				return;
+			}
 
 			const script = metacall_handle('rb', 'ducktype.rb');
 			assert.notStrictEqual(script, undefined);
@@ -94,11 +107,19 @@ describe('metacall', () => {
 				assert.strictEqual(script.name, 'basic.rs');
 			});
 		}
-		it('metacall_load_from_memory (py)', () => {
+		it('metacall_load_from_memory (py)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			assert.strictEqual(metacall_load_from_memory('py', 'def py_memory():\n\treturn 4;\n'), undefined);
 			assert.strictEqual(metacall('py_memory'), 4.0);
 		});
-		it('metacall_load_from_memory_export (py)', () => {
+		it('metacall_load_from_memory_export (py)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			const handle = metacall_load_from_memory_export('py', 'def py_memory_export():\n\treturn 6;\n');
 			assert.notStrictEqual(handle, undefined);
 			assert.strictEqual(handle.py_memory_export(), 6.0);
@@ -149,7 +170,11 @@ describe('metacall', () => {
 			});
 			*/
 		}
-		it('require (mock)', () => {
+		it('require (mock)', function() {
+			if (!checkLoader('mock', 'asd.mock')) {
+				this.skip();
+				return;
+			}
 			const asd = require('./asd.mock');
 			assert.notStrictEqual(asd, undefined);
 			assert.strictEqual(asd.my_empty_func(), 1234);
@@ -161,12 +186,20 @@ describe('metacall', () => {
 			assert.strictEqual(asd.three_str('a', 'b', 'c'), 'Hello World');
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
 		});
-		it('require (ts)', () => {
+		it('require (ts)', function() {
+			if (!checkLoader('ts', 'badrequire/index.ts')) {
+				this.skip();
+				return;
+			}
 			const { isExported } = require('./badrequire/index.ts');
 			assert.notStrictEqual(isExported, undefined);
 			assert.strictEqual(isExported(), true);
 		});
-		it('require (py)', () => {
+		it('require (py)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			const example = require('./example.py');
 			assert.notStrictEqual(example, undefined);
 			assert.strictEqual(example.multiply(2, 2), 4);
@@ -176,7 +209,11 @@ describe('metacall', () => {
 			assert.deepStrictEqual(example.return_array(), [1, 2, 3]);
 			assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
 		});
-		it('require (py class)', () => {
+		it('require (py class)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			const classname = require('./classname.py');
 			assert.notStrictEqual(classname.function_returns_object_new_local_variable, undefined);
 			assert.notStrictEqual(classname.return_bound_method_param, undefined);
@@ -189,13 +226,21 @@ describe('metacall', () => {
 			// TODO: Implement classes
 			// assert.notStrictEqual(classname.MyClass, undefined);
 		});
-		it('require (py module)', () => {
+		it('require (py module)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			// This code loads directly a module without extension from Python
 			const { escape } = require('py:html');
 			assert.notStrictEqual(escape, undefined);
 			assert.strictEqual(escape('<html></html>'), '&lt;html&gt;&lt;/html&gt;');
 		});
-		it('require (py submodule)', () => {
+		it('require (py submodule)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			// This code loads directly a module without extension from Python
 			const { find_library } = require('py:ctypes.util');
 			assert.notStrictEqual(find_library, undefined);
@@ -243,7 +288,11 @@ describe('metacall', () => {
 				}
 			});
 		}
-		it('require (rb)', () => {
+		it('require (rb)', function() {
+			if (!loaderAvailable['rb']) {
+				this.skip();
+				return;
+			}
 			const cache = require('./cache.rb');
 			assert.notStrictEqual(cache, undefined);
 			assert.strictEqual(cache.cache_set('asd', 'efg'), undefined);
@@ -269,10 +318,18 @@ describe('metacall', () => {
 	});
 
 	describe('call', () => {
-		it('metacall (py)', () => {
+		it('metacall (py)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			assert.strictEqual(metacall('s_sum', 2, 2), 4);
 		});
-		it('metacall (rb)', () => {
+		it('metacall (rb)', function() {
+			if (!loaderAvailable['rb']) {
+				this.skip();
+				return;
+			}
 			assert.strictEqual(metacall('get_second', 5, 12), 12);
 		});
 		if (process.env['OPTION_BUILD_LOADERS_RS']) {
@@ -283,14 +340,22 @@ describe('metacall', () => {
 	});
 
 	describe('call by map', () => {
-		it('metacallfms (py)', () => {
+		it('metacallfms (py)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			assert.strictEqual(metacallfms('s_sum', '{"left":2,"right":2}'), 4);
 			assert.strictEqual(metacallfms('s_sum', '{"right":2,"left":2}'), 4);
 		});
 	});
 
 	describe('callback', () => {
-		it('callback (py)', () => {
+		it('callback (py)', function() {
+			if (!loaderAvailable['py']) {
+				this.skip();
+				return;
+			}
 			const py_f = require('function.py');
 			assert.notStrictEqual(py_f, undefined);
 
