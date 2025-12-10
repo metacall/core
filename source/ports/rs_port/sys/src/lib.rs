@@ -46,20 +46,8 @@ fn find_files_recursively<P: AsRef<Path>>(
                 let path = entry.path();
 
                 if path.is_file() {
-                    println!(
-                        "cargo:warning=MetaCall Searching Library: {}",
-                        path.display(),
-                    );
-
                     // Simple filename comparison
                     if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-
-                        println!(
-                            "cargo:warning={} == {}",
-                            file_name,
-                            filename,
-                        );
-
                         if file_name == filename {
                             matches.push(path);
                         }
@@ -92,7 +80,7 @@ fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
                 PathBuf::from("/opt/homebrew/lib/"),
                 PathBuf::from("/usr/local/lib/"),
             ],
-            names: vec!["libmetacall.dylib, libmetacalld.dylib"],
+            names: vec!["libmetacall.dylib", "libmetacalld.dylib"],
         })
     } else if cfg!(target_os = "linux") {
         Ok(InstallPath {
