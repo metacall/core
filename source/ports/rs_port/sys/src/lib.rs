@@ -127,6 +127,18 @@ fn get_parent_and_library(path: &Path) -> Option<(PathBuf, String)> {
     Some((parent, cleaned_stem))
 }
 
+/// Strip the Windows extended-length path prefix (\\?\) if present
+/// fs::canonicalize() on Windows returns paths with this prefix which can cause issues
+#[cfg(target_os = "windows")]
+fn strip_extended_length_prefix(path: PathBuf) -> PathBuf {
+    let path_str = path.to_string_lossy();
+    if let Some(stripped) = path_str.strip_prefix(r"\\?\") {
+        PathBuf::from(stripped)
+    } else {
+        path
+    }
+}
+
 /// Find the runtime DLL on Windows
 /// This searches for metacall.dll or metacalld.dll recursively
 #[cfg(target_os = "windows")]
@@ -142,7 +154,7 @@ fn find_metacall_dll(
             Ok(files) if !files.is_empty() => {
                 let found_dll = fs::canonicalize(&files[0])?;
                 if let Some(parent) = found_dll.parent() {
-                    return Ok(parent.to_path_buf());
+                    return Ok(strip_extended_length_prefix(parent.to_path_buf()));
                 }
             }
             _ => continue,
@@ -176,28 +188,33 @@ fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
 
                     match get_parent_and_library(&found_lib) {
                         Some((parent, library_name)) => {
-                            // On Windows, we need to find the DLL separately for runtime search path
+                            // On Windows, strip the extended-length path prefix and find DLL separately
                             #[cfg(target_os = "windows")]
-                            let search_path = {
-                                match find_metacall_dll(&search_config.paths, &library_name) {
+                            let (lib_path, search_path) = {
+                                let cleaned_parent = strip_extended_length_prefix(parent);
+                                let dll_search = match find_metacall_dll(
+                                    &search_config.paths,
+                                    &library_name,
+                                ) {
                                     Ok(dll_path) => dll_path,
                                     Err(e) => {
                                         eprintln!(
                                             "Warning: Could not find DLL, using lib path: {}",
                                             e
                                         );
-                                        parent.clone()
+                                        cleaned_parent.clone()
                                     }
-                                }
+                                };
+                                (cleaned_parent, dll_search)
                             };
 
                             // On non-Windows platforms, the shared library is used for both
                             // linking and runtime, so search path is the same as lib path
                             #[cfg(not(target_os = "windows"))]
-                            let search_path = parent.clone();
+                            let (lib_path, search_path) = (parent.clone(), parent);
 
                             return Ok(LibraryPath {
-                                path: parent,
+                                path: lib_path,
                                 library: library_name,
                                 search: search_path,
                             });
