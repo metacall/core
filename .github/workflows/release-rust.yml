@@ -46,7 +46,9 @@ jobs:
 
       - name: Build the Rust Port
         working-directory: source/ports/rs_port
-        run: cargo build --verbose
+        run: |
+          rustup default nightly
+          cargo build --verbose
 
       - name: Test the Rust Port
         working-directory: source/ports/rs_port
