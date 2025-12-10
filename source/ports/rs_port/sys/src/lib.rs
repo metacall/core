@@ -357,6 +357,11 @@ pub fn build() {
                     "cargo:rustc-env={}",
                     define_library_search_path(ENV_VAR, SEPARATOR, &lib_path.search)
                 );
+
+                println!(
+                    "cargo:warning=Library {} found in: {} with runtime search path: {}",
+                    lib_path.library, lib_path.path.display(), lib_path.search.display()
+                );
             }
             Err(e) => {
                 // Print the error
