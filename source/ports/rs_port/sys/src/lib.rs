@@ -281,6 +281,36 @@ pub fn build() {
                     "cargo:rustc-env={}",
                     define_library_search_path(ENV_VAR, SEPARATOR, &lib_path.path)
                 );
+
+                // On Windows, generate .cargo/config.toml to set PATH at runtime so tests find the library
+                #[cfg(target_os = "windows")]
+                {
+                    let manifest_dir = env::var("CARGO_MANIFEST_DIR")
+                        .expect("CARGO_MANIFEST_DIR should be set by Cargo");
+                    let cargo_dir = PathBuf::from(&manifest_dir)
+                        .parent()
+                        .expect("Failed to get parent of manifest dir")
+                        .join(".cargo");
+ 
+                    // Create .cargo directory if it doesn't exist
+                    if !cargo_dir.exists() {
+                        let _ = fs::create_dir_all(&cargo_dir);
+                    }
+ 
+                    let config_path = cargo_dir.join("config.toml");
+                    let path_value = lib_path.path.display().to_string().replace('\\', "\\\\");
+                    let config_content = format!(
+                        "[env]\nPATH = {{ value = \"{}{}${{PATH}}\", force = true }}\n",
+                        path_value, SEPARATOR
+                    );
+ 
+                    if let Err(e) = fs::write(&config_path, config_content) {
+                        eprintln!(
+                            "cargo:warning=Failed to write .cargo/config.toml: {}",
+                            e
+                        );
+                    }
+                }
             }
             Err(e) => {
                 // Print the error
