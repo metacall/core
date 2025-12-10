@@ -46,6 +46,11 @@ fn find_files_recursively<P: AsRef<Path>>(
                 let path = entry.path();
 
                 if path.is_file() {
+                    println!(
+                        "cargo:warning=MetaCall Searching Library: {}",
+                        path.display(),
+                    );
+
                     // Simple filename comparison instead of regex
                     if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
                         if file_name == filename {
@@ -199,7 +204,7 @@ fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
                                     Ok(dll_path) => dll_path,
                                     Err(e) => {
                                         println!(
-                                            "cargo:warning=Warning: Could not find DLL, using lib path: {}",
+                                            "cargo:warning=Could not find DLL, using library path: {}",
                                             e
                                         );
                                         cleaned_parent.clone()
