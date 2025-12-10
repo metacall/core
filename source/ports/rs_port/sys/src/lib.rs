@@ -198,8 +198,8 @@ fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
                                 ) {
                                     Ok(dll_path) => dll_path,
                                     Err(e) => {
-                                        eprintln!(
-                                            "Warning: Could not find DLL, using lib path: {}",
+                                        println!(
+                                            "cargo:warning=Warning: Could not find DLL, using lib path: {}",
                                             e
                                         );
                                         cleaned_parent.clone()
@@ -227,7 +227,11 @@ fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
                     continue;
                 }
                 Err(e) => {
-                    eprintln!("Error searching in {}: {}", search_path.display(), e);
+                    println!(
+                        "cargo:warning=Error searching in {}: {}",
+                        search_path.display(),
+                        e
+                    );
                     continue;
                 }
             }
@@ -290,7 +294,10 @@ fn set_rpath(lib_path: &Path) {
     #[cfg(target_os = "aix")]
     {
         // Add default system library paths to avoid breaking standard lookup
-        println!("cargo:rustc-link-arg=-Wl,-blibpath:{}:/usr/lib:/lib", path_str);
+        println!(
+            "cargo:rustc-link-arg=-Wl,-blibpath:{}:/usr/lib:/lib",
+            path_str
+        );
     }
 
     #[cfg(target_os = "windows")]
@@ -360,13 +367,15 @@ pub fn build() {
 
                 println!(
                     "cargo:warning=Library {} found in: {} with runtime search path: {}",
-                    lib_path.library, lib_path.path.display(), lib_path.search.display()
+                    lib_path.library,
+                    lib_path.path.display(),
+                    lib_path.search.display()
                 );
             }
             Err(e) => {
                 // Print the error
-                eprintln!(
-                    "Failed to find MetaCall library with: {e} \
+                println!(
+                    "cargo:warning=Failed to find MetaCall library with: {e} \
                     Still trying to link in case the library is in system paths"
                 );
 
