@@ -17,8 +17,12 @@ struct InstallPath {
 
 /// Represents the match of a library when it's found
 struct LibraryPath {
+    /// Path to the library for linking (where .lib/.so/.dylib is)
     path: PathBuf,
+    /// Library name for linking
     library: String,
+    /// Path for runtime search (where .dll/.so/.dylib is for PATH/LD_LIBRARY_PATH)
+    search: PathBuf,
 }
 
 /// Find files recursively in a directory matching a pattern
@@ -123,6 +127,40 @@ fn get_parent_and_library(path: &Path) -> Option<(PathBuf, String)> {
     Some((parent, cleaned_stem))
 }
 
+/// Find the runtime DLL on Windows
+/// This searches for metacall.dll or metacalld.dll recursively
+#[cfg(target_os = "windows")]
+fn find_metacall_dll(
+    search_paths: &[PathBuf],
+    library_name: &str,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    // Determine the DLL name based on the library name (metacall or metacalld)
+    let dll_name = format!("{}.dll", library_name);
+
+    for search_path in search_paths {
+        match find_files_recursively(search_path, &dll_name, None) {
+            Ok(files) if !files.is_empty() => {
+                let found_dll = fs::canonicalize(&files[0])?;
+                if let Some(parent) = found_dll.parent() {
+                    return Ok(parent.to_path_buf());
+                }
+            }
+            _ => continue,
+        }
+    }
+
+    Err(format!(
+        "MetaCall DLL ({}) not found. Searched in: {}",
+        dll_name,
+        search_paths
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    )
+    .into())
+}
+
 /// Find the MetaCall library
 /// This orchestrates the search process
 fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
@@ -137,11 +175,32 @@ fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
                     let found_lib = fs::canonicalize(&files[0])?;
 
                     match get_parent_and_library(&found_lib) {
-                        Some((parent, name)) => {
+                        Some((parent, library_name)) => {
+                            // On Windows, we need to find the DLL separately for runtime search path
+                            #[cfg(target_os = "windows")]
+                            let search_path = {
+                                match find_metacall_dll(&search_config.paths, &library_name) {
+                                    Ok(dll_path) => dll_path,
+                                    Err(e) => {
+                                        eprintln!(
+                                            "Warning: Could not find DLL, using lib path: {}",
+                                            e
+                                        );
+                                        parent.clone()
+                                    }
+                                }
+                            };
+
+                            // On non-Windows platforms, the shared library is used for both
+                            // linking and runtime, so search path is the same as lib path
+                            #[cfg(not(target_os = "windows"))]
+                            let search_path = parent.clone();
+
                             return Ok(LibraryPath {
                                 path: parent,
-                                library: name,
-                            })
+                                library: library_name,
+                                search: search_path,
+                            });
                         }
                         None => continue,
                     };
@@ -279,7 +338,7 @@ pub fn build() {
 
                 println!(
                     "cargo:rustc-env={}",
-                    define_library_search_path(ENV_VAR, SEPARATOR, &lib_path.path)
+                    define_library_search_path(ENV_VAR, SEPARATOR, &lib_path.search)
                 );
             }
             Err(e) => {
