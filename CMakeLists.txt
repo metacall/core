@@ -233,11 +233,11 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH	TRUE)	# Add path to dependencies for INSTA
 if(SYSTEM_DIR_INSTALL)
 	SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
 else()
-	# Find libraries relative to binary
+	# Find libraries relative to binary and other libraries
 	if(APPLE)
-		set(CMAKE_INSTALL_RPATH "@loader_path/${INSTALL_LIB}")
+		set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/${INSTALL_LIB}")
 	else()
-		set(CMAKE_INSTALL_RPATH "$ORIGIN/${INSTALL_LIB}")
+		set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/${INSTALL_LIB}")
 	endif()
 endif()
 
