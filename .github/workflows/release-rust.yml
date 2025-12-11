@@ -62,7 +62,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Release the port
-        run: |
-          cd source/ports/rs_port
-          bash ./upload.sh
+      - name: Release the Rust Port
+        working-directory: source/ports/rs_port
+        run: ./upload.sh
