@@ -562,8 +562,119 @@ clear:
 	return result;
 }
 
-// TODO
-#if 0
+/* Context passed to resolve/reject callbacks for await */
+typedef struct py_loader_port_await_context_type
+{
+	loader_impl_py py_impl;
+	PyObject *future;
+} py_loader_port_await_context;
+
+static void *py_loader_port_await_resolve(void *result, void *data)
+{
+	py_loader_port_await_context *ctx = (py_loader_port_await_context *)data;
+	loader_impl impl = loader_get_impl(py_loader_tag);
+
+	py_loader_thread_acquire();
+
+	/* Convert metacall value to Python object */
+	PyObject *py_result = NULL;
+
+	if (result != NULL)
+	{
+		py_result = py_loader_impl_value_to_capi(impl, value_type_id(result), result);
+	}
+
+	if (py_result == NULL)
+	{
+		Py_IncRef(Py_None);
+		py_result = Py_None;
+	}
+
+	/* Get thread background module and asyncio loop */
+	PyObject *thread_bg_module = py_loader_impl_get_thread_background_module(ctx->py_impl);
+	PyObject *asyncio_loop = py_loader_impl_get_asyncio_loop(ctx->py_impl);
+
+	/* Call future_resolve(tl, future, value) */
+	PyObject *future_resolve_func = PyObject_GetAttrString(thread_bg_module, "future_resolve");
+
+	if (future_resolve_func != NULL && PyCallable_Check(future_resolve_func))
+	{
+		PyObject *args = PyTuple_Pack(3, asyncio_loop, ctx->future, py_result);
+		PyObject *call_result = PyObject_Call(future_resolve_func, args, NULL);
+
+		Py_DecRef(call_result);
+		Py_DecRef(args);
+		Py_DecRef(future_resolve_func);
+	}
+
+	Py_DecRef(py_result);
+	Py_DecRef(ctx->future);
+
+	py_loader_thread_release();
+
+	free(ctx);
+
+	return NULL;
+}
+
+static void *py_loader_port_await_reject(void *result, void *data)
+{
+	py_loader_port_await_context *ctx = (py_loader_port_await_context *)data;
+	loader_impl impl = loader_get_impl(py_loader_tag);
+
+	py_loader_thread_acquire();
+
+	/* Convert to Python exception object */
+	PyObject *py_exception = NULL;
+
+	if (result != NULL)
+	{
+		py_exception = py_loader_impl_value_to_capi(impl, value_type_id(result), result);
+	}
+
+	if (py_exception == NULL)
+	{
+		py_exception = PyExc_RuntimeErrorPtr();
+		Py_IncRef(py_exception);
+	}
+
+	/* Create an Exception instance if we got a string or other value */
+	if (!PyExceptionInstance_Check(py_exception) && !PyExceptionClass_Check(py_exception))
+	{
+		PyObject *exc_args = PyTuple_Pack(1, py_exception);
+		PyObject *new_exc = PyObject_Call(PyExc_RuntimeErrorPtr(), exc_args, NULL);
+		Py_DecRef(exc_args);
+		Py_DecRef(py_exception);
+		py_exception = new_exc;
+	}
+
+	/* Get thread background module and asyncio loop */
+	PyObject *thread_bg_module = py_loader_impl_get_thread_background_module(ctx->py_impl);
+	PyObject *asyncio_loop = py_loader_impl_get_asyncio_loop(ctx->py_impl);
+
+	/* Call future_reject(tl, future, exception) */
+	PyObject *future_reject_func = PyObject_GetAttrString(thread_bg_module, "future_reject");
+
+	if (future_reject_func != NULL && PyCallable_Check(future_reject_func))
+	{
+		PyObject *args = PyTuple_Pack(3, asyncio_loop, ctx->future, py_exception);
+		PyObject *call_result = PyObject_Call(future_reject_func, args, NULL);
+
+		Py_DecRef(call_result);
+		Py_DecRef(args);
+		Py_DecRef(future_reject_func);
+	}
+
+	Py_DecRef(py_exception);
+	Py_DecRef(ctx->future);
+
+	py_loader_thread_release();
+
+	free(ctx);
+
+	return NULL;
+}
+
 static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 {
 	PyObject *name, *result = NULL;
@@ -573,38 +684,50 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 	size_t args_size = 0, args_count;
 	Py_ssize_t var_args_size;
 	loader_impl impl;
+	loader_impl_py py_impl;
 
 	(void)self;
 
 	/* Obtain Python loader implementation */
 	impl = loader_get_impl(py_loader_tag);
+	py_impl = loader_impl_get(impl);
+
+	/* Check if asyncio is initialized */
+	PyObject *asyncio_loop = py_loader_impl_get_asyncio_loop(py_impl);
+
+	if (asyncio_loop == NULL)
+	{
+		PyErr_SetString(PyExc_RuntimeErrorPtr(), "Asyncio loop not initialized. Cannot use metacall_await.");
+		return Py_ReturnNone();
+	}
 
 	var_args_size = PyTuple_Size(var_args);
 
 	if (var_args_size == 0)
 	{
-		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid number of arguments, use it like: metacall('function_name', 'asd', 123, [7, 4]);");
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid number of arguments, use it like: metacall_await('function_name', arg1, arg2, ...);");
 		return Py_ReturnNone();
 	}
 
+	/* Get function name */
 	name = PyTuple_GetItem(var_args, 0);
 
-	#if PY_MAJOR_VERSION == 2
+#if PY_MAJOR_VERSION == 2
 	{
 		if (!(PyString_Check(name) && PyString_AsStringAndSize(name, &name_str, &name_length) != -1))
 		{
 			name_str = NULL;
 		}
 	}
-	#elif PY_MAJOR_VERSION == 3
+#elif PY_MAJOR_VERSION == 3
 	{
 		name_str = PyUnicode_Check(name) ? (char *)PyUnicode_AsUTF8AndSize(name, &name_length) : NULL;
 	}
-	#endif
+#endif
 
 	if (name_str == NULL)
 	{
-		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid function name string conversion, first parameter must be a string");
+		PyErr_SetString(PyExc_TypeErrorPtr(), "First parameter must be a string (function name)");
 		return Py_ReturnNone();
 	}
 
@@ -618,7 +741,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 
 		if (value_args == NULL)
 		{
-			PyErr_SetString(PyExc_ValueErrorPtr(), "Invalid argument allocation");
+			PyErr_SetString(PyExc_MemoryErrorPtr(), "Failed to allocate arguments");
 			return Py_ReturnNone();
 		}
 
@@ -631,57 +754,103 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 		}
 	}
 
-	/* Execute the await */
+	/* Create Python Future */
+	PyObject *thread_bg_module = py_loader_impl_get_thread_background_module(py_impl);
+	PyObject *future_create_func = PyObject_GetAttrString(thread_bg_module, "future_create");
+
+	if (future_create_func == NULL || !PyCallable_Check(future_create_func))
 	{
-		void *ret;
+		PyErr_SetString(PyExc_RuntimeErrorPtr(), "Failed to get future_create function");
+		Py_DecRef(future_create_func);
+		goto cleanup_args;
+	}
 
-		py_loader_thread_release();
+	PyObject *future_args = PyTuple_Pack(1, asyncio_loop);
+	PyObject *future = PyObject_Call(future_create_func, future_args, NULL);
+	Py_DecRef(future_args);
+	Py_DecRef(future_create_func);
 
-		/* TODO: */
-		/*
-		if (value_args != NULL)
+	if (future == NULL)
+	{
+		if (PyErr_Occurred() == NULL)
 		{
-			ret = metacallv_s(name_str, value_args, args_size);
+			PyErr_SetString(PyExc_RuntimeErrorPtr(), "Failed to create Future");
+		}
+		goto cleanup_args;
+	}
+
+	/* Create callback context */
+	py_loader_port_await_context *ctx = (py_loader_port_await_context *)malloc(sizeof(py_loader_port_await_context));
+
+	if (ctx == NULL)
+	{
+		Py_DecRef(future);
+		PyErr_SetString(PyExc_MemoryErrorPtr(), "Failed to allocate context");
+		goto cleanup_args;
+	}
+
+	ctx->py_impl = py_impl;
+	ctx->future = future;
+	Py_IncRef(future); /* Keep reference for callback */
+
+	/* Execute the await call */
+	py_loader_thread_release();
+
+	void *ret = metacall_await_s(
+		name_str,
+		value_args != NULL ? value_args : metacall_null_args,
+		args_size,
+		py_loader_port_await_resolve,
+		py_loader_port_await_reject,
+		ctx);
+
+	py_loader_thread_acquire();
+
+	/* Check for immediate errors (e.g., function not found) */
+	if (ret != NULL && value_type_id(ret) == TYPE_THROWABLE)
+	{
+		PyObject *error = py_loader_impl_value_to_capi(impl, TYPE_THROWABLE, ret);
+		if (error != NULL)
+		{
+			PyErr_SetObject(PyExc_RuntimeErrorPtr(), error);
+			Py_DecRef(error);
 		}
 		else
 		{
-			ret = metacallv_s(name_str, metacall_null_args, 0);
+			PyErr_SetString(PyExc_RuntimeErrorPtr(), "Async call failed");
 		}
-		*/
-
-		py_loader_thread_acquire();
-
-		if (ret == NULL)
-		{
-			result = Py_ReturnNone();
-			goto clear;
-		}
-
-		result = py_loader_impl_value_to_capi(impl, value_type_id(ret), ret);
-
+		Py_DecRef(future);
+		Py_DecRef(ctx->future);
+		free(ctx);
 		value_type_destroy(ret);
-
-		if (result == NULL)
-		{
-			result = Py_ReturnNone();
-			goto clear;
-		}
+		result = Py_ReturnNone();
+		goto cleanup_args;
 	}
 
-clear:
+	if (ret != NULL)
+	{
+		value_type_destroy(ret);
+	}
+
+	result = future;
+
+cleanup_args:
 	if (value_args != NULL)
 	{
+		py_loader_thread_release();
+
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
 			value_type_destroy(value_args[args_count]);
 		}
+
+		py_loader_thread_acquire();
 
 		free(value_args);
 	}
 
 	return result;
 }
-#endif
 
 static PyObject *py_loader_port_inspect(PyObject *self, PyObject *args)
 {
@@ -925,6 +1094,8 @@ static PyMethodDef metacall_methods[] = {
 		"Get information about all loaded objects." },
 	{ "metacall", py_loader_port_invoke, METH_VARARGS,
 		"Call a function anonymously." },
+	{ "metacall_await", py_loader_port_await, METH_VARARGS,
+		"Call an async function and return a Future." },
 	{ "metacall_value_create_ptr", py_loader_port_value_create_ptr, METH_VARARGS,
 		"Create a new value of type Pointer." },
 	{ "metacall_value_reference", py_loader_port_value_reference, METH_VARARGS,

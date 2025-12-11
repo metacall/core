@@ -69,6 +69,7 @@ PY_LOADER_NO_EXPORT PyObject *PyExc_FileNotFoundErrorPtr(void);
 PY_LOADER_NO_EXPORT PyObject *PyExc_TypeErrorPtr(void);
 PY_LOADER_NO_EXPORT PyObject *PyExc_ValueErrorPtr(void);
 PY_LOADER_NO_EXPORT PyObject *PyExc_RuntimeErrorPtr(void);
+PY_LOADER_NO_EXPORT PyObject *PyExc_MemoryErrorPtr(void);
 PY_LOADER_NO_EXPORT PyObject *Py_ReturnNone(void);
 PY_LOADER_NO_EXPORT PyObject *Py_ReturnFalse(void);
 PY_LOADER_NO_EXPORT PyObject *Py_ReturnTrue(void);
