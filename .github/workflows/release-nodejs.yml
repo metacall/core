@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
       - name: Install MetaCall Unix
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
-        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
+        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
       - name: Install MetaCall Windows
         if: matrix.os == 'windows-latest'
         run: powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
