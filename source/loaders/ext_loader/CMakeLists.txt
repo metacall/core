@@ -165,6 +165,7 @@ target_compile_features(${target}
 
 target_link_options(${target}
 	PRIVATE
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
