@@ -127,8 +127,11 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::metacall # MetaCall library
-	${SPIDERMONKEY_LIBRARY} # SpiderMonkey library
+	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
+	$<$<NOT:$<BOOL:${APPLE}>>:${META_PROJECT_NAME}::metacall>
+
+	# SpiderMonkey library
+	${SPIDERMONKEY_LIBRARY}
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -147,7 +150,8 @@ target_compile_definitions(${target}
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	${SPIDERMONKEY_DEFINITIONS} # SpiderMonkey definitions
+	# SpiderMonkey definitions
+	${SPIDERMONKEY_DEFINITIONS}
 
 	INTERFACE
 )
@@ -171,6 +175,8 @@ target_compile_options(${target}
 
 target_link_options(${target}
 	PRIVATE
+	# On macOS, we use dynamic lookup for using existing symbols
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}

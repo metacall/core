@@ -138,8 +138,11 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::metacall # MetaCall library
-	${JULIA_LIBRARY} # Julia libraries
+	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
+	$<$<NOT:$<BOOL:${APPLE}>>:${META_PROJECT_NAME}::metacall>
+
+	# Julia libraries
+	${JULIA_LIBRARY}
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -182,6 +185,8 @@ target_compile_options(${target}
 
 target_link_options(${target}
 	PRIVATE
+	# On macOS, we use dynamic lookup for using existing symbols
+	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}

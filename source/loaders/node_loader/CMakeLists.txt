@@ -176,7 +176,8 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::metacall # MetaCall library
+	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
+	$<$<NOT:$<BOOL:${APPLE}>>:${META_PROJECT_NAME}::metacall>
 
 	# Delay load for MSVC
 	$<$<CXX_COMPILER_ID:MSVC>:${NodeJS_LIBRARY}> # NodeJS library
@@ -224,7 +225,10 @@ target_compile_options(${target}
 
 target_link_options(${target}
 	PRIVATE
+	# On macOS, we use dynamic lookup for using existing symbols
 	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+
+	# Delay load for MSVC
 	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
 
 	PUBLIC
