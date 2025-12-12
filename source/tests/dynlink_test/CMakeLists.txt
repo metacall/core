@@ -88,6 +88,9 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::dynlink
+
+	# On macOS, we use dynamic lookup for using existing symbols, so we need to link to metacall
+	$<$<AND:$<BOOL:${OPTION_BUILD_LOADERS}>,$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>,$<$<NOT:$<BOOL:${APPLE}>>>:${META_PROJECT_NAME}::metacall>
 )
 
 #
