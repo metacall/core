@@ -89,8 +89,12 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::dynlink
 
-	# On macOS, we use dynamic lookup for using existing symbols, so we need to link to metacall
-	$<$<AND:$<BOOL:${OPTION_BUILD_LOADERS}>,$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>>:$<$<NOT:$<BOOL:${APPLE}>>:${META_PROJECT_NAME}::metacall>>
+	# In macOS link against metacall library for having the symbols preloaded
+	$<$<AND:
+		$<BOOL:${OPTION_BUILD_LOADERS}>,
+		$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>,
+		$<PLATFORM_ID:Darwin>
+	>:${META_PROJECT_NAME}::metacall>
 )
 
 #
@@ -130,7 +134,8 @@ target_link_options(${target}
 	PRIVATE
 	${DEFAULT_LINKER_OPTIONS}
 
-	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>
+	# Required for linking symbols from the executable
+	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>
 	$<$<CXX_COMPILER_ID:GNU>:-rdynamic>
 )
 
