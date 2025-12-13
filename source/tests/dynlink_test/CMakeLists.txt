@@ -93,7 +93,7 @@ target_link_libraries(${target}
 	$<$<AND:
 		$<BOOL:${OPTION_BUILD_LOADERS}>,
 		$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>,
-		$<PLATFORM_ID:Darwin>
+		$<BOOL:$<PLATFORM_ID:Darwin>>
 	>:${META_PROJECT_NAME}::metacall>
 )
 
