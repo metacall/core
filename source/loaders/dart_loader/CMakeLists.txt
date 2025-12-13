@@ -92,7 +92,7 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
-	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
+	BUNDLE $<$<PLATFORM_ID:Darwin>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
 )
 
 #
@@ -125,7 +125,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
-	$<$<NOT:$<BOOL:${APPLE}>>:${META_PROJECT_NAME}::metacall>
+	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
 
 	# TODO:
 	# Dart library
@@ -171,7 +171,7 @@ target_compile_options(${target}
 target_link_options(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup for using existing symbols
-	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}

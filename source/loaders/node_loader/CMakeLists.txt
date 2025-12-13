@@ -145,7 +145,7 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
-	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
+	BUNDLE $<$<PLATFORM_ID:Darwin>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
 )
 
 #
@@ -177,7 +177,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
-	$<$<NOT:$<BOOL:${APPLE}>>:${META_PROJECT_NAME}::metacall>
+	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
 
 	# Delay load for MSVC
 	$<$<CXX_COMPILER_ID:MSVC>:${NodeJS_LIBRARY}> # NodeJS library
@@ -197,7 +197,7 @@ target_compile_definitions(${target}
 	PRIVATE
 	$<$<NOT:$<BOOL:${MSVC}>>:_LARGEFILE_SOURCE>
 	$<$<NOT:$<BOOL:${MSVC}>>:_FILE_OFFSET_BITS=64>
-	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:_DARWIN_USE_64_BIT_INODE=1>
+	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:_DARWIN_USE_64_BIT_INODE=1>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
@@ -226,7 +226,7 @@ target_compile_options(${target}
 target_link_options(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup for using existing symbols
-	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
+	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
 
 	# Delay load for MSVC
 	$<$<CXX_COMPILER_ID:MSVC>:/DELAYLOAD:${NodeJS_LIBRARY_NAME}>
