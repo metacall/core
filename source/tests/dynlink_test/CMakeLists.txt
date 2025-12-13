@@ -90,11 +90,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::dynlink
 
 	# In macOS link against metacall library for having the symbols preloaded
-	$<$<AND:
-		$<BOOL:${OPTION_BUILD_LOADERS}>,
-		$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>,
-		$<BOOL:$<PLATFORM_ID:Darwin>>
-	>:${META_PROJECT_NAME}::metacall>
+	$<$<AND:$<BOOL:${OPTION_BUILD_LOADERS}>,$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>,$<BOOL:$<PLATFORM_ID:Darwin>>>:${META_PROJECT_NAME}::metacall>
 )
 
 #
