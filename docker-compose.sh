@@ -199,7 +199,7 @@ sub_cache() {
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build cli
 }
 
-# Build MetaCall Docker Compose with multi-platform specifier (link manually dockerignore files)
+# Build MetaCall Docker Compose with multi-platform specifier using bake with contexts
 sub_platform() {
 	if [ -z "$METACALL_PLATFORM" ]; then
 		echo "Error: METACALL_PLATFORM variable not defined"
@@ -209,30 +209,26 @@ sub_platform() {
 	# Initialize QEMU for Buildkit
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
+	# Load default environment variables
+	source .env
+
 	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
 	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
-		source .env
 		export METACALL_BASE_IMAGE="ghcr.io/loong64/${METACALL_BASE_IMAGE}"
 	fi
 
-	# Generate the docker compose file with all .env variables substituted (bake seems not to support this)
-	$DOCKER_COMPOSE -f docker-compose.yml config &> docker-compose.bake.yml
+	# Export variables for docker bake
+	export METACALL_BASE_IMAGE="${METACALL_BASE_IMAGE}"
+	export METACALL_PATH="${METACALL_PATH}"
+	export METACALL_BUILD_TYPE="${METACALL_BUILD_TYPE}"
 
-	# Build with Bake, so the image can be loaded into local docker context
-	ln -sf tools/deps/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load dev
-
-	ln -sf tools/runtime/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load runtime
-
-	ln -sf tools/cli/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load cli
-
-	# Delete temporal docker compose file
-	rm -rf docker-compose.bake.yml
+	# Build all images with Bake in a single command using contexts for dependencies
+	# This ensures that dependent images (dev->deps, runtime->dev, cli->runtime+dev)
+	# can properly reference their base images without needing them in local cache
+	docker buildx bake \
+		-f docker-bake.hcl \
+		--set "*.platform=${METACALL_PLATFORM}" \
+		--load
 }
 
 # Push MetaCall Docker Compose
