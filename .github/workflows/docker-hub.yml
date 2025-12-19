@@ -111,7 +111,7 @@ jobs:
           RUN grep 0123456789abcdef output.txt
           EOF
 
-          docker buildx build --progress=plain --platform ${{ matrix.platform }} -f Dockerfile.test -t test-image .
+          docker buildx build --pull=false --progress=plain --platform ${{ matrix.platform }} -f Dockerfile.test -t metacall/core:test .
 
       - name: Tag & Push Platform Images
         # Only run when master or when tagging a version
