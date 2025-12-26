@@ -99,8 +99,8 @@ pub fn metacall<T: MetaCallValue>(
     }
 }
 
-/// Calls a function with arguments. The generic parameter is the return type of the function
-/// you're calling. Checkout [MetaCallValue](MetaCallValue) for possible types.
+/// Calls a function within a specific [Handle](Handle) with arguments. The generic
+/// parameter is the return type of the function you're calling. Checkout [MetaCallValue](MetaCallValue) for possible types.
 /// For example: ...
 /// ```
 /// let sum = metacall::metacall_handle::<i32>(handle, "sum", [1, 2]).unwrap();
@@ -124,9 +124,10 @@ pub fn metacall_no_arg<T: MetaCallValue>(func: impl ToString) -> Result<T, MetaC
     metacall::<T>(func, [] as [MetaCallNull; 0])
 }
 
-/// Calls a function same as [metacall](metacall) without passing any arguments. For example: ...
+/// Calls a function within a specific ['Handle'] without passing any arguments.
+///The generic parameter is the return type. For example: ...
 /// ```
-/// let greet = metacall::metacall_no_arg::<String>("greet").unwrap();
+/// let greet = metacall::metacall_handle_no_arg::<String>(handle, "greet").unwrap();
 /// ```
 pub fn metacall_handle_no_arg<T: MetaCallValue>(
     handle: &mut Handle,
