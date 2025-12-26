@@ -253,10 +253,11 @@ sub_bake() {
 
 	# Build all images all at once
 	docker buildx bake \
-		--debug \
 		--metadata-file .bake/metadata.json \
 		-f docker-bake.hcl \
 		--set "*.platform=${METACALL_PLATFORM}"
+
+	cat .bake/metadata.json
 }
 
 # Push MetaCall Docker Compose
