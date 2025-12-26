@@ -219,17 +219,10 @@ sub_platform() {
 	$DOCKER_COMPOSE -f docker-compose.yml config &> docker-compose.bake.yml
 
 	# Build with Bake, so the image can be loaded into local docker context
-	ln -sf tools/deps/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load dev
-
-	ln -sf tools/runtime/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load runtime
-
-	ln -sf tools/cli/.dockerignore .dockerignore
-	docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load cli
+	for tag in "deps" "dev" "runtime" "cli"; do
+		ln -sf "tools/${tag}/.dockerignore" .dockerignore
+		docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load "${tag}"
+	done
 
 	# Delete temporal docker compose file
 	rm -rf docker-compose.bake.yml
