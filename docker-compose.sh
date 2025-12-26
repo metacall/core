@@ -42,7 +42,7 @@ METACALL_TAGS=("deps" "dev" "runtime" "cli")
 
 # Pull MetaCall Docker Compose
 sub_pull() {
-	if [ -z "$IMAGE_NAME" ]; then
+	if [ -z "${IMAGE_NAME+x}" ]; then
 		echo "Error: IMAGE_NAME variable not defined"
 		exit 1
 	fi
@@ -128,7 +128,7 @@ sub_test_sanitizer() {
 		BEGIN=$(grep -n "The following tests FAILED:" /tmp/metacall-test-output | cut -d : -f 1)
 		END=$(grep -n "Errors while running CTest" /tmp/metacall-test-output | cut -d : -f 1)
 
-		if [ -z "${BEGIN}" ] || [ -z "${END}" ]; then
+		if [ -z "${BEGIN+x}" ] || [ -z "${END+x}" ]; then
 			echo "ERROR! CTest failed to print properly the output, run tests again:"
 			echo "	Recompiling everything: docker rmi metacall/core:dev && ./docker-compose.sh test-${METACALL_BUILD_SANITIZER}"
 			echo "	Without recompiling (needs to be built successfully previously): docker run --rm -it metacall/core:dev sh -c \"cd build && ctest -j$(getconf _NPROCESSORS_ONLN) --output-on-failure\""
@@ -166,7 +166,7 @@ sub_coverage() {
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
 sub_cache() {
-	if [ -z "$IMAGE_REGISTRY" ]; then
+	if [ -z "${IMAGE_REGISTRY+x}" ]; then
 		echo "Error: IMAGE_REGISTRY variable not defined"
 		exit 1
 	fi
@@ -179,7 +179,7 @@ sub_cache() {
 
 # Build MetaCall Docker Compose with multi-platform specifier (link manually dockerignore files)
 sub_platform() {
-	if [ -z "$METACALL_PLATFORM" ]; then
+	if [ -z "${METACALL_PLATFORM+x}" ]; then
 		echo "Error: METACALL_PLATFORM variable not defined"
 		exit 1
 	fi
@@ -187,9 +187,11 @@ sub_platform() {
 	# Initialize QEMU for Buildkit
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
+	# Load, clear and export default environment variables
+	export $(cat .env | sed 's/#.*//g' | xargs)
+
 	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
 	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
-		source .env
 		export METACALL_BASE_IMAGE="ghcr.io/loong64/${METACALL_BASE_IMAGE}"
 	fi
 
@@ -206,9 +208,60 @@ sub_platform() {
 	rm -rf docker-compose.bake.yml
 }
 
+# Build MetaCall Docker Compose with multi-platform specifier
+sub_bake() {
+	if [ -z "${METACALL_PLATFORM+x}" ]; then
+		echo "Error: METACALL_PLATFORM variable not defined"
+		exit 1
+	fi
+
+	if [ -z "${DOCKER_USERNAME+x}" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
+	if [ -z "${IMAGE_NAME+x}" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
+	# Initialize QEMU for Buildkit
+	docker run --rm --privileged tonistiigi/binfmt --install all
+
+	# Load, clear and export default environment variables
+	export $(cat .env | sed 's/#.*//g' | xargs)
+
+	# Get the options from the compose file
+	export METACALL_INSTALL_OPTIONS=$(grep "METACALL_INSTALL_OPTIONS:" docker-compose.yml | head -n 1 | sed 's/.*METACALL_INSTALL_OPTIONS: //' | sed 's/#.*//g')
+	export METACALL_BUILD_OPTIONS=$(grep "METACALL_BUILD_OPTIONS:" docker-compose.yml | head -n 1 | sed 's/.*METACALL_BUILD_OPTIONS: //' | sed 's/#.*//g')
+	export METACALL_RUNTIME_OPTIONS=$(grep "METACALL_RUNTIME_OPTIONS:" docker-compose.yml | head -n 1 | sed 's/.*METACALL_RUNTIME_OPTIONS: //' | sed 's/#.*//g')
+
+	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
+	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
+		export METACALL_BASE_IMAGE="ghcr.io/loong64/${METACALL_BASE_IMAGE}"
+	fi
+
+	# Create temporal folder for storing metadata
+	mkdir -p .bake
+
+	# Generate the dockerignore file by merging all of them
+	echo "**" > .bake/.dockerignore
+	for f in tools/deps/.dockerignore tools/dev/.dockerignore tools/runtime/.dockerignore tools/cli/.dockerignore; do
+		tail -n +2 "$f" >> .bake/.dockerignore
+	done
+	ln -sf .bake/.dockerignore .dockerignore
+
+	# Build all images all at once
+	docker buildx bake \
+		--debug \
+		--metadata-file .bake/metadata.json \
+		-f docker-bake.hcl \
+		--set "*.platform=${METACALL_PLATFORM}"
+}
+
 # Push MetaCall Docker Compose
 sub_push() {
-	if [ -z "$IMAGE_NAME" ]; then
+	if [ -z "${IMAGE_NAME+x}" ]; then
 		echo "Error: IMAGE_NAME variable not defined"
 		exit 1
 	fi
@@ -226,7 +279,7 @@ sub_push() {
 
 # Version MetaCall Docker Compose
 sub_version() {
-	if [ -z "$IMAGE_NAME" ]; then
+	if [ -z "${IMAGE_NAME+x}" ]; then
 		echo "Error: IMAGE_NAME variable not defined"
 		exit 1
 	fi
@@ -246,7 +299,7 @@ sub_version() {
 
 # Pack MetaCall Docker Compose
 sub_pack() {
-	if [ -z "$ARTIFACTS_PATH" ]; then
+	if [ -z "${ARTIFACTS_PATH+x}" ]; then
 		echo "Error: ARTIFACTS_PATH variable not defined"
 		exit 1
 	fi
@@ -325,6 +378,9 @@ case "$1" in
 		;;
 	platform)
 		sub_platform
+		;;
+	bake)
+		sub_bake
 		;;
 	push)
 		sub_push

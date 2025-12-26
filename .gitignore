@@ -65,3 +65,6 @@ _start-cmd.bat
 !tools/dev/.dockerignore
 !tools/runtime/.dockerignore
 !tools/cli/.dockerignore
+
+# Bake folder
+.bake

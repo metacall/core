@@ -94,7 +94,7 @@ jobs:
           METACALL_PLATFORM: ${{ matrix.platform }}
           DOCKER_BUILDKIT: 1
         run: |
-          ./docker-compose.sh platform
+          ./docker-compose.sh bake
 
       - name: Tag & Push Platform Images
         # Only run when master or when tagging a version
