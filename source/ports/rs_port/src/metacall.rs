@@ -99,8 +99,8 @@ pub fn metacall<T: MetaCallValue>(
     }
 }
 
-/// Calls a function within a specific ['Handle'] with arguments. The generic
-/// parameter is the return type of the function you're calling. Checkout ['MetaCallValue'] for possible types.
+/// Calls a function within a specific [Handle](Handle) with arguments. The generic
+/// parameter is the return type of the function you're calling. Checkout [MetaCallValue](MetaCallValue) for possible types.
 /// For example: ...
 /// ```
 /// let sum = metacall::metacall_handle::<i32>(handle, "sum", [1, 2]).unwrap();
