@@ -100,7 +100,7 @@ impl Drop for Handle {
 /// Loads a file from a single file. Usage example: ...
 /// ```
 /// // A Nodejs path
-/// metacall::load::from_single_file(Tag::NodeJS, "index.js",None).unwrap();
+/// metacall::load::from_single_file(Tag::NodeJS, "index.js", None).unwrap();
 /// ```
 pub fn from_single_file(
     tag: Tag,
@@ -113,7 +113,7 @@ pub fn from_single_file(
 /// Loads a path from file. Usage example: ...
 /// ```
 /// // A Nodejs script
-/// metacall::load::from_file(Tag::NodeJS, ["index.js", "main.js"],None).unwrap();
+/// metacall::load::from_file(Tag::NodeJS, ["index.js", "main.js"], None).unwrap();
 /// ```
 pub fn from_file(
     tag: Tag,
