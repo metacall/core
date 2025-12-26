@@ -37,6 +37,9 @@ else
 	exit 1
 fi
 
+# List of tags
+METACALL_TAGS=("deps" "dev" "runtime" "cli")
+
 # Pull MetaCall Docker Compose
 sub_pull() {
 	if [ -z "$IMAGE_NAME" ]; then
@@ -44,43 +47,25 @@ sub_pull() {
 		exit 1
 	fi
 
-	docker pull $IMAGE_NAME:deps && docker tag $IMAGE_NAME:deps metacall/core:deps || true
-
-	docker pull $IMAGE_NAME:dev && docker tag $IMAGE_NAME:dev metacall/core:dev || true
-
-	docker pull $IMAGE_NAME:runtime && docker tag $IMAGE_NAME:runtime metacall/core:runtime || true
-
-	docker pull $IMAGE_NAME:cli && docker tag $IMAGE_NAME:cli metacall/core:cli || true
+	for tag in "${METACALL_TAGS[@]}"; do
+		docker pull $IMAGE_NAME:${tag} && docker tag $IMAGE_NAME:${tag} metacall/core:${tag} || true
+	done
 }
 
 # Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
-
-	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm runtime
-
-	ln -sf tools/cli/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm cli
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/${tag}/.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
 sub_rebuild() {
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache dev
-
-	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache runtime
-
-	ln -sf tools/cli/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache cli
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/${tag}/.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose for testing (link manually dockerignore files)
@@ -186,17 +171,10 @@ sub_cache() {
 		exit 1
 	fi
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build dev
-
-	ln -sf tools/runtime/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build runtime
-
-	ln -sf tools/cli/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build cli
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/${tag}/.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose with multi-platform specifier (link manually dockerignore files)
@@ -219,7 +197,7 @@ sub_platform() {
 	$DOCKER_COMPOSE -f docker-compose.yml config &> docker-compose.bake.yml
 
 	# Build with Bake, so the image can be loaded into local docker context
-	for tag in "deps" "dev" "runtime" "cli"; do
+	for tag in "${METACALL_TAGS[@]}"; do
 		ln -sf "tools/${tag}/.dockerignore" .dockerignore
 		docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load "${tag}"
 	done
@@ -235,21 +213,11 @@ sub_push() {
 		exit 1
 	fi
 
-	# Push deps image
-	docker tag metacall/core:deps $IMAGE_NAME:deps
-	docker push $IMAGE_NAME:deps
-
-	# Push dev image
-	docker tag metacall/core:dev $IMAGE_NAME:dev
-	docker push $IMAGE_NAME:dev
-
-	# Push runtime image
-	docker tag metacall/core:runtime $IMAGE_NAME:runtime
-	docker push $IMAGE_NAME:runtime
-
-	# Push cli image
-	docker tag metacall/core:cli $IMAGE_NAME:cli
-	docker push $IMAGE_NAME:cli
+	# Push images
+	for tag in "${METACALL_TAGS[@]}"; do
+		docker tag metacall/core:${tag} $IMAGE_NAME:${tag}
+		docker push $IMAGE_NAME:${tag}
+	done
 
 	# Push cli as a latest
 	docker tag metacall/core:cli $IMAGE_NAME:latest
@@ -265,21 +233,11 @@ sub_version() {
 
 	VERSION=$(tail -n 1 VERSION | tr -d '\n')
 
-	# Push deps image
-	docker tag metacall/core:deps $IMAGE_NAME:${VERSION}-deps
-	docker push $IMAGE_NAME:${VERSION}-deps
-
-	# Push dev image
-	docker tag metacall/core:dev $IMAGE_NAME:${VERSION}-dev
-	docker push $IMAGE_NAME:${VERSION}-dev
-
-	# Push runtime image
-	docker tag metacall/core:runtime $IMAGE_NAME:${VERSION}-runtime
-	docker push $IMAGE_NAME:${VERSION}-runtime
-
-	# Push cli image
-	docker tag metacall/core:cli $IMAGE_NAME:${VERSION}-cli
-	docker push $IMAGE_NAME:${VERSION}-cli
+	# Push images
+	for tag in "${METACALL_TAGS[@]}"; do
+		docker tag metacall/core:${tag} $IMAGE_NAME:${VERSION}-${tag}
+		docker push $IMAGE_NAME:${VERSION}-${tag}
+	done
 
 	# Push cli image as version
 	docker tag metacall/core:cli $IMAGE_NAME:${VERSION}
