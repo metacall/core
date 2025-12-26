@@ -17,7 +17,7 @@ env:
   DOCKER_REGISTRY: index.docker.io
   DOCKER_USERNAME: metacall
   IMAGE_NAME: core
-  BUILDKIT_VERSION: 0.13.0
+  BUILDKIT_VERSION: 0.30.0
 
   # TODO: Tests failing
   # - linux/s390x
