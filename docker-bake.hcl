@@ -84,7 +84,6 @@ group "default" {
 target "deps" {
 	context = "."
 	dockerfile = "tools/deps/Dockerfile"
-	tags = ["${DOCKER_USERNAME}/${IMAGE_NAME}:deps"]
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
@@ -92,17 +91,12 @@ target "deps" {
 		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
 		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
 	}
-	# Set output parameters
-	output = [
-		"type=image,name=docker.io/${DOCKER_USERNAME}/${IMAGE_NAME}:deps,push-by-digest=true,name-canonical=true,push=true"
-	]
 }
 
 # Development image (depends on deps)
 target "dev" {
 	context = "."
 	dockerfile = "tools/dev/Dockerfile"
-	tags = ["${DOCKER_USERNAME}/${IMAGE_NAME}:dev"]
 	args = {
 		METACALL_PATH = "${METACALL_PATH}"
 		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
@@ -112,17 +106,12 @@ target "dev" {
 	contexts = {
 		"metacall/core:deps" = "target:deps"
 	}
-	# Set output parameters
-	output = [
-		"type=image,name=docker.io/${DOCKER_USERNAME}/${IMAGE_NAME}:dev,push-by-digest=true,name-canonical=true,push=true"
-	]
 }
 
 # Runtime image (depends on dev for builder stage)
 target "runtime" {
 	context = "."
 	dockerfile = "tools/runtime/Dockerfile"
-	tags = ["${DOCKER_USERNAME}/${IMAGE_NAME}:runtime"]
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
@@ -132,24 +121,15 @@ target "runtime" {
 	contexts = {
 		"metacall/core:dev" = "target:dev"
 	}
-	# Set output parameters
-	output = [
-		"type=image,name=docker.io/${DOCKER_USERNAME}/${IMAGE_NAME}:runtime,push-by-digest=true,name-canonical=true,push=true"
-	]
 }
 
 # CLI image (depends on dev for builder and runtime for base)
 target "cli" {
 	context = "."
 	dockerfile = "tools/cli/Dockerfile"
-	tags = ["${DOCKER_USERNAME}/${IMAGE_NAME}:cli"]
 	# Use both dev (for builder) and runtime (for base) targets
 	contexts = {
 		"metacall/core:dev" = "target:dev"
 		"metacall/core:runtime" = "target:runtime"
 	}
-	# Set output parameters
-	output = [
-		"type=image,name=docker.io/${DOCKER_USERNAME}/${IMAGE_NAME}:cli,push-by-digest=true,name-canonical=true,push=true"
-	]
 }

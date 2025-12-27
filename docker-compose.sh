@@ -255,9 +255,15 @@ sub_bake() {
 	docker buildx bake \
 		--metadata-file .bake/metadata.json \
 		-f docker-bake.hcl \
-		--set "*.platform=${METACALL_PLATFORM}"
+		--set "*.platform=${METACALL_PLATFORM}" \
+		--set "*.output=type=image,name=docker.io/${DOCKER_USERNAME}/${IMAGE_NAME},push-by-digest=true,name-canonical=true,push=true"
 
-	cat .bake/metadata.json
+	# Generate the digests
+	for tag in "${METACALL_TAGS[@]}"; do
+		mkdir -p ".bake/digests/${tag}"
+		digest=$(jq -r ".${tag}[\"containerimage.digest\"] | ltrimstr(\"sha256:\")" .bake/metadata.json)
+		touch ".bake/digests/${tag}/${digest}"
+	done
 }
 
 # Push MetaCall Docker Compose
