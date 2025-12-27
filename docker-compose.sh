@@ -208,7 +208,7 @@ sub_platform() {
 	rm -rf docker-compose.bake.yml
 }
 
-# Build MetaCall Docker Compose with multi-platform specifier
+# Build MetaCall Docker Bake with multi-platform specifier
 sub_bake() {
 	if [ -z "${METACALL_PLATFORM+x}" ]; then
 		echo "Error: METACALL_PLATFORM variable not defined"
@@ -263,6 +263,36 @@ sub_bake() {
 		mkdir -p ".bake/digests/${tag}"
 		digest=$(jq -r ".${tag}[\"containerimage.digest\"] | ltrimstr(\"sha256:\")" .bake/metadata.json)
 		touch ".bake/digests/${tag}/${digest}"
+	done
+}
+
+# Create Manifest for multi-platform images from Docker Bake
+sub_manifest() {
+	if [ -z "${DOCKER_USERNAME+x}" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
+	if [ -z "${IMAGE_NAME+x}" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
+	# Get current directory
+	workdir=$(pwd)
+
+	for tag in "${METACALL_TAGS[@]}"; do
+		cd "${workdir}/.bake/digests/${tag}"
+		image_hashes=$(printf '${DOCKER_USERNAME}/${IMAGE_NAME}@sha256:%s ' *)
+		docker buildx imagetools create -t ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} ${image_hashes}
+		# TODO: Implement versions for each tag
+		docker buildx imagetools inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}
+
+		if [[ "${tag}" == "cli" ]]; then
+			docker buildx imagetools create -t ${DOCKER_USERNAME}/${IMAGE_NAME}:latest ${image_hashes}
+			docker buildx imagetools inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
+			# TODO: Implement version for latest
+		fi
 	done
 }
 
@@ -388,6 +418,9 @@ case "$1" in
 		;;
 	bake)
 		sub_bake
+		;;
+	manifest)
+		sub_manifest
 		;;
 	push)
 		sub_push
