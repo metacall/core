@@ -118,7 +118,7 @@ jobs:
         run: |
           set -exuo pipefail
           image=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}@sha256:$(basename .bake/digests/cli/*)
-          docker pull ${image}
+          docker pull --platform ${{ matrix.platform }} ${image}
           docker image inspect ${image} --format='{{.Os}}/{{.Architecture}}'
           cat <<EOF > Dockerfile.test
           FROM ${image}
