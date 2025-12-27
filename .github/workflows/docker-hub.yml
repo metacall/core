@@ -144,7 +144,7 @@ jobs:
         uses: actions/upload-artifact@v6.0.0
         with:
           name: digests-${{ env.PLATFORM_SAFE }}
-          path: /tmp/digests/*
+          path: .bake/digests/*
           if-no-files-found: error
           retention-days: 1
 
