@@ -278,20 +278,37 @@ sub_manifest() {
 		exit 1
 	fi
 
+	if [ "${TAG_VERSION:-}" == "true" ]; then
+		VERSION=$(tail -n 1 VERSION | tr -d '\n')
+	fi
+
 	# Get current directory
 	workdir=$(pwd)
 
 	for tag in "${METACALL_TAGS[@]}"; do
 		cd "${workdir}/.bake/digests/${tag}"
-		image_hashes=$(printf '${DOCKER_USERNAME}/${IMAGE_NAME}@sha256:%s ' *)
+		image_hashes=$(printf "${DOCKER_USERNAME}/${IMAGE_NAME}@sha256:%s " *)
+
+		# Tag each image
 		docker buildx imagetools create -t ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag} ${image_hashes}
-		# TODO: Implement versions for each tag
 		docker buildx imagetools inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:${tag}
 
+		# Tag each image with version if any
+		if [ -n "${VERSION+x}" ]; then
+			docker buildx imagetools create -t ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag} ${image_hashes}
+			docker buildx imagetools inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}-${tag}
+		fi
+
 		if [[ "${tag}" == "cli" ]]; then
+			# Tag the latest
 			docker buildx imagetools create -t ${DOCKER_USERNAME}/${IMAGE_NAME}:latest ${image_hashes}
 			docker buildx imagetools inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
-			# TODO: Implement version for latest
+
+			# Tag the version
+			if [ -n "${VERSION+x}" ]; then
+				docker buildx imagetools create -t ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION} ${image_hashes}
+				docker buildx imagetools inspect ${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}
+			fi
 		fi
 	done
 }

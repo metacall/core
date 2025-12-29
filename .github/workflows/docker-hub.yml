@@ -185,5 +185,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Create manifest list and push
+        env:
+          TAG_VERSION: ${{ startsWith(github.ref, 'refs/tags/') }}
         run: |
           ./docker-compose.sh manifest
