@@ -136,9 +136,12 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-add_dependencies(${target}
-	plthook_detour
-)
+if(NOT MINGW)
+	add_dependencies(${target}
+		plthook_detour
+	)
+endif()
+
 
 #
 # Define test properties

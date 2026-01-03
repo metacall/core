@@ -2,6 +2,11 @@
 if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_PLTHOOK)
 	return()
 endif()
+# Disable PLTHook detour on MinGW due to missing ImageDirectoryEntryToData
+if(MINGW)
+	message(STATUS "Detour plthook_detour disabled on MinGW")
+	return()
+endif()
 
 #
 # External dependencies
