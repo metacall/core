@@ -2,6 +2,11 @@
 if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_PLUGINS_BACKTRACE)
 	return()
 endif()
+# MinGW does not support MSVC-specific CRT symbols used by backward-cpp
+if(MINGW)
+    message(STATUS "Skipping backtrace_plugin on MinGW (unsupported CRT symbols)")
+    return()
+endif()
 
 #
 # External dependencies
