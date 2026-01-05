@@ -75,7 +75,9 @@ typedef NTSTATUS(NTAPI *RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 
 typedef long pid_t;
 
-pid_t fork(void);
+#ifndef __MINGW32__
+    typedef long pid_t;
+#endif
 
 pid_t fork()
 {
