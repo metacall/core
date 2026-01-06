@@ -110,6 +110,7 @@ jobs:
             mingw-w64-${{ matrix.env }}-gcc
             mingw-w64-${{ matrix.env }}-ninja
             mingw-w64-${{ matrix.env }}-pkg-config
+            mingw-w64-${{ matrix.env }}-gtest
             make
             git
 
