@@ -23,16 +23,16 @@ static int post_callback_fired = 0;
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
-#define _WIN32_WINNT 0x0600
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+	#define _WIN32_WINNT 0x0600
+	#define WIN32_LEAN_AND_MEAN
+	#include <windows.h>
 
-#define RTL_CLONE_PROCESS_FLAGS_CREATE_SUSPENDED 0x00000001
-#define RTL_CLONE_PROCESS_FLAGS_INHERIT_HANDLES  0x00000002
-#define RTL_CLONE_PROCESS_FLAGS_NO_SYNCHRONIZE   0x00000004
+	#define RTL_CLONE_PROCESS_FLAGS_CREATE_SUSPENDED 0x00000001
+	#define RTL_CLONE_PROCESS_FLAGS_INHERIT_HANDLES	 0x00000002
+	#define RTL_CLONE_PROCESS_FLAGS_NO_SYNCHRONIZE	 0x00000004
 
-#define RTL_CLONE_PARENT 0
-#define RTL_CLONE_CHILD  297
+	#define RTL_CLONE_PARENT 0
+	#define RTL_CLONE_CHILD	 297
 
 typedef long NTSTATUS;
 
@@ -73,9 +73,9 @@ typedef NTSTATUS(NTAPI *RtlCloneUserProcessPtr)(
 	HANDLE DebugPort,
 	PRTL_USER_PROCESS_INFORMATION ProcessInformation);
 
-#ifndef __MINGW32__
+	#ifndef __MINGW32__
 typedef long pid_t;
-#endif
+	#endif
 
 pid_t fork()
 {
