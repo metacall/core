@@ -73,10 +73,8 @@ typedef NTSTATUS(NTAPI *RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 	HANDLE DebugPort,
 	PRTL_USER_PROCESS_INFORMATION ProcessInformation);
 
-typedef long pid_t;
-
 #ifndef __MINGW32__
-    typedef long pid_t;
+typedef long pid_t;
 #endif
 
 pid_t fork()
