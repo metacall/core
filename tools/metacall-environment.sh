@@ -632,7 +632,7 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
+	LLVM_VERSION_STRING=17
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
@@ -684,8 +684,8 @@ sub_c(){
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
 		LIBCLANG_VERSION=$(brew list --versions llvm@$LLVM_VERSION_STRING | awk '{print $2}')
-		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/${LIBCLANG_VERSION}/lib/clang/${LIBCLANG_VERSION}/include" >> $CMAKE_CONFIG_PATH
-		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/${LIBCLANG_VERSION}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
