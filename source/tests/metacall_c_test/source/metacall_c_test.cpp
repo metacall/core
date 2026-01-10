@@ -91,7 +91,7 @@ TEST_F(metacall_c_test, DefaultConstructor)
 		"compiled.c"
 	};
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 
 	void *ret = metacall("compiled_sum", 3, 4);
 
@@ -238,7 +238,7 @@ TEST_F(metacall_c_test, DefaultConstructor)
 	EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_INCLUDE_DIR));
 	EXPECT_EQ((int)0, (int)metacall_execution_path("c", LIBFFI_LIBRARY));
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
 
 	ret = metacall("call_fp_address");
 
@@ -289,7 +289,7 @@ TEST_F(metacall_c_test, DefaultConstructor)
 			"int compiled_mult_memory(int a, int b) { return a * b; }"
 		};
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
 
 		void *ret = metacall("compiled_mult_memory", 3, 4);
 
