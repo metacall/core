@@ -632,7 +632,7 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=17
+	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
@@ -677,13 +677,13 @@ sub_c(){
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		LLVM_VERSION_STRING=17
 		brew install libffi
 		brew install llvm@$LLVM_VERSION_STRING
 		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
 		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
-		LIBCLANG_VERSION=$(brew list --versions llvm@$LLVM_VERSION_STRING | awk '{print $2}')
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 	fi
