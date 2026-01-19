@@ -133,9 +133,6 @@ target_link_libraries(${target}
 
 	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
 
-	# HP-UX requires linking against dld library for shl_load functions
-	$<$<AND:$<BOOL:${BUILD_SHARED_LIBS}>,$<BOOL:${PROJECT_OS_HPUX}>>:dld>
-
 	INTERFACE
 )
 
