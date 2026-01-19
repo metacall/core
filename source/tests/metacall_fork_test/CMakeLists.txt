@@ -1,4 +1,9 @@
 # Check if detours are enabled
+if(MINGW)
+    message(STATUS "Skipping metacall_fork_test on MinGW (fork not supported)")
+    return()
+endif()
+
 if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS)
 	return()
 endif()
@@ -136,9 +141,12 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-add_dependencies(${target}
-	plthook_detour
-)
+if(NOT MINGW)
+	add_dependencies(${target}
+		plthook_detour
+	)
+endif()
+
 
 #
 # Define test properties

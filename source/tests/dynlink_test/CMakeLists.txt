@@ -2,6 +2,11 @@
 # Executable name and options
 #
 
+if(MINGW)
+    message(STATUS "Skipping dynlink_test on MinGW (-rdynamic not supported)")
+    return()
+endif()
+
 # Target name
 set(target dynlink-test)
 message(STATUS "Test ${target}")

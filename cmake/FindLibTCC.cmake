@@ -58,6 +58,10 @@ find_path(LIBTCC_INCLUDE_DIR libtcc.h
 	PATH_SUFFIXES ${LIBTCC_SUFFIXES}
 )
 
+if(NOT LIBTCC_LIBRARY)
+	message(WARNING "LibTCC shared library (libtcc.so) not found. Ubuntu may only provide libtcc.a which cannot be linked into libc_loader.so. Consider building/installing shared libtcc.")
+endif()
+
 # Define TCC cmake module
 find_package_handle_standard_args(LibTCC DEFAULT_MSG LIBTCC_LIBRARY LIBTCC_INCLUDE_DIR)
 
