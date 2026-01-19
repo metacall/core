@@ -1,6 +1,6 @@
 #
 # CMake Find LibGit2 Library by Parra Studios
-# Copyright (C) 2016 - 2025 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+# Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
 # Find libgit2 library and include paths
