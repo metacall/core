@@ -307,14 +307,17 @@ sub_c(){
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		LLVM_VERSION_STRING=17
 		brew install libffi
 		brew install llvm@$LLVM_VERSION_STRING
 		brew link llvm@$LLVM_VERSION_STRING --force --overwrite
 		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
-		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
-		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
+		LIBCLANG_REALPATH=$(readlink -f "${LIBCLANG_PREFIX}")
+		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_REALPATH}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBCLANG_REALPATH}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
 	fi
 }
 

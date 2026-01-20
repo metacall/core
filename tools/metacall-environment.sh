@@ -685,8 +685,6 @@ sub_c(){
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		LIBCLANG_PREFIX=$(brew --prefix llvm@$LLVM_VERSION_STRING)
 		LIBCLANG_REALPATH=$(readlink -f "${LIBCLANG_PREFIX}")
-		# TODO: Remove debug info
-		ls -laR "${LIBCLANG_REALPATH}"
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_REALPATH}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_REALPATH}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
