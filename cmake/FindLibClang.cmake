@@ -75,9 +75,8 @@ if(NOT LibClang_INCLUDE_DIR)
 		NAMES ${LibClang_INCLUDE_HEADERS}
 		PATHS ${LibClang_INCLUDE_PATHS} /usr/include/clang-c # Use this path as a fallback
 	)
+	get_filename_component(LibClang_INCLUDE_DIR ${LibClang_INCLUDE_DIR} DIRECTORY)
 endif()
-
-get_filename_component(LibClang_INCLUDE_DIR ${LibClang_INCLUDE_DIR} DIRECTORY)
 
 # Define LibClang cmake module
 find_package_handle_standard_args(LibClang DEFAULT_MSG LibClang_LIBRARY LibClang_INCLUDE_DIR)
@@ -86,6 +85,6 @@ find_package_handle_standard_args(LibClang DEFAULT_MSG LibClang_LIBRARY LibClang
 mark_as_advanced(LibClang_LIBRARY LibClang_INCLUDE_DIR)
 
 if(LibClang_CMAKE_DEBUG)
-	message(STATUS "LibClang_INCLUDE_DIRS: ${LibClang_INCLUDE_DIR}")
+	message(STATUS "LibClang_INCLUDE_DIR: ${LibClang_INCLUDE_DIR}")
 	message(STATUS "LibClang_LIBRARY: ${LibClang_LIBRARY}")
 endif()
