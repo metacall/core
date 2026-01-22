@@ -31,6 +31,8 @@
 	#include <dynlink/dynlink_impl_win32.h>
 #elif defined(__hpux) || defined(__hpux__) || defined(_HPUX_SOURCE)
 	#include <dynlink/dynlink_impl_hpux.h>
+#elif defined(__ANDROID__) || defined(ANDROID)
+	#include <dynlink/dynlink_impl_android.h>
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	(((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) && (defined(MAC_OS_X_VERSION_10_15) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15)))
