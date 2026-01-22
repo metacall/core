@@ -18,8 +18,6 @@
  *
  */
 
-
-
 #include <dynlink/dynlink.h>
 
 #include <dynlink/dynlink_impl.h>
@@ -30,10 +28,8 @@
 
 #include <dlfcn.h>
 
-
 const char *dynlink_impl_interface_prefix_android(void)
 {
-	
 	static const char prefix_android[] = "lib";
 
 	return prefix_android;
@@ -41,7 +37,6 @@ const char *dynlink_impl_interface_prefix_android(void)
 
 const char *dynlink_impl_interface_extension_android(void)
 {
-	
 	static const char extension_android[] = "so";
 
 	return extension_android;
@@ -55,7 +50,6 @@ dynlink_impl dynlink_impl_interface_load_android(dynlink handle)
 
 	DYNLINK_FLAGS_SET(flags_impl, 0);
 
-	
 	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NOW))
 	{
 		DYNLINK_FLAGS_ADD(flags_impl, RTLD_NOW);
@@ -76,15 +70,12 @@ dynlink_impl dynlink_impl_interface_load_android(dynlink handle)
 		DYNLINK_FLAGS_ADD(flags_impl, RTLD_GLOBAL);
 	}
 
-	
 	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
 	{
-		
 		impl = dlopen(NULL, flags_impl);
 	}
 	else
 	{
-		
 		impl = dlopen(dynlink_get_path(handle), flags_impl);
 	}
 
@@ -107,12 +98,10 @@ int dynlink_impl_interface_symbol_android(dynlink handle, dynlink_impl impl, con
 
 	(void)handle;
 
-	
 	dlerror();
 
 	symbol = dlsym(impl, name);
 
-	
 	if (symbol == NULL)
 	{
 		const char *error_msg = dlerror();
