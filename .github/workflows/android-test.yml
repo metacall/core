@@ -67,11 +67,12 @@ jobs:
             -DANDROID_PLATFORM=android-${{ matrix.api-level }} \
             -DANDROID_STL=c++_shared \
             -DCMAKE_BUILD_TYPE=${{ matrix.build == 'debug' && 'Debug' || 'Release' }} \
-            -DOPTION_BUILD_LOADERS=OFF \
+            -DOPTION_BUILD_LOADERS=ON \
             -DOPTION_BUILD_SCRIPTS=OFF \
-            -DOPTION_BUILD_TESTS=OFF \
+            -DOPTION_BUILD_TESTS=ON \
             -DOPTION_BUILD_EXAMPLES=OFF \
             -DOPTION_BUILD_PORTS=OFF \
+            -DOPTION_BUILD_CLI=OFF \
             -G Ninja
 
       - name: Build core libraries
@@ -90,6 +91,8 @@ jobs:
           path: |
             build/*.so
             build/**/*.so
+            build/**/*_test
+            build/**/*_test.exe
           retention-days: 7
 
   android-emulator-test:
@@ -142,6 +145,9 @@ jobs:
 
           # Copy all shared libraries
           find build -name "*.so" -exec cp {} test_bundle/ \;
+
+          # Copy test executables
+          find build -name "*_test" -type f -executable -exec cp {} test_bundle/ \;
 
           # Copy libc++_shared.so from NDK
           cp $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so test_bundle/
@@ -267,5 +273,9 @@ jobs:
             adb shell "ls -la /data/local/tmp/metacall/"
 
             echo ""
-            echo "=== Running dynlink Android test ==="
+            echo "=== Running custom dynlink Android test ==="
             adb shell "cd /data/local/tmp/metacall && chmod +x test_dynlink_android && LD_LIBRARY_PATH=/data/local/tmp/metacall ./test_dynlink_android"
+
+            echo ""
+            echo "=== Running MetaCall test executables ==="
+            adb shell "cd /data/local/tmp/metacall && for test in *_test; do if [ -f \"\$test\" ] && [ -x \"\$test\" ]; then echo \"Running \$test...\"; LD_LIBRARY_PATH=/data/local/tmp/metacall ./\$test && echo \"PASSED: \$test\" || echo \"FAILED: \$test\"; fi; done"
