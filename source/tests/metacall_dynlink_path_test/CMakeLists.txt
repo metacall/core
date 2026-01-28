@@ -100,6 +100,8 @@ target_compile_definitions(${target}
 	${DEFAULT_COMPILE_DEFINITIONS}
 	# For metacall library path test
 	METACALL_LIBRARY_PATH="${METACALL_LIBRARY_PATH}"
+	# For Android cross-compilation, skip path comparison (runtime path differs from build path)
+	$<$<BOOL:${ANDROID}>:METACALL_DYNLINK_PATH_TEST_SKIP_COMPARE>
 )
 
 #

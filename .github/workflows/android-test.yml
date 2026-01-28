@@ -142,6 +142,8 @@ jobs:
       - name: Prepare test files
         run: |
           mkdir -p test_bundle
+          mkdir -p test_bundle/detours
+          mkdir -p test_bundle/configurations
 
           # Copy all shared libraries
           find build -name "*.so" -exec cp {} test_bundle/ \;
@@ -152,10 +154,59 @@ jobs:
           # Copy libc++_shared.so from NDK
           cp $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so test_bundle/
 
+          # Copy detour plugins to detours directory
+          if [ -f test_bundle/libplthook_detour.so ]; then
+            cp test_bundle/libplthook_detour.so test_bundle/detours/
+          fi
+
+          # Create configuration files with Android paths
+          cat > test_bundle/configurations/global.json << 'JSONEOF'
+          {
+            "value": 12345,
+            "value_local": 321321,
+            "child_a": "/data/local/tmp/metacall/configurations/child_a.json",
+            "child_b": "/data/local/tmp/metacall/configurations/child_b.json"
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_a.json << 'JSONEOF'
+          {
+            "value": 65432345,
+            "value_a": 555
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_b.json << 'JSONEOF'
+          {
+            "value": 54321,
+            "value_b": 333,
+            "child_c": "/data/local/tmp/metacall/configurations/child_c.json",
+            "child_d": "/data/local/tmp/metacall/configurations/child_d.json"
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_c.json << 'JSONEOF'
+          {
+            "value": 1111,
+            "value_c": 8080
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_d.json << 'JSONEOF'
+          {
+            "value": 22222,
+            "value_d": 999999
+          }
+          JSONEOF
+
           echo "=== Test bundle contents ==="
           ls -la test_bundle/
+          echo "=== Detours directory ==="
+          ls -la test_bundle/detours/
+          echo "=== Configurations directory ==="
+          ls -la test_bundle/configurations/
 
-      - name: Create test program
+      - name: Create custom dynlink test program
         run: |
           cat > test_dynlink_android.c << 'EOF'
           #include <stdio.h>
@@ -278,4 +329,10 @@ jobs:
 
             echo ""
             echo "=== Running MetaCall test executables ==="
-            adb shell "cd /data/local/tmp/metacall && for test in *_test; do if [ -f \"\$test\" ] && [ -x \"\$test\" ]; then echo \"Running \$test...\"; LD_LIBRARY_PATH=/data/local/tmp/metacall ./\$test && echo \"PASSED: \$test\" || echo \"FAILED: \$test\"; fi; done"
+            # Set up environment variables needed by tests:
+            # - DETOUR_LIBRARY_PATH: Path to detour plugins (plthook)
+            # - CONFIGURATION_PATH: Path to global.json for configuration tests
+            # - ENV_TEXT, ENV_PATH, ENV_SAN: Environment variables for environment tests
+            # - LD_LIBRARY_PATH: Library search path
+            TEST_ENV="DETOUR_LIBRARY_PATH=/data/local/tmp/metacall/detours CONFIGURATION_PATH=/data/local/tmp/metacall/configurations/global.json ENV_TEXT=abcd ENV_PATH=abcd ENV_SAN=abcd/ LD_LIBRARY_PATH=/data/local/tmp/metacall"
+            adb shell "cd /data/local/tmp/metacall && for test in *_test; do if [ -f \"\$test\" ] && [ -x \"\$test\" ]; then echo \"Running \$test...\"; $TEST_ENV ./\$test && echo \"PASSED: \$test\" || echo \"FAILED: \$test\"; fi; done"
