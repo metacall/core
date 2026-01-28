@@ -28,15 +28,7 @@ VERBOSE="${VERBOSE:-0}"
 TEST_FILTER="${TEST_FILTER:-}"
 ANDROID_ABI="${ANDROID_ABI:-arm64-v8a}"
 
-# Known failing tests on Android with reasons
-# These tests have known issues on Android and are skipped by default
-# - detour-test: PLTHook library doesn't support Android (plthook_open fails)
-# - metacall-fork-test: Depends on detour + fork() has Android Zygote limitations
-# - configuration-test: Uses hardcoded host build paths in test config files
-# - metacall-dynlink-path-test: Compares against hardcoded host build paths
-# - environment-test: Requires specific test env vars (ENVIRONMENT_TEST_TEXT=abcd)
-# Reference: https://github.com/kubo/plthook/issues/9
-# Reference: https://source.android.com/docs/core/runtime/zygote
+
 KNOWN_FAILING_TESTS="detour-test metacall-fork-test configuration-test metacall-dynlink-path-test environment-test"
 SKIP_KNOWN_FAILING="${SKIP_KNOWN_FAILING:-1}"
 
@@ -229,10 +221,8 @@ push_files_to_device() {
     fi
 
     # Push libc++_shared.so from NDK if available
-    # Reference: https://developer.android.com/ndk/guides/cpp-support
     if [ -n "${ANDROID_NDK_HOME:-}" ]; then
         # Detect host OS for prebuilt path
-        # Note: darwin-x86_64 contains fat binaries that work on Apple Silicon too
         local host_tag
         case "$(uname -s)" in
             Linux*)  host_tag="linux-x86_64" ;;
@@ -325,8 +315,7 @@ run_single_test() {
     env_vars="$env_vars DETOUR_LIBRARY_PATH=$ANDROID_TEST_DIR"
     env_vars="$env_vars DYNLINK_TEST_LIBRARY_PATH=$ANDROID_TEST_DIR"
 
-    # Run test without timeout (Android toybox timeout has compatibility issues)
-    # Reference: https://github.com/jackpal/Android-Terminal-Emulator/wiki/Android-Shell-Command-Reference
+
     local start_time=$(date +%s)
     local exit_code
 
@@ -364,7 +353,7 @@ run_all_tests() {
     echo ""
 
     # Get list of test names on device using IFS to handle newlines properly
-    # Reference: https://www.baeldung.com/linux/variable-preserve-linebreaks
+
     local OLD_IFS="$IFS"
     IFS=$'\n'
 
