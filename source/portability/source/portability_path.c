@@ -597,3 +597,27 @@ int portability_path_is_pattern(const char *path, size_t size)
 
 	return 1;
 }
+
+int portability_path_exists(const char *path)
+{
+#if defined(WIN32) || defined(_WIN32) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+
+	if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)
+	{
+		return 1;
+	}
+
+	return 0;
+#else
+	struct stat buffer;
+
+	if (stat(path, &buffer) != 0)
+	{
+		return 1;
+	}
+
+	return 0;
+#endif
+}

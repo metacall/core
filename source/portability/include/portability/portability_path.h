@@ -48,24 +48,28 @@
 
 	#include <limits.h>
 	#include <unistd.h>
+	#include <sys/stat.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	#include <stdlib.h>
 	#include <limits.h>
 	#include <sys/syslimits.h>
+	#include <sys/stat.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #elif defined(__FreeBSD__)
 	#include <limits.h>
 	#include <sys/types.h>
 	#include <sys/sysctl.h>
+	#include <sys/stat.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #elif defined(sun) || defined(__sun)
 	#include <stdlib.h>
 	#include <limits.h>
 	#include <string.h>
+	#include <sys/stat.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #else
@@ -187,6 +191,18 @@ PORTABILITY_API int portability_path_separator_normalize_inplace(char *path, siz
 PORTABILITY_API int portability_path_compare(const char *left_path, const char *right_path);
 
 PORTABILITY_API int portability_path_is_pattern(const char *path, size_t size);
+
+/**
+ * @brief
+ *   Check if a path exists either if it is a directory or a file.
+ *
+ * @param[in] path
+ *   The full path to extract the name from.
+ *
+ * @return
+ *   Zero if the path exists, one otherwise.
+ */
+PORTABILITY_API int portability_path_exists(const char *path);
 
 #ifdef __cplusplus
 }
