@@ -230,8 +230,7 @@ TEST_F(metacall_c_test, DefaultConstructor)
 
 	/* File with dependencies */
 	const char *c_dep_scripts[] = {
-		"ffi.c",
-		"ffi.ld"
+		"ffi.c"
 	};
 
 	/* Set dependency paths */
