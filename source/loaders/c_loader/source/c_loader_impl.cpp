@@ -57,6 +57,7 @@ namespace fs = std::experimental::filesystem;
 #include <vector>
 
 #include <cassert>
+#include <cstdlib>
 #include <cstring>
 
 /* LibFFI */
@@ -74,7 +75,7 @@ typedef struct loader_impl_c_type
 	std::vector<std::string> execution_paths;
 	std::string libtcc_runtime_path;
 
-} * loader_impl_c;
+} *loader_impl_c;
 
 struct loader_impl_c_handle_base_type;
 
@@ -87,7 +88,7 @@ typedef struct c_loader_impl_discover_visitor_data_type
 	scope sp;
 	int result;
 
-} * c_loader_impl_discover_visitor_data;
+} *c_loader_impl_discover_visitor_data;
 
 static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data);
 
@@ -104,7 +105,7 @@ public:
 
 	virtual int discover_visitor(std::vector<const char *> &command_line_args, void *data) = 0;
 
-} * loader_impl_c_handle_base;
+} *loader_impl_c_handle_base;
 
 typedef struct loader_impl_c_handle_file_type : loader_impl_c_handle_base_type
 {
@@ -180,7 +181,7 @@ private:
 		return true;
 	}
 
-} * loader_impl_c_handle_file;
+} *loader_impl_c_handle_file;
 
 typedef struct loader_impl_c_handle_memory_type : loader_impl_c_handle_base_type
 {
@@ -232,7 +233,7 @@ public:
 		return 0;
 	}
 
-} * loader_impl_c_handle_memory;
+} *loader_impl_c_handle_memory;
 
 static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr);
 static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_base c_handle, context ctx);
@@ -272,15 +273,88 @@ public:
 		/* JIT the code into memory */
 		tcc_set_output_type(this->state, TCC_OUTPUT_MEMORY);
 
+		tcc_set_error_func(this->state, nullptr, [](void *, const char *msg) {
+			log_write("metacall", LOG_LEVEL_ERROR, "TCC Error: %s", msg);
+		});
+
 		/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
 		if (!c_impl->libtcc_runtime_path.empty())
 		{
 			tcc_set_lib_path(this->state, c_impl->libtcc_runtime_path.c_str());
+
+			std::string tcc_include_path = c_impl->libtcc_runtime_path + "/lib/tcc/include";
+			tcc_add_sysinclude_path(this->state, tcc_include_path.c_str());
 		}
 
-		/* Register execution paths */
+#if defined(__APPLE__)
+		{
+			const char *sdk_root = std::getenv("SDKROOT");
+			std::string sdk_include_path;
+
+			if (sdk_root != nullptr && sdk_root[0] != '\0')
+			{
+				sdk_include_path = std::string(sdk_root) + "/usr/include";
+			}
+			else
+			{
+				const char *default_sdk_paths[] = {
+					"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+					"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
+					nullptr
+				};
+
+				for (const char **path = default_sdk_paths; *path != nullptr; ++path)
+				{
+					if (fs::exists(*path))
+					{
+						sdk_include_path = *path;
+						break;
+					}
+				}
+			}
+
+			if (!sdk_include_path.empty())
+			{
+				tcc_add_include_path(this->state, sdk_include_path.c_str());
+			}
+		}
+
+		{
+			const char *ffi_include_paths[] = {
+				"/opt/homebrew/opt/libffi/include",
+				"/usr/local/opt/libffi/include",
+				"/usr/include/ffi",
+				nullptr
+			};
+
+			for (const char **path = ffi_include_paths; *path != nullptr; ++path)
+			{
+				if (fs::exists(*path))
+				{
+					tcc_add_include_path(this->state, *path);
+					break;
+				}
+			}
+		}
+#endif
+
 		for (auto exec_path : c_impl->execution_paths)
 		{
+			if (exec_path.size() > 3)
+			{
+				std::string extension = exec_path.substr(exec_path.size() - 3);
+				std::string extension6;
+				if (exec_path.size() > 6)
+				{
+					extension6 = exec_path.substr(exec_path.size() - 6);
+				}
+
+				if (extension == ".so" || extension == ".a" || extension6 == ".dylib")
+				{
+					continue;
+				}
+			}
+
 			tcc_add_include_path(this->state, exec_path.c_str());
 			tcc_add_library_path(this->state, exec_path.c_str());
 		}
@@ -397,9 +471,9 @@ public:
 				std::string lib_name = lib_path.filename().string();
 
 				/* If the path is relative, we keep trying the exec_paths until we find the header,
-				* this is for solving situations where we have the header in /usr/local/include and
-				* the library in /usr/local/lib
-				*/
+				 * this is for solving situations where we have the header in /usr/local/include and
+				 * the library in /usr/local/lib
+				 */
 				if (this->lib == NULL)
 				{
 					this->load_dynlink(absolute_path, lib_name.c_str());
@@ -490,7 +564,7 @@ private:
 		return c_loader_impl_discover_ast(impl, this, ctx);
 	}
 
-} * loader_impl_c_handle_dynlink;
+} *loader_impl_c_handle_dynlink;
 
 typedef struct loader_impl_c_function_type
 {
@@ -503,7 +577,7 @@ typedef struct loader_impl_c_function_type
 	void **values;
 	const void *address;
 
-} * loader_impl_c_function;
+} *loader_impl_c_function;
 
 /* Retrieve the equivalent FFI type from type id */
 static ffi_type *c_loader_impl_ffi_type(type_id id);
@@ -1203,7 +1277,7 @@ int c_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 
 	/* TODO: It would be interesting to support LD_LIBRARY_PATH or DYLD_LIBRARY_PATH
-	* on startup for supporting standard execution paths */
+	 * on startup for supporting standard execution paths */
 	c_impl->execution_paths.push_back(path);
 
 	return 0;
@@ -1310,6 +1384,15 @@ type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_ty
 		In order to avoid problems with this, we must get the canonical type */
 		case CXType_Typedef:
 			return c_loader_impl_clang_type(impl, cursor, clang_getCanonicalType(cx_type), impl_type);
+
+		case CXType_Elaborated: {
+			CXType named_type = clang_Type_getNamedType(cx_type);
+			if (named_type.kind != CXType_Invalid)
+			{
+				return c_loader_impl_clang_type(impl, cursor, named_type, impl_type);
+			}
+			return c_loader_impl_clang_type(impl, cursor, clang_getCanonicalType(cx_type), impl_type);
+		}
 
 		/* TODO: Add more types */
 		default:
@@ -1457,12 +1540,65 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 	std::vector<std::string> includes;
 	std::vector<const char *> command_line_args;
 
-	/* Otherwise, check the execution paths */
 	for (auto exec_path : c_impl->execution_paths)
 	{
 		includes.push_back("-I" + exec_path);
 		command_line_args.push_back(includes.back().c_str());
 	}
+
+#if defined(__APPLE__)
+	{
+		const char *sdk_root = std::getenv("SDKROOT");
+		std::string sdk_include_path;
+
+		if (sdk_root != nullptr && sdk_root[0] != '\0')
+		{
+			sdk_include_path = std::string(sdk_root) + "/usr/include";
+		}
+		else
+		{
+			const char *default_sdk_paths[] = {
+				"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+				"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
+				nullptr
+			};
+
+			for (const char **path = default_sdk_paths; *path != nullptr; ++path)
+			{
+				if (fs::exists(*path))
+				{
+					sdk_include_path = *path;
+					break;
+				}
+			}
+		}
+
+		if (!sdk_include_path.empty())
+		{
+			includes.push_back("-I" + sdk_include_path);
+			command_line_args.push_back(includes.back().c_str());
+		}
+	}
+
+	{
+		const char *ffi_include_paths[] = {
+			"/opt/homebrew/opt/libffi/include",
+			"/usr/local/opt/libffi/include",
+			"/usr/include/ffi",
+			nullptr
+		};
+
+		for (const char **path = ffi_include_paths; *path != nullptr; ++path)
+		{
+			if (fs::exists(*path))
+			{
+				includes.push_back("-I" + std::string(*path));
+				command_line_args.push_back(includes.back().c_str());
+				break;
+			}
+		}
+	}
+#endif
 
 	if (c_handle->discover_visitor(command_line_args, static_cast<void *>(&data)) != 0)
 	{
@@ -1531,6 +1667,27 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
 				goto error;
+			}
+		}
+	}
+
+	for (auto exec_path : c_impl->execution_paths)
+	{
+		if (exec_path.size() > 3)
+		{
+			std::string extension = exec_path.substr(exec_path.size() - 3);
+			std::string extension6;
+			if (exec_path.size() > 6)
+			{
+				extension6 = exec_path.substr(exec_path.size() - 6);
+			}
+
+			if (extension == ".so" || extension == ".a" || extension6 == ".dylib")
+			{
+				if (fs::exists(exec_path))
+				{
+					tcc_add_file(c_handle->state, exec_path.c_str());
+				}
 			}
 		}
 	}
