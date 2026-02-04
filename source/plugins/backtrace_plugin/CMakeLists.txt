@@ -15,6 +15,9 @@ if(NOT (OPTION_BUILD_GUIX OR BackwardCpp_SOURCE))
 		GIT_TAG 0bfd0a07a61551413ccd2ab9a9099af3bad40681
 	)
 
+	# Ensure backward-cpp is compiled with position independent code (required for shared library linking)
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 	FetchContent_MakeAvailable(BackwardCpp)
 
 	FetchContent_GetProperties(BackwardCpp

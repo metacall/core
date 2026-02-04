@@ -642,34 +642,40 @@ sub_c(){
 			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
 			. /etc/os-release
 
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# Ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
+			# For trixie/forky, use native Debian packages (LLVM apt repo GPG key uses SHA1 which is rejected)
+			if [ "${VERSION_CODENAME}" = "trixie" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
+				# Use native libclang from Debian repos (version varies by release)
+				$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
+			else
+				case ${LINUX_DISTRO} in
+					debian)
+						# For now bookworm == sid, change when trixie is released
+						if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ]; then
+							CODENAME="unstable"
+							LINKNAME=""
+						else
+							# "stable" Debian release
+							CODENAME="${VERSION_CODENAME}"
 							LINKNAME="-${CODENAME}"
 						fi
-					fi
-					;;
-			esac
+						;;
+					*)
+						# Ubuntu and its derivatives
+						if [ -n "${UBUNTU_CODENAME}" ]; then
+							CODENAME="${UBUNTU_CODENAME}"
+							if [ -n "${CODENAME}" ]; then
+								LINKNAME="-${CODENAME}"
+							fi
+						fi
+						;;
+				esac
 
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+				wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+				$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+				$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+				$SUDO_CMD apt-get update
+				$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			fi
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -813,35 +819,41 @@ sub_clangformat(){
 			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
 			. /etc/os-release
 
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
+			# For trixie/forky, use native Debian packages (LLVM apt repo GPG key uses SHA1 which is rejected)
+			if [ "${VERSION_CODENAME}" = "trixie" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
+				# Use native clang-format from Debian repos
+				$SUDO_CMD apt-get install -y --no-install-recommends clang-format
+			else
+				case ${LINUX_DISTRO} in
+					debian)
+						# For now bookworm == sid, change when trixie is released
+						if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ]; then
+							CODENAME="unstable"
+							LINKNAME=""
+						else
+							# "stable" Debian release
+							CODENAME="${VERSION_CODENAME}"
 							LINKNAME="-${CODENAME}"
 						fi
-					fi
-					;;
-			esac
+						;;
+					*)
+						# ubuntu and its derivatives
+						if [ -n "${UBUNTU_CODENAME}" ]; then
+							CODENAME="${UBUNTU_CODENAME}"
+							if [ -n "${CODENAME}" ]; then
+								LINKNAME="-${CODENAME}"
+							fi
+						fi
+						;;
+				esac
 
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
-			$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
+				wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+				$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+				$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+				$SUDO_CMD apt-get update
+				$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
+				$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main clang-extra-tools=12.0.1-r1
 		fi
