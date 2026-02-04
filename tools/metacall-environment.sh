@@ -644,8 +644,8 @@ sub_c(){
 
 			case ${LINUX_DISTRO} in
 				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
+					# For now bookworm || trixie || forky == sid, change when trixie/forky is released
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
 						CODENAME="unstable"
 						LINKNAME=""
 					else
@@ -815,8 +815,8 @@ sub_clangformat(){
 
 			case ${LINUX_DISTRO} in
 				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
+					# For now bookworm || trixie || forky == sid, change when trixie/forky is released
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
 						CODENAME="unstable"
 						LINKNAME=""
 					else
