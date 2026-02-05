@@ -10,7 +10,16 @@ endif()
 find_package(LibFFI)
 
 if(NOT LIBFFI_FOUND)
-	message(SEND_ERROR "Foreing Function Interface library not found")
+	message(WARNING "Foreign Function Interface library not found, C loader will be disabled")
+	set(OPTION_BUILD_LOADERS_C OFF CACHE BOOL "Disable C loader" FORCE)
+	return()
+endif()
+
+find_package(LibClang)
+
+if(NOT LibClang_FOUND)
+	message(WARNING "Clang C API library not found, C loader will be disabled")
+	set(OPTION_BUILD_LOADERS_C OFF CACHE BOOL "Disable C loader" FORCE)
 	return()
 endif()
 
@@ -20,16 +29,10 @@ if(NOT LIBTCC_FOUND)
 	include(InstallLibTCC)
 
 	if(NOT LIBTCC_FOUND)
-		message(SEND_ERROR "TCC library not found")
+		message(WARNING "TCC library not found, C loader will be disabled")
+		set(OPTION_BUILD_LOADERS_C OFF CACHE BOOL "Disable C loader" FORCE)
 		return()
 	endif()
-endif()
-
-find_package(LibClang)
-
-if(NOT LibClang_FOUND)
-	message(SEND_ERROR "Clang C API library not found")
-	return()
 endif()
 
 #
