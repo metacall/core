@@ -48,6 +48,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <thread>
 
 typedef struct loader_impl_rpc_type
 {
@@ -199,16 +200,153 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 
 function_return function_rpc_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
-	/* TODO */
+	loader_impl_rpc_function rpc_function = static_cast<loader_impl_rpc_function>(impl);
+	loader_impl_rpc rpc_impl = rpc_function->rpc_impl;
 
 	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-	(void)resolve_callback;
-	(void)reject_callback;
-	(void)context;
 
+	/* Copy arguments to avoid use-after-free in thread */
+	value v = metacall_value_create_array(NULL, size);
+	size_t body_request_size = 0;
+
+	if (size > 0)
+	{
+		void **v_array = metacall_value_to_array(v);
+
+		for (size_t arg = 0; arg < size; ++arg)
+		{
+			/* Deep copy the arguments for thread safety */
+			v_array[arg] = metacall_value_copy(args[arg]);
+		}
+	}
+
+	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
+
+	/* Destroy the value including the copied contents */
+	metacall_value_destroy(v);
+
+	if (body_request_size == 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
+
+		if (reject_callback != NULL)
+		{
+			value error = metacall_value_create_string("Serialization failed", sizeof("Serialization failed") - 1);
+			reject_callback(error, context);
+			metacall_value_destroy(error);
+		}
+
+		return NULL;
+	}
+
+	/* Copy data needed for the async thread */
+	std::string url = rpc_function->url;
+	std::string request_body(buffer, body_request_size - 1);
+
+	/* Free the serialization buffer */
+	metacall_allocator_free(rpc_impl->allocator, buffer);
+
+	/* Spawn async thread to perform the HTTP call */
+	std::thread([url, request_body, resolve_callback, reject_callback, context]() {
+		/* Create a new CURL handle for this thread (CURL handles are not thread-safe) */
+		CURL *curl = curl_easy_init();
+
+		if (curl == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL handle for async call to %s", url.c_str());
+
+			if (reject_callback != NULL)
+			{
+				value error = metacall_value_create_string("CURL init failed", sizeof("CURL init failed") - 1);
+				reject_callback(error, context);
+				metacall_value_destroy(error);
+			}
+
+			return;
+		}
+
+		/* Set up CURL options */
+		static struct curl_slist *headers = NULL;
+		if (headers == NULL)
+		{
+			headers = curl_slist_append(headers, "Accept: application/json");
+			headers = curl_slist_append(headers, "Content-Type: application/json");
+			headers = curl_slist_append(headers, "charset: utf-8");
+		}
+
+		loader_impl_rpc_write_data_type write_data;
+
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+		curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "librpc_loader/0.1");
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body.c_str());
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, request_body.length());
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+
+		/* Perform the HTTP call */
+		CURLcode res = curl_easy_perform(curl);
+
+		curl_easy_cleanup(curl);
+
+		if (res != CURLE_OK)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Async call failed to API endpoint %s [%s]", url.c_str(), curl_easy_strerror(res));
+
+			if (reject_callback != NULL)
+			{
+				std::string error_msg = std::string("HTTP request failed: ") + curl_easy_strerror(res);
+				value error = metacall_value_create_string(error_msg.c_str(), error_msg.length());
+				reject_callback(error, context);
+				metacall_value_destroy(error);
+			}
+
+			return;
+		}
+
+		/* Deserialize the response */
+		const size_t write_data_size = write_data.buffer.length() + 1;
+
+		/* Create allocator for deserialization */
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+		void *result_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), write_data_size, allocator);
+
+		metacall_allocator_destroy(allocator);
+
+		if (result_value == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize async call result from API endpoint %s", url.c_str());
+
+			if (reject_callback != NULL)
+			{
+				value error = metacall_value_create_string("Deserialization failed", sizeof("Deserialization failed") - 1);
+				reject_callback(error, context);
+				metacall_value_destroy(error);
+			}
+
+			return;
+		}
+
+		/* Call resolve callback with the result */
+		/* Note: Callback takes ownership of result_value */
+		if (resolve_callback != NULL)
+		{
+			resolve_callback(result_value, context);
+		}
+		else
+		{
+			/* No callback to take ownership, clean up */
+			metacall_value_destroy(result_value);
+		}
+
+	}).detach();
+
+	/* Return NULL immediately - result will come via callback */
 	return NULL;
 }
 
