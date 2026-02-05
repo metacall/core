@@ -644,11 +644,12 @@ sub_c(){
 
 			# Skip C loader on trixie/forky due to libclang compatibility issues
 			# The C loader has type resolution bugs with libclang 17+ that cause test failures
-			# See: https://github.com/metacall/core/issues/XXX (TODO: file issue)
 			if [ "${VERSION_CODENAME}" = "trixie" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
 				echo "Skipping C loader on ${VERSION_CODENAME} due to libclang compatibility issues"
-				# Install libffi (needed by other components) and libclang-dev (needed by Rust bindgen)
-				$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
+				# Install only libffi (needed by other components); libclang-dev is installed
+				# in sub_rust() for Rust bindgen, but NOT here so find_package(LibClang)
+				# fails and the C loader is not built
+				$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev
 				return 0
 			fi
 
@@ -767,6 +768,13 @@ sub_rust(){
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
+
+			# On trixie/forky, libclang-dev is not installed by sub_c() (to prevent
+			# the C loader from being built), so install it here for Rust bindgen
+			. /etc/os-release
+			if [ "${VERSION_CODENAME}" = "trixie" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
+				$SUDO_CMD apt-get install -y --no-install-recommends libclang-dev
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
