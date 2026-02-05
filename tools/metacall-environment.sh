@@ -647,8 +647,8 @@ sub_c(){
 			# See: https://github.com/metacall/core/issues/XXX (TODO: file issue)
 			if [ "${VERSION_CODENAME}" = "trixie" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
 				echo "Skipping C loader on ${VERSION_CODENAME} due to libclang compatibility issues"
-				# Still install libffi as it's needed by other components
-				$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev
+				# Install libffi (needed by other components) and libclang-dev (needed by Rust bindgen)
+				$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 				return 0
 			fi
 
