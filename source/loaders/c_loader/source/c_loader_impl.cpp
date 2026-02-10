@@ -1289,6 +1289,19 @@ type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_ty
 		case CXType_UInt:
 			return TYPE_INT;
 
+		case CXType_Long:
+		case CXType_ULong:
+		case CXType_LongLong:
+		case CXType_ULongLong:
+			return TYPE_LONG;
+
+		case CXType_Float:
+			return TYPE_FLOAT;
+
+		case CXType_Double:
+		case CXType_LongDouble:
+			return TYPE_DOUBLE;
+
 		case CXType_Void:
 			return TYPE_NULL;
 
@@ -1310,6 +1323,17 @@ type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_ty
 		In order to avoid problems with this, we must get the canonical type */
 		case CXType_Typedef:
 			return c_loader_impl_clang_type(impl, cursor, clang_getCanonicalType(cx_type), impl_type);
+
+		case CXType_Elaborated: {
+			CXType named_type = clang_Type_getNamedType(cx_type);
+
+			if (named_type.kind != CXType_Invalid)
+			{
+				return c_loader_impl_clang_type(impl, cursor, named_type, impl_type);
+			}
+
+			return c_loader_impl_clang_type(impl, cursor, clang_getCanonicalType(cx_type), impl_type);
+		}
 
 		/* TODO: Add more types */
 		default:
