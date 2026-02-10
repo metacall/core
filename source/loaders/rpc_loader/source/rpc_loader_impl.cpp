@@ -49,11 +49,17 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <atomic>
+#include <mutex>
 
 typedef struct loader_impl_rpc_type
 {
 	CURL *discover_curl;
 	CURL *invoke_curl;
+	CURLM *async_multi;
+	std::thread poll_thread;
+	std::atomic<bool> poll_running;
+	std::mutex multi_mutex;
 	void *allocator;
 	std::map<type_id, type> types;
 	std::set<std::string> execution_paths;
@@ -78,6 +84,17 @@ typedef struct loader_impl_rpc_write_data_type
 	std::string buffer;
 
 } * loader_impl_rpc_write_data;
+
+/* Context for a single async RPC call */
+struct rpc_async_context
+{
+	CURL *easy;
+	std::string url;
+	loader_impl_rpc_write_data_type write_data;
+	function_resolve_callback resolve_callback;
+	function_reject_callback reject_callback;
+	void *context;
+};
 
 static size_t rpc_loader_impl_write_data(void *buffer, size_t size, size_t nmemb, void *userp);
 static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string &url, value v, context ctx);
@@ -198,6 +215,109 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	return result_value;
 }
 
+/* Poll loop: runs in a single thread, drives all async transfers */
+static void rpc_poll_loop(loader_impl_rpc rpc_impl)
+{
+	while (rpc_impl->poll_running.load())
+	{
+		int still_running = 0;
+
+		/* Lock once for all CURL multi operations */
+		{
+			std::lock_guard<std::mutex> lock(rpc_impl->multi_mutex);
+
+			/* Drive all active transfers forward */
+			curl_multi_perform(rpc_impl->async_multi, &still_running);
+
+			/* Check for completed transfers */
+			CURLMsg *msg;
+			int msgs_left;
+
+			while ((msg = curl_multi_info_read(rpc_impl->async_multi, &msgs_left)))
+			{
+				if (msg->msg == CURLMSG_DONE)
+				{
+					CURL *easy = msg->easy_handle;
+					CURLcode result = msg->data.result;
+
+					/* Retrieve our async context */
+					rpc_async_context *ctx = NULL;
+					curl_easy_getinfo(easy, CURLINFO_PRIVATE, &ctx);
+
+					/* Remove from multi handle */
+					curl_multi_remove_handle(rpc_impl->async_multi, easy);
+					curl_easy_cleanup(easy);
+
+					if (ctx == NULL)
+					{
+						continue;
+					}
+
+					if (result != CURLE_OK)
+					{
+						log_write("metacall", LOG_LEVEL_ERROR, "Async call failed to API endpoint %s [%s]", ctx->url.c_str(), curl_easy_strerror(result));
+
+						if (ctx->reject_callback != NULL)
+						{
+							std::string error_msg = std::string("HTTP request failed: ") + curl_easy_strerror(result);
+							value error = metacall_value_create_string(error_msg.c_str(), error_msg.length());
+							ctx->reject_callback(error, ctx->context);
+							metacall_value_destroy(error);
+						}
+
+						delete ctx;
+						continue;
+					}
+
+					/* Deserialize the response */
+					const size_t write_data_size = ctx->write_data.buffer.length() + 1;
+
+					struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+					void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+					void *result_value = metacall_deserialize(metacall_serial(), ctx->write_data.buffer.c_str(), write_data_size, allocator);
+
+					metacall_allocator_destroy(allocator);
+
+					if (result_value == NULL)
+					{
+						log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize async call result from API endpoint %s", ctx->url.c_str());
+
+						if (ctx->reject_callback != NULL)
+						{
+							value error = metacall_value_create_string("Deserialization failed", sizeof("Deserialization failed") - 1);
+							ctx->reject_callback(error, ctx->context);
+							metacall_value_destroy(error);
+						}
+
+						delete ctx;
+						continue;
+					}
+
+					/* Call resolve callback with the result */
+					if (ctx->resolve_callback != NULL)
+					{
+						ctx->resolve_callback(result_value, ctx->context);
+					}
+					else
+					{
+						metacall_value_destroy(result_value);
+					}
+
+					delete ctx;
+				}
+			}
+		}
+		/* Mutex is released here — main thread can add new handles */
+
+		/* Sleep WITHOUT holding the mutex */
+		if (rpc_impl->poll_running.load())
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		}
+	}
+}
+
 function_return function_rpc_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	loader_impl_rpc_function rpc_function = static_cast<loader_impl_rpc_function>(impl);
@@ -205,7 +325,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 	(void)func;
 
-	/* Copy arguments to avoid use-after-free in thread */
+	/* Serialize arguments */
 	value v = metacall_value_create_array(NULL, size);
 	size_t body_request_size = 0;
 
@@ -215,14 +335,12 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 		for (size_t arg = 0; arg < size; ++arg)
 		{
-			/* Deep copy the arguments for thread safety */
 			v_array[arg] = metacall_value_copy(args[arg]);
 		}
 	}
 
 	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
 
-	/* Destroy the value including the copied contents */
 	metacall_value_destroy(v);
 
 	if (body_request_size == 0)
@@ -239,114 +357,61 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 		return NULL;
 	}
 
-	/* Copy data needed for the async thread */
-	std::string url = rpc_function->url;
-	std::string request_body(buffer, body_request_size - 1);
+	/* Create async context */
+	rpc_async_context *async_ctx = new rpc_async_context();
+	async_ctx->url = rpc_function->url;
+	async_ctx->resolve_callback = resolve_callback;
+	async_ctx->reject_callback = reject_callback;
+	async_ctx->context = context;
 
-	/* Free the serialization buffer */
+	/* Create easy handle for this async call */
+	CURL *easy = curl_easy_init();
+
+	if (easy == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL handle for async call to %s", rpc_function->url.c_str());
+		metacall_allocator_free(rpc_impl->allocator, buffer);
+		delete async_ctx;
+		return NULL;
+	}
+
+	static struct curl_slist *headers = NULL;
+	if (headers == NULL)
+	{
+		headers = curl_slist_append(headers, "Accept: application/json");
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+		headers = curl_slist_append(headers, "charset: utf-8");
+	}
+
+	/* Copy the request body so it persists after this function returns */
+	async_ctx->url = rpc_function->url;
+
+	curl_easy_setopt(easy, CURLOPT_VERBOSE, 0L);
+	curl_easy_setopt(easy, CURLOPT_HEADER, 0L);
+	curl_easy_setopt(easy, CURLOPT_CUSTOMREQUEST, "POST");
+	curl_easy_setopt(easy, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(easy, CURLOPT_USERAGENT, "librpc_loader/0.1");
+	curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
+	curl_easy_setopt(easy, CURLOPT_URL, async_ctx->url.c_str());
+	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&async_ctx->write_data));
+	curl_easy_setopt(easy, CURLOPT_PRIVATE, async_ctx);
+
+	/* COPYPOSTFIELDS copies data internally, safe to free buffer after */
+	curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE, (long)(body_request_size - 1));
+	curl_easy_setopt(easy, CURLOPT_COPYPOSTFIELDS, buffer);
+
+	async_ctx->easy = easy;
+
+	/* Free serialization buffer */
 	metacall_allocator_free(rpc_impl->allocator, buffer);
 
-	/* Spawn async thread to perform the HTTP call */
-	std::thread([url, request_body, resolve_callback, reject_callback, context]() {
-		/* Create a new CURL handle for this thread (CURL handles are not thread-safe) */
-		CURL *curl = curl_easy_init();
+	/* Add to multi handle - poll thread will drive this transfer */
+	{
+		std::lock_guard<std::mutex> lock(rpc_impl->multi_mutex);
+		curl_multi_add_handle(rpc_impl->async_multi, easy);
+	}
 
-		if (curl == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL handle for async call to %s", url.c_str());
-
-			if (reject_callback != NULL)
-			{
-				value error = metacall_value_create_string("CURL init failed", sizeof("CURL init failed") - 1);
-				reject_callback(error, context);
-				metacall_value_destroy(error);
-			}
-
-			return;
-		}
-
-		/* Set up CURL options */
-		static struct curl_slist *headers = NULL;
-		if (headers == NULL)
-		{
-			headers = curl_slist_append(headers, "Accept: application/json");
-			headers = curl_slist_append(headers, "Content-Type: application/json");
-			headers = curl_slist_append(headers, "charset: utf-8");
-		}
-
-		loader_impl_rpc_write_data_type write_data;
-
-		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-		curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, "librpc_loader/0.1");
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
-		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body.c_str());
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, request_body.length());
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
-
-		/* Perform the HTTP call */
-		CURLcode res = curl_easy_perform(curl);
-
-		curl_easy_cleanup(curl);
-
-		if (res != CURLE_OK)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Async call failed to API endpoint %s [%s]", url.c_str(), curl_easy_strerror(res));
-
-			if (reject_callback != NULL)
-			{
-				std::string error_msg = std::string("HTTP request failed: ") + curl_easy_strerror(res);
-				value error = metacall_value_create_string(error_msg.c_str(), error_msg.length());
-				reject_callback(error, context);
-				metacall_value_destroy(error);
-			}
-
-			return;
-		}
-
-		/* Deserialize the response */
-		const size_t write_data_size = write_data.buffer.length() + 1;
-
-		/* Create allocator for deserialization */
-		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
-		void *result_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), write_data_size, allocator);
-
-		metacall_allocator_destroy(allocator);
-
-		if (result_value == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize async call result from API endpoint %s", url.c_str());
-
-			if (reject_callback != NULL)
-			{
-				value error = metacall_value_create_string("Deserialization failed", sizeof("Deserialization failed") - 1);
-				reject_callback(error, context);
-				metacall_value_destroy(error);
-			}
-
-			return;
-		}
-
-		/* Call resolve callback with the result */
-		/* Note: Callback takes ownership of result_value */
-		if (resolve_callback != NULL)
-		{
-			resolve_callback(result_value, context);
-		}
-		else
-		{
-			/* No callback to take ownership, clean up */
-			metacall_value_destroy(result_value);
-		}
-
-	}).detach();
-
-	/* Return NULL immediately - result will come via callback */
+	/* Return immediately - result comes via callback */
 	return NULL;
 }
 
@@ -492,16 +557,36 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_USERAGENT, "librpc_loader/0.1");
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
 
+	/* Initialize async multi handle */
+	rpc_impl->async_multi = curl_multi_init();
+
+	if (rpc_impl->async_multi == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL multi handle for async");
+
+		curl_easy_cleanup(rpc_impl->discover_curl);
+		curl_easy_cleanup(rpc_impl->invoke_curl);
+		metacall_allocator_destroy(rpc_impl->allocator);
+		delete rpc_impl;
+
+		return NULL;
+	}
+
+	/* Start poll thread for async transfers */
+	rpc_impl->poll_running.store(true);
+	rpc_impl->poll_thread = std::thread(rpc_poll_loop, rpc_impl);
+
 	if (rpc_loader_impl_initialize_types(impl, rpc_impl) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL object");
 
+		rpc_impl->poll_running.store(false);
+		rpc_impl->poll_thread.join();
+
+		curl_multi_cleanup(rpc_impl->async_multi);
 		curl_easy_cleanup(rpc_impl->discover_curl);
-
 		curl_easy_cleanup(rpc_impl->invoke_curl);
-
 		metacall_allocator_destroy(rpc_impl->allocator);
-
 		delete rpc_impl;
 
 		return NULL;
@@ -821,6 +906,16 @@ int rpc_loader_impl_destroy(loader_impl impl)
 
 	/* Destroy children loaders */
 	loader_unload_children(impl);
+
+	/* Stop the poll thread */
+	rpc_impl->poll_running.store(false);
+	if (rpc_impl->poll_thread.joinable())
+	{
+		rpc_impl->poll_thread.join();
+	}
+
+	/* Clean up async multi handle */
+	curl_multi_cleanup(rpc_impl->async_multi);
 
 	metacall_allocator_destroy(rpc_impl->allocator);
 
