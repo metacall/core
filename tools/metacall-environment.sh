@@ -64,6 +64,7 @@ PROGNAME=$(basename $0)
 case "$(uname -s)" in
 	Linux*)		OPERATIVE_SYSTEM=Linux;;
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
 	*)			OPERATIVE_SYSTEM="Unknown"
@@ -110,6 +111,9 @@ sub_base(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# FreeBSD: use pkg (pkgng). Base system has Clang; gmake for GNU make.
+		$SUDO_CMD pkg install -y gmake cmake git wget gnupg ca_root_nss
 	fi
 }
 
@@ -188,6 +192,12 @@ sub_python(){
 		pip3 install numpy
 		pip3 install joblib
 		pip3 install scikit-learn
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# FreeBSD: python3 and versioned pyXY-* packages (e.g. py39 on 14.x, py311 on 15.x).
+		$SUDO_CMD pkg install -y python3
+		PYMINOR=$(python3 -c 'import sys; print(sys.version_info.major, sys.version_info.minor)' 2>/dev/null | tr -d ' ') || PYMINOR="39"
+		$SUDO_CMD pkg install -y py${PYMINOR}-pip py${PYMINOR}-setuptools py${PYMINOR}-wheel || true
+		$SUDO_CMD pkg install -y py${PYMINOR}-requests py${PYMINOR}-rsa py${PYMINOR}-numpy py${PYMINOR}-scipy py${PYMINOR}-scikit-learn py${PYMINOR}-joblib 2>/dev/null || true
 	fi
 }
 
@@ -218,6 +228,8 @@ sub_ruby(){
 		echo "-DRuby_LIBRARY=$RUBY_PREFIX/lib/libruby.3.2.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y ruby ruby-gems
 	fi
 }
 
@@ -235,6 +247,16 @@ sub_rapidjson(){
 		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
 		make -j$(getconf _NPROCESSORS_ONLN)
 		$SUDO_CMD make install
+		cd ../.. && rm -rf ./rapidjson
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		git clone https://github.com/Tencent/rapidjson.git
+		cd rapidjson
+		git checkout 24b5e7a8b27f42fa16b96fc70aade9106cf7102f
+		mkdir build
+		cd build
+		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
+		gmake -j$(sysctl -n hw.ncpu)
+		$SUDO_CMD gmake install
 		cd ../.. && rm -rf ./rapidjson
 	fi
 }
@@ -552,6 +574,13 @@ sub_nodejs(){
 			brew install libgit2@1.8
 			brew link libgit2@1.8 --force --overwrite
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		if [ $INSTALL_C = 1 ]; then
+			INSTALL_LIBGIT2="libgit2"
+		else
+			INSTALL_LIBGIT2=""
+		fi
+		$SUDO_CMD pkg install -y node npm python3 curl $INSTALL_LIBGIT2
 	fi
 }
 
@@ -567,6 +596,9 @@ sub_typescript(){
 		# Install React dependencies in order to run the tests
 		npm i react@latest -g
 		npm i react-dom@latest -g
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD npm i react@latest -g
+		$SUDO_CMD npm i react-dom@latest -g
 	fi
 }
 
@@ -589,6 +621,8 @@ sub_rpc(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install curl
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y curl
 	fi
 }
 
@@ -602,6 +636,8 @@ sub_wasm(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y wasmtime || true
 	fi
 }
 
@@ -625,6 +661,8 @@ sub_java(){
 		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y openjdk17
 	fi
 }
 
@@ -687,6 +725,18 @@ sub_c(){
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y libffi llvm${LLVM_VERSION_STRING}
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		if [ -d "/usr/local/llvm${LLVM_VERSION_STRING}" ]; then
+			LIBCLANG_PREFIX="/usr/local/llvm${LLVM_VERSION_STRING}"
+		else
+			LIBCLANG_PREFIX="/usr/local"
+		fi
+		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.so" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -732,6 +782,14 @@ sub_cobol(){
 		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.dylib" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y gnucobol
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		COBOL_PREFIX="/usr/local"
+		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -748,6 +806,8 @@ sub_go(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install go
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y go
 	fi
 }
 
@@ -766,6 +826,8 @@ sub_rust(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y rust
 	fi
 }
 
@@ -780,6 +842,8 @@ sub_pack(){
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache rpm
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y rpm || true
 	fi
 }
 
@@ -798,6 +862,9 @@ sub_coverage(){
 		PIP_BREAK_SYSTEM_PACKAGES=`python3 -c 'import sys; sys.version_info.major >= 3 and sys.version_info.minor >= 11 and print("--break-system-packages", end="")'`
 
 		pip3 install ${PIP_BREAK_SYSTEM_PACKAGES} gcovr==7.2
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y lcov python3 py39-pip
+		pip3 install gcovr==7.2 || true
 	fi
 }
 
@@ -847,6 +914,8 @@ sub_clangformat(){
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main clang-extra-tools=12.0.1-r1
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y clang-format
 	fi
 }
 
@@ -871,6 +940,8 @@ sub_backtrace(){
 		echo "-DLIBDWARF_INCLUDE_DIR=${LIBDWARD_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y libdwarf libelf
 	fi
 }
 
@@ -885,6 +956,8 @@ sub_sandbox(){
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libseccomp-dev
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y libseccomp || true
 	fi
 }
 
@@ -1121,6 +1194,7 @@ sub_options(){
 # Help
 sub_help() {
 	echo "Usage: `basename "$0"` list of component"
+	echo "Supported OS: Linux (Debian/Ubuntu/Alpine), Darwin (macOS), FreeBSD."
 	echo "Components:"
 	echo "	debug | release | relwithdebinfo"
 	echo "	cache"

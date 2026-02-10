@@ -1,0 +1,60 @@
+name: FreeBSD Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - master
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  freebsd-test:
+    name: FreeBSD 15.0 Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install deps, configure, build and test on FreeBSD
+        uses: cross-platform-actions/action@v0.32.0
+        with:
+          operating_system: freebsd
+          version: '15.0'
+          architecture: x86-64
+          shell: bash
+          run: |
+            set -e
+            echo "=== Installing environment (base) ==="
+            ./tools/metacall-environment.sh base
+            echo "=== Configuring ==="
+            mkdir -p build && cd build
+            cmake -DCMAKE_BUILD_TYPE=Release \
+              -DOPTION_BUILD_LOADERS=On \
+              -DOPTION_BUILD_LOADERS_PY=Off \
+              -DOPTION_BUILD_LOADERS_NODE=Off \
+              -DOPTION_BUILD_LOADERS_RB=Off \
+              -DOPTION_BUILD_LOADERS_CS=Off \
+              -DOPTION_BUILD_LOADERS_TS=Off \
+              -DOPTION_BUILD_LOADERS_JAVA=Off \
+              -DOPTION_BUILD_LOADERS_WASM=Off \
+              -DOPTION_BUILD_LOADERS_C=Off \
+              -DOPTION_BUILD_LOADERS_RS=Off \
+              -DOPTION_BUILD_TESTS=On \
+              -DOPTION_BUILD_EXAMPLES=Off \
+              ..
+            echo "=== Building ==="
+            gmake -j$(sysctl -n hw.ncpu)
+            echo "=== Installing ==="
+            gmake install
+            echo "=== Running tests ==="
+            ctest -j$(sysctl -n hw.ncpu) --timeout 600 --output-on-failure -C Release
