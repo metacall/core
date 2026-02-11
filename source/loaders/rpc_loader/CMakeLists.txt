@@ -9,6 +9,16 @@ endif()
 
 find_package(CURL REQUIRED)
 
+# Fetch moodycamel::ConcurrentQueue (header-only, lock-free MPSC queue)
+include(FetchContent)
+FetchContent_Declare(
+	concurrentqueue
+	GIT_REPOSITORY https://github.com/cameron314/concurrentqueue.git
+	GIT_TAG        master
+	GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(concurrentqueue)
+
 # Copy cURL DLL into project output directory
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
 # TODO: https://gist.github.com/micahsnyder/5d98ac8548b429309ec5a35bca9366da
@@ -114,6 +124,7 @@ target_include_directories(${target}
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
 	${CURL_INCLUDE_DIRS} # cURL includes
+	${concurrentqueue_SOURCE_DIR} # moodycamel::ConcurrentQueue includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
