@@ -172,7 +172,7 @@ PORTABILITY_API size_t portability_path_get_extension(const char *path, size_t p
 
 PORTABILITY_API size_t portability_path_get_module_name(const char *path, size_t path_size, const char *extension, size_t extension_size, char *name, size_t name_size);
 
-PORTABILITY_API size_t portability_path_get_directory(const char *path, size_t path_size, char *absolute, size_t absolute_size);
+PORTABILITY_API size_t portability_path_get_directory(const char *path, size_t path_size, char *directory, size_t directory_size);
 
 PORTABILITY_API size_t portability_path_get_directory_inplace(char *path, size_t size);
 
@@ -197,12 +197,24 @@ PORTABILITY_API int portability_path_is_pattern(const char *path, size_t size);
  *   Check if a path exists either if it is a directory or a file.
  *
  * @param[in] path
- *   The full path to extract the name from.
+ *   The full path to check if exists.
  *
  * @return
  *   Zero if the path exists, one otherwise.
  */
 PORTABILITY_API int portability_path_exists(const char *path);
+
+/**
+ * @brief
+ *   Check if a path exists and it is a file.
+ *
+ * @param[in] path
+ *   The full path to check if exists.
+ *
+ * @return
+ *   Zero if the file exists, one otherwise.
+ */
+PORTABILITY_API int portability_path_file_exists(const char *path);
 
 #ifdef __cplusplus
 }

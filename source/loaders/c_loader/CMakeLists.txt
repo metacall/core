@@ -198,7 +198,7 @@ target_compile_options(${target}
 
 target_compile_features(${target}
 	PRIVATE
-	cxx_std_17 # Required for filesystem
+	cxx_std_17 # Required for optional
 )
 
 #

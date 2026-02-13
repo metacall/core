@@ -37,20 +37,6 @@
 
 #include <metacall/metacall.h>
 
-#if defined __has_include
-	#if __has_include(<filesystem>)
-		#include <filesystem>
-namespace fs = std::filesystem;
-	#elif __has_include(<experimental/filesystem>)
-		#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-	#else
-		#error "Missing the <filesystem> header."
-	#endif
-#else
-	#error "C++ standard too old for compiling this file."
-#endif
-
 #include <map>
 #include <optional>
 #include <string>
@@ -159,6 +145,11 @@ public:
 
 			this->files.push_back(filename);
 		}
+	}
+
+	void add(std::string& file)
+	{
+		this->files.push_back(file);
 	}
 
 private:
@@ -292,8 +283,10 @@ public:
 		#endif
 		*/
 
-		/* TODO: Add error handling */
-		/* tcc_set_error_func */
+		/* Error handling */
+		tcc_set_error_func(this->state, nullptr, [](void *, const char *msg) {
+			log_write("metacall", LOG_LEVEL_ERROR, "TCC Error: %s", msg);
+		});
 
 		/* TODO: Add some warnings? */
 		/* tcc_set_warning */
@@ -368,20 +361,20 @@ public:
 
 	bool initialize(loader_impl_c c_impl, const loader_path path)
 	{
-		std::string lib_path_str(path);
-		fs::path lib_path(lib_path_str);
+		size_t path_size = strnlen(path, LOADER_PATH_SIZE);
+		char library_directory[PORTABILITY_PATH_SIZE];
+		size_t library_directory_size = portability_path_get_directory(path, path_size, library_directory, PORTABILITY_PATH_SIZE);
+		char library_name[PORTABILITY_PATH_SIZE];
+		size_t library_name_size = portability_path_get_fullname(path, path_size, library_name, PORTABILITY_PATH_SIZE);
 
-		if (lib_path.is_absolute())
+		if (portability_path_is_absolute(path, path_size) == 0)
 		{
-			fs::path lib_dir = lib_path.parent_path();
-			std::string lib_name = fs::path(lib_path).filename().string();
-
-			this->load_dynlink(lib_dir, lib_name.c_str());
+			this->load_dynlink(library_directory, library_directory_size, library_name);
 
 			/* If the path is absolute, we assume the header is in the same folder */
 			if (this->lib != NULL)
 			{
-				return this->add_header(lib_dir, lib_name);
+				return this->add_header(library_directory, library_directory_size, library_name, library_name_size);
 			}
 		}
 		else
@@ -390,11 +383,9 @@ public:
 
 			for (auto exec_path : c_impl->execution_paths)
 			{
-				fs::path absolute_path(exec_path);
+				char absolute_path[PORTABILITY_PATH_SIZE];
 
-				absolute_path /= lib_path.parent_path();
-
-				std::string lib_name = lib_path.filename().string();
+				size_t absolute_path_size = portability_path_join(exec_path.c_str(), exec_path.length() + 1, library_directory, library_directory_size, absolute_path, PORTABILITY_PATH_SIZE);
 
 				/* If the path is relative, we keep trying the exec_paths until we find the header,
 				* this is for solving situations where we have the header in /usr/local/include and
@@ -402,12 +393,12 @@ public:
 				*/
 				if (this->lib == NULL)
 				{
-					this->load_dynlink(absolute_path, lib_name.c_str());
+					this->load_dynlink(absolute_path, absolute_path_size, library_name);
 				}
 
 				if (header_found == false)
 				{
-					header_found = this->add_header(absolute_path, lib_name);
+					header_found = this->add_header(absolute_path, absolute_path_size, library_name, library_name_size);
 				}
 
 				if (this->lib != NULL && header_found == true)
@@ -433,7 +424,7 @@ public:
 	}
 
 private:
-	void load_dynlink(fs::path &path, const char *library_name)
+	void load_dynlink(const char library_directory[PORTABILITY_PATH_SIZE], size_t library_directory_size, const char library_name[PORTABILITY_PATH_SIZE])
 	{
 		/* This function will try to check if the library exists before loading it,
 		so we avoid error messages from dynlink when guessing the file path for relative load from file */
@@ -441,17 +432,23 @@ private:
 
 		dynlink_platform_name(library_name, platform_name);
 
-		fs::path lib_path(path);
+		char absolute_path[PORTABILITY_PATH_SIZE];
 
-		lib_path /= platform_name;
+		portability_path_join(
+			library_directory,
+			library_directory_size,
+			platform_name,
+			strnlen(platform_name, PORTABILITY_PATH_SIZE),
+			absolute_path,
+			PORTABILITY_PATH_SIZE);
 
-		if (fs::exists(lib_path) == true)
+		if (portability_path_file_exists(absolute_path) == 0)
 		{
-			this->lib = dynlink_load(path.string().c_str(), library_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+			this->lib = dynlink_load(library_directory, library_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 		}
 	}
 
-	bool add_header(fs::path path, std::string &lib_name)
+	bool add_header(const char library_directory[PORTABILITY_PATH_SIZE], size_t library_directory_size, const char library_name[PORTABILITY_PATH_SIZE], size_t library_name_size)
 	{
 		static const char *extensions[] = {
 			".h",
@@ -463,19 +460,18 @@ private:
 			"" /* No extension is also valid */
 		};
 
-		path /= lib_name;
+		char path[PORTABILITY_PATH_SIZE];
+		portability_path_join(library_directory, library_directory_size, library_name, library_name_size, path, PORTABILITY_PATH_SIZE);
 
 		for (auto extension : extensions)
 		{
-			fs::path header(path);
+			std::string header_path(path);
 
-			header += extension;
+			header_path.append(extension);
 
-			if (fs::exists(header))
+			if (portability_path_file_exists(header_path.c_str()) == 0)
 			{
-				std::string header_str = header.string();
-
-				this->add(header_str.c_str(), header_str.length() + 1);
+				this->add(header_path.c_str(), header_path.length() + 1);
 
 				return true;
 			}
@@ -795,17 +791,6 @@ static void c_loader_impl_discover_symbols(void *ctx, const char *name, const vo
 	std::map<std::string, const void *> *symbols = static_cast<std::map<std::string, const void *> *>(ctx);
 
 	symbols->insert(std::pair<std::string, const void *>(name, addr));
-}
-
-static bool c_loader_impl_file_exists(const loader_path path)
-{
-	if (FILE *file = fopen(path, "r"))
-	{
-		fclose(file);
-		return true;
-	}
-
-	return false;
 }
 
 int function_c_interface_create(function func, function_impl impl)
@@ -1540,7 +1525,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 				loader_path path;
 				size_t path_size = portability_path_join(exec_path.c_str(), exec_path.length() + 1, paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1, path, LOADER_PATH_SIZE);
 
-				if (c_loader_impl_file_exists(path) == true)
+				if (portability_path_file_exists(path) == 0)
 				{
 					if (tcc_add_file(c_handle->state, path) != -1)
 					{

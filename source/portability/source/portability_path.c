@@ -230,18 +230,18 @@ size_t portability_path_get_module_name(const char *path, size_t path_size, cons
 	return portability_path_get_name(path, path_size, name, name_size);
 }
 
-size_t portability_path_get_directory(const char *path, size_t path_size, char *absolute, size_t absolute_size)
+size_t portability_path_get_directory(const char *path, size_t path_size, char *directory, size_t directory_size)
 {
-	if (path == NULL || absolute == NULL)
+	if (path == NULL || directory == NULL)
 	{
 		return 0;
 	}
 
-	size_t i, last, size = path_size < absolute_size ? path_size : absolute_size;
+	size_t i, last, size = path_size < directory_size ? path_size : directory_size;
 
 	for (i = 0, last = 0; path[i] != '\0' && i < size; ++i)
 	{
-		absolute[i] = path[i];
+		directory[i] = path[i];
 
 		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
@@ -249,7 +249,7 @@ size_t portability_path_get_directory(const char *path, size_t path_size, char *
 		}
 	}
 
-	absolute[last] = '\0';
+	directory[last] = '\0';
 
 	return last + 1;
 }
@@ -614,6 +614,42 @@ int portability_path_exists(const char *path)
 	struct stat buffer;
 
 	if (stat(path, &buffer) != 0)
+	{
+		return 1;
+	}
+
+	return 0;
+#endif
+}
+
+int portability_path_file_exists(const char *path)
+{
+#if defined(WIN32) || defined(_WIN32) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+
+	DWORD attrs = GetFileAttributesA(path);
+
+	if (attrs == INVALID_FILE_ATTRIBUTES)
+	{
+		return 1;
+	}
+
+	if (attrs & FILE_ATTRIBUTE_DIRECTORY)
+	{
+		return 1;
+	}
+
+	return 0;
+#else
+	struct stat buffer;
+
+	if (stat(path, &buffer) != 0)
+	{
+		return 1;
+	}
+
+	if (!S_ISREG(buffer.st_mode))
 	{
 		return 1;
 	}
