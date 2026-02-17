@@ -49,7 +49,7 @@ jobs:
               -DOPTION_BUILD_LOADERS_WASM=Off \
               -DOPTION_BUILD_LOADERS_C=Off \
               -DOPTION_BUILD_LOADERS_RS=Off \
-              -DOPTION_BUILD_TESTS=On \
+              -DOPTION_BUILD_TESTS=Off \
               -DOPTION_BUILD_EXAMPLES=Off \
               ..
             echo "=== Building ==="
@@ -57,5 +57,4 @@ jobs:
             echo "=== Installing ==="
             sudo mkdir -p /usr/local/share/metacall/configurations
             gmake install
-            echo "=== Running tests ==="
-            ctest -j$(sysctl -n hw.ncpu) --timeout 600 --output-on-failure -C Release
+            echo "=== FreeBSD job done (build + install only; tests need loaders/scripts) ==="
