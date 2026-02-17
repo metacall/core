@@ -55,6 +55,7 @@ jobs:
             echo "=== Building ==="
             gmake -j$(sysctl -n hw.ncpu)
             echo "=== Installing ==="
+            sudo mkdir -p /usr/local/share/metacall/configurations
             gmake install
             echo "=== Running tests ==="
             ctest -j$(sysctl -n hw.ncpu) --timeout 600 --output-on-failure -C Release
