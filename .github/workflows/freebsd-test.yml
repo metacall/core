@@ -38,23 +38,8 @@ jobs:
             ./tools/metacall-environment.sh base
             echo "=== Configuring ==="
             mkdir -p build && cd build
-            cmake -DCMAKE_BUILD_TYPE=Release \
-              -DOPTION_BUILD_LOADERS=On \
-              -DOPTION_BUILD_LOADERS_PY=Off \
-              -DOPTION_BUILD_LOADERS_NODE=Off \
-              -DOPTION_BUILD_LOADERS_RB=Off \
-              -DOPTION_BUILD_LOADERS_CS=Off \
-              -DOPTION_BUILD_LOADERS_TS=Off \
-              -DOPTION_BUILD_LOADERS_JAVA=Off \
-              -DOPTION_BUILD_LOADERS_WASM=Off \
-              -DOPTION_BUILD_LOADERS_C=Off \
-              -DOPTION_BUILD_LOADERS_RS=Off \
-              -DOPTION_BUILD_TESTS=Off \
-              -DOPTION_BUILD_EXAMPLES=Off \
-              ..
-            echo "=== Building ==="
-            gmake -j$(sysctl -n hw.ncpu)
-            echo "=== Installing ==="
+            sh ../tools/metacall-configure.sh release
+            echo "=== Building and installing ==="
             sudo mkdir -p /usr/local/share/metacall/configurations
-            gmake install
-            echo "=== FreeBSD job done (build + install only; tests need loaders/scripts) ==="
+            sh ../tools/metacall-build.sh release install
+            echo "=== FreeBSD job done (build + install; tests off for minimal run) ==="

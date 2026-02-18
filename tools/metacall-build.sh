@@ -27,6 +27,12 @@ BUILD_BENCHMARKS=0
 BUILD_COVERAGE=0
 BUILD_INSTALL=0
 
+# Operative System detection (for make vs gmake, getconf vs sysctl)
+case "$(uname -s)" in
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
+	*)			OPERATIVE_SYSTEM=Other
+esac
+
 # Check out for sudo
 if [ "`id -u`" = '0' ]; then
 	SUDO_CMD=""
@@ -69,28 +75,35 @@ sub_options() {
 }
 
 sub_build() {
+	if [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		MAKE_CMD=gmake
+		NPROC=$(sysctl -n hw.ncpu)
+	else
+		MAKE_CMD=make
+		NPROC=$(getconf _NPROCESSORS_ONLN)
+	fi
 
 	# Build the project
-	make -j$(getconf _NPROCESSORS_ONLN)
+	$MAKE_CMD -j$NPROC
 
 	# Tests (coverage needs to run the tests)
 	if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS=1 ] || [ $BUILD_COVERAGE = 1 ]; then
-		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
+		ctest -j$NPROC --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
 	fi
 
 	# Coverage
 	if [ $BUILD_COVERAGE = 1 ]; then
-		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T Coverage
+		ctest -j$NPROC --timeout 5400 -T Coverage
 		gcovr -r ../source/ . --html-details coverage.html
 	fi
 
 	# Install
 	if [ $BUILD_INSTALL = 1 ]; then
 		if [ "$SUDO_CMD" = "" ]; then
-			make install
+			$MAKE_CMD install
 		else
 			# Needed for rustup in order to install rust loader properly
-			$SUDO_CMD HOME="$HOME" make install
+			$SUDO_CMD HOME="$HOME" $MAKE_CMD install
 		fi
 	fi
 }
