@@ -196,8 +196,8 @@ sub_python(){
 		# FreeBSD: python3 and versioned pyXY-* packages (e.g. py39 on 14.x, py311 on 15.x).
 		$SUDO_CMD pkg install -y python3
 		PYMINOR=$(python3 -c 'import sys; print(sys.version_info.major, sys.version_info.minor)' 2>/dev/null | tr -d ' ') || PYMINOR="39"
-		$SUDO_CMD pkg install -y py${PYMINOR}-pip py${PYMINOR}-setuptools py${PYMINOR}-wheel || true
-		$SUDO_CMD pkg install -y py${PYMINOR}-requests py${PYMINOR}-rsa py${PYMINOR}-numpy py${PYMINOR}-scipy py${PYMINOR}-scikit-learn py${PYMINOR}-joblib 2>/dev/null || true
+		$SUDO_CMD pkg install -y py${PYMINOR}-pip py${PYMINOR}-setuptools py${PYMINOR}-wheel
+		$SUDO_CMD pkg install -y py${PYMINOR}-requests py${PYMINOR}-rsa py${PYMINOR}-numpy py${PYMINOR}-scipy py${PYMINOR}-scikit-learn py${PYMINOR}-joblib
 	fi
 }
 
@@ -637,7 +637,7 @@ sub_wasm(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y wasmtime || true
+		$SUDO_CMD pkg install -y wasmtime
 	fi
 }
 
@@ -843,7 +843,7 @@ sub_pack(){
 			$SUDO_CMD apk add --no-cache rpm
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y rpm || true
+		$SUDO_CMD pkg install -y rpm
 	fi
 }
 
@@ -864,7 +864,7 @@ sub_coverage(){
 		pip3 install ${PIP_BREAK_SYSTEM_PACKAGES} gcovr==7.2
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y lcov python3 py39-pip
-		pip3 install gcovr==7.2 || true
+		pip3 install gcovr==7.2
 	fi
 }
 
@@ -957,7 +957,7 @@ sub_sandbox(){
 			$SUDO_CMD apk add --no-cache libseccomp-dev
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y libseccomp || true
+		$SUDO_CMD pkg install -y libseccomp
 	fi
 }
 

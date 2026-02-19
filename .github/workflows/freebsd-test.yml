@@ -38,8 +38,8 @@ jobs:
             ./tools/metacall-environment.sh base
             echo "=== Configuring ==="
             mkdir -p build && cd build
-            sh ../tools/metacall-configure.sh release
-            echo "=== Building and installing ==="
+            sh ../tools/metacall-configure.sh release tests
+            echo "=== Building, testing and installing ==="
             sudo mkdir -p /usr/local/share/metacall/configurations
-            sh ../tools/metacall-build.sh release install
-            echo "=== FreeBSD job done (build + install; tests off for minimal run) ==="
+            sh ../tools/metacall-build.sh release tests install
+            echo "=== FreeBSD job done ==="
