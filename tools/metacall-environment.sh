@@ -112,8 +112,10 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg (pkgng). Base system has Clang; gmake for GNU make.
+		# FreeBSD: use pkg (pkgng). Base has Clang; gmake for GNU make.
+		# googletest for tests; libunwind/libelf/libdwarf/binutils for backtrace/detour plugins.
 		$SUDO_CMD pkg install -y gmake cmake git wget gnupg ca_root_nss
+		$SUDO_CMD pkg install -y googletest libunwind libelf libdwarf binutils
 	fi
 }
 
