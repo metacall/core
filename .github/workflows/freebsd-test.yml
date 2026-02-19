@@ -39,7 +39,23 @@ jobs:
             echo "=== Configuring ==="
             mkdir -p build && cd build
             sh ../tools/metacall-configure.sh release tests
-            echo "=== Building, testing and installing ==="
+            echo "=== Building and installing (no ctest yet) ==="
             sudo mkdir -p /usr/local/share/metacall/configurations
-            sh ../tools/metacall-build.sh release tests install
+            sh ../tools/metacall-build.sh release install
+            echo "=== Diagnostics ==="
+            uname -a
+            ulimit -c unlimited || true
+            if [ -f ./dynlink-test ]; then
+              echo "=== dynlink-test binary: ldd ==="
+              ldd ./dynlink-test || true
+            fi
+            echo "=== Re-running dynlink-test verbosely ==="
+            ctest -V -R '^dynlink-test$' --output-on-failure -C Release || true
+            echo "=== If it crashed, try to get a backtrace ==="
+            pkg install -y gdb || true
+            if [ -f ./dynlink-test ]; then
+              ( gdb -batch -ex run -ex bt -ex quit --args ./dynlink-test ) || true
+            fi
+            echo "=== Running full test suite ==="
+            ctest -j$(sysctl -n hw.ncpu) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C Release
             echo "=== FreeBSD job done ==="
