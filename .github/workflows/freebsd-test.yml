@@ -46,23 +46,40 @@ jobs:
             uname -a
             ulimit -c unlimited
             sudo sysctl kern.corefile=/tmp/core.%N.%P
-            if [ -f ./dynlink-test ]; then
-              echo "=== dynlink-test binary: ldd ==="
-              ldd ./dynlink-test
-            fi
-            echo "=== Re-running dynlink-test verbosely ==="
-            ctest -V -R '^dynlink-test$' --output-on-failure -C Release 2>&1 | tee /tmp/dynlink_ctest_verbose.log
-            echo "=== Running dynlink-test under gdb (same env as ctest) ==="
+            echo "=== dynlink-test binary: ldd ==="
+            if [ -f ./dynlink-test ]; then ldd ./dynlink-test; fi
+
+            echo "=== Re-running dynlink-test verbosely (do not fail here) ==="
+            (ctest -V -R '^dynlink-test$' --output-on-failure -C Release) 2>&1 | tee /tmp/dynlink_ctest_verbose.log
+
+            echo "=== Running dynlink-test under gdb (always print bt) ==="
             pkg install -y gdb
             if [ -f ./dynlink-test ]; then
               gdb -q -batch \
                 -ex "set pagination off" \
                 -ex "run" \
                 -ex "bt full" \
+                -ex "info registers" \
                 -ex "info sharedlibrary" \
-                -ex "quit" \
-                --args ./dynlink-test
+                --args ./dynlink-test 
             fi
-            echo "=== Running full test suite ==="
+
+            echo "=== List potential core dumps ==="
+            ls -lah /tmp/core.* 2>/dev/null
+
+            echo "=== Preserve crash evidence for artifacts ==="
+            mkdir -p ./dynlink-crash-artifacts
+            cp -f /tmp/dynlink_ctest_verbose.log ./dynlink-crash-artifacts/ 2>/dev/null
+            cp -f /tmp/core.* ./dynlink-crash-artifacts/ 2>/dev/null
+
+            echo "=== Running full test suite (this is the real gate) ==="
             ctest -j$(sysctl -n hw.ncpu) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C Release
             echo "=== FreeBSD job done ==="
+
+      - name: Upload dynlink crash artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: freebsd-dynlink-crash
+          path: build/dynlink-crash-artifacts/
+          if-no-files-found: ignore
