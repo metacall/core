@@ -95,13 +95,26 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 
 int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
-	void *symbol = dlsym(impl, name);
+	void *symbol;
+	const char *err;
 
 	(void)handle;
 
+	/* Clear any previous dlerror() so we can distinguish NULL symbol from error (POSIX) */
+	(void)dlerror();
+	symbol = dlsym(impl, name);
+	err = dlerror();
+	if (err != NULL || symbol == NULL)
+	{
+		if (err != NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "DynLink dlsym error: %s", err);
+		}
+		dynlink_symbol_cast(void *, NULL, *addr);
+		return 1;
+	}
 	dynlink_symbol_cast(void *, symbol, *addr);
-
-	return (*addr == NULL);
+	return 0;
 }
 
 int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
