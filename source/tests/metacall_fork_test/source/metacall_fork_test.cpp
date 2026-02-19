@@ -146,6 +146,10 @@ int post_callback_test(metacall_pid pid, void *ctx)
 
 TEST_F(metacall_fork_test, DefaultConstructor)
 {
+#if defined(__FreeBSD__)
+	GTEST_SKIP() << "METACALL_FLAGS_FORK_SAFE requires detour backend not available on FreeBSD CI";
+#endif
+
 	metacall_print_info();
 
 	metacall_flags(METACALL_FLAGS_FORK_SAFE);

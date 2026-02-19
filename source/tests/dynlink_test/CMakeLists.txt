@@ -126,9 +126,15 @@ target_compile_features(${target}
 # Linker options
 #
 
+# FreeBSD: export dynamic symbols for dynlink_load_self (like -rdynamic on Linux)
+if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+	set(DYNLINK_TEST_EXPORT_DYNAMIC "-Wl,--export-dynamic")
+endif()
+
 target_link_options(${target}
 	PRIVATE
 	${DEFAULT_LINKER_OPTIONS}
+	${DYNLINK_TEST_EXPORT_DYNAMIC}
 
 	# Required for linking symbols from the executable
 	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>

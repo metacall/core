@@ -94,6 +94,10 @@ extern "C" EXPORT_SYMBOL int test_exported_symbols_from_executable(int x)
 
 TEST_F(detour_test, DefaultConstructor)
 {
+#if defined(__FreeBSD__)
+	GTEST_SKIP() << "Detour backend 'plthook' is not supported/working on FreeBSD CI";
+#endif
+
 	static const char name[] = "plthook";
 
 	/* Initialize log */
