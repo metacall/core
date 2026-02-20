@@ -415,7 +415,31 @@ public:
 	{
 		dynlink_symbol_addr symbol_address = NULL;
 
-		if (dynlink_symbol(this->lib, name.c_str(), &symbol_address) != 0)
+		if (dynlink_symbol(this->lib, name.c_str(), &symbol_address) == 0)
+		{
+			return (const void *)(symbol_address);
+		}
+
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+		/* Support both Mach-O and dlsym symbol spellings depending on dynlink backend. */
+		std::string alternate_name = name;
+
+		if (!alternate_name.empty() && alternate_name.front() == '_')
+		{
+			alternate_name.erase(0, 1);
+		}
+		else
+		{
+			alternate_name.insert(0, 1, '_');
+		}
+
+		if (alternate_name != name && dynlink_symbol(this->lib, alternate_name.c_str(), &symbol_address) == 0)
+		{
+			return (const void *)(symbol_address);
+		}
+#endif
+
+		if (symbol_address == NULL)
 		{
 			return NULL;
 		}
@@ -1406,7 +1430,7 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 	symbol_name.insert(0, 1, '_');
 #endif
 
-	if (scope_get(sp, symbol_name.c_str()) != NULL)
+	if (scope_get(sp, func_name.c_str()) != NULL)
 	{
 		log_write("metacall", LOG_LEVEL_WARNING, "Symbol '%s' redefined, skipping the function", func_name.c_str());
 		return 0;

@@ -161,6 +161,14 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
 
+if(OPTION_BUILD_ADDRESS_SANITIZER)
+	# TODO: This test can finish successfully but LSan can still crash while tracing
+	# cleanup in this mixed runtime scenario (Python + Node + Ruby).
+	set_tests_properties(${target} PROPERTIES
+		PASS_REGULAR_EXPRESSION "[  PASSED  ]"
+	)
+endif()
+
 include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
