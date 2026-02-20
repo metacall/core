@@ -428,6 +428,7 @@ private:
 	{
 		/* This function will try to check if the library exists before loading it,
 		so we avoid error messages from dynlink when guessing the file path for relative load from file */
+		static const dynlink_flags load_flags = DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL;
 		dynlink_path platform_name;
 
 		dynlink_platform_name(library_name, platform_name);
@@ -444,8 +445,48 @@ private:
 
 		if (portability_path_file_exists(absolute_path) == 0)
 		{
-			this->lib = dynlink_load(library_directory, library_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+			this->lib = dynlink_load_absolute(absolute_path, load_flags);
 		}
+
+#if defined(__APPLE__) && defined(__MACH__)
+		/* On macOS, external/system C libraries are usually distributed as .dylib. */
+		if (this->lib == NULL)
+		{
+			std::string macos_name;
+			const char *prefix = dynlink_prefix();
+			const size_t library_name_len = strnlen(library_name, PORTABILITY_PATH_SIZE);
+			const size_t prefix_len = strnlen(prefix, PORTABILITY_PATH_SIZE);
+
+			if (library_name_len >= prefix_len && strncmp(library_name, prefix, prefix_len) == 0)
+			{
+				macos_name.assign(library_name, library_name_len);
+			}
+			else
+			{
+				macos_name.reserve(prefix_len + library_name_len + sizeof(".dylib"));
+				macos_name.append(prefix);
+				macos_name.append(library_name, library_name_len);
+			}
+
+			if (macos_name.size() < sizeof(".dylib") - 1 || macos_name.compare(macos_name.size() - (sizeof(".dylib") - 1), sizeof(".dylib") - 1, ".dylib") != 0)
+			{
+				macos_name.append(".dylib");
+			}
+
+			portability_path_join(
+				library_directory,
+				library_directory_size,
+				macos_name.c_str(),
+				macos_name.length() + 1,
+				absolute_path,
+				PORTABILITY_PATH_SIZE);
+
+			if (portability_path_file_exists(absolute_path) == 0)
+			{
+				this->lib = dynlink_load_absolute(absolute_path, load_flags);
+			}
+		}
+#endif
 	}
 
 	bool add_header(const char library_directory[PORTABILITY_PATH_SIZE], size_t library_directory_size, const char library_name[PORTABILITY_PATH_SIZE], size_t library_name_size)
