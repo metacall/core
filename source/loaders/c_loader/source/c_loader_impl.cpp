@@ -147,7 +147,7 @@ public:
 		}
 	}
 
-	void add(std::string& file)
+	void add(std::string &file)
 	{
 		this->files.push_back(file);
 	}
@@ -388,9 +388,9 @@ public:
 				size_t absolute_path_size = portability_path_join(exec_path.c_str(), exec_path.length() + 1, library_directory, library_directory_size, absolute_path, PORTABILITY_PATH_SIZE);
 
 				/* If the path is relative, we keep trying the exec_paths until we find the header,
-				* this is for solving situations where we have the header in /usr/local/include and
-				* the library in /usr/local/lib
-				*/
+				 * this is for solving situations where we have the header in /usr/local/include and
+				 * the library in /usr/local/lib
+				 */
 				if (this->lib == NULL)
 				{
 					this->load_dynlink(absolute_path, absolute_path_size, library_name);
@@ -1188,7 +1188,7 @@ int c_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 
 	/* TODO: It would be interesting to support LD_LIBRARY_PATH or DYLD_LIBRARY_PATH
-	* on startup for supporting standard execution paths */
+	 * on startup for supporting standard execution paths */
 	c_impl->execution_paths.push_back(path);
 
 	return 0;

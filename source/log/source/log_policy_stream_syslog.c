@@ -123,15 +123,15 @@ static int log_policy_stream_syslog_write(log_policy policy, const void *buffer,
 	(void)size;
 
 #if defined(_WIN32)
-	LPCSTR msg_str[1];
+	LPTSTR lpt_str[1];
 
-	msg_str[0] = (LPCSTR)buffer;
+	lpt_str[0] = (LPTSTR)buffer;
 
-	ReportEventA(syslog_data->handle,
+	ReportEvent(syslog_data->handle,
 		EVENTLOG_INFORMATION_TYPE,
 		LOG_POLICY_STREAM_SYSLOG_WIN_CATEGORY,
 		LOG_POLICY_STREAM_SYSLOG_WIN_MSG,
-		NULL, 1, 0, msg_str, NULL);
+		NULL, 1, 0, (LPTSTR *)lpt_str, NULL);
 #elif defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__FreeBSD__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)

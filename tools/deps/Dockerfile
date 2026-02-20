@@ -52,7 +52,5 @@ ARG METACALL_BUILD_TYPE
 ARG METACALL_INSTALL_OPTIONS
 
 RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh \
-	&& sed -i 's/\r$//' $METACALL_TOOLS_PATH/metacall-environment.sh \
-	&& sed -i 's/\r$//' $METACALL_TOOLS_PATH/nobuildtest.patch \
 	&& $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_BUILD_TYPE} ${METACALL_INSTALL_OPTIONS} \
 	&& rm -rf $METACALL_PATH

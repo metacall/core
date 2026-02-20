@@ -615,8 +615,7 @@ static int hs_loader_impl_value_to_ffi(value v, type_id id, hs_loader_ffi_value 
 			ffi_value->data.v_double = value_to_double(v);
 			return 0;
 
-		case TYPE_STRING:
-		{
+		case TYPE_STRING: {
 			char *str = value_to_string(v);
 			size_t string_size = value_type_size(v);
 
@@ -679,8 +678,7 @@ static value hs_loader_impl_value_from_ffi(const hs_loader_ffi_value *ffi_value)
 		case TYPE_DOUBLE:
 			return value_create_double(ffi_value->data.v_double);
 
-		case TYPE_STRING:
-		{
+		case TYPE_STRING: {
 			const char *str = (const char *)ffi_value->data.v_string.data;
 			size_t str_size = ffi_value->data.v_string.size;
 
