@@ -148,6 +148,8 @@ target_link_libraries(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
+	$<$<OR:$<PLATFORM_ID:Windows>,$<BOOL:${MINGW}>>:dbghelp>
+	$<$<OR:$<PLATFORM_ID:Windows>,$<BOOL:${MINGW}>>:imagehlp>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

@@ -50,6 +50,7 @@ COPY . $METACALL_PATH
 # Configure MetaCall build tool script
 RUN chmod 500 $METACALL_PATH/tools/metacall-configure.sh \
 	&& chmod 500 $METACALL_PATH/tools/metacall-build.sh \
+	&& find $METACALL_PATH/tools -type f -name "*.sh" -exec sed -i 's/\r$//' {} + \
 	&& mkdir -p $METACALL_PATH/build
 
 # Configure MetaCall libraries and build runtimes if needed

@@ -636,40 +636,13 @@ sub_c(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev
 
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# Ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			# Prefer distro-provided libclang-14-dev, then fall back to generic libclang-dev.
+			if ! $SUDO_CMD apt-get install -y --no-install-recommends libclang-${LLVM_VERSION_STRING}-dev; then
+				echo "libclang-${LLVM_VERSION_STRING}-dev unavailable, using distro default libclang-dev"
+				$SUDO_CMD apt-get install -y --no-install-recommends libclang-dev clang
+			fi
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then

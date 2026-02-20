@@ -1,0 +1,7 @@
+.ghc-build/
+.ghc-build*/
+*.hi
+*.o
+*.so
+*.dylib
+*.dll

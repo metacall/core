@@ -11,6 +11,7 @@ option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 5.0.17 Runtime loader plugin." 
 option(OPTION_BUILD_LOADERS_DART "Build Dart VM 2.8.4 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_EXT "Build MetaCall Core Extension loader plugin." ON)
 option(OPTION_BUILD_LOADERS_FILE "Build File System loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_HS "Build Haskell GHC Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JAVA "Build Java Virtual Machine loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JL "Build Julia 1.6 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JSM "Build JavaScript SpiderMonkey 4.8 loader plugin." OFF)
@@ -186,6 +187,7 @@ add_subdirectory(cs_loader) # CoreCLR 5.0.17 Runtime
 add_subdirectory(dart_loader) # Dart VM 2.8.4 Runtime
 add_subdirectory(ext_loader) # MetaCall Core Extensions
 add_subdirectory(file_loader) # File System
+add_subdirectory(hs_loader) # Haskell GHC Runtime
 add_subdirectory(java_loader) # Java Virtual Machine
 add_subdirectory(jl_loader) # Julia Runtime
 add_subdirectory(jsm_loader) # Mozilla's SpiderMonkey 4.8 JavaScript Engine
