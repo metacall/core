@@ -228,8 +228,10 @@ void dynlink_unload(dynlink handle)
 {
 	if (handle != NULL)
 	{
-		dynlink_impl_unload(handle, handle->impl);
-
+		if (handle->impl != NULL)
+		{
+			dynlink_impl_unload(handle, handle->impl);
+		}
 		free(handle);
 	}
 }

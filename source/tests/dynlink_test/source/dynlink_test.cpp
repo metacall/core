@@ -66,19 +66,24 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
 
-		dynlink_symbol_addr addr;
+		dynlink_symbol_addr addr = nullptr;
 
-		EXPECT_EQ((int)0, dynlink_symbol(proc, "function_from_current_executable", &addr));
-
+		int sym_ret = dynlink_symbol(proc, "function_from_current_executable", &addr);
+		if (sym_ret != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "dynlink_symbol failed for function_from_current_executable (return %d, addr %p)", sym_ret, (void *)addr);
+		}
+		EXPECT_EQ((int)0, sym_ret);
 		ASSERT_NE((dynlink_symbol_addr)addr, (dynlink_symbol_addr)NULL);
 
 		int (*fn_ptr)(void) = (int (*)(void))addr;
-
+		ASSERT_NE((void *)fn_ptr, (void *)NULL);
 		EXPECT_EQ((int)48, fn_ptr());
 
 		EXPECT_EQ((int (*)(void))(&function_from_current_executable), (int (*)(void))fn_ptr);
 
 		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
+		proc = nullptr;
 	}
 
 #ifdef DYNLINK_TEST_MOCK_LOADER
@@ -105,27 +110,24 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 			if (handle != NULL)
 			{
-				dynlink_symbol_addr mock_loader_print_info_addr;
+				dynlink_symbol_addr mock_loader_print_info_addr = nullptr;
 
-				EXPECT_EQ((int)0, dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr));
+				int sym_ret = dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr);
+				if (sym_ret != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "dynlink_symbol failed for mock_loader_print_info (return %d)", sym_ret);
+				}
+				EXPECT_EQ((int)0, sym_ret);
 
 				if (mock_loader_print_info_addr != NULL)
 				{
 					mock_loader_print_func print = (mock_loader_print_func)mock_loader_print_info_addr;
-
 					log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
-
-					log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)mock_loader_print_info_addr);
-
-					if (mock_loader_print_info_addr != NULL)
-					{
-						log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
-					}
-
 					log_write("metacall", LOG_LEVEL_DEBUG, "Print: %s", print());
 				}
 
 				dynlink_unload(handle);
+				handle = nullptr;
 			}
 		}
 
@@ -151,31 +153,29 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 			if (handle != NULL)
 			{
-				dynlink_symbol_addr mock_loader_print_info_addr;
+				dynlink_symbol_addr mock_loader_print_info_addr = nullptr;
 
-				EXPECT_EQ((int)0, dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr));
+				int sym_ret = dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr);
+				if (sym_ret != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "dynlink_symbol failed for mock_loader_print_info (absolute path, return %d)", sym_ret);
+				}
+				EXPECT_EQ((int)0, sym_ret);
 
 				if (mock_loader_print_info_addr != NULL)
 				{
 					mock_loader_print_func print = (mock_loader_print_func)mock_loader_print_info_addr;
-
 					log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
-
-					log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)mock_loader_print_info_addr);
-
-					if (mock_loader_print_info_addr != NULL)
-					{
-						log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
-					}
-
 					log_write("metacall", LOG_LEVEL_DEBUG, "Print: %s", print());
 				}
 
 				dynlink_unload(handle);
+				handle = nullptr;
 			}
 		}
 
 		environment_variable_path_destroy(path);
+		path = nullptr; /* do not use after destroy */
 	}
 #endif
 }
