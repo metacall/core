@@ -621,6 +621,12 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 Follow these steps to build and install **METACALL** manually.
 
+### Rust Loader Notes
+
+If you are working specifically on the Rust loader (`rs_loader`), see the
+[Rust loader build notes](../source/loaders/rs_loader/Building.md) for
+recommended build steps and common pitfalls.
+
 ```sh
 git clone https://github.com/metacall/core.git
 mkdir core/build && cd core/build
