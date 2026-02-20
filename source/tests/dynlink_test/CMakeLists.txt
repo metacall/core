@@ -136,9 +136,11 @@ target_link_options(${target}
 	${DEFAULT_LINKER_OPTIONS}
 	${DYNLINK_TEST_EXPORT_DYNAMIC}
 
-	# Required for linking symbols from the executable
+	# Required for linking symbols from the executable (dynlink_load_self)
 	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>
 	$<$<CXX_COMPILER_ID:GNU>:-rdynamic>
+	# Clang on Linux/BSD: same as -rdynamic so dlsym(NULL, "symbol") finds executable symbols
+	$<$<AND:$<NOT:$<PLATFORM_ID:Darwin>>,$<CXX_COMPILER_ID:Clang>>:-rdynamic>
 )
 
 #
