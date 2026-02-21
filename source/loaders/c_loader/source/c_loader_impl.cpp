@@ -147,7 +147,7 @@ public:
 		}
 	}
 
-	void add(std::string& file)
+	void add(std::string &file)
 	{
 		this->files.push_back(file);
 	}
