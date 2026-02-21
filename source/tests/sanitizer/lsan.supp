@@ -34,7 +34,8 @@ leak:libruby*
 #
 leak:libcoreclr*
 leak:libicuuc*
-# TODO: Implement assembly unloading with loader context
+# Intentional CoreCLR static-lifetime allocations (JIT/type-system metadata)
+# Note: Roslyn CSharpCompilation leak on failed loads (issue #378) is fixed in LoaderBase
 leak:System.Private.CoreLib.dll
 #
 # Rust

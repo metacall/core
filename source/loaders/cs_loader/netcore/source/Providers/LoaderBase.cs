@@ -13,26 +13,7 @@ using System.Runtime.InteropServices;
 
 namespace CSLoader.Providers
 {
-    /* TODO: Review the leak of CSharpCompilation when it fails to compile */
-    /*
-    public class CollectibleAssemblyLoadContext : System.Runtime.Loader.AssemblyLoadContext, IDisposable
-    {
-        public CollectibleAssemblyLoadContext() : base(true)
-        {
-
-        }
-
-        protected override Assembly Load(AssemblyName assemblyName)
-        {
-            return null;
-        }
-
-        public void Dispose()
-        {
-            Unload();
-        }
-    }
-    */
+    /* CollectibleAssemblyLoadContext is implemented in LoaderV2 for NET Core 2+ targets */
 
     public abstract class LoaderBase : ILoader
     {
@@ -195,11 +176,22 @@ namespace CSLoader.Providers
 
             if (PrintDiagnostics(compilation.GetDiagnostics()) > 0)
             {
+                // Release MetadataReferences so ASAN does not report them as leaked at exit
+                references = null;
+                compilation = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
                 return false;
             }
 
             if (PrintDiagnostics(compilation.GetDeclarationDiagnostics()) > 0)
             {
+                references = null;
+                compilation = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
                 return false;
             }
 
@@ -211,7 +203,11 @@ namespace CSLoader.Providers
                 {
                     PrintDiagnostics(result.Diagnostics);
 
-                    ms.Dispose();
+                    references = null;
+                    compilation = null;
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect();
 
                     return false;
                 }
@@ -221,9 +217,14 @@ namespace CSLoader.Providers
 
                     assembly = this.MakeAssembly(ms);
 
-                    this.LoadFunctions(assembly);
+                    // Release PE reader backing stores once the assembly is loaded
+                    references = null;
+                    compilation = null;
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect();
 
-                    ms.Dispose();
+                    this.LoadFunctions(assembly);
 
                     return true;
                 }

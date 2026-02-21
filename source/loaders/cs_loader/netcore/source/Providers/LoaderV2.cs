@@ -4,10 +4,24 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using System.Runtime.Loader;
 using CSLoader.Contracts;
 
 namespace CSLoader.Providers
 {
+    // Collectible context so Roslyn-compiled assemblies can be unloaded by the GC
+    internal sealed class CollectibleAssemblyLoadContext : AssemblyLoadContext
+    {
+        public CollectibleAssemblyLoadContext() : base(isCollectible: true)
+        {
+        }
+
+        protected override Assembly Load(AssemblyName assemblyName)
+        {
+            return null;
+        }
+    }
+
     public class LoaderV2 : LoaderBase
     {
         public LoaderV2(ILog log) : base(log)
@@ -72,7 +86,8 @@ namespace CSLoader.Providers
 
         protected override Assembly MakeAssembly(MemoryStream stream)
         {
-            return Assembly.Load(stream.ToArray());
+            var alc = new CollectibleAssemblyLoadContext();
+            return alc.LoadFromStream(stream);
         }
 
         protected override Assembly Load(AssemblyName assemblyName)
