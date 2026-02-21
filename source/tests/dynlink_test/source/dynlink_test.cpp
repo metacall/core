@@ -26,6 +26,8 @@
 
 #include <log/log.h>
 
+#include <cstring>
+
 #define DYNLINK_TEST_LIBRARY_PATH "DYNLINK_TEST_LIBRARY_PATH"
 
 typedef const char *(*mock_loader_print_func)(void);
@@ -56,19 +58,35 @@ TEST_F(dynlink_test, DefaultConstructor)
 						  log_policy_storage_sequential(),
 						  log_policy_stream_stdio(stdout)));
 
+	dynlink_print_info();
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
-	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
+
+	/* Test loading symbols from current process */
 	{
 		dynlink proc = dynlink_load_self(DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
-
+		ASSERT_NE((dynlink)NULL, proc);
 
 		dynlink_symbol_addr addr = nullptr;
-			log_write("metacall", LOG_LEVEL_ERROR, "dynlink_symbol failed for function_from_current_executable (return %d, addr %p)", sym_ret, (void *)addr);
+
+		int sym_ret = dynlink_symbol(proc, "function_from_current_executable", &addr);
+
+		if (sym_ret != 0 || addr == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR,
+				"dynlink_symbol failed for function_from_current_executable (return %d, addr %p)",
+				sym_ret, (void *)addr);
 		}
+
+		EXPECT_EQ((int)0, sym_ret);
+		ASSERT_NE((void *)NULL, (void *)addr);
+
+		auto fn_ptr = (int (*)(void))addr;
 		ASSERT_NE((void *)fn_ptr, (void *)NULL);
 		EXPECT_EQ((int)48, fn_ptr());
 		EXPECT_EQ((int (*)(void))(&function_from_current_executable), (int (*)(void))fn_ptr);
+
+		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 		proc = nullptr;
 	}
 
@@ -78,11 +96,14 @@ TEST_F(dynlink_test, DefaultConstructor)
 		const char library_name[] = "mock_loaderd";
 	#else
 		const char library_name[] = "mock_loader";
+	#endif
+
+		char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL, 0, NULL);
 
 		ASSERT_NE((char *)path, (char *)NULL);
 
 		/* Test library loading */
-		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
+		{
 			dynlink handle = dynlink_load(path, library_name, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
 			ASSERT_NE(handle, (dynlink)NULL);
