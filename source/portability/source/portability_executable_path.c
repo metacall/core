@@ -63,11 +63,6 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	if (sysctl(name, sizeof(name) / sizeof(name[0]), path, length, NULL, 0) < 0)
 	{
 		return 1;
-	}
-#elif defined(__NetBSD__)
-	*length = readlink("/proc/curproc/exe", path, path_max_length);
-#elif defined(__DragonFly__)
-	*length = readlink("/proc/curproc/file", path, path_max_length);
 #elif defined(sun) || defined(__sun)
 	const char *path_ptr = getexecname();
 	*length = strnlen(path_ptr, path_max_length);

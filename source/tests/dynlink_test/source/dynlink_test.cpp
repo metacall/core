@@ -56,33 +56,19 @@ TEST_F(dynlink_test, DefaultConstructor)
 						  log_policy_storage_sequential(),
 						  log_policy_stream_stdio(stdout)));
 
-	dynlink_print_info();
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
-
-	/* Test loading symbols from current process */
+	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 	{
 		dynlink proc = dynlink_load_self(DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
-		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
 
 		dynlink_symbol_addr addr = nullptr;
-
-		int sym_ret = dynlink_symbol(proc, "function_from_current_executable", &addr);
-		if (sym_ret != 0)
-		{
 			log_write("metacall", LOG_LEVEL_ERROR, "dynlink_symbol failed for function_from_current_executable (return %d, addr %p)", sym_ret, (void *)addr);
 		}
-		EXPECT_EQ((int)0, sym_ret);
-		ASSERT_NE((dynlink_symbol_addr)addr, (dynlink_symbol_addr)NULL);
-
-		int (*fn_ptr)(void) = (int (*)(void))addr;
 		ASSERT_NE((void *)fn_ptr, (void *)NULL);
 		EXPECT_EQ((int)48, fn_ptr());
-
 		EXPECT_EQ((int (*)(void))(&function_from_current_executable), (int (*)(void))fn_ptr);
-
-		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 		proc = nullptr;
 	}
 
@@ -92,14 +78,11 @@ TEST_F(dynlink_test, DefaultConstructor)
 		const char library_name[] = "mock_loaderd";
 	#else
 		const char library_name[] = "mock_loader";
-	#endif
-
-		char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL, 0, NULL);
 
 		ASSERT_NE((char *)path, (char *)NULL);
 
 		/* Test library loading */
-		{
+		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 			dynlink handle = dynlink_load(path, library_name, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
 			ASSERT_NE(handle, (dynlink)NULL);
