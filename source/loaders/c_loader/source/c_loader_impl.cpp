@@ -60,7 +60,7 @@ typedef struct loader_impl_c_type
 	std::vector<std::string> execution_paths;
 	std::string libtcc_runtime_path;
 
-} * loader_impl_c;
+} *loader_impl_c;
 
 struct loader_impl_c_handle_base_type;
 
@@ -73,7 +73,7 @@ typedef struct c_loader_impl_discover_visitor_data_type
 	scope sp;
 	int result;
 
-} * c_loader_impl_discover_visitor_data;
+} *c_loader_impl_discover_visitor_data;
 
 static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data);
 
@@ -90,7 +90,7 @@ public:
 
 	virtual int discover_visitor(std::vector<const char *> &command_line_args, void *data) = 0;
 
-} * loader_impl_c_handle_base;
+} *loader_impl_c_handle_base;
 
 typedef struct loader_impl_c_handle_file_type : loader_impl_c_handle_base_type
 {
@@ -171,7 +171,7 @@ private:
 		return true;
 	}
 
-} * loader_impl_c_handle_file;
+} *loader_impl_c_handle_file;
 
 typedef struct loader_impl_c_handle_memory_type : loader_impl_c_handle_base_type
 {
@@ -223,7 +223,7 @@ public:
 		return 0;
 	}
 
-} * loader_impl_c_handle_memory;
+} *loader_impl_c_handle_memory;
 
 static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr);
 static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_base c_handle, context ctx);
@@ -388,9 +388,9 @@ public:
 				size_t absolute_path_size = portability_path_join(exec_path.c_str(), exec_path.length() + 1, library_directory, library_directory_size, absolute_path, PORTABILITY_PATH_SIZE);
 
 				/* If the path is relative, we keep trying the exec_paths until we find the header,
-				* this is for solving situations where we have the header in /usr/local/include and
-				* the library in /usr/local/lib
-				*/
+				 * this is for solving situations where we have the header in /usr/local/include and
+				 * the library in /usr/local/lib
+				 */
 				if (this->lib == NULL)
 				{
 					this->load_dynlink(absolute_path, absolute_path_size, library_name);
@@ -486,7 +486,7 @@ private:
 		return c_loader_impl_discover_ast(impl, this, ctx);
 	}
 
-} * loader_impl_c_handle_dynlink;
+} *loader_impl_c_handle_dynlink;
 
 typedef struct loader_impl_c_function_type
 {
@@ -499,7 +499,7 @@ typedef struct loader_impl_c_function_type
 	void **values;
 	const void *address;
 
-} * loader_impl_c_function;
+} *loader_impl_c_function;
 
 /* Retrieve the equivalent FFI type from type id */
 static ffi_type *c_loader_impl_ffi_type(type_id id);
@@ -1188,7 +1188,7 @@ int c_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 
 	/* TODO: It would be interesting to support LD_LIBRARY_PATH or DYLD_LIBRARY_PATH
-	* on startup for supporting standard execution paths */
+	 * on startup for supporting standard execution paths */
 	c_impl->execution_paths.push_back(path);
 
 	return 0;
@@ -1359,19 +1359,14 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 {
 	auto cursor_type = clang_getCursorType(cursor);
 	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
-	auto symbol_name = func_name;
 
-#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	symbol_name.insert(0, 1, '_');
-#endif
-
-	if (scope_get(sp, symbol_name.c_str()) != NULL)
+	if (scope_get(sp, func_name.c_str()) != NULL)
 	{
 		log_write("metacall", LOG_LEVEL_WARNING, "Symbol '%s' redefined, skipping the function", func_name.c_str());
 		return 0;
 	}
 
-	const void *address = c_handle->symbol(symbol_name);
+	const void *address = c_handle->symbol(func_name);
 
 	if (address == NULL)
 	{
