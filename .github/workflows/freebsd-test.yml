@@ -45,13 +45,12 @@ jobs:
             echo "=== Diagnostics ==="
             uname -a
             ulimit -c unlimited
-            sudo sysctl kern.coredump=1 || true
-            sudo sysctl kern.corefile=/tmp/core.%N.%P || true
+            sudo sysctl kern.corefile=/tmp/core.%N.%P
             echo "=== dynlink-test binary: ldd ==="
             if [ -f ./dynlink-test ]; then ldd ./dynlink-test; fi
 
             echo "=== Re-running dynlink-test verbosely (do not fail here) ==="
-            (ctest -V -R '^dynlink-test$' --output-on-failure -C Release || true) 2>&1 | tee /tmp/dynlink_ctest_verbose.log
+            (ctest -V -R '^dynlink-test$' --output-on-failure -C Release) 2>&1 | tee /tmp/dynlink_ctest_verbose.log
 
             echo "=== Running dynlink-test under gdb (always print bt) ==="
             pkg install -y gdb
@@ -62,16 +61,16 @@ jobs:
                 -ex "bt full" \
                 -ex "info registers" \
                 -ex "info sharedlibrary" \
-                --args ./dynlink-test || true
+                --args ./dynlink-test 
             fi
 
             echo "=== List potential core dumps ==="
-            ls -lah /tmp/core.* 2>/dev/null || true
+            ls -lah /tmp/core.* 2>/dev/null
 
             echo "=== Preserve crash evidence for artifacts ==="
             mkdir -p ./dynlink-crash-artifacts
-            cp -f /tmp/dynlink_ctest_verbose.log ./dynlink-crash-artifacts/ 2>/dev/null || true
-            cp -f /tmp/core.* ./dynlink-crash-artifacts/ 2>/dev/null || true
+            cp -f /tmp/dynlink_ctest_verbose.log ./dynlink-crash-artifacts/ 2>/dev/null
+            cp -f /tmp/core.* ./dynlink-crash-artifacts/ 2>/dev/null
 
             echo "=== Running full test suite (this is the real gate) ==="
             ctest -j$(sysctl -n hw.ncpu) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C Release

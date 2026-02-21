@@ -56,33 +56,19 @@ TEST_F(dynlink_test, DefaultConstructor)
 						  log_policy_storage_sequential(),
 						  log_policy_stream_stdio(stdout)));
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "dynlink_test: calling dynlink_print_info");
 	dynlink_print_info();
 
-	const char *ext = dynlink_extension();
-	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", ext != NULL ? ext : "(null)");
+	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
 	/* Test loading symbols from current process */
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "dynlink_test: calling dynlink_load_self");
 		dynlink proc = dynlink_load_self(DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
-		if (proc == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "dynlink_test: dynlink_load_self returned NULL");
-		}
 		ASSERT_NE((dynlink)proc, (dynlink)(NULL));
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "dynlink_test: dynlink_load_self succeeded (name: %s, path: %s)",
-			dynlink_get_name(proc) ? dynlink_get_name(proc) : "(null)",
-			dynlink_get_path(proc) ? dynlink_get_path(proc) : "(null)");
 
 		dynlink_symbol_addr addr = nullptr;
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "dynlink_test: calling dynlink_symbol for function_from_current_executable");
 		int sym_ret = dynlink_symbol(proc, "function_from_current_executable", &addr);
-		log_write("metacall", LOG_LEVEL_DEBUG, "dynlink_test: dynlink_symbol returned %d, addr %p", sym_ret, (void *)addr);
-
 		if (sym_ret != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "dynlink_symbol failed for function_from_current_executable (return %d, addr %p)", sym_ret, (void *)addr);
@@ -92,14 +78,11 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		int (*fn_ptr)(void) = (int (*)(void))addr;
 		ASSERT_NE((void *)fn_ptr, (void *)NULL);
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "dynlink_test: calling fn_ptr at %p (expected %p)",
-			(void *)fn_ptr, (void *)&function_from_current_executable);
 		EXPECT_EQ((int)48, fn_ptr());
 
 		EXPECT_EQ((int (*)(void))(&function_from_current_executable), (int (*)(void))fn_ptr);
 
-		dynlink_unload(proc);
+		dynlink_unload(proc); /* Should do nothing except by freeing the handle */
 		proc = nullptr;
 	}
 

@@ -142,7 +142,7 @@ dynlink dynlink_load_absolute(const char *path, dynlink_flags flags)
 
 dynlink dynlink_load_self(dynlink_flags flags)
 {
-	portability_executable_path_length path_length = 0;
+	portability_executable_path_length path_length;
 	dynlink handle = malloc(sizeof(struct dynlink_type));
 
 	if (handle == NULL)
@@ -150,15 +150,8 @@ dynlink dynlink_load_self(dynlink_flags flags)
 		return NULL;
 	}
 
-	memset(handle->name, 0, PORTABILITY_PATH_SIZE);
-	memset(handle->path, 0, PORTABILITY_PATH_SIZE);
-
 	/* Retrieve the executable path for the full name */
-	if (portability_executable_path(handle->path, &path_length) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_WARNING, "DynLink: portability_executable_path failed, proceeding with empty path for load_self");
-		path_length = 0;
-	}
+	portability_executable_path(handle->path, &path_length);
 
 	/* Get the name without the extension */
 	portability_path_get_name(handle->path, path_length + 1, handle->name, PORTABILITY_PATH_SIZE);
