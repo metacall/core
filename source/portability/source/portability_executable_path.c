@@ -58,11 +58,16 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 
 	*length = strnlen(path, PORTABILITY_PATH_SIZE);
 #elif defined(__FreeBSD__)
-	int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
-	*length = sizeof(char) * path_max_length;
-	if (sysctl(name, sizeof(name) / sizeof(name[0]), path, length, NULL, 0) < 0)
 	{
-		return 1;
+		int mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+		size_t cb = (size_t)path_max_length;
+		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), path, &cb, NULL, 0) < 0)
+		{
+			return 1;
+		}
+		/* sysctl includes the NUL terminator in cb; subtract it so *length
+		   is the string length (consistent with readlink on Linux) */
+		*length = (cb > 0) ? (cb - 1) : 0;
 	}
 #elif defined(__NetBSD__)
 	*length = readlink("/proc/curproc/exe", path, path_max_length);
