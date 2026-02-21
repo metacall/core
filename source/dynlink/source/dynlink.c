@@ -28,6 +28,8 @@
 #include <portability/portability_executable_path.h>
 #include <portability/portability_path.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
 #include <string.h>
 
