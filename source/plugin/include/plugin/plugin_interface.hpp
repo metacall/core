@@ -18,83 +18,90 @@
  *
  */
 
+/* EXTENSION_FUNCTION and EXTENSION_FUNCTION_CHECK intentionally call variadic macros with zero
+ * extra arguments using the GNU empty-__VA_ARGS__ extension. The logic is correct (they branch
+ * via PREPROCESSOR_ARGS_EMPTY at expansion time), so suppress the Clang diagnostic here. */
+#if defined(__clang__)
+	#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #ifndef PLUGIN_INTERFACE_HPP
-#define PLUGIN_INTERFACE_HPP 1
+	#define PLUGIN_INTERFACE_HPP 1
 
 /* Private interface for using it inside any loader, extension or plugin for registering functions */
 /* TODO: Move this to source/metacall/include/metacall/private? */
 
-#include <preprocessor/preprocessor.h>
+	#include <preprocessor/preprocessor.h>
 
-#include <log/log.h>
+	#include <log/log.h>
 
-#include <reflect/reflect.h>
+	#include <reflect/reflect.h>
 
-#include <metacall/metacall.h>
+	#include <metacall/metacall.h>
 
-#include <sstream>
-#include <string>
+	#include <sstream>
+	#include <string>
 
-#define EXTENSION_FUNCTION_IMPL_VOID(ret, name) \
-	do \
-	{ \
-		if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, 0, NULL, NULL) != 0) \
+	#define EXTENSION_FUNCTION_IMPL_VOID(ret, name) \
+		do \
 		{ \
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name)); \
-			return 1; \
-		} \
-	} while (0)
+			if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, 0, NULL, NULL) != 0) \
+			{ \
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name)); \
+				return 1; \
+			} \
+		} while (0)
 
-#define EXTENSION_FUNCTION_IMPL(ret, name, ...) \
-	do \
-	{ \
-		enum metacall_value_id arg_types[] = { __VA_ARGS__ }; \
-		if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), arg_types, NULL) != 0) \
+	#define EXTENSION_FUNCTION_IMPL(ret, name, ...) \
+		do \
 		{ \
-			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name)); \
-			return 1; \
-		} \
-	} while (0)
+			enum metacall_value_id arg_types[] = { __VA_ARGS__ }; \
+			if (metacall_register_loaderv(loader, handle, PREPROCESSOR_STRINGIFY(name), name, ret, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), arg_types, NULL) != 0) \
+			{ \
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: " PREPROCESSOR_STRINGIFY(name)); \
+				return 1; \
+			} \
+		} while (0)
 
-#define EXTENSION_FUNCTION(ret, name, ...) \
-	PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
-		EXTENSION_FUNCTION_IMPL_VOID(ret, name), \
-		EXTENSION_FUNCTION_IMPL(ret, name, __VA_ARGS__))
-
-#define EXTENSION_FUNCTION_THROW(error) \
-	do \
-	{ \
-		exception ex = exception_create_const(error, "PluginException", 0, ""); \
-		throwable th = throwable_create(value_create_exception(ex)); \
-		return value_create_throwable(th); \
-	} while (0)
-
-#define EXTENSION_FUNCTION_CHECK_ITERATOR(error, iterator, value) \
-	if (metacall_value_id(args[iterator]) != value) \
-	{ \
-		std::stringstream ss; \
-		ss << error ". The parameter number " PREPROCESSOR_STRINGIFY(PREPROCESSOR_ARGS_COUNT(iterator)) " requires a value of type " << metacall_value_id_name(value) << ", received: " << metacall_value_type_name(args[iterator]); \
-		std::string error_msg = ss.str(); \
-		EXTENSION_FUNCTION_THROW(error_msg.c_str()); \
-	}
-
-#define EXTENSION_FUNCTION_CHECK(error, ...) \
-	do \
-	{ \
-		(void)data; /* TODO: Do something with data */ \
-		/* Disable warning on args when no args */ \
+	#define EXTENSION_FUNCTION(ret, name, ...) \
 		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
-						(void)args; \
-						, \
-						PREPROCESSOR_EMPTY_SYMBOL()) \
-		if (argc != PREPROCESSOR_ARGS_COUNT(__VA_ARGS__)) \
+			EXTENSION_FUNCTION_IMPL_VOID(ret, name), \
+			EXTENSION_FUNCTION_IMPL(ret, name, __VA_ARGS__))
+
+	#define EXTENSION_FUNCTION_THROW(error) \
+		do \
+		{ \
+			exception ex = exception_create_const(error, "PluginException", 0, ""); \
+			throwable th = throwable_create(value_create_exception(ex)); \
+			return value_create_throwable(th); \
+		} while (0)
+
+	#define EXTENSION_FUNCTION_CHECK_ITERATOR(error, iterator, value) \
+		if (metacall_value_id(args[iterator]) != value) \
 		{ \
 			std::stringstream ss; \
-			ss << error ". The required number of argumens is " PREPROCESSOR_STRINGIFY(PREPROCESSOR_ARGS_COUNT(__VA_ARGS__)) ", received: " << argc; \
+			ss << error ". The parameter number " PREPROCESSOR_STRINGIFY(PREPROCESSOR_ARGS_COUNT(iterator)) " requires a value of type " << metacall_value_id_name(value) << ", received: " << metacall_value_type_name(args[iterator]); \
 			std::string error_msg = ss.str(); \
 			EXTENSION_FUNCTION_THROW(error_msg.c_str()); \
-		} \
-		PREPROCESSOR_FOR(EXTENSION_FUNCTION_CHECK_ITERATOR, error, __VA_ARGS__) \
-	} while (0)
+		}
+
+	#define EXTENSION_FUNCTION_CHECK(error, ...) \
+		do \
+		{ \
+			(void)data; /* TODO: Do something with data */ \
+			/* Disable warning on args when no args */ \
+			PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
+				(void)args; \
+				, \
+				PREPROCESSOR_EMPTY_SYMBOL()) \
+			if (argc != PREPROCESSOR_ARGS_COUNT(__VA_ARGS__)) \
+			{ \
+				std::stringstream ss; \
+				ss << error ". The required number of argumens is " PREPROCESSOR_STRINGIFY(PREPROCESSOR_ARGS_COUNT(__VA_ARGS__)) ", received: " << argc; \
+				std::string error_msg = ss.str(); \
+				EXTENSION_FUNCTION_THROW(error_msg.c_str()); \
+			} \
+			PREPROCESSOR_FOR(EXTENSION_FUNCTION_CHECK_ITERATOR, error, __VA_ARGS__) \
+		} while (0)
 
 #endif /* PLUGIN_INTERFACE_HPP */
