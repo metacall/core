@@ -126,8 +126,12 @@ target_compile_features(${target}
 # Linker options
 #
 
-# FreeBSD: export dynamic symbols for dynlink_load_self (like -rdynamic on Linux)
+# Export executable symbols so dynlink_load_self + dlsym can resolve symbols from the test binary.
+# Use linker flag -Wl,--export-dynamic (GNU ld / ELF) or -Wl,-export_dynamic (macOS).
 if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+	set(DYNLINK_TEST_EXPORT_DYNAMIC "-Wl,--export-dynamic")
+elseif(PROJECT_OS_FAMILY STREQUAL "unix")
+	# Linux and other ELF: pass directly to linker (more reliable than -rdynamic with some Clang/ld)
 	set(DYNLINK_TEST_EXPORT_DYNAMIC "-Wl,--export-dynamic")
 endif()
 
@@ -136,11 +140,8 @@ target_link_options(${target}
 	${DEFAULT_LINKER_OPTIONS}
 	${DYNLINK_TEST_EXPORT_DYNAMIC}
 
-	# Required for linking symbols from the executable (dynlink_load_self)
+	# macOS: different linker flag name (underscore)
 	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>
-	$<$<CXX_COMPILER_ID:GNU>:-rdynamic>
-	# Clang on Linux/BSD: same as -rdynamic so dlsym(NULL, "symbol") finds executable symbols
-	$<$<AND:$<NOT:$<PLATFORM_ID:Darwin>>,$<CXX_COMPILER_ID:Clang>>:-rdynamic>
 )
 
 #
