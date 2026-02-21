@@ -438,7 +438,7 @@ private:
 			library_directory,
 			library_directory_size,
 			platform_name,
-			strnlen(platform_name, PORTABILITY_PATH_SIZE),
+			strnlen(platform_name, PORTABILITY_PATH_SIZE) + 1,
 			absolute_path,
 			PORTABILITY_PATH_SIZE);
 

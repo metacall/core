@@ -20,6 +20,7 @@
 
 #include <portability/portability_path.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 /* Define separator checking for any platform */
@@ -622,38 +623,57 @@ int portability_path_exists(const char *path)
 #endif
 }
 
+char *portability_path_resolve(const char *path, char *resolved)
+{
+#if defined(_WIN32)
+	return _fullpath(resolved, path, PATH_MAX);
+#else
+	return realpath(path, resolved);
+#endif
+}
+
 int portability_path_file_exists(const char *path)
 {
+	char resolved_path[PORTABILITY_PATH_SIZE];
+
+	if (portability_path_resolve(path, resolved_path) == NULL)
+	{
+		return 1;
+	}
+
 #if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
-
-	DWORD attrs = GetFileAttributesA(path);
-
-	if (attrs == INVALID_FILE_ATTRIBUTES)
 	{
-		return 1;
-	}
+		DWORD attrs = GetFileAttributesA(resolved_path);
 
-	if (attrs & FILE_ATTRIBUTE_DIRECTORY)
-	{
-		return 1;
-	}
+		if (attrs == INVALID_FILE_ATTRIBUTES)
+		{
+			return 1;
+		}
 
-	return 0;
+		if (attrs & FILE_ATTRIBUTE_DIRECTORY)
+		{
+			return 1;
+		}
+
+		return 0;
+	}
 #else
-	struct stat buffer;
-
-	if (stat(path, &buffer) != 0)
 	{
-		return 1;
-	}
+		struct stat buffer;
 
-	if (!S_ISREG(buffer.st_mode))
-	{
-		return 1;
-	}
+		if (stat(resolved_path, &buffer) != 0)
+		{
+			return 1;
+		}
 
-	return 0;
+		if (!S_ISREG(buffer.st_mode))
+		{
+			return 1;
+		}
+
+		return 0;
+	}
 #endif
 }

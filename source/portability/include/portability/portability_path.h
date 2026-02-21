@@ -192,6 +192,8 @@ PORTABILITY_API int portability_path_compare(const char *left_path, const char *
 
 PORTABILITY_API int portability_path_is_pattern(const char *path, size_t size);
 
+PORTABILITY_API char *portability_path_resolve(const char *path, char *resolved);
+
 /**
  * @brief
  *   Check if a path exists either if it is a directory or a file.
