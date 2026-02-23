@@ -790,7 +790,19 @@ static void c_loader_impl_discover_symbols(void *ctx, const char *name, const vo
 {
 	std::map<std::string, const void *> *symbols = static_cast<std::map<std::string, const void *> *>(ctx);
 
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	/* On macOS, TCC may prefix C symbols with a leading underscore per the platform ABI.
+	 * Strip it so that lookup by plain function name (as reported by Clang) always works,
+	 * regardless of whether the system TCC or the MetaCall forked TCC is in use. */
+	std::string sym_name(name);
+	if (!sym_name.empty() && sym_name[0] == '_')
+	{
+		sym_name = sym_name.substr(1);
+	}
+	symbols->insert(std::pair<std::string, const void *>(sym_name, addr));
+#else
 	symbols->insert(std::pair<std::string, const void *>(name, addr));
+#endif
 }
 
 int function_c_interface_create(function func, function_impl impl)
@@ -1359,19 +1371,14 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 {
 	auto cursor_type = clang_getCursorType(cursor);
 	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
-	auto symbol_name = func_name;
 
-#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	symbol_name.insert(0, 1, '_');
-#endif
-
-	if (scope_get(sp, symbol_name.c_str()) != NULL)
+	if (scope_get(sp, func_name.c_str()) != NULL)
 	{
 		log_write("metacall", LOG_LEVEL_WARNING, "Symbol '%s' redefined, skipping the function", func_name.c_str());
 		return 0;
 	}
 
-	const void *address = c_handle->symbol(symbol_name);
+	const void *address = c_handle->symbol(func_name);
 
 	if (address == NULL)
 	{
