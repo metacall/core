@@ -104,6 +104,14 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 			endif()
 		endif()
 
+# NOTE:
+# The Rust Language Server (rls) has been deprecated in favor of rust analyzer
+# and is no longer consistently available on newer nightly toolchains.
+# See: https://blog.rust-lang.org/2022/07/01/RLS-deprecation/
+#
+# For this reason, rls is not treated as a required toolchain component.
+# Tooling should prefer rust analyzer when applicable.
+
 		foreach(Rust_TOOLCHAIN_COMPONENT ${Rust_TOOLCHAIN_COMPONENT_LIST})
 			execute_process(
 				COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --component ${Rust_TOOLCHAIN_COMPONENT}

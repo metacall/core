@@ -15,7 +15,6 @@ set(Rust_TOOLCHAIN_COMPONENT_LIST
 	cargo
 	clippy
 	llvm-tools-preview
-	rls
 	rust-analysis
 	rust-analyzer-preview
 	rust-std
