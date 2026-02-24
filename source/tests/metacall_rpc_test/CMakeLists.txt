@@ -79,6 +79,8 @@ target_include_directories(${target}
 # Libraries
 #
 
+find_package(Threads REQUIRED)
+
 target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
@@ -86,6 +88,8 @@ target_link_libraries(${target}
 	GTest
 
 	${META_PROJECT_NAME}::metacall
+
+	Threads::Threads
 )
 
 #
