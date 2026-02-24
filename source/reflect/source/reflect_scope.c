@@ -272,6 +272,7 @@ value scope_metadata_name(scope sp)
 	if (v_ptr[0] == NULL)
 	{
 		value_type_destroy(v);
+		return NULL;
 	}
 
 	v_ptr[1] = value_create_string(sp->name, strlen(sp->name));
@@ -279,6 +280,7 @@ value scope_metadata_name(scope sp)
 	if (v_ptr[1] == NULL)
 	{
 		value_type_destroy(v);
+		return NULL;
 	}
 
 	return v;
