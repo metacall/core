@@ -1,111 +1,54 @@
 # Rust Loader
 
-## Building
-
-This document explains how to successfully build and test the MetaCall Rust loader from a clean environment.
+### What is Rust Loader 
 
 The Rust loader (`rs_loader`) is integrated into MetaCall's top level CMake build system. 
 Running cargo `build` directly inside the Rust directory may appear to work, but it can cause toolchain, linker, and metadata mismatches with MetaCall.
 Using the CMake build flow ensures the correct Rust nightly toolchain, linker paths, and test configuration are set up automatically.
 
+### How the Rust Loader Works
+
+MetaCall does not execute Rust source code directly.
+Instead, the Rust loader compiles the crate into a shared library and then dynamically loads it at runtime using FFI.
+
+The process:
+
+1. MetaCall detects a Rust script (.rs)
+2. The loader generates a temporary Cargo project
+3. The crate is compiled into a shared library (.so)
+4. Exported functions are discovered through metadata
+5. Functions become callable from MetaCall CLI
+
+### Why Nightly Rust is Required
+
+The Rust loader depends on unstable compiler features used for metadata extraction and symbol inspection.
+These APIs are only available in the Rust nightly toolchain.
+Using stable Rust typically results in the loader compiling but exported functions not appearing in inspect.
+
+### Building 
+
+Consider the Main project README.
+
 ### Tested Environment
 
 - OS: Ubuntu (WSL2 on Windows)
 - Build system: CMake
-- Rust toolchain: nightly 
-- NodeJS: v18+
-- C/C++ compiler: gcc/g++ 
+- Rust toolchain: nightly  
 
 ***The loader may fail to compile or load functions if stable Rust is used instead of nightly.***
 
-### 1. Install System Dependencies
-
-Install required build tools:
-
-```sh
-sudo apt update
-sudo apt install build-essential cmake git python3 pkg-config libssl-dev nodejs npm
-```
-
-### 2. Install Rust (Nightly Required)
-
-MetaCall Rust loader requires compiler APIs only available in nightly Rust.
-
-```sh
-curl https://sh.rustup.rs -sSf | sh
-source $HOME/.cargo/env
-rustup toolchain install nightly
-rustup default nightly
-```
-
-```sh
-rustc --version
-```
-It should show nightly.
-
-most of MetaCall Rust failures happen due to:
-nightly is installed but shell still uses stable.
-
-This command shows the active toolchain.
-```sh
-rustup show
-```
-Expected:
-
-```sh
-Default host: x86_64-unknown-linux-gnu
-active toolchain: nightly-xxxx
-```
-
-### 3. Clone MetaCall
-
-Fork the repository first on GitHub, then:
-
-```sh
-git clone https://github.com/<your-username>/core.git metacall
-cd metacall
-```
-Optional but recommended
-
-```sh
-git remote add upstream https://github.com/metacall/core.git
-```
-### 4. IMPORTANT: Do NOT Build Rust Loader Manually
-
-Do NOT run:
-`cargo build`
-
-inside "rs_loader/rust".
-
-MetaCall controls Rust compilation through CMake.
-Running cargo manually may cause linker, metadata and loader mismatches.
-
-### 5. Build MetaCall with Rust Loader
-
-Create build directory:
+### Building MetaCall with Rust Loader Enabled
 
 ```sh
 mkdir build
 cd build
-```
-
-Configure:
-
-```sh
 cmake .. \
 -DOPTION_BUILD_LOADERS_RS=ON \
--DOPTION_BUILD_CLI=ON \
--DOPTION_BUILD_LOADERS_EXT=ON \
--DOPTION_BUILD_LOADERS_NODE=ON
-```
-
-Then compile:
-
-```sh
+-DOPTION_BUILD_CLI=ON
 make -j4
 ```
 
-### 6. Verify the Build
+### Verify the Build
 
 After a successful build you should see:
 
@@ -127,7 +70,7 @@ Run it:
 
 This verifies the CLI started. Next we must confirm the Rust Loader works.
 
-### 7. Load a Rust Script
+### Load a Rust Script
 
 Example script is already included:
 source/scripts/rust/basic/source/basic.rs
@@ -158,7 +101,7 @@ add_float(num_1, num_2)
 return_map()
 ```
 
-### 8. Call a Rust Function
+### Call a Rust Function
 
 Important: functions must be called using "call".
 
@@ -168,4 +111,15 @@ call add(1,2)
 Output:
 3
 
-**Rust loader is correctly configured and working**
+**The Rust loader is now successfully integrated with MetaCall and exported Rust functions can be invoked from the CLI.**
+
+### Supported Types
+
+|   Rust Type       |   MetaCall    |
+|-------------------|---------------|
+|   i32             |   number      |
+|   f32             |   number      |
+|   &str            |   string      |
+|   String          |   string      |
+|   Vec<T           |   array       |
+|   Hashmaps<K,V>   |   map         |
