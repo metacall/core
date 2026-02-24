@@ -60,7 +60,7 @@ typedef struct loader_impl_c_type
 	std::vector<std::string> execution_paths;
 	std::string libtcc_runtime_path;
 
-} *loader_impl_c;
+} * loader_impl_c;
 
 struct loader_impl_c_handle_base_type;
 
@@ -73,7 +73,7 @@ typedef struct c_loader_impl_discover_visitor_data_type
 	scope sp;
 	int result;
 
-} *c_loader_impl_discover_visitor_data;
+} * c_loader_impl_discover_visitor_data;
 
 static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data);
 
@@ -90,7 +90,7 @@ public:
 
 	virtual int discover_visitor(std::vector<const char *> &command_line_args, void *data) = 0;
 
-} *loader_impl_c_handle_base;
+} * loader_impl_c_handle_base;
 
 typedef struct loader_impl_c_handle_file_type : loader_impl_c_handle_base_type
 {
@@ -171,7 +171,7 @@ private:
 		return true;
 	}
 
-} *loader_impl_c_handle_file;
+} * loader_impl_c_handle_file;
 
 typedef struct loader_impl_c_handle_memory_type : loader_impl_c_handle_base_type
 {
@@ -223,7 +223,7 @@ public:
 		return 0;
 	}
 
-} *loader_impl_c_handle_memory;
+} * loader_impl_c_handle_memory;
 
 static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr);
 static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_base c_handle, context ctx);
@@ -486,7 +486,7 @@ private:
 		return c_loader_impl_discover_ast(impl, this, ctx);
 	}
 
-} *loader_impl_c_handle_dynlink;
+} * loader_impl_c_handle_dynlink;
 
 typedef struct loader_impl_c_function_type
 {
@@ -499,7 +499,7 @@ typedef struct loader_impl_c_function_type
 	void **values;
 	const void *address;
 
-} *loader_impl_c_function;
+} * loader_impl_c_function;
 
 /* Retrieve the equivalent FFI type from type id */
 static ffi_type *c_loader_impl_ffi_type(type_id id);
