@@ -91,9 +91,9 @@
 			(void)data; /* TODO: Do something with data */ \
 			/* Disable warning on args when no args */ \
 			PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
-				(void)args; \
-				, \
-				PREPROCESSOR_EMPTY_SYMBOL()) \
+							(void)args; \
+							, \
+							PREPROCESSOR_EMPTY_SYMBOL()) \
 			if (argc != PREPROCESSOR_ARGS_COUNT(__VA_ARGS__)) \
 			{ \
 				std::stringstream ss; \
