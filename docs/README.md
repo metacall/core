@@ -72,18 +72,19 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
     - [5.6 Memory Layout](#56-memory-layout)
     - [5.7 Fork Model](#57-fork-model)
     - [5.8 Threading Model](#58-threading-model)
-  - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
-  - [6. Build System](#6-build-system)
-    - [6.1 Build Options](#61-build-options)
-    - [6.2 Coverage](#62-coverage)
-    - [6.3 Debugging](#63-debugging)
-    - [6.4 Build on Cloud - Gitpod](#64-build-on-cloud---gitpod)
-  - [7. Platform Support](#7-platform-support)
-    - [7.1 Docker Support](#71-docker-support)
-    - [7.1.1 Docker Development](#711-docker-development)
-    - [7.1.2 Docker Testing](#712-docker-testing)
-  - [8. Benchmarks](#8-benchmarks)
-  - [9. License](#9-license)
+  - [6. Application Programming Interface (API)](#6-application-programming-interface-api)
+  - [7. Build tools](#7-build-using-scripts)
+  - [8. Build System](#8-build-system)
+    - [8.1 Build Options](#81-build-options)
+    - [8.2 Coverage](#82-coverage)
+    - [8.3 Debugging](#83-debugging)
+    - [8.4 Build on Cloud - Gitpod](#84-build-on-cloud---gitpod)
+  - [9. Platform Support](#9-platform-support)
+    - [9.1 Docker Support](#91-docker-support)
+    - [9.1.1 Docker Development](#911-docker-development)
+    - [9.1.2 Docker Testing](#912-docker-testing)
+  - [10. Benchmarks](#10-benchmarks)
+  - [11. License](#11-license)
 
 <!-- /TOC -->
 
@@ -615,9 +616,72 @@ In order to end this section, here's a list of ideas that are not completely imp
 - Asynchronous non-deadlocking, non-stack growing callbacks between runtimes (running multiple event loops between languages). This will solve the second case where Python is the host language and deadlocks because of NodeJS event loop nature.
 - Support for multi-isolate and multiple interpreters instances.
 
-## 5. Application Programming Interface (API)
+## 6. Application Programming Interface (API)
 
-## 6. Build System
+## 7. Build using scripts
+
+MetaCall is a multi-language runtime (C, Python, Node, Rust, etc).
+Because of that, installation is complicated.
+So the project created a mini build system inside:
+
+```sh
+/tools
+```
+MetaCall provides helper scripts in the tools/ directory to automatically install dependencies, configure the project, and compile it.
+Using these scripts is the recommended way to build MetaCall instead of manually installing packages or running CMake directly.
+
+### Prepare the Environment
+
+From the repository root:
+```sh
+cd tools
+./metacall-environment.sh
+```
+What it does:
+1. Detects the operating system.
+2. Installs required system packages.
+3. Installs language runtimes used by MetaCall.
+4. Prepares certificates and build prerequisites.
+
+This replaces manual installation of packages such as build-essential, cmake, nodejs, python, etc.
+
+### Configure the project
+
+```sh
+cd tools
+./metacall-configure.sh
+```
+What it does:
+1. Creates the build directory.
+2. Runs CMake with the correct options.
+3. Detects available loaders and runtimes.
+
+You do not need to run cmake manually.
+
+### Build MetaCall
+
+```sh
+./metacall-build.sh
+```
+This compiles MetaCall and all enabled loaders.
+
+### Verify the Installation
+After building, you can run the CLI:
+```sh
+cd ../build
+./metacallcli
+```
+If the CLI starts successfully, MetaCall is correctly built.
+
+### Why use the scripts?
+
+ The tools scripts:
+1. Support Linux, macOS, and Windows CI environments.
+2. Install compatible dependency versions.
+3. Prevent toolchain mismatches.
+4. Ensure all language loaders compile correctly.
+
+## 8. Build System
 
 Follow these steps to build and install **METACALL** manually.
 
@@ -631,7 +695,7 @@ sudo HOME="$HOME" cmake --build . --target install
 cmake --build . --target install
 ```
 
-### 6.1 Build Options
+### 8.1 Build Options
 
 These options can be set using **`-D`** prefix when configuring CMake. For example, the following configuration enables the build of Python and Ruby loaders.
 
@@ -677,7 +741,7 @@ cmake --build build --target clang-format
 
 Be aware that this target won't exist if clang-format was not installed when cmake was last run.
 
-### 6.2 Coverage
+### 8.2 Coverage
 
 In order to run code coverage and obtain html reports use the following commands (assuming you just clonned the repository):
 
@@ -693,7 +757,7 @@ gcovr -r ../source/ . --html-details coverage.html
 
 The output reports will be generated in `${CMAKE_BINARY_DIR}/coverage.html` in html format.
 
-### 6.3 Debugging
+### 8.3 Debugging
 
 For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
 
@@ -726,7 +790,7 @@ ctest
 
 For running other Valgrind's tools like helgrind or similar, I recommend running them manually. Just run one test with `ctest -VV -R metacall-node-port-test`, copy the environment variables, and configure the flags by yourself.
 
-### 6.4 Build on Cloud - Gitpod
+### 8.4 Build on Cloud - Gitpod
 
 Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), an automated cloud dev environment.
 
@@ -736,7 +800,7 @@ Click the button below. A workspace with all required environments will be creat
 
 > To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/core`
 
-## 7. Platform Support
+## 8.5 Platform Support
 
 The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
 
@@ -747,7 +811,7 @@ The following platforms and architectures have been tested and are known to work
 |   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
 |  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
 
-### 7.1 Docker Support
+### 9 Docker Support
 
 To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bookworm-slim` for `amd64` architecture.
 
@@ -783,7 +847,7 @@ docker pull metacall/core:runtime
 docker pull metacall/core:cli
 ```
 
-### 7.1.1 Docker Development
+### 9.1.1 Docker Development
 
 It is possible to develop **METACALL** itself or applications using **METACALL** as standalone library with Docker. The `dev` image can be used for development. It contains all dependencies with all run-times installed with the code, allowing debugging too.
 
@@ -803,7 +867,7 @@ docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metac
 
 Inside docker terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call).
 
-### 7.1.2 Docker Testing
+### 9.1.2 Docker Testing
 
 An alternative for testing is to use a reduced image that includes the runtime and also the CLI. This alternative allows fast prototyping and CLI management in order to test and inspect your own scripts.
 
@@ -854,7 +918,7 @@ runtime __metacall_host__
 
 Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.
 
-## 8. Benchmarks
+## 10. Benchmarks
 
 **METACALL** provides benchmarks for multiple operative systems in order to improve performance iteratively, those can be found in GitHub Pages:
 
@@ -865,7 +929,7 @@ Where `script.js` is a script contained in host folder `$HOME/metacall` that wil
 | **`windows-2022`**  | https://metacall.github.io/core/bench/windows-2022/  |
 | **`windows-2025`**  | https://metacall.github.io/core/bench/windows-2025/  |
 
-## 9. License
+## 11. License
 
 **METACALL** is licensed under **[Apache License Version 2.0](/LICENSE)**.
 
