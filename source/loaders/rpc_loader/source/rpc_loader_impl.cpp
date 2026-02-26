@@ -65,6 +65,7 @@ typedef struct loader_impl_rpc_type
 	std::atomic<bool> exit_flag;
 	moodycamel::ConcurrentQueue<rpc_async_context *> async_queue;
 	void *allocator;
+	struct curl_slist *headers;
 	std::map<type_id, type> types;
 	std::set<std::string> execution_paths;
 
@@ -345,13 +346,13 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 		for (size_t arg = 0; arg < size; ++arg)
 		{
-			v_array[arg] = metacall_value_copy(args[arg]);
+			v_array[arg] = args[arg];
 		}
 	}
 
 	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
 
-	metacall_value_destroy(v);
+	value_destroy(v);
 
 	if (body_request_size == 0)
 	{
@@ -385,24 +386,13 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 		return NULL;
 	}
 
-	static struct curl_slist *headers = NULL;
-	if (headers == NULL)
-	{
-		headers = curl_slist_append(headers, "Accept: application/json");
-		headers = curl_slist_append(headers, "Content-Type: application/json");
-		headers = curl_slist_append(headers, "charset: utf-8");
-	}
-
-	/* Copy the request body so it persists after this function returns */
-	async_ctx->url = rpc_function->url;
-
+	curl_easy_setopt(easy, CURLOPT_URL, async_ctx->url.c_str());
 	curl_easy_setopt(easy, CURLOPT_VERBOSE, 0L);
 	curl_easy_setopt(easy, CURLOPT_HEADER, 0L);
 	curl_easy_setopt(easy, CURLOPT_CUSTOMREQUEST, "POST");
-	curl_easy_setopt(easy, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(easy, CURLOPT_HTTPHEADER, rpc_impl->headers);
 	curl_easy_setopt(easy, CURLOPT_USERAGENT, "librpc_loader/0.1");
 	curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
-	curl_easy_setopt(easy, CURLOPT_URL, async_ctx->url.c_str());
 	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&async_ctx->write_data));
 	curl_easy_setopt(easy, CURLOPT_PRIVATE, async_ctx);
 
@@ -551,19 +541,15 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	static struct curl_slist *headers = NULL;
-
-	if (headers == NULL)
-	{
-		headers = curl_slist_append(headers, "Accept: application/json");
-		headers = curl_slist_append(headers, "Content-Type: application/json");
-		headers = curl_slist_append(headers, "charset: utf-8");
-	}
+	rpc_impl->headers = NULL;
+	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "Accept: application/json");
+	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "Content-Type: application/json");
+	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "charset: utf-8");
 
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_VERBOSE, 0L);
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HEADER, 0L);
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_CUSTOMREQUEST, "POST");
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HTTPHEADER, rpc_impl->headers);
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_USERAGENT, "librpc_loader/0.1");
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
 
@@ -928,6 +914,8 @@ int rpc_loader_impl_destroy(loader_impl impl)
 
 	/* Clean up async multi handle */
 	curl_multi_cleanup(rpc_impl->async_multi);
+
+	curl_slist_free_all(rpc_impl->headers);
 
 	metacall_allocator_destroy(rpc_impl->allocator);
 
