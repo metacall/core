@@ -73,18 +73,18 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
     - [5.7 Fork Model](#57-fork-model)
     - [5.8 Threading Model](#58-threading-model)
   - [6. Application Programming Interface (API)](#6-application-programming-interface-api)
-  - [7. Build tools](#7-build-using-scripts)
-  - [8. Build System](#8-build-system)
-    - [8.1 Build Options](#81-build-options)
-    - [8.2 Coverage](#82-coverage)
-    - [8.3 Debugging](#83-debugging)
-    - [8.4 Build on Cloud - Gitpod](#84-build-on-cloud---gitpod)
-  - [9. Platform Support](#9-platform-support)
-    - [9.1 Docker Support](#91-docker-support)
-    - [9.1.1 Docker Development](#911-docker-development)
-    - [9.1.2 Docker Testing](#912-docker-testing)
-  - [10. Benchmarks](#10-benchmarks)
-  - [11. License](#11-license)
+  - [7. Build System](#7-build-system)
+    - [7.1 Build Options](#71-build-options)
+    - [7.2 Coverage](#72-coverage)
+    - [7.3 Debugging](#73-debugging)
+    - [7.4 Build on Cloud - Gitpod](#74-build-on-cloud---gitpod)
+    - [7.5 Build using scripts](#75-build-using-scripts)
+  - [8. Platform Support](#8-platform-support)
+    - [8.1 Docker Support](#81-docker-support)
+    - [8.1.1 Docker Development](#811-docker-development)
+    - [8.1.2 Docker Testing](#812-docker-testing)
+  - [9. Benchmarks](#9-benchmarks)
+  - [10. License](#10-license)
 
 <!-- /TOC -->
 
@@ -618,70 +618,7 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 ## 6. Application Programming Interface (API)
 
-## 7. Build using scripts
-
-MetaCall is a multi-language runtime (C, Python, Node, Rust, etc).
-Because of that, installation is complicated.
-So the project created a mini build system inside:
-
-```sh
-/tools
-```
-MetaCall provides helper scripts in the tools/ directory to automatically install dependencies, configure the project, and compile it.
-Using these scripts is the recommended way to build MetaCall instead of manually installing packages or running CMake directly.
-
-### Prepare the Environment
-
-From the repository root:
-```sh
-cd tools
-./metacall-environment.sh
-```
-What it does:
-1. Detects the operating system.
-2. Installs required system packages.
-3. Installs language runtimes used by MetaCall.
-4. Prepares certificates and build prerequisites.
-
-This replaces manual installation of packages such as build-essential, cmake, nodejs, python, etc.
-
-### Configure the project
-
-```sh
-cd tools
-./metacall-configure.sh
-```
-What it does:
-1. Creates the build directory.
-2. Runs CMake with the correct options.
-3. Detects available loaders and runtimes.
-
-You do not need to run cmake manually.
-
-### Build MetaCall
-
-```sh
-./metacall-build.sh
-```
-This compiles MetaCall and all enabled loaders.
-
-### Verify the Installation
-After building, you can run the CLI:
-```sh
-cd ../build
-./metacallcli
-```
-If the CLI starts successfully, MetaCall is correctly built.
-
-### Why use the scripts?
-
- The tools scripts:
-1. Support Linux, macOS, and Windows CI environments.
-2. Install compatible dependency versions.
-3. Prevent toolchain mismatches.
-4. Ensure all language loaders compile correctly.
-
-## 8. Build System
+## 7. Build System
 
 Follow these steps to build and install **METACALL** manually.
 
@@ -695,7 +632,7 @@ sudo HOME="$HOME" cmake --build . --target install
 cmake --build . --target install
 ```
 
-### 8.1 Build Options
+### 7.1 Build Options
 
 These options can be set using **`-D`** prefix when configuring CMake. For example, the following configuration enables the build of Python and Ruby loaders.
 
@@ -741,7 +678,7 @@ cmake --build build --target clang-format
 
 Be aware that this target won't exist if clang-format was not installed when cmake was last run.
 
-### 8.2 Coverage
+### 7.2 Coverage
 
 In order to run code coverage and obtain html reports use the following commands (assuming you just clonned the repository):
 
@@ -757,7 +694,7 @@ gcovr -r ../source/ . --html-details coverage.html
 
 The output reports will be generated in `${CMAKE_BINARY_DIR}/coverage.html` in html format.
 
-### 8.3 Debugging
+### 7.3 Debugging
 
 For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
 
@@ -790,7 +727,7 @@ ctest
 
 For running other Valgrind's tools like helgrind or similar, I recommend running them manually. Just run one test with `ctest -VV -R metacall-node-port-test`, copy the environment variables, and configure the flags by yourself.
 
-### 8.4 Build on Cloud - Gitpod
+### 7.4 Build on Cloud - Gitpod
 
 Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), an automated cloud dev environment.
 
@@ -800,7 +737,7 @@ Click the button below. A workspace with all required environments will be creat
 
 > To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/core`
 
-## 8.5 Platform Support
+## 7.5 Platform Support
 
 The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
 
@@ -811,7 +748,214 @@ The following platforms and architectures have been tested and are known to work
 |   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
 |  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
 
-### 9 Docker Support
+## 7. Build using scripts
+
+MetaCall is a multi-language runtime (C, Python, Node, Rust, etc).
+Because of that, installation is complicated.
+So the project created a mini build system inside:
+
+```sh
+/tools
+```
+MetaCall provides helper scripts in the tools/ directory to automatically install dependencies, configure the project, and compile it.
+Using these scripts is the recommended way to build MetaCall instead of manually installing packages or running CMake directly, because they ensure consistent environments across Linux, macOS, and Windows.
+
+### Why use the scripts?
+
+ The tools scripts:
+- Support Linux, macOS, and Windows CI environments.
+- Prevent toolchain mismatches.
+- Ensure all language loaders compile correctly.
+- The script detects the platform and installs the required dependencies.
+- The script provides a simple interface such as:
+
+```sh
+./metacall-environment.sh [options]
+```
+
+- Different contributors may use different Linux distributions, compilers, or package versions. The script ensures everyone builds MetaCall using the same configuration.
+
+### Prepare the Environment
+
+From the repository root:
+```sh
+cd tools
+./metacall-environment.sh
+```
+Installs system dependencies required by MetaCall (compilers, build tools, and language runtimes). This script prepares the machine so the project can be configured and compiled. It handles platform-specific packages automatically.
+
+Usage: `metacall-environment.sh` list of components
+
+example:
+```sh
+metacall-environment.sh base python nodejs
+```
+
+
+|       Components                                   |                                            Description                                                 | 
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                              Build type: Control debugging vs speed                                                         |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|       debug                                        |        Builds MetaCall with debug symbols and runtime assertions. Slower execution.                    |
+|       release                                      |        Optimized production build.No debug symbols. Fastest execution but harder to debug.             |
+|       relwithdebinfo                               |        Optimized build with debug information.                                                         |             
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                             Core                                                                            |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|       
+|       base                                         |         Core MetaCall runtime and loader manager. Mandatory for all builds.                            |
+|       cache                                        |         Keeps scripts in memory so calls are faster.                                                   |
+|       file                                         |         Enables loading scripts directly from the filesystem (e.g., .py, .js, .rb).                    |
+|       rapidjson                                    |         Lets MetaCall pass data between languages.                                                     |
+|       pack                                         |         Bundle scripts into one deployable runtime.                                                    |
+|       sandbox                                      |         Provides isolated execution contexts for safer script execution.                               |
+|       backtrace                                    |         Generates detailed stack traces and improves error diagnostics across languages.               |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                         Language Loaders                                                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       python                                       |         Enables execution and invocation of Python scripts and functions.                              |
+|       ruby                                         |         Enables execution of Ruby programs.                                                            |
+|       nodejs                                       |         Integrates the Node.js runtime and allows calling CommonJS/ES modules and npm packages.        |
+|       typescript                                   |         Executes TypeScript sources via the Node.js runtime.                                           |
+|       v8                                           |         Embeds the V8 JavaScript engine for executing standalone JavaScript without Node.js APIs.      |
+|       v8rep51 / v8rep54 / v8rep57 / v8rep58        |         Compatibility loaders for specific V8 engine versions used in embedded environments.           |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                    Compiled Language Loaders                                                                |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       c                                            |         Allows MetaCall to load and invoke native C shared libraries.                                  |
+|       java                                         |         Integrates the Java Virtual Machine (JVM) and allows calling Java classes and methods.         |
+|       go                                           |         Loads Go shared plugins compiled with `-buildmode=plugin`.                                       |
+|       cobol                                        |         Enables interoperability with COBOL programs compiled as shared libraries.                     |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                         .NET Loaders                                                                        |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       netcore                                      |         Generic .NET Core loader.                                                                      |
+|       netcore2                                     |         Support for .NET Core 2.x runtime.                                                             |
+|       netcore5                                     |         Support for .NET 5 runtime.                                                                    |
+|       netcore7                                     |         Support for .NET 7 runtime.                                                                    |
+|       netcore8                                     |         Support for .NET 8 runtime.                                                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                     Additional Runtime Loaders                                                              |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       wasm                                         |         Executes WebAssembly (WASM) modules through the MetaCall runtime.                              |
+|       rpc                                          |         Enables remote procedure calls so MetaCall functions can be invoked across network boundaries. |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                      Development and Tooling                                                                |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       Coverage                                     |         Enables generation of code coverage reports during testing.                                    |
+|       clangformat                                  |         Adds automatic C/C++ source formatting according to project style rules.                       |
+
+
+### Configure the project
+
+```sh
+cd tools
+./metacall-configure.sh
+```
+ Creates the build directory. Runs CMake with the correct options and also detects available loaders and runtimes.
+
+Usage: `metacall-configure.sh` list of options
+
+example:
+```sh
+metacall-configure.sh relwithdebinfo python tests
+```
+
+
+|       options                                      |                                            Description                                                 | 
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                              Build type: Control debugging vs speed                                                         |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|       debug                                        |        Builds MetaCall with debug symbols and runtime assertions. Slower execution.                    |
+|       release                                      |        Optimized production build.No debug symbols. Fastest execution but harder to debug.             |
+|       relwithdebinfo                               |        Optimized build with debug information.                                                         |             
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                         Language Runtime Loaders                                                            |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       python                                       |         Enables loading and calling Python scripts and modules.                                        |
+|       ruby                                         |         Enables execution of Ruby programs.                                                            |
+|       nodejs                                       |         Integrates the Node.js runtime and allows calling JavaScript modules and npm packages.         |
+|       typescript                                   |         Executes TypeScript sources via the Node.js runtime.                                           |
+|       v8                                           |         Embeds the V8 JavaScript engine for executing standalone JavaScript without Node.js APIs.      |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                    Compiled Languages                                                                       |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       c                                            |         Allows loading native C shared libraries (.so, .dll).                                          |
+|       java                                         |         Integrates the Java Virtual Machine (JVM) and allows calling Java classes and methods.         |
+|       go                                           |         Loads Go shared plugins compiled with `-buildmode=plugin`.                                     |
+|       cobol                                        |         Enables interoperability with COBOL programs compiled as shared libraries.                     |
+|       rust                                         |         Allows calling Rust libraries compiled as C-compatible shared objects.                         |
+|       zig                                          |         Allows loading Zig libraries through C ABI compatibility.                                      |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                         .NET Runtimes                                                                       |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       netcore                                      |         Generic .NET Core loader.                                                                      |
+|       netcore2                                     |         Support for .NET Core 2.x runtime.                                                             |
+|       netcore5                                     |         Support for .NET 5 runtime.                                                                    |
+|       netcore7                                     |         Support for .NET 7 runtime.                                                                    |
+|       netcore8                                     |         Support for .NET 8 runtime.                                                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                     Additional Runtime Loaders                                                              |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       wasm                                         |         Executes WebAssembly (WASM) modules through the MetaCall runtime.                              |
+|       rpc                                          |         Enables remote procedure calls so MetaCall functions can be invoked across network boundaries. |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                             Core                                                                            |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|       
+|       static                                       |         Builds MetaCall as static libraries instead of shared libraries.                               |
+|       install                                      |         Installs the compiled libraries and headers into the system after building.                    |
+|       file                                         |         Enables loading scripts directly from the filesystem (e.g., .py, .js, .rb).                    |
+|       pack                                         |         Bundle scripts into one deployable runtime.                                                    |
+|       sandbox                                      |         Provides isolated execution contexts for safer script execution.                               |
+|       ports                                        |         Builds language bindings (ports) for external usage of MetaCall APIs.                          |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                   Diagnostics and Code Quality                                                              |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       Coverage                                     |         Enables generation of code coverage reports during testing.                                    |
+|       address-sanitizer                            |         Detects invalid memory access                                                                  |
+|       thread-sanitizer                             |         Detects race conditions and thread synchronization issues.                                     |
+|       memory-sanitizer                             |         Detects usage of uninitialized memory.                                                         |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+|                                                                       Development Targets                                                                   |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|       scripts                                      |         Builds all MetaCall example scripts.                                                           |
+|       examples                                     |         Builds example applications demonstrating MetaCall usage.                                      |
+|       tests                                        |         Builds and executes the full test suite.                                                       |
+|       benchmarks                                   |         Builds and runs performance benchmarks.                                                        |
+
+
+### Build MetaCall
+
+```sh
+./metacall-build.sh
+```
+This compiles MetaCall and all enabled loaders.
+
+Usage: `metacall-build.sh` list of options
+
+example:
+```sh
+metacall-build.sh relwithdebinfo python tests
+```
+
+|       options                                      |                                            Description                                                 | 
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------|  
+|       debug                                        |        Builds MetaCall with debug symbols and runtime assertions. Slower execution.                    |
+|       release                                      |        Optimized production build.No debug symbols. Fastest execution but harder to debug.             |
+|       relwithdebinfo                               |        Optimized build with debug information.                                                         |             
+|       tests                                        |        Build and run all tests.                                                                        |
+|       coverage                                     |        Build coverage reports.                                                                         |
+|       install                                      |        Installs compiled MetaCall libraries into the system after a successful build.                  |
+
+### Verify the Installation
+After building, you can run the CLI:
+```sh
+cd ../build
+./metacallcli
+```
+If the CLI starts successfully, MetaCall is correctly built.
+
+
+## 8.1 Docker Support
 
 To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bookworm-slim` for `amd64` architecture.
 
@@ -847,7 +991,7 @@ docker pull metacall/core:runtime
 docker pull metacall/core:cli
 ```
 
-### 9.1.1 Docker Development
+### 8.1.1 Docker Development
 
 It is possible to develop **METACALL** itself or applications using **METACALL** as standalone library with Docker. The `dev` image can be used for development. It contains all dependencies with all run-times installed with the code, allowing debugging too.
 
@@ -867,7 +1011,7 @@ docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metac
 
 Inside docker terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call).
 
-### 9.1.2 Docker Testing
+### 8.1.2 Docker Testing
 
 An alternative for testing is to use a reduced image that includes the runtime and also the CLI. This alternative allows fast prototyping and CLI management in order to test and inspect your own scripts.
 
@@ -918,7 +1062,7 @@ runtime __metacall_host__
 
 Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.
 
-## 10. Benchmarks
+## 9. Benchmarks
 
 **METACALL** provides benchmarks for multiple operative systems in order to improve performance iteratively, those can be found in GitHub Pages:
 
@@ -929,7 +1073,7 @@ Where `script.js` is a script contained in host folder `$HOME/metacall` that wil
 | **`windows-2022`**  | https://metacall.github.io/core/bench/windows-2022/  |
 | **`windows-2025`**  | https://metacall.github.io/core/bench/windows-2025/  |
 
-## 11. License
+## 10. License
 
 **METACALL** is licensed under **[Apache License Version 2.0](/LICENSE)**.
 
