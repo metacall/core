@@ -65,7 +65,8 @@ const server = http.createServer((req, res) => {
 	}
 
 	console.error('Invalid request method or url:', req.method, req.url);
-	process.exit(1);
+	res.writeHead(500, { 'Content-Type': 'text/plain' });
+	res.end('ERROR: Unknown endpoint');
 });
 
 server.listen(port, () => {

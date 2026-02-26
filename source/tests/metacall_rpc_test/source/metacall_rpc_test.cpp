@@ -141,7 +141,7 @@ static double extract_numeric(void *value)
 	}
 }
 
-static void *on_resolve(void *result, void *data)
+static void *on_resolve(void *result, void * /*data*/)
 {
 	if (result != NULL)
 	{
@@ -393,3 +393,163 @@ TEST_F(metacall_rpc_test, AsyncMixedSyncAsync)
 	metacall_destroy();
 }
 
+
+TEST_F(metacall_rpc_test, ShutdownMidTransfer)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		const char *rpc_scripts[] = { "remote.url" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+
+		/* Fire several async calls — don't wait for any of them */
+		for (int i = 0; i < 10; i++)
+		{
+			void *args[] = {
+				metacall_value_create_float(static_cast<float>(i + 1)),
+				metacall_value_create_float(1.0f)
+			};
+
+			metacall_await_s("async_divide", args, 2, on_resolve, on_reject, NULL);
+
+			metacall_value_destroy(args[0]);
+			metacall_value_destroy(args[1]);
+		}
+	}
+#endif
+
+	/* The real test is that this returns without crashing */
+	metacall_destroy();
+}
+
+TEST_F(metacall_rpc_test, EmptyShutdown)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		const char *rpc_scripts[] = { "remote.url" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+
+		/* Do nothing — no calls, no awaits */
+	}
+#endif
+
+	/* Should return cleanly with no crash or hang */
+	metacall_destroy();
+}
+
+static std::atomic<int> g_error_resolved(0);
+static std::atomic<int> g_error_rejected(0);
+
+static void *on_error_resolve(void *result, void * /*data*/)
+{
+	if (result != NULL)
+	{
+		std::cout << "    [ERROR_TEST RESOLVE] result=" << extract_numeric(result) << std::endl;
+		metacall_value_destroy(result);
+	}
+
+	g_error_resolved.fetch_add(1);
+	return NULL;
+}
+
+static void *on_error_reject(void *error, void * /*data*/)
+{
+	if (error != NULL)
+	{
+		std::cout << "    [ERROR_TEST REJECT] ";
+
+		if (metacall_value_id(error) == METACALL_STRING)
+		{
+			std::cout << metacall_value_to_string(error);
+		}
+
+		std::cout << std::endl;
+	}
+
+	g_error_rejected.fetch_add(1);
+	return NULL;
+}
+
+static const int GOOD_CALLS = 5;
+
+TEST_F(metacall_rpc_test, ErrorUnderConcurrency)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		const char *rpc_scripts[] = { "remote.url" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+
+		g_error_resolved.store(0);
+		g_error_rejected.store(0);
+
+		call_context good_contexts[GOOD_CALLS];
+
+		for (int i = 0; i < GOOD_CALLS; i++)
+		{
+			float a = static_cast<float>((i + 1) * 10);
+			float b = static_cast<float>(i + 1);
+
+			good_contexts[i].call_id = i;
+			good_contexts[i].expected = static_cast<double>(a / b);
+
+			void *args[] = {
+				metacall_value_create_float(a),
+				metacall_value_create_float(b)
+			};
+
+			metacall_await_s("async_divide", args, 2,
+				on_error_resolve, on_error_reject, &good_contexts[i]);
+
+			metacall_value_destroy(args[0]);
+			metacall_value_destroy(args[1]);
+		}
+
+		{
+			void *bad_args[] = {
+				metacall_value_create_int(1),
+				metacall_value_create_int(2)
+			};
+
+			metacall_await_s("sum", bad_args, 2,
+				on_error_resolve, on_error_reject, NULL);
+
+			metacall_value_destroy(bad_args[0]);
+			metacall_value_destroy(bad_args[1]);
+		}
+
+		int total_expected = GOOD_CALLS + 1;
+		bool reached = false;
+		int waited = 0;
+
+		while (waited < 10000)
+		{
+			int total = g_error_resolved.load() + g_error_rejected.load();
+
+			if (total >= total_expected)
+			{
+				reached = true;
+				break;
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			waited += 10;
+		}
+
+		std::cout << "ErrorUnderConcurrency: Resolved=" << g_error_resolved.load()
+				  << ", Rejected=" << g_error_rejected.load() << std::endl;
+
+		EXPECT_TRUE(reached) << "All callbacks (good + bad) should fire within 10s";
+
+		EXPECT_EQ(g_error_resolved.load(), GOOD_CALLS) << "All valid calls should resolve";
+
+		EXPECT_GE(g_error_rejected.load(), 1) << "Bad endpoint call should be rejected";
+	}
+#endif
+
+	metacall_destroy();
+}
