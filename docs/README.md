@@ -737,18 +737,8 @@ Click the button below. A workspace with all required environments will be creat
 
 > To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/core`
 
-## 7.5 Platform Support
 
-The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
-
-| Operative System |                                                            Architecture                                                             |  Compiler   |
-| :--------------: | :---------------------------------------------------------------------------------------------------------------------------------: | :---------: |
-|   **`ubuntu`**   |                                                             **`amd64`**                                                             |  **`gcc`**  |
-|   **`debian`**   | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`ppc64le`** **`arm/v7`** **`arm/v6`** **`loong64`** |  **`gcc`**  |
-|   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
-|  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
-
-## 7. Build using scripts
+## 7.5 Build using scripts
 
 MetaCall is a multi-language runtime (C, Python, Node, Rust, etc).
 Because of that, installation is complicated.
@@ -953,6 +943,17 @@ cd ../build
 ./metacallcli
 ```
 If the CLI starts successfully, MetaCall is correctly built.
+
+## 8 Platform Support
+
+The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
+
+| Operative System |                                                            Architecture                                                             |  Compiler   |
+| :--------------: | :---------------------------------------------------------------------------------------------------------------------------------: | :---------: |
+|   **`ubuntu`**   |                                                             **`amd64`**                                                             |  **`gcc`**  |
+|   **`debian`**   | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`ppc64le`** **`arm/v7`** **`arm/v6`** **`loong64`** |  **`gcc`**  |
+|   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
+|  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
 
 
 ## 8.1 Docker Support
