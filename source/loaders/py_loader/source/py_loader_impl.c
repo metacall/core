@@ -53,9 +53,9 @@
 #endif
 
 /* Set this variable to 1 in order to debug garbage collection data
-* and threading flow for improving the debug of memory leaks and async bugs.
-* Set it to 0 in order to remove all the noise.
-*/
+ * and threading flow for improving the debug of memory leaks and async bugs.
+ * Set it to 0 in order to remove all the noise.
+ */
 #define DEBUG_PRINT_ENABLED 0
 
 typedef struct loader_impl_py_function_type
@@ -63,7 +63,7 @@ typedef struct loader_impl_py_function_type
 	PyObject *func;
 	PyObject **values; // Cache and re-use the values array
 	loader_impl impl;
-} * loader_impl_py_function;
+} *loader_impl_py_function;
 
 typedef struct loader_impl_py_future_type
 {
@@ -71,14 +71,14 @@ typedef struct loader_impl_py_future_type
 	loader_impl_py py_impl;
 	PyObject *future;
 
-} * loader_impl_py_future;
+} *loader_impl_py_future;
 
 typedef struct loader_impl_py_class_type
 {
 	PyObject *cls;
 	loader_impl impl;
 
-} * loader_impl_py_class;
+} *loader_impl_py_class;
 
 typedef struct loader_impl_py_object_type
 {
@@ -86,21 +86,21 @@ typedef struct loader_impl_py_object_type
 	loader_impl impl;
 	value obj_class;
 
-} * loader_impl_py_object;
+} *loader_impl_py_object;
 
 typedef struct loader_impl_py_handle_module_type
 {
 	PyObject *instance;
 	PyObject *name;
 
-} * loader_impl_py_handle_module;
+} *loader_impl_py_handle_module;
 
 typedef struct loader_impl_py_handle_type
 {
 	loader_impl_py_handle_module modules;
 	size_t size;
 
-} * loader_impl_py_handle;
+} *loader_impl_py_handle;
 
 struct loader_impl_py_type
 {
@@ -146,7 +146,7 @@ typedef struct loader_impl_py_await_invoke_callback_state_type
 	void *context;
 	PyObject *coroutine;
 
-} * loader_impl_py_await_invoke_callback_state;
+} *loader_impl_py_await_invoke_callback_state;
 
 static int py_loader_impl_check_class(loader_impl_py py_impl, PyObject *obj);
 
@@ -200,8 +200,8 @@ static const char py_loader_capsule_null_id[] = "__metacall_capsule_null__";
 PyObject *py_loader_impl_capsule_new_null(void)
 {
 	/* We want to create a new capsule with contents set to NULL, but PyCapsule
-	* does not allow that, instead we are going to identify our NULL capsule with
-	* this configuration (setting the capsule to Py_None) */
+	 * does not allow that, instead we are going to identify our NULL capsule with
+	 * this configuration (setting the capsule to Py_None) */
 	return PyCapsule_New((void *)Py_NonePtr(), py_loader_capsule_null_id, NULL);
 }
 
@@ -2112,6 +2112,10 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 		"			if module_name in sys.modules:\n"
 		"				return sys.modules[module_name]\n"
 		"			else:\n"
+		"				# Guard against relative module names\n"
+		"				# ImportError in Python 3.12+ when passed to find_spec directly.\n"
+		"				if module_name.startswith('.') or '/' in module_name or '\\\\' in module_name:\n"
+		"					return FileNotFoundError('Module ' + module_name + ' could not be found')\n"
 		"				spec = importlib.util.find_spec(module_name)\n"
 		"				if spec is None:\n"
 		"					return FileNotFoundError('Module ' + module_name + ' could not be found')\n"
@@ -2499,9 +2503,9 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		py_loader_impl_main_module = argv[1];
 
 		/* If we are running on host, this means the main is already executed by the host, so we can skip it,
-		* otherwise if we are not in host and we run it for the first time, we can prepare the loader
-		* for running the main the first time
-		*/
+		 * otherwise if we are not in host and we run it for the first time, we can prepare the loader
+		 * for running the main the first time
+		 */
 		if (host == 0)
 		{
 			py_loader_impl_run_main = 0;
@@ -3658,7 +3662,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 					PyUnicode_AsUTF8(tuple_key),
 					args_count,
 					NULL,			   /* There's no need to pass the method implementation (tuple_val) here,
-					* it is used only for introspection, not for invoking it, that's done by name */
+										* it is used only for introspection, not for invoking it, that's done by name */
 					VISIBILITY_PUBLIC, /* TODO: check @property decorator for protected access? */
 					func_synchronicity,
 					NULL);
@@ -3725,7 +3729,7 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover object member %s, type %s",
 					  PyUnicode_AsUTF8(dict_key),
 					  type_id_name(py_loader_impl_capi_to_value_type(dict_val)));
-			
+
 		}
 	}
 
