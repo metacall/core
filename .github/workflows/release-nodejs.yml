@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches: [ master, develop ]
+    branches: [master, develop]
     paths:
-      - '.github/workflows/release-nodejs.yml'
-      - 'source/ports/node_port/**'
+      - ".github/workflows/release-nodejs.yml"
+      - "source/ports/node_port/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -18,32 +18,94 @@ jobs:
     name: NodeJS Port Tests
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
-        matrix:
-          os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Install MetaCall Unix
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
         run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
+
       - name: Install MetaCall Windows
         if: matrix.os == 'windows-latest'
         run: powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
 
+      - name: Fix NPM Permissions (macOS)
+        if: matrix.os == 'macos-latest'
+        run: sudo chown -R $(id -u):$(id -g) ~/.npm
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Dependencies
         working-directory: source/ports/node_port
         run: npm install
 
-      - name: Test the NodeJS Port
+
+      - name: Populate scripts directory (Unix)
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        run: |
+          mkdir -p source/ports/node_port/scripts
+
+          # Python scripts (source/*/source/ → scripts/)
+          cp source/scripts/python/helloworld/source/helloworld.py  source/ports/node_port/scripts/
+          cp source/scripts/python/ducktype/source/ducktype.py       source/ports/node_port/scripts/
+          cp source/scripts/python/example/source/example.py         source/ports/node_port/scripts/
+          cp source/scripts/python/classname/source/classname.py     source/ports/node_port/scripts/
+          cp source/scripts/python/function/source/function.py       source/ports/node_port/scripts/
+
+          # Ruby scripts
+          cp source/scripts/ruby/ducktype/source/ducktype.rb         source/ports/node_port/scripts/
+          cp source/scripts/ruby/cache/source/cache.rb               source/ports/node_port/scripts/
+
+          # TypeScript badrequire package
+          # ts_project copies source/badrequire/source/ → LOADER_SCRIPT_PATH/
+          # source/badrequire/source/ contains the badrequire/ subdirectory, so
+          # the result is LOADER_SCRIPT_PATH/badrequire/  (matching CMake).
+          cp -r source/scripts/typescript/badrequire/source/badrequire \
+                source/ports/node_port/scripts/badrequire
+
+      - name: Populate scripts directory (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path source/ports/node_port/scripts | Out-Null
+
+          # Python scripts
+          Copy-Item source/scripts/python/helloworld/source/helloworld.py  source/ports/node_port/scripts/
+          Copy-Item source/scripts/python/ducktype/source/ducktype.py       source/ports/node_port/scripts/
+          Copy-Item source/scripts/python/example/source/example.py         source/ports/node_port/scripts/
+          Copy-Item source/scripts/python/classname/source/classname.py     source/ports/node_port/scripts/
+          Copy-Item source/scripts/python/function/source/function.py       source/ports/node_port/scripts/
+
+          # Ruby scripts
+          Copy-Item source/scripts/ruby/ducktype/source/ducktype.rb         source/ports/node_port/scripts/
+          Copy-Item source/scripts/ruby/cache/source/cache.rb               source/ports/node_port/scripts/
+
+          # TypeScript badrequire package
+          Copy-Item -Recurse `
+            source/scripts/typescript/badrequire/source/badrequire `
+            source/ports/node_port/scripts/badrequire
+
+      - name: Test the NodeJS Port (Unix)
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
         working-directory: source/ports/node_port
+        env:
+          LOADER_SCRIPT_PATH: ${{ github.workspace }}/source/ports/node_port/scripts
+        run: node test.js
+
+      - name: Test the NodeJS Port (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: source/ports/node_port
+        env:
+          LOADER_SCRIPT_PATH: ${{ github.workspace }}\source\ports\node_port\scripts
         run: node test.js
 
   release:
