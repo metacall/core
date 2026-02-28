@@ -34,6 +34,11 @@ leak:libruby*
 #
 leak:libcoreclr*
 leak:libicuuc*
+# System.Private.CoreLib.dll holds CoreCLR static-lifetime allocations (JIT warmup,
+# type system initialisation) that the runtime intentionally never frees at process
+# exit. This is distinct from the Roslyn compilation-failure leak fixed in
+# LoaderBase.cs (issue #378): that leak is gone; these are normal runtime residuals.
+leak:System.Private.CoreLib.dll
 #
 # Rust
 #
