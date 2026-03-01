@@ -33,6 +33,7 @@
 	#pragma GCC diagnostic pop
 #endif
 
+#include <climits>
 #include <sstream>
 
 /* -- Type Definitions -- */
@@ -42,7 +43,7 @@ typedef struct rapid_json_document_type
 	rapidjson::Document impl;
 	memory_allocator allocator;
 
-} * rapid_json_document;
+} *rapid_json_document;
 
 /* -- Private Methods -- */
 
@@ -402,8 +403,11 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	{
 		unsigned int ui = v->GetUint();
 
-		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to integer (posible overflow) in RapidJSON implementation");
+		if (ui > (unsigned int)INT_MAX)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unsigned integer value (%u) exceeds INT_MAX, cannot represent safely in RapidJSON implementation", ui);
+			return NULL;
+		}
 
 		return value_create_int((int)ui);
 	}
@@ -411,9 +415,12 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	{
 		int64_t i = v->GetInt64();
 
-		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
 #if LONG_MAX < INT64_MAX
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int (posible overflow) in RapidJSON implementation");
+		if (i > (int64_t)LONG_MAX || i < (int64_t)LONG_MIN)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "64-bit integer value exceeds LONG_MAX/MIN, cannot represent safely in RapidJSON implementation");
+			return NULL;
+		}
 #endif
 
 		return value_create_long((long)i);
@@ -422,10 +429,11 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	{
 		uint64_t ui = v->GetUint64();
 
-		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
-#if LONG_MAX < UINT64_MAX
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible overflow) in RapidJSON implementation");
-#endif
+		if (ui > (uint64_t)LONG_MAX)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unsigned 64-bit integer value exceeds LONG_MAX, cannot represent safely in RapidJSON implementation");
+			return NULL;
+		}
 
 		return value_create_long((long)ui);
 	}
