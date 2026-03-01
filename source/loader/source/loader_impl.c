@@ -1324,6 +1324,18 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 {
 	if (impl != NULL && buffer != NULL && size > 0)
 	{
+		/* Treat an effectively-empty buffer (null-terminated only, i.e. "") as a no-op success.
+		 * Passing such a buffer to individual loaders can cause crashes (e.g. Python SEGFAULT)
+		 * because they assume there is real script content to parse. */
+		if (size == 1 && buffer[0] == '\0')
+		{
+			if (handle_ptr != NULL)
+			{
+				*handle_ptr = NULL;
+			}
+			return 0;
+		}
+
 		loader_impl_interface iface = loader_iface(p);
 
 		/* TODO: Disable logs here until log is completely thread safe and async signal safe */

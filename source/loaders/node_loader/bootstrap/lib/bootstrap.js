@@ -25,6 +25,14 @@ function node_loader_trampoline_initialize(loader_library_path) {
 	// Add current execution directory to the execution paths
 	node_loader_trampoline_execution_path(process.cwd());
 
+	// Add LOADER_SCRIPT_PATH to execution paths so scripts installed there
+	// (e.g. helloworld.py, derpyramda.js) are findable regardless of the
+	// working directory.  This is essential for port tests that run from
+	// a directory other than the scripts directory.
+	if (process.env['LOADER_SCRIPT_PATH']) {
+		node_loader_trampoline_execution_path(process.env['LOADER_SCRIPT_PATH']);
+	}
+
 	const paths = [
 		// Local version of MetaCall NodeJS Port
 		'metacall',

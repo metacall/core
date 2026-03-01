@@ -42,6 +42,11 @@
 
 	#include <windows.h>
 	#define PORTABILITY_PATH_SIZE MAX_PATH
+
+	/* MSVC does not define PATH_MAX; provide a fallback so any code using it directly compiles */
+	#ifndef PATH_MAX
+		#define PATH_MAX MAX_PATH
+	#endif
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__NetBSD__) || defined(__DragonFly__)
