@@ -1,0 +1,96 @@
+name: FreeBSD Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - master
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  freebsd-test:
+    name: FreeBSD Test
+    runs-on: freebsd-14
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [debug, release]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify FreeBSD environment
+        run: |
+          echo "FreeBSD version:"
+          uname -a
+          echo "Available package manager:"
+          which pkg
+          echo "Python availability:"
+          python3 --version 2>/dev/null || echo "Python3 not yet installed"
+          echo "Node.js availability:"
+          node --version 2>/dev/null || echo "Node.js not yet installed"
+
+      - name: Set up the environment
+        run: |
+          chmod +x ./tools/metacall-environment.sh
+          sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+        env:
+          METACALL_INSTALL_OPTIONS: base python nodejs ruby c go backtrace
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure
+        working-directory: ./build
+        run: |
+          export PATH="/usr/local/bin:$PATH"
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
+            -DOPTION_BUILD_LOADERS_PY=On \
+            -DOPTION_BUILD_LOADERS_NODE=On \
+            -DOPTION_BUILD_LOADERS_RB=On \
+            -DOPTION_BUILD_TESTS=On \
+            -DOPTION_BUILD_EXAMPLES=On \
+            -DOPTION_BUILD_SCRIPTS=On \
+            -DOPTION_BUILD_PORTS=On \
+            ..
+
+      - name: Build
+        working-directory: ./build
+        run: |
+          export PATH="/usr/local/bin:$PATH"
+          gmake -j$(sysctl -n hw.ncpu)
+
+      - name: Install
+        working-directory: ./build
+        run: |
+          export PATH="/usr/local/bin:$PATH"
+          gmake install
+
+      - name: Run tests (non-fatal - for diagnostics)
+        working-directory: ./build
+        run: |
+          export PATH="/usr/local/bin:$PATH"
+          ctest --verbose --output-on-failure || true
+
+      - name: Capture diagnostics on failure
+        if: failure()
+        run: |
+          echo "=== System Information ==="
+          uname -a
+          echo "=== Installed Packages (partial) ==="
+          pkg info | head -20
+          echo "=== CMake version ==="
+          cmake --version
+          echo "=== Git version ==="
+          git --version
