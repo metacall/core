@@ -72,14 +72,11 @@ typedef execution_result *(execute_function_with_params_c)(const char *function,
 typedef void(get_loaded_functions)(int *, reflect_function *);
 
 #if defined(__linux) || defined(linux) || defined(__APPLE__) || defined(__MACH__)
-
 	/* On Linux and macOS, CoreCLR uses narrow char APIs (const char *).
- * Only Windows uses wide char (wchar_t) for its CLR host API. */
+	* Only Windows uses wide char (wchar_t) for its CLR host API. */
 	#define W(str) str
 typedef char CHARSTRING;
-
 #else
-
 	#define W(str) L##str
 typedef wchar_t CHARSTRING;
 #endif
