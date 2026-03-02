@@ -3,7 +3,7 @@
 ### What is Rust Loader 
 
 The Rust loader (`rs_loader`) is integrated into MetaCall's top level CMake build system. 
-Running cargo `build` directly inside the Rust directory may appear to work, but it can cause toolchain, linker, and metadata mismatches with MetaCall.
+Running `cargo build` directly inside the Rust directory may appear to work, but it can cause toolchain, linker, and metadata mismatches with MetaCall.
 Using the CMake build flow ensures the correct Rust nightly toolchain, linker paths, and test configuration are set up automatically.
 
 ### How the Rust Loader Works
@@ -17,17 +17,17 @@ The process:
 2. The loader generates a temporary Cargo project
 3. The crate is compiled into a shared library (.so)
 4. Exported functions are discovered through metadata
-5. Functions become callable from MetaCall CLI
+5. Functions become callable from MetaCall CLI/Library.
 
 ### Why Nightly Rust is Required
 
-The Rust loader depends on unstable compiler features used for metadata extraction and symbol inspection.
+The Rust loader depends on unstable compiler features and `rustc` compiler API, used for metadata extraction and symbol inspection.
 These APIs are only available in the Rust nightly toolchain.
 Using stable Rust typically results in the loader compiling but exported functions not appearing in inspect.
 
 ### Building 
 
-Consider the Main project README.
+Use CMake for building `rs_loader`, check the (README)[/docs/README.md] for more info.
 
 ### Tested Environment
 
@@ -35,16 +35,14 @@ Consider the Main project README.
 - Build system: CMake
 - Rust toolchain: nightly  
 
-***The loader may fail to compile or load functions if stable Rust is used instead of nightly.***
+**The loader may fail to compile or load functions if stable Rust is used instead of nightly.**
 
 ### Building MetaCall with Rust Loader Enabled
 
 ```sh
 mkdir build
 cd build
-cmake .. \
--DOPTION_BUILD_LOADERS_RS=ON \
--DOPTION_BUILD_CLI=ON
+cmake .. -DOPTION_BUILD_LOADERS_RS=ON -DOPTION_BUILD_CLI=ON
 make -j4
 ```
 
