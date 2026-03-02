@@ -37,10 +37,16 @@ jobs:
           release: ${{ matrix.version }}
           usesh: true
           prepare: |
-            pkg install -y git
+            set -eux
+            pkg update -f
+            pkg upgrade -y
           run: |
-            # Ensure git is available for CMake
-            pkg install -y git
+            set -eux
+            
+            # Ensure pkg is consistent and all libs are properly linked
+            pkg update -f
+            pkg upgrade -y
+            pkg reinstall -y pcre2 git
             
             echo "=== FreeBSD Environment ==="
             uname -a
