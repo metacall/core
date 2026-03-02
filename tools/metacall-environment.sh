@@ -114,7 +114,6 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg (pkgng). Base has Clang; gmake for GNU make.
 		$SUDO_CMD pkg install -y gmake cmake git wget gnupg ca_root_nss
 	fi
 }
@@ -195,11 +194,7 @@ sub_python(){
 		pip3 install joblib
 		pip3 install scikit-learn
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
-		# Note: FreeBSD doesn't have python3-dev; headers are included with python3
 		$SUDO_CMD pkg install -y python3
-		
-		# Python test dependencies (using py311 for FreeBSD 14)
 		$SUDO_CMD pkg install -y py311-pip py311-requests py311-setuptools py311-wheel py311-rsa py311-scipy py311-numpy py311-scikit-learn py311-joblib
 	fi
 }
@@ -232,7 +227,6 @@ sub_ruby(){
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
 		$SUDO_CMD pkg install -y ruby ruby-devel
 	fi
 }
@@ -616,7 +610,6 @@ sub_rpc(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install curl
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
 		$SUDO_CMD pkg install -y curl
 	fi
 }
@@ -632,7 +625,6 @@ sub_wasm(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager (wasmtime may not be available, skip for now)
 		echo "WebAssembly (wasmtime) not yet supported on FreeBSD"
 	fi
 }
@@ -658,7 +650,6 @@ sub_java(){
 		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
 		$SUDO_CMD pkg install -y openjdk17-jdk openjdk17-jre
 	fi
 }
@@ -723,7 +714,6 @@ sub_c(){
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
 		$SUDO_CMD pkg install -y libffi clang
 	fi
 }
@@ -771,7 +761,6 @@ sub_cobol(){
 		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.dylib" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
 		$SUDO_CMD pkg install -y gnucobol
 	fi
 }
@@ -790,7 +779,6 @@ sub_go(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install go
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
 		$SUDO_CMD pkg install -y go
 	fi
 }
@@ -811,7 +799,6 @@ sub_rust(){
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager for dependency, then rustup
 		$SUDO_CMD pkg install -y curl autoconf automake
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 	fi
@@ -939,7 +926,6 @@ sub_backtrace(){
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: backtrace support with libunwind and libdwarf
 		$SUDO_CMD pkg install -y libunwind libelf libdwarf
 	fi
 }
