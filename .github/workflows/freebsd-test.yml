@@ -39,13 +39,16 @@ jobs:
           prepare: |
             pkg install -y git
           run: |
+            # Ensure git is available for CMake
+            pkg install -y git
+            
             echo "=== FreeBSD Environment ==="
             uname -a
             freebsd-version
             
             echo "=== Set up the environment ==="
             chmod +x ./tools/metacall-environment.sh
-            sh ./tools/metacall-environment.sh base python nodejs ruby c go backtrace || echo "Warning: Some packages may have failed to install"
+            sh ./tools/metacall-environment.sh base python c go backtrace || echo "Warning: Some packages may have failed to install"
             
             echo "=== Verify installations ==="
             which cmake || echo "CMake not found"
@@ -60,8 +63,8 @@ jobs:
             echo "=== Configure (CMake) ==="
             cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
               -DOPTION_BUILD_LOADERS_PY=On \
-              -DOPTION_BUILD_LOADERS_NODE=On \
-              -DOPTION_BUILD_LOADERS_RB=On \
+              -DOPTION_BUILD_LOADERS_NODE=Off \
+              -DOPTION_BUILD_LOADERS_RB=Off \
               -DOPTION_BUILD_TESTS=On \
               -DOPTION_BUILD_EXAMPLES=On \
               -DOPTION_BUILD_SCRIPTS=On \

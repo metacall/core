@@ -196,10 +196,11 @@ sub_python(){
 		pip3 install scikit-learn
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		# FreeBSD: use pkg package manager
-		$SUDO_CMD pkg install -y python3 python3-dev
+		# Note: FreeBSD doesn't have python3-dev; headers are included with python3
+		$SUDO_CMD pkg install -y python3
 		
-		# Python test dependencies
-		$SUDO_CMD pkg install -y py39-pip py39-requests py39-setuptools py39-wheel py39-rsa py39-scipy py39-numpy py39-scikit-learn py39-joblib
+		# Python test dependencies (using py311 for FreeBSD 14)
+		$SUDO_CMD pkg install -y py311-pip py311-requests py311-setuptools py311-wheel py311-rsa py311-scipy py311-numpy py311-scikit-learn py311-joblib
 	fi
 }
 
