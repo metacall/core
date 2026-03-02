@@ -46,6 +46,10 @@ jobs:
             uname -a
             freebsd-version
             
+            echo "=== Verify git ==="
+            which git
+            git --version
+            
             echo "=== Set up the environment ==="
             chmod +x ./tools/metacall-environment.sh
             sh ./tools/metacall-environment.sh base python c go backtrace || echo "Warning: Some packages may have failed to install"
@@ -54,14 +58,15 @@ jobs:
             which cmake || echo "CMake not found"
             which gmake || echo "gmake not found"
             python3 --version || echo "Python3 not found"
-            node --version || echo "Node not found"
             
             echo "=== Create build directory ==="
             mkdir -p build
             cd build
             
             echo "=== Configure (CMake) ==="
+            GIT_BIN="$(command -v git)" || { echo "git not found"; exit 1; }
             cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
+              -DGIT_EXECUTABLE="${GIT_BIN}" \
               -DOPTION_BUILD_LOADERS_PY=On \
               -DOPTION_BUILD_LOADERS_NODE=Off \
               -DOPTION_BUILD_LOADERS_RB=Off \
