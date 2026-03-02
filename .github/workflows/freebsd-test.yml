@@ -17,12 +17,13 @@ concurrency:
 jobs:
   freebsd-test:
     name: FreeBSD Test
-    runs-on: freebsd-14
+    runs-on: ubuntu-latest
     
     strategy:
       fail-fast: false
       matrix:
         build: [debug, release]
+        version: [14.1]
 
     steps:
       - name: Check out the repository
@@ -30,67 +31,51 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify FreeBSD environment
-        run: |
-          echo "FreeBSD version:"
-          uname -a
-          echo "Available package manager:"
-          which pkg
-          echo "Python availability:"
-          python3 --version 2>/dev/null || echo "Python3 not yet installed"
-          echo "Node.js availability:"
-          node --version 2>/dev/null || echo "Node.js not yet installed"
-
-      - name: Set up the environment
-        run: |
-          chmod +x ./tools/metacall-environment.sh
-          sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
-        env:
-          METACALL_INSTALL_OPTIONS: base python nodejs ruby c go backtrace
-
-      - name: Create build directory
-        run: mkdir -p build
-
-      - name: Configure
-        working-directory: ./build
-        run: |
-          export PATH="/usr/local/bin:$PATH"
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
-            -DOPTION_BUILD_LOADERS_PY=On \
-            -DOPTION_BUILD_LOADERS_NODE=On \
-            -DOPTION_BUILD_LOADERS_RB=On \
-            -DOPTION_BUILD_TESTS=On \
-            -DOPTION_BUILD_EXAMPLES=On \
-            -DOPTION_BUILD_SCRIPTS=On \
-            -DOPTION_BUILD_PORTS=On \
-            ..
-
-      - name: Build
-        working-directory: ./build
-        run: |
-          export PATH="/usr/local/bin:$PATH"
-          gmake -j$(sysctl -n hw.ncpu)
-
-      - name: Install
-        working-directory: ./build
-        run: |
-          export PATH="/usr/local/bin:$PATH"
-          gmake install
-
-      - name: Run tests (non-fatal - for diagnostics)
-        working-directory: ./build
-        run: |
-          export PATH="/usr/local/bin:$PATH"
-          ctest --verbose --output-on-failure || true
-
-      - name: Capture diagnostics on failure
-        if: failure()
-        run: |
-          echo "=== System Information ==="
-          uname -a
-          echo "=== Installed Packages (partial) ==="
-          pkg info | head -20
-          echo "=== CMake version ==="
-          cmake --version
-          echo "=== Git version ==="
-          git --version
+      - name: Run tests in FreeBSD VM
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: ${{ matrix.version }}
+          usesh: true
+          prepare: |
+            pkg install -y git
+          run: |
+            echo "=== FreeBSD Environment ==="
+            uname -a
+            freebsd-version
+            
+            echo "=== Set up the environment ==="
+            chmod +x ./tools/metacall-environment.sh
+            sh ./tools/metacall-environment.sh base python nodejs ruby c go backtrace || echo "Warning: Some packages may have failed to install"
+            
+            echo "=== Verify installations ==="
+            which cmake || echo "CMake not found"
+            which gmake || echo "gmake not found"
+            python3 --version || echo "Python3 not found"
+            node --version || echo "Node not found"
+            
+            echo "=== Create build directory ==="
+            mkdir -p build
+            cd build
+            
+            echo "=== Configure (CMake) ==="
+            cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
+              -DOPTION_BUILD_LOADERS_PY=On \
+              -DOPTION_BUILD_LOADERS_NODE=On \
+              -DOPTION_BUILD_LOADERS_RB=On \
+              -DOPTION_BUILD_TESTS=On \
+              -DOPTION_BUILD_EXAMPLES=On \
+              -DOPTION_BUILD_SCRIPTS=On \
+              -DOPTION_BUILD_PORTS=On \
+              .. || { echo "Configure failed"; exit 1; }
+            
+            echo "=== Build ==="
+            gmake -j$(sysctl -n hw.ncpu) || { echo "Build failed"; exit 1; }
+            
+            echo "=== Install ==="
+            gmake install || { echo "Install failed"; exit 1; }
+            
+            echo "=== Run tests (non-fatal for diagnostics) ==="
+            ctest --verbose --output-on-failure || echo "Some tests failed (non-blocking)"
+            
+            echo "=== Test Summary ==="
+            echo "FreeBSD ${{ matrix.build }} build completed"
