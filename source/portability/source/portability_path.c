@@ -626,7 +626,7 @@ int portability_path_exists(const char *path)
 char *portability_path_resolve(const char *path, char *resolved)
 {
 #if defined(_WIN32)
-	return _fullpath(resolved, path, PATH_MAX);
+	return _fullpath(resolved, path, MAX_PATH);
 #else
 	return realpath(path, resolved);
 #endif
