@@ -46,7 +46,8 @@ jobs:
             # Ensure all packages are consistent
             pkg update -f
             pkg upgrade -y
-            pkg reinstall -y pcre2 git
+            pkg delete -y pcre2 git 
+            pkg install -y pcre2 git
             
             echo "=== FreeBSD Environment ==="
             uname -a
