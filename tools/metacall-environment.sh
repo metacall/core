@@ -114,7 +114,10 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y gmake cmake git wget gnupg ca_root_nss
+		$SUDO_CMD pkg update -f
+		$SUDO_CMD pkg upgrade -y
+		$SUDO_CMD pkg delete -y pcre2 git || true
+		$SUDO_CMD pkg install -y pcre2 git gmake cmake wget gnupg ca_root_nss
 	fi
 }
 
@@ -195,7 +198,8 @@ sub_python(){
 		pip3 install scikit-learn
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y python3
-		$SUDO_CMD pkg install -y py311-pip py311-requests py311-setuptools py311-wheel py311-rsa py311-scipy py311-numpy py311-scikit-learn py311-joblib
+		PYTHON_VERSION=$(python3 -c 'import sys; print(f"py{sys.version_info.major}{sys.version_info.minor}")')
+		$SUDO_CMD pkg install -y ${PYTHON_VERSION}-pip ${PYTHON_VERSION}-requests ${PYTHON_VERSION}-setuptools ${PYTHON_VERSION}-wheel ${PYTHON_VERSION}-rsa ${PYTHON_VERSION}-scipy ${PYTHON_VERSION}-numpy ${PYTHON_VERSION}-scikit-learn ${PYTHON_VERSION}-joblib
 	fi
 }
 
@@ -563,7 +567,6 @@ sub_nodejs(){
 			brew link libgit2@1.8 --force --overwrite
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		# FreeBSD: use pkg package manager
 		if [ $INSTALL_C = 1 ]; then
 			# Required for test source/tests/metacall_node_port_c_lib_test
 			INSTALL_LIBGIT2="libgit2"
@@ -799,7 +802,7 @@ sub_rust(){
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y curl autoconf automake
+		$SUDO_CMD pkg install -y curl
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 	fi
 }

@@ -36,42 +36,15 @@ jobs:
         with:
           release: ${{ matrix.version }}
           usesh: true
-          prepare: |
-            set -eux
-            pkg update -f
-            pkg upgrade -y
           run: |
             set -eux
             
-            # Ensure all packages are consistent
-            pkg update -f
-            pkg upgrade -y
-            pkg delete -y pcre2 git 
-            pkg install -y pcre2 git
+            sh ./tools/metacall-environment.sh base python c go backtrace
             
-            echo "=== FreeBSD Environment ==="
-            uname -a
-            freebsd-version
-            
-            echo "=== Verify git ==="
-            which git
-            git --version
-            
-            echo "=== Set up the environment ==="
-            chmod +x ./tools/metacall-environment.sh
-            sh ./tools/metacall-environment.sh base python c go backtrace || echo "Warning: Some packages may have failed to install"
-            
-            echo "=== Verify installations ==="
-            which cmake || echo "CMake not found"
-            which gmake || echo "gmake not found"
-            python3 --version || echo "Python3 not found"
-            
-            echo "=== Create build directory ==="
             mkdir -p build
             cd build
             
-            echo "=== Configure (CMake) ==="
-            GIT_BIN="$(command -v git)" || { echo "git not found"; exit 1; }
+            GIT_BIN="$(command -v git)"
             cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
               -DGIT_EXECUTABLE="${GIT_BIN}" \
               -DOPTION_BUILD_LOADERS_PY=On \
@@ -81,16 +54,8 @@ jobs:
               -DOPTION_BUILD_EXAMPLES=On \
               -DOPTION_BUILD_SCRIPTS=On \
               -DOPTION_BUILD_PORTS=On \
-              .. || { echo "Configure failed"; exit 1; }
+              ..
             
-            echo "=== Build ==="
-            gmake -j$(sysctl -n hw.ncpu) || { echo "Build failed"; exit 1; }
-            
-            echo "=== Install ==="
-            gmake install || { echo "Install failed"; exit 1; }
-            
-            echo "=== Run tests (non-fatal for diagnostics) ==="
-            ctest --verbose --output-on-failure || echo "Some tests failed (non-blocking)"
-            
-            echo "=== Test Summary ==="
-            echo "FreeBSD ${{ matrix.build }} build completed"
+            gmake -j$(sysctl -n hw.ncpu)
+            gmake install
+            ctest --verbose --output-on-failure
