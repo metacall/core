@@ -1,0 +1,75 @@
+name: VxWorks RTP Cross-Compilation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "source/dynlink/**"
+      - "cmake/Portability.cmake"
+      - ".github/workflows/rtos-test.yml"
+  push:
+    branches:
+      - develop
+      - master
+    paths:
+      - "source/dynlink/**"
+      - "cmake/Portability.cmake"
+      - ".github/workflows/rtos-test.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vxworks-rtp-build:
+    name: VxWorks RTP Cross-Compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          set -exuo pipefail
+          sudo apt-get update -q
+          sudo apt-get install -y cmake build-essential file
+
+      - name: Download VxWorks SDK
+        run: |
+          set -exuo pipefail
+          wget -q --timeout=300 \
+            https://d13321s3lxgewa.cloudfront.net/wrsdk-vxworks7-qemu-1.14.tar.bz2
+          tar -xjf wrsdk-vxworks7-qemu-1.14.tar.bz2
+          VXSDK_DIR=$(find . -maxdepth 1 -type d -name "wrsdk-vxworks7*" | head -1)
+          echo "VXSDK=$PWD/${VXSDK_DIR#./}" >> $GITHUB_ENV
+
+      - name: Configure and build dynlink with VxWorks RTP toolchain
+        run: |
+          set -exo pipefail
+          set +u
+          source $VXSDK/sdkenv.sh
+          set -u
+          mkdir build-vxworks && cd build-vxworks
+          cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE=$VXSDK/vxsdk/sysroot/mk/rtp.toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DOPTION_BUILD_TESTS=OFF \
+            -DOPTION_BUILD_LOADERS=OFF \
+            -DOPTION_BUILD_EXAMPLES=OFF
+          cmake --build . --target dynlink 2>&1 | tail -30
+          echo "Build result: $?"
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vxworks-build-logs
+          path: |
+            build-vxworks/CMakeFiles/CMakeOutput.log
+            build-vxworks/CMakeFiles/CMakeError.log
+          if-no-files-found: ignore
+          retention-days: 7

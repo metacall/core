@@ -40,12 +40,12 @@ typedef struct dynlink_impl_interface_type *dynlink_impl_interface;
 /* -- Methods -- */
 
 /**
-*  @brief
-*    QNX dynamic link shared object implementation singleton
-*
-*  @return
-*    A pointer to the dynamically linked shared object implementation singleton
-*/
+ *  @brief
+ *    QNX dynamic link shared object implementation singleton
+ *
+ *  @return
+ *    A pointer to the dynamically linked shared object implementation singleton
+ */
 DYNLINK_API dynlink_impl_interface dynlink_impl_interface_singleton(void);
 
 #ifdef __cplusplus

@@ -66,6 +66,11 @@ elseif(APPLE)
 		${sources}
 		${source_path}/threading_mutex_macos.c
 	)
+elseif(PROJECT_OS_VXWORKS)
+	set(sources
+		${sources}
+		${source_path}/threading_mutex_vxworks.c
+	)
 else()
 	set(sources
 		${sources}

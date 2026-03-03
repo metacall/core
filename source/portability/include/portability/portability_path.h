@@ -24,6 +24,7 @@
 /* -- Headers -- */
 
 #include <portability/portability_api.h>
+#include <stddef.h>
 
 /* -- Definitions -- */
 
@@ -44,7 +45,9 @@
 	#define PORTABILITY_PATH_SIZE MAX_PATH
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__NetBSD__) || defined(__DragonFly__)
+	defined(__NetBSD__) || defined(__DragonFly__) || \
+	defined(__QNX__) || defined(__QNXNTO__) || \
+	defined(__VXWORKS__) || defined(__vxworks)
 
 	#include <limits.h>
 	#include <unistd.h>
@@ -88,7 +91,9 @@
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
-	defined(__HAIKU__) || defined(__BEOS__)
+	defined(__HAIKU__) || defined(__BEOS__) || \
+	defined(__QNX__) || defined(__QNXNTO__) || \
+	defined(__VXWORKS__) || defined(__vxworks)
 	#define PORTABILITY_PATH_SEPARATOR(chr) (chr == '/')
 	#define PORTABILITY_PATH_SEPARATOR_C	'/'
 

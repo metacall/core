@@ -120,6 +120,41 @@ void *metacall_link_hook(void *handle, const char *symbol)
 	return metacall_link_trampoline(handle, symbol);
 }
 
+#elif defined(__VXWORKS__) || defined(__vxworks) || \
+	defined(__QNX__) || defined(__QNXNTO__)
+
+	/* RTOS platforms use dlsym-like functionality from portability layer */
+	#include <dlfcn.h>
+
+typedef void *(*metacall_link_trampoline_type)(void *, const char *);
+
+static const char metacall_link_func_name[] = "dlsym";
+static metacall_link_trampoline_type metacall_link_trampoline = NULL;
+
+static metacall_link_trampoline_type metacall_link_func(void)
+{
+	return &dlsym;
+}
+
+void *metacall_link_hook(void *handle, const char *symbol)
+{
+	void *ptr;
+
+	threading_mutex_lock(&link_mutex);
+
+	/* Intercept function if any */
+	ptr = set_get(metacall_link_table, (set_key)symbol);
+
+	threading_mutex_unlock(&link_mutex);
+
+	if (ptr != NULL)
+	{
+		return ptr;
+	}
+
+	return metacall_link_trampoline(handle, symbol);
+}
+
 #else
 	#error "Unknown metacall link platform"
 #endif

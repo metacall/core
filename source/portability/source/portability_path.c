@@ -339,7 +339,9 @@ int portability_path_is_absolute(const char *path, size_t size)
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
-	defined(__HAIKU__) || defined(__BEOS__)
+	defined(__HAIKU__) || defined(__BEOS__) || \
+	defined(__QNX__) || defined(__QNXNTO__) || \
+	defined(__VXWORKS__) || defined(__vxworks)
 
 	if (size < 1)
 	{

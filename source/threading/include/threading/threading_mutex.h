@@ -52,6 +52,10 @@ typedef pthread_mutex_t threading_mutex_impl_type;
 	#include <os/lock.h>
 	#define THREADING_MUTEX_INITIALIZE OS_UNFAIR_LOCK_INIT
 typedef os_unfair_lock threading_mutex_impl_type;
+#elif defined(__VXWORKS__) || defined(__vxworks)
+	#include <semLib.h>
+	#define THREADING_MUTEX_INITIALIZE NULL
+typedef SEM_ID threading_mutex_impl_type;
 #else
 	#error "Platform not supported for mutex implementation"
 #endif

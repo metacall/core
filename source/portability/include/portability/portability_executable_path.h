@@ -37,7 +37,9 @@ typedef char portability_executable_path_str[PORTABILITY_PATH_SIZE];
 typedef DWORD portability_executable_path_length;
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__NetBSD__) || defined(__DragonFly__)
+	defined(__NetBSD__) || defined(__DragonFly__) || \
+	defined(__QNX__) || defined(__QNXNTO__) || \
+	defined(__VXWORKS__) || defined(__vxworks)
 
 typedef ssize_t portability_executable_path_length;
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)

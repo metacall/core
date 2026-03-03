@@ -28,13 +28,63 @@
 
 #include <string.h>
 
-#include <fcntl.h>
-#include <ioLib.h>
-#include <loadLib.h>
-#include <symLib.h>
-#include <sysSymTbl.h>
-#include <unldLib.h>
-#include <errnoLib.h>
+#if defined(__has_include)
+	#if __has_include(<errnoLib.h>)
+		#include <errnoLib.h>
+	#else
+		#define errnoGet() 0
+		#define ERROR	   (-1)
+		#define OK		   (0)
+typedef int STATUS;
+	#endif
+	#if __has_include(<fcntl.h>)
+		#include <fcntl.h>
+	#else
+		#define O_RDONLY 0
+	#endif
+	#if __has_include(<ioLib.h>)
+		#include <ioLib.h>
+	#else
+		#define open(path, flags, mode) (-1)
+		#define close(fd)				(-1)
+	#endif
+	#if __has_include(<loadLib.h>)
+		#include <loadLib.h>
+	#else
+typedef void *MODULE_ID;
+		#define LOAD_GLOBAL_SYMBOLS	  0
+		#define LOAD_LOCAL_SYMBOLS	  1
+		#define loadModule(fd, flags) NULL
+	#endif
+	#if __has_include(<symLib.h>)
+		#include <symLib.h>
+	#else
+typedef int SYM_TYPE;
+	#endif
+	#if __has_include(<sysSymTbl.h>)
+		#include <sysSymTbl.h>
+	#else
+		#define sysSymTbl NULL
+	#endif
+	#if __has_include(<unldLib.h>)
+		#include <unldLib.h>
+	#else
+		#define unldByModuleId(mid, flags) ERROR
+	#endif
+#else
+	/* Fallback for older compilers without __has_include */
+	#include <errnoLib.h>
+	#include <fcntl.h>
+	#include <ioLib.h>
+	#include <loadLib.h>
+	#include <symLib.h>
+	#include <sysSymTbl.h>
+	#include <unldLib.h>
+#endif
+
+#ifndef symFindByName
+	#define symFindByName(symTbl, name, pVal, pType) ERROR
+#endif
 
 /* -- Methods -- */
 

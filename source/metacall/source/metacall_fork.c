@@ -94,13 +94,30 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	PRTL_USER_PROCESS_INFORMATION ProcessInformation);
 
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
-	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux__) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-/* -- Methods -- */
+/* -- Headers -- */
+
+	#include <sys/types.h>
+	#include <sys/wait.h>
+	#include <unistd.h>
 
 pid_t metacall_fork_hook(void);
+
+#elif defined(__VXWORKS__) || defined(__vxworks) || \
+	defined(__QNX__) || defined(__QNXNTO__)
+
+/* -- Headers -- */
+
+	#include <sys/types.h>
+
+/* VxWorks and QNX RTOS don't have fork() in the traditional sense */
+static int metacall_fork_hook(void)
+{
+	return 0;
+}
 
 #else
 	#error "Unknown metacall fork safety platform"
@@ -263,12 +280,23 @@ pid_t metacall_fork_hook(void)
 	return pid;
 }
 
+#elif defined(__VXWORKS__) || defined(__vxworks) || \
+	defined(__QNX__) || defined(__QNXNTO__)
+
+return pid;
+}
+
 #else
 	#error "Unknown metacall fork safety platform"
 #endif
 
 int metacall_fork_initialize(void)
 {
+#if defined(__VXWORKS__) || defined(__vxworks) || \
+	defined(__QNX__) || defined(__QNXNTO__)
+	/* RTOS platforms don't have fork() in the traditional sense, so no detour needed */
+	return 0;
+#else
 	detour d = detour_create(metacall_detour());
 
 	if (detour_fork_handle == NULL)
@@ -302,20 +330,30 @@ int metacall_fork_initialize(void)
 	}
 
 	return 0;
+#endif
 }
 
 void metacall_fork(metacall_pre_fork_callback_ptr pre_callback, metacall_post_fork_callback_ptr post_callback)
 {
+#if defined(__VXWORKS__) || defined(__vxworks)
+	/* VxWorks doesn't support fork-style process creation */
+	(void)pre_callback;
+	(void)post_callback;
+#else
 	metacall_pre_fork_callback = pre_callback;
 	metacall_post_fork_callback = post_callback;
+#endif
 }
 
 void metacall_fork_destroy(void)
 {
+#if defined(__VXWORKS__) || defined(__vxworks)
+	/* Nothing to destroy */
+#else
+	detour d = detour_create(metacall_detour());
+
 	if (detour_fork_handle != NULL)
 	{
-		detour d = detour_create(metacall_detour());
-
 		/* TODO: Restore the hook? We need support for this on the detour API */
 
 		detour_unload(d, detour_fork_handle);
@@ -325,4 +363,5 @@ void metacall_fork_destroy(void)
 
 	metacall_pre_fork_callback = NULL;
 	metacall_post_fork_callback = NULL;
+#endif
 }

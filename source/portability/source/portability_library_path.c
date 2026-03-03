@@ -38,7 +38,7 @@ static int portability_library_path_ends_with(const char path[], const char name
 
 	#include <link.h>
 
-#elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+#elif defined(__APPLE__) && defined(__MACH__) || defined(__MACOSX__)
 
 	#include <mach-o/dyld.h>
 
@@ -50,11 +50,19 @@ static int portability_library_path_ends_with(const char path[], const char name
 	#include <windows.h>
 	#include <psapi.h>
 
+#elif defined(__VXWORKS__) || defined(__vxworks)
+
+	#if defined(__has_include)
+		#if __has_include(<moduleLib.h>)
+			#include <moduleLib.h>
+		#endif
+	#endif
+
 #else
 	#error "Unsupported platform for portability_library_path"
 #endif
 
-int portability_library_path_ends_with(const char path[], const char name[])
+static int portability_library_path_ends_with(const char path[], const char name[])
 {
 	if (path == NULL || name == NULL)
 	{
@@ -219,6 +227,15 @@ int portability_library_path_find(const char name[], portability_library_path_st
 
 	return 1;
 
+#elif defined(__VXWORKS__) || defined(__vxworks)
+
+	(void)name;
+	(void)path;
+	(void)length;
+
+	/* VxWorks DKM modules are loaded by explicit path, not by name search */
+	return 1;
+
 #else
 	#error "Unsupported platform for portability_library_path"
 #endif
@@ -284,6 +301,13 @@ int portability_library_path_list(portability_library_path_list_cb callback, voi
 
 		return 0;
 	}
+#elif defined(__VXWORKS__) || defined(__vxworks)
+
+	(void)data;
+
+	/* VxWorks DKM modules are loaded by explicit path, no module listing available */
+	return 1;
+
 #else
 	#error "Unsupported platform for portability_library_path"
 #endif

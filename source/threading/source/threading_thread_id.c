@@ -56,6 +56,20 @@
 	#include <sys/thr.h>
 #elif defined(__HAIKU__) || defined(__BEOS__)
 	#include <be/kernel/OS.h>
+#elif defined(__VXWORKS__) || defined(__vxworks)
+	#if defined(__has_include)
+		#if __has_include(<taskLib.h>)
+			#include <taskLib.h>
+		#else
+			#define taskIdSelf() 0
+		#endif
+		#if __has_include(<vxWorks.h>)
+			#include <vxWorks.h>
+		#endif
+	#else
+		#include <taskLib.h>
+		#include <vxWorks.h>
+	#endif
 #else
 	#error "Unsupported platform thread id"
 #endif
@@ -90,6 +104,14 @@ uint64_t thread_id_get_current(void)
 	return (thread_id < 0) ? 0 : (uint64_t)thread_id;
 #elif defined(__HAIKU__) || defined(__BEOS__)
 	return (uint64_t)thread_get_current_thread_id();
+#elif defined(__VXWORKS__) || defined(__vxworks)
+	/* VxWorks task ID as thread ID */
+	#if defined(__has_include) && __has_include(<taskLib.h>)
+	return (uint64_t)taskIdSelf();
+	#else
+	/* Fallback when taskLib is not available */
+	return 0;
+	#endif
 #else
 	return THREAD_ID_INVALID;
 #endif
