@@ -26,3 +26,7 @@ long test_mixed_numbers(short s, int i, long l)
 {
 	return l + (long)i + (long)s;
 }
+int return_negative_int()
+{
+    return -1;
+}

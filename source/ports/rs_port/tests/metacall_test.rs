@@ -6,6 +6,22 @@ use metacall::{
 };
 use std::{any::Any, collections::HashMap, env, fmt::Debug};
 
+use std::sync::Once;
+
+static INIT: Once = Once::new();
+
+fn ensure_runtime() {
+    INIT.call_once(|| {
+        initialize().unwrap();
+
+        load::from_file(
+            Tag::Python,
+            ["tests/scripts/script.py"],
+            None,
+        )
+        .unwrap();
+    });
+}
 fn generate_test<T: MetaCallValue + PartialEq + Debug + Clone>(
     name: impl ToString,
     expected: T,
@@ -82,6 +98,26 @@ fn test_float() {
 fn test_double() {
     generate_test::<f64>("test_double", 1.2345_f64);
 }
+
+
+#[test]
+fn test_u32_overflow_from_python() {
+    ensure_runtime();
+
+    let result = ::metacall::metacall_no_arg::<u32>("return_large_number");
+    assert!(result.is_err());
+}
+
+
+#[test]
+fn test_u32_negative() {
+    ensure_runtime();
+
+    let result = ::metacall::metacall_no_arg::<u32>("return_negative_int");
+
+    assert!(result.is_err(), "Negative C int should not convert to u32");
+}
+
 fn test_mixed_numbers() {
     let result = ::metacall::metacall::<i64>(
         "test_mixed_numbers",
