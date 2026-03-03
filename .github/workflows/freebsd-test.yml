@@ -29,7 +29,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Run tests in FreeBSD VM
         uses: vmactions/freebsd-vm@v1
