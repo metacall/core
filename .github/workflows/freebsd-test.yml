@@ -61,12 +61,19 @@ jobs:
             gmake -j$(sysctl -n hw.ncpu)
             gmake install
 
-            SERIAL_PLUGIN_PATH="$(find . -type f -name 'librapid_json_serial*.so' | head -n 1 || true)"
+            SERIAL_PLUGIN_PATH="$(
+              find . -type f \
+                \( -name 'librapid_json_seriald.so' -o -name 'librapid_json_serial.so' -o -name 'librapid_json_serial*.so' \) \
+                -print | head -n 1 || true
+            )"
 
             if [ -z "${SERIAL_PLUGIN_PATH}" ]; then
               echo "rapid_json serial plugin was not built"
+              find . -maxdepth 4 -type f -name 'lib*_serial*.so' -print || true
               exit 1
             fi
 
-            export SERIAL_LIBRARY_PATH="$(dirname "${SERIAL_PLUGIN_PATH}")"
+            export SERIAL_LIBRARY_PATH="$(cd "$(dirname "${SERIAL_PLUGIN_PATH}")" && pwd)"
+            export LD_LIBRARY_PATH="${SERIAL_LIBRARY_PATH}:${LD_LIBRARY_PATH:-}"
+
             ctest --verbose --output-on-failure
