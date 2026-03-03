@@ -47,6 +47,8 @@ jobs:
             GIT_BIN="$(command -v git)"
             cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
               -DGIT_EXECUTABLE="${GIT_BIN}" \
+              -DOPTION_BUILD_SERIALS=On \
+              -DOPTION_BUILD_SERIALS_RAPID_JSON=On \
               -DOPTION_BUILD_LOADERS_PY=On \
               -DOPTION_BUILD_LOADERS_NODE=Off \
               -DOPTION_BUILD_LOADERS_RB=Off \
@@ -58,4 +60,13 @@ jobs:
             
             gmake -j$(sysctl -n hw.ncpu)
             gmake install
+
+            SERIAL_PLUGIN_PATH="$(find . -type f -name 'librapid_json_serial*.so' | head -n 1 || true)"
+
+            if [ -z "${SERIAL_PLUGIN_PATH}" ]; then
+              echo "rapid_json serial plugin was not built"
+              exit 1
+            fi
+
+            export SERIAL_LIBRARY_PATH="$(dirname "${SERIAL_PLUGIN_PATH}")"
             ctest --verbose --output-on-failure
