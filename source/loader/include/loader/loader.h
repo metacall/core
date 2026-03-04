@@ -71,6 +71,12 @@ LOADER_API int loader_load_from_memory(const loader_tag tag, const char *buffer,
 
 LOADER_API int loader_load_from_package(const loader_tag tag, const loader_path path, void **handle);
 
+
+LOADER_API int loader_load_from_file_ex(const loader_tag tag, const loader_path paths[], size_t size, void **handle, void *data);
+
+LOADER_API int loader_load_from_memory_ex(const loader_tag tag, const char *buffer, size_t size, void **handle, void *data);
+
+LOADER_API int loader_load_from_package_ex(const loader_tag tag, const loader_path path, void **handle, void *data);
 LOADER_API int loader_load_from_configuration(const loader_path path, void **handle, void *allocator);
 
 LOADER_API loader_impl loader_get_impl(const loader_tag tag);

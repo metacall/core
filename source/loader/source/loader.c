@@ -350,7 +350,7 @@ int loader_load_from_file(const loader_tag tag, const loader_path paths[], size_
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loading %" PRIuS " file(s) (%s) from path(s): %s ...", size, tag, paths[0]); */
 
-	return loader_impl_load_from_file(&loader_manager, p, plugin_impl_type(p, loader_impl), paths, size, handle);
+	return loader_impl_load_from_file(&loader_manager, p, plugin_impl_type(p, loader_impl), paths, size, handle, NULL);
 }
 
 int loader_load_from_memory(const loader_tag tag, const char *buffer, size_t size, void **handle)
@@ -371,7 +371,7 @@ int loader_load_from_memory(const loader_tag tag, const char *buffer, size_t siz
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loading buffer from memory (%s):\n%s", tag, buffer); */
 
-	return loader_impl_load_from_memory(&loader_manager, p, plugin_impl_type(p, loader_impl), buffer, size, handle);
+	return loader_impl_load_from_memory(&loader_manager, p, plugin_impl_type(p, loader_impl), buffer, size, handle, NULL);
 }
 
 int loader_load_from_package(const loader_tag tag, const loader_path path, void **handle)
@@ -392,7 +392,61 @@ int loader_load_from_package(const loader_tag tag, const loader_path path, void 
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loading package (%s): %s", tag, path); */
 
-	return loader_impl_load_from_package(&loader_manager, p, plugin_impl_type(p, loader_impl), path, handle);
+	return loader_impl_load_from_package(&loader_manager, p, plugin_impl_type(p, loader_impl), path, handle, NULL);
+}
+
+int loader_load_from_file_ex(const loader_tag tag, const loader_path paths[], size_t size, void **handle, void *data)
+{
+	if (loader_initialize() == 1)
+	{
+		return 1;
+	}
+
+	plugin p = loader_get_impl_plugin(tag);
+
+	if (p == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Tried to load %" PRIuS " file(s) from non existent loader (%s): %s", size, tag, paths[0]);
+		return 1;
+	}
+
+	return loader_impl_load_from_file(&loader_manager, p, plugin_impl_type(p, loader_impl), paths, size, handle, data);
+}
+
+int loader_load_from_memory_ex(const loader_tag tag, const char *buffer, size_t size, void **handle, void *data)
+{
+	if (loader_initialize() == 1)
+	{
+		return 1;
+	}
+
+	plugin p = loader_get_impl_plugin(tag);
+
+	if (p == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Tried to load a buffer from non existent loader (%s): %s", tag, buffer);
+		return 1;
+	}
+
+	return loader_impl_load_from_memory(&loader_manager, p, plugin_impl_type(p, loader_impl), buffer, size, handle, data);
+}
+
+int loader_load_from_package_ex(const loader_tag tag, const loader_path path, void **handle, void *data)
+{
+	if (loader_initialize() == 1)
+	{
+		return 1;
+	}
+
+	plugin p = loader_get_impl_plugin(tag);
+
+	if (p == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Tried to load a package from non existent loader (%s): %s", tag, path);
+		return 1;
+	}
+
+	return loader_impl_load_from_package(&loader_manager, p, plugin_impl_type(p, loader_impl), path, handle, data);
 }
 
 int loader_load_from_configuration(const loader_path path, void **handle, void *allocator)
