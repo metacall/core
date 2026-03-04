@@ -46,6 +46,7 @@ jobs:
             
             GIT_BIN="$(command -v git)"
             cmake -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
+              -DCMAKE_INSTALL_PREFIX=. \
               -DGIT_EXECUTABLE="${GIT_BIN}" \
               -DOPTION_BUILD_SERIALS=On \
               -DOPTION_BUILD_SERIALS_RAPID_JSON=On \
