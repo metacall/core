@@ -1,7 +1,5 @@
-# EditorConfig: https://editorconfig.org
 root = true
 
-# All files — tabs used throughout C/C++/CMake/JSON/Shell/Python
 [*]
 charset = utf-8
 end_of_line = lf
@@ -10,11 +8,9 @@ trim_trailing_whitespace = true
 indent_style = tab
 indent_size = 4
 
-# YAML — tabs are invalid per spec
 [*.{yml,yaml}]
 indent_style = space
 indent_size = 2
 
-# Markdown — trailing spaces are intentional line breaks
 [*.md]
 trim_trailing_whitespace = false
