@@ -208,8 +208,9 @@ int ts_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	return metacall_execution_path("node", path);
 }
 
-loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
+	(void)data;
 	void *ts_impl = (void *)loader_impl_get(impl);
 	void *args[1] = { metacall_value_create_array(NULL, size) };
 	size_t iterator;
@@ -241,8 +242,9 @@ loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	return (loader_handle)ret;
 }
 
-loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
+	(void)data;
 	void *ts_impl = (void *)loader_impl_get(impl);
 	void *args[2] = {
 		metacall_value_create_string(name, strlen(name)),
@@ -263,8 +265,9 @@ loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return (loader_handle)ret;
 }
 
-loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
+	(void)data;
 	void *ts_impl = (void *)loader_impl_get(impl);
 
 	void *args[1];

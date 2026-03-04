@@ -1275,8 +1275,9 @@ loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, con
 	return NULL;
 }
 
-loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
+	(void)data;
 	loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
 
 	if (handle == NULL)
@@ -1485,8 +1486,9 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 	return NULL;
 }
 
-loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
+	(void)data;
 	loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
 
 	loader_impl_rb_module rb_module;
@@ -1527,8 +1529,9 @@ loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return (loader_handle)handle;
 }
 
-loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
+	(void)data;
 	/* TODO */
 
 	(void)impl;

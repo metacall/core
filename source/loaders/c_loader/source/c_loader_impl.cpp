@@ -1490,8 +1490,9 @@ static int c_loader_impl_tcc_relocate(TCCState *state)
 #endif
 }
 
-loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
+	(void)data;
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle_tcc_file c_handle = new loader_impl_c_handle_tcc_file_type();
 
@@ -1557,8 +1558,9 @@ error:
 	return NULL;
 }
 
-loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
+	(void)data;
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle_tcc_memory c_handle = new loader_impl_c_handle_tcc_memory_type();
 
@@ -1593,8 +1595,9 @@ error:
 	return NULL;
 }
 
-loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
+	(void)data;
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle_dynlink c_handle = new loader_impl_c_handle_dynlink_type();
 

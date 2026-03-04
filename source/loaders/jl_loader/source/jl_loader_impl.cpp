@@ -238,8 +238,9 @@ int jl_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	return 0;
 }
 
-loader_handle jl_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle jl_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
+	(void)data;
 	loader_impl_jl jl_impl = static_cast<loader_impl_jl>(loader_impl_get(impl));
 	loader_impl_jl_handle jl_handle = new loader_impl_jl_handle_type();
 
@@ -259,8 +260,9 @@ loader_handle jl_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	return static_cast<loader_handle>(jl_handle);
 }
 
-loader_handle jl_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle jl_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
+	(void)data;
 	loader_impl_jl jl_impl = static_cast<loader_impl_jl>(loader_impl_get(impl));
 	loader_impl_jl_handle jl_handle = new loader_impl_jl_handle_type();
 
@@ -282,8 +284,9 @@ loader_handle jl_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return static_cast<loader_handle>(jl_handle);
 }
 
-loader_handle jl_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle jl_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
+	(void)data;
 	loader_impl_jl jl_impl = static_cast<loader_impl_jl>(loader_impl_get(impl));
 	loader_impl_jl_handle jl_handle = new loader_impl_jl_handle_type();
 
