@@ -39,11 +39,14 @@ jobs:
           run: |
             set -eux
             
-            sh ./tools/metacall-environment.sh base python backtrace
-            
-            sh ./tools/metacall-configure.sh
-            
-            gmake -j$(sysctl -n hw.ncpu)
-            gmake install
+            sh ./tools/metacall-environment.sh base rapidjson python backtrace
 
-            sh ./tools/metacall-build.sh
+            mkdir -p build
+            cd build
+
+            mkdir -p .ci-bin
+            ln -sf "$(command -v gmake)" .ci-bin/make
+            export PATH="$(pwd)/.ci-bin:${PATH}"
+
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} python scripts examples tests ports
+            sh ../tools/metacall-build.sh ${{ matrix.build }} tests
