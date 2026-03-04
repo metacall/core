@@ -75,32 +75,49 @@ sub_options() {
 
 sub_build() {
 
-	# Build the project
-	cmake --build . -j$(getconf _NPROCESSORS_ONLN)
+	# Determine the project root dynamically
+	SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+	PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+
+	# Map BUILD_TYPE to the build directory name
+	if [ "$BUILD_TYPE" = "Debug" ]; then
+		BUILD_DIR="$PROJECT_ROOT/build-debug"
+	else
+		BUILD_DIR="$PROJECT_ROOT/build-release"
+	fi
+
+	# Verify build directory exists and contains Makefile or build.ninja
+	if [ ! -f "$BUILD_DIR/Makefile" ] && [ ! -f "$BUILD_DIR/build.ninja" ]; then
+		echo "Error: Build directory not configured or missing Makefile: $BUILD_DIR"
+		exit 1
+	fi
+
+	# Build the project using CMake
+	cmake --build "$BUILD_DIR" -j$(getconf _NPROCESSORS_ONLN)
 
 	# Memcheck
 	if [ $BUILD_MEMCHECK = 1 ]; then
-		cmake --build . -j$(getconf _NPROCESSORS_ONLN) --target memcheck
+		cmake --build "$BUILD_DIR" -j$(getconf _NPROCESSORS_ONLN) --target memcheck
 	else
 		# Tests (coverage needs to run the tests)
 		if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS = 1 ] || [ $BUILD_COVERAGE = 1 ]; then
-			ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
+			ctest --test-dir "$BUILD_DIR" -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
 		fi
 
 		# Coverage
 		if [ $BUILD_COVERAGE = 1 ]; then
-			ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T Coverage
-			gcovr -r ../source/ . --html-details coverage.html
+			ctest --test-dir "$BUILD_DIR" -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T Coverage
+			gcovr -r "$PROJECT_ROOT/source/" "$BUILD_DIR" --html-details coverage.html
 		fi
 	fi
 
 	# Install
 	if [ $BUILD_INSTALL = 1 ]; then
 		if [ "$SUDO_CMD" = "" ]; then
-			cmake --build . --target install
+			cmake --install "$BUILD_DIR"
 		else
 			# Needed for rustup in order to install rust loader properly
-			$SUDO_CMD HOME="$HOME" cmake --build . --target install
+			$SUDO_CMD HOME="$HOME" cmake --install "$BUILD_DIR"
 		fi
 	fi
 }
