@@ -17,6 +17,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
             let segment = &path.segments[0];
             let symbol_string = segment.ident.name.to_string();
             match symbol_string.as_str() {
+                "i8" => result.ty = FunctionType::i8,
                 "i16" => result.ty = FunctionType::i16,
                 "i32" => result.ty = FunctionType::i32,
                 "i64" => result.ty = FunctionType::i64,
@@ -28,6 +29,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                 "f64" => result.ty = FunctionType::f64,
                 "bool" => result.ty = FunctionType::bool,
                 "str" => result.ty = FunctionType::String,
+                "char" => result.ty = FunctionType::char,
                 "Vec" => {
                     result.ty = FunctionType::Array;
                     if let Some(args) = &segment.args {

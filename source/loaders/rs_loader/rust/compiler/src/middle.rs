@@ -19,6 +19,7 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
     };
     match &ty.kind() {
         TyKind::Int(i) => match i {
+            IntTy::I8 => result.ty = FunctionType::i8,
             IntTy::I16 => result.ty = FunctionType::i16,
             IntTy::I32 => result.ty = FunctionType::i32,
             IntTy::I64 => result.ty = FunctionType::i64,

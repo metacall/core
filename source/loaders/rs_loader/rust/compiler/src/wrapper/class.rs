@@ -626,11 +626,11 @@ impl FromMeta for MetacallValue {
 //         Ok(unsafe { metacall_value_to_bool(val) as bool })
 //     }
 // }
-// impl FromMeta for char {
-//     fn from_meta(val: MetacallValue) -> Result<Self> {
-//         Ok(unsafe { metacall_value_to_char(val) as char })
-//     }
-// }
+ impl FromMeta for char {
+     fn from_meta(val: MetacallValue) -> Result<Self> {
+         Ok(unsafe { metacall_value_to_char(val) as char })
+     }
+ }
 
 // TODO: Finish the whole list of types
 enum PrimitiveMetacallProtocolTypes {
