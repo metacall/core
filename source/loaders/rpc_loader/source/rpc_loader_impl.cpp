@@ -42,16 +42,22 @@
 #include <cstring>
 
 #include <algorithm>
+#include <atomic>
 #include <fstream>
 #include <map>
 #include <set>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <thread>
-#include <atomic>
+#include <vector>
 
 #include <concurrentqueue.h>
+
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	#define CURL_VERBOSE 1L
+#else
+	#define CURL_VERBOSE 0L
+#endif
 
 /* Forward declaration for async context */
 struct rpc_async_context;
@@ -232,7 +238,7 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 		/* Sleep until: network activity OR curl_multi_wakeup OR 1s timeout */
 		curl_multi_poll(rpc_impl->async_multi, NULL, 0, 1000, NULL);
 
-		/* Drain queue — add new handles from producers */
+		/* Drain queue, add new handles from producers */
 		rpc_async_context *ctx;
 		while (rpc_impl->async_queue.try_dequeue(ctx))
 		{
@@ -352,6 +358,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
 
+	/* Destroy the value without destroying the contents of the array */
 	value_destroy(v);
 
 	if (body_request_size == 0)
@@ -387,7 +394,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	}
 
 	curl_easy_setopt(easy, CURLOPT_URL, async_ctx->url.c_str());
-	curl_easy_setopt(easy, CURLOPT_VERBOSE, 0L);
+	curl_easy_setopt(easy, CURLOPT_VERBOSE, CURL_VERBOSE);
 	curl_easy_setopt(easy, CURLOPT_HEADER, 0L);
 	curl_easy_setopt(easy, CURLOPT_CUSTOMREQUEST, "POST");
 	curl_easy_setopt(easy, CURLOPT_HTTPHEADER, rpc_impl->headers);
@@ -405,13 +412,13 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	/* Free serialization buffer */
 	metacall_allocator_free(rpc_impl->allocator, buffer);
 
-	/* Enqueue for poll thread — lock-free, wait-free */
+	/* Enqueue for poll thread (lock-free, wait-free) */
 	rpc_impl->async_queue.enqueue(async_ctx);
 
 	/* Wake poll thread from curl_multi_poll (thread-safe) */
 	curl_multi_wakeup(rpc_impl->async_multi);
 
-	/* Return immediately - result comes via callback */
+	/* TODO: Implement future return? */
 	return NULL;
 }
 
@@ -438,7 +445,7 @@ function_interface function_rpc_singleton(void)
 
 int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rpc_impl)
 {
-	/* TODO: move this to loader_impl by passing the structure and loader_impl_derived callback */
+	/* TODO: Move this to loader_impl by passing the structure and loader_impl_derived callback */
 
 	static struct
 	{
@@ -521,7 +528,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_VERBOSE, 0L);
+	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_VERBOSE, CURL_VERBOSE);
 	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_HEADER, 0L);
 	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
 
@@ -546,7 +553,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "Content-Type: application/json");
 	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "charset: utf-8");
 
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_VERBOSE, 0L);
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_VERBOSE, CURL_VERBOSE);
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HEADER, 0L);
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_CUSTOMREQUEST, "POST");
 	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HTTPHEADER, rpc_impl->headers);
@@ -763,7 +770,7 @@ int rpc_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 0;
 }
 
-// TODO: Move this to the C++ Port
+/* TODO: Replace this by the C++ Port */
 static std::map<std::string, void *> rpc_loader_impl_value_to_map(void *v)
 {
 	void **v_map = metacall_value_to_map(v);
@@ -904,7 +911,7 @@ int rpc_loader_impl_destroy(loader_impl impl)
 	/* Destroy children loaders */
 	loader_unload_children(impl);
 
-	/* Stop the poll thread — set exit flag, wake it, wait for drain */
+	/* Stop the poll thread, set exit flag, wake it, wait for drain */
 	rpc_impl->exit_flag.store(true);
 	curl_multi_wakeup(rpc_impl->async_multi);
 	if (rpc_impl->poll_thread.joinable())

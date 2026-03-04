@@ -48,7 +48,9 @@ function isReady() {
 // Catch unhandled exceptions
 function killTest(error) {
 	server.kill('SIGINT');
+	console.log('-------------------------');
 	console.error(error);
+	console.log('-------------------------');
 	process.exit(1);
 }
 

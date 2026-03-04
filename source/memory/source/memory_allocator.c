@@ -29,6 +29,7 @@ struct memory_allocator_type
 	memory_allocator_iface iface;
 	memory_allocator_impl impl;
 
+#ifdef TODO_MAKE_THIS_ATOMIC
 	struct
 	{
 		size_t alloc;
@@ -37,6 +38,7 @@ struct memory_allocator_type
 		size_t bad_realloc;
 		size_t dealloc;
 	} size;
+#endif
 };
 
 /* -- Methods -- */
@@ -64,11 +66,13 @@ memory_allocator memory_allocator_create(memory_allocator_iface iface, void *ctx
 	allocator->iface = iface;
 	allocator->impl = impl;
 
+#ifdef TODO_MAKE_THIS_ATOMIC
 	allocator->size.alloc = 0;
 	allocator->size.bad_alloc = 0;
 	allocator->size.realloc = 0;
 	allocator->size.bad_realloc = 0;
 	allocator->size.dealloc = 0;
+#endif
 
 	return allocator;
 }
@@ -77,6 +81,7 @@ void *memory_allocator_allocate(memory_allocator allocator, size_t size)
 {
 	void *data = allocator->iface->allocate(allocator->impl, size);
 
+#ifdef TODO_MAKE_THIS_ATOMIC
 	if (data == NULL)
 	{
 		++allocator->size.bad_alloc;
@@ -85,6 +90,7 @@ void *memory_allocator_allocate(memory_allocator allocator, size_t size)
 	{
 		++allocator->size.alloc;
 	}
+#endif
 
 	return data;
 }
@@ -93,6 +99,7 @@ void *memory_allocator_reallocate(memory_allocator allocator, void *data, size_t
 {
 	void *new_data = allocator->iface->reallocate(allocator->impl, data, size, new_size);
 
+#ifdef TODO_MAKE_THIS_ATOMIC
 	if (new_data == NULL)
 	{
 		++allocator->size.bad_realloc;
@@ -101,6 +108,7 @@ void *memory_allocator_reallocate(memory_allocator allocator, void *data, size_t
 	{
 		++allocator->size.realloc;
 	}
+#endif
 
 	return new_data;
 }
@@ -109,7 +117,9 @@ void memory_allocator_deallocate(memory_allocator allocator, void *data)
 {
 	allocator->iface->deallocate(allocator->impl, data);
 
+#ifdef TODO_MAKE_THIS_ATOMIC
 	++allocator->size.dealloc;
+#endif
 }
 
 size_t memory_allocator_used(memory_allocator allocator)
