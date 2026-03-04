@@ -21,7 +21,9 @@
 
 set -euxo
 
-ROOT_DIR=$(pwd)
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+ROOT_DIR="$PROJECT_ROOT"
 BUILD_TYPE=Release
 BUILD_PYTHON=0
 BUILD_RUBY=0
@@ -573,7 +575,10 @@ sub_configure() {
 		export CC=clang
 		export CXX=clang++
 	fi
-	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off \
+    -S "$PROJECT_ROOT" \
+    -B "$PROJECT_ROOT/build" \
+    $BUILD_STRING
 }
 
 sub_help() {
