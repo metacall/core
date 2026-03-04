@@ -425,6 +425,11 @@ int metacall_execution_path_s(const char *tag, size_t tag_length, const char *pa
 
 int metacall_load_from_file(const char *tag, const char *paths[], size_t size, void **handle)
 {
+	return metacall_load_from_file_ex(tag, paths, size, handle, NULL);
+}
+
+int metacall_load_from_file_ex(const char *tag, const char *paths[], size_t size, void **handle, void *data)
+{
 	loader_path *path_impl;
 	size_t iterator;
 
@@ -445,7 +450,7 @@ int metacall_load_from_file(const char *tag, const char *paths[], size_t size, v
 		strncpy(path_impl[iterator], paths[iterator], LOADER_PATH_SIZE);
 	}
 
-	int result = loader_load_from_file(tag, (const loader_path *)path_impl, size, handle);
+	int result = loader_load_from_file_ex(tag, (const loader_path *)path_impl, size, handle, data);
 
 	free(path_impl);
 
@@ -454,12 +459,22 @@ int metacall_load_from_file(const char *tag, const char *paths[], size_t size, v
 
 int metacall_load_from_memory(const char *tag, const char *buffer, size_t size, void **handle)
 {
-	return loader_load_from_memory(tag, buffer, size, handle);
+	return metacall_load_from_memory_ex(tag, buffer, size, handle, NULL);
+}
+
+int metacall_load_from_memory_ex(const char *tag, const char *buffer, size_t size, void **handle, void *data)
+{
+	return loader_load_from_memory_ex(tag, buffer, size, handle, data);
 }
 
 int metacall_load_from_package(const char *tag, const char *path, void **handle)
 {
-	return loader_load_from_package(tag, path, handle);
+	return metacall_load_from_package_ex(tag, path, handle, NULL);
+}
+
+int metacall_load_from_package_ex(const char *tag, const char *path, void **handle, void *data)
+{
+	return loader_load_from_package_ex(tag, path, handle, data);
 }
 
 int metacall_load_from_configuration(const char *path, void **handle, void *allocator)

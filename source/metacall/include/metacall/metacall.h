@@ -311,6 +311,13 @@ METACALL_API int metacall_load_from_memory(const char *tag, const char *buffer, 
 */
 METACALL_API int metacall_load_from_package(const char *tag, const char *path, void **handle);
 
+METACALL_API int metacall_load_from_file_ex(const char *tag, const char *paths[], size_t size, void **handle, void *data);
+
+METACALL_API int metacall_load_from_memory_ex(const char *tag, const char *buffer, size_t size, void **handle, void *data);
+
+METACALL_API int metacall_load_from_package_ex(const char *tag, const char *path, void **handle, void *data);
+
+
 /**
 *  @brief
 *    Loads a a list of scrips from configuration specified by @path into loader
