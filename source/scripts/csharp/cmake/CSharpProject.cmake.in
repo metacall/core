@@ -28,7 +28,7 @@ endif()
 
 # TODO
 
-find_package(CoreCLR)
+find_package(DotNET)
 
 # Target name
 set(target @PACKAGE_NAME@)
