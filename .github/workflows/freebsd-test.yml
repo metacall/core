@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    tags:
-      - 'v*.*.*'
     branches:
       - master
       - develop
+    tags:
+      - 'v*.*.*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -16,9 +16,9 @@ concurrency:
 
 jobs:
   freebsd-test:
-    name: FreeBSD Test
+    name: FreeBSD ${{ matrix.build }}
     runs-on: ubuntu-latest
-    
+
     strategy:
       fail-fast: false
       matrix:
@@ -26,27 +26,21 @@ jobs:
         version: [14.3]
 
     steps:
-      - name: Check out the repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Run tests in FreeBSD VM
+      - name: Run MetaCall build inside FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
           release: ${{ matrix.version }}
           usesh: true
           run: |
             set -eux
-            
-            sh ./tools/metacall-environment.sh base rapidjson python backtrace
 
-            mkdir -p build
-            cd build
+            sh ./tools/metacall-environment.sh base python
 
-            mkdir -p .ci-bin
-            ln -sf "$(command -v gmake)" .ci-bin/make
-            export PATH="$(pwd)/.ci-bin:${PATH}"
+            sh ./tools/metacall-configure.sh ${{ matrix.build }} python tests
 
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} python scripts examples tests ports
-            sh ../tools/metacall-build.sh ${{ matrix.build }} tests
+            sh ./tools/metacall-build.sh ${{ matrix.build }} tests
