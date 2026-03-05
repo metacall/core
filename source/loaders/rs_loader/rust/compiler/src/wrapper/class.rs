@@ -626,16 +626,16 @@ impl FromMeta for MetacallValue {
 //         Ok(unsafe { metacall_value_to_bool(val) as bool })
 //     }
 // }
-// impl FromMeta for char {
-//     fn from_meta(val: MetacallValue) -> Result<Self> {
-//         Ok(unsafe { metacall_value_to_char(val) as char })
-//     }
-// }
+ impl FromMeta for char {
+     fn from_meta(val: MetacallValue) -> Result<Self> {
+         Ok(unsafe { metacall_value_to_char(val) as u8 as char })
+     }
+ }
 
 // TODO: Finish the whole list of types
 enum PrimitiveMetacallProtocolTypes {
     // Bool = 0,
-    // Char = 1,
+    Char = 1,
     Short = 2,
     Int = 3,
     Long = 4,
@@ -686,6 +686,9 @@ macro_rules! convert_to {
             let id = value_type_id($val);
 
             match id.try_into() {
+                Ok(PrimitiveMetacallProtocolTypes::Char) => {
+                    Ok(metacall_value_to_char($val) as $t)
+                }
                 Ok(PrimitiveMetacallProtocolTypes::Short) => {
                     Ok(metacall_value_to_short($val) as $t)
                 }
