@@ -644,7 +644,7 @@ enum PrimitiveMetacallProtocolTypes {
     // String = 7,
     // Buffer = 8,
     // Array = 9,
-    // Map = 10,
+    Map = 10,
     // Pointer = 11,
     // Future = 12,
     // Function = 13,
@@ -674,6 +674,9 @@ impl TryFrom<i32> for PrimitiveMetacallProtocolTypes {
             }
             x if x == PrimitiveMetacallProtocolTypes::Double as i32 => {
                 Ok(PrimitiveMetacallProtocolTypes::Double)
+            } 
+            x if x == PrimitiveMetacallProtocolTypes::Map as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Map)
             }
             _ => Err(()),
         }
