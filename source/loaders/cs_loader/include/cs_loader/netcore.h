@@ -45,6 +45,7 @@ protected:
 	int functions_count;
 	char *dotnet_root;
 	char *dotnet_loader_assembly_path;
+	bool initialized;
 
 public:
 	execution_path_w *core_execution_path_w;

@@ -457,27 +457,14 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
 
-	if(NOT (OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS))
-		# TODO: This test fails when run with thread sanitizer (this happens when C# loader is enabled):
-		#
-		# WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=14459)
-		# 	#0 malloc ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:647 (libtsan.so.2+0x3ebb8)
-		# 	#1 <null> <null> (ld-linux-x86-64.so.2+0x28df)
-		# 	#2 <null> <null> (libruby-2.7.so.2.7+0x237879)
-		# 	#3 simple_netcore_create /usr/local/metacall/source/loaders/cs_loader/source/simple_netcore.cpp:42 (libcs_loaderd.so+0x108de)
-		# 	#4 cs_loader_impl_initialize /usr/local/metacall/source/loaders/cs_loader/source/cs_loader_impl.c:236 (libcs_loaderd.so+0xf5fe)
-		# 	#5 loader_impl_initialize /usr/local/metacall/source/loader/source/loader_impl.c:367 (libmetacalld.so+0x30673)
-		# 	#6 loader_impl_load_from_file /usr/local/metacall/source/loader/source/loader_impl.c:822 (libmetacalld.so+0x30888)
-		# 	#7 loader_load_from_file /usr/local/metacall/source/loader/source/loader.c:307 (libmetacalld.so+0x2e0d1)
-		# 	#8 metacall_load_from_file /usr/local/metacall/source/metacall/source/metacall.c:348 (libmetacalld.so+0x32bbf)
-		# 	#9 node_loader_port_load_from_file_export(napi_env__*, napi_callback_info__*) /usr/local/metacall/source/loaders/node_loader/source/node_loader_port.cpp:395 (libnode_loaderd.so+0x113c5)
-		# 	#10 <null> <null> (libnode.so.72+0x7b6344)
-		# 	#11 node_loader_impl_async_func_call_safe /usr/local/metacall/source/loaders/node_loader/source/node_loader_impl.cpp:2040 (libnode_loaderd.so+0xe2e8)
-		# 	#12 <null> <null> (libnode.so.72+0x7b6344)
-		#
-		# SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (/lib64/ld-linux-x86-64.so.2+0x28df)
-		#
-		#
+	if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
+		find_package(DotNET)
+		check_tsan_executable("${DOTNET_CORE_LIBRARY}" DotNET_TSAN)
+	endif()
+
+	if(NOT (OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS AND NOT DotNET_TSAN))
+		# This test fails when run with thread sanitizer due to C# when CoreCLR is not compiled with TSAN:
+		# coreclr_initialize status (0x8007ff0b)
 		# For solving this, we should enable C# support for sanitizers and debug it properly
 		add_test(NAME ${target}-tsx-loop-fail
 			COMMAND $<TARGET_FILE:${target}> loopfail.tsx

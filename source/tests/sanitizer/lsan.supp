@@ -34,7 +34,6 @@ leak:libruby*
 #
 leak:libcoreclr*
 leak:libicuuc*
-# TODO: Implement assembly unloading with loader context
 leak:SystemNative_LowLevelMonitor_Create
 #
 # Rust

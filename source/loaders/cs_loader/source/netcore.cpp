@@ -24,10 +24,9 @@
 
 #include <exception>
 
-netcore::netcore(char *dotnet_root, char *dotnet_loader_assembly_path)
+netcore::netcore(char *dotnet_root, char *dotnet_loader_assembly_path) :
+	dotnet_root(dotnet_root), dotnet_loader_assembly_path(dotnet_loader_assembly_path), initialized(false)
 {
-	this->dotnet_root = dotnet_root;
-	this->dotnet_loader_assembly_path = dotnet_loader_assembly_path;
 }
 
 netcore::~netcore()

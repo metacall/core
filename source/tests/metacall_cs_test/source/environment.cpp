@@ -35,7 +35,7 @@ void environment::SetUp()
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
 }
 
 void environment::TearDown()
