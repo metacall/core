@@ -17,7 +17,7 @@ extern "C" {
     fn value_type_id(v: *mut c_void) -> c_int;
     // fn metacall_value_id(v: *mut c_void) -> c_int;
     fn metacall_value_to_int(v: *mut c_void) -> c_int;
-    // fn metacall_value_to_bool(v: *mut c_void) -> c_int;
+    fn metacall_value_to_bool(v: *mut c_void) -> c_int;
     fn metacall_value_to_char(v: *mut c_void) -> c_char;
     fn metacall_value_to_long(v: *mut c_void) -> c_long;
     fn metacall_value_to_short(v: *mut c_void) -> c_short;
@@ -621,11 +621,11 @@ impl FromMeta for MetacallValue {
 //         Ok(val as u32)
 //     }
 // }
-// impl FromMeta for bool {
-//     fn from_meta(val: MetacallValue) -> Result<Self> {
-//         Ok(unsafe { metacall_value_to_bool(val) as bool })
-//     }
-// }
+impl FromMeta for bool {
+    fn from_meta(val: MetacallValue) -> Result<Self> {
+        Ok(unsafe { metacall_value_to_bool(val) !=0 })
+    }
+}
 // impl FromMeta for char {
 //     fn from_meta(val: MetacallValue) -> Result<Self> {
 //         Ok(unsafe { metacall_value_to_char(val) as char })
@@ -634,7 +634,7 @@ impl FromMeta for MetacallValue {
 
 // TODO: Finish the whole list of types
 enum PrimitiveMetacallProtocolTypes {
-    // Bool = 0,
+    Bool = 0,
     // Char = 1,
     Short = 2,
     Int = 3,
@@ -660,6 +660,9 @@ impl TryFrom<i32> for PrimitiveMetacallProtocolTypes {
 
     fn try_from(v: i32) -> Result<Self, Self::Error> {
         match v {
+            x if x == PrimitiveMetacallProtocolTypes::Bool as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Bool)
+            }
             x if x == PrimitiveMetacallProtocolTypes::Short as i32 => {
                 Ok(PrimitiveMetacallProtocolTypes::Short)
             }
@@ -686,6 +689,7 @@ macro_rules! convert_to {
             let id = value_type_id($val);
 
             match id.try_into() {
+                Ok(PrimitiveMetacallProtocolTypes::Bool) => Ok(metacall_value_to_bool($val) as $t),
                 Ok(PrimitiveMetacallProtocolTypes::Short) => {
                     Ok(metacall_value_to_short($val) as $t)
                 }
