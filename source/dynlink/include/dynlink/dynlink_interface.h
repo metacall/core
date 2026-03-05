@@ -31,16 +31,15 @@
 	#include <dynlink/dynlink_impl_win32.h>
 #elif defined(__hpux) || defined(__hpux__) || defined(_HPUX_SOURCE)
 	#include <dynlink/dynlink_impl_hpux.h>
-#elif defined(__VXWORKS__) || defined(__vxworks)
-	#include <dynlink/dynlink_impl_vxworks.h>
-#elif defined(__QNXNTO__) || defined(__QNX__)
-	#include <dynlink/dynlink_impl_qnx.h>
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	(((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) && (defined(MAC_OS_X_VERSION_10_15) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15)))
 	#include <dynlink/dynlink_impl_unix.h>
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	#include <dynlink/dynlink_impl_macos.h>
+#elif defined(__QNX__) || defined(__QNXNTO__) || \
+	defined(__VXWORKS__) || defined(__vxworks)
+	#include <dynlink/dynlink_impl_unix.h>
 #elif defined(__HAIKU__) || defined(__BEOS__)
 	#include <dynlink/dynlink_impl_beos.h>
 #else

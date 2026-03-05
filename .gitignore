@@ -68,3 +68,5 @@ _start-cmd.bat
 
 # Bake folder
 .bake
+config.bat
+node_modules

@@ -134,14 +134,14 @@ endif()
 if(QNXNTO)
 	set(PROJECT_OS_QNX TRUE BOOL INTERNAL)
 	set(PROJECT_OS_NAME "QNX")
-	set(PROJECT_OS_FAMILY qnx)
+	set(PROJECT_OS_FAMILY unix)
 endif()
 
 # Check VxWorks
 if(CMAKE_SYSTEM_NAME MATCHES "VxWorks")
 	set(PROJECT_OS_VXWORKS TRUE BOOL INTERNAL)
 	set(PROJECT_OS_NAME "VxWorks")
-	set(PROJECT_OS_FAMILY vxworks)
+	set(PROJECT_OS_FAMILY unix)
 endif()
 
 # Check UNIX
