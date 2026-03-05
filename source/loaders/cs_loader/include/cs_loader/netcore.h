@@ -41,7 +41,7 @@ private:
 	}
 
 protected:
-	reflect_function functions[100];
+	reflect_function functions[100]; // TODO: Improve this, make it dynamic
 	int functions_count;
 	char *dotnet_root;
 	char *dotnet_loader_assembly_path;
@@ -66,6 +66,8 @@ public:
 	get_loaded_functions *core_get_functions;
 	corefunction_destroy_execution_result *core_destroy_execution_result;
 
+	destroy_clr *core_destroy;
+
 	const CHARSTRING *loader_dll = W("CSLoader.dll");
 	const CHARSTRING *class_name = W("CSLoader.MetacallEntryPoint");
 	const CHARSTRING *assembly_name = W("CSLoader");
@@ -88,6 +90,8 @@ public:
 	const CHARSTRING *delegate_execute_with_params_c = W("ExecuteWithParamsC");
 	const CHARSTRING *delegate_get_functions = W("GetFunctions");
 	const CHARSTRING *delegate_destroy_execution_result = W("DestroyExecutionResult");
+
+	const CHARSTRING *delegate_destroy = W("Destroy");
 
 	explicit netcore(char *dotnet_root, char *dotnet_loader_assembly_path);
 	virtual ~netcore();
@@ -119,6 +123,8 @@ public:
 
 	reflect_function *get_functions(int *count);
 	void destroy_execution_result(execution_result *er);
+
+	void destroy(void);
 };
 
 #endif

@@ -115,6 +115,11 @@ bool netcore::create_delegates()
 		return false;
 	}
 
+	if (!this->create_delegate(this->delegate_destroy, delegate_cast(&this->core_destroy)))
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -289,6 +294,18 @@ void netcore::destroy_execution_result(execution_result *er)
 	try
 	{
 		this->core_destroy_execution_result(er);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
+	}
+}
+
+void netcore::destroy(void)
+{
+	try
+	{
+		this->core_destroy();
 	}
 	catch (const std::exception &ex)
 	{

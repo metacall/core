@@ -107,11 +107,9 @@ void simple_netcore_destroy_execution_result(netcore_handle handle, execution_re
 
 void simple_netcore_destroy(netcore_handle handle)
 {
-#if defined(__linux) | defined(linux)
-	netcore_linux *netcore_impl = (netcore_linux *)handle;
-#else
-	netcore_win *netcore_impl = (netcore_win *)handle;
-#endif
+	netcore *core = (netcore *)handle;
 
-	delete netcore_impl;
+	core->destroy();
+
+	delete core;
 }

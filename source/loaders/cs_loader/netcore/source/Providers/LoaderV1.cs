@@ -66,6 +66,11 @@ namespace CSLoader.Providers
         {
             return AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyFile);
         }
+
+        public override void Unload()
+        {
+
+        }
     }
 }
 #endif

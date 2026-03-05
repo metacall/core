@@ -179,19 +179,6 @@ add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
 
-if(OPTION_BUILD_ADDRESS_SANITIZER)
-	# TODO: This test fails when run with sanitizers (this happens when C# loader is enabled):
-	# Tracer caught signal 11: addr=0x81e000278 pc=0x7f21968e07c8 sp=0x7ee064c83d20
-	# LeakSanitizer has encountered a fatal error.
-	# HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
-	# HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
-	#
-	# For solving this, we should enable C# support for sanitizers and debug it properly
-	set_tests_properties(${target} PROPERTIES
-		PASS_REGULAR_EXPRESSION "[  PASSED  ]"
-	)
-endif()
-
 #
 # Define test properties
 #

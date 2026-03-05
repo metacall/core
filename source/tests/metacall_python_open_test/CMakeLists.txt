@@ -211,19 +211,6 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
 
-if(OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_CS)
-	# TODO: This test fails when run with sanitizers (this happens when C# loader is enabled):
-	# Tracer caught signal 11: addr=0x1500000aa8 pc=0x7f49da2cc0f0 sp=0x7f49d4ad2d10
-	# LeakSanitizer has encountered a fatal error.
-	# HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
-	# HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
-	#
-	# For solving this, we should enable C# support for sanitizers and debug it properly
-	set_tests_properties(${target} PROPERTIES
-		PASS_REGULAR_EXPRESSION "[  PASSED  ]"
-	)
-endif()
-
 include(TestEnvironmentVariables)
 
 test_environment_variables(${target}

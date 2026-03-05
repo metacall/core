@@ -182,15 +182,10 @@ namespace CSLoader
             return LoadFromAssembly(assemblyFile);
         }
 
-        // TODO: Is this needed?
-        /*
         public static void Destroy()
         {
+            loader.Unload();
             loader = null;
-            log = null;
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
-        */
     }
 }

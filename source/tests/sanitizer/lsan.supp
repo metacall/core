@@ -35,7 +35,7 @@ leak:libruby*
 leak:libcoreclr*
 leak:libicuuc*
 # TODO: Implement assembly unloading with loader context
-leak:System.Private.CoreLib.dll
+leak:SystemNative_LowLevelMonitor_Create
 #
 # Rust
 #
