@@ -505,6 +505,10 @@ impl ToMetaResult for bool {
 
 impl ToMetaResult for char {
     fn to_meta_result(self) -> Result<MetacallValue> {
+        if !self.is_ascii() {
+            panic!("MetaCall char only supports ASCII characters");
+        }
+
         Ok(unsafe { metacall_value_create_char(self as i8) })
     }
 }
