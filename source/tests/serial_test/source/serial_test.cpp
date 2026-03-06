@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 
+#include <climits>
+
 #include <portability/portability_assert.h>
 
 #include <serial/serial.h>
@@ -288,6 +290,37 @@ TEST_F(serial_test, DefaultConstructor)
 		EXPECT_EQ((int)0, (int)strncmp(value_to_string(v), json_string_value, sizeof(json_string_value) - 1));
 
 		value_destroy(v);
+
+		// Regression: unsigned int > INT_MAX must not silently corrupt to a negative number.
+		// 3,000,000,000 fits in uint32 but not int32. Previously the unguarded cast
+		// returned -1,294,967,296 with no error. Now it must either round-trip as a long
+		// (on platforms where long is wide enough) or return NULL.
+		{
+			static const char json_uint_overflow[] = "3000000000";
+
+			v = serial_deserialize(s, json_uint_overflow, sizeof(json_uint_overflow), allocator);
+
+#if LONG_MAX >= 3000000000L
+			EXPECT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_LONG, (type_id)value_type_id(v));
+			EXPECT_EQ((long)3000000000L, (long)value_to_long(v));
+			value_destroy(v);
+#else
+			/* On 32-bit platforms long cannot hold this value; NULL is the correct result */
+			EXPECT_EQ((value)NULL, (value)v);
+#endif
+		}
+
+		// Regression: uint64 > LONG_MAX must return NULL, not a silently wrapped value.
+		// UINT64_MAX (18446744073709551615) cannot be represented in any MetaCall integer
+		// type; returning corrupt data here is worse than a clean NULL.
+		{
+			static const char json_uint64_overflow[] = "18446744073709551615";
+
+			v = serial_deserialize(s, json_uint64_overflow, sizeof(json_uint64_overflow), allocator);
+
+			EXPECT_EQ((value)NULL, (value)v);
+		}
 	}
 
 	// MetaCall
