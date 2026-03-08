@@ -628,7 +628,7 @@ impl FromMeta for MetacallValue {
 // }
  impl FromMeta for char {
      fn from_meta(val: MetacallValue) -> Result<Self> {
-         Ok(unsafe { metacall_value_to_char(val) as char })
+         Ok(unsafe { (metacall_value_to_char(val) as u8) as char })
      }
  }
 
@@ -700,11 +700,15 @@ macro_rules! convert_to {
                 Ok(PrimitiveMetacallProtocolTypes::Double) => {
                     Ok(metacall_value_to_double($val) as $t)
                 }
+                Ok(PrimitiveMetacallProtocolTypes::Map) => {
+                    eprintln!("Rust Loader: Return type with id #{} is a map, which is not supported yet. ", id);
+                    panic!("Rust loader: Map type conversion is not supported yet");
+                }
                 Err(_) => {
                     eprintln!("Rust Loader: Return type with id #{} is not implemented, ", id);
                     panic!("received mismatch type");
                 }
-            }
+            }   
         }
     };
 }
