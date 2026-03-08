@@ -39,7 +39,7 @@ jobs:
           run: |
             set -eux
 
-            sh ./tools/metacall-environment.sh base python
+            sh ./tools/metacall-environment.sh base python backtrace
 
             sh ./tools/metacall-configure.sh ${{ matrix.build }} python tests
 
