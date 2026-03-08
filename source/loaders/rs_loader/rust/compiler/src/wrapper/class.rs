@@ -506,9 +506,12 @@ impl ToMetaResult for bool {
 impl ToMetaResult for char {
     fn to_meta_result(self) -> Result<MetacallValue> {
         let s = self.to_string();
-        let cstring = CString::new(s.clone()).unwrap();
-        let ptr = cstring.as_ptr();
-        Ok(unsafe { metacall_value_create_string(ptr, s.len()) })
+        let cstring = CString::new(s).unwrap();
+        let len = cstring.to_bytes().len();
+
+        Ok(unsafe {
+            metacall_value_create_string(cstring.as_ptr(), len)
+        })
     }
 }
 
