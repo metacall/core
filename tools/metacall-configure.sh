@@ -569,6 +569,15 @@ sub_configure() {
 
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
+
+	# Build directory by build type
+	if [ "$BUILD_TYPE" = "Debug" ]; then
+		BUILD_DIR="$PROJECT_ROOT/build-debug"
+	elif [ "$BUILD_TYPE" = "RelWithDebInfo" ]; then
+		BUILD_DIR="$PROJECT_ROOT/build-relwithdebinfo"
+	else
+		BUILD_DIR="$PROJECT_ROOT/build-release"
+	fi
 	
 	# Execute CMake
 	if [ $BUILD_CLANG = 1 ]; then
@@ -577,7 +586,7 @@ sub_configure() {
 	fi
 	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off \
     -S "$PROJECT_ROOT" \
-    -B "$PROJECT_ROOT/build" \
+    -B "$BUILD_DIR" \
     $BUILD_STRING
 }
 

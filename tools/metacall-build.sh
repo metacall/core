@@ -82,6 +82,8 @@ sub_build() {
 	# Map BUILD_TYPE to the build directory name
 	if [ "$BUILD_TYPE" = "Debug" ]; then
 		BUILD_DIR="$PROJECT_ROOT/build-debug"
+	elif [ "$BUILD_TYPE" = "RelWithDebInfo" ]; then
+		BUILD_DIR="$PROJECT_ROOT/build-relwithdebinfo"
 	else
 		BUILD_DIR="$PROJECT_ROOT/build-release"
 	fi
