@@ -49,6 +49,39 @@ pub fn add_map(map: HashMap<i32, f32>) -> f32 {
     map.into_values().sum()
 }
 
+pub fn return_map_string_string() -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    map.insert("a".to_string(), "one".to_string());
+    map.insert("b".to_string(), "two".to_string());
+    map
+}
+
+pub fn add_map_string_string(map: HashMap<String, String>) -> i32 {
+    map.len() as i32
+}
+
+pub fn return_map_string_int() -> HashMap<String, i32> {
+    let mut map = HashMap::new();
+    map.insert("a".to_string(), 1);
+    map.insert("b".to_string(), 2);
+    map
+}
+
+pub fn add_map_string_int(map: HashMap<String, i32>) -> i32 {
+    map.into_values().sum()
+}
+
+pub fn return_map_int_string() -> HashMap<i32, String> {
+    let mut map = HashMap::new();
+    map.insert(1, "one".to_string());
+    map.insert(2, "two".to_string());
+    map
+}
+
+pub fn add_map_int_string(map: HashMap<i32, String>) -> i32 {
+    map.len() as i32
+}
+
 pub fn string_len(s: String) -> usize {
     s.len()
 }
