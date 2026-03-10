@@ -25,7 +25,8 @@ extern "C" {
     fn metacall_value_to_double(v: *mut c_void) -> c_double;
     fn metacall_value_to_array(v: *mut c_void) -> *mut *mut c_void;
     fn metacall_value_to_map(v: *mut c_void) -> *mut *mut c_void;
-    // fn metacall_value_to_ptr(v: *mut c_void) -> *mut c_void;
+    fn metacall_value_to_ptr(v: *mut c_void) -> *mut c_void;
+    fn metacall_value_create_ptr(ptr: *const c_void) -> *mut c_void;
     fn metacall_value_to_string(v: *mut c_void) -> *mut c_char;
     // fn metacall_function(cfn: *const c_char) -> *mut c_void;
     fn metacall_value_create_int(i: c_int) -> *mut c_void;
@@ -601,6 +602,13 @@ where
         }
     }
 }
+
+impl ToMetaResult for *mut c_void {
+    fn to_meta_result(self) -> Result<MetacallValue> {
+        Ok(unsafe { metacall_value_create_ptr(self) })
+    }
+}
+
 pub trait FromMetaList {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self>
     where

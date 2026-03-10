@@ -83,6 +83,14 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
         TyKind::ImplicitSelf => {
             result.name = "self".to_string();
             result.ty = FunctionType::This
+        } 
+        TyKind::Ptr(MutTy { ty, mutbl}) => {
+            result.ty = FunctionType::Ptr;
+            match mutbl {
+                rustc_hir::Mutability::Mut => result.mutability = Mutability::Yes,
+                rustc_hir::Mutability::Not => result.mutability = Mutability::No,
+            }
+            return result;
         }
         _ => {}
     }

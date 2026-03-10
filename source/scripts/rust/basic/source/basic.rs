@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::Write;
+use std::os::raw::c_void;
 
 pub fn add(num_1: i32, num_2: i32) -> i32 {
     num_1 + num_2
@@ -80,6 +81,10 @@ pub fn return_map_int_string() -> HashMap<i32, String> {
 
 pub fn add_map_int_string(map: HashMap<i32, String>) -> i32 {
     map.len() as i32
+}
+
+pub fn return_ptr(p: *mut c_void) -> *mut c_void {
+    p
 }
 
 pub fn string_len(s: String) -> usize {

@@ -235,6 +235,15 @@ TEST_F(metacall_rust_test, DefaultConstructor)
     metacall_value_destroy(ret);
 }
 
+{
+	void *ptr_val = metacall_value_create_ptr(NULL);
+	void *args[] = { ptr_val };
+	void *ret = metacallv_s("return_ptr", args, 1);
+	EXPECT_EQ((void *)NULL, (void *)metacall_value_to_ptr(ret));
+	metacall_value_destroy(ptr_val);
+	metacall_value_destroy(ret);
+}
+
 	/* Print inspect information */
 	{
 		size_t size = 0;

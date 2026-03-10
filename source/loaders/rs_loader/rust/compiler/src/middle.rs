@@ -71,6 +71,14 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                 _ => result.ty = FunctionType::Null,
             }
         }
+        TyKind::RawPtr(rustc_middle::ty::TypeAndMut { mutbl, .. }) => {
+            result.ty = FunctionType::Ptr;
+            match mutbl {
+                rustc_hir::Mutability::Mut => result.mutability = Mutability::Yes,
+                rustc_hir::Mutability::Not => result.mutability = Mutability::No,
+            }
+            return result;
+        }
         _ => {}
     }
     result
