@@ -39,7 +39,6 @@
 
 typedef struct rapid_json_document_type
 {
-	rapidjson::Document impl;
 	memory_allocator allocator;
 
 } * rapid_json_document;
@@ -54,8 +53,8 @@ static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 /* -- Classes -- */
 
-rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
-
+static thread_local rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
+static thread_local rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>> rapid_json_document_impl(&rapid_json_allocator);
 /* -- Methods -- */
 
 const char *rapid_json_serial_impl_extension()
@@ -340,7 +339,7 @@ char *rapid_json_serial_impl_document_stringify(rapid_json_document document, si
 {
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	document->impl.Accept(writer);
+	rapid_json_document_impl.Accept(writer);
 	size_t buffer_size = buffer.GetSize();
 	size_t buffer_str_size = buffer_size + 1;
 	char *buffer_str = static_cast<char *>(memory_allocator_allocate(document->allocator, sizeof(char) * buffer_str_size));
@@ -371,7 +370,7 @@ char *rapid_json_serial_impl_serialize(serial_handle handle, value v, size_t *si
 		return NULL;
 	}
 
-	rapid_json_serial_impl_serialize_value(v, &document->impl);
+	rapid_json_serial_impl_serialize_value(v, &rapid_json_document_impl);
 
 	return rapid_json_serial_impl_document_stringify(document, size);
 }
@@ -550,7 +549,7 @@ value rapid_json_serial_impl_deserialize(serial_handle handle, const char *buffe
 		return NULL;
 	}
 
-	rapidjson::ParseResult parse_result = document->impl.Parse(buffer, size - 1);
+	rapidjson::ParseResult parse_result = rapid_json_document_impl.Parse(buffer, size - 1);
 
 	if (parse_result.IsError() == true)
 	{
@@ -562,7 +561,7 @@ value rapid_json_serial_impl_deserialize(serial_handle handle, const char *buffe
 		return NULL;
 	}
 
-	return rapid_json_serial_impl_deserialize_value(&document->impl);
+	return rapid_json_serial_impl_deserialize_value(&rapid_json_document_impl);
 }
 
 int rapid_json_serial_impl_destroy(serial_handle handle)
