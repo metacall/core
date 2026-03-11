@@ -32,6 +32,25 @@
 #include <unordered_map>
 #include <vector>
 
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+/* Use ASCII borders on Windows so help output aligns correctly in console */
+#define CLI_BOX_TL "\t+"
+#define CLI_BOX_TR "+"
+#define CLI_BOX_BL "\t+"
+#define CLI_BOX_BR "+"
+#define CLI_BOX_H  "--------------------------------------------------------------------------------------------"
+#define CLI_BOX_V "\t|"
+#define CLI_BOX_VR "|"
+#else
+#define CLI_BOX_TL "\t┌"
+#define CLI_BOX_TR "┐"
+#define CLI_BOX_BL "\t└"
+#define CLI_BOX_BR "┘"
+#define CLI_BOX_H  "────────────────────────────────────────────────────────────────────────────────────────"
+#define CLI_BOX_V "\t│"
+#define CLI_BOX_VR "│"
+#endif
+
 /* Error messages */
 #define LOAD_ERROR		"Failed to load a script"
 #define INSPECT_ERROR	"Failed to inspect MetaCall context"
@@ -462,178 +481,178 @@ void *help(size_t argc, void *args[], void *data)
 			  << std::endl;
 
 	/* Load command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Load a script from file into MetaCall                                                  │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ load <runtime tag> <script0> <script1> ... <scriptN>                                   │" << std::endl;
-	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
-	std::cout << "\t│                  options :                                                             │" << std::endl;
-	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
-	std::cout << "\t│                            py   - Python                                               │" << std::endl;
-	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
-	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
-	std::cout << "\t│                            cs   - C# NetCore                                           │" << std::endl;
-	std::cout << "\t│                            cob  - Cobol                                                │" << std::endl;
-	std::cout << "\t│                            ts   - TypeScript                                           │" << std::endl;
-	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
-	std::cout << "\t│                            file - Files (for handling file systems)                    │" << std::endl;
-	std::cout << "\t│    <script0> <script1> ... <scriptN> : relative or absolute path to the script(s)      │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Example:                                                                               │" << std::endl;
-	std::cout << "\t│ load node concat.js                                                                    │" << std::endl;
-	std::cout << "\t│ load py example.py                                                                     │" << std::endl;
-	std::cout << "\t│ load rb hello.rb                                                                       │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ Script (concat.js) loaded correctly                                                    │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Load a script from file into MetaCall                                                  " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "load <runtime tag> <script0> <script1> ... <scriptN>                                   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <runtime tag> : identifier to the type of script                                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                 options :                                                             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           mock - Mock (for testing purposes)                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           py   - Python                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           node - NodeJS                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           rb   - Ruby                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           cs   - C# NetCore                                           " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           cob  - Cobol                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           ts   - TypeScript                                           " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           js   - V8 JavaScript Engine                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           file - Files (for handling file systems)                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <script0> <script1> ... <scriptN> : relative or absolute path to the script(s)      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Example:                                                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "load node concat.js                                                                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "load py example.py                                                                     " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "load rb hello.rb                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Result:                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Script (concat.js) loaded correctly                                                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Inspect command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Show all runtimes, modules and functions (with their signature) loaded into MetaCall   │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ inspect                                                                                │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Example:                                                                               │" << std::endl;
-	std::cout << "\t│ inspect                                                                                │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ runtime node {                                                                         │" << std::endl;
-	std::cout << "\t│     module concat {                                                                    │" << std::endl;
-	std::cout << "\t│         function concat(left, right)                                                   │" << std::endl;
-	std::cout << "\t│     }                                                                                  │" << std::endl;
-	std::cout << "\t│ }                                                                                      │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Show all runtimes, modules and functions (with their signature) loaded into MetaCall   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "inspect                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Example:                                                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "inspect                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Result:                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "runtime node {                                                                         " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "    module concat {                                                                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "        function concat(left, right)                                                   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "    }                                                                                  " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "}                                                                                      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Eval command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Evaluate a code snippet with the specified runtime tag                                 │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ eval <runtime tag> <script>                                                            │" << std::endl;
-	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
-	std::cout << "\t│                  options :                                                             │" << std::endl;
-	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
-	std::cout << "\t│                            py   - Python                                               │" << std::endl;
-	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
-	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
-	std::cout << "\t│                            cs   - C# NetCore                                           │" << std::endl;
-	std::cout << "\t│                            cob  - Cobol                                                │" << std::endl;
-	std::cout << "\t│                            ts   - TypeScript                                           │" << std::endl;
-	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
-	std::cout << "\t│                            file - Files (for handling file systems)                    │" << std::endl;
-	std::cout << "\t│    <script> : textual code to execute                                                  │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Example:                                                                               │" << std::endl;
-	std::cout << "\t│ eval node console.log(\"hello world\")                                                   │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Evaluate a code snippet with the specified runtime tag                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "eval <runtime tag> <script>                                                            " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <runtime tag> : identifier to the type of script                                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                 options :                                                             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           mock - Mock (for testing purposes)                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           py   - Python                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           node - NodeJS                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           rb   - Ruby                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           cs   - C# NetCore                                           " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           cob  - Cobol                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           ts   - TypeScript                                           " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           js   - V8 JavaScript Engine                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           file - Files (for handling file systems)                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <script> : textual code to execute                                                  " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Example:                                                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "eval node console.log(\"hello world\")                                                   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Result:                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "\"hello world\"                                                                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Call command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Call a function previously loaded in MetaCall                                          │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ call <function name>(<arg0>, <arg1>, ... , <argN>)                                     │" << std::endl;
-	std::cout << "\t│    <function name> : alphanumeric string beginning by letter (method1, method2, hello) │" << std::endl;
-	std::cout << "\t│    <arg0>, <arg1>, ... , <argN>  : arguments to be passed to the function in JSON      │" << std::endl;
-	std::cout << "\t│                                    types :                                             │" << std::endl;
-	std::cout << "\t│                                            bool   - true, false                        │" << std::endl;
-	std::cout << "\t│                                            number - 5, 4.34                            │" << std::endl;
-	std::cout << "\t│                                            string - \"hello world\"                      │" << std::endl;
-	std::cout << "\t│                                            array  - [2, true, \"abc\"]                   │" << std::endl;
-	std::cout << "\t│                                            object - { \"one\": 1, \"two\": 2 }             │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Example:                                                                               │" << std::endl;
-	std::cout << "\t│ call concat(\"hello\", \"world\")                                                          │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Call a function previously loaded in MetaCall                                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "call <function name>(<arg0>, <arg1>, ... , <argN>)                                     " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <function name> : alphanumeric string beginning by letter (method1, method2, hello) " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <arg0>, <arg1>, ... , <argN>  : arguments to be passed to the function in JSON      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                   types :                                             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           bool   - true, false                        " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           number - 5, 4.34                            " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           string - \"hello world\"                      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           array  - [2, true, \"abc\"]                   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           object - { \"one\": 1, \"two\": 2 }             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Example:                                                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "call concat(\"hello\", \"world\")                                                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Result:                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "\"hello world\"                                                                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Await command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Await an async function previously loaded in MetaCall                                  │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ await <function name>(<arg0>, <arg1>, ... , <argN>)                                    │" << std::endl;
-	std::cout << "\t│    <function name> : alphanumeric string beginning by letter (method1, method2, hello) │" << std::endl;
-	std::cout << "\t│    <arg0>, <arg1>, ... , <argN>  : arguments to be passed to the function in JSON      │" << std::endl;
-	std::cout << "\t│                                    types :                                             │" << std::endl;
-	std::cout << "\t│                                            bool   - true, false                        │" << std::endl;
-	std::cout << "\t│                                            number - 5, 4.34                            │" << std::endl;
-	std::cout << "\t│                                            string - \"hello world\"                      │" << std::endl;
-	std::cout << "\t│                                            array  - [2, true, \"abc\"]                   │" << std::endl;
-	std::cout << "\t│                                            object - { \"one\": 1, \"two\": 2 }             │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Example:                                                                               │" << std::endl;
-	std::cout << "\t│ await concat(\"hello\", \"world\")                                                         │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Await an async function previously loaded in MetaCall                                  " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "await <function name>(<arg0>, <arg1>, ... , <argN>)                                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <function name> : alphanumeric string beginning by letter (method1, method2, hello) " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <arg0>, <arg1>, ... , <argN>  : arguments to be passed to the function in JSON      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                   types :                                             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           bool   - true, false                        " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           number - 5, 4.34                            " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           string - \"hello world\"                      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           array  - [2, true, \"abc\"]                   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                           object - { \"one\": 1, \"two\": 2 }             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Example:                                                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "await concat(\"hello\", \"world\")                                                         " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Result:                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "\"hello world\"                                                                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Clear command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Delete a script previously loaded in MetaCall                                          │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ clear <runtime tag> <script0> <script1> ... <scriptN>                                  │" << std::endl;
-	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
-	std::cout << "\t│                  options :                                                             │" << std::endl;
-	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
-	std::cout << "\t│                            py   - Python                                               │" << std::endl;
-	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
-	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
-	std::cout << "\t│                            cs   - C# NetCore                                           │" << std::endl;
-	std::cout << "\t│                            cob  - Cobol                                                │" << std::endl;
-	std::cout << "\t│                            ts   - TypeScript                                           │" << std::endl;
-	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
-	std::cout << "\t│                            file - Files (for handling file systems)                    │" << std::endl;
-	std::cout << "\t│    <script0> <script1> ... <scriptN> : id of the script (file name without extension)  │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Example:                                                                               │" << std::endl;
-	std::cout << "\t│ clear node concat                                                                      │" << std::endl;
-	std::cout << "\t│                                                                                        │" << std::endl;
-	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ Script (concat) removed correctly                                                      │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Delete a script previously loaded in MetaCall                                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "clear <runtime tag> <script0> <script1> ... <scriptN>                                  " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <runtime tag> : identifier to the type of script                                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                 options :                                                             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           mock - Mock (for testing purposes)                          " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           py   - Python                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           node - NodeJS                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           rb   - Ruby                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           cs   - C# NetCore                                           " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           cob  - Cobol                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           ts   - TypeScript                                           " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           js   - V8 JavaScript Engine                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                           file - Files (for handling file systems)                    " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "   <script0> <script1> ... <scriptN> : id of the script (file name without extension)  " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Example:                                                                               " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "clear node concat                                                                      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "                                                                                       " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Result:                                                                                " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Script (concat) removed correctly                                                      " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Exit command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Exit from MetaCall CLI                                                                 │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ exit                                                                                   │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Exit from MetaCall CLI                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "exit                                                                                   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Copyright command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Show copyright of MetaCall CLI                                                         │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ copyright                                                                              │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Show copyright of MetaCall CLI                                                         " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "copyright                                                                              " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	/* Help command */
-	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Show help for MetaCall CLI                                                             │" << std::endl;
-	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
-	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
-	std::cout << "\t│ help                                                                                   │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+	std::cout << CLI_BOX_TL << CLI_BOX_H << CLI_BOX_TR << std::endl;
+	std::cout << CLI_BOX_V << "Show help for MetaCall CLI                                                             " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << CLI_BOX_H << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "Usage:                                                                                 " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_V << "help                                                                                   " << CLI_BOX_VR << std::endl;
+	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
 
 	return metacall_value_create_int(0);
