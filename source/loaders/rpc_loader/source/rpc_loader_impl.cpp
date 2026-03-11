@@ -65,6 +65,7 @@ typedef struct loader_impl_rpc_type
 	std::atomic<bool> exit_flag;
 	moodycamel::ConcurrentQueue<rpc_async_context *> async_queue;
 	void *allocator;
+	serial cached_serial;
 	struct curl_slist *headers;
 	std::map<type_id, type> types;
 	std::set<std::string> execution_paths;
@@ -177,7 +178,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 		}
 	}
 
-	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
+	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (memory_allocator)rpc_impl->allocator);
 
 	/* Destroy the value without destroying the contents of the array */
 	value_destroy(v);
@@ -210,7 +211,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	/* Deserialize the call result data */
 	const size_t write_data_size = write_data.buffer.length() + 1;
 
-	void *result_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), write_data_size, rpc_impl->allocator);
+	void *result_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), write_data_size, (memory_allocator)rpc_impl->allocator);
 
 	if (result_value == NULL)
 	{
@@ -288,7 +289,7 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 				struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 				void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-				void *result_value = metacall_deserialize(metacall_serial(), done_ctx->write_data.buffer.c_str(), write_data_size, allocator);
+				void *result_value = serial_deserialize(rpc_impl->cached_serial, done_ctx->write_data.buffer.c_str(), write_data_size, (memory_allocator)allocator);
 
 				metacall_allocator_destroy(allocator);
 
@@ -350,7 +351,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 		}
 	}
 
-	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
+	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (memory_allocator)rpc_impl->allocator);
 
 	value_destroy(v);
 
@@ -495,6 +496,8 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
 	rpc_impl->allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	rpc_impl->cached_serial = serial_create(metacall_serial());
 
 	if (rpc_impl->allocator == NULL)
 	{
@@ -878,7 +881,7 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 		/* Deserialize the inspect data */
 		const size_t size = write_data.buffer.length() + 1;
 
-		void *inspect_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), size, rpc_impl->allocator);
+		void *inspect_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), size, (memory_allocator)rpc_impl->allocator);
 
 		if (inspect_value == NULL)
 		{
