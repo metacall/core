@@ -43,6 +43,7 @@
 #include <vector>
 
 #include <cassert>
+#include <cstdlib>
 #include <cstring>
 
 /* LibFFI */
@@ -404,6 +405,37 @@ public:
 				if (this->lib != NULL && header_found == true)
 				{
 					return true;
+				}
+			}
+
+			/* Fallback: when package name has no directory (e.g. "loadtest"), search in
+			 * LOADER_SCRIPT_PATH and LOADER_LIBRARY_PATH from environment so that C packages
+			 * built to script path (e.g. tests) are found even if execution_paths were not
+			 * populated for this loader.
+			 */
+			if (library_directory_size == 0 || (library_directory_size == 1 && library_directory[0] == '\0'))
+			{
+				const char *env_paths[] = { "LOADER_SCRIPT_PATH", "LOADER_LIBRARY_PATH" };
+				for (const char *env_name : env_paths)
+				{
+					const char *env_value = getenv(env_name);
+					if (env_value == NULL || env_value[0] == '\0')
+					{
+						continue;
+					}
+					size_t env_len = strnlen(env_value, PORTABILITY_PATH_SIZE - 1);
+					if (this->lib == NULL)
+					{
+						this->load_dynlink(env_value, env_len + 1, library_name);
+					}
+					if (header_found == false)
+					{
+						header_found = this->add_header(env_value, env_len + 1, library_name, library_name_size);
+					}
+					if (this->lib != NULL && header_found == true)
+					{
+						return true;
+					}
 				}
 			}
 		}
