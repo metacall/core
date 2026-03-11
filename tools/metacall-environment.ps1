@@ -80,8 +80,8 @@ function Set-Nodejs {
 	Set-Location $ROOT_DIR
 
 	$DepsDir = "$ROOT_DIR\dependencies"
-	$NodeVersion = "14.18.2"
-	$DLLReleaseVer = "v0.0.1"
+	$NodeVersion = "20.11.0"
+	$DLLReleaseVer = "v0.0.6"
 	$RuntimeDir = "$env:ProgramFiles\nodejs"
 
 	Set-Location $DepsDir
