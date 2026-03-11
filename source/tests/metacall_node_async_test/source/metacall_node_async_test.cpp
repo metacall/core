@@ -28,6 +28,12 @@
 
 std::atomic<int> success_callbacks{};
 
+struct trampoline_regression_ctx_type
+{
+	std::atomic<unsigned int> resolve_callbacks{ 0 };
+	std::atomic<unsigned int> reject_callbacks{ 0 };
+} trampoline_ctx;
+
 class metacall_node_async_test : public testing::Test
 {
 public:
@@ -151,6 +157,71 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 		metacall_value_destroy(args[0]);
 
+		/*  Regression #578: trampoline ownership. test */
+		{
+			const char trampoline_buffer[] =
+				"function f_reg(x) { return new Promise(r => r(x)); }\n"
+				"function g_reg(x) { return new Promise((_, r) => r(x)); }\n"
+				"async function i_reg() { throw Error('Hi there!'); }\n"
+				"module.exports = { f_reg, g_reg, i_reg };\n";
+
+			EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", trampoline_buffer, sizeof(trampoline_buffer), NULL));
+
+			auto trampoline_resolve_cb = [](void *result, void *data) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
+
+				trampoline_regression_ctx_type *ctx = static_cast<trampoline_regression_ctx_type *>(data);
+				EXPECT_NE((void *)NULL, (void *)ctx);
+
+				++ctx->resolve_callbacks;
+
+				return NULL;
+			};
+
+			auto trampoline_reject_cb = [](void *result, void *data) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
+
+				trampoline_regression_ctx_type *ctx = static_cast<trampoline_regression_ctx_type *>(data);
+				EXPECT_NE((void *)NULL, (void *)ctx);
+
+				++ctx->reject_callbacks;
+
+				return NULL;
+			};
+
+			/* Await #1: resolve path — exercises node_loader_trampoline_resolve ownership */
+			void *args_f_reg[] = { metacall_value_create_double(10.0) };
+
+			void *future_f_reg = metacall_await("f_reg", args_f_reg, trampoline_resolve_cb, trampoline_reject_cb, static_cast<void *>(&trampoline_ctx));
+
+			metacall_value_destroy(args_f_reg[0]);
+
+			EXPECT_NE((void *)NULL, (void *)future_f_reg);
+			EXPECT_EQ((enum metacall_value_id)METACALL_FUTURE, (enum metacall_value_id)metacall_value_id(future_f_reg));
+
+			metacall_value_destroy(future_f_reg);
+
+			/* Await #2: reject path — exercises node_loader_trampoline_reject ownership */
+			void *args_g_reg[] = { metacall_value_create_double(20.0) };
+
+			void *future_g_reg = metacall_await("g_reg", args_g_reg, trampoline_resolve_cb, trampoline_reject_cb, static_cast<void *>(&trampoline_ctx));
+
+			metacall_value_destroy(args_g_reg[0]);
+
+			EXPECT_NE((void *)NULL, (void *)future_g_reg);
+			EXPECT_EQ((enum metacall_value_id)METACALL_FUTURE, (enum metacall_value_id)metacall_value_id(future_g_reg));
+
+			metacall_value_destroy(future_g_reg);
+
+			/* Await #3: async throw — exception surfaces as reject path */
+			void *future_i_reg = metacall_await("i_reg", metacall_null_args, trampoline_resolve_cb, trampoline_reject_cb, static_cast<void *>(&trampoline_ctx));
+
+			EXPECT_NE((void *)NULL, (void *)future_i_reg);
+			EXPECT_EQ((enum metacall_value_id)METACALL_FUTURE, (enum metacall_value_id)metacall_value_id(future_i_reg));
+
+			metacall_value_destroy(future_i_reg);
+		}
+
 		/* Test future */
 		future = metacall("h");
 
@@ -259,6 +330,12 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 	{
 		/* Total amount of successful callbacks must be 4 */
 		EXPECT_EQ((int)success_callbacks, (int)4);
+
+		/* Regression #578: exactly 1 resolve and 2 rejects must have fired.
+		 * Under ASAN (detect_leaks=1) this also confirms zero heap leaks from
+		 * the trampoline unique_ptr fix in node_loader_trampoline.cpp. */
+		EXPECT_EQ((unsigned int)1, (unsigned int)trampoline_ctx.resolve_callbacks);
+		EXPECT_EQ((unsigned int)2, (unsigned int)trampoline_ctx.reject_callbacks);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 }
