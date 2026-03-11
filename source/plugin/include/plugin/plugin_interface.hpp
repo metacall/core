@@ -94,7 +94,9 @@
 			std::string error_msg = ss.str(); \
 			EXTENSION_FUNCTION_THROW(error_msg.c_str()); \
 		} \
-		PREPROCESSOR_FOR(EXTENSION_FUNCTION_CHECK_ITERATOR, error, __VA_ARGS__) \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
+			(void)0, \
+			PREPROCESSOR_FOR(EXTENSION_FUNCTION_CHECK_ITERATOR, error, __VA_ARGS__)) \
 	} while (0)
 
 #endif /* PLUGIN_INTERFACE_HPP */
