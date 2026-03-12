@@ -11,6 +11,7 @@
 
 #include <cinttypes>
 #include <cstdio> /* TODO: Improve this trick */
+#include <memory>
 
 #define NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD(name, func) \
 	{ \
@@ -31,8 +32,9 @@ typedef struct loader_impl_async_future_await_trampoline_type
 	future_resolve_callback resolve_callback;
 	future_reject_callback reject_callback;
 	void *context;
+} loader_impl_async_future_await_trampoline_type;
 
-} * loader_impl_async_future_await_trampoline;
+typedef loader_impl_async_future_await_trampoline_type *loader_impl_async_future_await_trampoline;
 
 template <typename T>
 union loader_impl_trampoline_cast
@@ -183,6 +185,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 
 	/* Execute the callback */
 	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+	std::unique_ptr<loader_impl_async_future_await_trampoline_type> trampoline_guard(trampoline);
 
 	return trampoline->resolve_trampoline(trampoline->node_impl, env, trampoline->resolve_callback, recv, args[1], trampoline->context);
 }
@@ -240,6 +243,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 
 	/* Execute the callback */
 	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+	std::unique_ptr<loader_impl_async_future_await_trampoline_type> trampoline_guard(trampoline);
 
 	return trampoline->reject_trampoline(trampoline->node_impl, env, trampoline->reject_callback, recv, args[1], trampoline->context);
 }
