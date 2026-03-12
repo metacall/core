@@ -92,7 +92,7 @@ extern "C" fn class_singleton_static_invoke(
             .expect("Unable to get method name");
         let ret = class.call(name, args);
         std::mem::forget(class);
-        std::mem::forget(name);
+        //std::mem::forget(name);
         ret
     };
     if let Ok(ret) = ret {

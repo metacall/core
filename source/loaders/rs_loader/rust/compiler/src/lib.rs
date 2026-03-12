@@ -93,7 +93,7 @@ impl Source {
             let lib_extension = "so";
             #[cfg(windows)]
             let lib_extension = "dll";
-            #[cfg(macos)]
+            #[cfg(target_os = "macos")]
             let lib_extension = "dylib";
 
             let mut lib_name = file_name.clone();
@@ -266,15 +266,16 @@ impl DynlinkLibrary {
         }
     }
 
-    pub fn symbol(&self, symbol_name: &str) -> Result<DynlinkSymbolAddr, String> {
+pub fn symbol(&self, symbol_name: &str) -> Result<DynlinkSymbolAddr, String> {
         let c_symbol_name = CString::new(symbol_name).expect("CString::new failed");
 
         unsafe {
-            let mut symbol_address: DynlinkSymbolAddr = std::mem::transmute(std::ptr::null::<DynlinkSymbolAddr>());
-            let result = dynlink_symbol(self.instance, c_symbol_name.as_ptr(), &mut symbol_address);
+            let mut symbol_address = std::mem::MaybeUninit::<DynlinkSymbolAddr>::uninit();
+
+            let result = dynlink_symbol(self.instance, c_symbol_name.as_ptr(), symbol_address.as_mut_ptr());
 
             if result == 0 {
-                Ok(symbol_address)
+                Ok(symbol_address.assume_init())
             } else {
                 Err(format!("Failed to find symbol: {}", symbol_name))
             }
@@ -590,7 +591,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                 let mut wrapped_script = std::fs::File::create(&wrapped_script_path)
                     .expect("unable to create wrapped script");
                 wrapped_script
-                    .write("extern crate metacall_package;\n".as_bytes())
+                    .write_all("extern crate metacall_package;\n".as_bytes())
                     .expect("Unablt to write wrapped script");
             }
 

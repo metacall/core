@@ -44,7 +44,7 @@ extern "C" fn object_singleton_set(
 
         std::mem::forget(class);
         std::mem::forget(obj);
-        std::mem::forget(name);
+    //   std::mem::forget(name);
     };
     0
 }
@@ -66,7 +66,7 @@ extern "C" fn object_singleton_get(
 
         std::mem::forget(class);
         std::mem::forget(obj);
-        std::mem::forget(name);
+        //std::mem::forget(name);
         ret
     };
     if let Ok(ret) = ret {
@@ -96,7 +96,7 @@ extern "C" fn object_singleton_method_invoke(
 
         std::mem::forget(class);
         std::mem::forget(obj);
-        std::mem::forget(name);
+      //  std::mem::forget(name);
         ret
     };
     if let Ok(ret) = ret {
