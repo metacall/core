@@ -109,6 +109,26 @@ else()
 	set(TESTS_MEMCHECK_ENVIRONMENT_VARIABLES)
 endif()
 
+# Warn loudly when a sanitizer is requested with a build type that will not
+# activate it. Silent no-ops here cost hours of debugging as happened in node_ci.	
+foreach(_san_opt
+	OPTION_BUILD_THREAD_SANITIZER
+	OPTION_BUILD_MEMORY_SANITIZER
+	OPTION_BUILD_ADDRESS_SANITIZER
+)
+	if(${_san_opt} AND
+		NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND
+		NOT CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		message(WARNING
+			"${_san_opt} is ON but CMAKE_BUILD_TYPE is '${CMAKE_BUILD_TYPE}'. "
+			"Sanitizers only activate for Debug and RelWithDebInfo builds - "
+			"the sanitizer will have NO EFFECT. "
+			"Reconfigure with -DCMAKE_BUILD_TYPE=Debug to enable it."
+		)
+	endif()
+endforeach()
+unset(_san_opt)
+
 # ThreadSanitizer is incompatible with AddressSanitizer and LeakSanitizer
 if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -ltsan)
