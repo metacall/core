@@ -3596,8 +3596,8 @@ static BOOL node_loader_is_caller_node_extension(void *return_addr)
 {
 	HMODULE mod = NULL;
 
-	if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-							   GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+	if (get_module_handle_ex_w_ptr(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+									   GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
 			(LPCWSTR)return_addr, &mod) == TRUE)
 	{
 		static const wchar_t node_ext[] = L".node";
@@ -3633,8 +3633,17 @@ _Ret_maybenull_ HMODULE WINAPI get_module_handle_a_hook(_In_opt_ LPCSTR lpModule
 	* GetModuleHandle funciton. This method successfully hooks into the NodeJS mechanism and
 	* redirects properly the linker resolver system to the node.dll where symbols are located.
 	*/
-	if (lpModuleName == NULL)
+	if (lpModuleName != NULL)
 	{
+		/* Handle named module lookups for "node.exe" */
+		if (_stricmp(lpModuleName, "node.exe") == 0 || _stricmp(lpModuleName, "node") == 0)
+		{
+			return node_loader_node_dll_handle;
+		}
+	}
+	else
+	{
+		/* Handle NULL module lookups from .node extensions */
 		if (node_loader_is_caller_node_extension(_ReturnAddress()))
 		{
 			return node_loader_node_dll_handle;
@@ -3653,19 +3662,17 @@ _Ret_maybenull_ HMODULE WINAPI get_module_handle_w_hook(_In_opt_ LPCWSTR lpModul
 	 * main executable handle instead of libnode.dll, causing all napi_* symbol resolutions
 	 * to fail with "Node-API symbol X has not been loaded".
 	 */
-
-	/* Handle named module lookups for L"node.exe" */
 	if (lpModuleName != NULL)
 	{
+		/* Handle named module lookups for L"node.exe" */
 		if (_wcsicmp(lpModuleName, L"node.exe") == 0 || _wcsicmp(lpModuleName, L"node") == 0)
 		{
 			return node_loader_node_dll_handle;
 		}
 	}
-
-	/* Handle NULL module lookups from .node extensions */
-	if (lpModuleName == NULL)
+	else
 	{
+		/* Handle NULL module lookups from .node extensions */
 		if (node_loader_is_caller_node_extension(_ReturnAddress()))
 		{
 			return node_loader_node_dll_handle;
@@ -3677,7 +3684,7 @@ _Ret_maybenull_ HMODULE WINAPI get_module_handle_w_hook(_In_opt_ LPCWSTR lpModul
 
 BOOL WINAPI get_module_handle_ex_w_hook(_In_ DWORD dwFlags, _In_opt_ LPCWSTR lpModuleName, _Outptr_result_maybenull_ HMODULE *phModule)
 {
-	/* WARN!:napi-rs on Windows MSVC resolves N-API symbols through libloading::os::windows::Library::this(),
+	/* napi-rs on Windows MSVC resolves N-API symbols through libloading::os::windows::Library::this(),
 	 * which calls GetModuleHandleExW(0, NULL, &handle). Intercept that path too, otherwise the host
 	 * module resolves to metacallcli.exe and all napi_* lookups fall back to stub functions.
 	 */
@@ -3691,8 +3698,7 @@ BOOL WINAPI get_module_handle_ex_w_hook(_In_ DWORD dwFlags, _In_opt_ LPCWSTR lpM
 				return TRUE;
 			}
 		}
-
-		if (lpModuleName != NULL)
+		else
 		{
 			if (_wcsicmp(lpModuleName, L"node.exe") == 0 || _wcsicmp(lpModuleName, L"node") == 0)
 			{
@@ -3720,8 +3726,7 @@ BOOL WINAPI get_module_handle_ex_a_hook(_In_ DWORD dwFlags, _In_opt_ LPCSTR lpMo
 				return TRUE;
 			}
 		}
-
-		if (lpModuleName != NULL)
+		else
 		{
 			if (_stricmp(lpModuleName, "node.exe") == 0 || _stricmp(lpModuleName, "node") == 0)
 			{
