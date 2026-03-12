@@ -87,6 +87,10 @@ pub fn return_ptr(p: *mut c_void) -> *mut c_void {
     p
 }
 
+pub fn ptr_to_int(p: *mut c_void) -> i32 {
+    unsafe { *(p as *mut i32) }
+}
+
 pub fn string_len(s: String) -> usize {
     s.len()
 }
