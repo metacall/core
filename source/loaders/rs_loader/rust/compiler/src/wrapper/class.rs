@@ -26,7 +26,6 @@ extern "C" {
     fn metacall_value_to_array(v: *mut c_void) -> *mut *mut c_void;
     fn metacall_value_to_map(v: *mut c_void) -> *mut *mut c_void;
     fn metacall_value_to_ptr(v: *mut c_void) -> *mut c_void;
-    fn metacall_value_create_ptr(ptr: *const c_void) -> *mut c_void;
     fn metacall_value_to_string(v: *mut c_void) -> *mut c_char;
     // fn metacall_function(cfn: *const c_char) -> *mut c_void;
     fn metacall_value_create_int(i: c_int) -> *mut c_void;
@@ -40,6 +39,7 @@ extern "C" {
     fn metacall_value_create_array(values: *const *mut c_void, size: usize) -> *mut c_void;
     fn metacall_value_create_map(tuples: *const *mut c_void, size: usize) -> *mut c_void;
     fn metacall_value_create_null() -> *mut c_void;
+    fn metacall_value_create_ptr(ptr: *const c_void) -> *mut c_void;
 }
 
 type Attributes = HashMap<&'static str, AttributeGetter>;
@@ -60,6 +60,10 @@ pub struct Class {
     instance_methods: InstanceMethods,
     pub class_methods: ClassMethods,
 }
+
+#[repr(transparent)]
+#[derive(Clone, Debug)]
+pub struct MetacallPointer(pub *mut c_void);
 
 impl Class {
     pub fn builder<T: 'static>() -> ClassBuilder<T> {
@@ -603,9 +607,9 @@ where
     }
 }
 
-impl ToMetaResult for *mut c_void {
+impl ToMetaResult for MetacallPointer {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_ptr(self) })
+        Ok(unsafe { metacall_value_create_ptr(self.0) })
     }
 }
 
@@ -653,7 +657,7 @@ enum PrimitiveMetacallProtocolTypes {
     // Buffer = 8,
     // Array = 9,
     Map = 10,
-    // Pointer = 11,
+    Pointer = 11,
     // Future = 12,
     // Function = 13,
     // Null = 14,
@@ -686,6 +690,9 @@ impl TryFrom<i32> for PrimitiveMetacallProtocolTypes {
             x if x == PrimitiveMetacallProtocolTypes::Map as i32 => {
                 Ok(PrimitiveMetacallProtocolTypes::Map)
             }
+            x if x == PrimitiveMetacallProtocolTypes::Pointer as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Pointer)
+            }
             _ => Err(()),
         }
     }
@@ -711,6 +718,10 @@ macro_rules! convert_to {
                 Ok(PrimitiveMetacallProtocolTypes::Map) => {
                     eprintln!("Rust Loader: Return type with id #{} is a map, which is not supported yet. ", id);
                     panic!("Rust loader: Map type conversion is not supported yet");
+                }
+                Ok(PrimitiveMetacallProtocolTypes::Pointer) => {
+                    eprintln!("Rust Loader: Return type with id #{} is a pointer, conversion not supported in convert_to macro.", id);
+                    panic!("Rust loader: Pointer type conversion is not supported in convert_to");
                 }
                 Err(_) => {
                     eprintln!("Rust Loader: Return type with id #{} is not implemented, ", id);
@@ -813,6 +824,12 @@ where
             }
             r_map
         })
+    }
+}
+
+impl FromMeta for MetacallPointer {
+    fn from_meta(val: MetacallValue) -> Result<Self> {
+        Ok(MetacallPointer(unsafe { metacall_value_to_ptr(val) }))
     }
 }
 
