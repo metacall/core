@@ -1019,7 +1019,22 @@ napi_value node_loader_port_metacall_load_from_configuration_export(napi_env env
 	return v_exports;
 }
 
-/* TODO: Add documentation */
+/**
+*  @brief
+*    Inspects the loaded scripts and returns a JSON string
+*    describing all registered functions, their signatures,
+*    and metadata across all active loaders
+*
+*  @param[in] env
+*    N-API reference to the environment
+*
+*  @param[in] info
+*    Reference to the call information (no arguments expected)
+*
+*  @return
+*    N-API string value containing the MetaCall inspect JSON,
+*    or throws a TypeError and returns nullptr on failure
+*/
 napi_value node_loader_port_metacall_inspect(napi_env env, napi_callback_info)
 {
 	size_t size = 0;
@@ -1027,20 +1042,21 @@ napi_value node_loader_port_metacall_inspect(napi_env env, napi_callback_info)
 	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 	char *inspect_str = metacall_inspect(&size, allocator);
 
-	if (!(inspect_str != NULL && size != 0))
+	if (inspect_str == NULL || size == 0)
 	{
 		napi_throw_error(env, nullptr, "Invalid MetaCall inspect string");
+		metacall_allocator_destroy(allocator);
+		return nullptr;
 	}
 
 	napi_value result;
 	napi_status status = napi_create_string_utf8(env, inspect_str, size - 1, &result);
 
-	node_loader_impl_exception(env, status);
-
 	metacall_allocator_free(allocator, inspect_str);
 
 	metacall_allocator_destroy(allocator);
 
+	node_loader_impl_exception(env, status);
 	return result;
 }
 
