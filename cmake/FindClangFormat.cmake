@@ -1,98 +1,261 @@
 #
-# Taken from https://raw.githubusercontent.com/BlueBrain/git-cmake-format/master/FindClangFormat.cmake
-# ---------------
+# FindClangFormat.cmake
+# Finds clang-format version 12 on the host system.
+# If not found natively, falls back to a Docker wrapper using
+# ghcr.io/jidicula/clang-format:12
 #
-# The module defines the following variables
+# Exported variables:
+#   ClangFormat_EXECUTABLE        - Path to clang-format executable (or generated wrapper script)
+#   ClangFormat_FOUND             - TRUE if clang-format 12.x was found or Docker fallback is available
+#   ClangFormat_VERSION           - Full version string (e.g. "12.0.1")
+#   ClangFormat_VERSION_MAJOR     - Major version component
+#   ClangFormat_VERSION_MINOR     - Minor version component
+#   ClangFormat_VERSION_PATCH     - Patch version component
+#   ClangFormat_VERSION_COUNT     - Number of version components
+#   ClangFormat_USE_DOCKER        - TRUE when the Docker fallback is active
 #
-# ``ClangFormat_EXECUTABLE`` Path to clang-format executable
-# ``ClangFormat_FOUND`` True if the clang-format executable was found.
-# ``ClangFormat_VERSION`` The version of clang-format found
-# ``ClangFormat_VERSION_MAJOR`` The clang-format major version if specified, 0
-# otherwise ``ClangFormat_VERSION_MINOR`` The clang-format minor version if
-# specified, 0 otherwise ``ClangFormat_VERSION_PATCH`` The clang-format patch
-# version if specified, 0 otherwise ``ClangFormat_VERSION_COUNT`` Number of
-# version components reported by clang-format
+# Required version: 12.x
+# Docker image fallback: ghcr.io/jidicula/clang-format:12
 #
-# Example usage:
-#
-# .. code-block:: cmake
-#
-# find_package(ClangFormat) if(ClangFormat_FOUND) message("clang-format
-# executable found: ${ClangFormat_EXECUTABLE}\n" "version:
-# ${ClangFormat_VERSION}") endif()
 
 if(ClangFormat_FOUND)
 	set(ClangFormat_FIND_QUIETLY TRUE)
 endif()
 
+set(CLANG_FORMAT_REQUIRED_MAJOR 12)
+set(CLANG_FORMAT_DOCKER_IMAGE "ghcr.io/jidicula/clang-format:12")
+
+# ---------------------------------------------------------------------------
+# Candidate binary names - versioned name first, then generic
+# ---------------------------------------------------------------------------
 set(ClangFormat_NAMES
-	clang-format
-	clang-format-11
 	clang-format-12
+	clang-format
 )
 
+# ---------------------------------------------------------------------------
+# Platform-specific search paths
+# ---------------------------------------------------------------------------
 set(ClangFormat_PATHS
+	# Linux - standard LLVM apt packages
 	/usr/bin
-	/usr/lib/llvm-11/bin
 	/usr/lib/llvm-12/bin
+
+	# macOS - Homebrew on Apple Silicon
+	/opt/homebrew/opt/llvm@12/bin
+
+	# macOS - Homebrew on Intel
+	/usr/local/opt/llvm@12/bin
+
+	# Windows - Chocolatey and manual LLVM installer default locations
+	"C:/Program Files/LLVM/bin"
+	"C:/ProgramData/chocolatey/bin"
+
+	# Windows - Scoop
+	"$ENV{USERPROFILE}/scoop/apps/llvm/12.0.1/bin"
+
+	# Windows - winget / per-user install
+	"$ENV{LOCALAPPDATA}/Programs/LLVM/bin"
 )
 
 find_program(ClangFormat_EXECUTABLE
 	NAMES ${ClangFormat_NAMES}
-	DOC "clang-format executable"
+	DOC "clang-format 12 executable"
 	PATHS ${ClangFormat_PATHS}
+	NO_DEFAULT_PATH
 )
 
-# Extract version from command "clang-format -version"
+# Also try the system PATH as a last resort before we reach Docker
+if(NOT ClangFormat_EXECUTABLE)
+	find_program(ClangFormat_EXECUTABLE
+		NAMES ${ClangFormat_NAMES}
+		DOC "clang-format 12 executable (system PATH)"
+	)
+endif()
+
+# ---------------------------------------------------------------------------
+# Version extraction and strict major-version validation
+# ---------------------------------------------------------------------------
 if(ClangFormat_EXECUTABLE)
-	execute_process(COMMAND ${ClangFormat_EXECUTABLE} -version
-					OUTPUT_VARIABLE clang_format_version
-					ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+	execute_process(
+		COMMAND "${ClangFormat_EXECUTABLE}" -version
+		OUTPUT_VARIABLE _cf_version_out
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
 
-	if(clang_format_version MATCHES "clang-format version .*")
-		# clang_format_version sample: "clang-format version 3.9.1-4ubuntu3~16.04.1
-		# (tags/RELEASE_391/rc2)"
-		string(REGEX
-					REPLACE ".*clang-format version ([.0-9]+).*"
-					"\\1"
-					ClangFormat_VERSION
-					"${clang_format_version}")
-		# ClangFormat_VERSION sample: "3.9.1"
+	if(_cf_version_out MATCHES "clang-format version ([0-9]+\\.[0-9]+[^ ]*)")
+		set(ClangFormat_VERSION "${CMAKE_MATCH_1}")
 
-		# Extract version components
-		string(REPLACE "." ";" clang_format_version "${ClangFormat_VERSION}")
-		list(LENGTH clang_format_version ClangFormat_VERSION_COUNT)
+		string(REPLACE "." ";" _cf_version_list "${ClangFormat_VERSION}")
+		list(LENGTH _cf_version_list ClangFormat_VERSION_COUNT)
+
 		if(ClangFormat_VERSION_COUNT GREATER 0)
-			list(GET clang_format_version 0 ClangFormat_VERSION_MAJOR)
+			list(GET _cf_version_list 0 ClangFormat_VERSION_MAJOR)
 		else()
 			set(ClangFormat_VERSION_MAJOR 0)
 		endif()
+
 		if(ClangFormat_VERSION_COUNT GREATER 1)
-			list(GET clang_format_version 1 ClangFormat_VERSION_MINOR)
+			list(GET _cf_version_list 1 ClangFormat_VERSION_MINOR)
 		else()
 			set(ClangFormat_VERSION_MINOR 0)
 		endif()
+
 		if(ClangFormat_VERSION_COUNT GREATER 2)
-			list(GET clang_format_version 2 ClangFormat_VERSION_PATCH)
+			list(GET _cf_version_list 2 ClangFormat_VERSION_PATCH)
 		else()
 			set(ClangFormat_VERSION_PATCH 0)
 		endif()
 	endif()
-	unset(clang_format_version)
+
+	unset(_cf_version_out)
+	unset(_cf_version_list)
+
+	# Reject any binary that is not version 12.x
+	if(NOT ClangFormat_VERSION_MAJOR EQUAL ${CLANG_FORMAT_REQUIRED_MAJOR})
+		if(NOT ClangFormat_FIND_QUIETLY)
+			message(STATUS
+				"Found clang-format ${ClangFormat_VERSION} at ${ClangFormat_EXECUTABLE}, "
+				"but version ${CLANG_FORMAT_REQUIRED_MAJOR}.x is required - ignoring."
+			)
+		endif()
+		unset(ClangFormat_EXECUTABLE CACHE)
+		unset(ClangFormat_VERSION)
+		unset(ClangFormat_VERSION_MAJOR)
+		unset(ClangFormat_VERSION_MINOR)
+		unset(ClangFormat_VERSION_PATCH)
+		unset(ClangFormat_VERSION_COUNT)
+	endif()
 endif()
 
+# ---------------------------------------------------------------------------
+# Docker fallback - only on non-Windows platforms
+# ---------------------------------------------------------------------------
+if(NOT ClangFormat_EXECUTABLE AND NOT WIN32)
+	find_program(_docker_exe NAMES docker)
+
+	if(_docker_exe)
+		if(NOT ClangFormat_FIND_QUIETLY)
+			message(STATUS
+				"clang-format 12 not found natively. "
+				"Generating Docker wrapper: ${CLANG_FORMAT_DOCKER_IMAGE}"
+			)
+		endif()
+
+		# The wrapper mounts CMAKE_SOURCE_DIR at the same absolute path
+		set(_wrapper_path "${CMAKE_BINARY_DIR}/clang-format-docker-wrapper.sh")
+
+		file(WRITE "${_wrapper_path}"
+"#!/bin/sh
+# Auto-generated by FindClangFormat.cmake - DO NOT EDIT.
+# Proxies clang-format calls through the pinned Docker image.
+set -e
+exec docker run --rm \\
+    -v \"${CMAKE_SOURCE_DIR}:${CMAKE_SOURCE_DIR}\" \\
+    -w \"${CMAKE_SOURCE_DIR}\" \\
+    \"${CLANG_FORMAT_DOCKER_IMAGE}\" \\
+    \"\$@\"
+"
+		)
+
+		execute_process(COMMAND chmod +x "${_wrapper_path}")
+
+		set(ClangFormat_EXECUTABLE "${_wrapper_path}" CACHE FILEPATH "clang-format Docker wrapper" FORCE)
+		set(ClangFormat_VERSION "12.0.0")
+		set(ClangFormat_VERSION_MAJOR 12)
+		set(ClangFormat_VERSION_MINOR 0)
+		set(ClangFormat_VERSION_PATCH 0)
+		set(ClangFormat_VERSION_COUNT 3)
+		set(ClangFormat_USE_DOCKER TRUE CACHE BOOL "clang-format is running via Docker" FORCE)
+	else()
+		if(NOT ClangFormat_FIND_QUIETLY)
+			message(STATUS
+				"clang-format 12 not found and Docker is not available. "
+				"Install clang-format-12 or Docker to enable formatting."
+			)
+		endif()
+	endif()
+
+	unset(_docker_exe CACHE)
+	unset(_docker_exe)
+endif()
+
+# ---------------------------------------------------------------------------
+# Windows Docker fallback - Docker Desktop must be on PATH
+# ---------------------------------------------------------------------------
+if(NOT ClangFormat_EXECUTABLE AND WIN32)
+	find_program(_docker_exe NAMES docker)
+
+	if(_docker_exe)
+		if(NOT ClangFormat_FIND_QUIETLY)
+			message(STATUS
+				"clang-format 12 not found on Windows. "
+				"Generating Docker wrapper (requires Docker Desktop): ${CLANG_FORMAT_DOCKER_IMAGE}"
+			)
+		endif()
+
+		set(_wrapper_path "${CMAKE_BINARY_DIR}/clang-format-docker-wrapper.cmd")
+
+		# Windows batch wrapper
+		string(REPLACE "\\" "/" _src_fwd "${CMAKE_SOURCE_DIR}")
+
+		file(WRITE "${_wrapper_path}"
+"@echo off
+REM Auto-generated by FindClangFormat.cmake -- DO NOT EDIT.
+docker run --rm ^
+    -v \"${_src_fwd}:${_src_fwd}\" ^
+    -w \"${_src_fwd}\" ^
+    \"${CLANG_FORMAT_DOCKER_IMAGE}\" ^
+    %*
+"
+		)
+
+		set(ClangFormat_EXECUTABLE "${_wrapper_path}" CACHE FILEPATH "clang-format Docker wrapper (Windows)" FORCE)
+		set(ClangFormat_VERSION "12.0.0")
+		set(ClangFormat_VERSION_MAJOR 12)
+		set(ClangFormat_VERSION_MINOR 0)
+		set(ClangFormat_VERSION_PATCH 0)
+		set(ClangFormat_VERSION_COUNT 3)
+		set(ClangFormat_USE_DOCKER TRUE CACHE BOOL "clang-format is running via Docker" FORCE)
+
+		unset(_src_fwd)
+	else()
+		if(NOT ClangFormat_FIND_QUIETLY)
+			message(WARNING
+				"clang-format 12 not found and Docker Desktop is not available. "
+				"Install LLVM 12 from https://github.com/llvm/llvm-project/releases/tag/llvmorg-12.0.1 "
+				"or install Docker Desktop to enable formatting."
+			)
+		endif()
+	endif()
+
+	unset(_docker_exe CACHE)
+	unset(_docker_exe)
+endif()
+
+# ---------------------------------------------------------------------------
+# Standard CMake result handling
+# ---------------------------------------------------------------------------
 if(ClangFormat_EXECUTABLE AND ClangFormat_VERSION)
 	set(ClangFormat_FOUND TRUE)
 
 	include(FindPackageHandleStandardArgs)
 
-	# Set standard args
 	find_package_handle_standard_args(ClangFormat
 		REQUIRED_VARS ClangFormat_EXECUTABLE
 		VERSION_VAR ClangFormat_VERSION
 	)
 
 	mark_as_advanced(ClangFormat_EXECUTABLE)
+
+	if(NOT ClangFormat_FIND_QUIETLY)
+		if(ClangFormat_USE_DOCKER)
+			message(STATUS "clang-format: using Docker image ${CLANG_FORMAT_DOCKER_IMAGE} via wrapper ${ClangFormat_EXECUTABLE}")
+		else()
+			message(STATUS "clang-format ${ClangFormat_VERSION} found: ${ClangFormat_EXECUTABLE}")
+		endif()
+	endif()
 else()
 	set(ClangFormat_FOUND FALSE)
 endif()
