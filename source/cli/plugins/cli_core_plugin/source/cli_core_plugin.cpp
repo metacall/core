@@ -22,6 +22,10 @@
 
 #include <plugin/plugin_interface.hpp>
 
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+#include <windows.h>
+#endif
+
 #include <algorithm>
 #include <condition_variable>
 #include <functional>
@@ -32,16 +36,6 @@
 #include <unordered_map>
 #include <vector>
 
-#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
-/* Use ASCII borders on Windows so help output aligns correctly in console */
-#define CLI_BOX_TL "\t+"
-#define CLI_BOX_TR "+"
-#define CLI_BOX_BL "\t+"
-#define CLI_BOX_BR "+"
-#define CLI_BOX_H  "--------------------------------------------------------------------------------------------"
-#define CLI_BOX_V "\t|"
-#define CLI_BOX_VR "|"
-#else
 #define CLI_BOX_TL "\t┌"
 #define CLI_BOX_TR "┐"
 #define CLI_BOX_BL "\t└"
@@ -49,7 +43,6 @@
 #define CLI_BOX_H  "────────────────────────────────────────────────────────────────────────────────────────"
 #define CLI_BOX_V "\t│"
 #define CLI_BOX_VR "│"
-#endif
 
 /* Error messages */
 #define LOAD_ERROR		"Failed to load a script"
@@ -472,6 +465,12 @@ void *help(size_t argc, void *args[], void *data)
 	/* Validate function parameters */
 	EXTENSION_FUNCTION_CHECK(HELP_ERROR);
 
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+	/* Enable UTF-8 output so Unicode box-drawing characters render correctly */
+	UINT prev_cp = GetConsoleOutputCP();
+	SetConsoleOutputCP(CP_UTF8);
+#endif
+
 	/* Print copyright first */
 	COPYRIGHT_PRINT();
 
@@ -654,6 +653,11 @@ void *help(size_t argc, void *args[], void *data)
 	std::cout << CLI_BOX_V << "help                                                                                   " << CLI_BOX_VR << std::endl;
 	std::cout << CLI_BOX_BL << CLI_BOX_H << CLI_BOX_BR << std::endl
 			  << std::endl;
+
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+	/* Restore the original console output code page */
+	SetConsoleOutputCP(prev_cp);
+#endif
 
 	return metacall_value_create_int(0);
 }
