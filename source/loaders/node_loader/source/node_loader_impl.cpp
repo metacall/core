@@ -910,8 +910,14 @@ static void node_loader_impl_try_destroy(loader_impl_node node_impl);
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
 /* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll */
 static HMODULE node_loader_node_dll_handle = NULL;
-static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Implement W version too? */
+static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL;
+static HMODULE (*get_module_handle_w_ptr)(_In_opt_ LPCWSTR) = NULL;
+static BOOL(WINAPI *get_module_handle_ex_w_ptr)(_In_ DWORD, _In_opt_ LPCWSTR, _Outptr_result_maybenull_ HMODULE *) = NULL;
+static BOOL(WINAPI *get_module_handle_ex_a_ptr)(_In_ DWORD, _In_opt_ LPCSTR, _Outptr_result_maybenull_ HMODULE *) = NULL;
 static detour_handle node_module_handle_a_handle = NULL;
+static detour_handle node_module_handle_w_handle = NULL;
+static detour_handle node_module_handle_ex_w_handle = NULL;
+static detour_handle node_module_handle_ex_a_handle = NULL;
 #endif
 
 /* -- Methods -- */
@@ -3585,7 +3591,34 @@ void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async_handle
 }
 
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-/* TODO: _Ret_maybenull_ HMODULE WINAPI GetModuleHandleW(_In_opt_ LPCWSTR lpModuleName); */
+
+static BOOL node_loader_is_caller_node_extension(void *return_addr)
+{
+	HMODULE mod = NULL;
+
+	if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+							   GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+			(LPCWSTR)return_addr, &mod) == TRUE)
+	{
+		static const wchar_t node_ext[] = L".node";
+		wchar_t mod_name[MAX_PATH];
+		DWORD length = GetModuleFileNameW(mod, mod_name, MAX_PATH);
+
+		/* It must contain a letter apart from the .node extension */
+		if (length > (sizeof(node_ext) / sizeof(wchar_t)))
+		{
+			wchar_t *ext = &mod_name[length - (sizeof(node_ext) / sizeof(wchar_t)) + 1];
+
+			if (wcsncmp(ext, node_ext, (sizeof(node_ext) / sizeof(wchar_t))) == 0)
+			{
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
+}
+
 _Ret_maybenull_ HMODULE WINAPI get_module_handle_a_hook(_In_opt_ LPCSTR lpModuleName)
 {
 	/* This hooks GetModuleHandle, which is called as DelayLoad hook inside NodeJS
@@ -3602,31 +3635,105 @@ _Ret_maybenull_ HMODULE WINAPI get_module_handle_a_hook(_In_opt_ LPCSTR lpModule
 	*/
 	if (lpModuleName == NULL)
 	{
-		HMODULE mod = NULL;
-
-		if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-								  GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, /* Behave like GetModuleHandle */
-				(LPCTSTR)_ReturnAddress(), &mod) == TRUE)
+		if (node_loader_is_caller_node_extension(_ReturnAddress()))
 		{
-			static const char node_ext[] = ".node";
-			char mod_name[MAX_PATH];
-			size_t length = GetModuleFileName(mod, mod_name, MAX_PATH);
-
-			/* It must contain a letter a part from the .node extension */
-			if (length > sizeof(node_ext))
-			{
-				char *ext = &mod_name[length - sizeof(node_ext) + 1];
-
-				if (strncmp(ext, node_ext, sizeof(node_ext)) == 0)
-				{
-					return node_loader_node_dll_handle;
-				}
-			}
+			return node_loader_node_dll_handle;
 		}
 	}
 
 	return get_module_handle_a_ptr(lpModuleName);
 }
+
+_Ret_maybenull_ HMODULE WINAPI get_module_handle_w_hook(_In_opt_ LPCWSTR lpModuleName)
+{
+	/* This hooks GetModuleHandleW (Unicode variant), which is called by napi-rs addons
+	 * compiled with Rust. Rust's windows-sys crate uses the W (Unicode) APIs by default,
+	 * so addons built with napi-rs call GetModuleHandleW(NULL) to resolve the host module
+	 * for N-API symbol lookup via GetProcAddress. Without this hook, the call returns the
+	 * main executable handle instead of libnode.dll, causing all napi_* symbol resolutions
+	 * to fail with "Node-API symbol X has not been loaded".
+	 */
+
+	/* Handle named module lookups for L"node.exe" */
+	if (lpModuleName != NULL)
+	{
+		if (_wcsicmp(lpModuleName, L"node.exe") == 0 || _wcsicmp(lpModuleName, L"node") == 0)
+		{
+			return node_loader_node_dll_handle;
+		}
+	}
+
+	/* Handle NULL module lookups from .node extensions */
+	if (lpModuleName == NULL)
+	{
+		if (node_loader_is_caller_node_extension(_ReturnAddress()))
+		{
+			return node_loader_node_dll_handle;
+		}
+	}
+
+	return get_module_handle_w_ptr(lpModuleName);
+}
+
+BOOL WINAPI get_module_handle_ex_w_hook(_In_ DWORD dwFlags, _In_opt_ LPCWSTR lpModuleName, _Outptr_result_maybenull_ HMODULE *phModule)
+{
+	/* WARN!:napi-rs on Windows MSVC resolves N-API symbols through libloading::os::windows::Library::this(),
+	 * which calls GetModuleHandleExW(0, NULL, &handle). Intercept that path too, otherwise the host
+	 * module resolves to metacallcli.exe and all napi_* lookups fall back to stub functions.
+	 */
+	if (phModule != NULL)
+	{
+		if (lpModuleName == NULL)
+		{
+			if (node_loader_is_caller_node_extension(_ReturnAddress()))
+			{
+				*phModule = node_loader_node_dll_handle;
+				return TRUE;
+			}
+		}
+
+		if (lpModuleName != NULL)
+		{
+			if (_wcsicmp(lpModuleName, L"node.exe") == 0 || _wcsicmp(lpModuleName, L"node") == 0)
+			{
+				*phModule = node_loader_node_dll_handle;
+				return TRUE;
+			}
+		}
+	}
+
+	return get_module_handle_ex_w_ptr(dwFlags, lpModuleName, phModule);
+}
+
+BOOL WINAPI get_module_handle_ex_a_hook(_In_ DWORD dwFlags, _In_opt_ LPCSTR lpModuleName, _Outptr_result_maybenull_ HMODULE *phModule)
+{
+	/* ANSI counterpart of GetModuleHandleExW hook. Intercepts GetModuleHandleExA(0, NULL, &handle)
+	 * called by addons or CRT internals so .node extensions receive node.dll instead of the host exe.
+	 */
+	if (phModule != NULL)
+	{
+		if (lpModuleName == NULL)
+		{
+			if (node_loader_is_caller_node_extension(_ReturnAddress()))
+			{
+				*phModule = node_loader_node_dll_handle;
+				return TRUE;
+			}
+		}
+
+		if (lpModuleName != NULL)
+		{
+			if (_stricmp(lpModuleName, "node.exe") == 0 || _stricmp(lpModuleName, "node") == 0)
+			{
+				*phModule = node_loader_node_dll_handle;
+				return TRUE;
+			}
+		}
+	}
+
+	return get_module_handle_ex_a_ptr(dwFlags, lpModuleName, phModule);
+}
+
 #endif
 
 void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr)
@@ -3760,7 +3867,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 		if (node_module_handle_a_handle == NULL)
 		{
-			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism");
+			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism (ANSI)");
 		}
 		else
 		{
@@ -3774,7 +3881,76 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 			if (detour_replace(d, node_module_handle_a_handle, "GetModuleHandleA", (void (*)(void))(&get_module_handle_a_hook), cast.ptr) != 0)
 			{
-				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandle for hooking node extension load mechanism");
+				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandleA for hooking node extension load mechanism");
+			}
+		}
+
+		/* Hook GetModuleHandleW (Unicode variant) for napi-rs / Rust-based addons */
+		node_module_handle_w_handle = detour_load_file(d, "kernel32.dll");
+
+		if (node_module_handle_w_handle == NULL)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism (Unicode)");
+		}
+		else
+		{
+			typedef HMODULE (*get_module_handle_w_type)(_In_opt_ LPCWSTR);
+
+			union
+			{
+				get_module_handle_w_type *trampoline;
+				void (**ptr)(void);
+			} cast_w = { &get_module_handle_w_ptr };
+
+			if (detour_replace(d, node_module_handle_w_handle, "GetModuleHandleW", (void (*)(void))(&get_module_handle_w_hook), cast_w.ptr) != 0)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandleW for hooking node extension load mechanism");
+			}
+		}
+
+		/* Hook GetModuleHandleExW for libloading::os::windows::Library::this() used by napi-rs */
+		node_module_handle_ex_w_handle = detour_load_file(d, "kernel32.dll");
+
+		if (node_module_handle_ex_w_handle == NULL)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism (GetModuleHandleExW)");
+		}
+		else
+		{
+			typedef BOOL(WINAPI * get_module_handle_ex_w_type)(_In_ DWORD, _In_opt_ LPCWSTR, _Outptr_result_maybenull_ HMODULE *);
+
+			union
+			{
+				get_module_handle_ex_w_type *trampoline;
+				void (**ptr)(void);
+			} cast_ex_w = { &get_module_handle_ex_w_ptr };
+
+			if (detour_replace(d, node_module_handle_ex_w_handle, "GetModuleHandleExW", (void (*)(void))(&get_module_handle_ex_w_hook), cast_ex_w.ptr) != 0)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandleExW for hooking node extension load mechanism");
+			}
+		}
+
+		/* Hook GetModuleHandleExA (ANSI variant) */
+		node_module_handle_ex_a_handle = detour_load_file(d, "kernel32.dll");
+
+		if (node_module_handle_ex_a_handle == NULL)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism (GetModuleHandleExA)");
+		}
+		else
+		{
+			typedef BOOL(WINAPI * get_module_handle_ex_a_type)(_In_ DWORD, _In_opt_ LPCSTR, _Outptr_result_maybenull_ HMODULE *);
+
+			union
+			{
+				get_module_handle_ex_a_type *trampoline;
+				void (**ptr)(void);
+			} cast_ex_a = { &get_module_handle_ex_a_ptr };
+
+			if (detour_replace(d, node_module_handle_ex_a_handle, "GetModuleHandleExA", (void (*)(void))(&get_module_handle_ex_a_hook), cast_ex_a.ptr) != 0)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandleExA for hooking node extension load mechanism");
 			}
 		}
 	}
@@ -4739,12 +4915,29 @@ int node_loader_impl_destroy(loader_impl impl)
 	/* On Windows, destroy the node extension hooking mechanism */
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
 	{
+		detour d = detour_create(metacall_detour());
+
+		if (node_module_handle_ex_a_handle != NULL)
+		{
+			detour_unload(d, node_module_handle_ex_a_handle);
+			node_module_handle_ex_a_handle = NULL;
+		}
+
+		if (node_module_handle_ex_w_handle != NULL)
+		{
+			detour_unload(d, node_module_handle_ex_w_handle);
+			node_module_handle_ex_w_handle = NULL;
+		}
+
+		if (node_module_handle_w_handle != NULL)
+		{
+			detour_unload(d, node_module_handle_w_handle);
+			node_module_handle_w_handle = NULL;
+		}
+
 		if (node_module_handle_a_handle != NULL)
 		{
-			detour d = detour_create(metacall_detour());
-
 			detour_unload(d, node_module_handle_a_handle);
-
 			node_module_handle_a_handle = NULL;
 		}
 	}
