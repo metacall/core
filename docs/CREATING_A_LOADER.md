@@ -62,7 +62,7 @@ source/loaders/mylang_loader/
   - Define a `MODULE` library (plugin) with your sources and link it to the MetaCall loader API, reflect, log, and any dependency libraries.
   - Follow the same pattern as other loaders for `target_include_directories`, `target_compile_definitions`, and install/export if applicable.
 
-## 4. Scripts and tests (optional but recommended)
+## 4. Scripts and tests (mandatory)
 
 - **Scripts** – If your loader can run code from files, add examples under `source/scripts/` (e.g. `source/scripts/mylang/`) and wire them in the scripts CMake so they are built/copied to a path that `LOADER_SCRIPT_PATH` or execution paths can use.
 - **Tests** – Add a test under `source/tests/`, e.g. `metacall_mylang_test`, that:
