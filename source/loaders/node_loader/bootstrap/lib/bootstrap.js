@@ -435,7 +435,7 @@ const startup = (impl, ptr, trampoline_exports) => {
 			'test': node_loader_trampoline_test,
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
-		});
+		}, trampoline_exports);
 
 		// This function must destroy all the loaders but
 		// delaying the NodeJS Loader library unloading
