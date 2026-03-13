@@ -1,40 +1,40 @@
 name: Release Python Package
 
 on:
-  workflow_dispatch:
-  pull_request:
+  workflow_dispatch: # Allow manual triggers for testing or emergency releases
   push:
-    branches: [ master, develop ]
-    paths:
-      - '.github/workflows/release-python.yml'
-      - 'source/ports/py_port/**'
+    tags:
+      - 'v*' # Only trigger on version tags (e.g., v0.5.5)
 
 permissions:
-  id-token: write
+  id-token: write # Required for OIDC Trusted Publishing to PyPI
   contents: read
 
+# Ensure only one release runs at a time. Do not cancel a release mid-flight.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test:
     name: Python Port Tests
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
+        # Collect results from all platforms even if one fails
+        fail-fast: false 
         matrix:
           os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - name: Install MetaCall Unix
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
         run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
+
       - name: Install MetaCall Windows
         if: matrix.os == 'windows-latest'
+        # Force TLS 1.2 because older Windows runners can default to TLS 1.0/1.1
         run: powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
 
       - name: Set up Python
@@ -44,6 +44,7 @@ jobs:
 
       - name: Install Python Port
         working-directory: source/ports/py_port
+        # Using editable install for testing against the local source
         run: pip install -e .
 
       - name: Test the Python Port
@@ -54,12 +55,26 @@ jobs:
     name: Release Python Port
     runs-on: ubuntu-latest
     needs: test
-    if: ${{ github.event_name != 'pull_request' }}
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - name: Release the port
+          # Full history needed for potential tag-based version detection during build
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Build package
         working-directory: source/ports/py_port
-        run: ./upload.sh
+        run: |
+          pip install build
+          python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: source/ports/py_port/dist/
