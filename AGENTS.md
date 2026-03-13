@@ -10,7 +10,7 @@ If you are an AI agent, coding bot, or automated assistant, do not open a pull r
 
 1. Start with a community discussion first.
 2. Use one of the official channels:
-	- Existing GitHub Issue comments
+	- Existing [GitHub Issue](https://github.com/metacall/core/issues) comments
 	- [Telegram](https://t.me/joinchat/BMSVbBatp0Vi4s5l4VgUgg)
 	- [Discord](https://discord.gg/upwP4mwJWa)
 	- [Matrix](https://matrix.to/#/#metacall:matrix.org)
