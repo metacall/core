@@ -683,7 +683,7 @@ void *metacallt(const char *name, const enum metacall_value_id ids[], ...)
 			{
 				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
 			}
-			if (id == TYPE_CHAR)
+			else if (id == TYPE_CHAR)
 			{
 				args[iterator] = value_create_char((char)va_arg(va, int));
 			}
@@ -782,7 +782,7 @@ void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t s
 			{
 				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
 			}
-			if (id == TYPE_CHAR)
+			else if (id == TYPE_CHAR)
 			{
 				args[iterator] = value_create_char((char)va_arg(va, int));
 			}
@@ -888,7 +888,7 @@ void *metacallht_s(void *handle, const char *name, const enum metacall_value_id 
 			{
 				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
 			}
-			if (id == TYPE_CHAR)
+			else if (id == TYPE_CHAR)
 			{
 				args[iterator] = value_create_char((char)va_arg(va, int));
 			}
@@ -1195,7 +1195,7 @@ void *metacallf(void *func, ...)
 			{
 				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
 			}
-			if (id == TYPE_CHAR)
+			else if (id == TYPE_CHAR)
 			{
 				args[iterator] = value_create_char((char)va_arg(va, int));
 			}
