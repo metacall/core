@@ -14,5 +14,5 @@ pub extern "C" fn rs_loader_impl_destroy(loader_impl: *mut c_void) -> c_int {
         Box::from_raw(loader_lifecycle_state);
     }
 
-    0 as c_int
+    0_i32
 }

@@ -77,7 +77,7 @@ impl Class {
         let attr = self
             .class_methods
             .get(attr)
-            .expect(format!("Unable to get {} from {}", attr, self.name).as_str());
+            .unwrap_or_else(|| panic!("Unable to get {} from {}", attr, self.name));
 
         attr.clone().invoke(args)
     }
@@ -233,7 +233,7 @@ impl Instance {
         let attr = class
             .attributes
             .get(name)
-            .expect(format!("Unable to find attribute {} from {}", name, self.name()).as_str())
+            .unwrap_or_else(|| panic!("Unable to find attribute {} from {}", name, self.name()))
             .clone();
         attr.invoke(self)
     }
@@ -241,7 +241,7 @@ impl Instance {
         let attr = class
             .attr_setters
             .get(name)
-            .expect(format!("Unable to find attribute {} from {}", name, self.name()).as_str())
+            .unwrap_or_else(|| panic!("Unable to find attribute {} from {}", name, self.name()))
             .clone();
         attr.invoke(value, self)
     }
@@ -262,7 +262,7 @@ impl Instance {
     ) -> Result<MetacallValue> {
         let method = class
             .get_method(name)
-            .expect(format!("Unable to find method {} from {}", name, self.name()).as_str());
+            .unwrap_or_else(|| panic!("Unable to find method {} from {}", name, self.name()));
         method.invoke(self, args)
     }
 }
@@ -698,7 +698,10 @@ macro_rules! convert_to {
                     Ok(metacall_value_to_double($val) as $t)
                 }
                 Err(_) => {
-                    eprintln!("Rust Loader: Return type with id #{} is not implemented, ", id);
+                    eprintln!(
+                        "Rust Loader: Return type with id #{} is not implemented, ",
+                        id
+                    );
                     panic!("received mismatch type");
                 }
             }
@@ -771,8 +774,7 @@ where
             let vec = std::slice::from_raw_parts(arr, count as usize)
                 .iter()
                 .map(|p| FromMeta::from_meta(*p).unwrap())
-                .collect::<Vec<T>>()
-                .clone();
+                .collect::<Vec<T>>();
             vec
         })
     }
@@ -819,16 +821,14 @@ where
 impl FromMetaList for () {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok(());
-        result
+        Ok(())
     }
 }
 #[allow(unused)]
 impl<TupleElement0: FromMeta> FromMetaList for (TupleElement0,) {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((TupleElement0::from_meta(iter.next().unwrap().clone())?,));
-        result
+        Ok((TupleElement0::from_meta(*iter.next().unwrap())?,))
     }
 }
 #[allow(unused)]
@@ -837,11 +837,10 @@ impl<TupleElement0: FromMeta, TupleElement1: FromMeta> FromMetaList
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -850,12 +849,11 @@ impl<TupleElement0: FromMeta, TupleElement1: FromMeta, TupleElement2: FromMeta> 
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -868,13 +866,12 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -895,14 +892,13 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -925,15 +921,14 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -958,16 +953,15 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -994,17 +988,16 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1033,18 +1026,17 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1075,19 +1067,18 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-            TupleElement9::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+            TupleElement9::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1120,20 +1111,19 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-            TupleElement9::from_meta(iter.next().unwrap().clone())?,
-            TupleElement10::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+            TupleElement9::from_meta(*iter.next().unwrap())?,
+            TupleElement10::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1168,21 +1158,20 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-            TupleElement9::from_meta(iter.next().unwrap().clone())?,
-            TupleElement10::from_meta(iter.next().unwrap().clone())?,
-            TupleElement11::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+            TupleElement9::from_meta(*iter.next().unwrap())?,
+            TupleElement10::from_meta(*iter.next().unwrap())?,
+            TupleElement11::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1219,22 +1208,21 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-            TupleElement9::from_meta(iter.next().unwrap().clone())?,
-            TupleElement10::from_meta(iter.next().unwrap().clone())?,
-            TupleElement11::from_meta(iter.next().unwrap().clone())?,
-            TupleElement12::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+            TupleElement9::from_meta(*iter.next().unwrap())?,
+            TupleElement10::from_meta(*iter.next().unwrap())?,
+            TupleElement11::from_meta(*iter.next().unwrap())?,
+            TupleElement12::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1273,23 +1261,22 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-            TupleElement9::from_meta(iter.next().unwrap().clone())?,
-            TupleElement10::from_meta(iter.next().unwrap().clone())?,
-            TupleElement11::from_meta(iter.next().unwrap().clone())?,
-            TupleElement12::from_meta(iter.next().unwrap().clone())?,
-            TupleElement13::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+            TupleElement9::from_meta(*iter.next().unwrap())?,
+            TupleElement10::from_meta(*iter.next().unwrap())?,
+            TupleElement11::from_meta(*iter.next().unwrap())?,
+            TupleElement12::from_meta(*iter.next().unwrap())?,
+            TupleElement13::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1330,24 +1317,23 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-            TupleElement9::from_meta(iter.next().unwrap().clone())?,
-            TupleElement10::from_meta(iter.next().unwrap().clone())?,
-            TupleElement11::from_meta(iter.next().unwrap().clone())?,
-            TupleElement12::from_meta(iter.next().unwrap().clone())?,
-            TupleElement13::from_meta(iter.next().unwrap().clone())?,
-            TupleElement14::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+            TupleElement9::from_meta(*iter.next().unwrap())?,
+            TupleElement10::from_meta(*iter.next().unwrap())?,
+            TupleElement11::from_meta(*iter.next().unwrap())?,
+            TupleElement12::from_meta(*iter.next().unwrap())?,
+            TupleElement13::from_meta(*iter.next().unwrap())?,
+            TupleElement14::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 #[allow(unused)]
@@ -1390,25 +1376,24 @@ impl<
 {
     fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        let result = Ok((
-            TupleElement0::from_meta(iter.next().unwrap().clone())?,
-            TupleElement1::from_meta(iter.next().unwrap().clone())?,
-            TupleElement2::from_meta(iter.next().unwrap().clone())?,
-            TupleElement3::from_meta(iter.next().unwrap().clone())?,
-            TupleElement4::from_meta(iter.next().unwrap().clone())?,
-            TupleElement5::from_meta(iter.next().unwrap().clone())?,
-            TupleElement6::from_meta(iter.next().unwrap().clone())?,
-            TupleElement7::from_meta(iter.next().unwrap().clone())?,
-            TupleElement8::from_meta(iter.next().unwrap().clone())?,
-            TupleElement9::from_meta(iter.next().unwrap().clone())?,
-            TupleElement10::from_meta(iter.next().unwrap().clone())?,
-            TupleElement11::from_meta(iter.next().unwrap().clone())?,
-            TupleElement12::from_meta(iter.next().unwrap().clone())?,
-            TupleElement13::from_meta(iter.next().unwrap().clone())?,
-            TupleElement14::from_meta(iter.next().unwrap().clone())?,
-            TupleElement15::from_meta(iter.next().unwrap().clone())?,
-        ));
-        result
+        Ok((
+            TupleElement0::from_meta(*iter.next().unwrap())?,
+            TupleElement1::from_meta(*iter.next().unwrap())?,
+            TupleElement2::from_meta(*iter.next().unwrap())?,
+            TupleElement3::from_meta(*iter.next().unwrap())?,
+            TupleElement4::from_meta(*iter.next().unwrap())?,
+            TupleElement5::from_meta(*iter.next().unwrap())?,
+            TupleElement6::from_meta(*iter.next().unwrap())?,
+            TupleElement7::from_meta(*iter.next().unwrap())?,
+            TupleElement8::from_meta(*iter.next().unwrap())?,
+            TupleElement9::from_meta(*iter.next().unwrap())?,
+            TupleElement10::from_meta(*iter.next().unwrap())?,
+            TupleElement11::from_meta(*iter.next().unwrap())?,
+            TupleElement12::from_meta(*iter.next().unwrap())?,
+            TupleElement13::from_meta(*iter.next().unwrap())?,
+            TupleElement14::from_meta(*iter.next().unwrap())?,
+            TupleElement15::from_meta(*iter.next().unwrap())?,
+        ))
     }
 }
 
