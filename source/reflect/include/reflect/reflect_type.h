@@ -26,6 +26,8 @@
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_value.h>
 
+#include <adt/adt_vector.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -59,8 +61,10 @@ REFLECT_API const char *type_name(type t);
 
 REFLECT_API type_impl type_derived(type t);
 
-// TODO: Subtyping (for handling typed containers like arrays, maps or templates)
-// REFLECT_API vector type_subtype(type t);
+
+REFLECT_API vector type_subtype(type t);
+
+REFLECT_API int type_subtype_push(type t, type subtype);
 
 REFLECT_API value type_metadata(type t);
 

@@ -30,6 +30,7 @@ struct type_type
 	char *name;
 	type_impl impl;
 	type_interface interface;
+	vector subtypes;
 };
 
 static value type_metadata_impl(type t);
@@ -60,6 +61,8 @@ type type_create(type_id id, const char *name, type_impl impl, type_impl_interfa
 			t->id = id;
 
 			t->impl = impl;
+			
+			t->subtypes = NULL;
 
 			if (singleton != NULL)
 			{
@@ -117,6 +120,38 @@ type_impl type_derived(type t)
 	}
 
 	return NULL;
+}
+
+vector type_subtype(type t)
+{
+	if (t != NULL)
+	{
+		if (t->subtypes == NULL)
+		{
+			t->subtypes = vector_create_type(type);
+		}
+
+		return t->subtypes;
+	}
+
+	return NULL;
+}
+
+int type_subtype_push(type t, type subtype)
+{
+	if (t != NULL)
+	{
+		vector subtypes = type_subtype(t);
+
+		if (subtypes != NULL)
+		{
+			vector_push_back_const(subtypes, subtype, type);
+
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 value type_metadata_impl(type t)
@@ -256,6 +291,11 @@ void type_destroy(type t)
 		if (t->interface != NULL && t->interface->destroy != NULL)
 		{
 			t->interface->destroy(t, t->impl);
+		}
+
+		if (t->subtypes != NULL)
+		{
+			vector_destroy(t->subtypes);
 		}
 
 		free(t->name);
