@@ -110,6 +110,11 @@ typedef struct loader_impl_rb_discover_module_protect_type
 	context ctx;
 } * loader_impl_rb_discover_module_protect;
 
+typedef struct loader_impl_rb_define_module_protect_type
+{
+	const char *name;
+} * loader_impl_rb_define_module_protect;
+
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);
 static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method));
@@ -327,6 +332,13 @@ static VALUE rb_loader_impl_funcallv_protect(VALUE args)
 	loader_impl_rb_funcall_protect protect = (loader_impl_rb_funcall_protect)args;
 
 	return rb_funcallv(protect->module_instance, protect->id, protect->argc, protect->argv);
+}
+
+static VALUE rb_loader_impl_define_module_protect(VALUE args)
+{
+	loader_impl_rb_define_module_protect protect = (loader_impl_rb_define_module_protect)args;
+
+	return rb_define_module(protect->name);
 }
 
 static VALUE rb_loader_impl_funcall2_protect(VALUE args)
@@ -1251,11 +1263,36 @@ loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE
 
 loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_path path, const loader_name name)
 {
+	struct loader_impl_rb_funcall_protect_type capitalize_protect;
+	struct loader_impl_rb_define_module_protect_type define_protect;
+	int state;
+
 	VALUE name_value = rb_str_new_cstr(name);
 
-	VALUE name_capitalized = rb_funcallv(name_value, rb_intern("capitalize"), 0, NULL);
+	capitalize_protect.argc = 0;
+	capitalize_protect.argv = NULL;
+	capitalize_protect.module_instance = name_value;
+	capitalize_protect.id = rb_intern("capitalize");
 
-	VALUE module = rb_define_module(RSTRING_PTR(name_capitalized));
+	VALUE name_capitalized = rb_protect(rb_loader_impl_funcallv_protect, (VALUE)&capitalize_protect, &state);
+
+	if (state != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to capitalize module name for '%s'", name);
+		rb_set_errinfo(Qnil);
+		return NULL;
+	}
+
+	define_protect.name = RSTRING_PTR(name_capitalized);
+
+	VALUE module = rb_protect(rb_loader_impl_define_module_protect, (VALUE)&define_protect, &state);
+
+	if (state != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to define module '%s'", define_protect.name);
+		rb_set_errinfo(Qnil);
+		return NULL;
+	}
 
 	if (module != Qnil)
 	{
