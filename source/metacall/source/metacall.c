@@ -1144,6 +1144,11 @@ void *metacallfv_s(void *func, void *args[], size_t size)
 
 		ret = function_call(f, args, size);
 
+		if (ret != NULL && type_id_throwable(value_type_id(ret)) == 0)
+		{
+			metacall_error_set_last(ret);
+		}
+
 		if (ret != NULL)
 		{
 			type t = signature_get_return(s);
