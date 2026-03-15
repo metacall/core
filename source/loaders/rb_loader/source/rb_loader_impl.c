@@ -345,22 +345,32 @@ static VALUE rb_loader_impl_funcallv_kw_protect(VALUE args)
 	return rb_funcallv_kw(protect->module_instance, protect->id, protect->argc, protect->argv, RB_PASS_KEYWORDS);
 }
 
-/* TODO: Convert this into a return exception */
-#define rb_loader_impl_print_last_exception() \
-	do \
-	{ \
-		VALUE e = rb_errinfo(); \
-		if (e != Qnil) \
-		{ \
-			VALUE error; \
-			VALUE bt = rb_funcall(e, rb_intern("backtrace"), 0); \
-			VALUE msg = rb_funcall(e, rb_intern("message"), 0); \
-			bt = rb_ary_entry(bt, 0); \
-			error = rb_sprintf("%" PRIsVALUE ": %" PRIsVALUE " (%s)\n", bt, msg, rb_obj_classname(e)); \
-			log_write("metacall", LOG_LEVEL_ERROR, "Exception raised in Ruby '%s'", RSTRING_PTR(error)); \
-			rb_backtrace(); \
-		} \
-	} while (0)
+static value rb_loader_impl_exception_value(void)
+{
+	static const char backtrace_not_found[] = "Backtrace not available";
+	VALUE e = rb_errinfo();
+
+	if (e == Qnil)
+	{
+		return NULL;
+	}
+
+	VALUE msg_obj = rb_funcall(e, rb_intern("message"), 0);
+	VALUE bt_ary = rb_funcall(e, rb_intern("backtrace"), 0);
+	VALUE bt_first = (bt_ary != Qnil && RARRAY_LEN(bt_ary) > 0) ? rb_ary_entry(bt_ary, 0) : Qnil;
+
+	const char *class_name = rb_obj_classname(e);
+	const char *msg = (msg_obj != Qnil) ? StringValuePtr(msg_obj) : "";
+	const char *bt = (bt_first != Qnil) ? StringValuePtr(bt_first) : backtrace_not_found;
+
+	log_write("metacall", LOG_LEVEL_ERROR, "Exception raised in Ruby '%s': %s", class_name, msg);
+
+	rb_set_errinfo(Qnil);
+
+	exception ex = exception_create_const(msg, class_name, 0, bt);
+	throwable th = throwable_create(value_create_exception(ex));
+	return value_create_throwable(th);
+}
 
 function_return function_rb_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
@@ -446,9 +456,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			if (state != 0)
 			{
-				rb_loader_impl_print_last_exception();
-
-				// TODO: Throw exception?
+				return rb_loader_impl_exception_value();
 			}
 		}
 		else if (invoke_type == FUNCTION_RB_DUCKTYPED)
@@ -465,9 +473,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			if (state != 0)
 			{
-				rb_loader_impl_print_last_exception();
-
-				// TODO: Throw exception ?
+				return rb_loader_impl_exception_value();
 			}
 		}
 		else if (invoke_type == FUNCTION_RB_MIXED)
@@ -486,9 +492,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			if (state != 0)
 			{
-				rb_loader_impl_print_last_exception();
-
-				// TODO: Throw exception ?
+				return rb_loader_impl_exception_value();
 			}
 		}
 	}
@@ -506,9 +510,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 		if (state != 0)
 		{
-			rb_loader_impl_print_last_exception();
-
-			// TODO: Throw exception ?
+			return rb_loader_impl_exception_value();
 		}
 	}
 
