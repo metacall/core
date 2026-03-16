@@ -122,7 +122,7 @@ type_impl type_derived(type t)
 	return NULL;
 }
 
-vector type_subtype(type t)
+vector type_subtypes(type t)
 {
 	if (t != NULL)
 	{
@@ -137,11 +137,11 @@ vector type_subtype(type t)
 	return NULL;
 }
 
-int type_subtype_push(type t, type subtype)
+int type_subtypes_define(type t, type subtype)
 {
 	if (t != NULL)
 	{
-		vector subtypes = type_subtype(t);
+		vector subtypes = type_subtypes(t);
 
 		if (subtypes != NULL)
 		{
