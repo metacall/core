@@ -61,10 +61,9 @@ REFLECT_API const char *type_name(type t);
 
 REFLECT_API type_impl type_derived(type t);
 
+REFLECT_API vector type_subtypes(type t);
 
-REFLECT_API vector type_subtype(type t);
-
-REFLECT_API int type_subtype_push(type t, type subtype);
+REFLECT_API int type_subtypes_define(type t, type subtype);
 
 REFLECT_API value type_metadata(type t);
 
