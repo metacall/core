@@ -36,6 +36,12 @@ using namespace metacallcli;
 
 static bool exit_condition = true;
 
+static void print_usage(const char *program)
+{
+	std::cerr << "Usage: " << program << " [options] [scripts...]" << std::endl;
+	std::cerr << "Try '" << program << " --help' for more information." << std::endl;
+}
+
 /* -- Methods -- */
 
 void application::repl()
@@ -298,7 +304,9 @@ application::application(int argc, char *argv[]) :
 		/* Launch the CMD (parse arguments) */
 		if (!cmd(arguments))
 		{
-			/* TODO: Report something? */
+			std::cerr << "Error: failed to parse command line arguments." << std::endl;
+			print_usage(argv[0]);
+			exit(1);
 		}
 	}
 }
