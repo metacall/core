@@ -112,11 +112,18 @@ else()
 	set(BUILD_STD_FLAGS)
 endif()
 
+add_custom_target(${target}_clippy ALL
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR} ${SANITIZER_FLAGS}
+        ${Rust_CARGO_EXECUTABLE} ${NIGHTLY_FLAGS} clippy ${BUILD_STD_FLAGS} -- -D warnings
+    DEPENDS ${META_PROJECT_NAME}::metacall
+)
+
 add_custom_target(${target} ALL
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR} ${SANITIZER_FLAGS}
-		${Rust_CARGO_EXECUTABLE} ${NIGHTLY_FLAGS} build ${BUILD_STD_FLAGS} ${TARGET_BUILD_TYPE}
-	DEPENDS ${META_PROJECT_NAME}::metacall
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR} ${SANITIZER_FLAGS}
+        ${Rust_CARGO_EXECUTABLE} ${NIGHTLY_FLAGS} build ${BUILD_STD_FLAGS} ${TARGET_BUILD_TYPE}
+    DEPENDS ${META_PROJECT_NAME}::metacall ${target}_clippy
 )
 
 if(RUSTUP_NIGTHLY_INSTALL_SRC)
@@ -127,6 +134,9 @@ if(RUSTUP_NIGTHLY_INSTALL_SRC)
 	add_dependencies(${target}
 		${target}_rustup_nightly
 	)
+	add_dependencies(${target}_clippy
+        ${target}_rustup_nightly
+    )
 endif()
 
 #
@@ -138,6 +148,9 @@ if(Rust_BINDGEN_EXECUTABLE AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	add_dependencies(${target}
 		${target}_bindings
 	)
+	add_dependencies(${target}_clippy
+        ${target}_bindings
+    )
 endif()
 
 #
