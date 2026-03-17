@@ -15,22 +15,33 @@ concurrency:
 
 jobs:
   test:
-    name: NodeJS Port Tests
+    name: NodeJS Port Tests (${{ matrix.os }}, ${{ matrix.build }})
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
-        matrix:
-          os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        build: [debug, release]
+        exclude:
+          # Windows distributable ships release-only builds
+          - os: windows-latest
+            build: debug
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install MetaCall Unix
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
-        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
-      - name: Install MetaCall Windows
-        if: matrix.os == 'windows-latest'
+
+      - name: Install MetaCall (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          FLAGS="${{ matrix.build == 'debug' && '-s -- --debug' || '' }}"
+          curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh $FLAGS
+
+      - name: Install MetaCall (Windows)
+        if: runner.os == 'Windows'
         run: powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
 
       - name: Set up Node.js
@@ -38,13 +49,49 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Fix npm cache permissions (macOS)
+        if: runner.os == 'macOS'
+        run: sudo chown -R 501:20 "/Users/runner/.npm"
+
       - name: Install Dependencies
         working-directory: source/ports/node_port
         run: npm install
 
-      - name: Test the NodeJS Port
+      # Single unified copy step
+      - name: Populate scripts directory
+        shell: bash
+        run: |
+          mkdir -p source/ports/node_port/scripts
+
+          # Python scripts
+          cp source/scripts/python/helloworld/source/helloworld.py  source/ports/node_port/scripts/
+          cp source/scripts/python/ducktype/source/ducktype.py       source/ports/node_port/scripts/
+          cp source/scripts/python/example/source/example.py         source/ports/node_port/scripts/
+          cp source/scripts/python/classname/source/classname.py     source/ports/node_port/scripts/
+          cp source/scripts/python/function/source/function.py       source/ports/node_port/scripts/
+
+          # Ruby scripts
+          cp source/scripts/ruby/ducktype/source/ducktype.rb         source/ports/node_port/scripts/
+          cp source/scripts/ruby/cache/source/cache.rb               source/ports/node_port/scripts/
+
+          # TypeScript badrequire package (directory copy)
+          cp -r source/scripts/typescript/badrequire/source/badrequire \
+                source/ports/node_port/scripts/badrequire
+
+      - name: Test the NodeJS Port (Unix)
+        if: runner.os != 'Windows'
         working-directory: source/ports/node_port
+        env:
+          LOADER_SCRIPT_PATH: ${{ github.workspace }}/source/ports/node_port/scripts
         run: node test.js
+
+      - name: Test the NodeJS Port (Windows)
+        if: runner.os == 'Windows'
+        working-directory: source/ports/node_port
+        env:
+          LOADER_SCRIPT_PATH: ${{ github.workspace }}\source\ports\node_port\scripts
+
+        run: metacall node test.js
 
   release:
     name: Release NodeJS Port
