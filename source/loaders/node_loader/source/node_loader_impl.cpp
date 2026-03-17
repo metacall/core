@@ -3596,6 +3596,12 @@ static BOOL node_loader_is_caller_node_extension(void *return_addr)
 {
 	HMODULE mod = NULL;
 
+	/* Guard: trampoline not yet initialized (early setup window before ExW hook is installed) */
+	if (get_module_handle_ex_w_ptr == NULL)
+	{
+		return FALSE;
+	}
+
 	if (get_module_handle_ex_w_ptr(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
 									   GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
 			(LPCWSTR)return_addr, &mod) == TRUE)
@@ -3868,6 +3874,31 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 		detour d = detour_create(metacall_detour());
 
+		/* Hook GetModuleHandleExW first: get_module_handle_ex_w_ptr must be non-NULL
+		   before GetModuleHandleA/W hooks fire, since node_loader_is_caller_node_extension()
+		   depends on it */
+		node_module_handle_ex_w_handle = detour_load_file(d, "kernel32.dll");
+
+		if (node_module_handle_ex_w_handle == NULL)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism (GetModuleHandleExW)");
+		}
+		else
+		{
+			typedef BOOL(WINAPI * get_module_handle_ex_w_type)(_In_ DWORD, _In_opt_ LPCWSTR, _Outptr_result_maybenull_ HMODULE *);
+
+			union
+			{
+				get_module_handle_ex_w_type *trampoline;
+				void (**ptr)(void);
+			} cast_ex_w = { &get_module_handle_ex_w_ptr };
+
+			if (detour_replace(d, node_module_handle_ex_w_handle, "GetModuleHandleExW", (void (*)(void))(&get_module_handle_ex_w_hook), cast_ex_w.ptr) != 0)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandleExW for hooking node extension load mechanism");
+			}
+		}
+
 		node_module_handle_a_handle = detour_load_file(d, "kernel32.dll");
 
 		if (node_module_handle_a_handle == NULL)
@@ -3910,29 +3941,6 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 			if (detour_replace(d, node_module_handle_w_handle, "GetModuleHandleW", (void (*)(void))(&get_module_handle_w_hook), cast_w.ptr) != 0)
 			{
 				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandleW for hooking node extension load mechanism");
-			}
-		}
-
-		/* Hook GetModuleHandleExW for libloading::os::windows::Library::this() used by napi-rs */
-		node_module_handle_ex_w_handle = detour_load_file(d, "kernel32.dll");
-
-		if (node_module_handle_ex_w_handle == NULL)
-		{
-			napi_throw_type_error(env, nullptr, "Invalid creation of the detour handle for hooking node extension load mechanism (GetModuleHandleExW)");
-		}
-		else
-		{
-			typedef BOOL(WINAPI * get_module_handle_ex_w_type)(_In_ DWORD, _In_opt_ LPCWSTR, _Outptr_result_maybenull_ HMODULE *);
-
-			union
-			{
-				get_module_handle_ex_w_type *trampoline;
-				void (**ptr)(void);
-			} cast_ex_w = { &get_module_handle_ex_w_ptr };
-
-			if (detour_replace(d, node_module_handle_ex_w_handle, "GetModuleHandleExW", (void (*)(void))(&get_module_handle_ex_w_hook), cast_ex_w.ptr) != 0)
-			{
-				napi_throw_type_error(env, nullptr, "Invalid replacement of GetModuleHandleExW for hooking node extension load mechanism");
 			}
 		}
 
@@ -4922,28 +4930,87 @@ int node_loader_impl_destroy(loader_impl impl)
 	{
 		detour d = detour_create(metacall_detour());
 
-		if (node_module_handle_ex_a_handle != NULL)
-		{
-			detour_unload(d, node_module_handle_ex_a_handle);
-			node_module_handle_ex_a_handle = NULL;
-		}
+		/* Restore IAT entries and unload in reverse-dependency order:
+		   A and W depend on get_module_handle_ex_w_ptr, so ExW must be last.
+		   Restoring each IAT entry before unloading prevents stale function
+		   pointers into the unloaded node_loader.dll from causing a SEGFAULT
+		   during process cleanup (e.g. CRT calling GetModuleHandleW in __scrt_is_managed_app). */
 
-		if (node_module_handle_ex_w_handle != NULL)
+		if (node_module_handle_a_handle != NULL)
 		{
-			detour_unload(d, node_module_handle_ex_w_handle);
-			node_module_handle_ex_w_handle = NULL;
+			if (get_module_handle_a_ptr != NULL)
+			{
+				typedef HMODULE (*get_module_handle_a_type)(_In_opt_ LPCSTR);
+
+				union
+				{
+					get_module_handle_a_type fn;
+					void (*vfn)(void);
+				} restore_a = { get_module_handle_a_ptr };
+
+				void (*prev_a)(void) = NULL;
+				detour_replace(d, node_module_handle_a_handle, "GetModuleHandleA", restore_a.vfn, &prev_a);
+			}
+			detour_unload(d, node_module_handle_a_handle);
+			node_module_handle_a_handle = NULL;
 		}
 
 		if (node_module_handle_w_handle != NULL)
 		{
+			if (get_module_handle_w_ptr != NULL)
+			{
+				typedef HMODULE (*get_module_handle_w_type)(_In_opt_ LPCWSTR);
+
+				union
+				{
+					get_module_handle_w_type fn;
+					void (*vfn)(void);
+				} restore_w = { get_module_handle_w_ptr };
+
+				void (*prev_w)(void) = NULL;
+				detour_replace(d, node_module_handle_w_handle, "GetModuleHandleW", restore_w.vfn, &prev_w);
+			}
 			detour_unload(d, node_module_handle_w_handle);
 			node_module_handle_w_handle = NULL;
 		}
 
-		if (node_module_handle_a_handle != NULL)
+		if (node_module_handle_ex_a_handle != NULL)
 		{
-			detour_unload(d, node_module_handle_a_handle);
-			node_module_handle_a_handle = NULL;
+			if (get_module_handle_ex_a_ptr != NULL)
+			{
+				typedef BOOL(WINAPI * get_module_handle_ex_a_type)(_In_ DWORD, _In_opt_ LPCSTR, _Outptr_result_maybenull_ HMODULE *);
+
+				union
+				{
+					get_module_handle_ex_a_type fn;
+					void (*vfn)(void);
+				} restore_ex_a = { get_module_handle_ex_a_ptr };
+
+				void (*prev_ex_a)(void) = NULL;
+				detour_replace(d, node_module_handle_ex_a_handle, "GetModuleHandleExA", restore_ex_a.vfn, &prev_ex_a);
+			}
+			detour_unload(d, node_module_handle_ex_a_handle);
+			node_module_handle_ex_a_handle = NULL;
+		}
+
+		/* ExW unloaded last: keeps get_module_handle_ex_w_ptr valid while A/W/ExA hooks were torn down */
+		if (node_module_handle_ex_w_handle != NULL)
+		{
+			if (get_module_handle_ex_w_ptr != NULL)
+			{
+				typedef BOOL(WINAPI * get_module_handle_ex_w_type)(_In_ DWORD, _In_opt_ LPCWSTR, _Outptr_result_maybenull_ HMODULE *);
+
+				union
+				{
+					get_module_handle_ex_w_type fn;
+					void (*vfn)(void);
+				} restore_ex_w = { get_module_handle_ex_w_ptr };
+
+				void (*prev_ex_w)(void) = NULL;
+				detour_replace(d, node_module_handle_ex_w_handle, "GetModuleHandleExW", restore_ex_w.vfn, &prev_ex_w);
+			}
+			detour_unload(d, node_module_handle_ex_w_handle);
+			node_module_handle_ex_w_handle = NULL;
 		}
 	}
 #endif
