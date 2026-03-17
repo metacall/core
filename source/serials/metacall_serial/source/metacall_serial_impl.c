@@ -120,7 +120,7 @@ value metacall_serial_impl_deserialize_value(const char *buffer, size_t size)
 		}
 	}
 
-	log_write("metacall", LOG_LEVEL_ERROR, "Deserialization unsuported value type in MetaCall Native Format implementation");
+	log_write("metacall", LOG_LEVEL_ERROR, "Deserialization unsupported value type in MetaCall Native Format implementation");
 
 	return NULL;
 }

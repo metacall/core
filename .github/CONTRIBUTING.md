@@ -1,7 +1,7 @@
 # Contributing
 
 When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change. Here is an examplary process you can follow to create an issue on MetaCall:
+email, or any other method with the owners of this repository before making a change. Here is an exemplary process you can follow to create an issue on MetaCall:
 
 1. Identify a problem or a possible addition to Metacall codebase/operation<br>
 for instance: ```pre-commit-clang-format not working on windows...```
