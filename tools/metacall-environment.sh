@@ -54,6 +54,7 @@ INSTALL_GO=0
 INSTALL_RUST=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
+INSTALL_MEMCHECK=0
 INSTALL_CLANGFORMAT=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
@@ -801,6 +802,18 @@ sub_coverage(){
 	fi
 }
 
+# Memcheck
+sub_memcheck(){
+	echo "configure memcheck"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends valgrind
+		fi
+	fi
+}
+
 # Clang format
 sub_clangformat(){
 	echo "configure clangformat"
@@ -964,6 +977,9 @@ sub_install(){
 	if [ $INSTALL_COVERAGE = 1 ]; then
 		sub_coverage
 	fi
+	if [ $INSTALL_MEMCHECK = 1 ]; then
+		sub_memcheck
+	fi
 	if [ $INSTALL_CLANGFORMAT = 1 ]; then
 		sub_clangformat
 	fi
@@ -1103,6 +1119,10 @@ sub_options(){
 			echo "coverage selected"
 			INSTALL_COVERAGE=1
 		fi
+		if [ "$option" = 'memcheck' ]; then
+			echo "memcheck selected"
+			INSTALL_MEMCHECK=1
+		fi
 		if [ "$option" = 'clangformat' ]; then
 			echo "clangformat selected"
 			INSTALL_CLANGFORMAT=1
@@ -1149,6 +1169,7 @@ sub_help() {
 	echo "	go"
 	echo "	pack"
 	echo "	coverage"
+	echo "	memcheck"
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"
