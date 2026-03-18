@@ -154,7 +154,15 @@ add_dependencies(${target}
 #
 
 set_property(TEST ${target}
-	# Disable valgrind when testing backtracing for segfaults
+	# This test deliberately triggers a segfault (via badass_function) to
+	# exercise the backtrace plugin's signal handler. The EXPECT_DEATH
+	# subprocess crashes before metacall_destroy() can run, so all
+	# metacall_initialize() resources appear as "still reachable" leaks.
+	# Third-party singletons (OpenSSL, libcurl, GTest, glibc regex) also
+	# contribute ~1100 benign leak records.
+	#
+	# A Valgrind suppression file is provided for manual memcheck runs:
+	#   valgrind --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/valgrind.supp
 	PROPERTY LABELS ${target} MEMCHECK_IGNORE
 )
 

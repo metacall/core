@@ -1,0 +1,375 @@
+# Valgrind suppression file for metacall-backtrace-plugin-test
+#
+# This test deliberately triggers a segfault (via badass_function writing to
+# address 0x2a) to exercise the backtrace plugin's signal handler. The
+# EXPECT_DEATH subprocess that crashes never calls metacall_destroy(), so all
+# resources allocated during metacall_initialize() appear as "still reachable"
+# or "possibly lost" at process exit.
+#
+# Additionally, third-party singletons (OpenSSL, libcurl, GTest, glibc regex,
+# debuginfod/libdw) allocate global state that is never freed by design.
+
+# =============================================================================
+# 1. Intentional Invalid Pointer Write in badass_function
+# =============================================================================
+{
+   badass_function_intentional_ipw
+   Memcheck:Addr1
+   fun:*badass_function*
+}
+
+# =============================================================================
+# 2. GTest internals — singleton allocations that persist until process exit
+# =============================================================================
+{
+   gtest_unittest_impl_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*testing*internal*UnitTestImpl*
+}
+
+{
+   gtest_make_and_register
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*testing*internal*MakeAndRegisterTestInfo*
+}
+
+{
+   gtest_test_suite_add
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*testing*TestSuite*AddTestInfo*
+}
+
+{
+   gtest_test_event_repeater
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*testing*internal*TestEventRepeater*
+}
+
+{
+   gtest_os_stack_trace
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*testing*internal*UnitTestImpl*os_stack_trace_getter*
+}
+
+{
+   gtest_global_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*GLOBAL*sub*I*badass*
+}
+
+# =============================================================================
+# 3. GTest regex (POSIX regex via glibc) — from RE::Init
+# =============================================================================
+{
+   gtest_regex_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:regcomp
+   ...
+   fun:*testing*internal*RE*Init*
+}
+
+# =============================================================================
+# 4. OpenSSL — global singletons, cipher/digest tables, namemap, provider
+# =============================================================================
+{
+   openssl_crypto_malloc_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:CRYPTO_malloc
+}
+
+{
+   openssl_crypto_zalloc_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:CRYPTO_zalloc
+}
+
+{
+   openssl_crypto_strdup_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:CRYPTO_strdup
+}
+
+{
+   openssl_init_crypto_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:OPENSSL_init_crypto
+}
+
+{
+   openssl_init_ssl_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:OPENSSL_init_ssl
+}
+
+{
+   openssl_evp_cipher_fetch_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:EVP_CIPHER_fetch
+}
+
+{
+   openssl_evp_add_cipher_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:EVP_add_cipher
+}
+
+{
+   openssl_evp_add_digest_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:EVP_add_digest
+}
+
+{
+   openssl_obj_name_add_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:OBJ_NAME_add
+}
+
+{
+   openssl_lh_insert_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:OPENSSL_LH_insert
+}
+
+{
+   openssl_conf_module_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:CONF_modules_load*
+}
+
+{
+   openssl_namemap_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:ossl_namemap*
+}
+
+{
+   openssl_provider_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:ossl_provider*
+}
+
+{
+   openssl_context_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*context_init*
+}
+
+# =============================================================================
+# 5. libcurl / ngtcp2 / debuginfod — global init singletons
+# =============================================================================
+{
+   libcurl_global_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:curl_global_init
+}
+
+{
+   debuginfod_begin_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:debuginfod_begin
+}
+
+{
+   ngtcp2_crypto_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:ngtcp2_crypto_ossl_init
+}
+
+# =============================================================================
+# 6. libdw / elfutils / backward-cpp — backtrace resolution
+# =============================================================================
+{
+   backward_trace_resolver_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*backward*TraceResolverLinuxImpl*resolve*
+}
+
+{
+   dwfl_module_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:dwfl_module*
+}
+
+# =============================================================================
+# 7. MetaCall internals — allocated during metacall_initialize(), not freed
+#    because EXPECT_DEATH subprocess crashes before metacall_destroy() runs
+# =============================================================================
+{
+   metacall_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:metacall_initialize
+}
+
+{
+   metacall_init_possibly_lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:metacall_initialize
+}
+
+{
+   metacall_log_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:metacall_log
+}
+
+{
+   metacall_link_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:metacall_link_initialize
+}
+
+# =============================================================================
+# 8. rapid_json_serial plugin — global constructor singleton
+# =============================================================================
+{
+   rapid_json_serial_global_ctor
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*GLOBAL*sub*I*rapid_json_serial*
+}
+
+# =============================================================================
+# 9. glibc / dl-open / pthread — runtime linker singletons
+# =============================================================================
+{
+   dl_open_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_dl_open
+}
+
+{
+   dlopen_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:dlopen*
+}
+
+{
+   pthread_once_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:__pthread_once_slow*
+}
+
+# =============================================================================
+# 10. MetaCall constructor — portability_atexit_initialize singleton
+# =============================================================================
+{
+   metacall_constructor_atexit
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*portability_atexit_initialize*
+}
+
+# =============================================================================
+# 11. GTest InitGoogleTestImpl — argument parsing allocations
+# =============================================================================
+{
+   gtest_init_impl_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*InitGoogleTestImpl*
+}
+
+# =============================================================================
+# 12. MetaCall allocations via metacall_load_from_file (possibly lost in
+#     EXPECT_DEATH subprocess)
+# =============================================================================
+{
+   metacall_load_from_file_possibly_lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*metacall_load_from_file*
+}
+
+# =============================================================================
+# 13. glibc dl_find_object — runtime linker internal bookkeeping
+# =============================================================================
+{
+   glibc_dl_find_object_possibly_lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:*_dl_find_object_update*
+}
+
+# =============================================================================
+# 14. libstdc++ eh_alloc.cc — exception handling emergency pool (global)
+# =============================================================================
+{
+   libstdcxx_eh_alloc_pool
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*GLOBAL*sub*I*eh_alloc*
+}
+
