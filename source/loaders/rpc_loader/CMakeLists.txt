@@ -27,6 +27,35 @@ if(NOT ConcurrentQueue_SOURCE_DIR)
 	FetchContent_MakeAvailable(ConcurrentQueue)
 endif()
 
+#
+# Optional OpenTelemetry tracing
+#
+
+option(OPTION_RPC_TRACING "Enable OpenTelemetry tracing for RPC loader" OFF)
+
+if(OPTION_RPC_TRACING)
+	message(STATUS "RPC loader: OpenTelemetry tracing ENABLED")
+
+	set(OPENTELEMETRY_CPP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/opentelemetry-cpp")
+
+	FetchContent_Declare(
+		opentelemetry-cpp
+		GIT_REPOSITORY https://github.com/open-telemetry/opentelemetry-cpp.git
+		GIT_TAG        v1.19.0
+		SOURCE_DIR ${OPENTELEMETRY_CPP_SOURCE_DIR}
+	)
+
+	set(WITH_OTLP_GRPC OFF CACHE BOOL "" FORCE)
+	set(WITH_OTLP_HTTP OFF CACHE BOOL "" FORCE)
+	set(WITH_EXAMPLES OFF CACHE BOOL "" FORCE)
+	set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+	set(WITH_BENCHMARK OFF CACHE BOOL "" FORCE)
+
+	FetchContent_MakeAvailable(opentelemetry-cpp)
+else()
+	message(STATUS "RPC loader: OpenTelemetry tracing DISABLED (no-op)")
+endif()
+
 
 # Copy cURL DLL into project output directory
 # TODO: https://cmake.org/cmake/help/latest/command/file.html#get-runtime-dependencies
@@ -73,11 +102,19 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/rpc_loader.h
 	${include_path}/rpc_loader_impl.h
+	${include_path}/rpc_loader_tracing.h
 )
+
+if(OPTION_RPC_TRACING)
+	set(tracing_source ${source_path}/rpc_loader_tracing_otel.cpp)
+else()
+	set(tracing_source ${source_path}/rpc_loader_tracing_noop.cpp)
+endif()
 
 set(sources
 	${source_path}/rpc_loader.c
 	${source_path}/rpc_loader_impl.cpp
+	${tracing_source}
 )
 
 # Group source files
@@ -161,6 +198,16 @@ target_link_libraries(${target}
 
 	INTERFACE
 )
+
+if(OPTION_RPC_TRACING)
+	target_link_libraries(${target}
+		PRIVATE
+		opentelemetry_trace
+		opentelemetry_exporter_ostream_span
+		opentelemetry_resources
+		opentelemetry_common
+	)
+endif()
 
 #
 # Compile definitions

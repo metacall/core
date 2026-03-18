@@ -19,6 +19,7 @@
  */
 
 #include <rpc_loader/rpc_loader_impl.h>
+#include <rpc_loader/rpc_loader_tracing.h>
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
@@ -168,10 +169,9 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 {
 	loader_impl_rpc_function rpc_function = static_cast<loader_impl_rpc_function>(impl);
 	loader_impl_rpc rpc_impl = rpc_function->rpc_impl;
+	rpc_trace_scope trace(function_name(func), rpc_function->url.c_str(), false);
 	value v = metacall_value_create_array(NULL, size);
 	size_t body_request_size = 0;
-
-	(void)func;
 
 	if (size > 0)
 	{
@@ -190,6 +190,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 
 	if (body_request_size == 0)
 	{
+		trace.set_error("serialization failed");
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
 		return NULL;
 	}
@@ -209,6 +210,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 
 	if (res != CURLE_OK)
 	{
+		trace.set_error(curl_easy_strerror(res));
 		log_write("metacall", LOG_LEVEL_ERROR, "Could not call to the API endpoint %s [%]", rpc_function->url.c_str(), curl_easy_strerror(res));
 		return NULL;
 	}
@@ -220,6 +222,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 
 	if (result_value == NULL)
 	{
+		trace.set_error("deserialization failed");
 		log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize the call result from API endpoint %s", rpc_function->url.c_str());
 	}
 
@@ -339,8 +342,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 {
 	loader_impl_rpc_function rpc_function = static_cast<loader_impl_rpc_function>(impl);
 	loader_impl_rpc rpc_impl = rpc_function->rpc_impl;
-
-	(void)func;
+	rpc_trace_scope trace(function_name(func), rpc_function->url.c_str(), true);
 
 	/* Serialize arguments */
 	value v = metacall_value_create_array(NULL, size);
@@ -363,6 +365,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 	if (body_request_size == 0)
 	{
+		trace.set_error("serialization failed");
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
 
 		if (reject_callback != NULL)
@@ -387,6 +390,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 	if (easy == NULL)
 	{
+		trace.set_error("failed to create CURL handle");
 		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL handle for async call to %s", rpc_function->url.c_str());
 		metacall_allocator_free(rpc_impl->allocator, buffer);
 		delete async_ctx;
@@ -418,6 +422,8 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	/* Wake poll thread from curl_multi_poll (thread-safe) */
 	curl_multi_wakeup(rpc_impl->async_multi);
 
+	//Trace span ends here
+	
 	/* TODO: Implement future return? */
 	return NULL;
 }
@@ -595,6 +601,9 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 		return NULL;
 	}
+
+	// Initialize tracing subsystem (no-op when OPTION_RPC_TRACING is OFF)
+	rpc_tracing_initialize();
 
 	/* Register initialization */
 	loader_initialization_register(impl);
@@ -907,6 +916,9 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 int rpc_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
+
+	// Shutdown tracing subsystem (no-op when OPTION_RPC_TRACING is OFF)
+	rpc_tracing_shutdown();
 
 	/* Destroy children loaders */
 	loader_unload_children(impl);
