@@ -67,9 +67,42 @@ jobs:
           METACALL_BUILD_TYPE: debug
           METACALL_BASE_IMAGE: ${{ matrix.image }}
 
+  valgrind-memcheck:
+    name: Linux Valgrind Memcheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -DOPTION_BUILD_TESTS=ON \
+            -DOPTION_MEMORY_TRACKER=ON \
+            -DOPTION_BUILD_ADDRESS_SANITIZER=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run Valgrind Memcheck
+        run: |
+          ctest --test-dir build -T memcheck --output-on-failure
+          if grep -R "<Defect" build/Testing >/dev/null 2>&1; then
+            echo "Valgrind defects were found"
+            exit 1
+          fi
+
   linux-distributable:
     name: Linux Distributable Dispatch
-    needs: [linux-test, linux-sanitizer-test]
+    needs: [linux-test, linux-sanitizer-test, valgrind-memcheck]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master'
     steps:
