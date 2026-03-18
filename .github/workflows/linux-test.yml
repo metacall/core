@@ -71,34 +71,28 @@ jobs:
     name: Linux Valgrind Memcheck
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:bookworm-slim", "ubuntu:noble"]
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Valgrind
+      - name: Install, build and run Valgrind memcheck tests
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+          METACALL_BUILD_COVERAGE: memcheck
         run: |
-          sudo apt-get update
-          sudo apt-get install -y valgrind
-
-      - name: Configure
-        run: |
-          cmake -S . -B build \
-            -DOPTION_BUILD_TESTS=ON \
-            -DOPTION_MEMORY_TRACKER=ON \
-            -DOPTION_BUILD_ADDRESS_SANITIZER=OFF
-
-      - name: Build
-        run: cmake --build build --parallel
-
-      - name: Run Valgrind Memcheck
-        run: |
-          ctest --test-dir build -T memcheck --output-on-failure
-          if grep -R "<Defect" build/Testing >/dev/null 2>&1; then
-            echo "Valgrind defects were found"
-            exit 1
-          fi
+          ln -sf tools/deps/.dockerignore .dockerignore
+          docker compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+          ln -sf tools/dev/.dockerignore .dockerignore
+          docker compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+          docker run --rm metacall/core:dev sh -c 'cd build && ctest -T memcheck --output-on-failure && if grep -R "<Defect" Testing >/dev/null 2>&1; then echo "Valgrind defects were found"; exit 1; fi'
 
   linux-distributable:
     name: Linux Distributable Dispatch
