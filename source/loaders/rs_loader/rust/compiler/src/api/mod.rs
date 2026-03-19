@@ -5,6 +5,25 @@ use std::{
 };
 pub type OpaqueType = *mut c_void;
 pub type OpaqueTypeList = *mut OpaqueType;
+pub type GetAttrNameFn = unsafe extern "C" fn(OpaqueType) -> *mut c_char;
+static mut GET_ATTR_NAME_FN: *const () = std::ptr::null();
+
+pub unsafe fn call_get_attr_name(attr: OpaqueType) -> *mut c_char {
+    if GET_ATTR_NAME_FN.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    let cb: GetAttrNameFn = std::mem::transmute(GET_ATTR_NAME_FN);
+    cb(attr)
+}
+
+#[no_mangle]
+pub extern "C" fn rs_loader_impl_set_get_attr_name(cb: GetAttrNameFn) {
+    unsafe {
+        GET_ATTR_NAME_FN = cb as *const ();
+    }
+}
+
 mod class;
 mod function;
 mod object;
@@ -94,7 +113,6 @@ extern "C" {
     ) -> OpaqueType;
     // fn class_register_static_attribute(class: OpaqueType, attr: OpaqueType) -> c_int;
     fn class_register_attribute(class: OpaqueType, attr: OpaqueType) -> c_int;
-    fn get_attr_name(attr: OpaqueType) -> *mut c_char;
     fn method_create(
         class: OpaqueType,
         name: *const c_char,

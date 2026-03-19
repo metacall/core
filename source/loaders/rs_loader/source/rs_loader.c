@@ -23,8 +23,11 @@
 #include <rs_loader/rs_loader.h>
 #include <rs_loader/rs_loader_impl.h>
 
+static const char *get_attr_name(struct accessor_type *accessor);
+
 loader_impl_interface rs_loader_impl_interface_singleton(void)
-{
+{	
+	rs_loader_impl_set_get_attr_name(get_attr_name);
 	static struct loader_impl_interface_type loader_impl_interface_rs = {
 		&rs_loader_impl_initialize,
 		&rs_loader_impl_execution_path,
@@ -39,7 +42,7 @@ loader_impl_interface rs_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_rs;
 }
 
-const char *get_attr_name(struct accessor_type *accessor)
+static const char *get_attr_name(struct accessor_type *accessor)
 {
 	return attribute_name(accessor->data.attr);
 }
