@@ -536,7 +536,11 @@ impl ToMetaResult for i32 {
 
 impl ToMetaResult for i64 {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_long(self) })
+        if self < c_long::MIN as i64 || self > c_long::MAX as i64 {
+            return Err(-1);
+        }
+
+        Ok(unsafe { metacall_value_create_long(self as c_long) })
     }
 }
 
