@@ -534,7 +534,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 		return v_map;
 	}
 
-	log_write("metacall", LOG_LEVEL_ERROR, "Unsuported value type in RapidJSON implementation");
+	log_write("metacall", LOG_LEVEL_ERROR, "Unsupported value type in RapidJSON implementation");
 
 	return NULL;
 }
