@@ -28,7 +28,8 @@
 #include <configuration/configuration.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 RS_LOADER_API loader_impl_data rs_loader_impl_initialize(loader_impl impl, configuration config);

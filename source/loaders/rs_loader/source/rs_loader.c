@@ -26,7 +26,7 @@
 static const char *get_attr_name(struct accessor_type *accessor);
 
 loader_impl_interface rs_loader_impl_interface_singleton(void)
-{	
+{
 	rs_loader_impl_set_get_attr_name(get_attr_name);
 	static struct loader_impl_interface_type loader_impl_interface_rs = {
 		&rs_loader_impl_initialize,
