@@ -19,6 +19,7 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
     };
     match &ty.kind() {
         TyKind::Int(i) => match i {
+            IntTy::I8 => result.ty = FunctionType::i8,
             IntTy::I16 => result.ty = FunctionType::i16,
             IntTy::I32 => result.ty = FunctionType::i32,
             IntTy::I64 => result.ty = FunctionType::i64,
@@ -69,6 +70,14 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                 "std::string::String" => result.ty = FunctionType::String,
                 _ => result.ty = FunctionType::Null,
             }
+        }
+        TyKind::RawPtr(rustc_middle::ty::TypeAndMut { mutbl, .. }) => {
+            result.ty = FunctionType::Ptr;
+            match mutbl {
+                rustc_hir::Mutability::Mut => result.mutability = Mutability::Yes,
+                rustc_hir::Mutability::Not => result.mutability = Mutability::No,
+            }
+            return result;
         }
         _ => {}
     }

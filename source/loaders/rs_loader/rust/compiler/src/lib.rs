@@ -310,6 +310,7 @@ pub enum Reference {
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug)]
 pub enum FunctionType {
+    i8,
     i16,
     i32,
     i64,

@@ -3,13 +3,48 @@ use super::{config::Input, source_map::FileName::Custom, CompilerCallbacks, Func
 use std::fs::File;
 use std::io::Write;
 fn generate_function_wrapper(functions: &Vec<Function>) -> String {
+    use crate::FunctionType;
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
             "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
             func.name
         ));
-        ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
+
+        let has_ptr_arg = func.args.iter().any(|a| matches!(a.ty, FunctionType::Ptr));
+        let has_ptr_ret = func.ret.as_ref().map_or(false, |r| matches!(r.ty, FunctionType::Ptr));
+
+        if has_ptr_arg || has_ptr_ret {
+            let args: Vec<String> = func.args.iter().map(|a| {
+                if matches!(a.ty, FunctionType::Ptr) {
+                    format!("{}: MetacallPointer", a.name)
+                } else {
+                    format!("{}: {}", a.name, a.ty)
+                }
+            }).collect();
+            let call_args: Vec<String> = func.args.iter().map(|a| {
+                if matches!(a.ty, FunctionType::Ptr) {
+                    format!("{}.0", a.name)
+                } else {
+                    a.name.clone()
+                }
+            }).collect();
+            let ret_type = if has_ptr_ret { "MetacallPointer".to_string() } else {
+                func.ret.as_ref().map_or("()".to_string(), |r| format!("{}", r.ty))
+            };
+            let call = if has_ptr_ret {
+                format!("MetacallPointer({}({}))", func.name, call_args.join(", "))
+            } else {
+                format!("{}({})", func.name, call_args.join(", "))
+            };
+            ret.push_str(&format!(
+                "\tlet f = Function::new(|{}| -> {} {{ {} }});\n",
+                args.join(", "), ret_type, call
+            ));
+        } else {
+            ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
+        }
+
         ret.push_str("\tBox::into_raw(Box::new(f))\n}\n");
     }
     ret

@@ -166,6 +166,103 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 	}
 	*/
 
+	{
+    // for map_string_string
+    void *args[] = {
+        metacall_value_create_map(NULL, 2)
+    };
+    void **map_value = metacall_value_to_map(args[0]);
+
+    map_value[0] = metacall_value_create_array(NULL, 2);
+    void **tuple0 = metacall_value_to_array(map_value[0]);
+    tuple0[0] = metacall_value_create_string("a", 1);
+    tuple0[1] = metacall_value_create_string("one", 3);
+
+    map_value[1] = metacall_value_create_array(NULL, 2);
+    void **tuple1 = metacall_value_to_array(map_value[1]);
+    tuple1[0] = metacall_value_create_string("b", 1);
+    tuple1[1] = metacall_value_create_string("two", 3);
+
+    void *ret = metacallv_s("add_map_string_string", args, 1);
+    EXPECT_EQ((int)2, (int)metacall_value_to_int(ret));
+    metacall_value_destroy(args[0]);
+    metacall_value_destroy(ret);
+}
+
+{
+    // for map_string_int
+    void *args[] = {
+        metacall_value_create_map(NULL, 2)
+    };
+    void **map_value = metacall_value_to_map(args[0]);
+
+    map_value[0] = metacall_value_create_array(NULL, 2);
+    void **tuple0 = metacall_value_to_array(map_value[0]);
+    tuple0[0] = metacall_value_create_string("a", 1);
+    tuple0[1] = metacall_value_create_int(1);
+
+    map_value[1] = metacall_value_create_array(NULL, 2);
+    void **tuple1 = metacall_value_to_array(map_value[1]);
+    tuple1[0] = metacall_value_create_string("b", 1);
+    tuple1[1] = metacall_value_create_int(2);
+
+    void *ret = metacallv_s("add_map_string_int", args, 1);
+    EXPECT_EQ((int)3, (int)metacall_value_to_int(ret));
+    metacall_value_destroy(args[0]);
+    metacall_value_destroy(ret);
+}
+
+{
+    // for map_int_string
+    void *args[] = {
+        metacall_value_create_map(NULL, 2)
+    };
+    void **map_value = metacall_value_to_map(args[0]);
+
+    map_value[0] = metacall_value_create_array(NULL, 2);
+    void **tuple0 = metacall_value_to_array(map_value[0]);
+    tuple0[0] = metacall_value_create_int(1);
+    tuple0[1] = metacall_value_create_string("one", 3);
+
+    map_value[1] = metacall_value_create_array(NULL, 2);
+    void **tuple1 = metacall_value_to_array(map_value[1]);
+    tuple1[0] = metacall_value_create_int(2);
+    tuple1[1] = metacall_value_create_string("two", 3);
+
+    void *ret = metacallv_s("add_map_int_string", args, 1);
+    EXPECT_EQ((int)2, (int)metacall_value_to_int(ret));
+    metacall_value_destroy(args[0]);
+    metacall_value_destroy(ret);
+}
+
+{
+	void *ptr_val = metacall_value_create_ptr(NULL);
+	void *args[] = { ptr_val };
+	void *ret = metacallv_s("return_ptr", args, 1);
+	EXPECT_EQ((void *)NULL, (void *)metacall_value_to_ptr(ret));
+	metacall_value_destroy(ptr_val);
+	metacall_value_destroy(ret);
+}
+
+{
+    int x = 83;
+    void *ptr_val = metacall_value_create_ptr(&x);
+    void *args[] = { ptr_val };
+    void *ret = metacallv_s("return_ptr", args, 1);
+    EXPECT_EQ((void *)&x, (void *)metacall_value_to_ptr(ret));
+    metacall_value_destroy(ptr_val);
+    metacall_value_destroy(ret);
+}
+
+{
+	int x = 83;
+	void *ptr_val =metacall_value_create_ptr(&x);
+	void *args[] = { ptr_val };
+	void *ret = metacallv_s("ptr_to_int", args, 1);
+	EXPECT_EQ((int)83, (int)metacall_value_to_int(ret));
+	metacall_value_destroy(ptr_val);
+	metacall_value_destroy(ret);
+}
 	/* Print inspect information */
 	{
 		size_t size = 0;
