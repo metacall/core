@@ -87,7 +87,7 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn new(source: Source) -> SourceImpl {
+    pub fn build(source: Source) -> SourceImpl {
         let library_name = |file_name: &PathBuf| {
             #[cfg(unix)]
             let lib_extension = "so";
