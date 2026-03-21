@@ -25,6 +25,7 @@ BUILD_TYPE=Release
 BUILD_TESTS=0
 BUILD_BENCHMARKS=0
 BUILD_COVERAGE=0
+BUILD_MEMCHECK=0
 BUILD_INSTALL=0
 
 # Check out for sudo
@@ -61,6 +62,10 @@ sub_options() {
 			echo "Build coverage reports"
 			BUILD_COVERAGE=1
 		fi
+		if [ "$option" = 'memcheck' ]; then
+			echo "Build and run memcheck"
+			BUILD_MEMCHECK=1
+		fi
 		if [ "$option" = 'install' ]; then
 			echo "Install all libraries"
 			BUILD_INSTALL=1
@@ -82,6 +87,11 @@ sub_build() {
 	if [ $BUILD_COVERAGE = 1 ]; then
 		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T Coverage
 		gcovr -r ../source/ . --html-details coverage.html
+	fi
+
+	# Memcheck
+	if [ $BUILD_MEMCHECK = 1 ]; then
+		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T memcheck --output-on-failure
 	fi
 
 	# Install
