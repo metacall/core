@@ -34,7 +34,6 @@ TEST_F(metacall_version_test, DefaultConstructor)
 	ASSERT_STREQ(METACALL_VERSION, metacall_version_str());
 
 	ASSERT_NE((const char *)NULL, metacall_version_str());
-	ASSERT_STREQ(METACALL_VERSION, metacall_version_str());
 
 	unsigned int hex = metacall_version_hex();
 	ASSERT_GT(hex, (unsigned int)0);
