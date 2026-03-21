@@ -163,7 +163,17 @@ sub_coverage() {
 	ln -sf tools/dev/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
-
+# Build MetaCall Docker Compose with Memcheck for testing (link manually dockerignore files)
+sub_test_memcheck() {
+	export DOCKER_BUILDKIT=0
+	export METACALL_BUILD_SANITIZER=
+	export METACALL_BUILD_COVERAGE=memcheck
+	export METACALL_BUILD_TYPE=debug
+	ln -sf tools/deps/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+	ln -sf tools/dev/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+}
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
 sub_cache() {
 	if [ -z "${IMAGE_REGISTRY+x}" ]; then
@@ -426,6 +436,9 @@ case "$1" in
 		;;
 	coverage)
 		sub_coverage
+		;;
+	test-memcheck)
+		sub_test_memcheck
 		;;
 	cache)
 		sub_cache
