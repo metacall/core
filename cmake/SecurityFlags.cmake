@@ -43,7 +43,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 				set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --param ssp-buffer-size=4")
 			endif()
 		else()
-			check_c_compiler_flag_stack_smashing("-fstack-protector" STACK_PROTECTOR_CXX_FLAG)
+			check_c_compiler_flag_stack_smashing("-fstack-protector" STACK_PROTECTOR_C_FLAG)
 
 			if(STACK_PROTECTOR_C_FLAG)
 				set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector")
@@ -59,7 +59,10 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		check_c_compiler_flag("-D_FORTIFY_SOURCE=2" FORTIFY_SOURCE_C_FLAG)
 
 		if(FORTIFY_SOURCE_C_FLAG)
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -D_FORTIFY_SOURCE=2")
+			# _FORTIFY_SOURCE=2 requires at least -O1; append only to release
+			# flag sets so Debug builds are not silently compiled at -O3.
+			string(APPEND CMAKE_C_FLAGS_RELEASE " -D_FORTIFY_SOURCE=2")
+			string(APPEND CMAKE_C_FLAGS_RELWITHDEBINFO " -D_FORTIFY_SOURCE=2")
 		endif()
 	endif()
 
@@ -107,7 +110,10 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 		check_cxx_compiler_flag("-D_FORTIFY_SOURCE=2" FORTIFY_SOURCE_CXX_FLAG)
 
 		if(FORTIFY_SOURCE_CXX_FLAG)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_FORTIFY_SOURCE=2")
+			# _FORTIFY_SOURCE=2 requires at least -O1; append only to release
+			# flag sets so Debug builds are not silently compiled at -O3.
+			string(APPEND CMAKE_CXX_FLAGS_RELEASE " -D_FORTIFY_SOURCE=2")
+			string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO " -D_FORTIFY_SOURCE=2")
 		endif()
 	endif()
 

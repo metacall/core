@@ -317,9 +317,29 @@ install(FILES README.md	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 #
 
 if(OPTION_GIT_HOOKS)
-	message(STATUS "Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR}")
+	# macOS shares the POSIX hook scripts with Linux/BSD; there is no
+	# separate githooks/macos/ directory.
+	if(PROJECT_OS_FAMILY STREQUAL "macos")
+		set(_hooks_family "unix")
+	else()
+		set(_hooks_family "${PROJECT_OS_FAMILY}")
+	endif()
+
+	message(STATUS "Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR}/githooks/${_hooks_family}")
+
 	execute_process(
-		COMMAND git config --local core.hooksPath githooks/${PROJECT_OS_FAMILY}
+		COMMAND git config --local core.hooksPath githooks/${_hooks_family}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE _git_hooks_result
 	)
+
+	if(NOT _git_hooks_result EQUAL 0)
+		message(WARNING
+			"Failed to install git hooks (is git available and is this a git repository?). "
+			"Run manually: git config --local core.hooksPath githooks/${_hooks_family}"
+		)
+	endif()
+
+	unset(_hooks_family)
+	unset(_git_hooks_result)
 endif()

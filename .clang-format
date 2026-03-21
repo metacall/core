@@ -106,5 +106,5 @@ SpacesBeforeTrailingComments: 1
 # SpacesInParentheses: false
 # SpacesInSquareBrackets: false
 TabWidth:        4
-UseCRLF:         true
+UseCRLF:         false
 UseTab:          Always
