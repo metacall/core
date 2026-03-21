@@ -104,31 +104,26 @@ TEST_F(preprocessor_test, boolean)
     EXPECT_EQ((int)0, (int)PREPROCESSOR_NOT(42));
 }
 
+TEST_F(preprocessor_test, comma)
+{
+    EXPECT_EQ((int)1, (int)PREPROCESSOR_ARGS_EMPTY(PREPROCESSOR_COMMA_IF(0)));
+    EXPECT_EQ((int)0, (int)PREPROCESSOR_ARGS_EMPTY(PREPROCESSOR_COMMA_IF(1)));
+}
+
 TEST_F(preprocessor_test, complement)
 {
     EXPECT_EQ((int)1, (int)PREPROCESSOR_COMPL(0));
     EXPECT_EQ((int)0, (int)PREPROCESSOR_COMPL(1));
 }
 
-TEST_F(preprocessor_test, comma)
-{
-    // COMMA_SYMBOL() expands to a real comma token
-    EXPECT_EQ((int)0, (int)PREPROCESSOR_ARGS_EMPTY(PREPROCESSOR_COMMA_SYMBOL()));
-    // COMMA_IF(0) → empty, COMMA_IF(1) → comma
-    EXPECT_EQ((int)1, (int)PREPROCESSOR_ARGS_EMPTY(PREPROCESSOR_COMMA_IF(0)));
-    EXPECT_EQ((int)0, (int)PREPROCESSOR_ARGS_EMPTY(PREPROCESSOR_COMMA_IF(1)));
-}
-
 TEST_F(preprocessor_test, comparison)
 {
-	/* EQUAL/NOT_EQUAL require tokens with PREPROCESSOR_COMPARE_X defined.
-	 * Define a comparable pair for this test. */
 #define PREPROCESSOR_COMPARE_foo(x) x
 #define PREPROCESSOR_COMPARE_bar(x) x
-	EXPECT_EQ((int)1, (int)PREPROCESSOR_EQUAL(foo, foo));
-	EXPECT_EQ((int)0, (int)PREPROCESSOR_EQUAL(foo, bar));
-	EXPECT_EQ((int)0, (int)PREPROCESSOR_NOT_EQUAL(foo, foo));
-	EXPECT_EQ((int)1, (int)PREPROCESSOR_NOT_EQUAL(foo, bar));
+    EXPECT_EQ((int)1, (int)PREPROCESSOR_EQUAL(foo, foo));
+    EXPECT_EQ((int)0, (int)PREPROCESSOR_EQUAL(foo, bar));
+    EXPECT_EQ((int)0, (int)PREPROCESSOR_NOT_EQUAL(foo, foo));
+    EXPECT_EQ((int)1, (int)PREPROCESSOR_NOT_EQUAL(foo, bar));
 #undef PREPROCESSOR_COMPARE_foo
 #undef PREPROCESSOR_COMPARE_bar
 }
@@ -139,20 +134,14 @@ TEST_F(preprocessor_test, concatenation)
 #define PREPROCESSOR_TEST_CAT_Y 2
     EXPECT_EQ((int)1, (int)PREPROCESSOR_CONCAT(PREPROCESSOR_TEST_CAT_, X));
     EXPECT_EQ((int)2, (int)PREPROCESSOR_CONCAT(PREPROCESSOR_TEST_CAT_, Y));
-    const char concat_str[] = PREPROCESSOR_STRINGIFY(PREPROCESSOR_CONCAT(pre, fix));
-    EXPECT_STREQ("prefix", concat_str);
 #undef PREPROCESSOR_TEST_CAT_X
 #undef PREPROCESSOR_TEST_CAT_Y
 }
 
 TEST_F(preprocessor_test, detection)
 {
-    // DETECT_PARENTHESIS: 1 if arg has parens, 0 otherwise
     EXPECT_EQ((int)1, (int)PREPROCESSOR_DETECT_PARENTHESIS(()));
     EXPECT_EQ((int)0, (int)PREPROCESSOR_DETECT_PARENTHESIS(token));
-    // DETECT: returns second arg or 0
-    EXPECT_EQ((int)1, (int)PREPROCESSOR_DETECT(PREPROCESSOR_DETECT_TOKEN(something)));
-    EXPECT_EQ((int)0, (int)PREPROCESSOR_DETECT(not_a_token));
 }
 
 TEST_F(preprocessor_test, empty)

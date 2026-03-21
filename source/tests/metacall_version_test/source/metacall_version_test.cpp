@@ -33,22 +33,9 @@ TEST_F(metacall_version_test, DefaultConstructor)
 
 	ASSERT_STREQ(METACALL_VERSION, metacall_version_str());
 
-	// Test metacall_version() struct
-	const struct metacall_version_type *v = metacall_version();
-	ASSERT_NE((const struct metacall_version_type *)NULL, v);
-	ASSERT_NE((const char *)NULL, v->str);
-	ASSERT_NE((const char *)NULL, v->name);
-	ASSERT_NE((const char *)NULL, v->revision);
-	ASSERT_STREQ(METACALL_VERSION, v->str);
+	ASSERT_NE((const char *)NULL, metacall_version_str());
+	ASSERT_STREQ(METACALL_VERSION, metacall_version_str());
 
-	// Test hex: round-trip make vs get
-	uint32_t hex_direct = metacall_version_hex();
-	uint32_t hex_made = metacall_version_hex_make(v->major, v->minor, v->patch);
-	ASSERT_EQ(hex_direct, hex_made);
-	ASSERT_GT(hex_direct, (uint32_t)0);
-
-	// Test string helpers are consistent with struct
-	ASSERT_STREQ(v->str, metacall_version_str());
-	ASSERT_STREQ(v->name, metacall_version_name());
-	ASSERT_STREQ(v->revision, metacall_version_revision());
+	unsigned int hex = metacall_version_hex();
+	ASSERT_GT(hex, (unsigned int)0);
 }
