@@ -1393,6 +1393,26 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		return obj_impl->obj;
 	}
+	else if (id == TYPE_THROWABLE)
+	{
+		throwable th = value_to_throwable(v);
+		value inner = throwable_value(th);
+
+		if (inner != NULL && value_type_id(inner) == TYPE_EXCEPTION)
+		{
+			exception ex = value_to_exception(inner);
+			const char *message = exception_message(ex);
+			const char *label = exception_label(ex);
+
+			PyErr_Format(PyExc_RuntimeError, "%s: %s", label ? label : "Error", message ? message : "Unknown error");
+		}
+		else
+		{
+			PyErr_SetString(PyExc_RuntimeError, "An error was thrown from a foreign function call");
+		}
+
+		return NULL;
+	}
 	else
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type: %d", id);
@@ -3725,7 +3745,7 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover object member %s, type %s",
 					  PyUnicode_AsUTF8(dict_key),
 					  type_id_name(py_loader_impl_capi_to_value_type(dict_val)));
-			
+
 		}
 	}
 
