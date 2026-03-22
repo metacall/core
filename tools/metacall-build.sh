@@ -91,7 +91,7 @@ sub_build() {
 
 	# Memcheck
 	if [ $BUILD_MEMCHECK = 1 ]; then
-		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T memcheck --output-on-failure
+		cmake --build . --target memcheck
 	fi
 
 	# Install
