@@ -67,9 +67,30 @@ jobs:
           METACALL_BUILD_TYPE: debug
           METACALL_BASE_IMAGE: ${{ matrix.image }}
 
+  valgrind-memcheck:
+    name: Linux Valgrind Memcheck
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:bookworm-slim", "ubuntu:noble"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install, build and run Valgrind memcheck tests
+        run: ./docker-compose.sh test-memcheck
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
   linux-distributable:
     name: Linux Distributable Dispatch
-    needs: [linux-test, linux-sanitizer-test]
+    needs: [linux-test, linux-sanitizer-test, valgrind-memcheck]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master'
     steps:
