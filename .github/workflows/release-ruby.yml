@@ -36,10 +36,9 @@ jobs:
         run: |
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           echo "/usr/local/lib" >> $GITHUB_PATH
-          # Critical: Tell MetaCall where its own loaders are
+          # We point directly to the lib folder to satisfy metacall.rb search logic
+          echo "METACALL_INSTALL_PATH=/usr/local/lib" >> $GITHUB_ENV
           echo "LOADER_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
-          echo "METACALL_INSTALL_PATH=/usr/local" >> $GITHUB_ENV
-          # For MacOS/Linux linker
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
 
@@ -50,8 +49,8 @@ jobs:
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "$METACALL_DIR" >> $GITHUB_PATH
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
-          # Windows-specific variables for the Ruby wrapper
-          echo "METACALL_INSTALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
+          # Point directly to the lib folder for Windows too
+          echo "METACALL_INSTALL_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
           echo "METACALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
 
       - name: Set up Ruby
@@ -70,8 +69,7 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          # Use -I to include the library, and we've set the env vars above 
-          # to help 'metacall.rb' find the binary core
+          # Use -I to manually include the library path
           ruby -I../package/lib run.rb
 
   release:
