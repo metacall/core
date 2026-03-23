@@ -1,6 +1,7 @@
 use super::loader::{self, LoadingMethod};
 use std::os::raw::{c_char, c_void};
 use std::path::PathBuf;
+use std::panic::catch_unwind;
 
 use compiler::{file::FileRegistration, RegistrationError};
 
@@ -10,25 +11,33 @@ pub extern "C" fn rs_loader_impl_load_from_file(
     paths: *mut *const c_char,
     size: usize,
 ) -> *mut c_void {
-    loader::load(
-        loader_impl,
-        paths,
-        size,
-        true,
-        |path_buf: PathBuf,
-         load_on_error: loader::LoadOnErrorPointer|
-         -> Result<LoadingMethod, *mut c_void> {
-            Ok(LoadingMethod::File(match FileRegistration::new(path_buf) {
-                Ok(instance) => instance,
-                Err(error) => match error {
-                    RegistrationError::CompilationError(analysis_error) => {
-                        return Err(load_on_error(analysis_error))
-                    }
-                    RegistrationError::DynlinkError(dynlink_error) => {
-                        return Err(load_on_error(dynlink_error))
-                    }
-                },
-            }))
-        },
-    )
+    let result = catch_unwind(|| {
+        if paths.is_null() {
+            return std::ptr::null_mut();
+        }
+
+        loader::load(
+            loader_impl,
+            paths,
+            size,
+            true,
+            |path_buf: PathBuf,
+             load_on_error: loader::LoadOnErrorPointer|
+             -> Result<LoadingMethod, *mut c_void> {
+                Ok(LoadingMethod::File(match FileRegistration::new(path_buf) {
+                    Ok(instance) => instance,
+                    Err(error) => match error {
+                        RegistrationError::CompilationError(analysis_error) => {
+                            return Err(load_on_error(analysis_error))
+                        }
+                        RegistrationError::DynlinkError(dynlink_error) => {
+                            return Err(load_on_error(dynlink_error))
+                        }
+                    },
+                }))
+            },
+        )
+    });
+
+    result.unwrap_or(std::ptr::null_mut())
 }

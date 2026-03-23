@@ -9,16 +9,27 @@ pub unsafe extern "C" fn rs_loader_impl_execution_path(
     loader_impl: *mut c_void,
     path: *const c_char,
 ) -> c_int {
-    let loader_lifecycle_state = api::get_loader_lifecycle_state(loader_impl)
-        .as_mut()
-        .expect("Unable to get lifecycle state.");
+    let result = std::panic::catch_unwind(|| {
+        if loader_impl.is_null() || path.is_null() {
+            return 1_i32; 
+        }
 
-    let c_path: &CStr = CStr::from_ptr(path);
+        let loader_lifecycle_state = match api::get_loader_lifecycle_state(loader_impl).as_mut() {
+            Some(state) => state,
+            None => return 1_i32,
+        };
 
-    let path_slice: &str = c_path.to_str().expect("Unable to cast CStr to str");
-    loader_lifecycle_state
-        .execution_paths
-        .push(PathBuf::from(path_slice));
+        let path_slice = match CStr::from_ptr(path).to_str() {
+            Ok(s) => s,
+            Err(_) => return 1_i32,
+        };
 
-    0_i32
+        loader_lifecycle_state
+            .execution_paths
+            .push(PathBuf::from(path_slice));
+
+        0_i32 
+    });
+
+    result.unwrap_or(1_i32)
 }
