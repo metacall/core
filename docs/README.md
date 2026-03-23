@@ -128,7 +128,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [Go](https://golang.org/)                                                     | Go Runtime                                                                                             |  go  |
 | [Haskell](https://www.haskell.org/)                                           | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [Crystal](https://crystal-lang.org/)                                          | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://spidermonkey.dev/) | jsm  |
 | [Dart](https://dart.dev/)                                                     | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart |
 | [LuaJIT](https://luajit.org/)                                                 | [LuaJIT2](https://github.com/openresty/luajit2)                                                        | lua  |
 | [LLVM IR](https://www.llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) | [LLVM](https://llvm.org/)                                                                              | llvm |
