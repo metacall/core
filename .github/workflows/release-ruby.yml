@@ -35,8 +35,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
         run: |
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
+          
+          # ARCHITECTURAL FIX: Create a symbolic link to bypass the strict regex in metacall.rb
+          # This maps 'libmetacall.so.0.x.y' to 'libmetacall.so' so the Ruby script can find it.
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            sudo ln -sf /usr/local/lib/libmetacall.so.* /usr/local/lib/libmetacall.so || true
+          else
+            sudo ln -sf /usr/local/lib/libmetacall.dylib.* /usr/local/lib/libmetacall.dylib || true
+          fi
+
           echo "/usr/local/lib" >> $GITHUB_PATH
-          # We point directly to the lib folder to satisfy metacall.rb search logic
           echo "METACALL_INSTALL_PATH=/usr/local/lib" >> $GITHUB_ENV
           echo "LOADER_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
@@ -46,10 +54,12 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
+          
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "$METACALL_DIR" >> $GITHUB_PATH
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
-          # Point directly to the lib folder for Windows too
+          
+          # Set the variables for the Windows Ruby loader
           echo "METACALL_INSTALL_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
           echo "METACALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
 
