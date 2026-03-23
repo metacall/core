@@ -37,7 +37,6 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           
           # ARCHITECTURAL FIX: Force symbolic links for the strict Ruby regex
-          # We search for the versioned file and link it to the plain name
           sudo find /usr/local/lib -name "libmetacall.so.*" -exec ln -sf {} /usr/local/lib/libmetacall.so \; || true
           sudo find /usr/local/lib -name "libmetacall.dylib.*" -exec ln -sf {} /usr/local/lib/libmetacall.dylib \; || true
           
