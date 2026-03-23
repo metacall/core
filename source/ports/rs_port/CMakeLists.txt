@@ -23,42 +23,9 @@ set(target rs_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
-# Find bindgen (disable when using sanitizers)
-if(NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
-	find_program(Rust_BINDGEN_EXECUTABLE bindgen
-		HINTS ${Rust_CARGO_HOME}
-		PATH_SUFFIXES "bin"
-	)
-
-	if(NOT Rust_BINDGEN_EXECUTABLE AND NOT OPTION_BUILD_GUIX)
-		execute_process(COMMAND ${Rust_CARGO_EXECUTABLE} install bindgen-cli)
-
-		find_program(Rust_BINDGEN_EXECUTABLE bindgen
-			HINTS ${Rust_CARGO_HOME}
-			PATH_SUFFIXES "bin"
-		)
-	endif()
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	return()
 endif()
-
-# Generate bindings
-if(Rust_BINDGEN_EXECUTABLE)
-	add_custom_target(${target}_bindings
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		COMMAND ${Rust_BINDGEN_EXECUTABLE}
-			--no-include-path-detection
-			--allowlist-function "metacall.*"
-			--rustified-enum "metacall_.*"
-			"${CMAKE_SOURCE_DIR}/source/metacall/include/metacall/metacall.h"
-			-o "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs"
-			--
-			-I${CMAKE_SOURCE_DIR}/source/metacall/include
-			-I${CMAKE_BINARY_DIR}/source/metacall/include
-			-I${CMAKE_BINARY_DIR}/source/include
-		DEPENDS ${META_PROJECT_NAME}::metacall
-	)
-endif()
-
-set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs" PROPERTIES GENERATED TRUE)
 
 # Build Rust Port
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -130,23 +97,9 @@ if(RUSTUP_NIGTHLY_INSTALL_SRC)
 endif()
 
 #
-# Dependecies
-#
-
-# Find bindgen (disable bindgen dependency for Clang as a workaround for stdlib.h not found issue)
-if(Rust_BINDGEN_EXECUTABLE AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-	add_dependencies(${target}
-		${target}_bindings
-	)
-endif()
-
-#
 # Define test
 #
 
-if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER) AND NOT RS_PORT_RUN_INSTRUMENTED_TEST)
-	return()
-endif()
 
 # If we have cargo-valgrind, run the tests with it
 # For installing it, first install valgrind on your system, then run:
