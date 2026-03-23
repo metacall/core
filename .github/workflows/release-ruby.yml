@@ -36,19 +36,22 @@ jobs:
         run: |
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           echo "/usr/local/lib" >> $GITHUB_PATH
+          # Critical: Tell MetaCall where its own loaders are
           echo "LOADER_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "METACALL_INSTALL_PATH=/usr/local" >> $GITHUB_ENV
+          # For MacOS/Linux linker
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
 
       - name: Install MetaCall Windows
         if: matrix.os == 'windows-latest'
         run: |
-          # Use the official installer
           powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
-          
-          # Force BOTH the base and lib paths into the Windows environment
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "$METACALL_DIR" >> $GITHUB_PATH
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
+          # Windows-specific variables for the Ruby wrapper
+          echo "METACALL_INSTALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
           echo "METACALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
 
       - name: Set up Ruby
@@ -67,9 +70,8 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          # We run from the 'test' directory so that '../package' 
-          # in run.rb correctly resolves to 'source/ports/rb_port/package'
-          # We also include the lib path manually for extra safety
+          # Use -I to include the library, and we've set the env vars above 
+          # to help 'metacall.rb' find the binary core
           ruby -I../package/lib run.rb
 
   release:
