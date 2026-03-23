@@ -75,17 +75,24 @@ sub_options() {
 
 sub_build() {
 
-	# Determine the project root dynamically
-	SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-	PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
-
-	# Map BUILD_TYPE to the build directory name
-	if [ "$BUILD_TYPE" = "Debug" ]; then
-		BUILD_DIR="$PROJECT_ROOT/build-debug"
-	elif [ "$BUILD_TYPE" = "RelWithDebInfo" ]; then
-		BUILD_DIR="$PROJECT_ROOT/build-relwithdebinfo"
+	# Check if we're running from within a build directory (Docker pattern)
+	if [ -f "Makefile" ] || [ -f "build.ninja" ]; then
+		# We're already in the build directory
+		BUILD_DIR="$(pwd)"
+		PROJECT_ROOT="$(CDPATH= cd -- "$BUILD_DIR/.." && pwd)"
 	else
-		BUILD_DIR="$PROJECT_ROOT/build-release"
+		# Determine the project root dynamically
+		SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+		PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+
+		# Map BUILD_TYPE to the build directory name
+		if [ "$BUILD_TYPE" = "Debug" ]; then
+			BUILD_DIR="$PROJECT_ROOT/build-debug"
+		elif [ "$BUILD_TYPE" = "RelWithDebInfo" ]; then
+			BUILD_DIR="$PROJECT_ROOT/build-relwithdebinfo"
+		else
+			BUILD_DIR="$PROJECT_ROOT/build-release"
+		fi
 	fi
 
 	# Verify build directory exists and contains Makefile or build.ninja

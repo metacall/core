@@ -570,24 +570,35 @@ sub_configure() {
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
-	# Build directory by build type
-	if [ "$BUILD_TYPE" = "Debug" ]; then
-		BUILD_DIR="$PROJECT_ROOT/build-debug"
-	elif [ "$BUILD_TYPE" = "RelWithDebInfo" ]; then
-		BUILD_DIR="$PROJECT_ROOT/build-relwithdebinfo"
-	else
-		BUILD_DIR="$PROJECT_ROOT/build-release"
-	fi
-	
-	# Execute CMake
+	# Set compiler to clang if requested
 	if [ $BUILD_CLANG = 1 ]; then
 		export CC=clang
 		export CXX=clang++
 	fi
-	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off \
-    -S "$PROJECT_ROOT" \
-    -B "$BUILD_DIR" \
-    $BUILD_STRING
+
+	# Check if we're running from within a build directory (Docker pattern)
+	if [ -f "CMakeCache.txt" ] || [ -d "CMakeFiles" ]; then
+		# We're already in a build directory, configure here
+		BUILD_DIR="$(pwd)"
+		cmake -Wno-dev -DOPTION_GIT_HOOKS=Off \
+			-S "$PROJECT_ROOT" \
+			$BUILD_STRING
+	else
+		# Build directory by build type (new pattern)
+		if [ "$BUILD_TYPE" = "Debug" ]; then
+			BUILD_DIR="$PROJECT_ROOT/build-debug"
+		elif [ "$BUILD_TYPE" = "RelWithDebInfo" ]; then
+			BUILD_DIR="$PROJECT_ROOT/build-relwithdebinfo"
+		else
+			BUILD_DIR="$PROJECT_ROOT/build-release"
+		fi
+
+		# Execute CMake
+		cmake -Wno-dev -DOPTION_GIT_HOOKS=Off \
+			-S "$PROJECT_ROOT" \
+			-B "$BUILD_DIR" \
+			$BUILD_STRING
+	fi
 }
 
 sub_help() {
