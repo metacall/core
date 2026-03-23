@@ -3,15 +3,15 @@ name: Release Ruby Gem
 on:
   workflow_dispatch:
   pull_request:
-  push:
-    tags:
-      - 'v*' # Trigger only on version tags (e.g., v0.0.1)
     branches:
       - master
       - develop
     paths:
       - '.github/workflows/release-ruby.yml'
       - 'source/ports/rb_port/**'
+  push:
+    tags:
+      - 'v*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -42,7 +42,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2' # Using stable Ruby 3.x
+          ruby-version: '3.2'
           bundler-cache: true
 
       - name: Sync Test Resources
@@ -53,11 +53,12 @@ jobs:
           cp source/scripts/ruby/hello/source/hello.rb source/ports/rb_port/test/
 
       - name: Test the Ruby Port
-        working-directory: source/ports/rb_port
+        working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          # Run the Ruby unit tests
-          ruby test/run.rb
+          # Run the Ruby unit tests from the test directory
+          # to ensure relative paths resolve correctly
+          ruby run.rb
 
   release:
     name: Release Ruby Port
