@@ -888,6 +888,9 @@ fn run_compiler(
             ErrorOutputType::default(),
         ));
 
+        #[cfg(debug_assertions)]
+        config.opts.cg.link_args.push("metacalld.lib".to_owned());
+        #[cfg(not(debug_assertions))]
         config.opts.cg.link_args.push("metacall.lib".to_owned());
     }
 
