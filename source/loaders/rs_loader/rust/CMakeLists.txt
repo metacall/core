@@ -52,6 +52,7 @@ endif()
 set(TARGET_OUTPUT ${PROJECT_OUTPUT_DIR}/${TARGET_OUTPUT_NAME})
 
 add_custom_target(${target}_runtime
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
@@ -90,6 +91,13 @@ endif()
 if(OPTION_BUILD_MUSL)
 	set(RUST_CTR_STATIC "-Ctarget-feature=-crt-static -Clink-self-contained=off -L/usr/lib/x86_64-linux-musl") #-Clink-args=--dynamic-linker /lib/ld-musl-x86_64.so.1
 	set(RUSTFLAGS ${CMAKE_COMMAND} -E env RUSTFLAGS=${RUST_CTR_STATIC})
+elseif(WIN32)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(METACALL_LIB metacalld)
+	else()
+		set(METACALL_LIB metacall)
+	endif()
+	set(RUSTFLAGS ${CMAKE_COMMAND} -E env "RUSTFLAGS=-L${PROJECT_OUTPUT_DIR} -l${METACALL_LIB}")
 else()
 	set(RUSTFLAGS)
 endif()

@@ -174,10 +174,17 @@ if(Rust_RUSTC_EXECUTABLE)
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	file(
-		GLOB Rust_RUSTC_LIBRARIES
-		${Rust_RUSTC_SYSROOT}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}
-	)
+	if(WIN32)
+		set(Rust_RUSTC_LIB_GLOB
+			"${Rust_RUSTC_SYSROOT}/lib/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+		)
+	else()
+		set(Rust_RUSTC_LIB_GLOB
+			"${Rust_RUSTC_SYSROOT}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+		)
+	endif()
+
+	file(GLOB Rust_RUSTC_LIBRARIES ${Rust_RUSTC_LIB_GLOB})
 endif()
 
 include(FindPackageHandleStandardArgs)

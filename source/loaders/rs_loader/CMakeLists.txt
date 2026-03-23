@@ -127,7 +127,17 @@ target_include_directories(${target}
 # Libraries
 #
 
-get_target_property(RS_LOADER_IMPL rs_loader_impl OUTPUT_NAME)
+if(WIN32)
+	set(RS_LOADER_IMPL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rust/target")
+
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(RS_LOADER_IMPL_LIB "${RS_LOADER_IMPL_DIR}/debug/deps/rs_loader_impl.dll.lib")
+	else()
+		set(RS_LOADER_IMPL_LIB "${RS_LOADER_IMPL_DIR}/release/deps/rs_loader_impl.dll.lib")
+	endif()
+else()
+	get_target_property(RS_LOADER_IMPL_LIB rs_loader_impl OUTPUT_NAME)
+endif()
 
 target_link_libraries(${target}
 	PRIVATE
@@ -135,7 +145,7 @@ target_link_libraries(${target}
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
 
 	# Rust implementation library
-	${RS_LOADER_IMPL}
+	${RS_LOADER_IMPL_LIB}
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

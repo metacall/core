@@ -876,6 +876,21 @@ fn run_compiler(
         make_codegen_backend: None,
     };
 
+    #[cfg(target_os = "windows")]
+    {
+        let build_release = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|x| x.to_path_buf()))
+            .expect("Unable to get current executable directory");
+
+        config.opts.search_paths.push(SearchPath::from_cli_opt(
+            &format!("native={}", build_release.display()),
+            ErrorOutputType::default(),
+        ));
+
+        config.opts.cg.link_args.push("metacall.lib".to_owned());
+    }
+
     callbacks.config(&mut config);
 
     rustc_interface::run_compiler(config, |compiler| {
