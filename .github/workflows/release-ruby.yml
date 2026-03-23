@@ -36,17 +36,17 @@ jobs:
         run: |
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           
-          # ARCHITECTURAL FIX: Create a symbolic link to bypass the strict regex in metacall.rb
-          # This maps 'libmetacall.so.0.x.y' to 'libmetacall.so' so the Ruby script can find it.
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            sudo ln -sf /usr/local/lib/libmetacall.so.* /usr/local/lib/libmetacall.so || true
-          else
-            sudo ln -sf /usr/local/lib/libmetacall.dylib.* /usr/local/lib/libmetacall.dylib || true
-          fi
-
+          # ARCHITECTURAL FIX: Force symbolic links for the strict Ruby regex
+          # We search for the versioned file and link it to the plain name
+          sudo find /usr/local/lib -name "libmetacall.so.*" -exec ln -sf {} /usr/local/lib/libmetacall.so \; || true
+          sudo find /usr/local/lib -name "libmetacall.dylib.*" -exec ln -sf {} /usr/local/lib/libmetacall.dylib \; || true
+          
+          # Define the full environment for the MetaCall Core
           echo "/usr/local/lib" >> $GITHUB_PATH
           echo "METACALL_INSTALL_PATH=/usr/local/lib" >> $GITHUB_ENV
-          echo "LOADER_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
+          echo "LOADER_LIBRARY_PATH=/usr/local/lib/metacall" >> $GITHUB_ENV
+          echo "SERIAL_LIBRARY_PATH=/usr/local/lib/metacall" >> $GITHUB_ENV
+          echo "DETECTOR_LIBRARY_PATH=/usr/local/lib/metacall" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
 
@@ -54,14 +54,16 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
-          
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
+          
+          # Force the entire MetaCall tree into the Windows Path
           echo "$METACALL_DIR" >> $GITHUB_PATH
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
           
-          # Set the variables for the Windows Ruby loader
+          # Critical Windows environment variables
           echo "METACALL_INSTALL_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
           echo "METACALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
+          echo "LOADER_LIBRARY_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -74,6 +76,17 @@ jobs:
         run: |
           cp source/scripts/python/example/source/example.py source/ports/rb_port/test/
           cp source/scripts/ruby/hello/source/hello.rb source/ports/rb_port/test/
+
+      - name: Environment Audit (Debug)
+        shell: bash
+        run: |
+          echo "--- PATH ---"
+          echo $PATH
+          echo "--- MetaCall Version ---"
+          metacall --version || echo "metacall binary not in path"
+          echo "--- Library Files ---"
+          ls /usr/local/lib/libmetacall* || true
+          ls $HOME/AppData/Local/MetaCall/metacall/lib/metacall* || true
 
       - name: Test the Ruby Port
         working-directory: source/ports/rb_port/test
