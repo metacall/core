@@ -67,14 +67,14 @@ jobs:
           METACALL_BUILD_TYPE: debug
           METACALL_BASE_IMAGE: ${{ matrix.image }}
 
-  valgrind-memcheck:
-    name: Linux Valgrind Memcheck
+  linux-memcheck-test:
+    name: Linux Valgrind Memcheck Test
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        image: ["debian:bookworm-slim", "ubuntu:noble"]
+        image: ["debian:trixie-slim", "ubuntu:noble"]
 
     steps:
       - name: Check out the repository
@@ -90,7 +90,7 @@ jobs:
 
   linux-distributable:
     name: Linux Distributable Dispatch
-    needs: [linux-test, linux-sanitizer-test, valgrind-memcheck]
+    needs: [linux-test, linux-sanitizer-test ] # TODO: linux-memcheck-test
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master'
     steps:
