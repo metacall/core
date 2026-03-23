@@ -44,7 +44,6 @@ extern "C" fn object_singleton_set(
 
         std::mem::forget(class);
         std::mem::forget(obj);
-        std::mem::forget(name);
     };
     0
 }
@@ -66,13 +65,12 @@ extern "C" fn object_singleton_get(
 
         std::mem::forget(class);
         std::mem::forget(obj);
-        std::mem::forget(name);
         ret
     };
     if let Ok(ret) = ret {
-        return ret;
+        ret
     } else {
-        return 0 as OpaqueType;
+        0 as OpaqueType
     }
 }
 
@@ -96,13 +94,12 @@ extern "C" fn object_singleton_method_invoke(
 
         std::mem::forget(class);
         std::mem::forget(obj);
-        std::mem::forget(name);
         ret
     };
     if let Ok(ret) = ret {
-        return ret;
+        ret
     } else {
-        return 0 as OpaqueType;
+        0 as OpaqueType
     }
 }
 
@@ -125,12 +122,10 @@ extern "C" fn object_singleton_destructor(_object: OpaqueType, _object_impl: Opa
 
 #[no_mangle]
 extern "C" fn object_singleton_destroy(_object: OpaqueType, object_impl: OpaqueType) {
-    if !rs_loader_destroyed() {
-        if !object_impl.is_null() {
-            unsafe {
-                let object = Box::from_raw(object_impl as *mut Object);
-                drop(object);
-            }
+    if !rs_loader_destroyed() && !object_impl.is_null() {
+        unsafe {
+            let object = Box::from_raw(object_impl as *mut Object);
+            drop(object);
         }
     }
 }

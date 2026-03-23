@@ -4,7 +4,7 @@ use std::os::raw::{c_int, c_void};
 
 pub fn discover_on_error<T: Display>(error: T) -> c_int {
     eprintln!("{}", error);
-    1 as c_int
+    1_i32
 }
 
 #[no_mangle]
@@ -37,5 +37,5 @@ pub extern "C" fn rs_loader_impl_discover(
 
     // Avoid dropping handle_shared_objects
     std::mem::forget(handle_shared_objects);
-    0 as c_int
+    0_i32
 }

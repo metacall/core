@@ -3,18 +3,19 @@ use compiler::{memory::MemoryRegistration, RegistrationError};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_void};
 
+/// # Safety
 #[no_mangle]
-pub extern "C" fn rs_loader_impl_load_from_memory(
+pub unsafe extern "C" fn rs_loader_impl_load_from_memory(
     _loader_impl: *mut c_void,
     name: *const c_char,
     buffer: *const c_char,
     _size: usize,
 ) -> *mut c_void {
-    let name = unsafe { CStr::from_ptr(name) }
+    let name = CStr::from_ptr(name)
         .to_str()
         .expect("Unable to cast CStr to str")
         .to_owned();
-    let code = unsafe { CStr::from_ptr(buffer) }
+    let code = CStr::from_ptr(buffer)
         .to_str()
         .expect("Unable to cast CStr to str")
         .to_owned();

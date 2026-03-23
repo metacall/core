@@ -2,7 +2,7 @@ pub mod class;
 use super::{config::Input, source_map::FileName::Custom, CompilerCallbacks, Function, Source};
 use std::fs::File;
 use std::io::Write;
-fn generate_function_wrapper(functions: &Vec<Function>) -> String {
+fn generate_function_wrapper(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
@@ -15,7 +15,7 @@ fn generate_function_wrapper(functions: &Vec<Function>) -> String {
     ret
 }
 
-fn generate_class_wrapper(classes: &Vec<&crate::Class>) -> String {
+fn generate_class_wrapper(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
@@ -31,7 +31,10 @@ fn generate_class_wrapper(classes: &Vec<&crate::Class>) -> String {
         if let Some(_ctor) = &class.constructor {
             ret.push_str(&format!("\t\t.set_constructor({}::new)\n", class.name));
         } else {
-            println!("Rust Loader: Class {} does not contain a constructor", class.name);
+            println!(
+                "Rust Loader: Class {} does not contain a constructor",
+                class.name
+            );
         }
 
         // Set attributes
@@ -69,7 +72,7 @@ fn generate_class_wrapper(classes: &Vec<&crate::Class>) -> String {
     ret
 }
 
-fn generate_function_wrapper_for_package(functions: &Vec<Function>) -> String {
+fn generate_function_wrapper_for_package(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
@@ -84,7 +87,7 @@ fn generate_function_wrapper_for_package(functions: &Vec<Function>) -> String {
     }
     ret
 }
-fn generate_class_wrapper_for_package(classes: &Vec<&crate::Class>) -> String {
+fn generate_class_wrapper_for_package(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
@@ -100,7 +103,10 @@ fn generate_class_wrapper_for_package(classes: &Vec<&crate::Class>) -> String {
         if let Some(_ctor) = &class.constructor {
             ret.push_str(&format!("\t\t.set_constructor({}::new)\n", class.name));
         } else {
-            println!("Rust Loader: Class {} does not contain a constructor", class.name);
+            println!(
+                "Rust Loader: Class {} does not contain a constructor",
+                class.name
+            );
         }
 
         // Set attributes
@@ -144,7 +150,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let function_wrapper = generate_function_wrapper_for_package(&callbacks.functions);
             content.push_str(&function_wrapper);
             let class_wrapper =
-                generate_class_wrapper_for_package(&callbacks.classes.iter().collect());
+                generate_class_wrapper_for_package(&callbacks.classes.iter().collect::<Vec<_>>());
             content.push_str(&class_wrapper);
 
             // Create metacall_class file
@@ -177,7 +183,8 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper(&callbacks.functions);
             content.push_str(&function_wrapper);
-            let class_wrapper = generate_class_wrapper(&callbacks.classes.iter().collect());
+            let class_wrapper =
+                generate_class_wrapper(&callbacks.classes.iter().collect::<Vec<_>>());
             content.push_str(&class_wrapper);
 
             match callbacks.source.input.0 {

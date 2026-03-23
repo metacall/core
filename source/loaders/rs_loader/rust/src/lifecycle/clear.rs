@@ -19,9 +19,9 @@ pub extern "C" fn rs_loader_impl_clear(loader_impl: *mut c_void, handle: *mut c_
             }
             Err(err) => {
                 eprintln!("{}", err);
-                return 1 as c_int;
+                return 1_i32;
             }
         }
     }
-    0 as c_int
+    0_i32
 }
