@@ -35,17 +35,21 @@ jobs:
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
         run: |
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
-          # Force MetaCall into the PATH for the current session
           echo "/usr/local/lib" >> $GITHUB_PATH
           echo "LOADER_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Install MetaCall Windows
         if: matrix.os == 'windows-latest'
         run: |
+          # Use the official installer
           powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
-          # Force the Windows installation path into the GITHUB_PATH
-          echo "$HOME\AppData\Local\MetaCall\metacall" >> $GITHUB_PATH
-          echo "METACALL_PATH=$HOME\AppData\Local\MetaCall\metacall" >> $GITHUB_ENV
+          
+          # Force BOTH the base and lib paths into the Windows environment
+          $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
+          echo "$METACALL_DIR" >> $GITHUB_PATH
+          echo "$METACALL_DIR\lib" >> $GITHUB_PATH
+          echo "METACALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -60,12 +64,13 @@ jobs:
           cp source/scripts/ruby/hello/source/hello.rb source/ports/rb_port/test/
 
       - name: Test the Ruby Port
-        working-directory: source/ports/rb_port
+        working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          # Use -I to manually include the library path, fixing the LoadError
-          # and ensuring we test against the local source code
-          ruby -I./package/lib test/run.rb
+          # We run from the 'test' directory so that '../package' 
+          # in run.rb correctly resolves to 'source/ports/rb_port/package'
+          # We also include the lib path manually for extra safety
+          ruby -I../package/lib run.rb
 
   release:
     name: Release Ruby Port
