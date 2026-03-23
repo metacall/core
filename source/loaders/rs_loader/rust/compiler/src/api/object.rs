@@ -37,7 +37,7 @@ extern "C" fn object_singleton_set(
         let object_impl_ptr = object_impl as *mut object::Object;
         let mut obj = Box::from_raw(object_impl_ptr);
         let class = Box::from_raw(obj.class);
-        let name = CStr::from_ptr(get_attr_name(accessor))
+        let name = CStr::from_ptr(call_get_attr_name(accessor))
             .to_str()
             .expect("Unable to get attr name");
         obj.instance.set_attr(name, value, &class);
@@ -58,7 +58,7 @@ extern "C" fn object_singleton_get(
         let object_impl_ptr = object_impl as *mut object::Object;
         let obj = Box::from_raw(object_impl_ptr);
         let class = Box::from_raw(obj.class);
-        let name = CStr::from_ptr(get_attr_name(accessor))
+        let name = CStr::from_ptr(call_get_attr_name(accessor))
             .to_str()
             .expect("Unable to get attr name");
         let ret = obj.instance.get_attr(name, &class);

@@ -47,7 +47,9 @@ RS_LOADER_API int rs_loader_impl_discover(loader_impl impl, loader_handle handle
 
 RS_LOADER_API int rs_loader_impl_destroy(loader_impl impl);
 
-RS_LOADER_API const char *get_attr_name(struct accessor_type *accessor);
+typedef const char *(*rs_loader_get_attr_name_cb)(struct accessor_type *accessor);
+
+RS_LOADER_API void rs_loader_impl_set_get_attr_name(rs_loader_get_attr_name_cb cb);
 
 #ifdef __cplusplus
 }
