@@ -126,6 +126,10 @@ add_custom_target(${target} ALL
     DEPENDS ${META_PROJECT_NAME}::metacall ${target}_clippy
 )
 
+add_dependencies(${target}
+    ${target}_clippy
+)
+
 if(RUSTUP_NIGTHLY_INSTALL_SRC)
 	add_custom_target(${target}_rustup_nightly ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -134,9 +138,6 @@ if(RUSTUP_NIGTHLY_INSTALL_SRC)
 	add_dependencies(${target}
 		${target}_rustup_nightly
 	)
-	add_dependencies(${target}_clippy
-        ${target}_rustup_nightly
-    )
 endif()
 
 #
@@ -148,9 +149,6 @@ if(Rust_BINDGEN_EXECUTABLE AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	add_dependencies(${target}
 		${target}_bindings
 	)
-	add_dependencies(${target}_clippy
-        ${target}_bindings
-    )
 endif()
 
 #
