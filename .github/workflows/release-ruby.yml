@@ -33,11 +33,19 @@ jobs:
 
       - name: Install MetaCall Unix
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
-        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
+        run: |
+          curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
+          # Force MetaCall into the PATH for the current session
+          echo "/usr/local/lib" >> $GITHUB_PATH
+          echo "LOADER_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
 
       - name: Install MetaCall Windows
         if: matrix.os == 'windows-latest'
-        run: powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
+        run: |
+          powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
+          # Force the Windows installation path into the GITHUB_PATH
+          echo "$HOME\AppData\Local\MetaCall\metacall" >> $GITHUB_PATH
+          echo "METACALL_PATH=$HOME\AppData\Local\MetaCall\metacall" >> $GITHUB_ENV
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -48,17 +56,16 @@ jobs:
       - name: Sync Test Resources
         shell: bash
         run: |
-          # Copy shared test scripts into the Ruby port test folder
           cp source/scripts/python/example/source/example.py source/ports/rb_port/test/
           cp source/scripts/ruby/hello/source/hello.rb source/ports/rb_port/test/
 
       - name: Test the Ruby Port
-        working-directory: source/ports/rb_port/test
+        working-directory: source/ports/rb_port
         shell: bash
         run: |
-          # Run the Ruby unit tests from the test directory
-          # to ensure relative paths resolve correctly
-          ruby run.rb
+          # Use -I to manually include the library path, fixing the LoadError
+          # and ensuring we test against the local source code
+          ruby -I./package/lib test/run.rb
 
   release:
     name: Release Ruby Port
