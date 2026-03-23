@@ -577,11 +577,12 @@ sub_configure() {
 	fi
 
 	# Check if we're running from within a build directory (Docker pattern)
-	if [ -f "CMakeCache.txt" ] || [ -d "CMakeFiles" ]; then
+	if [ "$(basename "$(pwd)")" = "build" ] || [ -f "CMakeCache.txt" ] || [ -d "CMakeFiles" ]; then
 		# We're already in a build directory, configure here
 		BUILD_DIR="$(pwd)"
 		cmake -Wno-dev -DOPTION_GIT_HOOKS=Off \
 			-S "$PROJECT_ROOT" \
+			-B "$BUILD_DIR" \
 			$BUILD_STRING
 	else
 		# Build directory by build type (new pattern)
