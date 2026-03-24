@@ -31,19 +31,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "[FORENSIC] Step 1a: Install & Detect MetaCall (Unix)"
+      - name: Install MetaCall (Unix)
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           set +o pipefail
-          echo "[INSTALL] Starting MetaCall Setup for Unix..."
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
-          echo "[DETECTION] Performing Global Component Hunt..."
-          RAW_DIRS=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
+          # Dynamic component discovery for Guix/Homebrew compatibility
+          SEARCH_DIRS="$HOME /usr/local /opt"
+          [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
+          [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
+          
+          RAW_DIRS=$(find $SEARCH_DIRS -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
           COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" - | sed 's/:$//')
-          echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
           LIB_FILE=$(find $RAW_DIRS -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | head -n 1)
           LIB_DIR=$(dirname "$LIB_FILE")
@@ -61,33 +63,24 @@ jobs:
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
           [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig "$LIB_DIR" || true
 
-      - name: "[FORENSIC] Step 1b: Install & Detect MetaCall (Windows)"
+      - name: Install MetaCall (Windows)
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          echo "[INSTALL] Starting MetaCall Setup for Windows..."
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))
           
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
-          echo "[DETECTION] Hunting for components in $METACALL_DIR"
-          
           $CoreFile = Get-ChildItem -Path $METACALL_DIR -Filter "metacall.dll" -Recurse | Select-Object -First 1
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
+          $PyDll = Get-ChildItem -Path $METACALL_DIR -Filter "python*.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
-          
-          # ARCHITECTURAL FIX: Restore the working Python Home detection
-          $PyHome = Join-Path $METACALL_DIR "runtimes\python"
-          if (-not (Test-Path $PyHome)) {
-             $LibDir = Get-ChildItem -Path $METACALL_DIR -Directory -Filter "Lib" -Recurse | Select-Object -First 1
-             $PyHome = if ($LibDir) { $LibDir.Parent.FullName } else { "$METACALL_DIR\lib" }
-          }
           
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
+          $PyHome = if ($PyDll) { $PyDll.DirectoryName } else { "$METACALL_DIR\runtimes\python" }
           
-          echo "[DETECTION] SUCCESS: Core -> $InstallDir, PythonHome -> $PyHome"
-          
+          # Use ASCII to ensure NO-BOM compatibility with GitHub Runner
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LoaderDir" -Encoding Ascii
@@ -97,59 +90,38 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "PYTHONPATH=$InstallDir" -Encoding Ascii
           
           Add-Content -Path $env:GITHUB_PATH -Value "$InstallDir" -Encoding Ascii
-          if ($RubyRuntime) {
-              $RubyRuntimeDir = $RubyRuntime.DirectoryName
-              Add-Content -Path $env:GITHUB_PATH -Value "$RubyRuntimeDir" -Encoding Ascii
-          }
+          if ($RubyRuntime) { Add-Content -Path $env:GITHUB_PATH -Value "$($RubyRuntime.DirectoryName)" -Encoding Ascii }
           Add-Content -Path $env:GITHUB_PATH -Value "$PyHome" -Encoding Ascii
 
-      - name: "[FORENSIC] Step 2: Set up Ruby Environment (Unix Only)"
+      - name: Set up Ruby Environment (Unix)
         if: matrix.os != 'windows-latest'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: "[FORENSIC] Step 3: Global Environment Audit"
-        shell: bash
-        run: |
-          echo "=== SYSTEM AUDIT START ==="
-          echo "OS: ${{ matrix.os }}"
-          echo "INSTALL_PATH: $METACALL_INSTALL_PATH"
-          echo "PYTHONHOME: $PYTHONHOME"
-          echo "--- Directory Verification ---"
-          SEP=$([[ "${{ matrix.os }}" == "windows-latest" ]] && echo ";" || echo ":")
-          IFS=$SEP read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
-          for i in "${ADDR[@]}"; do
-            [ -d "$i" ] && echo "Found House: $i" && ls -la "$i" | grep -E 'dll|json|so|dylib' || true
-          done
-          echo "=== SYSTEM AUDIT END ==="
-
-      - name: "[FORENSIC] Step 4a: Run Ruby Tests (Unix)"
+      - name: Run Integration Tests (Unix)
         if: matrix.os != 'windows-latest'
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          echo "[EXECUTION] Starting Unix Integration Tests..."
           cp ../../../scripts/python/example/source/example.py . || true
           cp ../../../scripts/ruby/hello/source/hello.rb . || true
           ruby -I../package/lib run.rb
 
-      - name: "[FORENSIC] Step 4b: Run Ruby Tests (Windows)"
+      - name: Run Integration Tests (Windows)
         if: matrix.os == 'windows-latest'
         working-directory: source/ports/rb_port/test
         shell: pwsh
         run: |
+          # Ensure local shell path is updated for DLL discovery
           $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
           $env:PYTHONHOME = "$env:PYTHONHOME"
           $env:PYTHONPATH = "$env:PYTHONPATH"
           
-          echo "[EXECUTION] Starting Windows Integration Tests (Polyglot Fixed)..."
-          $PyFile = Get-ChildItem -Path "../../../" -Filter "example.py" -Recurse | Select-Object -First 1
-          $RbFile = Get-ChildItem -Path "../../../" -Filter "hello.rb" -Recurse | Select-Object -First 1
-          if ($PyFile) { Copy-Item $PyFile.FullName . }
-          if ($RbFile) { Copy-Item $RbFile.FullName . }
+          cp ../../../scripts/python/example/source/example.py . || true
+          cp ../../../scripts/ruby/hello/source/hello.rb . || true
           ruby -I../package/lib run.rb
 
   release:
