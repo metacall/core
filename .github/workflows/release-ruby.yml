@@ -96,7 +96,8 @@ jobs:
           
           echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
-          # ARCHITECTURAL FIX: Use a simple loop with AppendAllText to ensure compatibility and NO-BOM UTF8
+          # ARCHITECTURAL FIX: Use Byte Injection to prevent BOM and encoding corruption
+          $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
           $lines = @(
             "METACALL_LIB_FILE=$($LIB_FILE.FullName)",
             "METACALL_INSTALL_PATH=$LIB_DIR",
@@ -104,10 +105,14 @@ jobs:
             "SERIAL_LIBRARY_PATH=$COMBINED_PATHS",
             "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS"
           )
+          
           foreach ($line in $lines) {
-            [System.IO.File]::AppendAllText($env:GITHUB_ENV, "$line`r`n")
+            $bytes = $Utf8NoBom.GetBytes("$line`n")
+            [System.IO.File]::AppendAllBytes($env:GITHUB_ENV, $bytes)
           }
-          [System.IO.File]::AppendAllText($env:GITHUB_PATH, "$LIB_DIR`r`n")
+          
+          $pathBytes = $Utf8NoBom.GetBytes("$LIB_DIR`n")
+          [System.IO.File]::AppendAllBytes($env:GITHUB_PATH, $pathBytes)
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
@@ -135,7 +140,6 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Integration Tests..."
-          # Reverting to the simple relative paths that worked before
           cp ../../../scripts/python/example/source/example.py . || true
           cp ../../../scripts/ruby/hello/source/hello.rb . || true
           
