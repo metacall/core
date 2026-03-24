@@ -31,23 +31,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install MetaCall Unix
+      - name: "[FORENSIC] Step 1: Install MetaCall Core (Unix)"
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
         run: |
+          echo "[DETECTION] Starting MetaCall Installation..."
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           
-          # ARCHITECTURAL FIX: Force symbolic links for the strict Ruby regex
-          # We search for the versioned file and link it to the plain name
-          sudo find /usr/local/lib -name "libmetacall.so.*" -exec ln -sf {} /usr/local/lib/libmetacall.so \; || true
-          sudo find /usr/local/lib -name "libmetacall.dylib.*" -exec ln -sf {} /usr/local/lib/libmetacall.dylib \; || true
+          echo "[DETECTION] Locating MetaCall library files..."
+          # Find the actual library file (versioned)
+          LIB_FILE=$(find /usr/local/lib -name "libmetacall.so.*" -o -name "libmetacall.dylib.*" | head -n 1)
           
-          # Refresh the library cache (Critical for Ubuntu)
+          if [ -z "$LIB_FILE" ]; then
+            echo "ERROR: MetaCall library NOT FOUND after installation!"
+            ls -la /usr/local/lib
+            exit 1
+          fi
+          
+          echo "[DETECTION] Found library at: $LIB_FILE"
+          echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
+          
+          # ARCHITECTURAL FIX: Force symbolic links
+          sudo ln -sf "$LIB_FILE" /usr/local/lib/libmetacall.so || true
+          sudo ln -sf "$LIB_FILE" /usr/local/lib/libmetacall.dylib || true
+          
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             sudo ldconfig
           fi
 
-          # Define the full environment for the MetaCall Core
-          echo "/usr/local/lib" >> $GITHUB_PATH
+          # Export full environment
           echo "METACALL_INSTALL_PATH=/usr/local/lib" >> $GITHUB_ENV
           echo "LOADER_LIBRARY_PATH=/usr/local/lib/metacall" >> $GITHUB_ENV
           echo "SERIAL_LIBRARY_PATH=/usr/local/lib/metacall" >> $GITHUB_ENV
@@ -55,56 +66,77 @@ jobs:
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
 
-      - name: Install MetaCall Windows
+      - name: "[FORENSIC] Step 1: Install MetaCall Core (Windows)"
         if: matrix.os == 'windows-latest'
         run: |
+          echo "[DETECTION] Starting MetaCall Installation on Windows..."
           powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
-          $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           
-          # Force the entire MetaCall tree into the Windows Path
+          $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
+          echo "[DETECTION] MetaCall Directory: $METACALL_DIR"
+          
+          # Verify installation
+          if (Test-Path "$METACALL_DIR\lib\metacall.dll") {
+            echo "[DETECTION] Found metacall.dll"
+          } else {
+            echo "ERROR: MetaCall library NOT FOUND on Windows!"
+            ls -R $METACALL_DIR
+            exit 1
+          }
+          
           echo "$METACALL_DIR" >> $GITHUB_PATH
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
-          
-          # Critical Windows environment variables
           echo "METACALL_INSTALL_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
           echo "METACALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
-          echo "LOADER_LIBRARY_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
 
-      - name: Set up Ruby
+      - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Sync Test Resources
+      - name: "[FORENSIC] Step 3: Deep Environment Audit"
         shell: bash
         run: |
-          cp source/scripts/python/example/source/example.py source/ports/rb_port/test/
-          cp source/scripts/ruby/hello/source/hello.rb source/ports/rb_port/test/
+          echo "=== SYSTEM AUDIT START ==="
+          echo "User: $(whoami)"
+          echo "OS: ${{ matrix.os }}"
+          echo "Working Directory: $(pwd)"
+          echo "Ruby Version: $(ruby -v)"
+          
+          echo "--- MetaCall Detection ---"
+          if [ -f "/usr/local/lib/libmetacall.so" ] || [ -f "/usr/local/lib/libmetacall.dylib" ]; then
+            echo "✅ Core Symbolic Link EXISTS"
+          else
+            echo "❌ Core Symbolic Link MISSING"
+          fi
+          
+          echo "--- Library Details ---"
+          ls -la /usr/local/lib/libmetacall* || echo "No metacall files found in /usr/local/lib"
+          
+          echo "--- Environment Variable Check ---"
+          echo "METACALL_INSTALL_PATH: $METACALL_INSTALL_PATH"
+          echo "METACALL_LIB_FILE: $METACALL_LIB_FILE"
+          
+          echo "--- Dynamic Linker Audit (Linux) ---"
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            ldconfig -p | grep metacall || echo "Metacall not found in ldconfig cache"
+          fi
+          echo "=== SYSTEM AUDIT END ==="
 
-      - name: Environment Audit (Debug)
-        shell: bash
-        run: |
-          echo "--- PATH ---"
-          echo $PATH
-          echo "--- MetaCall Version ---"
-          metacall --version || echo "metacall binary not in path"
-          echo "--- Library Files (Unix) ---"
-          ls -la /usr/local/lib/libmetacall* || true
-          echo "--- Library Files (Windows) ---"
-          ls -la $HOME/AppData/Local/MetaCall/metacall/lib/metacall* || true
-          echo "--- Environment Variables ---"
-          env | grep METACALL || true
-
-      - name: Test the Ruby Port
+      - name: "[FORENSIC] Step 4: Run Ruby Tests (Direct Injection)"
         working-directory: source/ports/rb_port/test
         shell: bash
         env:
-          METACALL_INSTALL_PATH: ${{ matrix.os == 'windows-latest' && format('{0}/AppData/Local/MetaCall/metacall/lib', env.HOME) || '/usr/local/lib' }}
-          LD_LIBRARY_PATH: /usr/local/lib
-          DYLD_LIBRARY_PATH: /usr/local/lib
+          # Use the absolute versioned file path we detected in Step 1
+          METACALL_LIBRARY_PATH: ${{ env.METACALL_LIB_FILE }}
         run: |
-          # Use -I to manually include the library path
+          echo "[EXECUTION] Starting Ruby Integration Tests..."
+          # Sync resources
+          cp ../../../scripts/python/example/source/example.py .
+          cp ../../../scripts/ruby/hello/source/hello.rb .
+          
+          # Execute with manual library include
           ruby -I../package/lib run.rb
 
   release:
@@ -117,12 +149,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-
       - name: Release the port
         working-directory: source/ports/rb_port
         env:
