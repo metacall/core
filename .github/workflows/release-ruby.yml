@@ -37,48 +37,41 @@ jobs:
           echo "[DETECTION] Starting MetaCall Installation..."
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           
-          echo "[DETECTION] Locating MetaCall via Binary Beacon..."
-          METACALL_PATH=$(which metacall || echo "")
+          # Force create common paths to prevent find errors
+          sudo mkdir -p /usr/local/lib
           
-          if [ -z "$METACALL_PATH" ]; then
-            echo "WARNING: 'metacall' binary not in PATH. Searching in common locations..."
-            METACALL_PATH=$(find $HOME /usr/local/bin /opt -name "metacall" -type f -executable 2>/dev/null | head -n 1)
-          fi
-
-          if [ -z "$METACALL_PATH" ]; then
-            echo "ERROR: MetaCall binary NOT FOUND!"
-            exit 1
-          fi
-
-          echo "[DETECTION] Binary found at: $METACALL_PATH"
+          echo "[DETECTION] Resolving MetaCall Home..."
+          METACALL_BIN=$(which metacall || echo "")
           
-          # Follow the link to find the real installation root
-          REAL_PATH=$(readlink -f "$METACALL_PATH" 2>/dev/null || realpath "$METACALL_PATH" 2>/dev/null || echo "$METACALL_PATH")
-          INSTALL_ROOT=$(dirname $(dirname "$REAL_PATH"))
+          # Use Python to get the TRUE physical path (bypassing symlinks/wrappers)
+          REAL_BIN_PATH=$(python3 -c "import os; print(os.path.realpath('$METACALL_BIN'))" 2>/dev/null || echo "$METACALL_BIN")
+          INSTALL_ROOT=$(dirname $(dirname "$REAL_BIN_PATH"))
           
-          echo "[DETECTION] Resolved Installation Root: $INSTALL_ROOT"
+          echo "[DETECTION] Physical Binary: $REAL_BIN_PATH"
+          echo "[DETECTION] Resolved Root: $INSTALL_ROOT"
           
-          # Find the actual library file within the resolved root
-          LIB_FILE=$(find "$INSTALL_ROOT" -name "libmetacall.so.*" -o -name "libmetacall.dylib.*" | head -n 1)
+          echo "[DETECTION] Hunting for library via Prefix Matching..."
+          # Fuzzy Match: Look for anything starting with 'libmetacall' or containing 'metacall' in key areas
+          LIB_FILE=$(find "$INSTALL_ROOT" "$HOME" "/usr/local/lib" -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)' | head -n 1)
           
           if [ -z "$LIB_FILE" ]; then
-            echo "WARNING: Library not found in root. Performing broad search..."
-            LIB_FILE=$(find "$HOME" "/usr/local" "/opt" -name "libmetacall.so.*" -o -name "libmetacall.dylib.*" 2>/dev/null | head -n 1)
+            echo "WARNING: Primary search failed. Scanning ALL local files for 'metacall' prefix..."
+            LIB_FILE=$(find /usr/local /opt $HOME -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)' | head -n 1)
           fi
 
           if [ -z "$LIB_FILE" ]; then
-            echo "ERROR: MetaCall library NOT FOUND anywhere!"
+            echo "ERROR: MetaCall library NOT FOUND even with fuzzy matching!"
             exit 1
           fi
           
           LIB_DIR=$(dirname "$LIB_FILE")
-          echo "[DETECTION] Library found at: $LIB_FILE"
-          echo "[DETECTION] Library Directory: $LIB_DIR"
+          echo "[DETECTION] SUCCESS: Found library at $LIB_FILE"
           
+          # Record the specific detected file and dir
           echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
           echo "METACALL_INSTALL_PATH=$LIB_DIR" >> $GITHUB_ENV
           
-          # ARCHITECTURAL FIX: Force symbolic links in the detected lib dir
+          # Force Link: Create the exact name Ruby expects in the detected folder
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
           
@@ -86,36 +79,20 @@ jobs:
             sudo ldconfig "$LIB_DIR"
           fi
 
-          # Export full environment
-          echo "$INSTALL_ROOT/bin" >> $GITHUB_PATH
+          # Export full environment for downstream steps
           echo "$LIB_DIR" >> $GITHUB_PATH
-          echo "LOADER_LIBRARY_PATH=$LIB_DIR/metacall" >> $GITHUB_ENV
-          echo "SERIAL_LIBRARY_PATH=$LIB_DIR/metacall" >> $GITHUB_ENV
-          echo "DETECTOR_LIBRARY_PATH=$LIB_DIR/metacall" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LIB_DIR" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=$LIB_DIR" >> $GITHUB_ENV
+          echo "LOADER_LIBRARY_PATH=$LIB_DIR/metacall" >> $GITHUB_ENV
 
       - name: "[FORENSIC] Step 1: Install MetaCall Core (Windows)"
         if: matrix.os == 'windows-latest'
         run: |
           echo "[DETECTION] Starting MetaCall Installation on Windows..."
           powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
-          
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
-          echo "[DETECTION] MetaCall Directory: $METACALL_DIR"
-          
-          if (Test-Path "$METACALL_DIR\lib\metacall.dll") {
-            echo "[DETECTION] Found metacall.dll"
-          } else {
-            echo "ERROR: MetaCall library NOT FOUND on Windows!"
-            ls -R $METACALL_DIR
-            exit 1
-          }
-          
-          echo "$METACALL_DIR" >> $GITHUB_PATH
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
           echo "METACALL_INSTALL_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
-          echo "METACALL_PATH=$METACALL_DIR" >> $GITHUB_ENV
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
@@ -123,38 +100,28 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: "[FORENSIC] Step 3: Deep Environment Audit"
+      - name: "[FORENSIC] Step 3: Global Environment Audit"
         shell: bash
         run: |
-          echo "=== SYSTEM AUDIT START ==="
-          echo "User: $(whoami)"
-          echo "OS: ${{ matrix.os }}"
-          echo "Ruby Version: $(ruby -v)"
-          echo "--- Environment Variable Check ---"
-          echo "METACALL_INSTALL_PATH: $METACALL_INSTALL_PATH"
-          echo "METACALL_LIB_FILE: $METACALL_LIB_FILE"
-          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-          
-          echo "--- Library Files (Detected Location) ---"
-          ls -la "$METACALL_INSTALL_PATH/libmetacall"* || echo "No metacall files found in detected path"
-          
-          echo "--- Binary Check ---"
-          which metacall
-          metacall --version || echo "metacall binary failed to execute"
-          echo "=== SYSTEM AUDIT END ==="
+          echo "=== AUDIT START ==="
+          echo "Detected Lib File: $METACALL_LIB_FILE"
+          echo "Search Path: $METACALL_INSTALL_PATH"
+          echo "--- Directory Content ---"
+          ls -la "$METACALL_INSTALL_PATH" | grep metacall || echo "No metacall files in detected dir"
+          echo "--- Environment ---"
+          env | grep METACALL || true
+          echo "=== AUDIT END ==="
 
-      - name: "[FORENSIC] Step 4: Run Ruby Tests (Direct Path Injection)"
+      - name: "[FORENSIC] Step 4: Run Ruby Tests (Direct Injection)"
         working-directory: source/ports/rb_port/test
         shell: bash
-        env:
-          METACALL_LIBRARY_PATH: ${{ env.METACALL_LIB_FILE }}
         run: |
-          echo "[EXECUTION] Starting Ruby Integration Tests..."
+          echo "[EXECUTION] Executing Ruby Integration Suite..."
           cp ../../../scripts/python/example/source/example.py .
           cp ../../../scripts/ruby/hello/source/hello.rb .
           
-          # Use the detected install path for the Ruby loader
-          export METACALL_INSTALL_PATH="${{ env.METACALL_INSTALL_PATH }}"
+          # Force the loader to use our detected install path
+          export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
           ruby -I../package/lib run.rb
 
   release:
