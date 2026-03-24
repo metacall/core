@@ -35,20 +35,33 @@ jobs:
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
+          # Disable strict pipe failures to allow empty search results
+          set +o pipefail
+          
           echo "[INSTALL] Starting MetaCall Setup for Unix..."
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
-          echo "[DETECTION] Performing Global Component Hunt..."
-          # Find all unique directories containing MetaCall components
-          RAW_DIRS=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
+          echo "[DETECTION] Constructing Safe Search Paths..."
+          SEARCH_DIRS="$HOME /usr/local /opt"
+          [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
+          [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
           
-          # Join paths with colons and strip trailing
+          echo "[DETECTION] Hunting for Components in: $SEARCH_DIRS"
+          # Find all unique directories containing MetaCall components
+          # We use fuzzy *metacall* to catch debug versions like libmetacalld.dylib
+          RAW_DIRS=$(find $SEARCH_DIRS -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
+          
+          if [ -z "$RAW_DIRS" ]; then
+            echo "ERROR: No MetaCall components found!"
+            exit 1
+          fi
+          
           COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" - | sed 's/:$//')
           echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
           # Find the specific Core Library
-          LIB_FILE=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | head -n 1)
+          LIB_FILE=$(find $RAW_DIRS -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | head -n 1)
           LIB_DIR=$(dirname "$LIB_FILE")
           
           # Export to GITHUB_ENV
@@ -61,7 +74,7 @@ jobs:
           echo "DYLD_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
           echo "$LIB_DIR" >> $GITHUB_PATH
           
-          # Link for Ruby
+          # Links for Ruby
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
           [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig "$LIB_DIR" || true
@@ -77,25 +90,24 @@ jobs:
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "[DETECTION] Hunting for components in $METACALL_DIR"
           
-          # Native PowerShell detection to avoid encoding bugs
           $LIB_FILE = Get-ChildItem -Path $METACALL_DIR -Filter "*metacall*.dll" -Recurse | Select-Object -First 1
           $LIB_DIR = $LIB_FILE.DirectoryName
-          
-          # Find all plugin folders
           $ALL_DIRS = Get-ChildItem -Path $METACALL_DIR -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $COMBINED_PATHS = $ALL_DIRS -join ";"
           
           echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
-          # Export to GITHUB_ENV using UTF-8 to prevent the "Chinese Characters" bug
-          "METACALL_LIB_FILE=$($LIB_FILE.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "METACALL_INSTALL_PATH=$LIB_DIR" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "LOADER_LIBRARY_PATH=$COMBINED_PATHS" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "SERIAL_LIBRARY_PATH=$COMBINED_PATHS" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          # ARCHITECTURAL FIX: Use UTF-8 WITHOUT BOM to prevent the "Chinese Characters" bug
+          $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
+          [System.IO.File]::AppendAllLines($env:GITHUB_ENV, @(
+            "METACALL_LIB_FILE=$($LIB_FILE.FullName)",
+            "METACALL_INSTALL_PATH=$LIB_DIR",
+            "LOADER_LIBRARY_PATH=$COMBINED_PATHS",
+            "SERIAL_LIBRARY_PATH=$COMBINED_PATHS",
+            "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS"
+          ), $Utf8NoBom)
           
-          # Add to Path
-          $LIB_DIR | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          [System.IO.File]::AppendAllLines($env:GITHUB_PATH, @($LIB_DIR), $Utf8NoBom)
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
@@ -109,10 +121,10 @@ jobs:
           echo "=== SYSTEM AUDIT START ==="
           echo "OS: ${{ matrix.os }}"
           echo "INSTALL_PATH: $METACALL_INSTALL_PATH"
-          echo "--- Directory Scan ---"
-          # Split path by : or ; depending on OS
-          IFS=$([[ "${{ matrix.os }}" == "windows-latest" ]] && echo ";" || echo ":")
-          read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
+          echo "LOADER_PATH: $LOADER_LIBRARY_PATH"
+          echo "--- Directory Verification ---"
+          SEP=$([[ "${{ matrix.os }}" == "windows-latest" ]] && echo ";" || echo ":")
+          IFS=$SEP read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
           for i in "${ADDR[@]}"; do
             [ -d "$i" ] && echo "Found House: $i" && ls -la "$i" | grep -i metacall || true
           done
@@ -123,7 +135,7 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Integration Tests..."
-          # Reverting to the simple CP paths that worked before the regression
+          # Reverting to the simple relative paths that worked before
           cp ../../../scripts/python/example/source/example.py . || true
           cp ../../../scripts/ruby/hello/source/hello.rb . || true
           
