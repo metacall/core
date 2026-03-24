@@ -40,6 +40,7 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
+          echo "[DETECTION] Constructing Safe Search Paths..."
           SEARCH_DIRS="$HOME /usr/local /opt"
           [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
           [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
@@ -74,36 +75,38 @@ jobs:
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "[DETECTION] Hunting for components in $METACALL_DIR"
           
-          # ARCHITECTURAL FIX (Strategy: Find specific files then use paths)
+          # ARCHITECTURAL FIX: Use specific hunt for dependencies
           $CoreFile = Get-ChildItem -Path $METACALL_DIR -Filter "metacall.dll" -Recurse | Select-Object -First 1
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
-          $Serial   = Get-ChildItem -Path $METACALL_DIR -Filter "*serial.dll" -Recurse | Select-Object -First 1
+          
+          # Find MetaCall's bundled Ruby runtime directory (The "Friend" needed to fix Error 126)
+          $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
           
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
-          $SerialDir  = if ($Serial)   { $Serial.DirectoryName }   else { $InstallDir }
           
-          # Find all unique DLL folders for the System PATH
-          $ALL_DIRS = Get-ChildItem -Path $METACALL_DIR -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
-          
-          echo "[DETECTION] SUCCESS: Core -> $InstallDir, Loader -> $LoaderDir"
+          echo "[DETECTION] SUCCESS: Core found at $InstallDir"
           
           # Export to GITHUB_ENV using ASCII
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LoaderDir" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$SerialDir" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           
-          # Inject EVERY house into the Windows System PATH
-          foreach ($dir in $ALL_DIRS) {
-            Add-Content -Path $env:GITHUB_PATH -Value "$dir" -Encoding Ascii
+          # Inject the primary lib dir and the bundled Ruby runtime into PATH
+          Add-Content -Path $env:GITHUB_PATH -Value "$InstallDir" -Encoding Ascii
+          if ($RubyRuntime) {
+              $RubyRuntimeDir = $RubyRuntime.DirectoryName
+              echo "[DETECTION] Found MetaCall Ruby runtime at: $RubyRuntimeDir"
+              Add-Content -Path $env:GITHUB_PATH -Value "$RubyRuntimeDir" -Encoding Ascii
           }
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          # Match MetaCall's bundled version for Windows to resolve transitive dependencies
+          ruby-version: ${{ matrix.os == 'windows-latest' && '3.5' || '3.2' }}
           bundler-cache: true
 
       - name: "[FORENSIC] Step 3: Global Environment Audit"
@@ -136,6 +139,10 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: pwsh
         run: |
+          # FORCE RE-INJECTION of all DLL folders into PATH to bypass flush issues
+          $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
+          $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
+          
           echo "[EXECUTION] Starting Windows Integration Tests..."
           cp ../../../scripts/python/example/source/example.py .
           cp ../../../scripts/ruby/hello/source/hello.rb .
