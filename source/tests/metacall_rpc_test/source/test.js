@@ -4,12 +4,48 @@ const http = require('http');
 // Start mock server
 const server = spawn(process.argv[0], [process.argv[2]]);
 
+let ready = false;
+let testFinished = false;
+let shuttingDown = false;
+let exitCode = 0;
+
 server.stdout.pipe(process.stdout);
 server.stderr.pipe(process.stderr);
 
-server.on('exit', (code) => {
-	if (code !== 0) {
-		process.exit(code);
+function shutdownServerAndExit(code) {
+	if (shuttingDown) {
+		return;
+	}
+
+	shuttingDown = true;
+	exitCode = code;
+
+	if (server.exitCode !== null || server.killed) {
+		process.exit(exitCode);
+		return;
+	}
+
+	server.once("exit", () => {
+		process.exit(exitCode);
+	});
+
+	server.kill("SIGINT");
+
+	setTimeout(() => {
+		process.exit(exitCode);
+	}, 5000);
+}
+
+server.on("exit", (code, signal) => {
+	if (shuttingDown) {
+		process.exit(exitCode);
+		return;
+	}
+
+	if (testFinished !== true) {
+		killTest(
+			`Error: RPC mock server exited prematurely with code ${code} and signal ${signal}`,
+		);
 	}
 });
 
@@ -58,8 +94,6 @@ process.on('uncaughtException', killTest);
 
 // Wait server to be ready and execute the test
 (async function run() {
-	let ready = false;
-
 	setTimeout(() => {
 		if (ready === false) {
 			killTest('Timeout reached, server is not ready');
@@ -78,11 +112,15 @@ process.on('uncaughtException', killTest);
 
 	test.stdout.pipe(process.stdout);
 	test.stderr.pipe(process.stderr);
-	
-	test.on('exit', (code) => {
+
+	test.on("exit", (code) => {
+		testFinished = true;
+
 		if (code !== 0) {
 			killTest(`Error: Test exited with code ${code}`);
+			return;
 		}
-		process.exit(0);
+
+		shutdownServerAndExit(0);
 	});
 })();

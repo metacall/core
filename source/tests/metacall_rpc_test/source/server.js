@@ -43,9 +43,6 @@ const server = http.createServer((req, res) => {
 				const result = '5.0';
 				res.setHeader('Content-Type', 'application/json');
 				res.end(result);
-				setTimeout(() => {
-					process.exit(0);
-				}, 1000);
 			});
 			return;
 		} else if (req.url === '/viferga/example/v1/await/async_divide') {
@@ -68,6 +65,30 @@ const server = http.createServer((req, res) => {
 	res.writeHead(500, { 'Content-Type': 'text/plain' });
 	res.end('ERROR: Unknown endpoint');
 });
+
+let shuttingDown = false;
+
+function shutdown(signal) {
+	if (shuttingDown === true) {
+		return;
+	}
+
+	shuttingDown = true;
+	console.log(`Shutting down MetaCall server (${signal})`);
+
+	server.close((err) => {
+		if (err) {
+			console.error(err);
+			process.exit(1);
+			return;
+		}
+
+		process.exit(0);
+	});
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 server.listen(port, () => {
 	console.log(`MetaCall server listening at ${port}`);
