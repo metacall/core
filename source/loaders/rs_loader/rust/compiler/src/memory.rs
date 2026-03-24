@@ -28,11 +28,6 @@ impl MemoryRegistration {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DynlinkError(error)),
         };
-        // cleanup temp dir
-        let mut destination = state.output.clone();
-        destination.pop();
-        std::fs::remove_dir_all(destination).expect("Unable to cleanup tempdir");
-
         Ok(MemoryRegistration {
             name,
             state,
@@ -47,6 +42,17 @@ impl MemoryRegistration {
                 Ok(())
             }
             None => Err(String::from("The Dynlink library is None")),
+        }
+    }
+}
+
+impl Drop for MemoryRegistration {
+    fn drop(&mut self) {
+        drop(std::mem::replace(&mut self.dynlink, None));
+
+        let mut path = std::mem::take(&mut self.state.output);
+        if path.pop() {
+            let _ = std::fs::remove_dir_all(path);
         }
     }
 }
