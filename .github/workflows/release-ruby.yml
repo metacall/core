@@ -76,27 +76,19 @@ jobs:
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
           
-          # ARCHITECTURAL FIX: Locate the TRUE Python Home (not just the DLL dir)
-          $PyHome = Join-Path $METACALL_DIR "runtimes\python"
-          if (-not (Test-Path $PyHome)) {
-             # Fallback to searching for the directory containing 'Lib'
-             $LibDir = Get-ChildItem -Path $METACALL_DIR -Directory -Filter "Lib" -Recurse | Select-Object -First 1
-             $PyHome = if ($LibDir) { $LibDir.Parent.FullName } else { "$METACALL_DIR\lib" }
-          }
+          $PyDll = Get-ChildItem -Path $METACALL_DIR -Filter "python*.dll" -Recurse | Select-Object -First 1
+          $PyHome = if ($PyDll) { $PyDll.DirectoryName } else { "$METACALL_DIR\runtimes\python" }
           
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
           
           echo "[DETECTION] SUCCESS: Core -> $InstallDir, PythonHome -> $PyHome"
           
-          # Export to GITHUB_ENV using ASCII
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LoaderDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$InstallDir" -Encoding Ascii
-          
-          # FIX: Export correct Python Home boundaries
           Add-Content -Path $env:GITHUB_ENV -Value "PYTHONHOME=$PyHome" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "PYTHONPATH=$InstallDir" -Encoding Ascii
           
@@ -135,9 +127,9 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Unix Integration Tests..."
-          # Fuzzy resource copy
-          cp $(find ../../../source/scripts -name "example.py" | head -n 1) . || true
-          cp $(find ../../../source/scripts -name "hello.rb" | head -n 1) . || true
+          # REVERTED: Using simple relative paths that worked before
+          cp ../../../scripts/python/example/source/example.py . || true
+          cp ../../../scripts/ruby/hello/source/hello.rb . || true
           ruby -I../package/lib run.rb
 
       - name: "[FORENSIC] Step 4b: Run Ruby Tests (Windows)"
@@ -145,21 +137,17 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: pwsh
         run: |
-          # FORCE RE-INJECTION of paths
+          # Keep Windows logic exactly as it is (it worked!)
           $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
-          
-          # Fix: Match the local shell env to the discovered Python home
           $env:PYTHONHOME = "$env:PYTHONHOME"
           $env:PYTHONPATH = "$env:PYTHONPATH"
           
           echo "[EXECUTION] Starting Windows Integration Tests (Polyglot Fixed)..."
-          # Standard resource copy for Windows
           $PyFile = Get-ChildItem -Path "../../../" -Filter "example.py" -Recurse | Select-Object -First 1
           $RbFile = Get-ChildItem -Path "../../../" -Filter "hello.rb" -Recurse | Select-Object -First 1
           if ($PyFile) { Copy-Item $PyFile.FullName . }
           if ($RbFile) { Copy-Item $RbFile.FullName . }
-          
           ruby -I../package/lib run.rb
 
   release:
