@@ -10,6 +10,8 @@
 
 #include <rapid_json_serial/rapid_json_serial_impl.h>
 
+#include <metacall/metacall_error.h>
+
 #include <log/log.h>
 
 /* Disable warnings from RapidJSON */
@@ -417,8 +419,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 		return value_create_long((long)ui);
 #else
 		log_write("metacall", LOG_LEVEL_ERROR, "Unsigned integer value overflows both int and long in RapidJSON implementation");
-
-		return NULL;
+		return (value)metacall_error_throw("RapidJSON", -1, NULL, "Unsigned integer value overflows both int and long in RapidJSON implementation");
 #endif
 	}
 	else if (v->IsInt64() == true)
@@ -433,8 +434,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 		if (i < (int64_t)LONG_MIN || i > (int64_t)LONG_MAX)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "64-bit signed integer value overflows long in RapidJSON implementation");
-
-			return NULL;
+			return (value)metacall_error_throw("RapidJSON", -1, NULL, "64-bit signed integer value overflows long in RapidJSON implementation");
 		}
 #endif
 
@@ -447,8 +447,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 		if (ui > (uint64_t)LONG_MAX)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "64-bit unsigned integer value overflows long in RapidJSON implementation");
-
-			return NULL;
+			return (value)metacall_error_throw("RapidJSON", -1, NULL, "64-bit unsigned integer value overflows long in RapidJSON implementation");
 		}
 
 		return value_create_long((long)ui);

@@ -306,20 +306,24 @@ TEST_F(serial_test, DefaultConstructor)
 			EXPECT_EQ((long)3000000000L, (long)value_to_long(v));
 			value_destroy(v);
 #else
-			/* On 32-bit platforms long cannot hold this value; NULL is the correct result */
-			EXPECT_EQ((value)NULL, (value)v);
+			/* On 32-bit platforms long cannot hold this value; expect a throwable error value */
+			EXPECT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
+			value_destroy(v);
 #endif
 		}
 
-		// Regression: uint64 > LONG_MAX must return NULL, not a silently wrapped value.
+		// Regression: uint64 > LONG_MAX must return a throwable, not a silently wrapped value.
 		// UINT64_MAX (18446744073709551615) cannot be represented in any MetaCall integer
-		// type; returning corrupt data here is worse than a clean NULL.
+		// type; returning corrupt data here is worse than a clean exception.
 		{
 			static const char json_uint64_overflow[] = "18446744073709551615";
 
 			v = serial_deserialize(s, json_uint64_overflow, sizeof(json_uint64_overflow), allocator);
 
-			EXPECT_EQ((value)NULL, (value)v);
+			EXPECT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
+			value_destroy(v);
 		}
 	}
 
