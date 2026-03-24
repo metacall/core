@@ -74,15 +74,18 @@ jobs:
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "[DETECTION] Hunting for components in $METACALL_DIR"
           
-          # ARCHITECTURAL FIX: Use MetaCall's internal Ruby 3.5 instead of setup-ruby
           $CoreFile = Get-ChildItem -Path $METACALL_DIR -Filter "metacall.dll" -Recurse | Select-Object -First 1
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
           
+          # Detect Python Home (Fix for 'ModuleNotFoundError: No module named encodings')
+          $PyDll = Get-ChildItem -Path $METACALL_DIR -Filter "python*.dll" -Recurse | Select-Object -First 1
+          $PyHome = if ($PyDll) { $PyDll.DirectoryName } else { "$METACALL_DIR\runtimes\python" }
+          
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
           
-          echo "[DETECTION] SUCCESS: Core -> $InstallDir"
+          echo "[DETECTION] SUCCESS: Core -> $InstallDir, PythonHome -> $PyHome"
           
           # Export to GITHUB_ENV using ASCII
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
@@ -91,13 +94,17 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           
-          # Ensure both the main lib and the bundled Ruby runtime are in the PATH
+          # ARCHITECTURAL FIX: Define Python and Ruby boundaries
+          Add-Content -Path $env:GITHUB_ENV -Value "PYTHONHOME=$PyHome" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "PYTHONPATH=$InstallDir" -Encoding Ascii
+          
+          # Inject paths
           Add-Content -Path $env:GITHUB_PATH -Value "$InstallDir" -Encoding Ascii
           if ($RubyRuntime) {
               $RubyRuntimeDir = $RubyRuntime.DirectoryName
-              echo "[DETECTION] Found MetaCall Ruby runtime at: $RubyRuntimeDir"
               Add-Content -Path $env:GITHUB_PATH -Value "$RubyRuntimeDir" -Encoding Ascii
           }
+          Add-Content -Path $env:GITHUB_PATH -Value "$PyHome" -Encoding Ascii
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment (Unix Only)"
         if: matrix.os != 'windows-latest'
@@ -112,7 +119,7 @@ jobs:
           echo "=== SYSTEM AUDIT START ==="
           echo "OS: ${{ matrix.os }}"
           echo "INSTALL_PATH: $METACALL_INSTALL_PATH"
-          echo "LOADER_PATH: $LOADER_LIBRARY_PATH"
+          echo "PYTHONHOME: $PYTHONHOME"
           echo "--- Directory Verification ---"
           SEP=$([[ "${{ matrix.os }}" == "windows-latest" ]] && echo ";" || echo ":")
           IFS=$SEP read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
@@ -140,7 +147,11 @@ jobs:
           $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
           
-          echo "[EXECUTION] Starting Windows Integration Tests (Bundled Ruby)..."
+          # Explicitly set Python Home in local shell to prevent encodings error
+          $env:PYTHONHOME = "$env:PYTHONHOME"
+          $env:PYTHONPATH = "$env:PYTHONPATH"
+          
+          echo "[EXECUTION] Starting Windows Integration Tests (Polyglot Sync)..."
           cp ../../../scripts/python/example/source/example.py .
           cp ../../../scripts/ruby/hello/source/hello.rb .
           ruby -I../package/lib run.rb
