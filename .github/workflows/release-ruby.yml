@@ -80,7 +80,7 @@ jobs:
 
       - name: "[FORENSIC] Step 1b: Install & Detect MetaCall (Windows)"
         if: matrix.os == 'windows-latest'
-        shell: powershell
+        shell: pwsh
         run: |
           echo "[INSTALL] Starting MetaCall Setup for Windows..."
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -96,8 +96,7 @@ jobs:
           
           echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
-          # ARCHITECTURAL FIX: Use Byte Injection to prevent BOM and encoding corruption
-          $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
+          # STRATEGY A: Using pwsh (PowerShell Core) which is BOM-free by default
           $lines = @(
             "METACALL_LIB_FILE=$($LIB_FILE.FullName)",
             "METACALL_INSTALL_PATH=$LIB_DIR",
@@ -106,13 +105,9 @@ jobs:
             "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS"
           )
           
-          foreach ($line in $lines) {
-            $bytes = $Utf8NoBom.GetBytes("$line`n")
-            [System.IO.File]::AppendAllBytes($env:GITHUB_ENV, $bytes)
-          }
-          
-          $pathBytes = $Utf8NoBom.GetBytes("$LIB_DIR`n")
-          [System.IO.File]::AppendAllBytes($env:GITHUB_PATH, $pathBytes)
+          # Writing to GITHUB_ENV and GITHUB_PATH using modern pwsh Out-File (BOM-less UTF8)
+          $lines | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          $LIB_DIR | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
@@ -140,8 +135,9 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Integration Tests..."
-          cp ../../../scripts/python/example/source/example.py . || true
-          cp ../../../scripts/ruby/hello/source/hello.rb . || true
+          # Fix: Include the /source/ prefix in the relative path
+          cp ../../../source/scripts/python/example/source/example.py . || true
+          cp ../../../source/scripts/ruby/hello/source/hello.rb . || true
           
           export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
           export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
