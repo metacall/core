@@ -32,12 +32,12 @@ impl LoadingMethod {
                 }
                 None => Err(String::from("consume_dlib was called more than once")),
             },
-            Self::Memory(MemoryRegistration { mut dynlink, .. }) => match dynlink {
-                Some(_) => {
-                    let dl = dynlink.take();
-                    Ok(dl.expect("Unexpected: Dynlink library is None"))
+            Self::Memory(mut memory) => {
+                let dl = std::mem::replace(&mut memory.dynlink, None);
+                match dl {
+                    Some(dl) => Ok(dl),
+                    None => Err(String::from("consume_dlib was called more than once")),
                 }
-                None => Err(String::from("consume_dlib was called more than once")),
             },
         }
     }
