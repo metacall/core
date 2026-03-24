@@ -1,15 +1,16 @@
 use crate::Attribute;
 
 use super::rustc_middle::ty::{
-    subst::GenericArgKind, Binder, FloatTy, FnSig, IntTy, TyCtxt, TyKind, TyS, UintTy, Visibility,
+    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyCtxt, TyKind, UintTy,
+    Visibility,
 };
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 use rustc_hir::def::{DefKind, Res};
-use rustc_middle::hir::exports::Export;
+//use rustc_middle::hir::exports::Export;
 use std::iter::zip;
 
-pub fn handle_ty(ty: &TyS) -> FunctionParameter {
+pub fn handle_ty(ty: &Ty) -> FunctionParameter {
     let mut result = FunctionParameter {
         name: String::new(),
         mutability: Mutability::No,
@@ -133,7 +134,7 @@ pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function
     match res {
         Res::Def(DefKind::AssocFn, def_id) => {
             let fn_sig = ctxt.fn_sig(*def_id);
-            let names = ctxt.fn_arg_names(*def_id);
+            let names = ctxt.hir_name(*def_id);
             Some(handle_fn(ident.to_string(), &fn_sig, names))
         }
         _ => None,
