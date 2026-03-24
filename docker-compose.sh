@@ -79,6 +79,9 @@ sub_test() {
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
 
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
+
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
@@ -99,6 +102,9 @@ sub_test_sanitizer() {
 
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
+
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
 
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
@@ -153,6 +159,33 @@ sub_coverage() {
 
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=coverage
+
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
+
+	# Define build type
+	export METACALL_BUILD_TYPE=debug
+
+	ln -sf tools/deps/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+}
+
+# Build MetaCall Docker Compose with Valgrind for testing (link manually dockerignore files)
+sub_test_memcheck() {
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
+
+	# Disable build with sanitizer
+	export METACALL_BUILD_SANITIZER=
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
+
+	# Enable build with memcheck
+	export METACALL_BUILD_MEMCHECK=memcheck
 
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
@@ -392,6 +425,7 @@ sub_help() {
 	echo "	test-thread-sanitizer"
 	echo "	test-memory-sanitizer"
 	echo "	coverage"
+	echo "	test-memcheck"
 	echo "	cache"
 	echo "	platform"
 	echo "	push"
@@ -426,6 +460,9 @@ case "$1" in
 		;;
 	coverage)
 		sub_coverage
+		;;
+	test-memcheck)
+		sub_test_memcheck
 		;;
 	cache)
 		sub_cache
