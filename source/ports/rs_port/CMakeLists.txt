@@ -23,11 +23,6 @@ set(target rs_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
-if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
-	return()
-endif()
-
-
 # Build Rust Port
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(TARGET_BUILD_TYPE "--release")
@@ -89,7 +84,7 @@ add_custom_target(${target}_clippy ALL
 
 add_custom_target(${target} ALL
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR} ${SANITIZER_FLAGS}
+    COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR} ${SANITIZER_FLAGS}
         ${Rust_CARGO_EXECUTABLE} ${NIGHTLY_FLAGS} build ${BUILD_STD_FLAGS} ${TARGET_BUILD_TYPE}
     DEPENDS ${META_PROJECT_NAME}::metacall ${target}_clippy
 )
@@ -113,6 +108,9 @@ endif()
 # Define test
 #
 
+if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER) AND NOT RS_PORT_RUN_INSTRUMENTED_TEST)
+ return()
+endif()
 
 # If we have cargo-valgrind, run the tests with it
 # For installing it, first install valgrind on your system, then run:
