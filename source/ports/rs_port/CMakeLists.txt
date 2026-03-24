@@ -23,6 +23,8 @@ set(target rs_port)
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
 
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.rs" PROPERTIES GENERATED TRUE)
+
 # Build Rust Port
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(TARGET_BUILD_TYPE "--release")
@@ -109,7 +111,7 @@ endif()
 #
 
 if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER) AND NOT RS_PORT_RUN_INSTRUMENTED_TEST)
- return()
+	return()
 endif()
 
 # If we have cargo-valgrind, run the tests with it
