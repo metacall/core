@@ -31,64 +31,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "[FORENSIC] Step 1: Install & Detect MetaCall"
+      - name: "[FORENSIC] Step 1a: Install & Detect MetaCall (Unix)"
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          # Disable strict pipe failures to prevent grep from killing the script
-          set +o pipefail
+          echo "[INSTALL] Starting MetaCall Setup for Unix..."
+          curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
+          sudo mkdir -p /usr/local/lib
           
-          echo "[INSTALL] Starting MetaCall Setup for ${{ matrix.os }}..."
+          echo "[DETECTION] Performing Global Component Hunt..."
+          # Find all unique directories containing MetaCall components
+          RAW_DIRS=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
           
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            powershell.exe -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
-          else
-            curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
-            sudo mkdir -p /usr/local/lib
-          fi
-          
-          echo "[DETECTION] Constructing Search Paths..."
-          SEARCH_DIRS="$HOME /usr/local /opt"
-          [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
-          [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
-          
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            WIN_PATH=$(cygpath "$USERPROFILE" 2>/dev/null || echo "C:/Users/runneradmin")
-            SEARCH_DIRS="$SEARCH_DIRS $WIN_PATH/AppData/Local/MetaCall"
-          fi
-
-          echo "[DETECTION] Hunting for Components in: $SEARCH_DIRS"
-          
-          # Find directories containing libraries
-          RAW_DIRS=$(find $SEARCH_DIRS -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib|dll)$' | xargs dirname 2>/dev/null | sort -u)
-          
-          if [ -z "$RAW_DIRS" ]; then
-            echo "WARNING: Broad search failed. Trying deep search in INSTALL_ROOT..."
-            METACALL_BIN=$(which metacall || echo "")
-            REAL_BIN=$(readlink -f "$METACALL_BIN" 2>/dev/null || echo "$METACALL_BIN")
-            INSTALL_ROOT=$(dirname $(dirname "$REAL_BIN"))
-            RAW_DIRS=$(find "$INSTALL_ROOT" -name "*metacall*" -type f 2>/dev/null | xargs dirname 2>/dev/null | sort -u)
-          fi
-
-          # Final check - if still empty, we have a real problem
-          if [ -z "$RAW_DIRS" ]; then
-            echo "ERROR: MetaCall components not found!"
-            exit 1
-          fi
-          
+          # Join paths with colons and strip trailing
           COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" - | sed 's/:$//')
           echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
-          # Find the specific Core Library (using the pattern that worked for macOS ARM)
-          LIB_FILE=$(find $RAW_DIRS -name "libmetacall*" -o -name "metacall.dll" -type f 2>/dev/null | grep -E '\.(so|dylib|dll)$' | head -n 1)
-          
-          if [ -z "$LIB_FILE" ]; then
-             # Fallback to the first file in the first dir if exact match fails
-             FIRST_DIR=$(echo "$RAW_DIRS" | head -n 1)
-             LIB_FILE=$(ls "$FIRST_DIR"/*metacall* | head -n 1)
-          fi
-
+          # Find the specific Core Library
+          LIB_FILE=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | head -n 1)
           LIB_DIR=$(dirname "$LIB_FILE")
-          echo "[DETECTION] Core Library: $LIB_FILE"
           
           # Export to GITHUB_ENV
           echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
@@ -100,12 +61,41 @@ jobs:
           echo "DYLD_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
           echo "$LIB_DIR" >> $GITHUB_PATH
           
-          # Unix Links
-          if [[ "${{ matrix.os }}" != "windows-latest" ]]; then
-            sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
-            sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
-            [[ "${{ matrix.os }}" == "ubuntu-latest" ]] && sudo ldconfig "$LIB_DIR" || true
-          fi
+          # Link for Ruby
+          sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
+          sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
+          [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig "$LIB_DIR" || true
+
+      - name: "[FORENSIC] Step 1b: Install & Detect MetaCall (Windows)"
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          echo "[INSTALL] Starting MetaCall Setup for Windows..."
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))
+          
+          $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
+          echo "[DETECTION] Hunting for components in $METACALL_DIR"
+          
+          # Native PowerShell detection to avoid encoding bugs
+          $LIB_FILE = Get-ChildItem -Path $METACALL_DIR -Filter "*metacall*.dll" -Recurse | Select-Object -First 1
+          $LIB_DIR = $LIB_FILE.DirectoryName
+          
+          # Find all plugin folders
+          $ALL_DIRS = Get-ChildItem -Path $METACALL_DIR -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
+          $COMBINED_PATHS = $ALL_DIRS -join ";"
+          
+          echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
+          
+          # Export to GITHUB_ENV using UTF-8 to prevent the "Chinese Characters" bug
+          "METACALL_LIB_FILE=$($LIB_FILE.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "METACALL_INSTALL_PATH=$LIB_DIR" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "LOADER_LIBRARY_PATH=$COMBINED_PATHS" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SERIAL_LIBRARY_PATH=$COMBINED_PATHS" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          
+          # Add to Path
+          $LIB_DIR | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
@@ -119,14 +109,12 @@ jobs:
           echo "=== SYSTEM AUDIT START ==="
           echo "OS: ${{ matrix.os }}"
           echo "INSTALL_PATH: $METACALL_INSTALL_PATH"
-          echo "LOADER_PATH: $LOADER_LIBRARY_PATH"
-          echo "--- Directory Verification ---"
-          IFS=':' read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
+          echo "--- Directory Scan ---"
+          # Split path by : or ; depending on OS
+          IFS=$([[ "${{ matrix.os }}" == "windows-latest" ]] && echo ";" || echo ":")
+          read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
           for i in "${ADDR[@]}"; do
-            if [ -d "$i" ]; then
-              echo "Found House: $i"
-              ls -la "$i" | grep -i metacall || true
-            fi
+            [ -d "$i" ] && echo "Found House: $i" && ls -la "$i" | grep -i metacall || true
           done
           echo "=== SYSTEM AUDIT END ==="
 
@@ -135,11 +123,9 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Integration Tests..."
-          # Standardize resource paths (using find to be safe)
-          PY_SRC=$(find ../../../source/scripts -name "example.py" | head -n 1)
-          RB_SRC=$(find ../../../source/scripts -name "hello.rb" | head -n 1)
-          cp "$PY_SRC" . || true
-          cp "$RB_SRC" . || true
+          # Reverting to the simple CP paths that worked before the regression
+          cp ../../../scripts/python/example/source/example.py . || true
+          cp ../../../scripts/ruby/hello/source/hello.rb . || true
           
           export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
           export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
