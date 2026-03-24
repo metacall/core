@@ -40,7 +40,6 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
-          echo "[DETECTION] Constructing Safe Search Paths..."
           SEARCH_DIRS="$HOME /usr/local /opt"
           [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
           [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
@@ -78,7 +77,6 @@ jobs:
           $ALL_DIRS = Get-ChildItem -Path $METACALL_DIR -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $COMBINED_PATHS = $ALL_DIRS -join ";"
           
-          # Use ASCII to ensure NO-BOM and fix Chinese characters in PowerShell 5.1
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($LIB_FILE.FullName)" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$LIB_DIR" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$COMBINED_PATHS" -Encoding Ascii
@@ -106,20 +104,25 @@ jobs:
           done
           echo "=== SYSTEM AUDIT END ==="
 
-      - name: "[FORENSIC] Step 4: Run Ruby Tests"
+      - name: "[FORENSIC] Step 4a: Run Ruby Tests (Unix)"
+        if: matrix.os != 'windows-latest'
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          echo "[EXECUTION] Starting Integration Tests..."
-          # FIXED: Removed the extra 'source/' from the path
+          echo "[EXECUTION] Starting Unix Integration Tests..."
           cp ../../../scripts/python/example/source/example.py . || true
           cp ../../../scripts/ruby/hello/source/hello.rb . || true
-          
-          export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
-          export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
-          export SERIAL_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
-          export DETECTOR_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
-          
+          ruby -I../package/lib run.rb
+
+      - name: "[FORENSIC] Step 4b: Run Ruby Tests (Windows)"
+        if: matrix.os == 'windows-latest'
+        working-directory: source/ports/rb_port/test
+        shell: pwsh
+        run: |
+          echo "[EXECUTION] Starting Windows Integration Tests..."
+          cp ../../../scripts/python/example/source/example.py .
+          cp ../../../scripts/ruby/hello/source/hello.rb .
+          # Using pwsh avoids the Bash path-conversion bug
           ruby -I../package/lib run.rb
 
   release:
