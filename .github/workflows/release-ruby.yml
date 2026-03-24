@@ -45,40 +45,43 @@ jobs:
           REAL_BIN_PATH=$(readlink -f "$METACALL_BIN" 2>/dev/null || realpath "$METACALL_BIN" 2>/dev/null || echo "$METACALL_BIN")
           echo "[DETECTION] Physical Binary: $REAL_BIN_PATH"
           
-          echo "[DETECTION] Scoping the System for MetaCall Components (Guix Hunter Mode)..."
-          # Find ALL unique directories containing metacall shared objects
-          # We search broadly to find Core, Loaders, Serializers, and Detectors
-          ALL_METACALL_DIRS=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "lib*metacall*.so" -o -name "lib*metacall*.dylib" 2>/dev/null | xargs dirname | sort -u | tr '\n' ':')
+          echo "[DETECTION] Scoping the System for ALL MetaCall Components..."
+          # Find EVERY unique directory containing any MetaCall related library
+          # This catches Core, Loaders (rb, ext, etc), Serializers, and Detectors
+          ALL_METACALL_DIRS=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)' | xargs dirname | sort -u | tr '\n' ':')
           
           if [ -z "$ALL_METACALL_DIRS" ]; then
-            echo "ERROR: No MetaCall components found anywhere on the disk!"
+            echo "ERROR: No MetaCall components found anywhere on the system!"
             exit 1
           fi
           
-          echo "[DETECTION] Discovered MetaCall Component Map: $ALL_METACALL_DIRS"
+          echo "[DETECTION] Discovered Component Map: $ALL_METACALL_DIRS"
           
-          # Find the specific Core Library for the main path
-          LIB_FILE=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "libmetacall.so.*" -o -name "libmetacall.dylib.*" 2>/dev/null | head -n 1)
-          [ -z "$LIB_FILE" ] && LIB_FILE=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "libmetacall.so" -o -name "libmetacall.dylib" 2>/dev/null | head -n 1)
+          # Find the specific Core Library (The Heart) using fuzzy matching
+          # This catches libmetacall.so, libmetacalld.dylib, etc.
+          LIB_FILE=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)' | head -n 1)
+          
+          if [ -z "$LIB_FILE" ]; then
+            echo "ERROR: MetaCall Core Library NOT FOUND!"
+            exit 1
+          fi
           
           LIB_DIR=$(dirname "$LIB_FILE")
-          echo "[DETECTION] Core Library: $LIB_FILE"
-          echo "[DETECTION] Core Directory: $LIB_DIR"
+          echo "[DETECTION] SUCCESS: Found Core at $LIB_FILE"
           
           # Record for downstream
           echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
           echo "METACALL_INSTALL_PATH=$LIB_DIR" >> $GITHUB_ENV
           
-          # Aggregate all discovered paths for the loaders
-          # Adding $LIB_DIR/metacall as a standard fallback
-          COMBINED_LOADER_PATHS="${ALL_METACALL_DIRS}${LIB_DIR}/metacall"
-          echo "LOADER_LIBRARY_PATH=$COMBINED_LOADER_PATHS" >> $GITHUB_ENV
-          echo "SERIAL_LIBRARY_PATH=$COMBINED_LOADER_PATHS" >> $GITHUB_ENV
-          echo "DETECTOR_LIBRARY_PATH=$COMBINED_LOADER_PATHS" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$LIB_DIR" >> $GITHUB_ENV
-          echo "DYLD_LIBRARY_PATH=$LIB_DIR" >> $GITHUB_ENV
+          # CRITICAL FIX: Add both the root dirs AND potential subdirs to the loader path
+          # This forces the engine to check every possible "House"
+          echo "LOADER_LIBRARY_PATH=$ALL_METACALL_DIRS" >> $GITHUB_ENV
+          echo "SERIAL_LIBRARY_PATH=$ALL_METACALL_DIRS" >> $GITHUB_ENV
+          echo "DETECTOR_LIBRARY_PATH=$ALL_METACALL_DIRS" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$ALL_METACALL_DIRS" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=$ALL_METACALL_DIRS" >> $GITHUB_ENV
           
-          # Force Link: Create the exact names Ruby expects in the detected Core folder
+          # Link: Satisfy Ruby's find_library logic in the Core folder
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
           
@@ -90,7 +93,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           echo "[DETECTION] Starting MetaCall Installation on Windows..."
-          powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
+          powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
           echo "METACALL_INSTALL_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
@@ -105,19 +108,18 @@ jobs:
         shell: bash
         run: |
           echo "=== SYSTEM AUDIT START ==="
-          echo "Ruby Version: $(ruby -v)"
-          echo "METACALL_INSTALL_PATH: $METACALL_INSTALL_PATH"
-          echo "LOADER_LIBRARY_PATH: $LOADER_LIBRARY_PATH"
-          echo "--- Loader Verification ---"
-          # Check if the critical loaders exist in the discovered paths
+          echo "Ruby: $(ruby -v)"
+          echo "INSTALL_PATH: $METACALL_INSTALL_PATH"
+          echo "LOADER_PATH: $LOADER_LIBRARY_PATH"
+          echo "--- Directory Scan ---"
           IFS=':' read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
           for i in "${ADDR[@]}"; do
-            echo "Checking: $i"
-            ls -la "$i" | grep -E 'librb_loader|libext_loader' || true
+            echo "Checking House: $i"
+            ls -la "$i" | grep -i metacall || true
           done
           echo "=== SYSTEM AUDIT END ==="
 
-      - name: "[FORENSIC] Step 4: Run Ruby Tests (Aggregated Injection)"
+      - name: "[FORENSIC] Step 4: Run Ruby Tests (Universal Injection)"
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
@@ -125,11 +127,11 @@ jobs:
           cp ../../../scripts/python/example/source/example.py .
           cp ../../../scripts/ruby/hello/source/hello.rb .
           
-          # Export the environment explicitly for this shell
+          # Inject the discovery map directly into the execution shell
           export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
           export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
-          export SERIAL_LIBRARY_PATH="$SERIAL_LIBRARY_PATH"
-          export DETECTOR_LIBRARY_PATH="$DETECTOR_LIBRARY_PATH"
+          export SERIAL_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
+          export DETECTOR_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
           
           ruby -I../package/lib run.rb
 
