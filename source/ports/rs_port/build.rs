@@ -29,13 +29,7 @@ fn generate_bindings() {
             .clang_arg(format!("-I{}", build_dir.join("source/metacall/include").display()))
             .clang_arg(format!("-I{}", build_dir.join("source/include").display()));
     } else {
-        let lib = match metacall_sys::find_metacall_library() {
-            Ok(lib) => lib,
-            Err(e) => {
-                println!("cargo:warning=Skipping bindings generation: {}", e);
-                return;
-            }
-        };
+        let lib = metacall_sys::find_metacall_library().unwrap();
         let include = lib.path.parent().expect("library path has no parent").join("include");
         let include_metacall = include.join("metacall");
 
