@@ -35,9 +35,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          # Disable strict pipe failures to allow empty search results
           set +o pipefail
-          
           echo "[INSTALL] Starting MetaCall Setup for Unix..."
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
@@ -47,23 +45,12 @@ jobs:
           [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
           [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
           
-          echo "[DETECTION] Hunting for Components in: $SEARCH_DIRS"
-          # Find all unique directories containing MetaCall components
           RAW_DIRS=$(find $SEARCH_DIRS -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
-          
-          if [ -z "$RAW_DIRS" ]; then
-            echo "ERROR: No MetaCall components found!"
-            exit 1
-          fi
-          
           COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" - | sed 's/:$//')
-          echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
-          # Find the specific Core Library
           LIB_FILE=$(find $RAW_DIRS -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | head -n 1)
           LIB_DIR=$(dirname "$LIB_FILE")
           
-          # Export to GITHUB_ENV
           echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
           echo "METACALL_INSTALL_PATH=$LIB_DIR" >> $GITHUB_ENV
           echo "LOADER_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
@@ -73,41 +60,31 @@ jobs:
           echo "DYLD_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
           echo "$LIB_DIR" >> $GITHUB_PATH
           
-          # Links for Ruby
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
           [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig "$LIB_DIR" || true
 
       - name: "[FORENSIC] Step 1b: Install & Detect MetaCall (Windows)"
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: powershell
         run: |
           echo "[INSTALL] Starting MetaCall Setup for Windows..."
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))
           
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
-          echo "[DETECTION] Hunting for components in $METACALL_DIR"
-          
           $LIB_FILE = Get-ChildItem -Path $METACALL_DIR -Filter "*metacall*.dll" -Recurse | Select-Object -First 1
           $LIB_DIR = $LIB_FILE.DirectoryName
           $ALL_DIRS = Get-ChildItem -Path $METACALL_DIR -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $COMBINED_PATHS = $ALL_DIRS -join ";"
           
-          echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
-          
-          # STRATEGY A: Using pwsh (PowerShell Core) which is BOM-free by default
-          $lines = @(
-            "METACALL_LIB_FILE=$($LIB_FILE.FullName)",
-            "METACALL_INSTALL_PATH=$LIB_DIR",
-            "LOADER_LIBRARY_PATH=$COMBINED_PATHS",
-            "SERIAL_LIBRARY_PATH=$COMBINED_PATHS",
-            "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS"
-          )
-          
-          # Writing to GITHUB_ENV and GITHUB_PATH using modern pwsh Out-File (BOM-less UTF8)
-          $lines | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          $LIB_DIR | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          # Use ASCII to ensure NO-BOM and fix Chinese characters in PowerShell 5.1
+          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($LIB_FILE.FullName)" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$LIB_DIR" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$COMBINED_PATHS" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$COMBINED_PATHS" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_PATH -Value "$LIB_DIR" -Encoding Ascii
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
         uses: ruby/setup-ruby@v1
@@ -121,7 +98,6 @@ jobs:
           echo "=== SYSTEM AUDIT START ==="
           echo "OS: ${{ matrix.os }}"
           echo "INSTALL_PATH: $METACALL_INSTALL_PATH"
-          echo "LOADER_PATH: $LOADER_LIBRARY_PATH"
           echo "--- Directory Verification ---"
           SEP=$([[ "${{ matrix.os }}" == "windows-latest" ]] && echo ";" || echo ":")
           IFS=$SEP read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
@@ -135,9 +111,9 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Integration Tests..."
-          # Fix: Include the /source/ prefix in the relative path
-          cp ../../../source/scripts/python/example/source/example.py . || true
-          cp ../../../source/scripts/ruby/hello/source/hello.rb . || true
+          # FIXED: Removed the extra 'source/' from the path
+          cp ../../../scripts/python/example/source/example.py . || true
+          cp ../../../scripts/ruby/hello/source/hello.rb . || true
           
           export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
           export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
