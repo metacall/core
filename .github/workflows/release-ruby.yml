@@ -37,9 +37,15 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           
           # ARCHITECTURAL FIX: Force symbolic links for the strict Ruby regex
+          # We search for the versioned file and link it to the plain name
           sudo find /usr/local/lib -name "libmetacall.so.*" -exec ln -sf {} /usr/local/lib/libmetacall.so \; || true
           sudo find /usr/local/lib -name "libmetacall.dylib.*" -exec ln -sf {} /usr/local/lib/libmetacall.dylib \; || true
           
+          # Refresh the library cache (Critical for Ubuntu)
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            sudo ldconfig
+          fi
+
           # Define the full environment for the MetaCall Core
           echo "/usr/local/lib" >> $GITHUB_PATH
           echo "METACALL_INSTALL_PATH=/usr/local/lib" >> $GITHUB_ENV
@@ -83,13 +89,20 @@ jobs:
           echo $PATH
           echo "--- MetaCall Version ---"
           metacall --version || echo "metacall binary not in path"
-          echo "--- Library Files ---"
-          ls /usr/local/lib/libmetacall* || true
-          ls $HOME/AppData/Local/MetaCall/metacall/lib/metacall* || true
+          echo "--- Library Files (Unix) ---"
+          ls -la /usr/local/lib/libmetacall* || true
+          echo "--- Library Files (Windows) ---"
+          ls -la $HOME/AppData/Local/MetaCall/metacall/lib/metacall* || true
+          echo "--- Environment Variables ---"
+          env | grep METACALL || true
 
       - name: Test the Ruby Port
         working-directory: source/ports/rb_port/test
         shell: bash
+        env:
+          METACALL_INSTALL_PATH: ${{ matrix.os == 'windows-latest' && format('{0}/AppData/Local/MetaCall/metacall/lib', env.HOME) || '/usr/local/lib' }}
+          LD_LIBRARY_PATH: /usr/local/lib
+          DYLD_LIBRARY_PATH: /usr/local/lib
         run: |
           # Use -I to manually include the library path
           ruby -I../package/lib run.rb
