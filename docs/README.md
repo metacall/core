@@ -414,7 +414,7 @@ metacall("multiply_type", 3, 4); // 12
 
 As the signature is already know the literal values `3` and `4` can be converted into **METACALL** values automatically. Note that in this case, as literal values are provided, if we pass a double floating point, the memory representation of the value will be corrupted as there is no possible way to detect input values and cast them to the correct target values.
 
-In the second example, the values are not know. If we use the same API to call the function, **METACALL** will not be able to call correctly the function as its types are not known. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
+In the second example, the values are not known. If we use the same API to call the function, **METACALL** will not be able to call correctly the function as its types are not known. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
 
 ```c
 const enum metacall_value_id multiply_types[] =
