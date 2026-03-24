@@ -55,7 +55,7 @@ typedef void (*value_finalizer_cb)(value, void *);
 *    Size in bytes to be allocated
 *
 *  @return
-*    Pointer to uninitialized value if success, null otherwhise
+*    Pointer to uninitialized value if success, null otherwise
 */
 REFLECT_API value value_alloc(size_t bytes);
 
@@ -82,7 +82,7 @@ REFLECT_API value value_create(const void *data, size_t bytes);
 *    Reference of value to be checked
 *
 *  @return
-*    Zero if the value is valid, null otherwhise
+*    Zero if the value is valid, null otherwise
 */
 REFLECT_API int value_validate(value v);
 

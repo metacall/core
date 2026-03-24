@@ -27,6 +27,11 @@ netcore_win::~netcore_win()
 
 void netcore_win::stop()
 {
+	if (!this->initialized)
+	{
+		return;
+	}
+
 	HRESULT hr;
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Unloading the AppDomain");
@@ -55,6 +60,8 @@ void netcore_win::stop()
 	log_write("metacall", LOG_LEVEL_DEBUG, "Releasing ICLRRuntimeHost2");
 
 	this->host->Release();
+
+	this->initialized = false;
 }
 
 bool netcore_win::start()
@@ -80,6 +87,8 @@ bool netcore_win::start()
 	{
 		return false;
 	}
+
+	this->initialized = true;
 
 	return true;
 }

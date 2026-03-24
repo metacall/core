@@ -259,15 +259,22 @@ bool netcore_linux::start()
 		return false;
 	}
 
+	this->initialized = true;
+
 	return true;
 }
 
 void netcore_linux::stop()
 {
-	int status = (*this->coreclr_shutdown)(this->hostHandle, this->domainId);
-
-	if (status != 0)
+	if (this->initialized)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Stop status (0x%08x)", status);
+		int status = (*this->coreclr_shutdown)(this->hostHandle, this->domainId);
+
+		if (status != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Stop status (0x%08x)", status);
+		}
+
+		this->initialized = false;
 	}
 }

@@ -165,7 +165,7 @@ impl MetaCallValue for i64 {
         Ok(value as i64)
     }
     fn into_metacall_raw(self) -> *mut c_void {
-        unsafe { metacall_value_create_long(self.try_into().unwrap()) }
+        unsafe { metacall_value_create_long(self) }
     }
 }
 /// Equivalent to MetaCall float type.

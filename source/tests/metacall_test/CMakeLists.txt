@@ -124,24 +124,14 @@ target_link_options(${target}
 #
 
 if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
-	# TODO: This test fails when run with thread sanitizer (this happens when C# loader is enabled):
-	#
-	# WARNING: ThreadSanitizer: data race (pid=13427)
-	# Write of size 8 at 0x7b5c00010680 by thread T8:
-	# 	#0 free ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:706 (libtsan.so.2+0x47e82)
-	# 	#1 <null> <null> (libcoreclr.so+0x36ba88)
-	#
-	# Previous write of size 8 at 0x7b5c00010680 by main thread:
-	# 	[failed to restore the stack]
-	#
-	# Thread T8 '.NET ThreadPool' (tid=13563, running) created by thread T7 at:
-	# 	#0 pthread_create ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:1001 (libtsan.so.2+0x5e686)
-	# 	#1 <null> <null> (libcoreclr.so+0x4e90ce)
-	#
-	# SUMMARY: ThreadSanitizer: data race (/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.17/libcoreclr.so+0x36ba88)
-	#
-	# For solving this, we should enable C# support for sanitizers and debug it properly
-	return()
+	find_package(DotNET)
+	check_tsan_executable("${DOTNET_CORE_LIBRARY}" DotNET_TSAN)
+	if(NOT DotNET_TSAN)
+		# This test fails when run with thread sanitizer due to C# when CoreCLR is not compiled with TSAN:
+		# coreclr_initialize status (0x8007ff0b)
+		# For solving this, we should enable C# support for sanitizers and debug it properly
+		return()
+	endif()
 endif()
 
 add_test(NAME ${target}

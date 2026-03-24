@@ -34,11 +34,8 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                         match &**args {
                             GenericArgs::AngleBracketed(AngleBracketedArgs { args, .. }) => {
                                 for arg in args {
-                                    match arg {
-                                        AngleBracketedArg::Arg(GenericArg::Type(ty)) => {
-                                            result.generic.push(handle_ty(ty))
-                                        }
-                                        _ => {}
+                                    if let AngleBracketedArg::Arg(GenericArg::Type(ty)) = arg {
+                                        result.generic.push(handle_ty(ty))
                                     }
                                 }
                             }
@@ -52,11 +49,8 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                         match &**args {
                             GenericArgs::AngleBracketed(AngleBracketedArgs { args, .. }) => {
                                 for arg in args {
-                                    match arg {
-                                        AngleBracketedArg::Arg(GenericArg::Type(ty)) => {
-                                            result.generic.push(handle_ty(ty))
-                                        }
-                                        _ => {}
+                                    if let AngleBracketedArg::Arg(GenericArg::Type(ty)) = arg {
+                                        result.generic.push(handle_ty(ty))
                                     }
                                 }
                             }
@@ -88,9 +82,8 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
 }
 
 fn handle_pat(pat: &Pat) -> Option<String> {
-    match pat.kind {
-        PatKind::Ident(_, ident, _) => return Some(ident.name.to_string()),
-        _ => {}
+    if let PatKind::Ident(_, ident, _) = pat.kind {
+        return Some(ident.name.to_string());
     }
     None
 }
@@ -114,7 +107,7 @@ pub fn handle_fn(name: String, sig: &FnSig) -> Function {
     match &sig.decl.output {
         FnRetTy::Default(_) => function.ret = None,
         FnRetTy::Ty(ty) => {
-            function.ret = Some(handle_ty(&ty));
+            function.ret = Some(handle_ty(ty));
         }
     }
     function

@@ -501,6 +501,14 @@ typedef struct loader_impl_c_function_type
 
 } * loader_impl_c_function;
 
+/* Relocate a TCC State */
+static int c_loader_impl_tcc_relocate(TCCState *state);
+
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+/* Check if symbols from TCC are prefixed with underscore */
+static int c_loader_impl_macos_symbol_prefix(void);
+#endif
+
 /* Retrieve the equivalent FFI type from type id */
 static ffi_type *c_loader_impl_ffi_type(type_id id);
 
@@ -786,11 +794,89 @@ void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void 
 	delete[] values;
 }
 
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+static int macos_symbol_prefix = 0;
+
+	#define TEST_FUNCTION_NAME "test_function_42069"
+
+static void c_loader_impl_macos_symbol_prefix_list(void *ctx, const char *name, const void *addr)
+{
+	static const char test_function_name[] = "_" TEST_FUNCTION_NAME;
+
+	(void)ctx;
+	(void)addr;
+
+	if (strncmp(test_function_name, name, sizeof(test_function_name)) == 0)
+	{
+		macos_symbol_prefix = 1;
+	}
+}
+
+static int c_loader_impl_macos_symbol_prefix(void)
+{
+	static const char test_function[] = "void " TEST_FUNCTION_NAME "(void){}";
+	TCCState *state = tcc_new();
+
+	if (state == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed create tcc state for function test");
+		return 1;
+	}
+
+	tcc_set_output_type(state, TCC_OUTPUT_MEMORY);
+
+	if (tcc_compile_string(state, test_function) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to compile the buffer: %s", test_function);
+		goto error;
+	}
+
+	if (c_loader_impl_tcc_relocate(state) == -1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
+		goto error;
+	}
+
+	tcc_list_symbols(state, NULL, &c_loader_impl_macos_symbol_prefix_list);
+
+	tcc_delete(state);
+
+	return 0;
+
+error:
+	tcc_delete(state);
+	return 1;
+}
+#endif
+
 static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr)
 {
 	std::map<std::string, const void *> *symbols = static_cast<std::map<std::string, const void *> *>(ctx);
 
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	/* On macOS, TCC may prefix C symbols with a leading underscore per the platform ABI.
+	 * Strip it so that lookup by plain function name (as reported by Clang) always works,
+	 * regardless of whether the system TCC or the MetaCall forked TCC is in use which,
+	 * which may produce different underscore behavior, may have it or not. */
+
+	if (macos_symbol_prefix)
+	{
+		std::string sym_name(name);
+
+		if (!sym_name.empty() && sym_name[0] == '_')
+		{
+			sym_name = sym_name.substr(1);
+		}
+
+		symbols->insert(std::pair<std::string, const void *>(sym_name, addr));
+	}
+	else
+	{
+		symbols->insert(std::pair<std::string, const void *>(name, addr));
+	}
+#else
 	symbols->insert(std::pair<std::string, const void *>(name, addr));
+#endif
 }
 
 int function_c_interface_create(function func, function_impl impl)
@@ -1156,15 +1242,25 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 
 	(void)impl;
 
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	if (c_loader_impl_macos_symbol_prefix() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to detect MacOS symbol prefix for TCC");
+		return NULL;
+	}
+#endif
+
 	c_impl = new loader_impl_c_type();
 
 	if (c_impl == nullptr)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to allocate C loader impl memory");
 		return NULL;
 	}
 
 	if (c_loader_impl_initialize_types(impl) != 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to initialize C types");
 		delete c_impl;
 		return NULL;
 	}
@@ -1359,19 +1455,14 @@ static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_hand
 {
 	auto cursor_type = clang_getCursorType(cursor);
 	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
-	auto symbol_name = func_name;
 
-#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	symbol_name.insert(0, 1, '_');
-#endif
-
-	if (scope_get(sp, symbol_name.c_str()) != NULL)
+	if (scope_get(sp, func_name.c_str()) != NULL)
 	{
 		log_write("metacall", LOG_LEVEL_WARNING, "Symbol '%s' redefined, skipping the function", func_name.c_str());
 		return 0;
 	}
 
-	const void *address = c_handle->symbol(symbol_name);
+	const void *address = c_handle->symbol(func_name);
 
 	if (address == NULL)
 	{

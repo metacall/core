@@ -19,35 +19,107 @@ concurrency:
 
 jobs:
   test:
-    name: Python Port Tests
+    name: Python Port Tests (${{ matrix.os }}, ${{ matrix.build }})
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
-        matrix:
-          os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        build: [debug, release]
+        exclude:
+          # Windows distributable ships release-only builds
+          - os: windows-latest
+            build: debug
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install MetaCall Unix
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
-        run: curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
-      - name: Install MetaCall Windows
-        if: matrix.os == 'windows-latest'
+
+      - name: Install MetaCall (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          FLAGS="${{ matrix.build == 'debug' && '-s -- --debug' || '' }}"
+          curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh $FLAGS
+
+      - name: Install MetaCall (Windows)
+        if: runner.os == 'Windows'
         run: powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+      - name: Install Python Port (Linux)
+        if: runner.os == 'Linux'
+        working-directory: source/ports/py_port
+        run: |
+          . /gnu/etc/profile
+          pip install -e .
 
-      - name: Install Python Port
+      - name: Install Python Port (Windows)
+        if: runner.os == 'Windows'
         working-directory: source/ports/py_port
         run: pip install -e .
 
-      - name: Test the Python Port
+      # macOS: pip-install the port so the package is findable.
+      - name: Install Python Port (macOS)
+        if: runner.os == 'macOS'
         working-directory: source/ports/py_port
+        run: pip install -e .
+
+      # Single unified copy step
+      - name: Populate scripts directory
+        shell: bash
+        run: |
+          mkdir -p source/ports/py_port/scripts
+
+          # Mock loader only needs a resolvable path, not actual content
+          touch source/ports/py_port/scripts/sometestmock.mock
+
+          # Python scripts
+          cp source/scripts/python/helloworld/source/helloworld.py source/ports/py_port/scripts/
+          cp source/scripts/python/example/source/example.py       source/ports/py_port/scripts/
+
+          # Ruby scripts
+          cp source/scripts/ruby/hello/source/hello.rb             source/ports/py_port/scripts/
+          cp source/scripts/ruby/second/source/second.rb           source/ports/py_port/scripts/
+
+          # NodeJS scripts — derpyramda.js is self-contained (no npm deps)
+          cp source/scripts/node/derpyramda/source/derpyramda.js   source/ports/py_port/scripts/
+
+      - name: Test the Python Port (Linux)
+        if: runner.os == 'Linux'
+        working-directory: source/ports/py_port
+        env:
+          LOADER_SCRIPT_PATH: ${{ github.workspace }}/source/ports/py_port/scripts
+        run: |
+          . /gnu/etc/profile
+          python test.py
+
+      - name: Test the Python Port (macOS)
+        if: runner.os == 'macOS'
+        working-directory: source/ports/py_port
+        env:
+          LOADER_SCRIPT_PATH: ${{ github.workspace }}/source/ports/py_port/scripts
+          # Include both the port package and the scripts dir so `import example`
+          # (no file extension — falls through to plain Python import) resolves.
+          PYTHONPATH: ${{ github.workspace }}/source/ports/py_port:${{ github.workspace }}/source/ports/py_port/scripts
+        run: |
+          # Derive loader paths from the installed Homebrew prefix — version-agnostic.
+          METACALL_PREFIX="$(brew --prefix metacall)"
+          export LOADER_LIBRARY_PATH="$METACALL_PREFIX/lib"
+          export SERIAL_LIBRARY_PATH="$METACALL_PREFIX/lib"
+          export DETOUR_LIBRARY_PATH="$METACALL_PREFIX/lib"
+          export CONFIGURATION_PATH="$METACALL_PREFIX/configurations/global.json"
+          # api.py finds libmetacall(d).dylib in /opt/homebrew/lib/ automatically;
+          # running plain python (not `metacall python`) avoids the CLI re-entrancy
+          # SIGSEGV where function_py_interface_invoke recurses infinitely.
+          python test.py
+
+      - name: Test the Python Port (Windows)
+        if: runner.os == 'Windows'
+        working-directory: source/ports/py_port
+        env:
+          LOADER_SCRIPT_PATH: ${{ github.workspace }}\source\ports\py_port\scripts
         run: python test.py
 
   release:

@@ -3,17 +3,14 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS)
 	return()
 endif()
 
-# TODO: Make this part of FindCoreCLR.cmake (automatically detect it)
-set(DOTNET_CORE_PATH "" CACHE PATH "Dotnet runtime path")
-
 #
 # External dependencies
 #
 
-find_package(CoreCLR)
+find_package(DotNET)
 
-if(NOT CORECLR_FOUND)
-	message(SEND_ERROR "CoreCLR libraries not found")
+if(NOT DotNET_FOUND OR NOT DOTNET_CORE_PATH)
+	message(SEND_ERROR "DotNET libraries not found")
 	return()
 endif()
 
@@ -156,7 +153,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${CORECLR_INCLUDE_DIR} # CoreCLR includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -241,7 +237,6 @@ target_link_options(${target}
 #
 
 set(CS_LOADER_CONFIG_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in")
-string(REPLACE "\\" "/" DOTNET_CORE_PATH "${DOTNET_CORE_PATH}")
 
 # Development
 loader_configuration_begin(cs_loader "${CS_LOADER_CONFIG_TEMPLATE}")

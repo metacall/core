@@ -77,7 +77,7 @@ enum metacall_value_id
 *    Boolean will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_bool(boolean b);
 
@@ -89,7 +89,7 @@ METACALL_API void *metacall_value_create_bool(boolean b);
 *    Character will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_char(char c);
 
@@ -101,7 +101,7 @@ METACALL_API void *metacall_value_create_char(char c);
 *    Short will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_short(short s);
 
@@ -113,7 +113,7 @@ METACALL_API void *metacall_value_create_short(short s);
 *    Integer will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_int(int i);
 
@@ -125,7 +125,7 @@ METACALL_API void *metacall_value_create_int(int i);
 *    Long integer will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_long(long l);
 
@@ -137,7 +137,7 @@ METACALL_API void *metacall_value_create_long(long l);
 *    Float will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_float(float f);
 
@@ -149,7 +149,7 @@ METACALL_API void *metacall_value_create_float(float f);
 *    Double will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_double(double d);
 
@@ -164,7 +164,7 @@ METACALL_API void *metacall_value_create_double(double d);
 *    Length of the constant string
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_string(const char *str, size_t length);
 
@@ -179,7 +179,7 @@ METACALL_API void *metacall_value_create_string(const char *str, size_t length);
 *    Size in bytes of data contained in the array
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_buffer(const void *buffer, size_t size);
 
@@ -194,7 +194,7 @@ METACALL_API void *metacall_value_create_buffer(const void *buffer, size_t size)
 *    Number of elements contained in the array
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_array(const void *values[], size_t size);
 
@@ -209,7 +209,7 @@ METACALL_API void *metacall_value_create_array(const void *values[], size_t size
 *    Number of elements contained in the map
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_map(const void *tuples[], size_t size);
 
@@ -221,7 +221,7 @@ METACALL_API void *metacall_value_create_map(const void *tuples[], size_t size);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_ptr(const void *ptr);
 
@@ -233,7 +233,7 @@ METACALL_API void *metacall_value_create_ptr(const void *ptr);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_future(void *f);
 
@@ -245,7 +245,7 @@ METACALL_API void *metacall_value_create_future(void *f);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_function(void *f);
 
@@ -260,7 +260,7 @@ METACALL_API void *metacall_value_create_function(void *f);
 *    Pointer to closure that will be binded into function @f
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_function_closure(void *f, void *c);
 
@@ -269,7 +269,7 @@ METACALL_API void *metacall_value_create_function_closure(void *f, void *c);
 *    Create a value of type null
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_null(void);
 
@@ -281,7 +281,7 @@ METACALL_API void *metacall_value_create_null(void);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_class(void *c);
 
@@ -293,7 +293,7 @@ METACALL_API void *metacall_value_create_class(void *c);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_object(void *o);
 
@@ -305,7 +305,7 @@ METACALL_API void *metacall_value_create_object(void *o);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_exception(void *ex);
 
@@ -317,7 +317,7 @@ METACALL_API void *metacall_value_create_exception(void *ex);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_throwable(void *th);
 

@@ -65,3 +65,65 @@ if(DOTNET_FOUND)
 		mark_as_advanced(DOTNET_COMMAND DOTNET_VERSION DOTNET_MIGRATE)
 	endif()
 endif()
+
+if(NOT DOTNET_CORE_PATH AND DOTNET_COMMAND)
+	execute_process(
+		COMMAND ${DOTNET_COMMAND} --list-runtimes
+		OUTPUT_VARIABLE DOTNET_RUNTIMES
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	string(REPLACE "\n" ";" DOTNET_RUNTIMES "${DOTNET_RUNTIMES}")
+	string(REPLACE "\\" "/" DOTNET_RUNTIMES "${DOTNET_RUNTIMES}")
+
+	set(HIGHEST_VERSION "")
+	set(RUNTIME_PATH "")
+
+	foreach(LINE ${DOTNET_RUNTIMES})
+		if(LINE MATCHES "Microsoft\\.NETCore\\.App")
+
+			# Extract version
+			string(REGEX REPLACE
+				"Microsoft\\.NETCore\\.App[ ]+([0-9\\.]+)[ ].*"
+				"\\1"
+				VERSION
+				"${LINE}"
+			)
+
+			# Extract base path
+			string(REGEX MATCH "\\[([^]]+)\\]" LINE_MATCH "${LINE}")
+
+			if(LINE_MATCH)
+				string(REGEX REPLACE "^\\[|\\]$" "" BASE_PATH "${LINE_MATCH}")
+			endif()
+
+			set(FULL_PATH "${BASE_PATH}/${VERSION}")
+
+			if(EXISTS "${FULL_PATH}/libcoreclr.so")
+				# Pick highest version
+				if(HIGHEST_VERSION STREQUAL "" OR VERSION VERSION_GREATER HIGHEST_VERSION)
+					set(HIGHEST_VERSION ${VERSION})
+					set(RUNTIME_PATH ${FULL_PATH})
+				endif()
+			endif()
+		endif()
+	endforeach()
+
+	if(EXISTS "${RUNTIME_PATH}/libcoreclr.so")
+		set(DOTNET_CORE_PATH "${RUNTIME_PATH}" CACHE PATH "Dotnet runtime path" FORCE)
+	endif()
+endif()
+
+if(DOTNET_CORE_PATH)
+	set(DOTNET_CORE_LIBRARIES "${DOTNET_CORE_PATH}/libcoreclr.so")
+endif()
+
+find_package_handle_standard_args(DotNET
+    REQUIRED_VARS DOTNET_COMMAND DOTNET_CORE_PATH
+)
+
+mark_as_advanced(
+	DOTNET_COMMAND
+	DOTNET_CORE_PATH
+	DOTNET_CORE_LIBRARIES
+)

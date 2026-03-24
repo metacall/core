@@ -5,7 +5,7 @@ use compiler::package::PackageRegistration;
 
 use std::ffi::CStr;
 use std::fmt::Display;
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_void};
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -20,24 +20,24 @@ impl LoadingMethod {
         match self {
             Self::File(FileRegistration { mut dynlink, .. }) => match dynlink {
                 Some(_) => {
-                    let dl = std::mem::replace(&mut dynlink, None);
+                    let dl = dynlink.take();
                     Ok(dl.expect("Unexpected: Dynlink library is None"))
                 }
                 None => Err(String::from("consume_dlib was called more than once")),
             },
             Self::Package(PackageRegistration { mut dynlink, .. }) => match dynlink {
                 Some(_) => {
-                    let dl = std::mem::replace(&mut dynlink, None);
+                    let dl = dynlink.take();
                     Ok(dl.expect("Unexpected: Dynlink library is None"))
                 }
                 None => Err(String::from("consume_dlib was called more than once")),
             },
-            Self::Memory(MemoryRegistration { mut dynlink, .. }) => match dynlink {
-                Some(_) => {
-                    let dl = std::mem::replace(&mut dynlink, None);
-                    Ok(dl.expect("Unexpected: Dynlink library is None"))
+            Self::Memory(mut memory) => {
+                let dl = std::mem::replace(&mut memory.dynlink, None);
+                match dl {
+                    Some(dl) => Ok(dl),
+                    None => Err(String::from("consume_dlib was called more than once")),
                 }
-                None => Err(String::from("consume_dlib was called more than once")),
             },
         }
     }
@@ -57,7 +57,7 @@ pub type LoadOnErrorPointer = fn(error: String) -> *mut c_void;
 
 pub fn load_on_error<T: Display>(error: T) -> *mut c_void {
     eprintln!("{}", error);
-    0 as c_int as *mut c_void
+    std::ptr::null_mut::<c_void>()
 }
 
 pub fn load<T>(
@@ -83,7 +83,7 @@ where
 
     for i in 0..size {
         if path_is_vector {
-            path = loadable_path.wrapping_offset(i as isize) as *const c_char
+            path = loadable_path.wrapping_add(i) as *const c_char
         } else {
             path = loadable_path as *const i8;
         }
@@ -104,7 +104,7 @@ where
                         let mut execution_path_as_str =
                             execution_path.to_str().expect("Unable to cast CStr to str");
 
-                        if !execution_path_as_str.ends_with("/") {
+                        if !execution_path_as_str.ends_with('/') {
                             execution_path =
                                 PathBuf::from(format!("{}{}", execution_path_as_str, "/"));
 
@@ -120,7 +120,7 @@ where
                         ));
 
                         if !path_buf.exists() || !path_buf.is_file() {
-                            path_buf = PathBuf::from(original_path_buf);
+                            path_buf = original_path_buf;
 
                             continue;
                         }

@@ -54,15 +54,12 @@ extern "C" fn function_singleton_await(
     0 as OpaqueType
 }
 
-
 #[no_mangle]
 extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueType) {
-    if !rs_loader_destroyed() {
-        if !func_impl.is_null() {
-            unsafe {
-                let func_ptr = Box::from_raw(func_impl as *mut class::Function);
-                drop(func_ptr);
-            }
+    if !rs_loader_destroyed() && !func_impl.is_null() {
+        unsafe {
+            let func_ptr = Box::from_raw(func_impl as *mut class::Function);
+            drop(func_ptr);
         }
     }
 }

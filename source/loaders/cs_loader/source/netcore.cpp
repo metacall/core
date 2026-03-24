@@ -24,10 +24,9 @@
 
 #include <exception>
 
-netcore::netcore(char *dotnet_root, char *dotnet_loader_assembly_path)
+netcore::netcore(char *dotnet_root, char *dotnet_loader_assembly_path) :
+	dotnet_root(dotnet_root), dotnet_loader_assembly_path(dotnet_loader_assembly_path), initialized(false)
 {
-	this->dotnet_root = dotnet_root;
-	this->dotnet_loader_assembly_path = dotnet_loader_assembly_path;
 }
 
 netcore::~netcore()
@@ -111,6 +110,11 @@ bool netcore::create_delegates()
 	}
 
 	if (!this->create_delegate(this->delegate_destroy_execution_result, delegate_cast(&this->core_destroy_execution_result)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_destroy, delegate_cast(&this->core_destroy)))
 	{
 		return false;
 	}
@@ -289,6 +293,18 @@ void netcore::destroy_execution_result(execution_result *er)
 	try
 	{
 		this->core_destroy_execution_result(er);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
+	}
+}
+
+void netcore::destroy(void)
+{
+	try
+	{
+		this->core_destroy();
 	}
 	catch (const std::exception &ex)
 	{

@@ -1,0 +1,3 @@
+load node index.js
+call check()
+exit
