@@ -68,7 +68,15 @@ impl fmt::Display for Tag {
     }
 }
 
+/// A MetaCall Handle is basically a C Pointer, One can pass it to when loading a script
+/// (pass it to [[from_single_file]] for example) to keep the script in a local scope related to
+/// this specific [[Handle]]
+/// [[Handle]] implements Send + Sync traits because we are sure 100% and guarantee developers that
+/// it is thread-safe. The Handle is a read-only pointer so there is no problem here.
 pub struct Handle(*mut c_void);
+
+unsafe impl Send for Handle {}
+unsafe impl Sync for Handle {}
 
 impl Handle {
     pub fn new() -> Self {
