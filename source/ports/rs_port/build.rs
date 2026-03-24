@@ -8,11 +8,8 @@ fn generate_bindings() {
         .allowlist_function("metacall.*")
         .rustified_enum("metacall_.*");
 
-    if let Ok(build_dir) = env::var("PROJECT_OUTPUT_DIR") {
-        let build_dir = PathBuf::from(build_dir)
-            .parent()
-            .expect("PROJECT_OUTPUT_DIR has no parent")
-            .to_path_buf();
+    if let Ok(build_dir) = env::var("CMAKE_BINARY_DIR") {
+        let build_dir = PathBuf::from(build_dir);
         let root = manifest_dir
             .ancestors()
             .nth(3)
