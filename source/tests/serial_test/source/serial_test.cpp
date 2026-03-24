@@ -309,7 +309,7 @@ TEST_F(serial_test, DefaultConstructor)
 			/* On 32-bit platforms long cannot hold this value; expect a throwable error value */
 			EXPECT_NE((value)NULL, (value)v);
 			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
-			value_destroy(v);
+			value_type_destroy(v);
 #endif
 		}
 
@@ -323,7 +323,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 			EXPECT_NE((value)NULL, (value)v);
 			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
-			value_destroy(v);
+			value_type_destroy(v);
 		}
 	}
 
