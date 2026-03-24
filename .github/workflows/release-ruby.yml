@@ -37,41 +37,52 @@ jobs:
           echo "[DETECTION] Starting MetaCall Installation..."
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           
-          # Force create common paths to prevent find errors
+          # Ensure critical directories exist
           sudo mkdir -p /usr/local/lib
           
-          echo "[DETECTION] Resolving MetaCall Home..."
+          echo "[DETECTION] Resolving MetaCall Binary..."
           METACALL_BIN=$(which metacall || echo "")
           
-          # Use Python to get the TRUE physical path (bypassing symlinks/wrappers)
-          REAL_BIN_PATH=$(python3 -c "import os; print(os.path.realpath('$METACALL_BIN'))" 2>/dev/null || echo "$METACALL_BIN")
-          INSTALL_ROOT=$(dirname $(dirname "$REAL_BIN_PATH"))
-          
+          if [ -z "$METACALL_BIN" ]; then
+            echo "WARNING: Binary not in PATH. Broad search starting..."
+            METACALL_BIN=$(find /usr/local /opt $HOME -name "metacall" -type f -executable 2>/dev/null | head -n 1)
+          fi
+
+          # Follow the trail to the real physical binary (unwrapping symlinks/Guix wrappers)
+          REAL_BIN_PATH=$(readlink -f "$METACALL_BIN" 2>/dev/null || realpath "$METACALL_BIN" 2>/dev/null || echo "$METACALL_BIN")
+          echo "[DETECTION] Target Binary: $METACALL_BIN"
           echo "[DETECTION] Physical Binary: $REAL_BIN_PATH"
-          echo "[DETECTION] Resolved Root: $INSTALL_ROOT"
           
-          echo "[DETECTION] Hunting for library via Prefix Matching..."
-          # Fuzzy Match: Look for anything starting with 'libmetacall' or containing 'metacall' in key areas
-          LIB_FILE=$(find "$INSTALL_ROOT" "$HOME" "/usr/local/lib" -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)' | head -n 1)
-          
+          # STRATEGY 1: System Trace (ldd) - Linux Only
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            echo "[DETECTION] Attempting ldd trace on $REAL_BIN_PATH..."
+            # Ask the OS: What library do you load when running this?
+            LIB_FILE=$(ldd "$REAL_BIN_PATH" 2>/dev/null | grep -i metacall | awk '{print $3}' | head -n 1)
+            [ ! -z "$LIB_FILE" ] && echo "[DETECTION] Trace Success: Found via ldd"
+          fi
+
+          # STRATEGY 2: Fuzzy Search Fallback (All Unix)
           if [ -z "$LIB_FILE" ]; then
-            echo "WARNING: Primary search failed. Scanning ALL local files for 'metacall' prefix..."
-            LIB_FILE=$(find /usr/local /opt $HOME -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)' | head -n 1)
+            echo "[DETECTION] Falling back to Fuzzy Search for '*metacall*'..."
+            # Look in binary's own tree first
+            INSTALL_ROOT=$(dirname $(dirname "$REAL_BIN_PATH"))
+            LIB_FILE=$(find "$INSTALL_ROOT" "$HOME" "/usr/local/lib" "/opt" "/gnu/store" -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)' | head -n 1)
           fi
 
           if [ -z "$LIB_FILE" ]; then
-            echo "ERROR: MetaCall library NOT FOUND even with fuzzy matching!"
+            echo "ERROR: MetaCall library NOT FOUND anywhere on the system!"
             exit 1
           fi
           
           LIB_DIR=$(dirname "$LIB_FILE")
-          echo "[DETECTION] SUCCESS: Found library at $LIB_FILE"
+          echo "[DETECTION] FINAL SUCCESS: Found library at $LIB_FILE"
           
           # Record the specific detected file and dir
           echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
           echo "METACALL_INSTALL_PATH=$LIB_DIR" >> $GITHUB_ENV
           
           # Force Link: Create the exact name Ruby expects in the detected folder
+          # This satisfies Ruby's strict find_library logic
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
           
@@ -89,7 +100,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           echo "[DETECTION] Starting MetaCall Installation on Windows..."
-          powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
+          powershell -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "$METACALL_DIR\lib" >> $GITHUB_PATH
           echo "METACALL_INSTALL_PATH=$METACALL_DIR\lib" >> $GITHUB_ENV
@@ -107,7 +118,7 @@ jobs:
           echo "Detected Lib File: $METACALL_LIB_FILE"
           echo "Search Path: $METACALL_INSTALL_PATH"
           echo "--- Directory Content ---"
-          ls -la "$METACALL_INSTALL_PATH" | grep metacall || echo "No metacall files in detected dir"
+          ls -la "$METACALL_INSTALL_PATH" | grep -i metacall || echo "No metacall files in detected dir"
           echo "--- Environment ---"
           env | grep METACALL || true
           echo "=== AUDIT END ==="
