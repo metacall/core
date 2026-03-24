@@ -31,50 +31,52 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "[FORENSIC] Step 1: Install & Detect MetaCall (Unix/Windows)"
+      - name: "[FORENSIC] Step 1: Install & Detect MetaCall"
         shell: bash
         run: |
-          echo "[DETECTION] Starting MetaCall Installation for ${{ matrix.os }}..."
+          echo "[INSTALL] Starting MetaCall Setup for ${{ matrix.os }}..."
           
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            # Run Windows Installer via PowerShell inside Bash
             powershell.exe -NoProfile -ExecutionPolicy Unrestricted -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))"
           else
-            # Run Unix Installer
             curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
             sudo mkdir -p /usr/local/lib
           fi
           
-          echo "[DETECTION] Scoping the System for ALL MetaCall Components (Fuzzy Search)..."
-          # Find EVERY unique directory containing any MetaCall related library (.so, .dylib, or .dll)
-          # We search broadly including the Guix store, opt, home, and AppData
-          RAW_DIRS=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib|dll)' | xargs dirname | sort -u)
+          echo "[DETECTION] Constructing Safe Search Paths..."
+          # Build list of directories that actually exist
+          SEARCH_DIRS="$HOME /usr/local /opt"
+          [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
+          [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
+          
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Map Windows AppData to Bash path
+            WIN_PATH=$(cygpath "$USERPROFILE")
+            SEARCH_DIRS="$SEARCH_DIRS $WIN_PATH/AppData/Local/MetaCall"
+          fi
+
+          echo "[DETECTION] Hunting for MetaCall Components in: $SEARCH_DIRS"
+          
+          # Find all unique directories containing any MetaCall library
+          # Wrap in || true to prevent 'grep' from failing the step if no files are found yet
+          RAW_DIRS=$(find $SEARCH_DIRS -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib|dll)$' | xargs dirname 2>/dev/null | sort -u || true)
           
           if [ -z "$RAW_DIRS" ]; then
-            echo "ERROR: No MetaCall components found anywhere on the system!"
+            echo "ERROR: Detection failed to find any MetaCall components!"
             exit 1
           fi
           
-          # Join paths with colons (or semicolons for Windows if necessary, but MetaCall usually handles colons in LOADER_PATH)
-          COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" -)
-          echo "[DETECTION] Discovered Component Map: $COMBINED_PATHS"
+          # Join paths with colons and ensure NO trailing colon
+          COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" - | sed 's/:$//')
+          echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
-          # Find the specific Core Library (The Heart) using fuzzy matching
-          LIB_FILE=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "libmetacall*" -o -name "metacall.dll" 2>/dev/null | grep -E '\.(so|dylib|dll)' | head -n 1)
-          
-          if [ -z "$LIB_FILE" ]; then
-            echo "ERROR: MetaCall Core Library NOT FOUND!"
-            exit 1
-          fi
-          
+          # Identify the main Core Library
+          LIB_FILE=$(find $SEARCH_DIRS \( -name "libmetacall*" -o -name "metacall.dll" \) -type f 2>/dev/null | grep -E '\.(so|dylib|dll)$' | head -n 1 || true)
           LIB_DIR=$(dirname "$LIB_FILE")
-          echo "[DETECTION] SUCCESS: Found Core at $LIB_FILE"
           
-          # Record for downstream steps
+          # Export to GITHUB_ENV
           echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
           echo "METACALL_INSTALL_PATH=$LIB_DIR" >> $GITHUB_ENV
-          
-          # Inject the clean combined path map into ALL MetaCall environment variables
           echo "LOADER_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
           echo "SERIAL_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
           echo "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
@@ -82,13 +84,11 @@ jobs:
           echo "DYLD_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
           echo "$LIB_DIR" >> $GITHUB_PATH
           
-          # Unix-only Linking & Ldconfig
+          # Link for Ruby loader (Unix only)
           if [[ "${{ matrix.os }}" != "windows-latest" ]]; then
             sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
             sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
-            if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-               sudo ldconfig "$LIB_DIR"
-            fi
+            [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig "$LIB_DIR"
           fi
 
       - name: "[FORENSIC] Step 2: Set up Ruby Environment"
@@ -102,34 +102,25 @@ jobs:
         run: |
           echo "=== SYSTEM AUDIT START ==="
           echo "OS: ${{ matrix.os }}"
-          echo "Ruby: $(ruby -v)"
           echo "INSTALL_PATH: $METACALL_INSTALL_PATH"
           echo "LOADER_PATH: $LOADER_LIBRARY_PATH"
-          echo "--- Component Scan ---"
+          echo "--- Directory Verification ---"
           IFS=':' read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
           for i in "${ADDR[@]}"; do
-            if [ -d "$i" ]; then
-              echo "Checking House: $i"
-              ls -la "$i" | grep -i metacall || true
-            fi
+            [ -d "$i" ] && echo "Found House: $i" && ls -la "$i" | grep -i metacall || true
           done
           echo "=== SYSTEM AUDIT END ==="
 
-      - name: "[FORENSIC] Step 4: Run Ruby Tests (Universal Injection)"
+      - name: "[FORENSIC] Step 4: Run Ruby Tests (Resilient Injection)"
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          echo "[EXECUTION] Executing Ruby Integration Suite..."
-          # Windows specific sync
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-             cp ../../../source/scripts/python/example/source/example.py .
-             cp ../../../source/scripts/ruby/hello/source/hello.rb .
-          else
-             cp ../../../scripts/python/example/source/example.py .
-             cp ../../../scripts/ruby/hello/source/hello.rb .
-          fi
+          echo "[EXECUTION] Starting Integration Tests..."
+          # Standardize resource paths
+          cp ../../../source/scripts/python/example/source/example.py . || cp ../../../scripts/python/example/source/example.py .
+          cp ../../../source/scripts/ruby/hello/source/hello.rb . || cp ../../../scripts/ruby/hello/source/hello.rb .
           
-          # Force the loader to use our detected install path
+          # Explicitly export the discovered paths to the Ruby shell
           export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
           export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
           export SERIAL_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
