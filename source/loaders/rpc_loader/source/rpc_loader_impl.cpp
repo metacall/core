@@ -275,12 +275,13 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 
 				if (result != CURLE_OK)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Async call failed to API endpoint %s [%s]", done_ctx->url.c_str(), curl_easy_strerror(result));
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+					log_write("metacall", LOG_LEVEL_ERROR, "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
+#endif
 
 					if (done_ctx->reject_callback != NULL)
 					{
-						std::string error_msg = std::string("HTTP request failed: ") + curl_easy_strerror(result);
-						value error = metacall_value_create_string(error_msg.c_str(), error_msg.length());
+						value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
 						done_ctx->reject_callback(error, done_ctx->context);
 						metacall_value_destroy(error);
 					}
@@ -301,11 +302,13 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 
 				if (result_value == NULL)
 				{
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 					log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize async call result from API endpoint %s", done_ctx->url.c_str());
+#endif
 
 					if (done_ctx->reject_callback != NULL)
 					{
-						value error = metacall_value_create_string("Deserialization failed", sizeof("Deserialization failed") - 1);
+						value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP deserialization failed [%s]", done_ctx->url.c_str());
 						done_ctx->reject_callback(error, done_ctx->context);
 						metacall_value_destroy(error);
 					}
@@ -364,16 +367,19 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 	if (body_request_size == 0)
 	{
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
+#endif
 
+		// TODO: Is the reject correct here? Should not we return the exception instead? The function has not been invoked yet
 		if (reject_callback != NULL)
 		{
-			value error = metacall_value_create_string("Serialization failed", sizeof("Serialization failed") - 1);
+			value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP serialization failed [%s]", rpc_function->url.c_str());
 			reject_callback(error, context);
 			metacall_value_destroy(error);
 		}
 
-		return NULL;
+		return NULL; // TODO: Return here the thrown exception?
 	}
 
 	/* Create async context */

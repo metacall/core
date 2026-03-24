@@ -54,7 +54,7 @@ static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 /* -- Classes -- */
 
-rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
+static thread_local rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
 
 /* -- Methods -- */
 
