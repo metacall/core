@@ -40,7 +40,6 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
-          echo "[DETECTION] Constructing Safe Search Paths..."
           SEARCH_DIRS="$HOME /usr/local /opt"
           [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
           [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
@@ -75,26 +74,28 @@ jobs:
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           echo "[DETECTION] Hunting for components in $METACALL_DIR"
           
-          # Find the Core library folder (SINGLE DIRECTORY)
-          $LIB_FILE = Get-ChildItem -Path $METACALL_DIR -Filter "*metacall*.dll" -Recurse | Select-Object -First 1
-          $LIB_DIR = $LIB_FILE.DirectoryName
+          # ARCHITECTURAL FIX (Strategy: Find specific files then use paths)
+          $CoreFile = Get-ChildItem -Path $METACALL_DIR -Filter "metacall.dll" -Recurse | Select-Object -First 1
+          $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
+          $Serial   = Get-ChildItem -Path $METACALL_DIR -Filter "*serial.dll" -Recurse | Select-Object -First 1
           
-          # Find all unique directories with DLLs (The Houses)
+          $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
+          $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
+          $SerialDir  = if ($Serial)   { $Serial.DirectoryName }   else { $InstallDir }
+          
+          # Find all unique DLL folders for the System PATH
           $ALL_DIRS = Get-ChildItem -Path $METACALL_DIR -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           
-          echo "[DETECTION] SUCCESS: Core found at $LIB_DIR"
+          echo "[DETECTION] SUCCESS: Core -> $InstallDir, Loader -> $LoaderDir"
           
-          # Export to GITHUB_ENV using ASCII (Safe for PowerShell 5.1)
-          # ARCHITECTURAL FIX: METACALL_INSTALL_PATH must be a SINGLE directory on Windows
-          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($LIB_FILE.FullName)" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$LIB_DIR" -Encoding Ascii
+          # Export to GITHUB_ENV using ASCII
+          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$InstallDir" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LoaderDir" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$SerialDir" -Encoding Ascii
+          Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           
-          # Use the main lib folder for loader paths to prevent syntax errors
-          Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LIB_DIR" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$LIB_DIR" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$LIB_DIR" -Encoding Ascii
-          
-          # Inject EVERY house into the Windows System PATH so the engine finds plugins natively
+          # Inject EVERY house into the Windows System PATH
           foreach ($dir in $ALL_DIRS) {
             Add-Content -Path $env:GITHUB_PATH -Value "$dir" -Encoding Ascii
           }
@@ -116,7 +117,7 @@ jobs:
           SEP=$([[ "${{ matrix.os }}" == "windows-latest" ]] && echo ";" || echo ":")
           IFS=$SEP read -ra ADDR <<< "$LOADER_LIBRARY_PATH"
           for i in "${ADDR[@]}"; do
-            [ -d "$i" ] && echo "Found House: $i" && ls -la "$i" | grep -i metacall || true
+            [ -d "$i" ] && echo "Found House: $i" && ls -la "$i" | grep -E 'dll|json|so|dylib' || true
           done
           echo "=== SYSTEM AUDIT END ==="
 
