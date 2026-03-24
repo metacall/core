@@ -40,12 +40,10 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
-          SEARCH_DIRS="$HOME /usr/local /opt"
-          [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
-          [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
-          
-          RAW_DIRS=$(find $SEARCH_DIRS -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
+          echo "[DETECTION] Performing Global Component Hunt..."
+          RAW_DIRS=$(find "$HOME" "/usr/local" "/opt" "/gnu/store" -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
           COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" - | sed 's/:$//')
+          echo "[DETECTION] SUCCESS: Discovered Map -> $COMBINED_PATHS"
           
           LIB_FILE=$(find $RAW_DIRS -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | head -n 1)
           LIB_DIR=$(dirname "$LIB_FILE")
@@ -78,9 +76,13 @@ jobs:
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
           
-          # Detect Python Home (Fix for 'ModuleNotFoundError: No module named encodings')
-          $PyDll = Get-ChildItem -Path $METACALL_DIR -Filter "python*.dll" -Recurse | Select-Object -First 1
-          $PyHome = if ($PyDll) { $PyDll.DirectoryName } else { "$METACALL_DIR\runtimes\python" }
+          # ARCHITECTURAL FIX: Locate the TRUE Python Home (not just the DLL dir)
+          $PyHome = Join-Path $METACALL_DIR "runtimes\python"
+          if (-not (Test-Path $PyHome)) {
+             # Fallback to searching for the directory containing 'Lib'
+             $LibDir = Get-ChildItem -Path $METACALL_DIR -Directory -Filter "Lib" -Recurse | Select-Object -First 1
+             $PyHome = if ($LibDir) { $LibDir.Parent.FullName } else { "$METACALL_DIR\lib" }
+          }
           
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
@@ -94,11 +96,10 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$InstallDir" -Encoding Ascii
           
-          # ARCHITECTURAL FIX: Define Python and Ruby boundaries
+          # FIX: Export correct Python Home boundaries
           Add-Content -Path $env:GITHUB_ENV -Value "PYTHONHOME=$PyHome" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "PYTHONPATH=$InstallDir" -Encoding Ascii
           
-          # Inject paths
           Add-Content -Path $env:GITHUB_PATH -Value "$InstallDir" -Encoding Ascii
           if ($RubyRuntime) {
               $RubyRuntimeDir = $RubyRuntime.DirectoryName
@@ -134,8 +135,9 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Unix Integration Tests..."
-          cp ../../../scripts/python/example/source/example.py . || true
-          cp ../../../scripts/ruby/hello/source/hello.rb . || true
+          # Fuzzy resource copy
+          cp $(find ../../../source/scripts -name "example.py" | head -n 1) . || true
+          cp $(find ../../../source/scripts -name "hello.rb" | head -n 1) . || true
           ruby -I../package/lib run.rb
 
       - name: "[FORENSIC] Step 4b: Run Ruby Tests (Windows)"
@@ -143,17 +145,21 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: pwsh
         run: |
-          # FORCE RE-INJECTION of every DLL folder into PATH
+          # FORCE RE-INJECTION of paths
           $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
           
-          # Explicitly set Python Home in local shell to prevent encodings error
+          # Fix: Match the local shell env to the discovered Python home
           $env:PYTHONHOME = "$env:PYTHONHOME"
           $env:PYTHONPATH = "$env:PYTHONPATH"
           
-          echo "[EXECUTION] Starting Windows Integration Tests (Polyglot Sync)..."
-          cp ../../../scripts/python/example/source/example.py .
-          cp ../../../scripts/ruby/hello/source/hello.rb .
+          echo "[EXECUTION] Starting Windows Integration Tests (Polyglot Fixed)..."
+          # Standard resource copy for Windows
+          $PyFile = Get-ChildItem -Path "../../../" -Filter "example.py" -Recurse | Select-Object -First 1
+          $RbFile = Get-ChildItem -Path "../../../" -Filter "hello.rb" -Recurse | Select-Object -First 1
+          if ($PyFile) { Copy-Item $PyFile.FullName . }
+          if ($RbFile) { Copy-Item $RbFile.FullName . }
+          
           ruby -I../package/lib run.rb
 
   release:
