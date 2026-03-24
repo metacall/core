@@ -76,8 +76,12 @@ jobs:
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
           
-          $PyDll = Get-ChildItem -Path $METACALL_DIR -Filter "python*.dll" -Recurse | Select-Object -First 1
-          $PyHome = if ($PyDll) { $PyDll.DirectoryName } else { "$METACALL_DIR\runtimes\python" }
+          # ARCHITECTURAL FIX: Restore the working Python Home detection
+          $PyHome = Join-Path $METACALL_DIR "runtimes\python"
+          if (-not (Test-Path $PyHome)) {
+             $LibDir = Get-ChildItem -Path $METACALL_DIR -Directory -Filter "Lib" -Recurse | Select-Object -First 1
+             $PyHome = if ($LibDir) { $LibDir.Parent.FullName } else { "$METACALL_DIR\lib" }
+          }
           
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
@@ -127,7 +131,6 @@ jobs:
         shell: bash
         run: |
           echo "[EXECUTION] Starting Unix Integration Tests..."
-          # REVERTED: Using simple relative paths that worked before
           cp ../../../scripts/python/example/source/example.py . || true
           cp ../../../scripts/ruby/hello/source/hello.rb . || true
           ruby -I../package/lib run.rb
@@ -137,7 +140,6 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: pwsh
         run: |
-          # Keep Windows logic exactly as it is (it worked!)
           $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
           $env:PYTHONHOME = "$env:PYTHONHOME"
