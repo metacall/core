@@ -433,7 +433,6 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 #if LONG_MAX < INT64_MAX
 		if (i < (int64_t)LONG_MIN || i > (int64_t)LONG_MAX)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "64-bit signed integer value overflows long in RapidJSON implementation");
 			return (value)metacall_error_throw("RapidJSON", -1, NULL, "64-bit signed integer value overflows long in RapidJSON implementation");
 		}
 #endif
@@ -446,7 +445,6 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 		if (ui > (uint64_t)LONG_MAX)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "64-bit unsigned integer value overflows long in RapidJSON implementation");
 			return (value)metacall_error_throw("RapidJSON", -1, NULL, "64-bit unsigned integer value overflows long in RapidJSON implementation");
 		}
 
