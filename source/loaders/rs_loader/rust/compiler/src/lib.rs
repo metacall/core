@@ -39,7 +39,7 @@ use std::iter::{self, FromIterator};
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     fmt,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync,
 };
 
@@ -88,6 +88,7 @@ pub enum Source {
     Package { path: PathBuf },
 }
 
+#[allow(clippy::new_ret_no_self)]
 impl Source {
     pub fn new(source: Source) -> SourceImpl {
         let library_name = |file_name: &PathBuf| {
@@ -95,7 +96,7 @@ impl Source {
             let lib_extension = "so";
             #[cfg(windows)]
             let lib_extension = "dll";
-            #[cfg(macos)]
+            #[cfg(target_os = "macos")]
             let lib_extension = "dylib";
 
             let mut lib_name = file_name.clone();
@@ -117,11 +118,11 @@ impl Source {
                 let dir = PathBuf::from(
                     path.clone()
                         .parent()
-                        .expect(format!("Unable to get the parent of {:?}", path).as_str()),
+                        .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
                 );
                 let name = PathBuf::from(
                     path.file_name()
-                        .expect(format!("Unable to get the filename of {:?}", path).as_str()),
+                        .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
                 );
                 let temp_dir = std::env::temp_dir();
                 SourceImpl {
@@ -132,7 +133,7 @@ impl Source {
                 }
             }
             Source::Memory { ref name, ref code } => {
-                let dir = PathBuf::from(std::env::temp_dir());
+                let dir = std::env::temp_dir();
                 let name_path = PathBuf::from(name.clone());
 
                 SourceImpl {
@@ -149,11 +150,11 @@ impl Source {
                 let dir = PathBuf::from(
                     path.clone()
                         .parent()
-                        .expect(format!("Unable to get the parent of {:?}", path).as_str()),
+                        .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
                 );
                 let name = PathBuf::from(
                     path.file_name()
-                        .expect(format!("Unable to get the filename of {:?}", path).as_str()),
+                        .unwrap_or_else(|| panic!("Unable to get the filename of {:?}", path)),
                 );
                 let temp_dir = std::env::temp_dir();
                 SourceImpl {
@@ -214,16 +215,16 @@ fn compiler_sys_root() -> Option<PathBuf> {
 fn compiler_source() -> Option<PathBuf> {
     match compiler_sys_root() {
         Some(sys_root) => {
-            let mut path = sys_root.clone();
+            let mut path = sys_root;
             path.push("lib");
             path.push("rustlib");
             path.push("src");
             path.push("rust");
 
             if path.exists() {
-                return Some(path);
+                Some(path)
             } else {
-                return None;
+                None
             }
         }
         _ => None,
@@ -258,7 +259,7 @@ pub struct DynlinkLibrary {
 }
 
 impl DynlinkLibrary {
-    pub fn new(path: &PathBuf) -> Result<DynlinkLibrary, String> {
+    pub fn new(path: &Path) -> Result<DynlinkLibrary, String> {
         let c_path = CString::new(path.to_str().unwrap()).expect("CString::new failed");
 
         unsafe {
@@ -279,12 +280,15 @@ impl DynlinkLibrary {
         let c_symbol_name = CString::new(symbol_name).expect("CString::new failed");
 
         unsafe {
-            let mut symbol_address: DynlinkSymbolAddr =
-                std::mem::transmute(std::ptr::null::<DynlinkSymbolAddr>());
-            let result = dynlink_symbol(self.instance, c_symbol_name.as_ptr(), &mut symbol_address);
+            let mut symbol_address = std::mem::MaybeUninit::<DynlinkSymbolAddr>::uninit();
 
+            let result = dynlink_symbol(
+                self.instance,
+                c_symbol_name.as_ptr(),
+                symbol_address.as_mut_ptr(),
+            );
             if result == 0 {
-                Ok(symbol_address)
+                Ok(symbol_address.assume_init())
             } else {
                 Err(format!("Failed to find symbol: {}", symbol_name))
             }
@@ -367,7 +371,7 @@ pub struct Function {
 
 impl Function {
     pub fn has_self(&self) -> bool {
-        if self.args.len() == 0 {
+        if self.args.is_empty() {
             return false;
         }
         self.args[0].name == "self"
@@ -585,7 +589,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                 let mut wrapped_script = std::fs::File::create(&wrapped_script_path)
                     .expect("unable to create wrapped script");
                 wrapped_script
-                    .write("extern crate metacall_package;\n".as_bytes())
+                    .write_all("extern crate metacall_package;\n".as_bytes())
                     .expect("Unablt to write wrapped script");
             }
 
@@ -696,51 +700,47 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                 let class_name_str = class_name.as_str();
 
                 for item in items {
-                    let name = i.kind.ident().map(|id| id.to_string()).unwrap_or_default();
-                    match &item.kind {
-                        rustc_ast::AssocItemKind::Fn(box rustc_ast::Fn { sig, .. }) => {
-                            // Function has self in parameters
-                            if sig.decl.has_self() {
-                                match impl_kind {
-                                    ImplKind::Drop => {
-                                        class.destructor = Some(ast::handle_fn(name, sig));
-                                    }
-                                    _ => {
-                                        class.methods.push(ast::handle_fn(name, sig));
-                                    }
+                    let name = item.ident.to_string();
+                    if let rustc_ast::AssocItemKind::Fn(box rustc_ast::Fn { sig, .. }) = &item.kind
+                    {
+                        // Function has self in parameters
+                        if sig.decl.has_self() {
+                            match impl_kind {
+                                ImplKind::Drop => {
+                                    class.destructor = Some(ast::handle_fn(name, sig));
                                 }
-                            } else {
-                                // Static method
-                                match &sig.decl.output {
-                                    rustc_ast::FnRetTy::Ty(p) => match &**p {
-                                        rustc_ast::Ty { kind, .. } => match kind {
-                                            rustc_ast::TyKind::Path(_, p) => {
-                                                let ret_name = p.segments[0].ident.to_string();
-                                                if ret_name == "Self" || ret_name == class_name_str
-                                                {
-                                                    class.constructor =
-                                                        Some(ast::handle_fn(name, sig));
-                                                } else {
-                                                    class
-                                                        .static_methods
-                                                        .push(ast::handle_fn(name, sig));
-                                                }
-                                            }
-                                            _ => {
+                                _ => {
+                                    class.methods.push(ast::handle_fn(name, sig));
+                                }
+                            }
+                        } else {
+                            // Static method
+                            match &sig.decl.output {
+                                rustc_ast::FnRetTy::Ty(p) => {
+                                    let rustc_ast::Ty { kind, .. } = &**p;
+
+                                    match kind {
+                                        rustc_ast::TyKind::Path(_, p) => {
+                                            let ret_name = p.segments[0].ident.to_string();
+                                            if ret_name == "Self" || ret_name == class_name_str {
+                                                class.constructor = Some(ast::handle_fn(name, sig));
+                                            } else {
                                                 class
                                                     .static_methods
                                                     .push(ast::handle_fn(name, sig));
                                             }
-                                        },
-                                    },
-                                    rustc_ast::FnRetTy::Default(_) => {
-                                        class.static_methods.push(ast::handle_fn(name, sig));
+                                        }
+                                        _ => {
+                                            class.static_methods.push(ast::handle_fn(name, sig));
+                                        }
                                     }
+                                }
+                                rustc_ast::FnRetTy::Default(_) => {
+                                    class.static_methods.push(ast::handle_fn(name, sig));
                                 }
                             }
                         }
-                        _ => {}
-                    };
+                    }
                 }
             }
             ItemKind::Fn(box sig) => {
@@ -848,7 +848,7 @@ fn run_compiler(
         // The second parameter is local providers and the third parameter is external providers.
         override_queries: None, // Option<fn(&Session, &mut ty::query::Providers<'_>, &mut ty::query::Providers<'_>)>
         // Registry of diagnostics codes.
-        //registry: rustc_errors::registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
+        registry: rustc_errors::registry::Registry::new(rustc_error_codes::DIAGNOSTICS),
         make_codegen_backend: None,
         ..Default::default()
     };

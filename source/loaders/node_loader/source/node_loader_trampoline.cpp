@@ -63,7 +63,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 {
 	napi_status status;
 
-	const size_t args_size = 3;
+	const size_t args_size = 4;
 	size_t argc = args_size;
 
 	napi_value args[args_size];
@@ -94,6 +94,10 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 
 	node_loader_impl_exception(env, status);
 
+	status = napi_typeof(env, args[3], &valuetype[3]);
+
+	node_loader_impl_exception(env, status);
+
 	if (valuetype[0] != napi_string || valuetype[1] != napi_string || valuetype[2] != napi_object)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong arguments type");
@@ -121,13 +125,26 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	(void)register_ptr_cast.data(node_impl_cast.data, static_cast<void *>(env), static_cast<void *>(function_table_object));
 
 	/* Store the node impl reference into a pointer so we can use it later on in the destroy mechanism */
-	napi_value return_external;
+	if (valuetype[3] != napi_undefined)
+	{
+		napi_value return_external;
 
-	status = napi_create_external(env, node_impl_cast.data, nullptr, nullptr, &return_external);
+		status = napi_create_external(env, node_impl_cast.data, nullptr, nullptr, &return_external);
 
-	node_loader_impl_exception(env, status);
+		node_loader_impl_exception(env, status);
 
-	return return_external;
+		return return_external;
+	}
+	else
+	{
+		napi_value undefined_value;
+
+		status = napi_get_undefined(env, &undefined_value);
+
+		node_loader_impl_exception(env, status);
+
+		return undefined_value;
+	}
 }
 
 napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)

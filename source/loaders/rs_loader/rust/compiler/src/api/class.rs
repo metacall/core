@@ -92,13 +92,12 @@ extern "C" fn class_singleton_static_invoke(
             .expect("Unable to get method name");
         let ret = class.call(name, args);
         std::mem::forget(class);
-        std::mem::forget(name);
         ret
     };
     if let Ok(ret) = ret {
-        return ret;
+        ret
     } else {
-        return 0 as OpaqueType;
+        0 as OpaqueType
     }
 }
 
@@ -116,12 +115,10 @@ extern "C" fn class_singleton_static_await(
 
 #[no_mangle]
 extern "C" fn class_singleton_destroy(_klass: OpaqueType, class_impl: OpaqueType) {
-    if !rs_loader_destroyed() {
-        if !class_impl.is_null() {
-            unsafe {
-                let class = Box::from_raw(class_impl as *mut class::Class);
-                drop(class);
-            }
+    if !rs_loader_destroyed() && !class_impl.is_null() {
+        unsafe {
+            let class = Box::from_raw(class_impl as *mut class::Class);
+            drop(class);
         }
     }
 }
@@ -239,10 +236,8 @@ pub fn register_class(class_registration: ClassRegistration) {
                     loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
                 );
             };
-        }
-        else {
-            let ret = CString::new("Null")
-            .expect("Failed to convert return type to C string");
+        } else {
+            let ret = CString::new("Null").expect("Failed to convert return type to C string");
 
             unsafe {
                 signature_set_return(
@@ -294,10 +289,8 @@ pub fn register_class(class_registration: ClassRegistration) {
                     loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
                 );
             };
-        }
-        else {
-            let ret = CString::new("Null")
-            .expect("Failed to convert return type to C string");
+        } else {
+            let ret = CString::new("Null").expect("Failed to convert return type to C string");
 
             unsafe {
                 signature_set_return(

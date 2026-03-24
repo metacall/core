@@ -75,7 +75,7 @@ REFLECT_API const char *type_id_name(type_id id);
 *    Type id to be checked
 *
 *  @return
-*    Returns zero if type is integer, different from zero otherwhise
+*    Returns zero if type is integer, different from zero otherwise
 */
 REFLECT_API int type_id_boolean(type_id id);
 
@@ -99,7 +99,7 @@ REFLECT_API int type_id_char(type_id id);
 *    Type id to be checked
 *
 *  @return
-*    Returns zero if type is integer, different from zero otherwhise
+*    Returns zero if type is integer, different from zero otherwise
 */
 REFLECT_API int type_id_integer(type_id id);
 

@@ -55,7 +55,7 @@ extern "C" {
 *    Type of memory block @data
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_type_create(const void *data, size_t bytes, type_id id);
 
@@ -157,7 +157,7 @@ REFLECT_API type_id value_type_id(value v);
 *    Boolean will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_bool(boolean b);
 
@@ -169,7 +169,7 @@ REFLECT_API value value_create_bool(boolean b);
 *    Character will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_char(char c);
 
@@ -181,7 +181,7 @@ REFLECT_API value value_create_char(char c);
 *    Short will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_short(short s);
 
@@ -193,7 +193,7 @@ REFLECT_API value value_create_short(short s);
 *    Integer will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_int(int i);
 
@@ -205,7 +205,7 @@ REFLECT_API value value_create_int(int i);
 *    Long integer will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_long(long l);
 
@@ -217,7 +217,7 @@ REFLECT_API value value_create_long(long l);
 *    Float will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_float(float f);
 
@@ -229,7 +229,7 @@ REFLECT_API value value_create_float(float f);
 *    Double will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_double(double d);
 
@@ -244,7 +244,7 @@ REFLECT_API value value_create_double(double d);
 *    Length of the constant string
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_string(const char *str, size_t length);
 
@@ -259,7 +259,7 @@ REFLECT_API value value_create_string(const char *str, size_t length);
 *    Size in bytes of data contained in the array
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_buffer(const void *buffer, size_t size);
 
@@ -274,7 +274,7 @@ REFLECT_API value value_create_buffer(const void *buffer, size_t size);
 *    Number of elements contained in the array
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_array(const value *values, size_t size);
 
@@ -289,7 +289,7 @@ REFLECT_API value value_create_array(const value *values, size_t size);
 *    Number of elements contained in the map
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_map(const value *tuples, size_t size);
 
@@ -301,7 +301,7 @@ REFLECT_API value value_create_map(const value *tuples, size_t size);
 *    Pointer to constant data will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_ptr(const void *ptr);
 
@@ -313,7 +313,7 @@ REFLECT_API value value_create_ptr(const void *ptr);
 *    Pointer to future will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_future(future f);
 
@@ -325,7 +325,7 @@ REFLECT_API value value_create_future(future f);
 *    Pointer to function will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_function(function f);
 
@@ -340,7 +340,7 @@ REFLECT_API value value_create_function(function f);
 *    Pointer to closure that will be binded into function @f
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_function_closure(function f, void *c);
 
@@ -349,7 +349,7 @@ REFLECT_API value value_create_function_closure(function f, void *c);
 *    Create a value of type null
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_null(void);
 
@@ -361,7 +361,7 @@ REFLECT_API value value_create_null(void);
 *    Pointer to class will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_class(klass c);
 
@@ -373,7 +373,7 @@ REFLECT_API value value_create_class(klass c);
 *    Pointer to object will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_object(object o);
 
@@ -385,7 +385,7 @@ REFLECT_API value value_create_object(object o);
 *    Pointer to exception will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_exception(exception ex);
 
@@ -397,7 +397,7 @@ REFLECT_API value value_create_exception(exception ex);
 *    Pointer to throwable will be copied into value
 *
 *  @return
-*    Pointer to value if success, null otherwhise
+*    Pointer to value if success, null otherwise
 */
 REFLECT_API value value_create_throwable(throwable th);
 

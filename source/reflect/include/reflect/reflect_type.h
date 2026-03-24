@@ -51,19 +51,82 @@ typedef struct type_interface_type
 
 typedef type_interface (*type_impl_interface_singleton)(void);
 
+/**
+*  @brief
+*    Create a new type representation
+*
+*  @param[in] id
+*    Numeric type identifier (e.g. TYPE_INT, TYPE_STRING)
+*  @param[in] name
+*    Human-readable name of the type (e.g. "Integer", "String")
+*  @param[in] impl
+*    Pointer to the language-specific type implementation
+*  @param[in] singleton
+*    Singleton accessor for the type interface (create, destroy)
+*
+*  @return
+*    Pointer to the newly created type on success, NULL on failure
+*/
 REFLECT_API type type_create(type_id id, const char *name, type_impl impl, type_impl_interface_singleton singleton);
 
+/**
+*  @brief
+*    Get the numeric identifier of a type
+*
+*  @param[in] t
+*    Pointer to the type
+*
+*  @return
+*    Type identifier (e.g. TYPE_INT, TYPE_STRING)
+*/
 REFLECT_API type_id type_index(type t);
 
+/**
+*  @brief
+*    Get the human-readable name of a type
+*
+*  @param[in] t
+*    Pointer to the type
+*
+*  @return
+*    String containing the type name
+*/
 REFLECT_API const char *type_name(type t);
 
+/**
+*  @brief
+*    Get the language-specific derived implementation of a type
+*
+*  @param[in] t
+*    Pointer to the type
+*
+*  @return
+*    Opaque pointer to the derived type implementation
+*/
 REFLECT_API type_impl type_derived(type t);
 
-// TODO: Subtyping (for handling typed containers like arrays, maps or templates)
-// REFLECT_API vector type_subtype(type t);
+/* TODO: Subtyping (for handling typed containers like arrays, maps or templates) */
+/* REFLECT_API vector type_subtype(type t); */
 
+/**
+*  @brief
+*    Generate a metadata representation of the type
+*
+*  @param[in] t
+*    Pointer to the type
+*
+*  @return
+*    Value containing the metadata map, or NULL on failure
+*/
 REFLECT_API value type_metadata(type t);
 
+/**
+*  @brief
+*    Destroy a type and free all associated resources
+*
+*  @param[in] t
+*    Pointer to the type to destroy
+*/
 REFLECT_API void type_destroy(type t);
 
 #ifdef __cplusplus

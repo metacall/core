@@ -24,7 +24,7 @@ TODO List
 
   * Loader C/C++:
     - [Clang](http://clang.llvm.org/docs/ExternalClangExamples.html) as a parser for reflect generation for .h and .hpp files.
-    - [Libffi](http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Using-libffi.html) as a foreing function interface caller.
+    - [Libffi](http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Using-libffi.html) as a foreign function interface caller.
     - [LLVM](http://llvm.org/docs/) as a JIT compiler for .c and .cpp files.
     - [Dynlink](source/dynlink) library as a cross-platform library loader.
     - Alternatively use [EmbedCh](https://www.softintegration.com/products/sdk/embedch/).

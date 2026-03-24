@@ -10,7 +10,7 @@ endif()
 find_package(LibFFI)
 
 if(NOT LIBFFI_FOUND)
-	message(SEND_ERROR "Foreing Function Interface library not found")
+	message(SEND_ERROR "Foreign Function Interface library not found")
 	return()
 endif()
 

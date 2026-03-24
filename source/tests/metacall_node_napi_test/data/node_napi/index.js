@@ -1,6 +1,7 @@
+#!/usr/bin/env node
 /*
  *	MetaCall Library by Parra Studios
- *	A library for dynamic loading and linking shared objects at run-time.
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -17,28 +18,16 @@
  *	limitations under the License.
  *
  */
-#include <metacall-cs-test/environment.hpp>
 
-#include <gtest/gtest.h>
+/* Regression test for MetaCall NAPI native addon support.
+ * @rspack/core depends on @rspack/binding, a Rust-compiled NAPI addon (napi-rs).
+ * On Windows, MetaCall must resolve napi_* symbols correctly for native addons.
+ * This covers the rspack regression reproduced by distributable-windows.
+ */
+const { rspackVersion } = require('@rspack/core');
 
-#include <metacall/metacall.h>
-
-void environment::SetUp()
-{
-	const char *cs_scripts[] = {
-		"hello.cs",
-		"IJump.cs",
-		"JumpMaster.cs",
-		"SuperJump.cs",
-		"TinyJump.cs"
-	};
-
-	ASSERT_EQ((int)0, (int)metacall_initialize());
-
-	ASSERT_EQ((int)0, (int)metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
-}
-
-void environment::TearDown()
-{
-	metacall_destroy();
-}
+module.exports = {
+	check: function check() {
+		console.log('rspack loaded, version: ' + rspackVersion);
+	},
+};

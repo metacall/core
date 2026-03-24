@@ -475,10 +475,6 @@ static void *on_error_reject(void *error, void * /*data*/)
 static const int GOOD_CALLS = 5;
 
 // TODO: It fails under address sanitizer and thread sanitizer
-// Test address sanitizer with:
-// cmake -DCMAKE_BUILD_TYPE=Debug -DOPTION_BUILD_ADDRESS_SANITIZER=on -DOPTION_BUILD_THREAD_SANITIZER=off .. && make -j24 && ctest -VV -R metacall-rpc-test
-// Test thread sanitizer with:
-// cmake -DCMAKE_BUILD_TYPE=Debug -DOPTION_BUILD_ADDRESS_SANITIZER=off -DOPTION_BUILD_THREAD_SANITIZER=on .. && make -j24 && ctest -VV -R metacall-rpc-test
 TEST_F(metacall_rpc_test, ErrorUnderConcurrency)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());

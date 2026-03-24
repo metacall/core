@@ -60,7 +60,7 @@ struct metacall_initialize_configuration_type;
 struct metacall_initialize_configuration_type
 {
 	const char *tag; /* Tag referring to the loader */
-	void *options;	 /* Value of type Map that will be merged merged into the configuration of the loader */
+	void *options;	 /* Value of type Map that will be merged into the configuration of the loader */
 };
 
 typedef void *(*metacall_await_callback)(void *, void *);
@@ -193,7 +193,7 @@ METACALL_API int metacall_is_initialized(const char *tag);
 *    Amount of function call arguments supported by MetaCall
 *
 *  @return
-*    Number of arguments suported
+*    Number of arguments supported
 */
 METACALL_API size_t metacall_args_size(void);
 
@@ -289,7 +289,7 @@ METACALL_API int metacall_load_from_memory(const char *tag, const char *buffer, 
 
 /**
 *  @brief
-*    Loads a package of scrips from file specified by @path into loader defined by @extension
+*    Loads a package of scripts from file specified by @path into loader defined by @extension
 *
 *  @param[in] tag
 *    Extension of the script
@@ -313,7 +313,7 @@ METACALL_API int metacall_load_from_package(const char *tag, const char *path, v
 
 /**
 *  @brief
-*    Loads a a list of scrips from configuration specified by @path into loader
+*    Loads a a list of scripts from configuration specified by @path into loader
 *    with the following format:
 *        {
 *            "language_id": "<tag>",
@@ -424,7 +424,7 @@ METACALL_API void *metacallhv_s(void *handle, const char *name, void *args[], si
 *    Name of the function
 *
 *  @param[in] va_args
-*    Varidic function parameters
+*    Variadic function parameters
 *
 *  @return
 *    Pointer to value containing the result of the call
@@ -439,10 +439,10 @@ METACALL_API void *metacall(const char *name, ...);
 *    Name of the function
 *
 *  @param[in] ids
-*    Array of types refered to @va_args
+*    Array of types referred to @va_args
 *
 *  @param[in] va_args
-*    Varidic function parameters
+*    Variadic function parameters
 *
 *  @return
 *    Pointer to value containing the result of the call
@@ -457,13 +457,13 @@ METACALL_API void *metacallt(const char *name, const enum metacall_value_id ids[
 *    Name of the function
 *
 *  @param[in] ids
-*    Array of types refered to @va_args
+*    Array of types referred to @va_args
 *
 *  @param[in] size
 *    Number of elements of the call
 *
 *  @param[in] va_args
-*    Varidic function parameters
+*    Variadic function parameters
 *
 *  @return
 *    Pointer to value containing the result of the call
@@ -481,13 +481,13 @@ METACALL_API void *metacallt_s(const char *name, const enum metacall_value_id id
 *    Name of the function
 *
 *  @param[in] ids
-*    Array of types refered to @va_args
+*    Array of types referred to @va_args
 *
 *  @param[in] size
 *    Number of elements of the call
 *
 *  @param[in] va_args
-*    Varidic function parameters
+*    Variadic function parameters
 *
 *  @return
 *    Pointer to value containing the result of the call
@@ -568,7 +568,7 @@ METACALL_API void *metacall_handle_function(void *handle, const char *name);
 *    The parameter type id that will be returned
 *
 *  @return
-*    Return 0 if the @parameter index exists and @func is valid, 1 otherwhise
+*    Return 0 if the @parameter index exists and @func is valid, 1 otherwise
 */
 METACALL_API int metacall_function_parameter_type(void *func, size_t parameter, enum metacall_value_id *id);
 
@@ -584,19 +584,19 @@ METACALL_API int metacall_function_parameter_type(void *func, size_t parameter, 
 *    The value id of the return type of the function @func
 *
 *  @return
-*    Return 0 if the @func is valid, 1 otherwhise
+*    Return 0 if the @func is valid, 1 otherwise
 */
 METACALL_API int metacall_function_return_type(void *func, enum metacall_value_id *id);
 
 /**
 *  @brief
-*    Get minimun mumber of arguments accepted by function @func
+*    Get minimum number of arguments accepted by function @func
 *
 *  @param[in] func
 *    Function reference
 *
 *  @return
-*    Return mumber of arguments
+*    Return number of arguments
 */
 METACALL_API size_t metacall_function_size(void *func);
 
@@ -608,7 +608,7 @@ METACALL_API size_t metacall_function_size(void *func);
 *    Function reference
 *
 *  @return
-*    Return 0 if it is syncrhonous, 1 if it is asynchronous and -1 if the function is NULL
+*    Return 0 if it is synchronous, 1 if it is asynchronous and -1 if the function is NULL
 */
 METACALL_API int metacall_function_async(void *func);
 

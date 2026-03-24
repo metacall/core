@@ -121,10 +121,7 @@ extern "C" {
 }
 
 pub fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecycleState {
-    let loader_lifecycle_state =
-        unsafe { loader_impl_get(loader_impl) } as *mut LoaderLifecycleState;
-
-    loader_lifecycle_state
+    (unsafe { loader_impl_get(loader_impl) }) as *mut LoaderLifecycleState
 }
 
 static mut RS_LOADER_PTR: *mut c_void = std::ptr::null_mut();
@@ -142,7 +139,9 @@ pub fn loader_lifecycle_register(loader_impl: OpaqueType) {
 }
 
 pub fn loader_lifecycle_unload_children(loader_impl: OpaqueType) {
-    unsafe { loader_unload_children(loader_impl); }
+    unsafe {
+        loader_unload_children(loader_impl);
+    }
 }
 
 pub enum PrimitiveMetacallProtocolTypes {
@@ -182,7 +181,5 @@ pub fn define_type(
 }
 
 pub fn rs_loader_destroyed() -> bool {
-    unsafe {
-        loader_is_destroyed(RS_LOADER_PTR) == 0
-    }
+    unsafe { loader_is_destroyed(RS_LOADER_PTR) == 0 }
 }

@@ -7,7 +7,7 @@ set(target loadtest)
 
 c_project(${target} 0.1.0)
 
-add_library(${target} SHARED
+add_library(${target} MODULE
 	source/loadtest.cpp
 	source/loadtest.h
 )
@@ -35,3 +35,10 @@ set_target_properties(${target}
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${LOADER_SCRIPT_PATH}"
 	ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${LOADER_SCRIPT_PATH}"
 )
+
+# Copy the header to LOADER_SCRIPT_PATH so load_from_package can find it
+add_custom_target(${target}_include
+	COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/source/loadtest.h" "${LOADER_SCRIPT_PATH}/loadtest.h"
+)
+
+add_dependencies(${target} ${target}_include)

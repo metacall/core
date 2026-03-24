@@ -15,6 +15,8 @@ namespace CSLoader.Providers
             // This handler is called only when the common language runtime tries to bind to the assembly and fails
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
             AppDomain.CurrentDomain.TypeResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
+
+            loadContext = new CollectibleAssemblyLoadContext();
         }
 
         private Assembly AssemblyResolveEventHandler(object sender, ResolveEventArgs args)
@@ -72,18 +74,67 @@ namespace CSLoader.Providers
 
         protected override Assembly MakeAssembly(MemoryStream stream)
         {
-            return Assembly.Load(stream.ToArray());
+            return loadContext.LoadFromStream(stream);
         }
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
-            return Assembly.Load(assemblyName);
+            // First check default context to resolve references
+            Assembly asm = null;
+
+            try
+            {
+                asm = loadContext.LoadFromAssemblyName(assemblyName);
+            }
+            catch
+            {
+                // Fallback to default load
+                asm = Assembly.Load(assemblyName);
+            }
+
+            return asm;
         }
 
         protected override Assembly LoadFile(string assemblyFile)
         {
-            return Assembly.LoadFile(assemblyFile);
+            using (var fs = new FileStream(assemblyFile, FileMode.Open, FileAccess.Read))
+            {
+                return loadContext.LoadFromStream(fs);
+            }
         }
+
+        public override void Unload()
+        {
+            if (loadContext != null)
+            {
+                contextWeakRef = new WeakReference(loadContext);
+                loadContext.Unload();
+                loadContext = null;
+
+                // Clear strong references to allow unload
+                functions.Clear();
+
+                for (int i = 0; contextWeakRef.IsAlive && i < 10; i++)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect();
+                }
+
+                if (contextWeakRef.IsAlive)
+                {
+                    // TODO: Review this?
+                    log.Error("AssemblyLoadContext did not unload.");
+                }
+                else
+                {
+                    log.Info("AssemblyLoadContext unloaded successfully.");
+                }
+            }
+        }
+
+        private CollectibleAssemblyLoadContext loadContext;
+        private WeakReference contextWeakRef;
     }
 }
 #endif

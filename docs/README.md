@@ -128,7 +128,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [Go](https://golang.org/)                                                     | Go Runtime                                                                                             |  go  |
 | [Haskell](https://www.haskell.org/)                                           | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [Crystal](https://crystal-lang.org/)                                          | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://spidermonkey.dev/) | jsm  |
 | [Dart](https://dart.dev/)                                                     | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart |
 | [LuaJIT](https://luajit.org/)                                                 | [LuaJIT2](https://github.com/openresty/luajit2)                                                        | lua  |
 | [LLVM IR](https://www.llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) | [LLVM](https://llvm.org/)                                                                              | llvm |
@@ -450,7 +450,7 @@ Each plugin is a piece of software that can be dynamically loaded into the **MET
 
 #### 5.3.1 Loaders
 
-Loaders are responsible for embedding run-times into **METACALL**. Each loader has the following interface.
+Loaders are responsible for embedding run-times into **METACALL**. For a step-by-step guide to implementing a new loader, see [Creating a New Loader](CREATING_A_LOADER.md). Each loader has the following interface.
 
 ```c
 typedef struct loader_impl_interface_type

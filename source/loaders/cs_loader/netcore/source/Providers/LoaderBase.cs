@@ -13,8 +13,6 @@ using System.Runtime.InteropServices;
 
 namespace CSLoader.Providers
 {
-    /* TODO: Review the leak of CSharpCompilation when it fails to compile */
-    /*
     public class CollectibleAssemblyLoadContext : System.Runtime.Loader.AssemblyLoadContext, IDisposable
     {
         public CollectibleAssemblyLoadContext() : base(true)
@@ -32,7 +30,6 @@ namespace CSLoader.Providers
             Unload();
         }
     }
-    */
 
     public abstract class LoaderBase : ILoader
     {
@@ -356,6 +353,7 @@ namespace CSLoader.Providers
             return er;
         }
 
+        public abstract void Unload();
         protected abstract Assembly Load(AssemblyName assemblyName);
         protected abstract Assembly LoadFile(string assemblyFile);
     }

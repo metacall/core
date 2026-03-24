@@ -1,6 +1,6 @@
 use crate::{compile, CompilerState, RegistrationError, Source};
 
-use std::{ffi::c_void};
+use std::ffi::c_void;
 
 use crate::{registrator, DynlinkLibrary};
 
@@ -18,21 +18,16 @@ impl MemoryRegistration {
         })) {
             Ok(state) => state,
             Err(error) => {
-                return Err(RegistrationError::CompilationError(String::from(format!(
+                return Err(RegistrationError::CompilationError(format!(
                     "{}\n{}\n{}",
                     error.err, error.errors, error.diagnostics
-                ))))
+                )))
             }
         };
         let dynlink = match DynlinkLibrary::new(&state.output) {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DynlinkError(error)),
         };
-        // cleanup temp dir
-        let mut destination = state.output.clone();
-        destination.pop();
-        std::fs::remove_dir_all(destination).expect("Unable to cleanup tempdir");
-
         Ok(MemoryRegistration {
             name,
             state,
@@ -43,10 +38,21 @@ impl MemoryRegistration {
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
         match &self.dynlink {
             Some(dl) => {
-                registrator::register(&self.state, &dl, loader_impl, ctx);
+                registrator::register(&self.state, dl, loader_impl, ctx);
                 Ok(())
             }
             None => Err(String::from("The Dynlink library is None")),
+        }
+    }
+}
+
+impl Drop for MemoryRegistration {
+    fn drop(&mut self) {
+        drop(std::mem::replace(&mut self.dynlink, None));
+
+        let mut path = std::mem::take(&mut self.state.output);
+        if path.pop() {
+            let _ = std::fs::remove_dir_all(path);
         }
     }
 }

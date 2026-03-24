@@ -30,21 +30,21 @@
 netcore_handle simple_netcore_create(char *dotnet_root, char *dotnet_loader_assembly_path)
 {
 #if defined(__linux) | defined(linux)
-	netcore_linux *netcore_impl = new netcore_linux(dotnet_root, dotnet_loader_assembly_path);
+	netcore *core = new netcore_linux(dotnet_root, dotnet_loader_assembly_path);
 #else
-	netcore_win *netcore_impl = new netcore_win(dotnet_root, dotnet_loader_assembly_path);
+	netcore *core = new netcore_win(dotnet_root, dotnet_loader_assembly_path);
 #endif
 
-	bool result = netcore_impl->start();
+	bool result = core->start();
 
 	if (result == false)
 	{
-		delete netcore_impl;
+		delete core;
 
 		return (netcore_handle)NULL;
 	}
 
-	return (netcore_handle)netcore_impl;
+	return (netcore_handle)core;
 }
 
 reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count)
@@ -107,11 +107,9 @@ void simple_netcore_destroy_execution_result(netcore_handle handle, execution_re
 
 void simple_netcore_destroy(netcore_handle handle)
 {
-#if defined(__linux) | defined(linux)
-	netcore_linux *netcore_impl = (netcore_linux *)handle;
-#else
-	netcore_win *netcore_impl = (netcore_win *)handle;
-#endif
+	netcore *core = (netcore *)handle;
 
-	delete netcore_impl;
+	core->destroy();
+
+	delete core;
 }

@@ -177,7 +177,7 @@ TEST_F(log_test, DefaultConstructor)
 		}
 	}
 
-	/* Write varidic logs */
+	/* Write variadic logs */
 	{
 		size_t iterator;
 
