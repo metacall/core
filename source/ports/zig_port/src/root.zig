@@ -13,6 +13,23 @@ pub fn destroy() void {
     mb.metacall_destroy();
 }
 
+/// Value wrapper for return types that require manual memory management.
+pub fn Value(comptime T: type) type {
+    return struct {
+        raw: *anyopaque,
+
+        /// Returns the value as type T.
+        pub fn get(self: *const @This()) T {
+            return parse_ret(T, self.raw);
+        }
+
+        /// Destroys the value.
+        pub fn deinit(self: *@This()) void {
+            mb.metacall_value_destroy(self.raw);
+        }
+    };
+}
+
 /// Loads files into MetaCall, strings should be null-terminated.
 pub fn load_from_file(tag: [:0]const u8, paths: [][:0]const u8) !void {
     if (mb.metacall_load_from_file(tag.ptr, @ptrCast(paths.ptr), paths.len, null) != 0) {
@@ -32,6 +49,7 @@ pub fn load_from_package(tag: [:0]const u8, path: []const u8) !void {
     }
 }
 
+/// Parses a Zig value into a MetaCall value pointer.
 fn parse_arg(value: anytype) ?*anyopaque {
     return switch (@TypeOf(value)) {
         bool => mb.metacall_value_create_bool(@intCast(@intFromBool(value))),
@@ -46,6 +64,7 @@ fn parse_arg(value: anytype) ?*anyopaque {
         else => mb.metacall_value_create_null(),
     };
 }
+/// Parses a MetaCall value pointer into a Zig value of type R.
 fn parse_ret(comptime R: type, value: ?*anyopaque) ?R {
     if (value == null) return null;
 
@@ -89,11 +108,11 @@ fn parse_ret(comptime R: type, value: ?*anyopaque) ?R {
     return null;
 }
 
-/// Calls a function with the return type of `R`. The `args` argument should be an array of any Metacall supported type.
-pub fn metacall(comptime R: type, method: [:0]const u8, args: anytype) ?R {
+/// Calls a function with input `args` and return type `R`. For strings ([*:0]u8), it returns a `Value(R)` wrapper requiring explicit deinit.
+pub fn metacall(comptime R: type, method: [:0]const u8, args: anytype) if (R == [*:0]u8) Value(R) else ?R {
     const info = @typeInfo(@TypeOf(args));
     comptime {
-        if (info != .Array)
+        if (info != .array)
             @compileError("Arguments should be an array!");
     }
     var metacall_args: [args.len]?*anyopaque = undefined;
@@ -103,10 +122,21 @@ pub fn metacall(comptime R: type, method: [:0]const u8, args: anytype) ?R {
     }
 
     const metacall_ret = mb.metacallv_s(method, &metacall_args, metacall_args.len);
-    defer {
-        for (metacall_args) |arg| mb.metacall_value_destroy(arg);
-        mb.metacall_value_destroy(metacall_ret);
-    }
 
-    return parse_ret(R, metacall_ret);
+    // Smart routing for return values.
+    if (R == [*:0]u8) {
+        // Strings require manual memory management via Value(R).
+        defer {
+            for (metacall_args) |arg| mb.metacall_value_destroy(arg);
+        }
+        return Value(R){ .raw = metacall_ret };
+    } else {
+        // Primitives are destroyed immediately after parsing.
+        defer {
+            for (metacall_args) |arg| mb.metacall_value_destroy(arg);
+            mb.metacall_value_destroy(metacall_ret);
+        }
+
+        return parse_ret(R, metacall_ret);
+    }
 }

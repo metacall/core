@@ -6,10 +6,11 @@ const hi: []const u8 = "hi";
 pub fn main() !void {
     try metacall.init();
 
-    var paths: [1][:0]const u8 = .{"/home/raymond/Projects/metacall-core/source/ports/zig_port/src/tests/test.c"};
+    // Use relative paths for better portability
+    var paths: [1][:0]const u8 = .{"src/tests/test.c"};
     try metacall.load_from_file("c", &paths);
 
-    var paths_py: [1][:0]const u8 = .{"/home/raymond/Projects/metacall-core/source/ports/zig_port/src/tests/test.py"};
+    var paths_py: [1][:0]const u8 = .{"src/tests/test.py"};
     try metacall.load_from_file("py", &paths_py);
 
     const ret_bool = metacall.metacall(bool, "ret_bool", [0]bool{});
@@ -34,9 +35,26 @@ pub fn main() !void {
     try std.testing.expect(ret_double == 2.0);
 
     const ret_string = metacall.metacall([*:0]u8, "ret_string", [1][]const u8{hi});
-    try std.testing.expect(ret_string != null);
-    try std.testing.expect(ret_string.?[0] == 'h');
-    try std.testing.expect(ret_string.?[1] == 'i');
+    defer ret_string.deinit();
+    
+    const str = ret_string.get();
+    try std.testing.expect(str != null);
+    try std.testing.expect(str.?[0] == 'h');
+    try std.testing.expect(str.?[1] == 'i');
+
+    // Stress test: Call 10,000 times to verify memory stability
+    var i: usize = 0;
+    while (i < 10000) : (i += 1) {
+        const stress_ret = metacall.metacall([*:0]u8, "ret_string", [1][]const u8{hi});
+        defer stress_ret.deinit();
+        try std.testing.expect(stress_ret.get() != null);
+    }
+
+    // Edge case: Empty string
+    const empty_str_ret = metacall.metacall([*:0]u8, "ret_string", [1][]const u8{""});
+    defer empty_str_ret.deinit();
+    try std.testing.expect(empty_str_ret.get() != null);
+    try std.testing.expect(empty_str_ret.get().?[0] == 0);
 
     defer metacall.destroy();
 }
