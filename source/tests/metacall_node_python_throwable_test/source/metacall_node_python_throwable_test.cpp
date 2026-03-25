@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cstring>
+
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
@@ -39,13 +41,13 @@ TEST_F(metacall_node_python_throwable_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_NODE) && defined(OPTION_BUILD_LOADERS_PY)
 	{
 		/*
-		 * Load a Node script that exports `flip`: a higher-order function that
-		 * takes a two-argument function `fn` and returns a new function that
-		 * calls `fn` with its arguments swapped.
-		 *
-		 * This replicates the derpyramda.js `flip` function used in the
-		 * original failing Python test (test.py) to validate for now and make sure
-		 * This doesn't happen in future
+		 * Load a Node script that exports:
+		 *   - flip: higher-order function (swaps arg order) - replicates derpyramda.js flip
+		 *     used in the original failing Python test (test.py)
+		 *   - throwing_node_fn: function that directly throws a JS Error, used to test
+		 *     that py_loader_port_invoke (the metacall() Python port) correctly propagates
+		 *     the thrown TYPE_THROWABLE as a Python exception rather than returning Py_None
+		 *     with a pending exception (which causes a fatal error in Python 3.14+).
 		 */
 		static const char node_buffer[] =
 			"function flip(fn) {\n"
@@ -53,25 +55,35 @@ TEST_F(metacall_node_python_throwable_test, DefaultConstructor)
 			"        return fn(y, x);\n"
 			"    };\n"
 			"}\n"
-			"module.exports = { flip };\n";
+			"function throwing_node_fn() {\n"
+			"    throw new Error('test error from node');\n"
+			"}\n"
+			"module.exports = { flip, throwing_node_fn };\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", node_buffer, sizeof(node_buffer), NULL));
 
 		/*
-		 * Load a Python script that:
-		 *   1. Imports the metacall Python port to call cross-language functions.
-		 *   2. Defines test_flip_returns_correct_value(): passes a Python lambda
-		 *      to Node's `flip`, then calls the returned closure with (5.0, 4.0).
-		 *      Expected result: flip swaps arguments → lambda(4.0, 5.0) = 4.0 - 5.0 = -1.0
+		 * Load a Python script that defines four test functions exercising the
+		 * cross-language throwable propagation fixes:
 		 *
-		 * Before the fix in py_loader_impl.c, calling this returned closure
-		 * would cause a SEGFAULT on Python 3.14+ because the return value
-		 * could arrive as TYPE_THROWABLE (id=18) and py_loader_impl_value_to_capi()
-		 * did not handle that type - it returned NULL without setting a Python
-		 * exception, which Python 3.14 treats as a fatal error.
+		 *   test_flip_returns_correct_value - the original crash scenario (test.py):
+		 *     flip(lambda)(5.0, 4.0) must return -1.0.  Before the fix this SEGFAULT'd
+		 *     on Python 3.14+ because the return value arrived as TYPE_THROWABLE and
+		 *     py_loader_impl_value_to_capi returned NULL without setting a Python
+		 *     exception, which Python 3.14 treats as a fatal error.
 		 *
-		 * After the fix, TYPE_THROWABLE is properly converted to a Python
-		 * RuntimeError exception instead of a NULL-without-exception crash.
+		 *   test_flip_with_throwing_callback - validates py_loader_func.c:
+		 *     When the Python callback passed to flip raises, the error must propagate
+		 *     back as a Python exception (not a SEGFAULT / silent None).
+		 *
+		 *   test_direct_node_throw_raises_exception - validates py_loader_port_invoke:
+		 *     A Node function that directly throws must surface as a Python RuntimeError
+		 *     when called via metacall().  Before the fix py_loader_port_invoke returned
+		 *     Py_None with a pending exception - a Python 3.14 fatal contract violation.
+		 *
+		 *   test_node_error_has_stacktrace - validates the stacktrace field is included
+		 *     in the RuntimeError message.  node_loader populates exception_stacktrace
+		 *     with Error.stack; the new py_loader_impl_value_to_capi handler appends it.
 		 */
 		static const char py_buffer[] =
 			"import sys\n"
@@ -84,11 +96,6 @@ TEST_F(metacall_node_python_throwable_test, DefaultConstructor)
 			"    return result\n"
 			"\n"
 			"def test_flip_with_throwing_callback():\n"
-			"    '''\n"
-			"    Verify that when the callback passed to flip raises a Python exception,\n"
-			"    the error propagates back to the caller as a Python exception\n"
-			"    (not a SEGFAULT).\n"
-			"    '''\n"
 			"    def throwing_cb(x, y):\n"
 			"        raise ValueError('intentional error from callback')\n"
 			"    try:\n"
@@ -96,7 +103,21 @@ TEST_F(metacall_node_python_throwable_test, DefaultConstructor)
 			"        result = flip_fn(5.0, 4.0)\n"
 			"        return False\n"
 			"    except Exception:\n"
-			"        return True\n";
+			"        return True\n"
+			"\n"
+			"def test_direct_node_throw_raises_exception():\n"
+			"    try:\n"
+			"        metacall('throwing_node_fn')\n"
+			"        return False\n"
+			"    except Exception:\n"
+			"        return True\n"
+			"\n"
+			"def test_node_error_has_stacktrace():\n"
+			"    try:\n"
+			"        metacall('throwing_node_fn')\n"
+			"        return ''\n"
+			"    except Exception as e:\n"
+			"        return str(e)\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", py_buffer, sizeof(py_buffer), NULL));
 
@@ -130,6 +151,46 @@ TEST_F(metacall_node_python_throwable_test, DefaultConstructor)
 
 			/* The Python function returns True when the exception was caught */
 			EXPECT_NE((int)0, (int)metacall_value_to_bool(ret));
+
+			metacall_value_destroy(ret);
+		}
+
+		/* Test 3: a Node function that directly throws must surface as a Python
+		 * exception when called via metacall() from the Python port.
+		 * Validates the py_loader_port_invoke fix: before the fix, py_loader_port_invoke
+		 * returned Py_None with a pending PyErr - a fatal contract violation in Python
+		 * 3.14+ ("a function returned a result with an exception set").
+		 * After the fix, NULL is returned and Python sees a clean RuntimeError. */
+		{
+			void *ret = metacall("test_direct_node_throw_raises_exception");
+
+			ASSERT_NE((void *)NULL, (void *)ret);
+
+			EXPECT_EQ((enum metacall_value_id)METACALL_BOOL, (enum metacall_value_id)metacall_value_id(ret));
+
+			EXPECT_NE((int)0, (int)metacall_value_to_bool(ret));
+
+			metacall_value_destroy(ret);
+		}
+
+		/* Test 4: the JS Error.stack (stacktrace) must appear in the RuntimeError
+		 * message raised in Python.  node_loader populates exception_stacktrace with
+		 * Error.stack; the updated TYPE_THROWABLE handler appends it after the message.
+		 * The Python function returns the exception string; we verify it contains the
+		 * expected error message text. */
+		{
+			void *ret = metacall("test_node_error_has_stacktrace");
+
+			ASSERT_NE((void *)NULL, (void *)ret);
+
+			EXPECT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
+
+			const char *msg = metacall_value_to_string(ret);
+
+			EXPECT_NE((void *)NULL, (void *)msg);
+
+			/* The error message must contain the text thrown from JS */
+			EXPECT_NE((void *)NULL, (void *)strstr(msg, "test error from node"));
 
 			metacall_value_destroy(ret);
 		}
