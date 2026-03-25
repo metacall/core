@@ -85,7 +85,7 @@ if(OPTION_TEST_MEMORYCHECK)
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-python.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-node.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-wasm.supp")
-	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-wasm.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-ruby.supp")
 
 	# TODO: Implement automatic detection for valgrind suppressions and create a proper test suite for the CI
 	set(MEMORYCHECK_ADDITIONAL_SUPPRESSIONS
