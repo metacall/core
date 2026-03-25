@@ -374,13 +374,8 @@ pub fn build() {
             }
             Err(e) => {
                 // Print the error
-                println!(
-                    "cargo:warning=Failed to find MetaCall library with: {e} \
-                    Still trying to link in case the library is in system paths"
-                );
-
-                // Still try to link in case the library is in system paths
-                println!("cargo:rustc-link-lib=dylib=metacall")
+                println!("cargo:warning={e}");
+                std::process::exit(1);
             }
         }
     }
