@@ -16,16 +16,19 @@ pub fn destroy() void {
 /// Value wrapper for return types that require manual memory management.
 pub fn Value(comptime T: type) type {
     return struct {
-        raw: *anyopaque,
+        raw: ?*anyopaque,
 
         /// Returns the value as type T.
-        pub fn get(self: *const @This()) T {
+        pub fn get(self: *const @This()) ?T {
             return parse_ret(T, self.raw);
         }
 
         /// Destroys the value.
         pub fn deinit(self: *@This()) void {
-            mb.metacall_value_destroy(self.raw);
+            if (self.raw) |raw| {
+                mb.metacall_value_destroy(raw);
+                self.raw = null;
+            }
         }
     };
 }
@@ -134,7 +137,7 @@ pub fn metacall(comptime R: type, method: [:0]const u8, args: anytype) if (R == 
         // Primitives are destroyed immediately after parsing.
         defer {
             for (metacall_args) |arg| mb.metacall_value_destroy(arg);
-            mb.metacall_value_destroy(metacall_ret);
+            if (metacall_ret != null) mb.metacall_value_destroy(metacall_ret);
         }
 
         return parse_ret(R, metacall_ret);

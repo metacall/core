@@ -25,15 +25,25 @@ pub fn build(b: *std.Build) void {
     exe.root_module.linkSystemLibrary("c", .{});
     
     // Use environment variables or default build path
-    const build_path = b.option([]const u8, "metacall_build_path", "Path to MetaCall build directory") orelse "../../../build";
-    
+    const build_path_raw = b.option([]const u8, "metacall_build_path", "Path to MetaCall build directory") orelse "../../../build";
+    const build_path = b.path(build_path_raw).getPath(b);
+
     exe.root_module.addLibraryPath(.{ .cwd_relative = build_path });
     exe.root_module.addIncludePath(b.path("../../metacall/include"));
     exe.root_module.linkSystemLibrary("metacall", .{});
 
     // Add run step
+    b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
+    run_cmd.addArgs(&.{ b.build_root.path.? });
+    
+    // No changes needed here, just removing the redundant declarations below
+
+    run_cmd.setEnvironmentVariable("LOADER_LIBRARY_PATH", build_path);
+    run_cmd.setEnvironmentVariable("SERIAL_LIBRARY_PATH", build_path);
+    run_cmd.setEnvironmentVariable("DETOUR_LIBRARY_PATH", build_path);
+    run_cmd.setEnvironmentVariable("LD_LIBRARY_PATH", build_path);
 
     const run_step = b.step("run", "Run integrated tests");
     run_step.dependOn(&run_cmd.step);
@@ -52,6 +62,6 @@ pub fn build(b: *std.Build) void {
     unit_tests.root_module.addIncludePath(b.path("../../metacall/include"));
     unit_tests.root_module.linkSystemLibrary("metacall", .{});
 
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&unit_tests.step);
+    const test_step = b.step("test", "Run integrated tests");
+    test_step.dependOn(&run_cmd.step);
 }
