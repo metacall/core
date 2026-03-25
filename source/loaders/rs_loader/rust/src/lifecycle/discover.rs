@@ -13,6 +13,11 @@ pub extern "C" fn rs_loader_impl_discover(
     handle: *mut c_void,
     ctx: *mut c_void,
 ) -> c_int {
+    if handle.is_null() {
+        eprintln!("rs_loader_impl_discover: received null handle pointer");
+        return 1_i32;
+    }
+
     let handle_shared_objects = unsafe { Box::from_raw(handle as *mut Vec<LoadingMethod>) };
 
     for handle_shared_object in handle_shared_objects.iter() {

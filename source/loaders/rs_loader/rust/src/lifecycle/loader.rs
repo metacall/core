@@ -70,10 +70,19 @@ pub fn load<T>(
 where
     T: OnPathBufClosure,
 {
+    if loader_impl.is_null() || loadable_path.is_null() {
+        eprintln!("rs_loader load: received null pointer for loader_impl or loadable_path");
+        return std::ptr::null_mut();
+    }
+
     let loader_lifecycle_state = unsafe {
-        api::get_loader_lifecycle_state(loader_impl)
-            .as_mut()
-            .expect("Unable to get lifecycle state.")
+        match api::get_loader_lifecycle_state(loader_impl).as_mut() {
+            Some(state) => state,
+            None => {
+                eprintln!("rs_loader load: unable to get lifecycle state");
+                return std::ptr::null_mut();
+            }
+        }
     };
     let mut execution_paths_iterator = loader_lifecycle_state.execution_paths.iter();
 
@@ -88,9 +97,14 @@ where
             path = loadable_path as *const i8;
         }
 
-        let path_slice = unsafe { CStr::from_ptr(path) }
-            .to_str()
-            .expect("Unable to cast CStr to str");
+        let path_slice = match unsafe { CStr::from_ptr(path) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                return load_on_error(String::from(
+                    "rs_loader load: path is not valid UTF-8",
+                ));
+            }
+        };
         let mut path_buf = PathBuf::from(path_slice);
 
         if !path_buf.is_absolute() {
@@ -102,7 +116,7 @@ where
                     Some(original_execution_path) => {
                         let mut execution_path = original_execution_path.clone();
                         let mut execution_path_as_str =
-                            execution_path.to_str().expect("Unable to cast CStr to str");
+                            execution_path.to_str().unwrap_or("<invalid path>");
 
                         if !execution_path_as_str.ends_with('/') {
                             execution_path =
@@ -110,13 +124,13 @@ where
 
                             // Reassign the execution_path_as_str since the execution_path got changed
                             execution_path_as_str =
-                                execution_path.to_str().expect("Unable to cast CStr to str");
+                                execution_path.to_str().unwrap_or("<invalid path>");
                         }
 
                         path_buf = PathBuf::from(format!(
                             "{}{}",
                             execution_path_as_str,
-                            path_buf.to_str().expect("Unable to cast CStr to str")
+                            path_buf.to_str().unwrap_or("<invalid path>")
                         ));
 
                         if !path_buf.exists() || !path_buf.is_file() {
@@ -130,7 +144,7 @@ where
                             "Rs_loader was unable to find '{}' in the list of execution_paths.",
                             original_path_buf
                                 .to_str()
-                                .expect("Unable to cast CStr to str")
+                                .unwrap_or("<invalid path>")
                         ))
                     }
                 };
@@ -143,7 +157,7 @@ where
         if !path_buf.exists() || !path_buf.is_file() {
             return load_on_error(format!(
                 "The file or path '{}' does not exist.",
-                path_buf.to_str().expect("Unable to cast CStr to str")
+                path_buf.to_str().unwrap_or("<invalid path>")
             ));
         }
 

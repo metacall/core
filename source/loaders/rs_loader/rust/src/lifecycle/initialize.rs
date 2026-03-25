@@ -8,7 +8,16 @@ pub extern "C" fn rs_loader_impl_initialize(
     _config: *mut c_void,
 ) -> *mut c_void {
     // Add current_dir to execution path to allow relative search path
-    let search_paths = vec![std::env::current_dir().expect("Unable to get current dir")];
+    let search_paths = match std::env::current_dir() {
+        Ok(dir) => vec![dir],
+        Err(e) => {
+            eprintln!(
+                "rs_loader_impl_initialize: unable to get current dir: {}, using empty search paths",
+                e
+            );
+            vec![]
+        }
+    };
     let boxed_loader_lifecycle_state = Box::new(api::LoaderLifecycleState::new(search_paths));
 
     compiler::initialize();
@@ -41,41 +50,6 @@ pub extern "C" fn rs_loader_impl_initialize(
         std::ptr::null_mut::<c_void>(),
         std::ptr::null_mut::<c_void>(),
     );
-    // api::define_type(
-    //     loader_impl,
-    //     "Usize",
-    //     PrimitiveMetacallProtocolTypes::Int,
-    //     0 as c_int as *mut c_void,
-    //     0 as c_int as *mut c_void,
-    // );
-    // api::define_type(
-    //     loader_impl,
-    //     "U8",
-    //     PrimitiveMetacallProtocolTypes::Char,
-    //     0 as c_int as *mut c_void,
-    //     0 as c_int as *mut c_void,
-    // );
-    // api::define_type(
-    //     loader_impl,
-    //     "U16",
-    //     PrimitiveMetacallProtocolTypes::Short,
-    //     0 as c_int as *mut c_void,
-    //     0 as c_int as *mut c_void,
-    // );
-    // api::define_type(
-    //     loader_impl,
-    //     "U32",
-    //     PrimitiveMetacallProtocolTypes::Int,
-    //     0 as c_int as *mut c_void,
-    //     0 as c_int as *mut c_void,
-    // );
-    // api::define_type(
-    //     loader_impl,
-    //     "U64",
-    //     PrimitiveMetacallProtocolTypes::Long,
-    //     0 as c_int as *mut c_void,
-    //     0 as c_int as *mut c_void,
-    // );
     api::define_type(
         loader_impl,
         "f32",

@@ -5,10 +5,19 @@ use compiler::api;
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_clear(loader_impl: *mut c_void, handle: *mut c_void) -> c_int {
+    if loader_impl.is_null() || handle.is_null() {
+        eprintln!("rs_loader_impl_clear: received null pointer");
+        return 1_i32;
+    }
+
     let loader_lifecycle_state = unsafe {
-        api::get_loader_lifecycle_state(loader_impl)
-            .as_mut()
-            .expect("Unable to get loader state")
+        match api::get_loader_lifecycle_state(loader_impl).as_mut() {
+            Some(state) => state,
+            None => {
+                eprintln!("rs_loader_impl_clear: unable to get loader state");
+                return 1_i32;
+            }
+        }
     };
     let methods = unsafe { Box::from_raw(handle as *mut Vec<LoadingMethod>) };
     for loading_method in *methods {
