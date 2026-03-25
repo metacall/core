@@ -539,7 +539,10 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 
 		if (result == NULL)
 		{
-			result = Py_ReturnNone();
+			if (!PyErr_Occurred())
+			{
+				PyErr_SetString(PyExc_RuntimeError, "A foreign function call returned an error");
+			}
 			goto clear;
 		}
 	}
@@ -865,8 +868,11 @@ static PyObject *py_loader_port_value_dereference(PyObject *self, PyObject *args
 
 	if (result == NULL)
 	{
-		PyErr_SetString(PyExc_ValueErrorPtr(), "Failed to convert the MetaCall value to Python object.");
-		return Py_ReturnNone();
+		if (!PyErr_Occurred())
+		{
+			PyErr_SetString(PyExc_ValueErrorPtr(), "Failed to convert the MetaCall value to Python object.");
+		}
+		return NULL;
 	}
 
 	return result;
