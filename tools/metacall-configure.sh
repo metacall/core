@@ -546,7 +546,7 @@ sub_configure() {
 
 	# Memory Sanitizer
 	if [ $BUILD_MEMORY_SANITIZER = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=On"
+		BUILD_STRING="$BUILD_STRING -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DOPTION_BUILD_MEMORY_SANITIZER=On -DOPTION_BUILD_ADDRESS_SANITIZER=Off"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
@@ -602,7 +602,7 @@ sub_help() {
 	echo "	memcheck: build with memcheck"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
-	echo "	memory-sanitizer: build with memory sanitizer"
+	echo "	memory-sanitizer: build with memory sanitizer (requires clang)"
 	echo ""
 }
 
