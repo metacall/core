@@ -31,7 +31,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install MetaCall (Unix)
+      - name: Install & Detect MetaCall (Unix)
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
@@ -39,7 +39,6 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
-          # Discovery logic for distributed Guix/Homebrew components
           SEARCH_DIRS="$HOME /usr/local /opt"
           [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
           [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
@@ -63,7 +62,7 @@ jobs:
           sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
           [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig "$LIB_DIR" || true
 
-      - name: Install MetaCall (Windows)
+      - name: Install & Detect MetaCall (Windows)
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
@@ -71,6 +70,7 @@ jobs:
           &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))
           
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
+          
           $CoreFile = Get-ChildItem -Path $METACALL_DIR -Filter "metacall.dll" -Recurse | Select-Object -First 1
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
@@ -108,8 +108,8 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          cp $(find ../../../ -name "example.py" | head -n 1) . || true
-          cp $(find ../../../ -name "hello.rb" | head -n 1) . || true
+          cp ../../../scripts/python/example/source/example.py . || true
+          cp ../../../scripts/ruby/hello/source/hello.rb . || true
           ruby -I../package/lib run.rb
 
       - name: Run Integration Tests (Windows)
@@ -117,7 +117,6 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: pwsh
         run: |
-          # Native pwsh test step to resolve DLL dependencies and avoid Git Bash path issues
           $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
           $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
           $env:PYTHONHOME = "$env:PYTHONHOME"
