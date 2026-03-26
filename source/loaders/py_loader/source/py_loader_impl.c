@@ -2955,12 +2955,12 @@ static void py_loader_impl_load_from_file_exception(loader_impl_py py_impl, cons
 
 loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
-	(void)data;
 	loader_impl_py py_impl = loader_impl_get(impl);
 	loader_impl_py_handle py_handle = py_loader_impl_handle_create(size);
 	int run_main = 1;
 	size_t iterator;
 	PyObject *exception = NULL;
+	(void)data;
 
 	if (py_handle == NULL)
 	{
@@ -3085,10 +3085,9 @@ PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const 
 
 loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
-	(void)data;
-	(void)size;
-
 	loader_impl_py_handle py_handle = py_loader_impl_handle_create(1);
+	(void)size;
+	(void)data;
 
 	if (py_handle == NULL)
 	{
@@ -3137,11 +3136,11 @@ error_create_handle:
 
 loader_handle py_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
-	(void)data;
 	/* TODO */
 
 	(void)impl;
 	(void)path;
+	(void)data;
 
 	return NULL;
 }

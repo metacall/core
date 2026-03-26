@@ -4352,8 +4352,8 @@ int node_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
-	(void)data;
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+	(void)data;
 
 	if (node_impl == nullptr || size == 0)
 	{
@@ -4379,8 +4379,8 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_pat
 
 loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
-	(void)data;
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+	(void)data;
 
 	if (node_impl == nullptr || buffer == NULL || size == 0)
 	{
@@ -4406,11 +4406,11 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 loader_handle node_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
-	(void)data;
 	/* TODO */
 
 	(void)impl;
 	(void)path;
+	(void)data;
 
 	return NULL;
 }

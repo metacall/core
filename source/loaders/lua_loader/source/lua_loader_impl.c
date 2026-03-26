@@ -365,10 +365,10 @@ int lua_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
-	(void)data;
 	loader_impl_lua_handle handle = malloc(sizeof(struct loader_impl_lua_handle_type));
 
 	(void)impl;
+	(void)data;
 
 	if (handle != NULL)
 	{
@@ -391,9 +391,9 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 
 loader_handle lua_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
-	(void)data;
 	loader_impl_lua lua_impl = loader_impl_get(impl);
 	loader_impl_lua_handle handle = malloc(sizeof(struct loader_impl_lua_handle_type));
+	(void)data;
 
 	if (handle != NULL)
 	{
@@ -414,10 +414,10 @@ loader_handle lua_loader_impl_load_from_memory(loader_impl impl, const loader_na
 
 loader_handle lua_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
-	(void)data;
 	loader_impl_lua_handle handle = malloc(sizeof(struct loader_impl_lua_handle_type));
 
 	(void)impl;
+	(void)data;
 
 	if (handle != NULL)
 	{

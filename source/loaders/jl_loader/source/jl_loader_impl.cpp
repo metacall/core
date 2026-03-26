@@ -240,9 +240,9 @@ int jl_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 loader_handle jl_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
-	(void)data;
 	loader_impl_jl jl_impl = static_cast<loader_impl_jl>(loader_impl_get(impl));
 	loader_impl_jl_handle jl_handle = new loader_impl_jl_handle_type();
+	(void)data;
 
 	if (jl_handle == nullptr)
 	{
@@ -262,9 +262,9 @@ loader_handle jl_loader_impl_load_from_file(loader_impl impl, const loader_path 
 
 loader_handle jl_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
-	(void)data;
 	loader_impl_jl jl_impl = static_cast<loader_impl_jl>(loader_impl_get(impl));
 	loader_impl_jl_handle jl_handle = new loader_impl_jl_handle_type();
+	(void)data;
 
 	if (jl_handle == nullptr)
 	{
@@ -286,9 +286,9 @@ loader_handle jl_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 loader_handle jl_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
-	(void)data;
 	loader_impl_jl jl_impl = static_cast<loader_impl_jl>(loader_impl_get(impl));
 	loader_impl_jl_handle jl_handle = new loader_impl_jl_handle_type();
+	(void)data;
 
 	if (jl_handle == nullptr)
 	{

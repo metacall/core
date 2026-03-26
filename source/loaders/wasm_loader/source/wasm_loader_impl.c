@@ -132,8 +132,8 @@ int wasm_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
-	(void)data;
 	loader_impl_wasm_handle handle = wasm_loader_handle_create(size);
+	(void)data;
 
 	if (handle == NULL)
 	{
@@ -158,9 +158,9 @@ error_alloc_handle:
 
 loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
-	(void)data;
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	loader_impl_wasm_handle handle = wasm_loader_handle_create(1);
+	(void)data;
 
 	if (handle == NULL)
 	{
@@ -201,8 +201,8 @@ error_alloc_handle:
 
 loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
-	(void)data;
 	loader_impl_wasm_handle handle = wasm_loader_handle_create(1);
+	(void)data;
 
 	if (handle == NULL)
 	{

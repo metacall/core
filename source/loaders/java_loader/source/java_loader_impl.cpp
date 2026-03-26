@@ -1704,8 +1704,8 @@ int java_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
-	(void)data;
 	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
+	(void)data;
 
 	if (java_handle != nullptr)
 	{
@@ -1749,11 +1749,10 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_pat
 
 loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
-	(void)data;
+	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
 	(void)impl;
 	(void)size;
-
-	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
+	(void)data;
 
 	if (java_handle != nullptr)
 	{
@@ -1780,11 +1779,10 @@ loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 loader_handle java_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
-	(void)data;
+	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
 	(void)impl;
 	(void)path;
-
-	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
+	(void)data;
 
 	if (java_handle != nullptr)
 	{

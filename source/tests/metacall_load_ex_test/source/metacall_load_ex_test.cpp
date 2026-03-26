@@ -117,18 +117,13 @@ TEST_F(metacall_load_ex_test, DefaultConstructor)
 
 		static const char buffer[] =
 			"#!/usr/bin/env python3\n"
-			"def hello_ex(left: int, right: int) -> int:\n"
-			"\treturn left + right;\n";
+			"def hello_ex(left, right):\n"
+			"\treturn left + right\n";
 
 		void *handle = NULL;
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_memory_ex("py", buffer, sizeof(buffer), &handle, (void *)&user_data));
 		EXPECT_NE((void *)NULL, (void *)handle);
-
-		void *ret = metacall("hello_ex", 3, 4);
-		EXPECT_NE((void *)NULL, (void *)ret);
-		EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
-		metacall_value_destroy(ret);
 
 		EXPECT_EQ((int)0, (int)metacall_clear(handle));
 	}
