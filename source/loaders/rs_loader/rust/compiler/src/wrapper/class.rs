@@ -542,7 +542,13 @@ impl ToMetaResult for i64 {
         // Meanwhile as a workaround, we just panic if it does not fit.
         // Here the error is wrose than in rs_port because the bindings.rs are hardcoded,
         // and not regenerated for each target platform so they will break ABI when using this.
-        Ok(unsafe { metacall_value_create_long(self).try_into().unwrap() })
+        #[cfg(any(target_pointer_width = "32", windows))]
+        {
+            if self < c_long::MIN as i64 || self > c_long::MAX as i64{
+                panic!("i64 does not fit into c_long on this platform");
+            }
+        }
+        Ok(unsafe { metacall_value_create_long(self) })
     }
 }
 
