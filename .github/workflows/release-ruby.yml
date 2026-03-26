@@ -39,7 +39,7 @@ jobs:
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
           sudo mkdir -p /usr/local/lib
           
-          # Dynamic component discovery for Guix/Homebrew compatibility
+          # Discovery logic for distributed Guix/Homebrew components
           SEARCH_DIRS="$HOME /usr/local /opt"
           [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
           [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
@@ -75,7 +75,6 @@ jobs:
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
           
-          # ARCHITECTURAL FIX: Explicitly find the Python runtime home (never use the lib folder)
           $PyHome = Join-Path $METACALL_DIR "runtimes\python"
           if (-not (Test-Path $PyHome)) {
              $LibDir = Get-ChildItem -Path $METACALL_DIR -Directory -Filter "Lib" -Recurse | Select-Object -First 1
@@ -85,7 +84,6 @@ jobs:
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
           
-          # Export to GITHUB_ENV using ASCII to ensure NO-BOM compatibility
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LoaderDir" -Encoding Ascii
@@ -105,18 +103,30 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Run Integration Tests
+      - name: Run Integration Tests (Unix)
+        if: matrix.os != 'windows-latest'
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          # Robust resource sync using search to avoid path regressions
           cp $(find ../../../ -name "example.py" | head -n 1) . || true
           cp $(find ../../../ -name "hello.rb" | head -n 1) . || true
+          ruby -I../package/lib run.rb
+
+      - name: Run Integration Tests (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: source/ports/rb_port/test
+        shell: pwsh
+        run: |
+          # Native pwsh test step to resolve DLL dependencies and avoid Git Bash path issues
+          $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
+          $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
+          $env:PYTHONHOME = "$env:PYTHONHOME"
+          $env:PYTHONPATH = "$env:PYTHONPATH"
           
-          export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
-          export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
-          export SERIAL_LIBRARY_PATH="$SERIAL_LIBRARY_PATH"
-          export DETECTOR_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
+          $PyFile = Get-ChildItem -Path "../../../" -Filter "example.py" -Recurse | Select-Object -First 1
+          $RbFile = Get-ChildItem -Path "../../../" -Filter "hello.rb" -Recurse | Select-Object -First 1
+          if ($PyFile) { Copy-Item $PyFile.FullName . }
+          if ($RbFile) { Copy-Item $RbFile.FullName . }
           
           ruby -I../package/lib run.rb
 
