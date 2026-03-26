@@ -536,7 +536,13 @@ impl ToMetaResult for i32 {
 
 impl ToMetaResult for i64 {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_long(self) })
+        // TODO: This issue happens because we do not have a clear type definition in the Core
+        // We are not sure yet if we should use fixed sizes in the core, or adapt all the loaders
+        // and ports to the standard C int type definition. We should define this but it's not yet.
+        // Meanwhile as a workaround, we just panic if it does not fit.
+        // Here the error is wrose than in rs_port because the bindings.rs are hardcoded,
+        // and not regenerated for each target platform so they will break ABI when using this.
+        Ok(unsafe { metacall_value_create_long(self).try_into().unwrap() })
     }
 }
 

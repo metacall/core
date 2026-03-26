@@ -52,7 +52,9 @@ fn generate_bindings() {
 }
 
 fn main() {
-    // Find MetaCall library
+    // Find and link MetaCall library
     metacall_sys::build();
+
+    // Generate bindings for current platform
     generate_bindings();
 }
