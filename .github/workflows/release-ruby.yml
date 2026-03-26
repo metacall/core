@@ -73,14 +73,19 @@ jobs:
           $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
           $CoreFile = Get-ChildItem -Path $METACALL_DIR -Filter "metacall.dll" -Recurse | Select-Object -First 1
           $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
-          $PyDll = Get-ChildItem -Path $METACALL_DIR -Filter "python*.dll" -Recurse | Select-Object -First 1
           $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
+          
+          # ARCHITECTURAL FIX: Explicitly find the Python runtime home (never use the lib folder)
+          $PyHome = Join-Path $METACALL_DIR "runtimes\python"
+          if (-not (Test-Path $PyHome)) {
+             $LibDir = Get-ChildItem -Path $METACALL_DIR -Directory -Filter "Lib" -Recurse | Select-Object -First 1
+             $PyHome = if ($LibDir) { $LibDir.Parent.FullName } else { "$METACALL_DIR\lib" }
+          }
           
           $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
           $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
-          $PyHome = if ($PyDll) { $PyDll.DirectoryName } else { "$METACALL_DIR\runtimes\python" }
           
-          # Use ASCII to ensure NO-BOM compatibility with GitHub Runner
+          # Export to GITHUB_ENV using ASCII to ensure NO-BOM compatibility
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$InstallDir" -Encoding Ascii
           Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LoaderDir" -Encoding Ascii
@@ -100,28 +105,19 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Run Integration Tests (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Run Integration Tests
         working-directory: source/ports/rb_port/test
         shell: bash
         run: |
-          cp ../../../scripts/python/example/source/example.py . || true
-          cp ../../../scripts/ruby/hello/source/hello.rb . || true
-          ruby -I../package/lib run.rb
-
-      - name: Run Integration Tests (Windows)
-        if: matrix.os == 'windows-latest'
-        working-directory: source/ports/rb_port/test
-        shell: pwsh
-        run: |
-          # Ensure local shell path is updated for DLL discovery
-          $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
-          $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
-          $env:PYTHONHOME = "$env:PYTHONHOME"
-          $env:PYTHONPATH = "$env:PYTHONPATH"
+          # Robust resource sync using search to avoid path regressions
+          cp $(find ../../../ -name "example.py" | head -n 1) . || true
+          cp $(find ../../../ -name "hello.rb" | head -n 1) . || true
           
-          cp ../../../scripts/python/example/source/example.py . || true
-          cp ../../../scripts/ruby/hello/source/hello.rb . || true
+          export METACALL_INSTALL_PATH="$METACALL_INSTALL_PATH"
+          export LOADER_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
+          export SERIAL_LIBRARY_PATH="$SERIAL_LIBRARY_PATH"
+          export DETECTOR_LIBRARY_PATH="$LOADER_LIBRARY_PATH"
+          
           ruby -I../package/lib run.rb
 
   release:
