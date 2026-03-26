@@ -87,7 +87,7 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn new(source: Source) -> SourceImpl {
+    pub fn build(source: Source) -> SourceImpl {
         let library_name = |file_name: &PathBuf| {
             #[cfg(unix)]
             let lib_extension = "so";
@@ -1048,7 +1048,7 @@ mod tests {
     #[test]
     fn test_compile_memory() {
         run_test(|| {
-            match compile(Source::new(Source::Memory {
+            match compile(Source::build(Source::Memory {
                 name: String::from("test.rs"),
                 code: String::from("pub fn add(a: i32, b: i32) -> i32 { a + b }"),
             })) {
@@ -1061,7 +1061,7 @@ mod tests {
     #[test]
     fn test_compile_file() {
         run_test(|| {
-            match compile(Source::new(Source::File {
+            match compile(Source::build(Source::File {
                 path: PathBuf::from(std::env::var("TEST_SOURCE_DIR").unwrap()),
             })) {
                 Err(comp_err) => assert!(false, "compilation failed: {}", comp_err.errors),

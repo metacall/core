@@ -12,7 +12,7 @@ pub struct MemoryRegistration {
 }
 impl MemoryRegistration {
     pub fn new(name: String, code: String) -> Result<MemoryRegistration, RegistrationError> {
-        let state = match compile(Source::new(Source::Memory {
+        let state = match compile(Source::build(Source::Memory {
             name: name.clone(),
             code,
         })) {
