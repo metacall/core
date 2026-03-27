@@ -34,7 +34,6 @@ module MetaCall
 					File.join(ENV['LOCALAPPDATA'].to_s, 'MetaCall', 'metacall'),
 					File.join(home_dir, 'AppData', 'Local', 'MetaCall', 'metacall')
 				],
-				# Flexible matching for Windows: metacall.dll, metacalld.dll
 				name: '^metacall(d)?\.dll$'
 			}
 		when /darwin/
@@ -45,7 +44,6 @@ module MetaCall
 					File.join(home_dir, '.metacall', 'lib'),
 					'/opt/metacall/lib'
 				],
-				# Flexible matching for macOS: libmetacall.dylib, libmetacalld.dylib
 				name: '^libmetacall(d)?\.dylib$'
 			}
 		when /linux/
@@ -56,7 +54,6 @@ module MetaCall
 					File.join(home_dir, '.metacall', 'lib'),
 					'/opt/metacall/lib'
 				],
-				# Flexible matching for Linux: libmetacall.so, libmetacalld.so, libmetacall.so.1
 				name: '^libmetacall(d)?\.so(\.\d+)*$'
 			}
 		else
@@ -111,20 +108,24 @@ module MetaCall
 		ENV['METACALL_HOST'] ||= 'rb'
 
 		# AUTOMATIC ENGINE BOOTSTRAPPING
-		# We set the internal MetaCall paths based on where we found the library.
-		# This eliminates the need for manual "Smart CI" scripts.
 		ENV['LOADER_LIBRARY_PATH'] ||= install_dir
 		ENV['SERIAL_LIBRARY_PATH'] ||= install_dir
 		ENV['DETECTOR_LIBRARY_PATH'] ||= install_dir
 		
-		# Look for configurations folder (usually adjacent to lib/bin in self-contained)
 		config_path = File.join(root_dir, 'configurations')
 		ENV['CONFIGURATION_PATH'] ||= config_path if Dir.exist?(config_path)
 
 		# Platform-specific environment fixes
 		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
-			# Force library directory into PATH for DLL dependency resolution (Error 126 fix)
-			ENV['PATH'] = "#{install_dir};#{ENV['PATH']}"
+			# Add library directory to PATH for DLL dependency resolution
+			path_entries = [install_dir]
+			
+			# ARCHITECTURAL FIX: On Windows, we MUST also add the Ruby runtime bin folder to PATH
+			# so that rb_loader.dll can find its Ruby runtime dependencies.
+			rb_runtime_bin = File.join(root_dir, 'runtimes', 'ruby', 'bin')
+			path_entries << rb_runtime_bin if Dir.exist?(rb_runtime_bin)
+			
+			ENV['PATH'] = (path_entries + [ENV['PATH']]).join(';')
 			
 			# Detect Python runtime bundled with MetaCall
 			unless ENV.key?('PYTHONHOME')
