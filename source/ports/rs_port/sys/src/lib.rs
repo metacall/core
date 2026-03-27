@@ -10,6 +10,7 @@ use std::{
 // Provide helpful error messages when things aren't found
 
 /// Represents the install paths for a platform
+#[derive(Debug, PartialEq, Eq)]
 struct InstallPath {
     paths: Vec<PathBuf>,
     names: Vec<&'static str>,
@@ -94,20 +95,22 @@ fn platform_install_paths() -> Result<InstallPath, Box<dyn std::error::Error>> {
 
 /// Get search paths, checking for custom installation path first
 fn get_search_config() -> Result<InstallPath, Box<dyn std::error::Error>> {
-    // First, check if user specified a custom path
+    // First, check if user specified a non-empty custom path
     if let Ok(custom_path) = env::var("METACALL_INSTALL_PATH") {
-        // For custom paths, we need to search for any metacall library variant
-        return Ok(InstallPath {
-            paths: vec![PathBuf::from(custom_path)],
-            names: vec![
-                "libmetacall.so",
-                "libmetacalld.so",
-                "libmetacall.dylib",
-                "libmetacalld.dylib",
-                "metacall.lib",
-                "metacalld.lib",
-            ],
-        });
+        if !custom_path.is_empty() {
+            // For custom paths, we need to search for any metacall library variant
+            return Ok(InstallPath {
+                paths: vec![PathBuf::from(custom_path)],
+                names: vec![
+                    "libmetacall.so",
+                    "libmetacalld.so",
+                    "libmetacall.dylib",
+                    "libmetacalld.dylib",
+                    "metacall.lib",
+                    "metacalld.lib",
+                ],
+            });
+        }
     }
 
     // Fall back to platform-specific paths
@@ -378,5 +381,64 @@ pub fn build() {
                 std::process::exit(1);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+
+    fn with_metacall_install_path<T>(value: Option<&str>, callback: impl FnOnce() -> T) -> T {
+        let _guard = env_lock().lock().unwrap();
+        let previous = env::var_os("METACALL_INSTALL_PATH");
+
+        match value {
+            Some(path) => env::set_var("METACALL_INSTALL_PATH", path),
+            None => env::remove_var("METACALL_INSTALL_PATH"),
+        }
+
+        let result = callback();
+
+        match previous {
+            Some(path) => env::set_var("METACALL_INSTALL_PATH", path),
+            None => env::remove_var("METACALL_INSTALL_PATH"),
+        }
+
+        result
+    }
+
+    #[test]
+    fn ignores_empty_custom_install_path() {
+        with_metacall_install_path(Some(""), || {
+            let config = get_search_config().unwrap();
+            assert_eq!(config, platform_install_paths().unwrap());
+        });
+    }
+
+    #[test]
+    fn honors_non_empty_custom_install_path() {
+        with_metacall_install_path(Some("/tmp/metacall"), || {
+            let config = get_search_config().unwrap();
+            assert_eq!(config.paths, vec![PathBuf::from("/tmp/metacall")]);
+            assert!(config.names.contains(&"libmetacall.dylib"));
+            assert!(config.names.contains(&"libmetacalld.dylib"));
+        });
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_searches_release_and_debug_dylibs() {
+        let config = platform_install_paths().unwrap();
+
+        assert_eq!(
+            config.names,
+            vec!["libmetacall.dylib", "libmetacalld.dylib"]
+        );
     }
 }
