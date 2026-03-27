@@ -31,70 +31,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install & Detect MetaCall (Unix)
+      - name: Install MetaCall (Unix)
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           set +o pipefail
           curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh -s -- --debug
-          sudo mkdir -p /usr/local/lib
           
-          SEARCH_DIRS="$HOME /usr/local /opt"
-          [ -d "/gnu/store" ] && SEARCH_DIRS="$SEARCH_DIRS /gnu/store"
-          [ -d "/opt/homebrew" ] && SEARCH_DIRS="$SEARCH_DIRS /opt/homebrew"
-          
-          RAW_DIRS=$(find $SEARCH_DIRS -name "*metacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | xargs dirname 2>/dev/null | sort -u)
-          COMBINED_PATHS=$(echo "$RAW_DIRS" | paste -sd ":" - | sed 's/:$//')
-          
-          LIB_FILE=$(find $RAW_DIRS -name "libmetacall*" -type f 2>/dev/null | grep -E '\.(so|dylib)$' | head -n 1)
-          LIB_DIR=$(dirname "$LIB_FILE")
-          
-          echo "METACALL_LIB_FILE=$LIB_FILE" >> $GITHUB_ENV
-          echo "METACALL_INSTALL_PATH=$LIB_DIR" >> $GITHUB_ENV
-          echo "LOADER_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
-          echo "SERIAL_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
-          echo "DETECTOR_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
-          echo "DYLD_LIBRARY_PATH=$COMBINED_PATHS" >> $GITHUB_ENV
-          echo "$LIB_DIR" >> $GITHUB_PATH
-          
-          sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.so" || true
-          sudo ln -sf "$LIB_FILE" "$LIB_DIR/libmetacall.dylib" || true
-          [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig "$LIB_DIR" || true
+          # We use the standard install path for Unix
+          echo "/usr/local/lib" >> $GITHUB_PATH
+          [ "${{ matrix.os }}" == "ubuntu-latest" ] && sudo ldconfig /usr/local/lib || true
 
-      - name: Install & Detect MetaCall (Windows)
+      - name: Install MetaCall (Windows)
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           &([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/metacall/install/master/install.ps1')))
           
-          $METACALL_DIR = "$HOME\AppData\Local\MetaCall\metacall"
-          
-          $CoreFile = Get-ChildItem -Path $METACALL_DIR -Filter "metacall.dll" -Recurse | Select-Object -First 1
-          $RbLoader = Get-ChildItem -Path $METACALL_DIR -Filter "rb_loader.dll" -Recurse | Select-Object -First 1
-          $RubyRuntime = Get-ChildItem -Path $METACALL_DIR -Filter "x64-vcruntime140-ruby*.dll" -Recurse | Select-Object -First 1
-          
-          $PyHome = Join-Path $METACALL_DIR "runtimes\python"
-          if (-not (Test-Path $PyHome)) {
-             $LibDir = Get-ChildItem -Path $METACALL_DIR -Directory -Filter "Lib" -Recurse | Select-Object -First 1
-             $PyHome = if ($LibDir) { $LibDir.Parent.FullName } else { "$METACALL_DIR\lib" }
-          }
-          
-          $InstallDir = if ($CoreFile) { $CoreFile.DirectoryName } else { "$METACALL_DIR\lib" }
-          $LoaderDir  = if ($RbLoader) { $RbLoader.DirectoryName } else { $InstallDir }
-          
-          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_LIB_FILE=$($CoreFile.FullName)" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "METACALL_INSTALL_PATH=$InstallDir" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "LOADER_LIBRARY_PATH=$LoaderDir" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "SERIAL_LIBRARY_PATH=$InstallDir" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "DETECTOR_LIBRARY_PATH=$InstallDir" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "PYTHONHOME=$PyHome" -Encoding Ascii
-          Add-Content -Path $env:GITHUB_ENV -Value "PYTHONPATH=$InstallDir" -Encoding Ascii
-          
-          Add-Content -Path $env:GITHUB_PATH -Value "$InstallDir" -Encoding Ascii
-          if ($RubyRuntime) { Add-Content -Path $env:GITHUB_PATH -Value "$($RubyRuntime.DirectoryName)" -Encoding Ascii }
-          Add-Content -Path $env:GITHUB_PATH -Value "$PyHome" -Encoding Ascii
+          # Add standard MetaCall installation directory to PATH
+          $METACALL_INSTALL_PATH = "$HOME\AppData\Local\MetaCall\metacall"
+          Add-Content -Path $env:GITHUB_PATH -Value "$METACALL_INSTALL_PATH" -Encoding Ascii
 
       - name: Set up Ruby Environment (Unix)
         if: matrix.os != 'windows-latest'
@@ -117,11 +74,6 @@ jobs:
         working-directory: source/ports/rb_port/test
         shell: pwsh
         run: |
-          $metacallDirs = Get-ChildItem "$env:USERPROFILE\AppData\Local\MetaCall" -Filter "*.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -Unique
-          $env:PATH = ($metacallDirs -join ";") + ";" + $env:PATH
-          $env:PYTHONHOME = "$env:PYTHONHOME"
-          $env:PYTHONPATH = "$env:PYTHONPATH"
-          
           $PyFile = Get-ChildItem -Path "../../../" -Filter "example.py" -Recurse | Select-Object -First 1
           $RbFile = Get-ChildItem -Path "../../../" -Filter "hello.rb" -Recurse | Select-Object -First 1
           if ($PyFile) { Copy-Item $PyFile.FullName . }
