@@ -117,15 +117,23 @@ module MetaCall
 
 		# Platform-specific environment fixes
 		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
-			# Add library directory to PATH for DLL dependency resolution
-			path_entries = [install_dir]
-			
-			# ARCHITECTURAL FIX: On Windows, we MUST also add the Ruby runtime bin folder to PATH
-			# so that rb_loader.dll can find its Ruby runtime dependencies.
-			rb_runtime_bin = File.join(root_dir, 'runtimes', 'ruby', 'bin')
-			path_entries << rb_runtime_bin if Dir.exist?(rb_runtime_bin)
-			
-			ENV['PATH'] = (path_entries + [ENV['PATH']]).join(';')
+			# MODERN WINDOWS FIX (Ruby 3.x+):
+			# Ruby 3+ ignores ENV['PATH'] for DLL loading. We must use SetDllDirectory 
+			# to allow metacall.dll to find its plugins and dependencies.
+			begin
+				kernel32 = Fiddle.dlopen('kernel32.dll')
+				set_dll_dir = Fiddle::Function.new(kernel32['SetDllDirectoryW'], [Fiddle::TYPE_VOIDP], Fiddle::TYPE_INT)
+				
+				# Add the library directory
+				set_dll_dir.call(install_dir.encode('UTF-16LE'))
+				
+				# Add the Ruby runtime bin folder if it exists
+				rb_runtime_bin = File.join(root_dir, 'runtimes', 'ruby', 'bin')
+				set_dll_dir.call(rb_runtime_bin.encode('UTF-16LE')) if Dir.exist?(rb_runtime_bin)
+			rescue => e
+				# Fallback to PATH for older Ruby versions
+				ENV['PATH'] = "#{install_dir};#{ENV['PATH']}"
+			end
 			
 			# Detect Python runtime bundled with MetaCall
 			unless ENV.key?('PYTHONHOME')
