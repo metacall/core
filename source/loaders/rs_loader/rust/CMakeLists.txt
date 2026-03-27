@@ -55,37 +55,17 @@ add_custom_target(${target}_runtime
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
-# On Linux, execute patchelf in order to patch rpath in the dependencies
-if(PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
-	# Find Patchelf
-	find_package(Patchelf)
+include(PatchRPath)
 
-	if(NOT Patchelf_FOUND)
-		include(InstallPatchelf)
+set(RUSTC_LIBS)
+foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
+	get_filename_component(rustc_lib_name "${rustc_lib}" NAME)
+	list(APPEND RUSTC_LIBS "${PROJECT_OUTPUT_DIR}/${rustc_lib_name}")
+endforeach()
 
-		if(NOT Patchelf_FOUND)
-			message(SEND_ERROR "Patchelf not found")
-			return()
-		endif()
-
-		set(TARGET_INSTALL_DEPENDENCY Patchelf)
-	endif()
-
-	set(RUSTC_LIBS)
-	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime ${TARGET_INSTALL_DEPENDENCY})
-	foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
-		get_filename_component(rustc_lib_name ${rustc_lib} NAME)
-		list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
-		add_custom_command(TARGET ${target}_patchelf POST_BUILD
-			COMMAND ${Patchelf_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
-		)
-	endforeach()
-
-	set(TARGET_DEPENDENCY ${target}_patchelf)
-else()
-	# TODO: Implement patchelf equivalent (if needed) for other platforms
-	set(RUSTC_LIBS ${Rust_RUSTC_LIBRARIES})
-endif()
+add_custom_target(${target}_rpath DEPENDS ${target}_runtime)
+metacall_patch_rpath(${target}_rpath "${RUSTC_LIBS}" "${PROJECT_OUTPUT_DIR}")
+set(TARGET_DEPENDENCY ${target}_rpath)
 
 if(OPTION_BUILD_MUSL)
 	set(RUST_CTR_STATIC "-Ctarget-feature=-crt-static -Clink-self-contained=off -L/usr/lib/x86_64-linux-musl") #-Clink-args=--dynamic-linker /lib/ld-musl-x86_64.so.1
