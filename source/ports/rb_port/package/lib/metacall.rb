@@ -15,7 +15,8 @@ module MetaCall
 
 		if Dir.exist?(root_dir)
 			Find.find(root_dir) do |path|
-				matches << path if File.file?(path) && regex.match?(File.basename(path))
+				filename = File.basename(path)
+				matches << path if File.file?(path) && regex.match?(filename)
 			end
 		end
 
@@ -33,7 +34,8 @@ module MetaCall
 					File.join(ENV['LOCALAPPDATA'].to_s, 'MetaCall', 'metacall'),
 					File.join(home_dir, 'AppData', 'Local', 'MetaCall', 'metacall')
 				],
-				name: 'metacall\.dll'
+				# Flexible matching for Windows: metacall.dll, metacalld.dll
+				name: '^metacall(d)?\.dll$'
 			}
 		when /darwin/
 			{
@@ -43,7 +45,8 @@ module MetaCall
 					File.join(home_dir, '.metacall', 'lib'),
 					'/opt/metacall/lib'
 				],
-				name: 'libmetacall\.dylib'
+				# Flexible matching for macOS: libmetacall.dylib, libmetacalld.dylib
+				name: '^libmetacall(d)?\.dylib$'
 			}
 		when /linux/
 			{
@@ -53,7 +56,8 @@ module MetaCall
 					File.join(home_dir, '.metacall', 'lib'),
 					'/opt/metacall/lib'
 				],
-				name: 'libmetacall\.so'
+				# Flexible matching for Linux: libmetacall.so, libmetacalld.so, libmetacall.so.1
+				name: '^libmetacall(d)?\.so(\.\d+)*$'
 			}
 		else
 			raise "Platform #{host_os} not supported"
@@ -66,7 +70,7 @@ module MetaCall
 		if custom_path
 			{
 				paths: [ custom_path ],
-				name: '^(lib)?metacall(d)?\.(so|dylib|dll)$'
+				name: '^(lib)?metacall(d)?\.(so|dylib|dll)(\.\d+)*$'
 			}
 		else
 			platform_install_paths
@@ -98,22 +102,37 @@ module MetaCall
 			return MetaCallRbLoaderPort
 		end
 
-		# Set environment variable for the host
-		ENV['METACALL_HOST'] = 'rb'
-
 		# Find the MetaCall shared library
 		library_path = find_library
 		install_dir = File.dirname(library_path)
+		root_dir = File.dirname(install_dir)
 
-		# ARCHITECTURAL FIX: On Windows, we MUST add the library directory to PATH 
-		# so that rb_loader.dll can find its dependencies (Error 126 fix).
+		# Set environment variable for the host
+		ENV['METACALL_HOST'] ||= 'rb'
+
+		# AUTOMATIC ENGINE BOOTSTRAPPING
+		# We set the internal MetaCall paths based on where we found the library.
+		# This eliminates the need for manual "Smart CI" scripts.
+		ENV['LOADER_LIBRARY_PATH'] ||= install_dir
+		ENV['SERIAL_LIBRARY_PATH'] ||= install_dir
+		ENV['DETECTOR_LIBRARY_PATH'] ||= install_dir
+		
+		# Look for configurations folder (usually adjacent to lib/bin in self-contained)
+		config_path = File.join(root_dir, 'configurations')
+		ENV['CONFIGURATION_PATH'] ||= config_path if Dir.exist?(config_path)
+
+		# Platform-specific environment fixes
 		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+			# Force library directory into PATH for DLL dependency resolution (Error 126 fix)
 			ENV['PATH'] = "#{install_dir};#{ENV['PATH']}"
 			
-			# Attempt to set up PythonHome if not present
+			# Detect Python runtime bundled with MetaCall
 			unless ENV.key?('PYTHONHOME')
-				py_home = File.join(File.dirname(install_dir), 'runtimes', 'python')
-				ENV['PYTHONHOME'] = py_home if Dir.exist?(py_home)
+				py_home = File.join(root_dir, 'runtimes', 'python')
+				if Dir.exist?(py_home)
+					ENV['PYTHONHOME'] = py_home
+					ENV['PYTHONPATH'] ||= install_dir
+				end
 			end
 		end
 
