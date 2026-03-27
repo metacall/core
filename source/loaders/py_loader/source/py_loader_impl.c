@@ -190,6 +190,45 @@ static int py_loader_impl_finalize(loader_impl_py py_impl, const int host);
 
 static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_name name, const char *buffer);
 
+#if defined(WIN32) || defined(_WIN32)
+static int py_loader_impl_initialize_python_home(configuration config)
+{
+	value python_home_value;
+	const char *python_home;
+	const char *python_home_env = getenv("PYTHONHOME");
+
+	/* Respect user-provided PYTHONHOME when present. */
+	if (python_home_env != NULL && python_home_env[0] != '\0')
+	{
+		return 0;
+	}
+
+	python_home_value = configuration_value_type(config, "python_home", TYPE_STRING);
+
+	if (python_home_value == NULL)
+	{
+		return 0;
+	}
+
+	python_home = value_to_string(python_home_value);
+
+	if (python_home == NULL || python_home[0] == '\0')
+	{
+		return 0;
+	}
+
+	if (_putenv_s("PYTHONHOME", python_home) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Python loader failed to set PYTHONHOME to: %s", python_home);
+		return 1;
+	}
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader configured PYTHONHOME to: %s", python_home);
+
+	return 0;
+}
+#endif
+
 /* Implements: if __name__ == "__main__": */
 static int py_loader_impl_run_main = 1;
 static char *py_loader_impl_main_module = NULL;
@@ -2454,6 +2493,13 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	if (host == 0)
 	{
+	#if defined(WIN32) || defined(_WIN32)
+		if (py_loader_impl_initialize_python_home(config) != 0)
+		{
+			goto error_init_py;
+		}
+	#endif
+
 		Py_InitializeEx(0);
 
 		if (Py_IsInitialized() == 0)
@@ -3725,7 +3771,7 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover object member %s, type %s",
 					  PyUnicode_AsUTF8(dict_key),
 					  type_id_name(py_loader_impl_capi_to_value_type(dict_val)));
-			
+
 		}
 	}
 

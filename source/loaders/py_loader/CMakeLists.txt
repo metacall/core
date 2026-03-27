@@ -294,12 +294,34 @@ endif()
 # Configuration
 #
 
+set(PY_LOADER_CONFIG_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/data/py_loader.json.in")
+
+set(PYTHON_HOME "")
+set(Python3_LIBRARY_SEARCH_PATHS "")
+
+if(PROJECT_OS_FAMILY STREQUAL win32)
+	# Prefer the interpreter directory as Python home for development builds.
+	set(PYTHON_HOME_DEVELOPMENT "${Python3_ROOT_DIR}")
+
+	# On installed layouts we place Python runtime artifacts under INSTALL_LIB.
+	set(PYTHON_HOME_INSTALL "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
+
+	set(Python3_LIBRARY_SEARCH_PATHS_DEVELOPMENT
+		"${Python3_ROOT_DIR};${Python3_ROOT_DIR}/DLLs;${Python3_ROOT_DIR}/libs")
+	set(Python3_LIBRARY_SEARCH_PATHS_INSTALL
+		"${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB};${CMAKE_INSTALL_PREFIX}/${INSTALL_BIN}")
+endif()
+
 # Development
-loader_configuration_begin(py_loader)
+loader_configuration_begin(py_loader "${PY_LOADER_CONFIG_TEMPLATE}")
+set(PYTHON_HOME "${PYTHON_HOME_DEVELOPMENT}")
+loader_configuration_paths("${Python3_LIBRARY_SEARCH_PATHS_DEVELOPMENT}")
 loader_configuration_deps(python "${Python3_LIBRARY_DEVELOPMENT}")
 loader_configuartion_end_development()
 
 # Install
-loader_configuration_begin(py_loader)
+loader_configuration_begin(py_loader "${PY_LOADER_CONFIG_TEMPLATE}")
+set(PYTHON_HOME "${PYTHON_HOME_INSTALL}")
+loader_configuration_paths("${Python3_LIBRARY_SEARCH_PATHS_INSTALL}")
 loader_configuration_deps(python "${Python3_LIBRARY_INSTALL}")
 loader_configuartion_end_install()
