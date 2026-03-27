@@ -1,15 +1,16 @@
 use crate::Attribute;
 
 use super::rustc_middle::ty::{
-    subst::GenericArgKind, Binder, FloatTy, FnSig, IntTy, TyCtxt, TyKind, TyS, UintTy, Visibility,
+    self, FloatTy, IntTy, Ty, TyCtxt, TyKind, UintTy, Visibility,
 };
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 use rustc_hir::def::{DefKind, Res};
-use rustc_middle::hir::exports::Export;
+use rustc_middle::metadata::ModChild;
 use std::iter::zip;
 
-pub fn handle_ty(ty: &TyS) -> FunctionParameter {
+// Updated: TyS removed in modern rustc, use Ty<'tcx> instead
+pub fn handle_ty<'tcx>(ty: Ty<'tcx>) -> FunctionParameter {
     let mut result = FunctionParameter {
         name: String::new(),
         mutability: Mutability::No,
@@ -17,7 +18,7 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
         ty: FunctionType::Null,
         generic: vec![],
     };
-    match &ty.kind() {
+    match ty.kind() {
         TyKind::Int(i) => match i {
             IntTy::I16 => result.ty = FunctionType::i16,
             IntTy::I32 => result.ty = FunctionType::i32,
@@ -34,6 +35,7 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
         TyKind::Float(f) => match f {
             FloatTy::F32 => result.ty = FunctionType::f32,
             FloatTy::F64 => result.ty = FunctionType::f64,
+            _ => result.ty = FunctionType::Null,
         },
         TyKind::Bool => result.ty = FunctionType::bool,
         TyKind::Char => result.ty = FunctionType::char,
@@ -45,7 +47,7 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                     result.ty = FunctionType::Array;
                     dbg!(gen);
                     let gen_arg = gen[0];
-                    if let GenericArgKind::Type(ty) = gen_arg.unpack() {
+                    if let ty::GenericArgKind::Type(ty) = gen_arg.unpack() {
                         result.generic.push(handle_ty(ty));
                     } else {
                         eprintln!("Rust Loader: Expect generic arg, get nothing");
@@ -54,13 +56,13 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                 "std::collections::HashMap" => {
                     result.ty = FunctionType::Map;
                     let key = gen[0];
-                    if let GenericArgKind::Type(ty) = key.unpack() {
+                    if let ty::GenericArgKind::Type(ty) = key.unpack() {
                         result.generic.push(handle_ty(ty));
                     } else {
                         eprintln!("Rust Loader: Expect key, get nothing");
                     }
                     let value = gen[1];
-                    if let GenericArgKind::Type(ty) = value.unpack() {
+                    if let ty::GenericArgKind::Type(ty) = value.unpack() {
                         result.generic.push(handle_ty(ty));
                     } else {
                         eprintln!("Rust Loader: Expect value, get nothing");
@@ -75,20 +77,21 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
     result
 }
 
-pub fn handle_fn(name: String, sig: &Binder<FnSig>, names: &[Ident]) -> Function {
+// Updated: sig is now PolyFnSig (Binder<FnSig>) after skip_binder on EarlyBinder
+pub fn handle_fn<'tcx>(name: String, sig: &ty::Binder<'tcx, ty::FnSig<'tcx>>, names: &[Ident]) -> Function {
     let mut function = Function {
         name,
         ret: None,
         args: vec![],
     };
     // parse input and output
-    let inputs = sig.inputs().skip_binder();
+    let inputs = sig.skip_binder().inputs();
     for (name, ty) in zip(names, inputs) {
-        let mut func_parameter = handle_ty(ty);
+        let mut func_parameter = handle_ty(*ty);
         func_parameter.name = name.to_string();
         function.args.push(func_parameter);
     }
-    let output = sig.output().skip_binder();
+    let output = sig.skip_binder().output();
     match output.kind() {
         TyKind::Tuple(arg) => {
             // default return
@@ -105,10 +108,11 @@ pub fn handle_fn(name: String, sig: &Binder<FnSig>, names: &[Ident]) -> Function
     function
 }
 
-pub fn extract_attribute_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Attribute> {
-    let Export {
-        ident, res, vis, ..
-    } = export;
+// Updated: Export replaced with ModChild
+pub fn extract_attribute_from_mod_child(ctxt: &TyCtxt, child: &ModChild) -> Option<Attribute> {
+    let ident = child.ident;
+    let res = child.res;
+    let vis = child.vis;
     // skip non-public items
     if !matches!(vis, Visibility::Public) {
         return None;
@@ -116,24 +120,27 @@ pub fn extract_attribute_from_export(ctxt: &TyCtxt, export: &Export) -> Option<A
     match res {
         Res::Def(DefKind::Field, def_id) => Some(Attribute {
             name: ident.to_string(),
-            ty: handle_ty(ctxt.type_of(*def_id)),
+            // Updated: type_of returns EarlyBinder, need skip_binder/instantiate_identity
+            ty: handle_ty(ctxt.type_of(def_id).instantiate_identity()),
         }),
         _ => None,
     }
 }
 
-pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
-    let Export {
-        ident, res, vis, ..
-    } = export;
+// Updated: Export replaced with ModChild
+pub fn extract_fn_from_mod_child(ctxt: &TyCtxt, child: &ModChild) -> Option<Function> {
+    let ident = child.ident;
+    let res = child.res;
+    let vis = child.vis;
     // skip non-public items
     if !matches!(vis, Visibility::Public) {
         return None;
     }
     match res {
         Res::Def(DefKind::AssocFn, def_id) => {
-            let fn_sig = ctxt.fn_sig(*def_id);
-            let names = ctxt.fn_arg_names(*def_id);
+            // Updated: fn_sig returns EarlyBinder, skip_binder to get PolyFnSig
+            let fn_sig = ctxt.fn_sig(def_id).skip_binder();
+            let names = ctxt.fn_arg_names(def_id);
             Some(handle_fn(ident.to_string(), &fn_sig, names))
         }
         _ => None,
