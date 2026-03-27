@@ -241,6 +241,8 @@ void detour_unload(detour d, detour_handle handle)
 	set_destroy(handle->symbol_map);
 
 	set_destroy(handle->replaced_symbols);
+
+	free(handle);
 }
 
 int detour_clear(detour d)
