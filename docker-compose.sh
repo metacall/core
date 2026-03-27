@@ -197,6 +197,30 @@ sub_test_memcheck() {
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
+# Build MetaCall Docker Compose with Clang for testing (link manually dockerignore files)
+sub_test_clang() {
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
+
+	# Enable build with clang
+	export METACALL_BUILD_SANITIZER=clang
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
+
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
+
+	# Define build type
+	export METACALL_BUILD_TYPE=debug
+
+	ln -sf tools/deps/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+}
+
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
 sub_cache() {
 	if [ -z "${IMAGE_REGISTRY+x}" ]; then
@@ -426,6 +450,7 @@ sub_help() {
 	echo "	test-memory-sanitizer"
 	echo "	coverage"
 	echo "	test-memcheck"
+	echo "	test-clang"
 	echo "	cache"
 	echo "	platform"
 	echo "	push"
@@ -463,6 +488,9 @@ case "$1" in
 		;;
 	test-memcheck)
 		sub_test_memcheck
+		;;
+	test-clang)
+		sub_test_clang
 		;;
 	cache)
 		sub_cache
