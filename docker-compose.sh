@@ -76,6 +76,9 @@ sub_test() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
 
@@ -99,6 +102,9 @@ sub_test_sanitizer() {
 
 	# Enable build with sanitizer
 	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
+
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
 
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
@@ -157,6 +163,9 @@ sub_coverage() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=coverage
 
@@ -181,6 +190,9 @@ sub_test_memcheck() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
 
@@ -202,8 +214,11 @@ sub_test_clang() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
 
+	# Disable build with sanitizer
+	export METACALL_BUILD_SANITIZER=
+
 	# Enable build with clang
-	export METACALL_BUILD_SANITIZER=clang
+	export METACALL_BUILD_CLANG=clang
 
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
