@@ -64,15 +64,15 @@
 
 /* -- Forward Declarations -- */
 
-struct loader_handle_impl_type;
+struct loader_handle_impl_s;
 
 /* -- Type Definitions -- */
 
-typedef struct loader_handle_impl_type *loader_handle_impl;
+typedef struct loader_handle_impl_s *loader_handle_impl;
 
 /* -- Member Data -- */
 
-struct loader_impl_type
+struct loader_impl_s
 {
 	plugin p;					   /* Plugin instance to which loader belongs to */
 	int init;					   /* Flag for checking if the loader is initialized */
@@ -90,7 +90,7 @@ struct loader_impl_type
 	set detour_map;				   /* List of detour handles (detour_handle) to the dependencies of the loader and the loader itself */
 };
 
-struct loader_handle_impl_type
+struct loader_handle_impl_s
 {
 	uintptr_t magic;			 /* Magic number for detecting corrupted input by the user */
 	loader_impl impl;			 /* Reference to the loader which handle belongs to */
@@ -157,14 +157,14 @@ static const char loader_handle_impl_magic_free[] = "loader_handle_impl_magic_fr
 
 loader_impl loader_impl_allocate(const loader_tag tag)
 {
-	loader_impl impl = malloc(sizeof(struct loader_impl_type));
+	loader_impl impl = malloc(sizeof(struct loader_impl_s));
 
 	if (impl == NULL)
 	{
 		goto alloc_error;
 	}
 
-	memset(impl, 0, sizeof(struct loader_impl_type));
+	memset(impl, 0, sizeof(struct loader_impl_s));
 
 	impl->handle_impl_path_map = set_create(&hash_callback_str, &comparable_callback_str);
 
@@ -868,7 +868,7 @@ int loader_impl_type_define(loader_impl impl, const char *name, type t)
 
 loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size)
 {
-	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
+	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_s));
 
 	if (handle_impl == NULL)
 	{

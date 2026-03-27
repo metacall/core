@@ -35,9 +35,9 @@
 extern "C" {
 #endif
 
-struct loader_impl_type;
+struct loader_impl_s;
 
-typedef struct loader_impl_type *loader_impl;
+typedef struct loader_impl_s *loader_impl;
 
 typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, configuration);
 
