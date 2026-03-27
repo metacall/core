@@ -40,6 +40,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                                 }
                             }
                             GenericArgs::Parenthesized(_) => {}
+                            _ => {}
                         }
                     }
                 }
@@ -55,6 +56,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                                 }
                             }
                             GenericArgs::Parenthesized(_) => {}
+                            _ => {}
                         }
                     }
                 }
@@ -63,7 +65,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
             }
             result.name = symbol_string;
         }
-        TyKind::Rptr(_, MutTy { ty, mutbl }) => {
+        TyKind::Ref(_, MutTy { ty, mutbl }) => {
             let mut inner_ty = handle_ty(ty);
             inner_ty.reference = Reference::Yes;
             match mutbl {
