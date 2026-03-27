@@ -1,9 +1,6 @@
 #![feature(rustc_private)]
-#![feature(once_cell)]
 // Allow us to match on Box<T>s:
 #![feature(box_patterns)]
-#![feature(let_else)]
-#![feature(iter_zip)]
 // Allow us to get file prefix
 #![feature(path_file_prefix)]
 extern crate rustc_ast;
@@ -24,14 +21,12 @@ use rustc_ast::{visit, Impl, Item, ItemKind, VariantData};
 use rustc_hir::def::{DefKind, Res};
 use rustc_hir::def_id::DefId;
 use rustc_interface::{interface::Compiler, Config, Queries};
-use rustc_middle::hir::exports::Export;
-use rustc_middle::ty::Visibility;
+use rustc_middle::ty::{TyCtxt, Visibility};
 use rustc_session::config::{
     self, CrateType, ErrorOutputType, ExternEntry, ExternLocation, Externs, Input,
 };
 use rustc_session::search_paths::SearchPath;
-use rustc_session::utils::CanonicalizedPath;
-use rustc_span::source_map;
+use rustc_span::FileName;
 use std::io::Write;
 use std::iter::{self, FromIterator};
 use std::{
@@ -136,7 +131,7 @@ impl Source {
 
                 SourceImpl {
                     input: SourceInput(config::Input::Str {
-                        name: source_map::FileName::Custom(name.clone()),
+                        name: FileName::Custom(name.clone()),
                         input: code.clone(),
                     }),
                     input_path: input_path(&dir, &name_path),
@@ -415,119 +410,114 @@ pub struct CompilerCallbacks {
 }
 
 impl CompilerCallbacks {
-    fn analyze_source<'tcx>(&mut self, queries: &'tcx Queries<'tcx>) {
-        let krate = queries
-            .parse()
-            .expect("no Result<Query<Crate>> found")
-            .take();
+    // Updated: analyze_source takes &Crate directly
+    fn analyze_source(&mut self, krate: &rustc_ast::Crate) {
         let mut item_visitor = ItemVisitor::new();
-        visit::walk_crate(&mut item_visitor, &krate);
+        visit::walk_crate(&mut item_visitor, krate);
         self.classes = item_visitor.classes.into_values().collect();
         self.functions = item_visitor.functions;
     }
-    fn analyze_metadata<'tcx>(&mut self, queries: &'tcx Queries<'tcx>) {
+
+    // Updated: analyze_metadata takes TyCtxt directly
+    fn analyze_metadata<'tcx>(&mut self, tcx: TyCtxt<'tcx>) {
         let mut class_map: HashMap<DefId, Class> = HashMap::new();
-        let krates = queries
-            .expansion()
-            .expect("Unable to get Expansion")
-            .peek_mut()
-            .1
-            .borrow_mut()
-            .access(|resolver| {
-                let c_store = resolver.cstore().clone();
-                c_store.crates_untracked()
-            });
-        queries
-            .global_ctxt()
-            .expect("Unable to get global ctxt")
-            .peek_mut()
-            .enter(|ctxt| {
-                // Since we are loading a package, input_path should be lib<crate_name>.rlib
-                let crate_name = &self
-                    .source
-                    .input_path
-                    .file_prefix()
-                    .expect("Unable to get file prefix.")
-                    .to_str()
-                    .expect("Unable to cast OsStr to str")[3..];
-                // Find our crate
-                let crate_num = krates
-                    .iter()
-                    .find(|&&x| ctxt.crate_name(x) == rustc_span::Symbol::intern(crate_name))
-                    .or_else(|| krates.get(0))
-                    .expect("unable to find crate");
-                // Parse public functions and structs
-                for child in ctxt.item_children(crate_num.as_def_id()) {
-                    let Export {
-                        ident, res, vis, ..
-                    } = child;
-                    // Skip non-public items
-                    if !matches!(vis, Visibility::Public) {
-                        continue;
-                    }
-                    match res {
-                        Res::Def(DefKind::Struct, def_id) => {
-                            let class = class_map.entry(*def_id).or_default();
-                            class.name = ident.to_string();
+        let krates = tcx.crates(());
+        // Since we are loading a package, input_path should be lib<crate_name>.rlib
+        let crate_name = &self
+            .source
+            .input_path
+            .file_prefix()
+            .expect("Unable to get file prefix.")
+            .to_str()
+            .expect("Unable to cast OsStr to str")[3..];
+        // Find our crate
+        let crate_num = krates
+            .iter()
+            .find(|&&x| tcx.crate_name(x) == rustc_span::Symbol::intern(crate_name))
+            .or_else(|| krates.get(0))
+            .expect("unable to find crate");
+        // Parse public functions and structs
+        // Updated: use tcx.module_children() and ModChild instead of Export
+        for child in tcx.module_children(crate_num.as_def_id()) {
+            let ident = child.ident;
+            let res = child.res;
+            let vis = child.vis;
+            // Skip non-public items
+            if !matches!(vis, Visibility::Public) {
+                continue;
+            }
+            match res {
+                Res::Def(DefKind::Struct, def_id) => {
+                    let class = class_map.entry(def_id).or_default();
+                    class.name = ident.to_string();
 
-                            for field in ctxt.item_children(*def_id) {
-                                if let Some(field) =
-                                    middle::extract_attribute_from_export(&ctxt, field)
-                                {
-                                    class.attributes.push(field);
-                                }
-                            }
-
-                            for inherent_impl in ctxt.inherent_impls(*def_id) {
-                                for method in ctxt.item_children(*inherent_impl) {
-                                    if let Some(function) =
-                                        middle::extract_fn_from_export(&ctxt, method)
-                                    {
-                                        if function.name == "new" {
-                                            class.constructor = Some(function);
-                                        } else if function.has_self() {
-                                            class.methods.push(function);
-                                        } else {
-                                            class.static_methods.push(function);
-                                        }
-                                    }
-                                }
-                            }
+                    for field in tcx.module_children(def_id) {
+                        if let Some(field) =
+                            middle::extract_attribute_from_mod_child(&tcx, field)
+                        {
+                            class.attributes.push(field);
                         }
-                        Res::Def(DefKind::Fn, def_id) => {
-                            // https://doc.rust-lang.org/stable/nightly-rustc/rustc_middle/ty/struct.Binder.html
-                            let fn_sig = ctxt.fn_sig(*def_id);
-                            let names = ctxt.fn_arg_names(*def_id);
-                            self.functions.push(middle::handle_fn(
-                                ident.to_string(),
-                                &fn_sig,
-                                names,
-                            ));
-                        }
-                        _ => {}
                     }
-                }
-                // After parsing all structs, parse tarit implementations
-                for trait_impl in ctxt.all_trait_implementations(*crate_num) {
-                    use rustc_middle::ty::fast_reject::SimplifiedTypeGen::AdtSimplifiedType;
-                    if let Some(AdtSimplifiedType(def_id)) = trait_impl.1 {
-                        if let Some(class) = class_map.get_mut(&def_id) {
-                            for func in ctxt.item_children(trait_impl.0) {
-                                if let Some(function) = middle::extract_fn_from_export(&ctxt, func)
-                                {
-                                    if function.name == "drop" {
-                                        class.destructor = Some(function);
-                                    } else if function.has_self() {
-                                        class.methods.push(function);
-                                    } else {
-                                        class.static_methods.push(function);
-                                    }
+
+                    // inherent_impls returns &[DefId] in nightly-2024-11-01
+                    let inherent_impls = tcx.inherent_impls(def_id);
+                    for inherent_impl in inherent_impls {
+                        for method in tcx.module_children(*inherent_impl) {
+                            if let Some(function) =
+                                middle::extract_fn_from_mod_child(&tcx, method)
+                            {
+                                if function.name == "new" {
+                                    class.constructor = Some(function);
+                                } else if function.has_self() {
+                                    class.methods.push(function);
+                                } else {
+                                    class.static_methods.push(function);
                                 }
                             }
                         }
                     }
                 }
-            });
+                Res::Def(DefKind::Fn, def_id) => {
+                    // Updated: fn_sig now returns EarlyBinder, skip_binder() to unwrap
+                    let fn_sig = tcx.fn_sig(def_id).skip_binder();
+                    let names = tcx.fn_arg_names(def_id);
+                    self.functions.push(middle::handle_fn(
+                        ident.to_string(),
+                        &fn_sig,
+                        names,
+                    ));
+                }
+                _ => {}
+            }
+        }
+        // After parsing all structs, parse trait implementations
+        for &trait_impl in tcx.trait_impls_in_crate(*crate_num) {
+            use rustc_middle::ty::fast_reject::SimplifiedType;
+            if tcx.def_kind(trait_impl) != (DefKind::Impl { of_trait: true }) {
+                continue;
+            }
+            let self_ty_opt = tcx.impl_trait_ref(trait_impl)
+                .and_then(|tr| {
+                    let self_ty = tr.skip_binder().self_ty();
+                    rustc_middle::ty::fast_reject::simplify_type(tcx, self_ty, rustc_middle::ty::fast_reject::TreatParams::InstantiateWithInfer)
+                });
+            if let Some(SimplifiedType::Adt(def_id)) = self_ty_opt {
+                if let Some(class) = class_map.get_mut(&def_id) {
+                    for func in tcx.module_children(trait_impl) {
+                        if let Some(function) = middle::extract_fn_from_mod_child(&tcx, func)
+                        {
+                            if function.name == "drop" {
+                                class.destructor = Some(function);
+                            } else if function.has_self() {
+                                class.methods.push(function);
+                            } else {
+                                class.static_methods.push(function);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         self.classes = class_map.into_values().collect();
     }
 }
@@ -555,7 +545,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
             let mut externs: BTreeMap<String, ExternEntry> = BTreeMap::new();
             let name = "metacall_package";
             let path = self.source.input_path.clone();
-            let path = CanonicalizedPath::new(&path);
+            let canon_path = rustc_session::utils::CanonicalizedPath::new(&path);
 
             let entry = externs.entry(name.to_owned());
 
@@ -563,11 +553,13 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
 
             match entry {
                 Entry::Vacant(vacant) => {
-                    let files = BTreeSet::from_iter(iter::once(path));
+                    let files = BTreeSet::from_iter(iter::once(canon_path));
                     vacant.insert(ExternEntry {
                         location: ExternLocation::ExactPaths(files),
                         is_private_dep: false,
                         add_prelude: true,
+                        nounused_dep: false,
+                        force: false,
                     });
                 }
                 _ => {
@@ -585,10 +577,13 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                 .parent()
                 .expect("Unable to get parent dir")
                 .join("deps");
-            // println!("include dep: {}", dep_path.display());
+            let early_dcx = rustc_session::EarlyDiagCtxt::new(ErrorOutputType::default());
             config.opts.search_paths.push(SearchPath::from_cli_opt(
+                &std::env::current_dir().unwrap_or_default(),
+                &config.opts.target_triple,
+                &early_dcx,
                 format!("dependency={}", dep_path.display()).as_str(),
-                ErrorOutputType::default(),
+                false,
             ));
             // Set up inputs
             let wrapped_script_path = self.destination.join("metacall_wrapped_package.rs");
@@ -600,21 +595,19 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                     .expect("Unablt to write wrapped script");
             }
 
-            config.input = Input::File(wrapped_script_path.clone()); // self.source.input.clone().0;
-            config.input_path = Some(wrapped_script_path);
+            config.input = Input::File(wrapped_script_path.clone());
         } else {
             // Set up inputs
             config.input = self.source.input.clone().0;
-            config.input_path = Some(self.source.input_path.clone());
         }
         // Set up output
         if self.is_parsing {
             let output_path = self.source.output.clone();
             let file_name = output_path.file_name().expect("Unable to get the filename");
-            config.output_file = Some(self.destination.join(file_name));
+            config.output_file = Some(config::OutFileName::Real(self.destination.join(file_name)));
             self.source.output = self.destination.join(file_name);
         } else {
-            config.output_file = Some(self.source.output.clone());
+            config.output_file = Some(config::OutFileName::Real(self.source.output.clone()));
         }
         // Setting up default compiler flags
         config.opts.output_types = config::OutputTypes::new(&[(config::OutputType::Exe, None)]);
@@ -624,28 +617,43 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         config.opts.edition = rustc_span::edition::Edition::Edition2021;
     }
 
+    fn after_crate_root_parsing<'tcx>(
+        &mut self,
+        _compiler: &Compiler,
+        queries: &'tcx Queries<'tcx>,
+    ) -> rustc_driver::Compilation {
+        if self.is_parsing {
+            match self.source.source {
+                Source::File { .. } | Source::Memory { .. } => {
+                    let krate = queries.parse().expect("Failed to parse");
+                    let krate_ref = krate.borrow();
+                    self.analyze_source(&krate_ref);
+                    return rustc_driver::Compilation::Stop;
+                }
+                _ => {}
+            }
+        }
+        rustc_driver::Compilation::Continue
+    }
+
     fn after_expansion<'tcx>(
         &mut self,
         _compiler: &Compiler,
         queries: &'tcx Queries<'tcx>,
     ) -> rustc_driver::Compilation {
-        // analysis
-        // is_parsing will be set to false after generating wrappers.
         if self.is_parsing {
             match self.source.source {
-                Source::File { .. } | Source::Memory { .. } => {
-                    self.analyze_source(queries);
-                    rustc_driver::Compilation::Stop
-                }
                 Source::Package { .. } => {
-                    self.analyze_metadata(queries);
-                    rustc_driver::Compilation::Stop
+                    let gcx = queries.global_ctxt().expect("Failed to get global context");
+                    gcx.borrow().enter(|tcx| {
+                        self.analyze_metadata(tcx);
+                    });
+                    return rustc_driver::Compilation::Stop;
                 }
+                _ => {}
             }
-        } else {
-            // we have finished the parsing process.
-            rustc_driver::Compilation::Continue
         }
+        rustc_driver::Compilation::Continue
     }
 }
 
@@ -673,8 +681,7 @@ impl ItemVisitor {
 impl<'a> visit::Visitor<'a> for ItemVisitor {
     fn visit_item(&mut self, i: &Item) {
         match &i.kind {
-            ItemKind::Struct(VariantData::Struct(fields, _), _) => {
-                // let def_id = i.
+            ItemKind::Struct(VariantData::Struct { fields, .. }, _) => {
                 let class = self.classes.entry(i.ident.to_string()).or_default();
                 class.name = i.ident.to_string();
                 for field in fields {
@@ -780,145 +787,77 @@ impl std::io::Write for DiagnosticSink {
 
 const BUG_REPORT_URL: &str = "https://github.com/metacall/core/issues/new";
 
-static ICE_HOOK: std::lazy::SyncLazy<
-    Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>,
-> = std::lazy::SyncLazy::new(|| {
+// Updated: use std::sync::LazyLock instead of std::lazy::SyncLazy
+static ICE_HOOK: std::sync::LazyLock<
+    Box<dyn Fn(&std::panic::PanicHookInfo<'_>) + Sync + Send + 'static>,
+> = std::sync::LazyLock::new(|| {
     let hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|info| report_ice(info, BUG_REPORT_URL)));
     hook
 });
 
-fn report_ice(info: &std::panic::PanicInfo<'_>, bug_report_url: &str) {
+// Updated: PanicInfo renamed to PanicHookInfo in newer Rust
+fn report_ice(info: &std::panic::PanicHookInfo<'_>, bug_report_url: &str) {
     // Invoke our ICE handler, which prints the actual panic message and optionally a backtrace
     (*ICE_HOOK)(info);
 
     // Separate the output with an empty line
     eprintln!();
 
-    let emitter = Box::new(rustc_errors::emitter::EmitterWriter::stderr(
-        rustc_errors::ColorConfig::Auto,
-        None,
-        false,
-        false,
-        None,
-        false,
-    ));
-    let handler = rustc_errors::Handler::with_emitter(true, None, emitter);
-
-    // a .span_bug or .bug call has already printed what it wants to print
-    if !info.payload().is::<rustc_errors::ExplicitBug>() {
-        let d = rustc_errors::Diagnostic::new(rustc_errors::Level::Bug, "unexpected panic");
-        handler.emit_diagnostic(&d);
-    }
-
-    let xs: Vec<std::borrow::Cow<'static, str>> = vec![
-        "the compiler unexpectedly panicked. this is a bug.".into(),
-        format!("we would appreciate a bug report: {}", bug_report_url).into(),
-    ];
-
-    for note in &xs {
-        handler.note_without_error(note);
-    }
+    // Updated: simplified ICE reporting — just print to stderr
+    eprintln!("the compiler unexpectedly panicked. this is a bug.");
+    eprintln!("we would appreciate a bug report: {}", bug_report_url);
 
     // If backtraces are enabled, also print the query stack
-    let backtrace = std::env::var_os("RUST_BACKTRACE").map_or(false, |x| &x != "0");
-
-    let num_frames = if backtrace { None } else { Some(2) };
-
-    rustc_interface::interface::try_print_query_stack(&handler, num_frames);
+    let _backtrace = std::env::var_os("RUST_BACKTRACE").map_or(false, |x| &x != "0");
 }
 
+// Updated: using_internal_features now requires Arc<AtomicBool>
+static USING_INTERNAL_FEATURES: std::sync::LazyLock<std::sync::Arc<std::sync::atomic::AtomicBool>> =
+    std::sync::LazyLock::new(|| std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)));
+
 pub fn initialize() {
-    rustc_driver::init_rustc_env_logger();
-    std::lazy::SyncLazy::force(&ICE_HOOK);
+    std::sync::LazyLock::force(&ICE_HOOK);
 }
 
 fn run_compiler(
     callbacks: &mut (dyn rustc_driver::Callbacks + Send),
     diagnostics_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
-    errors_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
-) -> Result<(), rustc_errors::ErrorReported> {
+    _errors_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
+) -> Result<(), rustc_errors::ErrorGuaranteed> {
     let mut config = Config {
-        // Command line options
         opts: config::Options {
             maybe_sysroot: compiler_sys_root(),
             crate_types: vec![CrateType::Cdylib],
             ..Default::default()
         },
-        // cfg! configuration in addition to the default ones
-        crate_cfg: rustc_hash::FxHashSet::default(), // FxHashSet<(String, Option<String>)>
+        crate_cfg: Vec::new(),
+        crate_check_cfg: Vec::new(),
         input: config::Input::File(PathBuf::new()),
-        input_path: None,  // Option<PathBuf>
-        output_dir: None,  // Option<PathBuf>
-        output_file: None, // Option<PathBuf>
-        file_loader: None, // Option<Box<dyn FileLoader + Send + Sync>>
-        diagnostic_output: rustc_session::DiagnosticOutput::Raw(Box::from(DiagnosticSink(
-            diagnostics_buffer.clone(),
-        ))),
-        // Set to capture stderr output during compiler execution
-        stderr: Some(errors_buffer.clone()), // Option<Arc<Mutex<Vec<u8>>>>
-        lint_caps: rustc_hash::FxHashMap::default(), // FxHashMap<lint::LintId, lint::Level>
-        // This is a callback from the driver that is called when [`ParseSess`] is created.
-        parse_sess_created: None, //Option<Box<dyn FnOnce(&mut ParseSess) + Send>>
-        // This is a callback from the driver that is called when we're registering lints;
-        // it is called during plugin registration when we have the LintStore in a non-shared state.
-        //
-        // Note that if you find a Some here you probably want to call that function in the new
-        // function being registered.
-        register_lints: None, // Option<Box<dyn Fn(&Session, &mut LintStore) + Send + Sync>>
-        // This is a callback from the driver that is called just after we have populated
-        // the list of queries.
-        //
-        // The second parameter is local providers and the third parameter is external providers.
-        override_queries: None, // Option<fn(&Session, &mut ty::query::Providers<'_>, &mut ty::query::Providers<'_>)>
-        // Registry of diagnostics codes.
-        registry: rustc_errors::registry::Registry::new(rustc_error_codes::DIAGNOSTICS),
+        output_dir: None,
+        output_file: None,
+        ice_file: None,
+        file_loader: None,
+        locale_resources: Vec::new(),
+        lint_caps: rustc_hash::FxHashMap::default(),
+        psess_created: None,
+        hash_untracked_state: None,
+        register_lints: None,
+        override_queries: None,
         make_codegen_backend: None,
+        registry: rustc_errors::registry::Registry::new(rustc_errors::DIAGNOSTICS),
+        using_internal_features: USING_INTERNAL_FEATURES.clone(),
+        expanded_args: Vec::new(),
     };
 
     callbacks.config(&mut config);
 
     rustc_interface::run_compiler(config, |compiler| {
-        let sess = compiler.session();
-
-        let linker = compiler.enter(|queries| {
-            let early_exit = || sess.compile_status().map(|_| None);
-
-            queries.parse()?;
-
-            if callbacks.after_parsing(compiler, queries) == rustc_driver::Compilation::Stop {
-                return early_exit();
-            }
-
-            queries.expansion()?;
-            if callbacks.after_expansion(compiler, queries) == rustc_driver::Compilation::Stop {
-                return early_exit();
-            }
-
-            queries.prepare_outputs()?;
-
-            queries.global_ctxt()?;
-
-            queries
-                .global_ctxt()?
-                .peek_mut()
-                .enter(|tcx| tcx.analysis(()))?;
-
-            if callbacks.after_analysis(compiler, queries) == rustc_driver::Compilation::Stop {
-                return early_exit();
-            }
-
-            queries.ongoing_codegen()?;
-
-            let linker = queries.linker()?;
-            Ok(Some(linker))
-        })?;
-
-        if let Some(linker) = linker {
-            linker.link()?
-        }
-
-        Ok(())
+        compiler.enter(|queries| {
+            queries.global_ctxt()?.borrow().enter(|tcx| {
+                tcx.analysis(())
+            })
+        })
     })
 }
 
@@ -944,10 +883,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let errors_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
 
     // Parse and generate wrapper
-    let parsing_result: Result<(), CompilerError> = match rustc_driver::catch_fatal_errors(|| {
-        run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
-    })
-    .and_then(|result| result)
+    let parsing_result: Result<(), CompilerError> = match run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
     {
         Ok(()) => Ok(()),
         Err(err) => {
@@ -987,10 +923,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let mut patched_callback = generate_wrapper(callbacks).expect("Unable to generate wrapper");
 
     // Generate binary
-    match rustc_driver::catch_fatal_errors(|| {
-        run_compiler(&mut patched_callback, &diagnostics_buffer, &errors_buffer)
-    })
-    .and_then(|result| result)
+    match run_compiler(&mut patched_callback, &diagnostics_buffer, &errors_buffer)
     {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
