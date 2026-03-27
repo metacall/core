@@ -55,6 +55,20 @@ add_custom_target(${target}_runtime
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
+# Darwin: allow undefined metacall symbols (resolved at runtime via dynamic_lookup)
+# Linux: embed $ORIGIN rpath so sibling libraries resolve at load time
+if(APPLE)
+	set(CARGO_RUSTFLAGS "\"-C\", \"link-args=-Wl,-undefined,dynamic_lookup\"")
+else()
+	set(CARGO_RUSTFLAGS "\"-C\", \"link-args=-Wl,-rpath,$ORIGIN\"")
+endif()
+
+configure_file(
+	"${CMAKE_CURRENT_SOURCE_DIR}/.cargo/config.in"
+	"${CMAKE_CURRENT_SOURCE_DIR}/.cargo/config"
+	@ONLY
+)
+
 include(PatchRPath)
 
 set(RUSTC_LIBS)
@@ -63,9 +77,10 @@ foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
 	list(APPEND RUSTC_LIBS "${PROJECT_OUTPUT_DIR}/${rustc_lib_name}")
 endforeach()
 
-add_custom_target(${target}_rpath DEPENDS ${target}_runtime)
-metacall_patch_rpath(${target}_rpath "${RUSTC_LIBS}" "${PROJECT_OUTPUT_DIR}")
-set(TARGET_DEPENDENCY ${target}_rpath)
+# Patching runs after cargo build, not before
+set(PATCH_LIBS "${TARGET_OUTPUT}" ${RUSTC_LIBS})
+add_custom_target(${target}_rpath ALL DEPENDS ${target})
+metacall_patch_rpath(${target}_rpath "${PATCH_LIBS}" "${PROJECT_OUTPUT_DIR}")
 
 if(OPTION_BUILD_MUSL)
 	set(RUST_CTR_STATIC "-Ctarget-feature=-crt-static -Clink-self-contained=off -L/usr/lib/x86_64-linux-musl") #-Clink-args=--dynamic-linker /lib/ld-musl-x86_64.so.1
@@ -78,7 +93,7 @@ add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
-	DEPENDS ${target}_runtime ${TARGET_DEPENDENCY}
+	DEPENDS ${target}_runtime
 )
 
 set_property(TARGET ${target}
