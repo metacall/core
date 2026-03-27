@@ -551,7 +551,7 @@ sub_configure() {
 
 	# Memory Sanitizer
 	if [ $BUILD_MEMORY_SANITIZER = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=On -DOPTION_BUILD_ADDRESS_SANITIZER=Off"
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=On"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
@@ -570,10 +570,10 @@ sub_configure() {
 	
 	# Execute CMake
 	if [ $BUILD_CLANG = 1 ]; then
-		CC=clang CXX=clang++ cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
-	else
-		cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+		export CC=clang
+		export CXX=clang++
 	fi
+	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
 }
 
 sub_help() {
