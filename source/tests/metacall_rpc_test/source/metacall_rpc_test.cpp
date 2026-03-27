@@ -553,3 +553,91 @@ TEST_F(metacall_rpc_test, ErrorUnderConcurrency)
 
 	metacall_destroy();
 }
+
+static const int SYNC_NUM_THREADS = 4;
+static const int SYNC_CALLS_PER_THREAD = 10;
+
+/* 
+ * I added this test to show the data race on shared curl handels in the rpc_interface_invoke function.
+ * If you build it with ThreadSanitizer (-DOPTION_BUILD_THREAD_SANITIZER=On), TSan should report a data race.
+ */
+TEST_F(metacall_rpc_test, ConcurrentSyncInvoke)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		const char *rpc_scripts[] = { "remote.url" };
+		void *handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
+
+		ASSERT_NE((void *)NULL, (void *)handle);
+
+		std::atomic<int> sync_failures(0);
+		std::atomic<int> sync_mismatches(0);
+		std::vector<std::thread> threads;
+
+		for (int t = 0; t < SYNC_NUM_THREADS; t++)
+		{
+			threads.emplace_back([t, handle, &sync_failures, &sync_mismatches]() {
+				for (int i = 0; i < SYNC_CALLS_PER_THREAD; i++)
+				{
+					float a = static_cast<float>(t * 100 + i + 1);
+					float b = 1.0f;
+					float expected = a / b;
+
+					const enum metacall_value_id divide_ids[] = {
+						METACALL_FLOAT, METACALL_FLOAT
+					};
+
+					void *ret = metacallht_s(handle, "divide", divide_ids, 2, a, b);
+
+					if (ret == NULL)
+					{
+						std::cout << "    [SYNC FAIL] thread=" << t
+								  << " call=" << i
+								  << " ret=NULL" << std::endl;
+						sync_failures.fetch_add(1);
+						continue;
+					}
+
+					double actual = extract_numeric(ret);
+
+					if (actual < expected - 0.01 || actual > expected + 0.01)
+					{
+						std::cout << "    [SYNC MISMATCH] thread=" << t
+								  << " call=" << i
+								  << " expected=" << expected
+								  << " got=" << actual << std::endl;
+						sync_mismatches.fetch_add(1);
+					}
+
+					metacall_value_destroy(ret);
+				}
+
+				std::cout << "Thread " << t << ": completed "
+						  << SYNC_CALLS_PER_THREAD << " sync calls" << std::endl;
+			});
+		}
+
+		for (auto &th : threads)
+		{
+			th.join();
+		}
+
+		int total_calls = SYNC_NUM_THREADS * SYNC_CALLS_PER_THREAD;
+
+		std::cout << "ConcurrentSyncInvoke: total=" << total_calls
+				  << ", failures=" << sync_failures.load()
+				  << ", mismatches=" << sync_mismatches.load() << std::endl;
+
+		EXPECT_EQ(sync_failures.load(), 0) << "All sync calls should now  succeed";
+		EXPECT_EQ(sync_mismatches.load(), 0) << "All sync results should match expected values";
+
+		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+	}
+#endif
+
+	metacall_destroy();
+}
