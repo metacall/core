@@ -187,7 +187,7 @@ int metacall_link_register(const char *tag, const char *library, const char *sym
 	return set_insert(metacall_link_table, (set_key)symbol, ptr);
 }
 
-int metacall_link_register_loader(void *loader, const char *library, const char *symbol, void (*fn)(void))
+int metacall_link_register_loader(void *loader_ptr, const char *library, const char *symbol, void (*fn)(void))
 {
 	void *ptr;
 
@@ -196,7 +196,7 @@ int metacall_link_register_loader(void *loader, const char *library, const char 
 		return 1;
 	}
 
-	if (loader_hook_impl(loader, library, metacall_link_register_load_cb) == NULL)
+	if (loader_hook_impl(loader_ptr, library, metacall_link_register_load_cb) == NULL)
 	{
 		return 1;
 	}
