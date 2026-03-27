@@ -50,6 +50,7 @@ BUILD_PORTS=0
 BUILD_SANDBOX=0
 BUILD_COVERAGE=0
 BUILD_MEMCHECK=0
+BUILD_CLANG=0
 BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
@@ -197,6 +198,10 @@ sub_options() {
 		if [ "$option" = 'memcheck' ]; then
 			echo "Build with memcheck"
 			BUILD_MEMCHECK=1
+		fi
+		if [ "$option" = 'clang' ]; then
+			echo "Build with clang compiler"
+			BUILD_CLANG=1
 		fi
 		if [ "$option" = 'address-sanitizer' ]; then
 			echo "Build with address sanitizer"
@@ -546,8 +551,6 @@ sub_configure() {
 
 	# Memory Sanitizer
 	if [ $BUILD_MEMORY_SANITIZER = 1 ]; then
-		export CC=clang
-		export CXX=clang++
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=On -DOPTION_BUILD_ADDRESS_SANITIZER=Off"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
@@ -566,7 +569,11 @@ sub_configure() {
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 	
 	# Execute CMake
-	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+	if [ $BUILD_CLANG = 1 ]; then
+		CC=clang CXX=clang++ cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+	else
+		cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+	fi
 }
 
 sub_help() {
@@ -602,6 +609,7 @@ sub_help() {
 	echo "	sandbox: build with sandboxing support"
 	echo "	coverage: build all coverage reports"
 	echo "	memcheck: build with memcheck"
+	echo "	clang: build with clang compiler"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
 	echo "	memory-sanitizer: build with memory sanitizer (requires clang)"
