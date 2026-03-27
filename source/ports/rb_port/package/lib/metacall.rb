@@ -24,21 +24,35 @@ module MetaCall
 
 	def platform_install_paths
 		host_os = RbConfig::CONFIG['host_os']
+		home_dir = Dir.home
 
 		case host_os
 		when /mswin|mingw|cygwin/
 			{
-				paths: [ File.join(ENV['LOCALAPPDATA'].to_s, 'MetaCall', 'metacall') ],
+				paths: [ 
+					File.join(ENV['LOCALAPPDATA'].to_s, 'MetaCall', 'metacall'),
+					File.join(home_dir, 'AppData', 'Local', 'MetaCall', 'metacall')
+				],
 				name: 'metacall\.dll'
 			}
 		when /darwin/
 			{
-				paths: [ '/opt/homebrew/lib/', '/usr/local/lib/' ],
+				paths: [ 
+					'/opt/homebrew/lib/', 
+					'/usr/local/lib/', 
+					File.join(home_dir, '.metacall', 'lib'),
+					'/opt/metacall/lib'
+				],
 				name: 'libmetacall\.dylib'
 			}
 		when /linux/
 			{
-				paths: [ '/usr/local/lib/', '/gnu/lib/' ],
+				paths: [ 
+					'/usr/local/lib/', 
+					'/gnu/lib/', 
+					File.join(home_dir, '.metacall', 'lib'),
+					'/opt/metacall/lib'
+				],
 				name: 'libmetacall\.so'
 			}
 		else
@@ -87,8 +101,21 @@ module MetaCall
 		# Set environment variable for the host
 		ENV['METACALL_HOST'] = 'rb'
 
-		# Find and load the MetaCall shared library
+		# Find the MetaCall shared library
 		library_path = find_library
+		install_dir = File.dirname(library_path)
+
+		# ARCHITECTURAL FIX: On Windows, we MUST add the library directory to PATH 
+		# so that rb_loader.dll can find its dependencies (Error 126 fix).
+		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+			ENV['PATH'] = "#{install_dir};#{ENV['PATH']}"
+			
+			# Attempt to set up PythonHome if not present
+			unless ENV.key?('PYTHONHOME')
+				py_home = File.join(File.dirname(install_dir), 'runtimes', 'python')
+				ENV['PYTHONHOME'] = py_home if Dir.exist?(py_home)
+			end
+		end
 
 		begin
 			# Load the shared library globally
