@@ -119,9 +119,10 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 		"__THREAD_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	# TODO: This requires much more effort than expected: https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo
-	set(SANITIZER_LIBRARIES)
-	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
+	set(SANITIZER_LIBRARIES -fsanitize=memory)
+	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
+		"MSAN_OPTIONS=verbosity=1"
+	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__MEMORY_SANITIZER__=1"
 	)
@@ -189,7 +190,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL 
 			"${LIBTSAN_PATH}"
 		)
 	elseif(OPTION_BUILD_MEMORY_SANITIZER)
-		set(SANITIZER_LIBRARIES_PATH) # TODO
+		set(SANITIZER_LIBRARIES_PATH)
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER)
 		find_sanitizer(asan -fsanitize=address)
 		find_sanitizer(ubsan -fsanitize=undefined)
@@ -407,7 +408,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 		add_compile_options(-fsanitize=memory)
 		add_compile_options(-fsanitize-memory-track-origins)
 		add_compile_options(-fsanitize-memory-use-after-dtor)
-		if(PROJECT_OS_FAMILY MATCHES "macos")
+		if(PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "unix")
 			add_link_options(-fsanitize=undefined)
 			add_link_options(-fsanitize=memory)
 			add_link_options(-fsanitize-memory-track-origins)
