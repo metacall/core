@@ -171,13 +171,8 @@ impl MetaCallValue for i64 {
         // Meanwhile as a workaround, we just panic if it does not fit.        
         #[cfg(any(target_pointer_width = "32", windows))]
         {
-            if self < std::os::raw::c_long::MIN as i64 || self > std::os::raw::c_long::MAX as i64 {
-                panic!("i64 does not fit into c_long on this platform");
-            }
-
-            return unsafe { metacall_value_create_long(self as std::os::raw::c_long) };
+            unsafe { metacall_value_create_long(self.try_into().unwrap()) }
         }
-
         #[cfg(not(any(target_pointer_width = "32", windows)))]
         {
             unsafe { metacall_value_create_long(self) }
