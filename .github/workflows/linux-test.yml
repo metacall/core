@@ -109,6 +109,27 @@ jobs:
           METACALL_BUILD_TYPE: debug
           METACALL_BASE_IMAGE: ${{ matrix.image }}
 
+  linux-memory-sanitizer-test:
+    name: Linux Clang Memory Sanitizer Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:trixie-slim", "ubuntu:noble"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install, build and run Memory Sanitizer tests
+        run: ./docker-compose.sh test-memory-sanitizer
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
   linux-distributable:
     name: Linux Distributable Dispatch
     needs: [linux-test, linux-sanitizer-test] # TODO: linux-memcheck-test

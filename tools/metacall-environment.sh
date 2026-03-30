@@ -818,7 +818,7 @@ sub_memcheck(){
 sub_clang(){
 	echo "configure clang"
 	if [ "$(uname)" = 'Linux' ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
 	fi
 }
 
