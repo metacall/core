@@ -17,25 +17,8 @@ env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
 jobs:
-  fmt:
-    name: Rust Port Format Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt
-      - name: Check Rust Formatting
-        working-directory: source/ports/rs_port
-        run: cargo fmt --check
-
   test:
     name: Rust Port Tests
-    needs: fmt
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -58,6 +41,11 @@ jobs:
         with:
           toolchain: stable
           override: true
+          components: rustfmt
+
+      - name: Check Rust Formatting
+        working-directory: source/ports/rs_port
+        run: cargo fmt --check
 
       - name: Build the Rust Port
         working-directory: source/ports/rs_port
