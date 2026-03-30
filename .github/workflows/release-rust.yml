@@ -43,13 +43,13 @@ jobs:
           override: true
           components: rustfmt
 
-      - name: Check Rust Formatting
-        working-directory: source/ports/rs_port
-        run: cargo fmt --check
-
       - name: Build the Rust Port
         working-directory: source/ports/rs_port
         run: cargo build --verbose
+
+      - name: Check Rust Formatting
+        working-directory: source/ports/rs_port
+        run: cargo fmt --check
 
       - name: Test the Rust Port
         working-directory: source/ports/rs_port
