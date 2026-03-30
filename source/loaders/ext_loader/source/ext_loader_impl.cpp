@@ -66,11 +66,15 @@ typedef struct loader_impl_ext_type
 	std::set<fs::path> paths;
 	std::map<std::string, loader_impl_ext_handle_lib_type> destroy_list;
 
+	loader_impl_ext_type() : paths(), destroy_list() {}
+
 } * loader_impl_ext;
 
 typedef struct loader_impl_ext_handle_type
 {
 	std::vector<loader_impl_ext_handle_lib_type> extensions;
+
+	loader_impl_ext_handle_type() : extensions() {}
 
 } * loader_impl_ext_handle;
 
