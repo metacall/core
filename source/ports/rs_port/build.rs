@@ -4,8 +4,9 @@ use std::path::PathBuf;
 fn generate_bindings() {
     let manifest_dir =
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set"));
-    let output = manifest_dir.join("src").join("bindings.rs");
+    let output = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set")).join("bindings.rs");
     let mut builder = bindgen::Builder::default()
+        .raw_line("#![cfg_attr(rustfmt, rustfmt::skip)]")
         .allowlist_function("metacall.*")
         .rustified_enum("metacall_.*");
 
