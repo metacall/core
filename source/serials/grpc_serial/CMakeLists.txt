@@ -1,35 +1,37 @@
 # Check if this serial is enabled
-if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_GRPC)
+if(NOT OPTION_BUILD_SERIALS)
+	return()
+endif()
+
+if(NOT OPTION_BUILD_SERIALS_GRPC)
 	return()
 endif()
 
 #
 # External dependencies
 #
+# Note: find gRPC only — it pulls in Protobuf automatically.
+# Calling find_package(Protobuf) separately causes duplicate target errors.
+#
 
-find_package(Protobuf REQUIRED)
 find_package(gRPC QUIET)
 
 if(NOT gRPC_FOUND)
-	include(InstallGRPC)
-	if(NOT gRPC_FOUND)
-		message(SEND_ERROR "gRPC libraries not found")
-		return()
-	endif()
-	set(GRPC_INSTALL TRUE)
+	message(STATUS "gRPC not found, skipping grpc_serial")
+	return()
 endif()
+
+# Resolve protobuf include dirs from the gRPC dependency
+get_target_property(PROTOBUF_INCLUDE_DIRS protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
 
 #
 # Library name and options
 #
 
-# Target name
 set(target grpc_serial)
 
-# Exit here if required dependencies are not met
 message(STATUS "Serial ${target}")
 
-# Set API export file and macro
 string(TOUPPER ${target} target_upper)
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
@@ -63,7 +65,6 @@ set(sources
 	${source_path}/grpc_serial_impl.cpp
 )
 
-# Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
@@ -75,19 +76,15 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-# Build library
 add_library(${target} MODULE
 	${sources}
 	${headers}
 )
 
-# Create namespaced alias
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
-# Export library for downstream projects
 export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
 
-# Create API export header
 generate_export_header(${target}
 	EXPORT_FILE_NAME  ${export_file}
 	EXPORT_MACRO_NAME ${export_macro}
@@ -113,8 +110,8 @@ target_include_directories(${target}
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${Protobuf_INCLUDE_DIRS}                                               # Protobuf includes
+	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES>
+	${PROTOBUF_INCLUDE_DIRS}
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	INTERFACE
@@ -129,10 +126,9 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
-	${Protobuf_LIBRARIES}   # libprotobuf
-	gRPC::grpc++            # libgrpc++ (brings in gRPC core)
+	protobuf::libprotobuf
+	gRPC::grpc++
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 	INTERFACE
@@ -167,7 +163,6 @@ target_compile_options(${target}
 
 target_link_options(${target}
 	PRIVATE
-	# On macOS, we use dynamic lookup for using existing symbols
 	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-undefined,dynamic_lookup>
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
@@ -178,7 +173,6 @@ target_link_options(${target}
 # Deployment
 #
 
-# Library
 install(TARGETS ${target}
 	EXPORT  "${target}-export"              COMPONENT dev
 	RUNTIME DESTINATION ${INSTALL_BIN}      COMPONENT runtime
