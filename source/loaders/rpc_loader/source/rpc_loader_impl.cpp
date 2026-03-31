@@ -72,6 +72,7 @@ typedef struct loader_impl_rpc_type
 	std::atomic<bool> exit_flag;
 	moodycamel::ConcurrentQueue<rpc_async_context *> async_queue;
 	void *allocator;
+	serial cached_serial;
 	struct curl_slist *headers;
 	std::map<type_id, type> types;
 	std::set<std::string> execution_paths;
@@ -183,7 +184,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 		}
 	}
 
-	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
+	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (memory_allocator)rpc_impl->allocator);
 
 	/* Destroy the value without destroying the contents of the array */
 	value_destroy(v);
@@ -220,7 +221,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	/* Deserialize the call result data */
 	const size_t write_data_size = write_data.buffer.length() + 1;
 
-	void *result_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), write_data_size, rpc_impl->allocator);
+	void *result_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), write_data_size, (memory_allocator)rpc_impl->allocator);
 
 	if (result_value == NULL)
 	{
@@ -279,12 +280,13 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 
 				if (result != CURLE_OK)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Async call failed to API endpoint %s [%s]", done_ctx->url.c_str(), curl_easy_strerror(result));
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+					log_write("metacall", LOG_LEVEL_ERROR, "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
+#endif
 
 					if (done_ctx->reject_callback != NULL)
 					{
-						std::string error_msg = std::string("HTTP request failed: ") + curl_easy_strerror(result);
-						value error = metacall_value_create_string(error_msg.c_str(), error_msg.length());
+						value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
 						done_ctx->reject_callback(error, done_ctx->context);
 						metacall_value_destroy(error);
 					}
@@ -299,17 +301,19 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 				struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 				void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-				void *result_value = metacall_deserialize(metacall_serial(), done_ctx->write_data.buffer.c_str(), write_data_size, allocator);
+				void *result_value = serial_deserialize(rpc_impl->cached_serial, done_ctx->write_data.buffer.c_str(), write_data_size, (memory_allocator)allocator);
 
 				metacall_allocator_destroy(allocator);
 
 				if (result_value == NULL)
 				{
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 					log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize async call result from API endpoint %s", done_ctx->url.c_str());
+#endif
 
 					if (done_ctx->reject_callback != NULL)
 					{
-						value error = metacall_value_create_string("Deserialization failed", sizeof("Deserialization failed") - 1);
+						value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP deserialization failed [%s]", done_ctx->url.c_str());
 						done_ctx->reject_callback(error, done_ctx->context);
 						metacall_value_destroy(error);
 					}
@@ -360,7 +364,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 		}
 	}
 
-	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
+	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (memory_allocator)rpc_impl->allocator);
 
 	/* Destroy the value without destroying the contents of the array */
 	value_destroy(v);
@@ -369,15 +373,17 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	{
 		trace.set_error("serialization failed");
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
+#endif
 
+		// TODO: Is the reject correct here? Should not we return the exception instead? The function has not been invoked yet
 		if (reject_callback != NULL)
 		{
-			value error = metacall_value_create_string("Serialization failed", sizeof("Serialization failed") - 1);
+			value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP serialization failed [%s]", rpc_function->url.c_str());
 			reject_callback(error, context);
 			metacall_value_destroy(error);
 		}
 
-		return NULL;
+		return NULL; // TODO: Return here the thrown exception?
 	}
 
 	trace.set_attribute("rpc.request.body", buffer);
@@ -512,6 +518,8 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
 	rpc_impl->allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	rpc_impl->cached_serial = serial_create(metacall_serial());
 
 	if (rpc_impl->allocator == NULL)
 	{
@@ -898,7 +906,7 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 		/* Deserialize the inspect data */
 		const size_t size = write_data.buffer.length() + 1;
 
-		void *inspect_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), size, rpc_impl->allocator);
+		void *inspect_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), size, (memory_allocator)rpc_impl->allocator);
 
 		if (inspect_value == NULL)
 		{

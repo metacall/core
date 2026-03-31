@@ -9,13 +9,13 @@ fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate 
     let name = func.name.clone();
     let args_count = func.args.len();
     let register_func_name = format!("rs_loader_impl_register_fn_{}", name);
-    let register_func: unsafe extern "C" fn() -> *mut class::Function =
-        unsafe {
-            std::mem::transmute(
-                dynlink.symbol(&register_func_name[..])
-                    .expect(format!("Unable to find register function {}", name).as_str())
-            )
-        };
+    let register_func: unsafe extern "C" fn() -> *mut class::Function = unsafe {
+        std::mem::transmute(
+            dynlink
+                .symbol(&register_func_name[..])
+                .unwrap_or_else(|_| panic!("Unable to find register function {}", name)),
+        )
+    };
     let function_impl = unsafe { register_func() } as OpaqueType;
 
     FunctionCreate {
@@ -29,13 +29,13 @@ fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate 
 fn class_create(class: &Class, dynlink: &DynlinkLibrary) -> ClassCreate {
     let name = class.name.clone();
     let register_func_name = format!("rs_loader_impl_register_class_{}", name);
-    let register_func: unsafe extern "C" fn() -> *mut class::Class =
-        unsafe {
-            std::mem::transmute(
-                dynlink.symbol(&register_func_name[..])
-                    .expect(format!("Unable to find register function {}", name).as_str())
-            )
-        };
+    let register_func: unsafe extern "C" fn() -> *mut class::Class = unsafe {
+        std::mem::transmute(
+            dynlink
+                .symbol(&register_func_name[..])
+                .unwrap_or_else(|_| panic!("Unable to find register function {}", name)),
+        )
+    };
     let class_impl = unsafe { register_func() } as OpaqueType;
 
     ClassCreate {
@@ -57,17 +57,14 @@ pub fn register(
         let function_registration = FunctionRegistration {
             ctx,
             loader_impl,
-            function_create: function_create(func, &dynlink),
-            ret: match &func.ret {
-                Some(ret) => Some(ret.ty.to_string().clone()),
-                _ => None,
-            },
+            function_create: function_create(func, dynlink),
+            ret: func.ret.as_ref().map(|ret| ret.ty.to_string()),
             input: func
                 .args
                 .iter()
                 .map(|param| FunctionInputSignature {
                     name: param.name.clone(),
-                    t: param.ty.to_string().clone(),
+                    t: param.ty.to_string(),
                 })
                 .collect(),
         };
@@ -80,7 +77,7 @@ pub fn register(
         let class_registration = ClassRegistration {
             ctx,
             loader_impl,
-            class_create: class_create(class, &dynlink),
+            class_create: class_create(class, dynlink),
         };
         register_class(class_registration);
     }

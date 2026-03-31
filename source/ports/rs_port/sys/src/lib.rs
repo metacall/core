@@ -16,13 +16,13 @@ struct InstallPath {
 }
 
 /// Represents the match of a library when it's found
-struct LibraryPath {
+pub struct LibraryPath {
     /// Path to the library for linking (where .lib/.so/.dylib is)
-    path: PathBuf,
+    pub path: PathBuf,
     /// Library name for linking
-    library: String,
+    pub library: String,
     /// Path for runtime search (where .dll/.so/.dylib is for PATH/LD_LIBRARY_PATH)
-    search: PathBuf,
+    pub search: PathBuf,
 }
 
 /// Find files recursively in a directory matching filename
@@ -175,7 +175,7 @@ fn find_metacall_dll(
 
 /// Find the MetaCall library
 /// This orchestrates the search process
-fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
+pub fn find_metacall_library() -> Result<LibraryPath, Box<dyn std::error::Error>> {
     let search_config = get_search_config()?;
 
     // Search in each configured path
@@ -374,13 +374,8 @@ pub fn build() {
             }
             Err(e) => {
                 // Print the error
-                println!(
-                    "cargo:warning=Failed to find MetaCall library with: {e} \
-                    Still trying to link in case the library is in system paths"
-                );
-
-                // Still try to link in case the library is in system paths
-                println!("cargo:rustc-link-lib=dylib=metacall")
+                println!("cargo:warning={e}");
+                std::process::exit(1);
             }
         }
     }

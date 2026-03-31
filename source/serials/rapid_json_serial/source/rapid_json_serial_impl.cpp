@@ -10,6 +10,8 @@
 
 #include <rapid_json_serial/rapid_json_serial_impl.h>
 
+#include <metacall/metacall_error.h>
+
 #include <log/log.h>
 
 /* Disable warnings from RapidJSON */
@@ -33,6 +35,7 @@
 	#pragma GCC diagnostic pop
 #endif
 
+#include <climits>
 #include <sstream>
 
 /* -- Type Definitions -- */
@@ -54,7 +57,7 @@ static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 /* -- Classes -- */
 
-rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
+static thread_local rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
 
 /* -- Methods -- */
 
@@ -402,18 +405,36 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	{
 		unsigned int ui = v->GetUint();
 
-		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to integer (posible overflow) in RapidJSON implementation");
+		/* Happy path: value fits in a signed int */
+		if (ui <= (unsigned int)INT_MAX)
+		{
+			return value_create_int((int)ui);
+		}
 
-		return value_create_int((int)ui);
+		/* On 64-bit platforms unsigned int's full range (0..UINT_MAX = 4294967295)
+		 * fits within long (LONG_MAX = 9223372036854775807) so we can upcast without
+		 * loss.  On 32-bit where LONG_MAX == INT_MAX this branch is unreachable and
+		 * we return NULL.  The compile-time guard avoids -Wtype-limits. */
+#if LONG_MAX >= UINT_MAX
+		return value_create_long((long)ui);
+#else
+		log_write("metacall", LOG_LEVEL_ERROR, "Unsigned integer value overflows both int and long in RapidJSON implementation");
+		return (value)metacall_error_throw("RapidJSON", -1, NULL, "Unsigned integer value overflows both int and long in RapidJSON implementation");
+#endif
 	}
 	else if (v->IsInt64() == true)
 	{
 		int64_t i = v->GetInt64();
 
-		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
+		/* On 32-bit, long is 32 bits so int64_t values outside [LONG_MIN, LONG_MAX]
+		 * would be silently truncated. Guard with a compile-time check to avoid a
+		 * -Wtype-limits warning on 64-bit where long == int64_t and the comparison
+		 * is trivially false. */
 #if LONG_MAX < INT64_MAX
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int (posible overflow) in RapidJSON implementation");
+		if (i < (int64_t)LONG_MIN || i > (int64_t)LONG_MAX)
+		{
+			return (value)metacall_error_throw("RapidJSON", -1, NULL, "64-bit signed integer value overflows long in RapidJSON implementation");
+		}
 #endif
 
 		return value_create_long((long)i);
@@ -422,10 +443,10 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	{
 		uint64_t ui = v->GetUint64();
 
-		/* TODO: Review this, in case of underflow/overflow store it in a bigger type? */
-#if LONG_MAX < UINT64_MAX
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible overflow) in RapidJSON implementation");
-#endif
+		if (ui > (uint64_t)LONG_MAX)
+		{
+			return (value)metacall_error_throw("RapidJSON", -1, NULL, "64-bit unsigned integer value overflows long in RapidJSON implementation");
+		}
 
 		return value_create_long((long)ui);
 	}
@@ -534,7 +555,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 		return v_map;
 	}
 
-	log_write("metacall", LOG_LEVEL_ERROR, "Unsuported value type in RapidJSON implementation");
+	log_write("metacall", LOG_LEVEL_ERROR, "Unsupported value type in RapidJSON implementation");
 
 	return NULL;
 }

@@ -46,7 +46,7 @@
 //! fn main() {
 //!     // Initialize MetaCall at the top
 //!     let _metacall = initialize().unwrap();
-//!     
+//!
 //!     // Load the file (Checkout the loaders module for loading multiple files
 //!     // or loading from string)
 //!     load::from_single_file(load::Tag::TypeScript, "sum.ts").unwrap();

@@ -134,7 +134,7 @@ TEST_F(log_custom_test, DefaultConstructor)
 	/* Write simple logs */
 	EXPECT_EQ((int)0, (int)log_write(name, LOG_LEVEL_INFO, "hello world"));
 
-	/* Write varidic log */
+	/* Write variadic log */
 	EXPECT_EQ((int)0, (int)log_write(name, LOG_LEVEL_INFO, "hello world from log %d", 20));
 
 	/* Clear log */

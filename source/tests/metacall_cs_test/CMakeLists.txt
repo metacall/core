@@ -162,8 +162,10 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
+	PROPERTY LABELS ${target}
+
 	# TODO: Valgrind also fails with C#
-	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)

@@ -163,8 +163,10 @@ add_dependencies(${target}
 #
 
 set_property(TEST ${target}
+	PROPERTY LABELS ${target}
+
 	# Valgrind does not work well with libseccomp
-	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)

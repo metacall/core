@@ -128,7 +128,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [Go](https://golang.org/)                                                     | Go Runtime                                                                                             |  go  |
 | [Haskell](https://www.haskell.org/)                                           | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [Crystal](https://crystal-lang.org/)                                          | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://spidermonkey.dev/) | jsm  |
 | [Dart](https://dart.dev/)                                                     | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart |
 | [LuaJIT](https://luajit.org/)                                                 | [LuaJIT2](https://github.com/openresty/luajit2)                                                        | lua  |
 | [LLVM IR](https://www.llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) | [LLVM](https://llvm.org/)                                                                              | llvm |
@@ -218,7 +218,7 @@ The environment variables are optional, in case you want to modify default paths
 
 - [Mixing Go and TypeScript](https://github.com/metacall/golang-typescript-example): This example shows how to embed TypeScript into Go using METACALL. In other words, calling TypeScript functions from Go.
 
-- [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing **METACALL** by compining it by hand.
+- [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing **METACALL** by compiling it by hand.
 
 - [Polyglot Redis Module](https://github.com/metacall/redis-module): Extend Redis DataBase modules with TypeScript, JavaScript, Python, C#, Ruby...
 
@@ -414,7 +414,7 @@ metacall("multiply_type", 3, 4); // 12
 
 As the signature is already know the literal values `3` and `4` can be converted into **METACALL** values automatically. Note that in this case, as literal values are provided, if we pass a double floating point, the memory representation of the value will be corrupted as there is no possible way to detect input values and cast them to the correct target values.
 
-In the second example, the values are not know. If we use the same API to call the function, **METACALL** will not be able to call correctly the function as its types are not know. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
+In the second example, the values are not known. If we use the same API to call the function, **METACALL** will not be able to call correctly the function as its types are not known. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
 
 ```c
 const enum metacall_value_id multiply_types[] =
@@ -564,7 +564,7 @@ To overcome the blocking nature of `node::Start`, the event loop is launched in 
 
 This solution of waiting to the call with the condition, introduces new problems. For completely async calls, there is no problem at all, but for synchronous calls, it can deadlock. For example, when calling recursively to the same synchronous function via **METACALL**, in the second call it will try to block twice and deadlock the thread. So in order to solve this an atomic variable was added in addition to a variable storing the thread id of the V8 thread. With this, recursive calls can be detected, and instead of blocking and enqueueing them, it is possible to call directly and safely to the function because we are already in the V8 thread when the second iteration is done.
 
-This solves all (known) issues related to NodeJS threading model **if and only if** you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
+This solves all (known) issues related to NodeJS threading model **if and only if** you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorrectly the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
 
 If you use the CLI instead, and your host language is Python or any other (which does not allow to use you the low level API), and you want to load scripts from other languages, you have to use **METACALL** through `Ports`. Ports provide a high abstraction of the low level API and allow you to load and call functions of other languages. Here is where the fun begins.
 
@@ -680,7 +680,7 @@ Be aware that this target won't exist if clang-format was not installed when cma
 
 ### 7.2 Coverage
 
-In order to run code coverage and obtain html reports use the following commands (assuming you just clonned the repository):
+In order to run code coverage and obtain html reports use the following commands (assuming you just cloned the repository):
 
 ```sh
 git clone https://github.com/metacall/core.git
@@ -713,7 +713,7 @@ For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag a
 make memcheck
 ```
 
-For runing a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_ADDRESS_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
+For running a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_ADDRESS_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
 
 ```sh
 # Run one test
@@ -816,7 +816,7 @@ metacall-configure.sh relwithdebinfo python tests
 |       Options                                      |                                            Description                                                 |
 |:---------------------------------------------------|-------------------------------------------------------------------------------------------------------:|
 |       debug                                        |        Builds MetaCall with debug symbols and runtime assertions. Slower execution.                    |
-|       release                                      |        Optimized production build.No debug symbols. Fastest execution but harder to debug.             |
+|       release                                      |        Optimized production build. No debug symbols. Fastest execution but harder to debug.             |
 |       relwithdebinfo                               |        Optimized build with debug information.                                                         |
 
 **Languages**

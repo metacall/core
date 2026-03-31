@@ -43,13 +43,10 @@ const server = http.createServer((req, res) => {
 				const result = '5.0';
 				res.setHeader('Content-Type', 'application/json');
 				res.end(result);
-				setTimeout(() => {
-					process.exit(0);
-				}, 1000);
 			});
 			return;
 		} else if (req.url === '/viferga/example/v1/await/async_divide') {
-			/* Async endpoint - simulates async operation with delay */
+			/* Async endpoint, simulates async operation with delay */
 			data.then((body) => {
 				console.log('¡Async call recieved!');
 				const args = JSON.parse(body);

@@ -1,6 +1,6 @@
 use compiler::api::{self, PrimitiveMetacallProtocolTypes};
 
-use std::os::raw::{c_int, c_void};
+use std::os::raw::c_void;
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_initialize(
@@ -17,29 +17,29 @@ pub extern "C" fn rs_loader_impl_initialize(
         loader_impl,
         "i8",
         PrimitiveMetacallProtocolTypes::Char,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "i16",
         PrimitiveMetacallProtocolTypes::Short,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "i32",
         PrimitiveMetacallProtocolTypes::Int,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "i64",
         PrimitiveMetacallProtocolTypes::Long,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     // api::define_type(
     //     loader_impl,
@@ -80,50 +80,50 @@ pub extern "C" fn rs_loader_impl_initialize(
         loader_impl,
         "f32",
         PrimitiveMetacallProtocolTypes::Float,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "f64",
         PrimitiveMetacallProtocolTypes::Double,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "Ptr",
         PrimitiveMetacallProtocolTypes::Pointer,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "Array",
         PrimitiveMetacallProtocolTypes::Array,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "Map",
         PrimitiveMetacallProtocolTypes::Map,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "String",
         PrimitiveMetacallProtocolTypes::String,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
     api::define_type(
         loader_impl,
         "Null",
         PrimitiveMetacallProtocolTypes::Null,
-        0 as c_int as *mut c_void,
-        0 as c_int as *mut c_void,
+        std::ptr::null_mut::<c_void>(),
+        std::ptr::null_mut::<c_void>(),
     );
 
     // Register initialization

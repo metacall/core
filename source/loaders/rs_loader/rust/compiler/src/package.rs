@@ -12,14 +12,14 @@ pub struct PackageRegistration {
 impl PackageRegistration {
     pub fn new(path_to_file: PathBuf) -> Result<PackageRegistration, RegistrationError> {
         let state = match compile(Source::new(Source::Package {
-            path: PathBuf::from(path_to_file.clone()),
+            path: path_to_file.clone(),
         })) {
             Ok(state) => state,
             Err(error) => {
-                return Err(RegistrationError::CompilationError(String::from(format!(
+                return Err(RegistrationError::CompilationError(format!(
                     "{}\n{}\n{}",
                     error.err, error.errors, error.diagnostics
-                ))))
+                )))
             }
         };
         let dynlink = match DynlinkLibrary::new(&state.output) {
@@ -37,7 +37,7 @@ impl PackageRegistration {
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
         match &self.dynlink {
             Some(dl) => {
-                registrator::register(&self.state, &dl, loader_impl, ctx);
+                registrator::register(&self.state, dl, loader_impl, ctx);
                 Ok(())
             }
             None => Err(String::from("The Dynlink library is None")),
