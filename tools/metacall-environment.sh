@@ -55,6 +55,7 @@ INSTALL_RUST=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
+INSTALL_CLANG=0
 INSTALL_CLANGFORMAT=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
@@ -814,6 +815,13 @@ sub_memcheck(){
 	fi
 }
 
+sub_clang(){
+	echo "configure clang"
+	if [ "$(uname)" = 'Linux' ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+	fi
+}
+
 # Clang format
 sub_clangformat(){
 	echo "configure clangformat"
@@ -980,6 +988,9 @@ sub_install(){
 	if [ $INSTALL_MEMCHECK = 1 ]; then
 		sub_memcheck
 	fi
+	if [ $INSTALL_CLANG = 1 ]; then
+		sub_clang
+	fi
 	if [ $INSTALL_CLANGFORMAT = 1 ]; then
 		sub_clangformat
 	fi
@@ -1123,6 +1134,10 @@ sub_options(){
 			echo "memcheck selected"
 			INSTALL_MEMCHECK=1
 		fi
+		if [ "$option" = 'clang' ]; then
+			echo "clang selected"
+			INSTALL_CLANG=1
+		fi
 		if [ "$option" = 'clangformat' ]; then
 			echo "clangformat selected"
 			INSTALL_CLANGFORMAT=1
@@ -1170,6 +1185,7 @@ sub_help() {
 	echo "	pack"
 	echo "	coverage"
 	echo "	memcheck"
+	echo "	clang"
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"

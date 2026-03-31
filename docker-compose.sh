@@ -76,6 +76,9 @@ sub_test() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
 
@@ -99,6 +102,9 @@ sub_test_sanitizer() {
 
 	# Enable build with sanitizer
 	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
+
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
 
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
@@ -157,6 +163,9 @@ sub_coverage() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=coverage
 
@@ -181,11 +190,68 @@ sub_test_memcheck() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
 
 	# Enable build with memcheck
 	export METACALL_BUILD_MEMCHECK=memcheck
+
+	# Define build type
+	export METACALL_BUILD_TYPE=debug
+
+	ln -sf tools/deps/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+}
+
+# Build MetaCall Docker Compose with Clang for testing (link manually dockerignore files)
+sub_test_clang() {
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
+
+	# Disable build with sanitizer
+	export METACALL_BUILD_SANITIZER=
+
+	# Enable build with clang
+	export METACALL_BUILD_CLANG=clang
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
+
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
+
+	# Define build type
+	export METACALL_BUILD_TYPE=debug
+
+	ln -sf tools/deps/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+}
+
+# Build MetaCall Docker Compose with Memory Sanitizer for testing (link manually dockerignore files)
+sub_test_memory_sanitizer() {
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
+
+	# Enable build with clang
+	export METACALL_BUILD_CLANG=clang
+
+	# Enable build with memory sanitizer
+	export METACALL_BUILD_SANITIZER=memory-sanitizer
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
+
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
 
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
@@ -426,6 +492,7 @@ sub_help() {
 	echo "	test-memory-sanitizer"
 	echo "	coverage"
 	echo "	test-memcheck"
+	echo "	test-clang"
 	echo "	cache"
 	echo "	platform"
 	echo "	push"
@@ -455,14 +522,16 @@ case "$1" in
 		sub_test_sanitizer
 		;;
 	test-memory-sanitizer)
-		export METACALL_BUILD_SANITIZER="memory-sanitizer"
-		sub_test_sanitizer
+		sub_test_memory_sanitizer
 		;;
 	coverage)
 		sub_coverage
 		;;
 	test-memcheck)
 		sub_test_memcheck
+		;;
+	test-clang)
+		sub_test_clang
 		;;
 	cache)
 		sub_cache
