@@ -34,6 +34,8 @@
 
 #include <log/log.h>
 
+#include <cstring>
+
 #if defined __has_include
 	#if __has_include(<filesystem>)
 		#include <filesystem>
