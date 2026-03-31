@@ -34,6 +34,7 @@ public:
 	rpc_trace_scope(const char *function_name, const char *target_url, bool is_async);
 
 	void set_error(const char *error_message);
+	void set_attribute(const char *key, const char *value);
 
 	~rpc_trace_scope();
 

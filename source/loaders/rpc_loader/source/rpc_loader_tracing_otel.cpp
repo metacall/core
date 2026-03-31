@@ -74,6 +74,14 @@ void rpc_trace_scope::set_error(const char *error_message)
 	}
 }
 
+void rpc_trace_scope::set_attribute(const char *key, const char *value)
+{
+	if (pimpl != nullptr && pimpl->span != nullptr)
+	{
+		pimpl->span->SetAttribute(key, value);
+	}
+}
+
 rpc_trace_scope::~rpc_trace_scope()
 {
 	if (pimpl != nullptr)

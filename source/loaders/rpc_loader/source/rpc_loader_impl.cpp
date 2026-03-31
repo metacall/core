@@ -195,6 +195,8 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 		return NULL;
 	}
 
+	trace.set_attribute("rpc.request.body", buffer);
+
 	/* Execute a POST to the endpoint */
 	loader_impl_rpc_write_data_type write_data;
 
@@ -377,6 +379,8 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 		return NULL;
 	}
+
+	trace.set_attribute("rpc.request.body", buffer);
 
 	/* Create async context */
 	rpc_async_context *async_ctx = new rpc_async_context();

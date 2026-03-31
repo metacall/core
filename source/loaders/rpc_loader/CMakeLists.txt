@@ -31,9 +31,9 @@ endif()
 # Optional OpenTelemetry tracing
 #
 
-option(OPTION_RPC_TRACING "Enable OpenTelemetry tracing for RPC loader" OFF)
+option(OPTION_BUILD_LOADERS_RPC_TRACING "Enable OpenTelemetry tracing for RPC loader" OFF)
 
-if(OPTION_RPC_TRACING)
+if(OPTION_BUILD_LOADERS_RPC_TRACING)
 	message(STATUS "RPC loader: OpenTelemetry tracing ENABLED")
 
 	set(OPENTELEMETRY_CPP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/opentelemetry-cpp")
@@ -105,7 +105,7 @@ set(headers
 	${include_path}/rpc_loader_tracing.h
 )
 
-if(OPTION_RPC_TRACING)
+if(OPTION_BUILD_LOADERS_RPC_TRACING)
 	set(tracing_source ${source_path}/rpc_loader_tracing_otel.cpp)
 else()
 	set(tracing_source ${source_path}/rpc_loader_tracing_noop.cpp)
@@ -199,7 +199,7 @@ target_link_libraries(${target}
 	INTERFACE
 )
 
-if(OPTION_RPC_TRACING)
+if(OPTION_BUILD_LOADERS_RPC_TRACING)
 	target_link_libraries(${target}
 		PRIVATE
 		opentelemetry_trace
