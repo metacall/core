@@ -1145,7 +1145,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		py_cls->cls = obj;
 
 		// TODO: We should register the class during the discover as a type, so here we would
-		// be able to retrieve the the class instance by using loader_impl_type
+		// be able to retrieve the the class instance by using loader_impl_get_type
 
 		if (py_loader_impl_discover_class(impl, obj, c) != 0)
 		{
@@ -3191,7 +3191,7 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 	{
 		if (strcmp(annotation_name, "_empty") != 0)
 		{
-			t = loader_impl_type(impl, annotation_name);
+			t = loader_impl_get_type(impl, annotation_name);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
 		}
@@ -3453,7 +3453,7 @@ type py_loader_impl_get_type(loader_impl impl, PyObject *obj)
 	}
 
 	const char *name = PyUnicode_AsUTF8(t_name);
-	t = loader_impl_type(impl, name);
+	t = loader_impl_get_type(impl, name);
 
 	if (t == NULL)
 	{

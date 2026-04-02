@@ -353,11 +353,11 @@ int ts_loader_impl_discover_value(loader_impl impl, context ctx, void *discover)
 		{
 			const char *type_name = metacall_value_to_string(types_array[iterator]);
 			const char *parameter_name = metacall_value_to_string(signature_array[iterator]);
-			type t = loader_impl_type(impl, type_name);
+			type t = loader_impl_get_type(impl, type_name);
 			signature_set(s, iterator, parameter_name, t);
 		}
 
-		signature_set_return(s, loader_impl_type(impl, metacall_value_to_string(ts_func.data["ret"])));
+		signature_set_return(s, loader_impl_get_type(impl, metacall_value_to_string(ts_func.data["ret"])));
 
 		function_async(f, is_async == 1L ? ASYNCHRONOUS : SYNCHRONOUS);
 

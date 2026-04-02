@@ -72,7 +72,7 @@ typedef struct loader_handle_impl_s *loader_handle_impl;
 
 /* -- Member Data -- */
 
-struct loader_impl_s
+struct loader_impl_type
 {
 	plugin p;					   /* Plugin instance to which loader belongs to */
 	int init;					   /* Flag for checking if the loader is initialized */
@@ -157,14 +157,14 @@ static const char loader_handle_impl_magic_free[] = "loader_handle_impl_magic_fr
 
 loader_impl loader_impl_allocate(const loader_tag tag)
 {
-	loader_impl impl = malloc(sizeof(struct loader_impl_s));
+	loader_impl impl = malloc(sizeof(struct loader_impl_type));
 
 	if (impl == NULL)
 	{
 		goto alloc_error;
 	}
 
-	memset(impl, 0, sizeof(struct loader_impl_s));
+	memset(impl, 0, sizeof(struct loader_impl_type));
 
 	impl->handle_impl_path_map = set_create(&hash_callback_str, &comparable_callback_str);
 
@@ -846,7 +846,7 @@ context loader_impl_context(loader_impl impl)
 	return NULL;
 }
 
-type loader_impl_type(loader_impl impl, const char *name)
+type loader_impl_get_type(loader_impl impl, const char *name)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{

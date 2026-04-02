@@ -1425,7 +1425,7 @@ type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_ty
 type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_type)
 {
 	auto type_str = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(cx_type));
-	type t = loader_impl_type(impl, type_str.c_str());
+	type t = loader_impl_get_type(impl, type_str.c_str());
 
 	if (t != NULL)
 	{

@@ -256,14 +256,14 @@ public:
 
 			parameter_list::iterator param_it;
 
-			type ret_type = loader_impl_type(impl, js_f->return_type.c_str());
+			type ret_type = loader_impl_get_type(impl, js_f->return_type.c_str());
 
 			signature_set_return(s, ret_type);
 
 			for (param_it = js_f->parameters.begin();
 				 param_it != js_f->parameters.end(); ++param_it)
 			{
-				type t = loader_impl_type(impl, param_it->type.c_str());
+				type t = loader_impl_get_type(impl, param_it->type.c_str());
 
 				signature_set(s, param_it->index, param_it->name.c_str(), t);
 			}

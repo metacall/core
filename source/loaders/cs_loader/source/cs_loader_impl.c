@@ -377,11 +377,11 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 		{
 			signature s = function_signature(f);
 
-			signature_set_return(s, loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].return_type)));
+			signature_set_return(s, loader_impl_get_type(impl, cs_loader_impl_discover_type(functions[i].return_type)));
 
 			for (int j = 0; j < functions[i].param_count; ++j)
 			{
-				type t = loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].pars[j].type));
+				type t = loader_impl_get_type(impl, cs_loader_impl_discover_type(functions[i].pars[j].type));
 
 				signature_set(s, j, functions[i].pars[j].name, t);
 			}

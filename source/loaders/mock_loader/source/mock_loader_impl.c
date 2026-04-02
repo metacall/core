@@ -438,7 +438,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "Integer"));
+		signature_set_return(s, loader_impl_get_type(impl, "Integer"));
 
 		value v = value_create_function(f);
 
@@ -457,11 +457,11 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "Double"));
+		signature_set_return(s, loader_impl_get_type(impl, "Double"));
 
-		signature_set(s, 0, "first_parameter", loader_impl_type(impl, "Double"));
+		signature_set(s, 0, "first_parameter", loader_impl_get_type(impl, "Double"));
 
-		signature_set(s, 1, "second_parameter", loader_impl_type(impl, "Double"));
+		signature_set(s, 1, "second_parameter", loader_impl_get_type(impl, "Double"));
 
 		value v = value_create_function(f);
 
@@ -480,17 +480,17 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "Char"));
+		signature_set_return(s, loader_impl_get_type(impl, "Char"));
 
-		signature_set(s, 0, "a_char", loader_impl_type(impl, "Char"));
+		signature_set(s, 0, "a_char", loader_impl_get_type(impl, "Char"));
 
-		signature_set(s, 1, "b_int", loader_impl_type(impl, "Integer"));
+		signature_set(s, 1, "b_int", loader_impl_get_type(impl, "Integer"));
 
-		signature_set(s, 2, "c_long", loader_impl_type(impl, "Long"));
+		signature_set(s, 2, "c_long", loader_impl_get_type(impl, "Long"));
 
-		signature_set(s, 3, "d_double", loader_impl_type(impl, "Double"));
+		signature_set(s, 3, "d_double", loader_impl_get_type(impl, "Double"));
 
-		signature_set(s, 4, "e_ptr", loader_impl_type(impl, "Ptr"));
+		signature_set(s, 4, "e_ptr", loader_impl_get_type(impl, "Ptr"));
 
 		value v = value_create_function(f);
 
@@ -509,9 +509,9 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "String"));
+		signature_set_return(s, loader_impl_get_type(impl, "String"));
 
-		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
+		signature_set(s, 0, "a_str", loader_impl_get_type(impl, "String"));
 
 		value v = value_create_function(f);
 
@@ -530,11 +530,11 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "String"));
+		signature_set_return(s, loader_impl_get_type(impl, "String"));
 
-		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
+		signature_set(s, 0, "a_str", loader_impl_get_type(impl, "String"));
 
-		signature_set(s, 1, "b_str", loader_impl_type(impl, "String"));
+		signature_set(s, 1, "b_str", loader_impl_get_type(impl, "String"));
 
 		value v = value_create_function(f);
 
@@ -553,13 +553,13 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "String"));
+		signature_set_return(s, loader_impl_get_type(impl, "String"));
 
-		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
+		signature_set(s, 0, "a_str", loader_impl_get_type(impl, "String"));
 
-		signature_set(s, 1, "b_str", loader_impl_type(impl, "String"));
+		signature_set(s, 1, "b_str", loader_impl_get_type(impl, "String"));
 
-		signature_set(s, 2, "c_str", loader_impl_type(impl, "String"));
+		signature_set(s, 2, "c_str", loader_impl_get_type(impl, "String"));
 
 		value v = value_create_function(f);
 
@@ -578,7 +578,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "String"));
+		signature_set_return(s, loader_impl_get_type(impl, "String"));
 
 		value v = value_create_function(f);
 
@@ -597,7 +597,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature s = function_signature(f);
 
-		signature_set_return(s, loader_impl_type(impl, "Integer"));
+		signature_set_return(s, loader_impl_get_type(impl, "Integer"));
 
 		value v = value_create_function(f);
 
