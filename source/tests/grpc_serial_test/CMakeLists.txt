@@ -1,5 +1,4 @@
-# Check if this serial test is enabled
-if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_GRPC)
+if(NOT OPTION_BUILD_SERIALS_GRPC)
 	return()
 endif()
 
