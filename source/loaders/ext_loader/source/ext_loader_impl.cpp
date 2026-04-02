@@ -135,7 +135,7 @@ int ext_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_ext ext_impl = static_cast<loader_impl_ext>(loader_impl_get(impl));
 
-	ext_impl->paths.insert(fs::path(std::string(path, strnlen(path, 1000))));
+	ext_impl->paths.insert(fs::path(std::string(path, strnlen(path, LOADER_PATH_SIZE))));
 
 	return 0;
 }
