@@ -6,7 +6,7 @@ fn generate_bindings() {
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set"));
     let output = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set")).join("bindings.rs");
     let mut builder = bindgen::Builder::default()
-        .raw_line("#![cfg_attr(rustfmt, rustfmt::skip)]")
+        .raw_line("#[cfg_attr(rustfmt, rustfmt::skip)]")
         .allowlist_function("metacall.*")
         .rustified_enum("metacall_.*");
 
