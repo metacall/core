@@ -19,6 +19,8 @@
 #	limitations under the License.
 #
 
+set -exuo pipefail
+
 function publish() {
     local crate_version=`cargo search --quiet $1 | grep "$1" | head -n 1 | awk '{ print $3 }'`
     local project_version=`cargo metadata --format-version=1 --no-deps | jq ".packages[] | select(.name == \"$1\") | .version"`
