@@ -28,7 +28,7 @@ function publish() {
     # Check if versions do not match, and if so, publish them
     if [ ! "${crate_version}" = "${project_version}" ]; then
         echo "Publishing $1: ${crate_version} -> ${project_version}"
-        cargo publish --verbose --locked --token ${CARGO_REGISTRY_TOKEN}
+        cargo publish --verbose --locked --no-verify --token ${CARGO_REGISTRY_TOKEN}
     fi
 }
 
