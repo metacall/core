@@ -2,9 +2,11 @@ use std::env;
 use std::path::PathBuf;
 
 fn generate_bindings() {
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set"));
-    let output = manifest_dir.join("src").join("bindings.rs");
+    let manifest_dir =
+        PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set"));
+    let output = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set")).join("bindings.rs");
     let mut builder = bindgen::Builder::default()
+        .raw_line("#[cfg_attr(rustfmt, rustfmt::skip)]")
         .allowlist_function("metacall.*")
         .rustified_enum("metacall_.*");
 
@@ -25,12 +27,22 @@ fn generate_bindings() {
         }
 
         builder = builder
-            .clang_arg(format!("-I{}", root.join("source/metacall/include").display()))
-            .clang_arg(format!("-I{}", build_dir.join("source/metacall/include").display()))
+            .clang_arg(format!(
+                "-I{}",
+                root.join("source/metacall/include").display()
+            ))
+            .clang_arg(format!(
+                "-I{}",
+                build_dir.join("source/metacall/include").display()
+            ))
             .clang_arg(format!("-I{}", build_dir.join("source/include").display()));
     } else {
         let lib = metacall_sys::find_metacall_library().unwrap();
-        let include = lib.path.parent().expect("library path has no parent").join("include");
+        let include = lib
+            .path
+            .parent()
+            .expect("library path has no parent")
+            .join("include");
         let include_metacall = include.join("metacall");
 
         for entry in std::fs::read_dir(&include_metacall).expect("failed to read include dir") {

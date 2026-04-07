@@ -168,7 +168,7 @@ impl MetaCallValue for i64 {
         // TODO: This issue happens because we do not have a clear type definition in the Core
         // We are not sure yet if we should use fixed sizes in the core, or adapt all the loaders
         // and ports to the standard C int type definition. We should define this but it's not yet.
-        // Meanwhile as a workaround, we just panic if it does not fit.        
+        // Meanwhile as a workaround, we just panic if it does not fit.
         #[cfg(any(target_pointer_width = "32", windows))]
         {
             unsafe { metacall_value_create_long(self.try_into().unwrap()) }
@@ -177,7 +177,6 @@ impl MetaCallValue for i64 {
         {
             unsafe { metacall_value_create_long(self) }
         }
-
     }
 }
 /// Equivalent to MetaCall float type.
