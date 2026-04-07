@@ -1,5 +1,5 @@
 pub mod class;
-use super::{config::Input, source_map::FileName::Custom, CompilerCallbacks, Function, Source};
+use super::{config::Input, rustc_span::FileName::Custom, CompilerCallbacks, Function, Source};
 use std::fs::File;
 use std::io::Write;
 fn generate_function_wrapper(functions: &[Function]) -> String {
