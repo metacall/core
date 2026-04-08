@@ -1,0 +1,42 @@
+name: FreeBSD Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
+    tags:
+      - v*.*.*
+
+concurrency:
+  group: freebsd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        build: [debug, release]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run FreeBSD VM
+        uses: cross-platform-actions/action@v0.32.0
+        with:
+          operating_system: freebsd
+          version: 14.2
+          architecture: x86-64
+          shell: sh
+          run: |
+            sh ./tools/metacall-environment.sh base
+            mkdir build && cd build
+            sh ../tools/metacall-configure.sh ${{ matrix.build }}
+            sh ../tools/metacall-build.sh ${{ matrix.build }}
