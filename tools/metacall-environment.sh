@@ -193,6 +193,8 @@ sub_python(){
 		pip3 install numpy
 		pip3 install joblib
 		pip3 install scikit-learn
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y python3
 	fi
 }
 
