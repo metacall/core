@@ -697,7 +697,7 @@ sub_c(){
 
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		LLVM_VERSION_STRING=19
-		$SUDO_CMD pkg install -y libffi llvm${LLVM_VERSION_STRING}
+		$SUDO_CMD pkg install -y libffi llvm${LLVM_VERSION_STRING} gcc
 		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 		echo "-DLibClang_INCLUDE_DIR=/usr/local/llvm${LLVM_VERSION_STRING}/include" >> $CMAKE_CONFIG_PATH
