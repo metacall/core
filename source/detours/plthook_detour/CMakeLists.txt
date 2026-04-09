@@ -148,6 +148,7 @@ target_link_libraries(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
+	# FreeBSD and OpenBSD required libraries for PLTHook
 	$<$<PLATFORM_ID:FreeBSD,NetBSD>:util>
 
 	PUBLIC

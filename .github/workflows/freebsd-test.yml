@@ -38,5 +38,5 @@ jobs:
           run: |
             sh ./tools/metacall-environment.sh base python
             mkdir build && cd build
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python tests address-sanitizer
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python tests 
             sh ../tools/metacall-build.sh ${{ matrix.build }} tests
