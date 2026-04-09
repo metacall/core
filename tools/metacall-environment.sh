@@ -694,6 +694,14 @@ sub_c(){
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
+
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		LLVM_VERSION_STRING=19
+		$SUDO_CMD pkg install -y libffi llvm${LLVM_VERSION_STRING}
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DLibClang_INCLUDE_DIR=/usr/local/llvm${LLVM_VERSION_STRING}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=/usr/local/llvm${LLVM_VERSION_STRING}/lib/libclang.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
