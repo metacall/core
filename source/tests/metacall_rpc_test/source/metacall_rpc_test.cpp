@@ -286,6 +286,70 @@ static const int NUM_THREADS = 4;
 static const int CALLS_PER_THREAD = 10;
 static const int TOTAL_CONCURRENT = NUM_THREADS * CALLS_PER_THREAD;
 
+TEST_F(metacall_rpc_test, SyncConcurrentProducers)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		const char *rpc_scripts[] = { "remote.url" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+
+		g_resolved.store(0);
+		g_rejected.store(0);
+		g_mismatches.store(0);
+
+		call_context all_contexts[TOTAL_CONCURRENT];
+		std::vector<std::thread> threads;
+		for (int t = 0; t < NUM_THREADS; t++)
+		{
+			threads.emplace_back([t, &all_contexts]() {
+				for (int i = 0; i < CALLS_PER_THREAD; i++)
+				{
+					int idx = t * CALLS_PER_THREAD + i;
+					float a = static_cast<float>(t * 100 + i + 1);
+					float b = 1.0f;
+
+					all_contexts[idx].call_id = idx;
+					all_contexts[idx].expected = static_cast<double>(a / b);
+
+					void *args[] = {
+						metacall_value_create_float(a),
+						metacall_value_create_float(b)
+					};
+
+					const enum metacall_value_id divide_ids[] = { METACALL_FLOAT, METACALL_FLOAT };
+					void *sync_ret = metacallt_s("divide", divide_ids, 2, args);
+
+					metacall_value_destroy(args[0]);
+					metacall_value_destroy(args[1]);
+
+					std::cout << "Thread " << t << ": dispatched " << CALLS_PER_THREAD << " calls" << std::endl;
+				}
+			});
+		}
+
+		for (auto &th : threads)
+		{
+			th.join();
+		}
+
+		bool reached = wait_for_count(g_resolved, TOTAL_CONCURRENT, 15000);
+
+		std::cout << "Resolved: " << g_resolved.load()
+				  << "/" << TOTAL_CONCURRENT
+				  << ", Rejected: " << g_rejected.load()
+				  << ", Mismatches: " << g_mismatches.load() << std::endl;
+
+		EXPECT_TRUE(reached) << "All callbacks should fire within 15s";
+		EXPECT_EQ(g_resolved.load(), TOTAL_CONCURRENT) << "All concurrent calls should resolve";
+		EXPECT_EQ(g_rejected.load(), 0) << "No rejects";
+		EXPECT_EQ(g_mismatches.load(), 0) << "All results should match expected values";
+	}
+#endif
+
+	metacall_destroy();
+}
+
 TEST_F(metacall_rpc_test, AsyncConcurrentProducers)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
