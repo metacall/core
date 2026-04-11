@@ -559,6 +559,8 @@ sub_nodejs(){
 			brew install libgit2@1.8
 			brew link libgit2@1.8 --force --overwrite
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y node22 npm-node22
 	fi
 }
 

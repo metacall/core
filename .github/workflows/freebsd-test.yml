@@ -36,7 +36,7 @@ jobs:
           architecture: x86-64
           shell: sh
           run: |
-            sh ./tools/metacall-environment.sh base python c
+            sh ./tools/metacall-environment.sh base python c nodejs
             mkdir -p build && cd build
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python c tests 
-            sh ../tools/metacall-build.sh ${{ matrix.build }} c tests
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python c nodejs tests 
+            sh ../tools/metacall-build.sh ${{ matrix.build }} c nodejs tests
