@@ -411,6 +411,9 @@ public:
 	array(array &arr) :
 		value_base(arr.to_raw(), &value_base::noop_destructor) {}
 
+	array(const array &arr) :
+		value_base(arr.to_raw(), &value_base::noop_destructor) {}
+
 	array(array &&arr) noexcept :
 		value_base(arr.value_ptr.release(), arr.value_ptr.get_deleter()) {}
 
