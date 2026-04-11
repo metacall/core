@@ -461,9 +461,11 @@ private:
 	template <typename... Args>
 	static void create_array(void **array_ptr, std::size_t index, Args &&...args)
 	{
-		// Use initializer list trick to expand the pack
-		((
-			 array_ptr[index++] = value<std::decay_t<Args>>::create(std::forward<Args>(args))),
+		(([&] {
+			using Decayed = std::decay_t<Args>;
+			Decayed decayed = std::forward<Args>(args);
+			array_ptr[index++] = value<Decayed>::create(decayed);
+		}()),
 			...);
 	}
 };
@@ -473,6 +475,14 @@ template <>
 inline void *value<array>::create(array &v)
 {
 	return v.release();
+}
+
+template <>
+template <>
+inline void *value<array>::create(metacall::array const &v)
+{
+	// TODO: Can be this avoided in order to avoid copying?
+	return metacall_value_copy(v.to_raw());
 }
 
 template <>

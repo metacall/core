@@ -175,8 +175,10 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		fflush(stdout);
 	}
 
-#if 0
 	{
+		// TODO: This snippet is copying metacall::array, it would be possible
+		// to safely achieve this without copy?
+		// Review this: inline void *value<array>::create(metacall::array const &v)
 		metacall::map<std::string, metacall::array> m = {
 			{ "includes", metacall::array("/a/path", "/another/path") },
 			{ "libraries", metacall::array("/a/path", "/another/path") }
@@ -186,7 +188,6 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 
 		EXPECT_EQ(nullptr, fn(m).to_value());
 	}
-#endif
 
 	// TODO:
 	/*
