@@ -139,6 +139,14 @@ foreach(tgt ${unity_build_depends})
 	)
 endforeach()
 
+# C++ Port is not defined here yet so we add the definition here
+if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_CXX)
+	set(unity_build_include_list
+		${unity_build_include_list}
+		${CMAKE_SOURCE_DIR}/source/ports/cxx_port/include
+	)
+endif()
+
 # Build library
 add_library(${target}
 	${unity_build_source_list}
