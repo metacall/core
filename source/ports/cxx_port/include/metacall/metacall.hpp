@@ -568,9 +568,13 @@ public:
 	std::optional<V> operator()(const K &key) const
 	{
 		auto it = m.find(key);
+
 		if (it == m.end())
+		{
 			return std::nullopt;
-		return it->second.to_value();
+		}
+
+		return it->second.second.to_value();
 	}
 
 	static enum metacall_value_id id()

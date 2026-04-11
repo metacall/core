@@ -188,9 +188,15 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	PUBLIC
+	# Dependencies Includes
+	${unity_build_include_list}
+
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
 	INTERFACE
+	# Dependencies Includes
+	${unity_build_include_list}
+
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 	$<INSTALL_INTERFACE:include>

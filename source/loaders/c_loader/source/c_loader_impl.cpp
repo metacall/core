@@ -366,14 +366,14 @@ public:
 		{
 			metacall::map<std::string, metacall::array> options(data);
 
-			std::optional<metacall::array> libs = options["libs"];
+			auto libs = options("libs");
 
 			if (!libs.has_value())
 			{
 				return false;
 			}
 
-			this->lib = dynlink_load_absolute(options["libs"][0].as<std::string>().c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+			this->lib = dynlink_load_absolute(libs.value()[0].as<std::string>().c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 			;
 
 			if (this->lib == NULL)
@@ -381,24 +381,24 @@ public:
 				return false;
 			}
 
-			std::optional<metacall::array> headers = options["headers"];
+			auto headers = options("headers");
 
 			if (headers.has_value())
 			{
-				for (size_t i = 0; i < options["headers"].count(); ++i)
+				for (size_t i = 0; i < headers.value().count(); ++i)
 				{
-					auto header = options["headers"][i].as<std::string>();
+					auto header = headers.value()[i].as<std::string>();
 					this->add(header);
 				}
 			}
 
-			std::optional<metacall::array> include_search_paths = options["include_search_paths"];
+			std::optional<metacall::array> include_search_paths = options("include_search_paths");
 
 			if (include_search_paths.has_value())
 			{
-				for (size_t i = 0; i < options["include_search_paths"].count(); ++i)
+				for (size_t i = 0; i < include_search_paths.value().count(); ++i)
 				{
-					auto include_search_path = options["include_search_paths"][i].as<std::string>();
+					auto include_search_path = include_search_paths.value()[i].as<std::string>();
 					c_impl->execution_paths.push_back(include_search_path);
 				}
 			}
