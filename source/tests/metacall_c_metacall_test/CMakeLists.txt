@@ -98,7 +98,7 @@ target_compile_definitions(${target}
 
 	METACALL_INCLUDE_DIR="${CMAKE_SOURCE_DIR}/source/metacall/include"
 	METACALL_API_INCLUDE_DIR="${CMAKE_BINARY_DIR}/source/metacall/include"
-	METACALL_LIBRARY="${PROJECT_OUTPUT_DIR}"
+	METACALL_LIBRARY="$<TARGET_FILE:metacall>"
 )
 
 #

@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-#include <metacall/metacall.h>
+#include <metacall/metacall.hpp>
 
 class metacall_c_metacall_test : public testing::Test
 {
@@ -29,17 +29,23 @@ protected:
 
 TEST_F(metacall_c_metacall_test, DefaultConstructor)
 {
+	using namespace metacall;
+
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	ASSERT_EQ((int)0, metacall_execution_path("c", METACALL_INCLUDE_DIR));
-	ASSERT_EQ((int)0, metacall_execution_path("c", METACALL_API_INCLUDE_DIR));
-	ASSERT_EQ((int)0, metacall_execution_path("c", METACALL_LIBRARY));
+	metacall::map<std::string, metacall::array> options = {
+		{ "include_search_paths", metacall::array(METACALL_API_INCLUDE_DIR, METACALL_INCLUDE_DIR) },
+		{ "headers", metacall::array(METACALL_INCLUDE_DIR "/metacall/metacall.h") },
+		{ "libs", metacall::array(METACALL_LIBRARY) /* TODO: Right now we only support one lib */ }
+	};
 
-	ASSERT_EQ((int)0, (int)metacall_load_from_package("c", "metacall", NULL));
+	void *handle = NULL;
 
-	void *ret = metacall("metacall_print_info");
+	ASSERT_EQ((int)0, (int)metacall_load_from_package_ex("c", "metacall", &handle, options.to_raw()));
 
-	ASSERT_EQ((void *)NULL, (void *)ret);
+	void *ret = metacall::metacallht_s(handle, "metacall_print_info", nullptr, 0);
+
+	ASSERT_NE((void *)NULL, (void *)ret);
 
 	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_STRING);
 

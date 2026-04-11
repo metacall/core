@@ -57,6 +57,18 @@ public:
 		return value_ptr.release();
 	}
 
+	// Get the size in bytes of the value
+	size_t size() const
+	{
+		return metacall_value_size(value_ptr.get());
+	}
+
+	// The number of elements of the value
+	size_t count() const
+	{
+		return metacall_value_count(value_ptr.get());
+	}
+
 protected:
 	std::unique_ptr<void, void (*)(void *)> value_ptr;
 
@@ -550,6 +562,14 @@ public:
 	V operator[](const K &key) const
 	{
 		return m.at(key).second.to_value();
+	}
+
+	std::optional<V> operator()(const K &key) const
+	{
+		auto it = m.find(key);
+		if (it == m.end())
+			return std::nullopt;
+		return it->second.to_value();
 	}
 
 	static enum metacall_value_id id()
