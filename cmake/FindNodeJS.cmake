@@ -39,6 +39,12 @@ if(NodeJS_EXECUTABLE)
 	set(NodeJS_FIND_QUIETLY TRUE)
 endif()
 
+if(PROJECT_OS_BSD)
+    set(MAKE_COMMAND gmake)
+else()
+    set(MAKE_COMMAND make)
+endif()
+
 option(NodeJS_CMAKE_DEBUG "Print paths for debugging NodeJS dependencies." OFF)
 option(NodeJS_SHARED_UV "If it is enabled, libuv won't be required by this script." OFF)
 option(NodeJS_BUILD_FROM_SOURCE "If it is enabled, NodeJS runtime library will be built from source." OFF)
@@ -592,12 +598,12 @@ if(NOT NodeJS_LIBRARY)
 			if(N GREATER 1)
 				execute_process(
 					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} make -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
+					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} ${MAKE_COMMAND} -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
 				)
 			else()
 				execute_process(
 					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} make -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
+					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} ${MAKE_COMMAND} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
 				)
 			endif()
 		endif()
