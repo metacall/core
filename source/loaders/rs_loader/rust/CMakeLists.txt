@@ -94,11 +94,21 @@ else()
 	set(RUSTFLAGS)
 endif()
 
+add_custom_target(${target}_clippy ALL
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} clippy ${TARGET_BUILD_TYPE} -- -D warnings
+)
+
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
 	DEPENDS ${target}_runtime ${TARGET_DEPENDENCY}
+)
+
+
+add_dependencies(${target}
+	${target}_clippy
 )
 
 set_property(TARGET ${target}
