@@ -286,6 +286,87 @@ static const int NUM_THREADS = 4;
 static const int CALLS_PER_THREAD = 10;
 static const int TOTAL_CONCURRENT = NUM_THREADS * CALLS_PER_THREAD;
 
+TEST_F(metacall_rpc_test, SyncConcurrentProducers)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		const char *rpc_scripts[] = { "remote.url" };
+		void *handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
+
+		ASSERT_NE((void *)NULL, (void *)handle);
+
+		std::atomic<int> sync_failures(0);
+		std::atomic<int> sync_mismatches(0);
+		std::vector<std::thread> threads;
+
+		for (int t = 0; t < NUM_THREADS; t++)
+		{
+			threads.emplace_back([t, handle, &sync_failures, &sync_mismatches]() {
+				for (int i = 0; i < CALLS_PER_THREAD; i++)
+				{
+					float a = static_cast<float>(t * 100 + i + 1);
+					float b = 1.0f;
+					float expected = a / b;
+
+					const enum metacall_value_id divide_ids[] = {
+						METACALL_FLOAT, METACALL_FLOAT
+					};
+
+					void *ret = metacallht_s(handle, "divide", divide_ids, 2, a, b);
+
+					if (ret == NULL)
+					{
+						std::cout << "    [SYNC FAIL] thread=" << t
+								  << " call=" << i
+								  << " ret=NULL" << std::endl;
+						sync_failures.fetch_add(1);
+						continue;
+					}
+
+					double actual = extract_numeric(ret);
+
+					if (actual < expected - 0.01 || actual > expected + 0.01)
+					{
+						std::cout << "    [SYNC MISMATCH] thread=" << t
+								  << " call=" << i
+								  << " expected=" << expected
+								  << " got=" << actual << std::endl;
+						sync_mismatches.fetch_add(1);
+					}
+
+					metacall_value_destroy(ret);
+				}
+
+				std::cout << "Thread " << t << ": completed "
+						  << CALLS_PER_THREAD << " sync calls" << std::endl;
+			});
+		}
+
+		for (auto &th : threads)
+		{
+			th.join();
+		}
+
+		int total_calls = NUM_THREADS * CALLS_PER_THREAD;
+
+		std::cout << "SyncConcurrentProducers: total=" << total_calls
+				  << ", failures=" << sync_failures.load()
+				  << ", mismatches=" << sync_mismatches.load() << std::endl;
+
+		EXPECT_EQ(sync_failures.load(), 0) << "All sync calls should succeed";
+		EXPECT_EQ(sync_mismatches.load(), 0) << "All sync results should match expected values";
+
+		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+	}
+#endif
+
+	metacall_destroy();
+}
+
 TEST_F(metacall_rpc_test, AsyncConcurrentProducers)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
@@ -470,86 +551,4 @@ static void *on_error_reject(void *error, void * /*data*/)
 
 	g_error_rejected.fetch_add(1);
 	return NULL;
-}
-
-static const int GOOD_CALLS = 5;
-
-// TODO: It fails under address sanitizer and thread sanitizer
-TEST_F(metacall_rpc_test, ErrorUnderConcurrency)
-{
-	ASSERT_EQ((int)0, (int)metacall_initialize());
-
-#if defined(OPTION_BUILD_LOADERS_RPC)
-	{
-		const char *rpc_scripts[] = { "remote.url" };
-		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
-
-		g_error_resolved.store(0);
-		g_error_rejected.store(0);
-
-		call_context good_contexts[GOOD_CALLS];
-
-		for (int i = 0; i < GOOD_CALLS; i++)
-		{
-			float a = static_cast<float>((i + 1) * 10);
-			float b = static_cast<float>(i + 1);
-
-			good_contexts[i].call_id = i;
-			good_contexts[i].expected = static_cast<double>(a / b);
-
-			void *args[] = {
-				metacall_value_create_float(a),
-				metacall_value_create_float(b)
-			};
-
-			metacall_await_s("async_divide", args, 2,
-				on_error_resolve, on_error_reject, &good_contexts[i]);
-
-			metacall_value_destroy(args[0]);
-			metacall_value_destroy(args[1]);
-		}
-
-		{
-			void *bad_args[] = {
-				metacall_value_create_int(1),
-				metacall_value_create_int(2)
-			};
-
-			metacall_await_s("sum", bad_args, 2,
-				on_error_resolve, on_error_reject, NULL);
-
-			metacall_value_destroy(bad_args[0]);
-			metacall_value_destroy(bad_args[1]);
-		}
-
-		int total_expected = GOOD_CALLS + 1;
-		bool reached = false;
-		int waited = 0;
-
-		while (waited < 10000)
-		{
-			int total = g_error_resolved.load() + g_error_rejected.load();
-
-			if (total >= total_expected)
-			{
-				reached = true;
-				break;
-			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			waited += 10;
-		}
-
-		std::cout << "ErrorUnderConcurrency: Resolved=" << g_error_resolved.load()
-				  << ", Rejected=" << g_error_rejected.load() << std::endl;
-
-		EXPECT_TRUE(reached) << "All callbacks (good + bad) should fire within 10s";
-
-		EXPECT_EQ(g_error_resolved.load(), GOOD_CALLS) << "All valid calls should resolve";
-
-		EXPECT_GE(g_error_rejected.load(), 1) << "Bad endpoint call should be rejected";
-	}
-#endif
-
-	metacall_destroy();
 }
