@@ -43,11 +43,11 @@ typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, config
 
 typedef int (*loader_impl_interface_execution_path)(loader_impl, const loader_path);
 
-typedef loader_handle (*loader_impl_interface_load_from_file)(loader_impl, const loader_path[], size_t);
+typedef loader_handle (*loader_impl_interface_load_from_file)(loader_impl, const loader_path[], size_t, void *);
 
-typedef loader_handle (*loader_impl_interface_load_from_memory)(loader_impl, const loader_name, const char *, size_t);
+typedef loader_handle (*loader_impl_interface_load_from_memory)(loader_impl, const loader_name, const char *, size_t, void *);
 
-typedef loader_handle (*loader_impl_interface_load_from_package)(loader_impl, const loader_path);
+typedef loader_handle (*loader_impl_interface_load_from_package)(loader_impl, const loader_path, void *);
 
 typedef int (*loader_impl_interface_clear)(loader_impl, loader_handle);
 

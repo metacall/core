@@ -10,6 +10,7 @@ pub unsafe extern "C" fn rs_loader_impl_load_from_memory(
     name: *const c_char,
     buffer: *const c_char,
     _size: usize,
+    _data: *mut c_void,
 ) -> *mut c_void {
     let name = CStr::from_ptr(name)
         .to_str()

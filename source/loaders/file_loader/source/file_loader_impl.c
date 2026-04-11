@@ -350,9 +350,11 @@ int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl
 	return 1;
 }
 
-loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
 	loader_impl_file file_impl = loader_impl_get(impl);
+
+	(void)data;
 
 	if (file_impl == NULL)
 	{
@@ -397,12 +399,13 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_pat
 	return NULL;
 }
 
-loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
 	(void)impl;
 	(void)name;
 	(void)buffer;
 	(void)size;
+	(void)data;
 
 	// TODO: In theory this should load the buffer, not the name... no?
 	// Although this loader does not take care of the file itself, only the paths;
@@ -441,9 +444,11 @@ loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	return NULL;
 }
 
-loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
 	loader_impl_file file_impl = loader_impl_get(impl);
+
+	(void)data;
 
 	if (file_impl == NULL)
 	{
