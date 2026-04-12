@@ -567,7 +567,7 @@ sub_nodejs(){
 		tar xzf /tmp/node-v${NODE_VERSION}.tar.gz -C /tmp
 		sed -i '' '/ASSERT_TRIVIALLY_COPYABLE(T);/d' /tmp/node-v${NODE_VERSION}/deps/v8/src/base/small-vector.h
 		cd /tmp/node-v${NODE_VERSION}
-		./configure --shared
+		CC=cc CXX=c++ ./configure --shared
 		gmake -j$(sysctl -n hw.ncpu)
 		$SUDO_CMD cp out/Release/lib/libnode.so.* /usr/local/lib/
 		cd $ROOT_DIR
