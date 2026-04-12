@@ -25,14 +25,12 @@ module MetaCall
 
 	def platform_install_paths
 		host_os = RbConfig::CONFIG['host_os']
-		home_dir = Dir.home
 
 		case host_os
 		when /mswin|mingw|cygwin/
 			{
 				paths: [ 
 					File.join(ENV['LOCALAPPDATA'].to_s, 'MetaCall', 'metacall'),
-					File.join(home_dir, 'AppData', 'Local', 'MetaCall', 'metacall')
 				],
 				name: '^metacall(d)?\.dll$'
 			}
@@ -41,8 +39,6 @@ module MetaCall
 				paths: [ 
 					'/opt/homebrew/lib/', 
 					'/usr/local/lib/', 
-					File.join(home_dir, '.metacall', 'lib'),
-					'/opt/metacall/lib'
 				],
 				name: '^libmetacall(d)?\.dylib$'
 			}
@@ -51,8 +47,6 @@ module MetaCall
 				paths: [ 
 					'/usr/local/lib/', 
 					'/gnu/lib/', 
-					File.join(home_dir, '.metacall', 'lib'),
-					'/opt/metacall/lib'
 				],
 				name: '^libmetacall(d)?\.so(\.\d+)*$'
 			}
@@ -99,25 +93,26 @@ module MetaCall
 			return MetaCallRbLoaderPort
 		end
 
+		# Set environment variable for the host
+		ENV['METACALL_HOST'] = 'rb'
+		
 		# Find the MetaCall shared library
 		library_path = find_library
+
+		# TODO: Check if it is required
 		install_dir = File.dirname(library_path)
 		root_dir = File.dirname(install_dir)
 
-		# Set environment variable for the host
-		ENV['METACALL_HOST'] ||= 'rb'
-
-		# AUTOMATIC ENGINE BOOTSTRAPPING
-		ENV['LOADER_LIBRARY_PATH'] ||= install_dir
-		ENV['SERIAL_LIBRARY_PATH'] ||= install_dir
-		ENV['DETECTOR_LIBRARY_PATH'] ||= install_dir
+		# # AUTOMATIC ENGINE BOOTSTRAPPING
+		# ENV['LOADER_LIBRARY_PATH'] ||= install_dir
+		# ENV['SERIAL_LIBRARY_PATH'] ||= install_dir
+		# ENV['DETECTOR_LIBRARY_PATH'] ||= install_dir
 		
-		config_path = File.join(root_dir, 'configurations')
-		ENV['CONFIGURATION_PATH'] ||= config_path if Dir.exist?(config_path)
+		# config_path = File.join(root_dir, 'configurations')
+		# ENV['CONFIGURATION_PATH'] ||= config_path if Dir.exist?(config_path)
 
 		# Platform-specific environment fixes
 		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
-			# MODERN WINDOWS FIX (Ruby 3.x+):
 			# Ruby 3+ ignores ENV['PATH'] for DLL loading. We must use SetDllDirectory 
 			# to allow metacall.dll to find its plugins and dependencies.
 			begin
@@ -134,15 +129,16 @@ module MetaCall
 				# Fallback to PATH for older Ruby versions
 				ENV['PATH'] = "#{install_dir};#{ENV['PATH']}"
 			end
-			
-			# Detect Python runtime bundled with MetaCall
-			unless ENV.key?('PYTHONHOME')
-				py_home = File.join(root_dir, 'runtimes', 'python')
-				if Dir.exist?(py_home)
-					ENV['PYTHONHOME'] = py_home
-					ENV['PYTHONPATH'] ||= install_dir
-				end
-			end
+
+			# TODO: We must move this outside here
+			# # Detect Python runtime bundled with MetaCall
+			# unless ENV.key?('PYTHONHOME')
+			# 	py_home = File.join(root_dir, 'runtimes', 'python')
+			# 	if Dir.exist?(py_home)
+			# 		ENV['PYTHONHOME'] = py_home
+			# 		ENV['PYTHONPATH'] ||= install_dir
+			# 	end
+			# end
 		end
 
 		begin
