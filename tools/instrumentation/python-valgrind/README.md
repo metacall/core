@@ -1,14 +1,27 @@
-# Python + Valgrind Helpers
+# Python + Valgrind
 
-This folder contains helper scripts for building Python with Valgrind support in a reproducible environment.
+Builds Python 3.13 from Debian source with Valgrind support and runs the MetaCall Python port test suite under Valgrind.
 
-## Scope
+## Build and run
 
-- Build debug Python with `--with-valgrind`.
-- Run Python-port tests under Valgrind with configurable depth.
-- Generate logs suitable for leak triage and sharing.
+```bash
+# From the repo root
+docker build -t metacall-python-valgrind -f tools/instrumentation/python-valgrind/Dockerfile .
+docker run --rm metacall-python-valgrind
+```
 
-## Notes
+## With aggressive ruby suppressions
 
-- Prefer containerized runs to avoid host contamination.
-- Keep aggressive suppressions opt-in from `tools/instrumentation/suppressions`.
+```bash
+docker run --rm metacall-python-valgrind valgrind --leak-check=full --num-callers=30 \
+	--suppressions=/app/memcheck/valgrind-ruby.supp \
+	--suppressions=tools/instrumentation/suppressions/valgrind-ruby-aggressive.supp \
+	python3.13 test.py
+```
+
+## Python build flags
+
+- `--with-pydebug` -- enables debug hooks
+- `--without-pymalloc` -- disables Python small object allocator
+- `--with-valgrind` -- cleaner memory tracking
+- `Py_USING_MEMORY_DEBUGGER` uncommented in `Objects/obmalloc.c`
