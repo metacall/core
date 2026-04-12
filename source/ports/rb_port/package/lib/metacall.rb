@@ -102,12 +102,13 @@ module MetaCall
 		# Platform-specific environment fixes
 		# TODO: Should we add this in the loader itself?
 		# https://github.com/metacall/core/issues/760
+		# TODO: Even with this trick it seems not to work...
 		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
 			# Define library and root directories
 			library_dir = File.dirname(library_path)
 			root_dir = File.dirname(library_dir)
-			paths = [library_dir, File.join(library_dir, 'ruby_builtin_dlls')]
-			# paths = [File.join(root_dir, 'runtimes', 'ruby', 'bin'), File.join(root_dir, 'runtimes', 'ruby', 'bin', 'ruby_builtin_dlls')]
+			# paths = [library_dir, File.join(library_dir, 'ruby_builtin_dlls')]
+			paths = [File.join(root_dir, 'runtimes', 'ruby', 'bin'), File.join(root_dir, 'runtimes', 'ruby', 'bin', 'ruby_builtin_dlls')]
 
 			# Ruby 3+ ignores ENV['PATH'] for DLL loading. We must use SetDllDirectory 
 			# to allow metacall.dll to find its plugins and dependencies.
