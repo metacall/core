@@ -559,10 +559,10 @@ sub_nodejs(){
 			brew install libgit2@1.8
 			brew link libgit2@1.8 --force --overwrite
 		fi
-		
+
 		elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y node22 npm-node22 python3 gmake
-		NODE_VERSION=$(node22 --version | sed 's/v//')
+		NODE_VERSION=$(node --version | sed 's/v//')
 		fetch -o /tmp/node-v${NODE_VERSION}.tar.gz https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz
 		tar xzf /tmp/node-v${NODE_VERSION}.tar.gz -C /tmp
 		sed -i '' '/ASSERT_TRIVIALLY_COPYABLE(T);/d' /tmp/node-v${NODE_VERSION}/deps/v8/src/base/small-vector.h
@@ -574,7 +574,7 @@ sub_nodejs(){
 		rm -rf /tmp/node-v${NODE_VERSION} /tmp/node-v${NODE_VERSION}.tar.gz
 		mkdir -p "$ROOT_DIR/build"
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
-		echo "-DNodeJS_EXECUTABLE=/usr/local/bin/node22" >> $CMAKE_CONFIG_PATH
+		echo "-DNodeJS_EXECUTABLE=/usr/local/bin/node" >> $CMAKE_CONFIG_PATH
 
 	fi
 }
