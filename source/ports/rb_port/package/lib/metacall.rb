@@ -99,29 +99,30 @@ module MetaCall
 		# Find and load the MetaCall shared library
 		library_path = find_library
 
-		# Define install and root path
-		install_dir = File.dirname(library_path)
-		root_dir = File.dirname(install_dir)
-
 		# Platform-specific environment fixes
 		# TODO: Should we add this in the loader itself?
 		# https://github.com/metacall/core/issues/760
 		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+			# Define library and root directories
+			library_dir = File.dirname(library_path)
+			root_dir = File.dirname(library_dir)
+			paths = [library_dir, File.join(library_dir, 'ruby_builtin_dlls')]
+			# paths = [File.join(root_dir, 'runtimes', 'ruby', 'bin'), File.join(root_dir, 'runtimes', 'ruby', 'bin', 'ruby_builtin_dlls')]
+
 			# Ruby 3+ ignores ENV['PATH'] for DLL loading. We must use SetDllDirectory 
 			# to allow metacall.dll to find its plugins and dependencies.
 			begin
 				kernel32 = Fiddle.dlopen('kernel32.dll')
 				set_dll_dir = Fiddle::Function.new(kernel32['SetDllDirectoryW'], [Fiddle::TYPE_VOIDP], Fiddle::TYPE_INT)
-				
-				# Add the library directory
-				set_dll_dir.call(install_dir.encode('UTF-16LE'))
-				
-				# Add the Ruby runtime bin folder if it exists
-				rb_runtime_bin = File.join(root_dir, 'runtimes', 'ruby', 'bin')
-				set_dll_dir.call(rb_runtime_bin.encode('UTF-16LE')) if Dir.exist?(rb_runtime_bin)
+
+				paths.each do |path|
+				  set_dll_dir.call(path.encode('UTF-16LE')) if Dir.exist?(path)
+				end
 			rescue => e
 				# Fallback to PATH for older Ruby versions
-				ENV['PATH'] = "#{install_dir};#{ENV['PATH']}"
+				paths.each do |path|
+					ENV['PATH'] = "#{path};#{ENV['PATH']}"
+				end
 			end
 		end
 
