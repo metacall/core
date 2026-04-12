@@ -107,6 +107,8 @@ module MetaCall
 			# Define library and root directories
 			library_dir = File.dirname(library_path)
 			root_dir = File.dirname(library_dir)
+
+			# TODO: None of both path lists works, they are equivalent because the runtime install copies always all libraries to lib folder
 			# paths = [library_dir, File.join(library_dir, 'ruby_builtin_dlls')]
 			paths = [File.join(root_dir, 'runtimes', 'ruby', 'bin'), File.join(root_dir, 'runtimes', 'ruby', 'bin', 'ruby_builtin_dlls')]
 
