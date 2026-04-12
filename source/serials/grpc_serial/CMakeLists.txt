@@ -1,19 +1,13 @@
 # Check if this serial is enabled
-if(NOT OPTION_BUILD_SERIALS)
-	return()
-endif()
-
-if(NOT OPTION_BUILD_SERIALS_GRPC)
+if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_GRPC)
 	return()
 endif()
 
 #
 # External dependencies
 #
-# Note: find gRPC only — it pulls in Protobuf automatically.
-# Calling find_package(Protobuf) separately causes duplicate target errors.
-#
 
+# gRPC and Protobuf
 find_package(gRPC QUIET)
 
 if(NOT gRPC_FOUND)
