@@ -106,7 +106,6 @@ add_custom_target(${target} ALL
 	DEPENDS ${target}_runtime ${TARGET_DEPENDENCY}
 )
 
-
 add_dependencies(${target}
 	${target}_clippy
 )
