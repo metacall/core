@@ -569,7 +569,8 @@ sub_nodejs(){
 		cd /tmp/node-v${NODE_VERSION}
 		CC=cc CXX=c++ ./configure --shared
 		gmake -j$(sysctl -n hw.ncpu)
-		$SUDO_CMD cp out/Release/lib/libnode.so.* /usr/local/lib/
+		$SUDO_CMD cp out/Release/obj.target/libnode.so.* /usr/local/lib/
+		$SUDO_CMD ln -sf libnode.so.127 /usr/local/lib/libnode.so
 		cd $ROOT_DIR
 		rm -rf /tmp/node-v${NODE_VERSION} /tmp/node-v${NODE_VERSION}.tar.gz
 		mkdir -p "$ROOT_DIR/build"
