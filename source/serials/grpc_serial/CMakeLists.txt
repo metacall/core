@@ -8,7 +8,7 @@ endif()
 #
 
 # gRPC and Protobuf
-find_package(gRPC QUIET)
+find_package(gRPC)
 
 if(NOT gRPC_FOUND)
 	message(STATUS "gRPC not found, skipping grpc_serial")
