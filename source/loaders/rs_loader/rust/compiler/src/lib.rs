@@ -86,7 +86,7 @@ pub enum Source {
     Package { path: PathBuf },
 }
 
-#[allow(clippy::new_ret_no_self)]
+
 impl Source {
     pub fn new(source: Source) -> SourceImpl {
         let library_name = |file_name: &PathBuf| {
