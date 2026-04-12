@@ -95,23 +95,17 @@ module MetaCall
 
 		# Set environment variable for the host
 		ENV['METACALL_HOST'] = 'rb'
-		
-		# Find the MetaCall shared library
+
+		# Find and load the MetaCall shared library
 		library_path = find_library
 
-		# TODO: Check if it is required
+		# Define install and root path
 		install_dir = File.dirname(library_path)
 		root_dir = File.dirname(install_dir)
 
-		# # AUTOMATIC ENGINE BOOTSTRAPPING
-		# ENV['LOADER_LIBRARY_PATH'] ||= install_dir
-		# ENV['SERIAL_LIBRARY_PATH'] ||= install_dir
-		# ENV['DETECTOR_LIBRARY_PATH'] ||= install_dir
-		
-		# config_path = File.join(root_dir, 'configurations')
-		# ENV['CONFIGURATION_PATH'] ||= config_path if Dir.exist?(config_path)
-
 		# Platform-specific environment fixes
+		# TODO: Should we add this in the loader itself?
+		# https://github.com/metacall/core/issues/760
 		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
 			# Ruby 3+ ignores ENV['PATH'] for DLL loading. We must use SetDllDirectory 
 			# to allow metacall.dll to find its plugins and dependencies.
@@ -129,16 +123,6 @@ module MetaCall
 				# Fallback to PATH for older Ruby versions
 				ENV['PATH'] = "#{install_dir};#{ENV['PATH']}"
 			end
-
-			# TODO: We must move this outside here
-			# # Detect Python runtime bundled with MetaCall
-			# unless ENV.key?('PYTHONHOME')
-			# 	py_home = File.join(root_dir, 'runtimes', 'python')
-			# 	if Dir.exist?(py_home)
-			# 		ENV['PYTHONHOME'] = py_home
-			# 		ENV['PYTHONPATH'] ||= install_dir
-			# 	end
-			# end
 		end
 
 		begin
