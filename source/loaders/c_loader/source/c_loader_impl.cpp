@@ -368,13 +368,12 @@ public:
 
 			auto libs = options("libs");
 
-			if (!libs.has_value())
+			if (!(libs.has_value() && libs.value().count() > 0))
 			{
 				return false;
 			}
 
 			this->lib = dynlink_load_absolute(libs.value()[0].as<std::string>().c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
-			;
 
 			if (this->lib == NULL)
 			{
