@@ -86,7 +86,6 @@ pub enum Source {
     Package { path: PathBuf },
 }
 
-
 impl Source {
     pub fn new(source: Source) -> SourceImpl {
         let library_name = |file_name: &PathBuf| {
