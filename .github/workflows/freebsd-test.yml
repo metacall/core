@@ -20,6 +20,8 @@ jobs:
 
     strategy:
       matrix:
+        # TODO: Implement more architectures and versions matrix
+        # TODO: Implement OpenBSD and Haiku 
         build: [debug, release]
 
     steps:
