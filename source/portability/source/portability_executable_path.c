@@ -64,7 +64,6 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	}
 
 	*length = strnlen(path, PORTABILITY_PATH_SIZE);
-
 #elif defined(__NetBSD__)
 	*length = readlink("/proc/curproc/exe", path, path_max_length);
 #elif defined(__DragonFly__)
