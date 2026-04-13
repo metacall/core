@@ -41,7 +41,7 @@ jobs:
         with:
           toolchain: stable
           override: true
-          components: rustfmt
+          components: rustfmt, clippy
 
       - name: Build the Rust Port
         working-directory: source/ports/rs_port
@@ -50,6 +50,10 @@ jobs:
       - name: Check Rust Formatting
         working-directory: source/ports/rs_port
         run: cargo fmt --check
+
+      - name: Run Clippy
+        working-directory: source/ports/rs_port
+        run: cargo clippy -- -D warnings
 
       - name: Test the Rust Port
         working-directory: source/ports/rs_port
