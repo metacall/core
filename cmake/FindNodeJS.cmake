@@ -591,27 +591,22 @@ if(NOT NodeJS_LIBRARY)
 			# Create build output directory
 			execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${NodeJS_OUTPUT_PATH}/out)
 
-			include(ProcessorCount)
-
-			ProcessorCount(N)
-
 			if(PROJECT_OS_BSD)
 				set(MAKE_COMMAND gmake)
 			else()
 				set(MAKE_COMMAND make)
 			endif()
 
+			include(ProcessorCount)
+			ProcessorCount(N)
 			if(N GREATER 1)
-				execute_process(
-					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} ${MAKE_COMMAND} -j${N} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
-				)
-			else()
-				execute_process(
-					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-					COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} ${MAKE_COMMAND} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
-				)
+				set(MAKE_PARALLEL "-j${N}")
 			endif()
+
+			execute_process(
+				WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
+				COMMAND ${BUILD_DEBUG_ASAN_OPTIONS} ${MAKE_COMMAND} ${MAKE_PARALLEL} -C ${NodeJS_OUTPUT_PATH}/out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1
+			)
 		endif()
 	endif()
 
