@@ -341,8 +341,7 @@ TEST_F(metacall_rpc_test, SyncConcurrentProducers)
 					metacall_value_destroy(ret);
 				}
 
-				std::cout << "Thread " << t << ": completed "
-						  << CALLS_PER_THREAD << " sync calls" << std::endl;
+				printf("Thread %d: dispatched %d calls\n", t, CALLS_PER_THREAD);
 			});
 		}
 
@@ -407,8 +406,7 @@ TEST_F(metacall_rpc_test, AsyncConcurrentProducers)
 					metacall_value_destroy(args[1]);
 				}
 
-				std::cout << "Thread " << t << ": dispatched "
-						  << CALLS_PER_THREAD << " calls" << std::endl;
+				printf("Thread %d: dispatched %d calls\n", t, CALLS_PER_THREAD);
 			});
 		}
 
@@ -518,37 +516,4 @@ TEST_F(metacall_rpc_test, EmptyShutdown)
 
 	/* Should return cleanly with no crash or hang */
 	metacall_destroy();
-}
-
-static std::atomic<int> g_error_resolved(0);
-static std::atomic<int> g_error_rejected(0);
-
-static void *on_error_resolve(void *result, void * /*data*/)
-{
-	if (result != NULL)
-	{
-		std::cout << "    [ERROR_TEST RESOLVE] result=" << extract_numeric(result) << std::endl;
-		metacall_value_destroy(result);
-	}
-
-	g_error_resolved.fetch_add(1);
-	return NULL;
-}
-
-static void *on_error_reject(void *error, void * /*data*/)
-{
-	if (error != NULL)
-	{
-		std::cout << "    [ERROR_TEST REJECT] ";
-
-		if (metacall_value_id(error) == METACALL_STRING)
-		{
-			std::cout << metacall_value_to_string(error);
-		}
-
-		std::cout << std::endl;
-	}
-
-	g_error_rejected.fetch_add(1);
-	return NULL;
 }
