@@ -425,13 +425,7 @@ if(NOT NodeJS_LIBRARY)
 		message(STATUS "Extract NodeJS distribution")
 		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NodeJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${NodeJS_BASE_PATH}" OUTPUT_QUIET)
 	endif()
-	if(PROJECT_OS_BSD)
-		execute_process(
-			COMMAND sed -i '' "/ASSERT_TRIVIALLY_COPYABLE(T);/d" "${NodeJS_OUTPUT_PATH}/deps/v8/src/base/small-vector.h"
-			WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-		)
-	endif()
-	
+
 	if(WIN32)
 		if(NodeJS_VERSION_MAJOR LESS 14)
 			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
