@@ -11,18 +11,20 @@ on:
       - v*.*.*
 
 concurrency:
-  group: freebsd-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
+    name: FreeBSD Test
     runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
         # TODO: Implement more architectures and versions matrix
-        # TODO: Implement OpenBSD and Haiku 
+        # TODO: Implement OpenBSD, Haiku, OmniOS
         build: [debug, release]
+        arch: [x86-64, arm64]
 
     steps:
       - name: Checkout
@@ -35,7 +37,7 @@ jobs:
         with:
           operating_system: freebsd
           version: 14.2
-          architecture: x86-64
+          architecture: ${{ matrix.arch }}
           shell: sh
           run: |
             sh ./tools/metacall-environment.sh base python c nodejs
