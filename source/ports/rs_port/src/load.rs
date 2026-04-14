@@ -1,5 +1,8 @@
 use crate::{
-    bindings::{metacall_clear, metacall_load_from_file, metacall_load_from_memory},
+    bindings::{
+        metacall_clear, metacall_execution_path, metacall_load_from_file,
+        metacall_load_from_memory,
+    },
     cstring_enum,
     types::MetaCallLoaderError,
 };
@@ -36,6 +39,30 @@ pub enum Tag {
     Rust,
     TypeScript,
     Wasm,
+}
+
+impl Tag {
+    /// Returns the matching tag for a given file extension, or `None` if unsupported.
+    pub fn from_extension(ext: &str) -> Option<Self> {
+        match ext {
+            "c" => Some(Tag::C),
+            "cob" | "cbl" => Some(Tag::Cobol),
+            "cr" => Some(Tag::Crystal),
+            "cs" => Some(Tag::CSharp),
+            "dart" => Some(Tag::Dart),
+            "java" => Some(Tag::Java),
+            "jl" => Some(Tag::Julia),
+            "js" | "mjs" | "cjs" => Some(Tag::NodeJS),
+            "jsm" => Some(Tag::JSM),
+            "lua" => Some(Tag::Lua),
+            "py" => Some(Tag::Python),
+            "rb" => Some(Tag::Ruby),
+            "rs" => Some(Tag::Rust),
+            "ts" => Some(Tag::TypeScript),
+            "wasm" => Some(Tag::Wasm),
+            _ => None,
+        }
+    }
 }
 
 impl fmt::Display for Tag {
@@ -201,6 +228,18 @@ pub fn from_memory(
     } != 0
     {
         return Err(MetaCallLoaderError::FromMemoryFailure);
+    }
+
+    Ok(())
+}
+
+/// Sets the execution path for the given loader tag.
+pub fn execution_path(tag: Tag, path: impl AsRef<Path>) -> Result<(), MetaCallLoaderError> {
+    let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
+    let c_path = cstring_enum!(path.as_ref().to_str().unwrap(), MetaCallLoaderError)?;
+
+    if unsafe { metacall_execution_path(c_tag.as_ptr(), c_path.as_ptr()) } != 0 {
+        return Err(MetaCallLoaderError::ExecutionPathFailure);
     }
 
     Ok(())
