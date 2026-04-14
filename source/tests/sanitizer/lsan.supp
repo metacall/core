@@ -24,7 +24,7 @@ leak:libpython*
 # Suppress small (intentional) leaks in glibc
 leak:libc.so
 # Supress node library (for now)
-leak:libnode*
+leak:libnode.so
 #
 # Ruby
 #
