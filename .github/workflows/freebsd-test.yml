@@ -1,0 +1,46 @@
+name: FreeBSD Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
+    tags:
+      - v*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: FreeBSD Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO: Implement more architectures and versions matrix
+        # TODO: Implement OpenBSD, Haiku, OmniOS
+        build: [debug, release]
+        arch: [x86-64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run FreeBSD VM
+        uses: cross-platform-actions/action@v0.32.0
+        with:
+          operating_system: freebsd
+          version: 14.2
+          architecture: ${{ matrix.arch }}
+          shell: sh
+          run: |
+            sh ./tools/metacall-environment.sh base python c nodejs
+            mkdir -p build && cd build
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python c nodejs tests 
+            sh ../tools/metacall-build.sh ${{ matrix.build }} c nodejs tests

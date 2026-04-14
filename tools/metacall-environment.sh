@@ -68,6 +68,7 @@ case "$(uname -s)" in
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
@@ -112,6 +113,8 @@ sub_base(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
 	fi
 }
 
@@ -190,6 +193,8 @@ sub_python(){
 		pip3 install numpy
 		pip3 install joblib
 		pip3 install scikit-learn
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y python3
 	fi
 }
 
@@ -554,6 +559,23 @@ sub_nodejs(){
 			brew install libgit2@1.8
 			brew link libgit2@1.8 --force --overwrite
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y node22 npm-node22 python3 gmake
+		NODE_VERSION=$(node --version | sed 's/v//')
+		fetch -o /tmp/node-v${NODE_VERSION}.tar.gz https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz
+		tar xzf /tmp/node-v${NODE_VERSION}.tar.gz -C /tmp
+		# TODO: Dirty fix, review or delete this
+		sed -i '' '/ASSERT_TRIVIALLY_COPYABLE(T);/d' /tmp/node-v${NODE_VERSION}/deps/v8/src/base/small-vector.h
+		cd /tmp/node-v${NODE_VERSION}
+		CC=cc CXX=c++ ./configure --shared
+		gmake -j$(sysctl -n hw.ncpu)
+		$SUDO_CMD cp out/Release/obj.target/libnode.so.* /usr/local/lib/
+		$SUDO_CMD ln -sf libnode.so.127 /usr/local/lib/libnode.so
+		cd $ROOT_DIR
+		rm -rf /tmp/node-v${NODE_VERSION} /tmp/node-v${NODE_VERSION}.tar.gz
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DNodeJS_EXECUTABLE=/usr/local/bin/node" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -689,6 +711,13 @@ sub_c(){
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		LLVM_VERSION_STRING=19
+		$SUDO_CMD pkg install -y libffi llvm${LLVM_VERSION_STRING} gcc
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DLibClang_INCLUDE_DIR=/usr/local/llvm${LLVM_VERSION_STRING}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=/usr/local/llvm${LLVM_VERSION_STRING}/lib/libclang.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 

@@ -39,6 +39,13 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 	*length = GetModuleFileName(NULL, path, path_max_length);
+#elif defined(__FreeBSD__)
+	int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+	*length = sizeof(char) * path_max_length;
+	if (sysctl(name, sizeof(name) / sizeof(name[0]), path, length, NULL, 0) < 0)
+	{
+		return 1;
+	}
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
 	*length = readlink("/proc/self/exe", path, path_max_length);
@@ -57,13 +64,6 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	}
 
 	*length = strnlen(path, PORTABILITY_PATH_SIZE);
-#elif defined(__FreeBSD__)
-	int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
-	*length = sizeof(char) * path_max_length;
-	if (sysctl(name, sizeof(name) / sizeof(name[0]), path, length, NULL, 0) < 0)
-	{
-		return 1;
-	}
 #elif defined(__NetBSD__)
 	*length = readlink("/proc/curproc/exe", path, path_max_length);
 #elif defined(__DragonFly__)
