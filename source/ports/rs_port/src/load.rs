@@ -46,20 +46,31 @@ impl Tag {
     pub fn from_extension(ext: &str) -> Option<Self> {
         match ext {
             "c" => Some(Tag::C),
-            "cob" | "cbl" => Some(Tag::Cobol),
+            "cob" | "cbl" | "cpy" => Some(Tag::Cobol),
             "cr" => Some(Tag::Crystal),
-            "cs" => Some(Tag::CSharp),
+            "cs" | "vb" => Some(Tag::CSharp),
             "dart" => Some(Tag::Dart),
             "java" => Some(Tag::Java),
             "jl" => Some(Tag::Julia),
-            "js" | "mjs" | "cjs" => Some(Tag::NodeJS),
+            "js" | "mjs" | "cjs" | "node" => Some(Tag::NodeJS),
             "jsm" => Some(Tag::JSM),
             "lua" => Some(Tag::Lua),
+            "mock" => Some(Tag::Mock),
             "py" => Some(Tag::Python),
             "rb" => Some(Tag::Ruby),
             "rs" => Some(Tag::Rust),
-            "ts" => Some(Tag::TypeScript),
+            "ts" | "jsx" | "tsx" => Some(Tag::TypeScript),
+            "wat" | "wasm" => Some(Tag::Wasm),
+            _ => None,
+        }
+    }
+
+    /// Returns the matching tag for a package extension (compiled artifacts like .dll, .rlib).
+    pub fn from_package_extension(ext: &str) -> Option<Self> {
+        match ext {
+            "dll" => Some(Tag::CSharp),
             "wasm" => Some(Tag::Wasm),
+            "rlib" => Some(Tag::Rust),
             _ => None,
         }
     }
