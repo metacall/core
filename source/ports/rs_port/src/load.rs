@@ -1,7 +1,6 @@
 use crate::{
     bindings::{
-        metacall_clear, metacall_execution_path, metacall_load_from_file,
-        metacall_load_from_memory,
+        metacall_clear, metacall_execution_path, metacall_load_from_file, metacall_load_from_memory,
     },
     cstring_enum,
     types::MetaCallLoaderError,
