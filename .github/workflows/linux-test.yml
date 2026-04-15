@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         build: [debug, release]
-        image: ["debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:jammy"] # TODO: "alpine:3.17"
+        image: ["debian:forky-slim", "debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:jammy"]
 
     steps:
       - name: Check out the repository
@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:jammy"]
+        image: ["debian:forky-slim", "debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:jammy"]
         sanitizer: [address-sanitizer, thread-sanitizer] # TODO: memory-sanitizer not supported by GCC
 
     env:
