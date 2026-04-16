@@ -653,6 +653,14 @@ sub_java(){
 		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y openjdk17
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DJAVA_HOME=/usr/local/openjdk17" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH2=/usr/local/openjdk17/include/freebsd" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_AWT_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
 	fi
 }
 

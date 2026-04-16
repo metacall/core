@@ -40,7 +40,7 @@ jobs:
           architecture: ${{ matrix.arch }}
           shell: sh
           run: |
-            sh ./tools/metacall-environment.sh base python c ruby wasm go backtrace
+            sh ./tools/metacall-environment.sh base python c ruby wasm go java backtrace
             mkdir -p build && cd build
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python c ruby wasm go tests
-            sh ../tools/metacall-build.sh ${{ matrix.build }} c ruby wasm go tests
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python c ruby wasm go java tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }} c ruby wasm go java tests
