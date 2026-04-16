@@ -775,6 +775,13 @@ sub_cobol(){
 		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.dylib" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y gnucobol
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DCOBOL_EXECUTABLE=/usr/local/bin/cobc" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_INCLUDE_DIR=/usr/local/include" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_LIBRARY=/usr/local/lib/libcob.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
