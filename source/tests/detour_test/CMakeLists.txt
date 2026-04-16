@@ -133,9 +133,6 @@ target_compile_features(${target}
 target_link_options(${target}
 	PRIVATE
 	${DEFAULT_LINKER_OPTIONS}
-	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>
-	$<$<CXX_COMPILER_ID:GNU>:-rdynamic>
-	$<$<AND:$<PLATFORM_ID:FreeBSD>,$<CXX_COMPILER_ID:Clang>>:-Wl,--export-dynamic>
 )
 
 #
