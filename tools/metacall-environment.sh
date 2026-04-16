@@ -922,7 +922,7 @@ sub_backtrace(){
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y libdwarf
+		$SUDO_CMD pkg install -y libdwarf libelf libunwind
 		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 	fi
 }
