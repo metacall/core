@@ -7,16 +7,18 @@ endif()
 # External dependencies
 #
 
-# gRPC and Protobuf
-find_package(gRPC)
+find_package(GRPC)
 
-if(NOT gRPC_FOUND)
-	message(STATUS "gRPC not found, skipping grpc_serial")
-	return()
+if(NOT GRPC_FOUND)
+	include(InstallGRPC)
+
+	if(NOT GRPC_FOUND)
+		message(SEND_ERROR "gRPC libraries not found")
+		return()
+	endif()
+
+	set(GRPC_INSTALL TRUE)
 endif()
-
-# Resolve protobuf include dirs from the gRPC dependency
-get_target_property(PROTOBUF_INCLUDE_DIRS protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
 
 #
 # Library name and options
@@ -30,21 +32,8 @@ string(TOUPPER ${target} target_upper)
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
-#
-# Compiler warnings
-#
-
 include(Warnings)
-
-#
-# Compiler security
-#
-
 include(SecurityFlags)
-
-#
-# Sources
-#
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
@@ -66,10 +55,6 @@ source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 	${source_group} ${sources})
 
-#
-# Create library
-#
-
 add_library(${target} MODULE
 	${sources}
 	${headers}
@@ -84,10 +69,6 @@ generate_export_header(${target}
 	EXPORT_MACRO_NAME ${export_macro}
 )
 
-#
-# Project options
-#
-
 set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
@@ -95,17 +76,13 @@ set_target_properties(${target}
 	BUNDLE $<AND:$<PLATFORM_ID:Darwin>,$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>
 )
 
-#
-# Include directories
-#
-
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES>
-	${PROTOBUF_INCLUDE_DIRS}
+	${GRPC_INCLUDE_DIRS}
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	INTERFACE
@@ -114,23 +91,14 @@ target_include_directories(${target}
 	$<INSTALL_INTERFACE:include>
 )
 
-#
-# Libraries
-#
-
 target_link_libraries(${target}
 	PRIVATE
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
-	protobuf::libprotobuf
-	gRPC::grpc++
+	${GRPC_LIBRARIES}
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 	INTERFACE
 )
-
-#
-# Compile definitions
-#
 
 target_compile_definitions(${target}
 	PRIVATE
@@ -140,20 +108,12 @@ target_compile_definitions(${target}
 	INTERFACE
 )
 
-#
-# Compile options
-#
-
 target_compile_options(${target}
 	PRIVATE
 	PUBLIC
 	${DEFAULT_COMPILE_OPTIONS}
 	INTERFACE
 )
-
-#
-# Linker options
-#
 
 target_link_options(${target}
 	PRIVATE
@@ -162,10 +122,6 @@ target_link_options(${target}
 	${DEFAULT_LINKER_OPTIONS}
 	INTERFACE
 )
-
-#
-# Deployment
-#
 
 install(TARGETS ${target}
 	EXPORT  "${target}-export"              COMPONENT dev
