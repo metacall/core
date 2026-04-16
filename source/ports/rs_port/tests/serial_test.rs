@@ -1,12 +1,13 @@
 use metacall::{
     bindings::{
         metacall_value_count, metacall_value_create_int, metacall_value_create_string,
-        metacall_value_destroy, metacall_value_id,
-        metacall_value_to_array, metacall_value_to_int, metacall_value_to_map,
-        metacall_value_to_string,
+        metacall_value_destroy, metacall_value_id, metacall_value_to_array, metacall_value_to_int,
+        metacall_value_to_map, metacall_value_to_string,
     },
     initialize, is_initialized,
-    serial::{deserialize_from_string, serialize_to_string, MetaCallAllocator, MetaCallSerialError},
+    serial::{
+        deserialize_from_string, serialize_to_string, MetaCallAllocator, MetaCallSerialError,
+    },
 };
 use std::ffi::CStr;
 use std::slice;
