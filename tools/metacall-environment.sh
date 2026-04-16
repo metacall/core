@@ -629,7 +629,7 @@ sub_wasm(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-      $SUDO_CMD pkg install -y wasmtime
+      $SUDO_CMD pkg install -y libwasmtime
 	fi
 }
 
