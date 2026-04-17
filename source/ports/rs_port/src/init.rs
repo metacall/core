@@ -4,11 +4,11 @@ use crate::{
 };
 use std::ptr;
 
-pub struct MetaCallDestroy(unsafe extern "C" fn());
+pub struct MetaCallDestroy(unsafe extern "C" fn() -> i32);
 
 impl Drop for MetaCallDestroy {
     fn drop(&mut self) {
-        unsafe { self.0() }
+        unsafe { self.0(); }
     }
 }
 
