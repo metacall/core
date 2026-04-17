@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![feature(once_cell)]
 // Allow us to match on Box<T>s:
 #![feature(box_patterns)]
 #![feature(let_else)]
@@ -20,6 +19,9 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 
+use rustc_errors::translation::Translator;
+use rustc_errors::emitter::stderr_destination;
+use rustc_errors::DiagCtxt;
 use rustc_session::config::OutFileName;
 use rustc_session::search_paths::FilesIndex;
 use rustc_interface::interface;
@@ -50,7 +52,6 @@ use std::iter::{self, FromIterator};
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     fmt,
-    path::{Path, PathBuf},
     path::{Path, PathBuf},
     sync,
 };
@@ -133,11 +134,9 @@ impl Source {
                     path.clone()
                         .parent()
                         .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
-                        .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
                 );
                 let name = PathBuf::from(
                     path.file_name()
-                        .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
                         .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
                 );
                 let temp_dir = std::env::temp_dir();
@@ -149,7 +148,6 @@ impl Source {
                 }
             }
             Source::Memory { ref name, ref code } => {
-                let dir = std::env::temp_dir();
                 let dir = std::env::temp_dir();
                 let name_path = PathBuf::from(name.clone());
 
@@ -168,11 +166,9 @@ impl Source {
                     path.clone()
                         .parent()
                         .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
-                        .unwrap_or_else(|| panic!("Unable to get the parent of {:?}", path)),
                 );
                 let name = PathBuf::from(
                     path.file_name()
-                        .unwrap_or_else(|| panic!("Unable to get the filename of {:?}", path)),
                         .unwrap_or_else(|| panic!("Unable to get the filename of {:?}", path)),
                 );
                 let temp_dir = std::env::temp_dir();
@@ -235,7 +231,6 @@ fn compiler_source() -> Option<PathBuf> {
     match compiler_sys_root() {
         Some(sys_root) => {
             let mut path = sys_root;
-            let mut path = sys_root;
             path.push("lib");
             path.push("rustlib");
             path.push("src");
@@ -243,9 +238,7 @@ fn compiler_source() -> Option<PathBuf> {
 
             if path.exists() {
                 Some(path)
-                Some(path)
             } else {
-                None
                 None
             }
         }
@@ -282,7 +275,6 @@ pub struct DynlinkLibrary {
 
 impl DynlinkLibrary {
     pub fn new(path: &Path) -> Result<DynlinkLibrary, String> {
-    pub fn new(path: &Path) -> Result<DynlinkLibrary, String> {
         let c_path = CString::new(path.to_str().unwrap()).expect("CString::new failed");
 
         unsafe {
@@ -304,20 +296,13 @@ impl DynlinkLibrary {
 
         unsafe {
             let mut symbol_address = std::mem::MaybeUninit::<DynlinkSymbolAddr>::uninit();
-            let mut symbol_address = std::mem::MaybeUninit::<DynlinkSymbolAddr>::uninit();
 
             let result = dynlink_symbol(
                 self.instance,
                 c_symbol_name.as_ptr(),
                 symbol_address.as_mut_ptr(),
             );
-            let result = dynlink_symbol(
-                self.instance,
-                c_symbol_name.as_ptr(),
-                symbol_address.as_mut_ptr(),
-            );
             if result == 0 {
-                Ok(symbol_address.assume_init())
                 Ok(symbol_address.assume_init())
             } else {
                 Err(format!("Failed to find symbol: {}", symbol_name))
@@ -401,7 +386,6 @@ pub struct Function {
 
 impl Function {
     pub fn has_self(&self) -> bool {
-        if self.args.is_empty() {
         if self.args.is_empty() {
             return false;
         }
@@ -612,7 +596,6 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                     .expect("unable to create wrapped script");
                 wrapped_script
                     .write_all("extern crate metacall_package;\n".as_bytes())
-                    .write_all("extern crate metacall_package;\n".as_bytes())
                     .expect("Unablt to write wrapped script");
             }
 
@@ -800,58 +783,51 @@ impl std::io::Write for DiagnosticSink {
 
 const BUG_REPORT_URL: &str = "https://github.com/metacall/core/issues/new";
 
-// static ICE_HOOK: std::lazy::SyncLazy<
-//     Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>,
-// > = std::lazy::SyncLazy::new(|| {
-//     let hook = std::panic::take_hook();
-//     std::panic::set_hook(Box::new(|info| report_ice(info, BUG_REPORT_URL)));
-//     hook
-// });
+static ICE_HOOK: std::sync::LazyLock<
+    Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>,
+> = std::sync::LazyLock::new(|| {
+    let hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(|info| report_ice(info, BUG_REPORT_URL, |_| {}, &USING_INTERNAL_FEATURES)));
+    hook
+});
 
-// fn report_ice(info: &std::panic::PanicInfo<'_>, bug_report_url: &str) {
-//     // Invoke our ICE handler, which prints the actual panic message and optionally a backtrace
-//     (*ICE_HOOK)(info);
+fn report_ice(info: &std::panic::PanicInfo<'_>, bug_report_url: &str, extra_info: fn(&DiagCtxt), using_internal_features: &AtomicBool) {
+    // Invoke our ICE handler, which prints the actual panic message and optionally a backtrace
+    (*ICE_HOOK)(info);
 
-//     // Separate the output with an empty line
-//     eprintln!();
+    eprintln!();
 
-//     let emitter = Box::new(rustc_errors::emitter::EmitterWriter::stderr(
-//         rustc_errors::ColorConfig::Auto,
-//         None,
-//         false,
-//         false,
-//         None,
-//         false,
-//     ));
-//     let handler = rustc_errors::Handler::with_emitter(true, None, emitter);
+    let translator = Translator::with_fallback_bundle(vec![rustc_errors::DEFAULT_LOCALE_RESOURCE], false);
 
-//     // a .span_bug or .bug call has already printed what it wants to print
-//     if !info.payload().is::<rustc_errors::ExplicitBug>() {
-//         let d = rustc_errors::Diagnostic::new(rustc_errors::Level::Bug, "unexpected panic");
-//         handler.emit_diagnostic(&d);
-//     }
+    let emitter = Box::new(
+        rustc_errors::annotate_snippet_emitter_writer::AnnotateSnippetEmitter::new(
+            stderr_destination(rustc_errors::ColorConfig::Auto),
+            translator
+        )
+    );
 
-//     let xs: Vec<std::borrow::Cow<'static, str>> = vec![
-//         "the compiler unexpectedly panicked. this is a bug.".into(),
-//         format!("we would appreciate a bug report: {}", bug_report_url).into(),
-//     ];
+   let dcx = rustc_errors::DiagCtxt::new(emitter);
+   let dcx = dcx.handle();
 
-//     for note in &xs {
-//         handler.note_without_error(note);
-//     }
+    // a .span_bug or .bug call has already printed what it wants to print
+    if !info.payload().is::<rustc_errors::ExplicitBug>() && !info.payload().is::<rustc_errors::DelayedBugPanic>() {
+        dcx.note("Unexpected compiler panic. This is a bug.");
+    }
 
-//     // If backtraces are enabled, also print the query stack
-//     let backtrace = std::env::var_os("RUST_BACKTRACE").map_or(false, |x| &x != "0");
+    dcx.note(format!("We would appreciate a bug report: {}", bug_report_url));
 
-//     let num_frames = if backtrace { None } else { Some(2) };
+    // If backtraces are enabled, also print the query stack
+    let backtrace = std::env::var_os("RUST_BACKTRACE").map_or(false, |x| &x != "0");
 
-//     rustc_interface::interface::try_print_query_stack(&handler, num_frames);
-// }
+    let limit_frames = if backtrace { None } else { Some(2) };
 
-// pub fn initialize() {
-//     rustc_driver::init_rustc_env_logger();
-//     std::lazy::SyncLazy::force(&ICE_HOOK);
-// }
+    rustc_interface::interface::try_print_query_stack(dcx, limit_frames, None);
+}
+
+pub fn initialize() {
+    //rustc_driver::init_rustc_env_logger();
+    std::sync::LazyLock::force(&ICE_HOOK);
+}
 
 fn run_compiler(
     callbacks: &mut (dyn rustc_driver::Callbacks + Send),

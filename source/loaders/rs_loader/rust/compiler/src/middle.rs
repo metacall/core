@@ -8,6 +8,7 @@ use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 use rustc_hir::def::{DefKind, Res};
 //use rustc_middle::hir::exports::Export;
+use rustc_hir::def_id::DefId;
 use std::iter::zip;
 
 pub fn handle_ty(ty: &Ty) -> FunctionParameter {
@@ -107,37 +108,33 @@ pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident])
     function
 }
 
-// pub fn extract_attribute_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Attribute> {
-//     let Export {
-//         ident, res, vis, ..
-//     } = export;
-//     // skip non-public items
-//     if !matches!(vis, Visibility::Public) {
-//         return None;
-//     }
-//     match res {
-//         Res::Def(DefKind::Field, def_id) => Some(Attribute {
-//             name: ident.to_string(),
-//             ty: handle_ty(ctxt.type_of(*def_id)),
-//         }),
-//         _ => None,
-//     }
-// }
+pub fn extract_attribute_from_export(tcx: TyCtxt<'_>, def_id: DefId) -> Option<Function> {
+    if tcx.def_kind(def_id) != rustc_hir::def::DefKind::Fn {
+    return None;
+    }
+    
+    let sig = tcx.fn_sig(def_id);
+    let sig = sig.instantiate_identity();
 
-// pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
-//     let Export {
-//         ident, res, vis, ..
-//     } = export;
-//     // skip non-public items
-//     if !matches!(vis, Visibility::Public) {
-//         return None;
-//     }
-//     match res {
-//         Res::Def(DefKind::AssocFn, def_id) => {
-//             let fn_sig = ctxt.fn_sig(*def_id);
-//             let names = ctxt.hir_name(*def_id);
-//             Some(handle_fn(ident.to_string(), &fn_sig, names))
-//         }
-//         _ => None,
-//     }
-// }
+    let name = tcx.def_path_str(def_id);
+
+    Some(handle_fn(name, &sig, &[]))
+}
+
+pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
+    let Export {
+        ident, res, vis, ..
+    } = export;
+    // skip non public items
+    if !matches!(vis, Visibility::Public) {
+        return None;
+    }
+    match res {
+        Res::Def(DefKind::AssocFn, def_id) => {
+            let fn_sig = ctxt.fn_sig(*def_id);
+            let names = ctxt.hir_name(*def_id);
+            Some(handle_fn(ident.to_string(), &fn_sig, names))
+        }
+        _ => None,
+    }
+}
