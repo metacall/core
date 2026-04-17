@@ -818,6 +818,9 @@ sub_rust(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		$SUDO_CMD pkg install -y patchelf
 	fi
 }
 
