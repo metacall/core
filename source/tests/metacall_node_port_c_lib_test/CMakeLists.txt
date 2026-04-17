@@ -113,6 +113,8 @@ target_compile_definitions(${target}
 	# LibGit2 paths
 	LIBGIT2_LIBRARY_DIR="${LibGit2_LIBRARY_DIR}"
 	LIBGIT2_INCLUDE_DIR="${LibGit2_INCLUDE_DIR}"
+	LIBGIT2_LIBRARY="${LibGit2_LIBRARY}"
+	LIBGIT2_HEADER="${LibGit2_INCLUDE_DIR}/git2.h"
 )
 
 #
