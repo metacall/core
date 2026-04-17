@@ -51,5 +51,12 @@ TEST_F(metacall_dynlink_path_test, DefaultConstructor)
 	printf("%s == %s\n", path, METACALL_LIBRARY_PATH);
 	fflush(stdout);
 
+#if defined(METACALL_DYNLINK_PATH_TEST_SKIP_COMPARE)
+	/* On Android (cross-compilation), the runtime path differs from build path.
+	 * Just verify that dynlink_library_path returned a non-empty path. */
+	ASSERT_GT(length, (size_t)0);
+	printf("Android: Skipping path comparison (cross-compilation)\n");
+#else
 	ASSERT_EQ((int)0, (int)portability_path_compare(path, METACALL_LIBRARY_PATH));
+#endif
 }

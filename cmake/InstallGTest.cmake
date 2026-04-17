@@ -47,6 +47,22 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		endif()
 	endif()
 
+	if(ANDROID)
+		set(GTEST_ANDROID_ARGS
+			-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+			-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+			-DANDROID_ABI=${ANDROID_ABI}
+			-DANDROID_PLATFORM=${ANDROID_PLATFORM}
+			-DANDROID_STL=${ANDROID_STL}
+			-DANDROID_NDK=${ANDROID_NDK}
+		)
+	endif()
+
+	# Set generator for ExternalProject (use same as parent)
+	if(CMAKE_GENERATOR)
+		set(GTEST_GENERATOR_ARGS -G "${CMAKE_GENERATOR}")
+	endif()
+
 	# Import Google Test Framework
 	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
@@ -61,6 +77,8 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 			-DBUILD_GMOCK=ON
 			-Dgmock_build_tests=OFF
 			${SANITIZER_FLAGS}
+			${GTEST_ANDROID_ARGS}
+			${GTEST_GENERATOR_ARGS}
 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
 		UPDATE_COMMAND ""
 		INSTALL_COMMAND ""

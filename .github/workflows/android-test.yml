@@ -1,0 +1,338 @@
+name: Android Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    tags:
+      - "v*.*.*"
+    branches:
+      - master
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-build:
+    name: Android NDK Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [x86_64]
+        api-level: [30]
+        build: [release]
+
+    env:
+      ANDROID_NDK_VERSION: "26.1.10909125"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        run: |
+          sdkmanager --install "ndk;${{ env.ANDROID_NDK_VERSION }}"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+          echo "ANDROID_NDK=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake for Android
+        working-directory: ./build
+        run: |
+          cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=${{ matrix.abi }} \
+            -DANDROID_PLATFORM=android-${{ matrix.api-level }} \
+            -DANDROID_STL=c++_shared \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build == 'debug' && 'Debug' || 'Release' }} \
+            -DOPTION_BUILD_LOADERS=ON \
+            -DOPTION_BUILD_SCRIPTS=OFF \
+            -DOPTION_BUILD_TESTS=ON \
+            -DOPTION_BUILD_EXAMPLES=OFF \
+            -DOPTION_BUILD_PORTS=OFF \
+            -DOPTION_BUILD_CLI=OFF \
+            -G Ninja
+
+      - name: Build core libraries
+        working-directory: ./build
+        run: ninja
+
+      - name: List built shared libraries
+        run: |
+          echo "=== Built shared libraries ==="
+          find build -name "*.so" -type f
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
+          path: |
+            build/*.so
+            build/**/*.so
+            build/**/*_test
+            build/**/*_test.exe
+          retention-days: 7
+
+  android-emulator-test:
+    name: Android Emulator Test
+    needs: android-build
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [30]
+        target: [google_apis]
+        arch: [x86_64]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-build-x86_64-api${{ matrix.api-level }}-release
+          path: build
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK for libc++_shared.so
+        run: |
+          sdkmanager --install "ndk;26.1.10909125"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+
+      - name: Prepare test files
+        run: |
+          mkdir -p test_bundle
+          mkdir -p test_bundle/detours
+          mkdir -p test_bundle/configurations
+
+          # Copy all shared libraries
+          find build -name "*.so" -exec cp {} test_bundle/ \;
+
+          # Copy test executables
+          find build -name "*_test" -type f -executable -exec cp {} test_bundle/ \;
+
+          # Copy libc++_shared.so from NDK
+          cp $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so test_bundle/
+
+          # Copy detour plugins to detours directory
+          if [ -f test_bundle/libplthook_detour.so ]; then
+            cp test_bundle/libplthook_detour.so test_bundle/detours/
+          fi
+
+          # Create configuration files with Android paths
+          cat > test_bundle/configurations/global.json << 'JSONEOF'
+          {
+            "value": 12345,
+            "value_local": 321321,
+            "child_a": "/data/local/tmp/metacall/configurations/child_a.json",
+            "child_b": "/data/local/tmp/metacall/configurations/child_b.json"
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_a.json << 'JSONEOF'
+          {
+            "value": 65432345,
+            "value_a": 555
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_b.json << 'JSONEOF'
+          {
+            "value": 54321,
+            "value_b": 333,
+            "child_c": "/data/local/tmp/metacall/configurations/child_c.json",
+            "child_d": "/data/local/tmp/metacall/configurations/child_d.json"
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_c.json << 'JSONEOF'
+          {
+            "value": 1111,
+            "value_c": 8080
+          }
+          JSONEOF
+
+          cat > test_bundle/configurations/child_d.json << 'JSONEOF'
+          {
+            "value": 22222,
+            "value_d": 999999
+          }
+          JSONEOF
+
+          echo "=== Test bundle contents ==="
+          ls -la test_bundle/
+          echo "=== Detours directory ==="
+          ls -la test_bundle/detours/
+          echo "=== Configurations directory ==="
+          ls -la test_bundle/configurations/
+
+      - name: Create custom dynlink test program
+        run: |
+          cat > test_dynlink_android.c << 'EOF'
+          #include <stdio.h>
+          #include <dlfcn.h>
+
+          int main() {
+              void *handle;
+              void *symbol;
+              const char *error;
+
+              printf("=== Android Dynlink Runtime Test ===\n\n");
+
+              printf("Test 1: Loading libdynlink.so...\n");
+              handle = dlopen("/data/local/tmp/metacall/libdynlink.so", RTLD_NOW);
+              if (!handle) {
+                  printf("FAILED: %s\n", dlerror());
+                  return 1;
+              }
+              printf("PASSED: Library loaded\n\n");
+
+              printf("Test 2: Finding dynlink_impl_interface_singleton...\n");
+              dlerror();
+              symbol = dlsym(handle, "dynlink_impl_interface_singleton");
+              error = dlerror();
+              if (error) {
+                  printf("FAILED: %s\n", error);
+                  dlclose(handle);
+                  return 1;
+              }
+              printf("PASSED: Symbol found\n\n");
+
+              printf("Test 3: Calling singleton function...\n");
+              typedef void* (*singleton_func)(void);
+              singleton_func get_interface = (singleton_func)symbol;
+              void *interface = get_interface();
+              if (!interface) {
+                  printf("FAILED: Interface is NULL\n");
+                  dlclose(handle);
+                  return 1;
+              }
+              printf("PASSED: Interface obtained\n\n");
+
+              printf("Test 4: Testing prefix function...\n");
+              typedef const char* (*prefix_func)(void);
+              prefix_func get_prefix = (prefix_func)dlsym(handle, "dynlink_impl_interface_prefix_android");
+              if (!get_prefix) {
+                  printf("FAILED: %s\n", dlerror());
+                  dlclose(handle);
+                  return 1;
+              }
+              const char *prefix = get_prefix();
+              if (prefix && prefix[0] == 'l' && prefix[1] == 'i' && prefix[2] == 'b') {
+                  printf("PASSED: Prefix = \"%s\"\n\n", prefix);
+              } else {
+                  printf("FAILED: Wrong prefix\n");
+                  dlclose(handle);
+                  return 1;
+              }
+
+              printf("Test 5: Testing extension function...\n");
+              typedef const char* (*ext_func)(void);
+              ext_func get_ext = (ext_func)dlsym(handle, "dynlink_impl_interface_extension_android");
+              if (!get_ext) {
+                  printf("FAILED: %s\n", dlerror());
+                  dlclose(handle);
+                  return 1;
+              }
+              const char *ext = get_ext();
+              if (ext && ext[0] == 's' && ext[1] == 'o') {
+                  printf("PASSED: Extension = \"%s\"\n\n", ext);
+              } else {
+                  printf("FAILED: Wrong extension\n");
+                  dlclose(handle);
+                  return 1;
+              }
+
+              printf("Test 6: Unloading library...\n");
+              if (dlclose(handle) == 0) {
+                  printf("PASSED: Library unloaded\n\n");
+              } else {
+                  printf("FAILED: Could not unload\n");
+                  return 1;
+              }
+
+              printf("=== ALL TESTS PASSED ===\n");
+              return 0;
+          }
+          EOF
+
+          # Compile for Android x86_64
+          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/clang \
+            --target=x86_64-none-linux-android30 \
+            --sysroot=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot \
+            -o test_bundle/test_dynlink_android \
+            test_dynlink_android.c \
+            -ldl
+
+          chmod +x test_bundle/test_dynlink_android
+
+      - name: Run tests on Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            echo "=== Pushing test files to emulator ==="
+            adb push test_bundle/ /data/local/tmp/metacall/
+
+            echo ""
+            echo "=== Files on emulator ==="
+            adb shell "ls -la /data/local/tmp/metacall/"
+
+            echo ""
+            echo "=== Running custom dynlink Android test ==="
+            adb shell "cd /data/local/tmp/metacall && chmod +x test_dynlink_android && LD_LIBRARY_PATH=/data/local/tmp/metacall ./test_dynlink_android"
+
+            echo ""
+            echo "=== Running MetaCall test executables ==="
+            # Set up environment variables needed by tests:
+            # - DETOUR_LIBRARY_PATH: Path to detour plugins (plthook)
+            # - CONFIGURATION_PATH: Path to global.json for configuration tests
+            # - ENV_TEXT, ENV_PATH, ENV_SAN: Environment variables for environment tests
+            # - LD_LIBRARY_PATH: Library search path
+            TEST_ENV="DETOUR_LIBRARY_PATH=/data/local/tmp/metacall/detours CONFIGURATION_PATH=/data/local/tmp/metacall/configurations/global.json ENV_TEXT=abcd ENV_PATH=abcd ENV_SAN=abcd/ LD_LIBRARY_PATH=/data/local/tmp/metacall"
+            adb shell "cd /data/local/tmp/metacall && for test in *_test; do if [ -f \"\$test\" ] && [ -x \"\$test\" ]; then echo \"Running \$test...\"; $TEST_ENV ./\$test && echo \"PASSED: \$test\" || echo \"FAILED: \$test\"; fi; done"

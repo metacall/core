@@ -132,6 +132,7 @@ target_link_options(${target}
 
 	# Required for linking symbols from the executable
 	$<$<AND:$<PLATFORM_ID:Darwin>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wl,-export_dynamic>
+	$<$<PLATFORM_ID:Android>:-Wl,--export-dynamic>
 	$<$<CXX_COMPILER_ID:GNU>:-rdynamic>
 )
 
