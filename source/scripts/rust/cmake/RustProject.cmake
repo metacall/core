@@ -91,7 +91,7 @@ function(rust_package target version script)
 		# Fix the version of rustc
 		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
 		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=lib ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
-		COMMAND ${Rust_RUSTC_EXECUTABLE} ${RUST_EXTRA_FLAGS} -verbose --crate-type=dylib -Cprefer-dynamic ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
+		COMMAND ${Rust_RUSTC_EXECUTABLE} ${RUST_EXTRA_FLAGS} --verbose --crate-type=dylib -Cprefer-dynamic ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
 	)
 
 	# Include generated project file
