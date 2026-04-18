@@ -704,10 +704,83 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
 
-	/* TODO: Check here about search_paths and load them */
-	/* TODO: Check here about environment and load them */
-	/* TODO: Implement the search_paths and environment_variables generation in CMake */
-	/* Reference: https://github.com/metacall/core/issues/760 */
+	/* Self-Discovery and Bootstrapping Logic */
+	{
+		char base_path[LOADER_PATH_SIZE];
+		size_t base_path_length = 0;
+		static const char metacall_name[] = "metacall"
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+										   "d"
+#endif
+			;
+
+		/* Find the directory of the MetaCall engine */
+		if (dynlink_library_path(metacall_name, base_path, &base_path_length) == 0)
+		{
+			char root_path[LOADER_PATH_SIZE];
+			char config_path[LOADER_PATH_SIZE];
+			
+			/* root_path = base_path / .. */
+			size_t root_path_length = portability_path_get_directory(base_path, base_path_length + 1, root_path, LOADER_PATH_SIZE);
+
+			/* Set internal MetaCall environment variables if not already defined */
+			if (environment_variable_get("LOADER_LIBRARY_PATH", NULL) == NULL)
+			{
+				environment_variable_set("LOADER_LIBRARY_PATH", base_path);
+			}
+
+			if (environment_variable_get("SERIAL_LIBRARY_PATH", NULL) == NULL)
+			{
+				environment_variable_set("SERIAL_LIBRARY_PATH", base_path);
+			}
+
+			if (environment_variable_get("DETECTOR_LIBRARY_PATH", NULL) == NULL)
+			{
+				environment_variable_set("DETECTOR_LIBRARY_PATH", base_path);
+			}
+
+			/* Detect configuration path */
+			portability_path_join(root_path, root_path_length, "configurations", sizeof("configurations"), config_path, LOADER_PATH_SIZE);
+
+			if (portability_path_is_directory(config_path, strnlen(config_path, LOADER_PATH_SIZE) + 1) == 0)
+			{
+				if (environment_variable_get("CONFIGURATION_PATH", NULL) == NULL)
+				{
+					environment_variable_set("CONFIGURATION_PATH", config_path);
+				}
+			}
+
+#if defined(WIN32) || defined(_WIN32)
+			/* Windows-Specific Relocation Support */
+			{
+				char rb_bin_path[LOADER_PATH_SIZE];
+				char py_home_path[LOADER_PATH_SIZE];
+				
+				/* Set DLL Directory for dependencies (Error 126 fix) */
+				SetDllDirectoryA(base_path);
+
+				/* Add Ruby runtime bin folder to DLL search path */
+				portability_path_join(root_path, root_path_length, "runtimes/ruby/bin", sizeof("runtimes/ruby/bin"), rb_bin_path, LOADER_PATH_SIZE);
+				
+				if (portability_path_is_directory(rb_bin_path, strnlen(rb_bin_path, LOADER_PATH_SIZE) + 1) == 0)
+				{
+					SetDllDirectoryA(rb_bin_path);
+				}
+
+				/* Bootstrapping PythonHome */
+				portability_path_join(root_path, root_path_length, "runtimes/python", sizeof("runtimes/python"), py_home_path, LOADER_PATH_SIZE);
+
+				if (portability_path_is_directory(py_home_path, strnlen(py_home_path, LOADER_PATH_SIZE) + 1) == 0)
+				{
+					if (environment_variable_get("PYTHONHOME", NULL) == NULL)
+					{
+						environment_variable_set("PYTHONHOME", py_home_path);
+					}
+				}
+			}
+#endif
+		}
+	}
 
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
