@@ -192,7 +192,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	
+
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
