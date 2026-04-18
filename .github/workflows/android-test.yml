@@ -26,6 +26,8 @@ jobs:
         abi: [x86_64]
         api-level: [30]
         build: [release]
+        # TODO: This may be removed
+        target: [google_apis]
 
     env:
       ANDROID_NDK_VERSION: "26.1.10909125"
@@ -51,63 +53,48 @@ jobs:
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
           echo "ANDROID_NDK=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
 
-      # TODO Move to metacall-environment.sh
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build
+      - name: Install dependencies
+        run: ./tools/metacall-environment.sh ${{ matrix.build }} base android
 
       - name: Create build directory
         run: mkdir -p build
 
-      # TODO: Move to metacall-configure.sh
       - name: Configure CMake for Android
         working-directory: ./build
-        run: |
-          cmake .. \
-            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
-            -DANDROID_ABI=${{ matrix.abi }} \
-            -DANDROID_PLATFORM=android-${{ matrix.api-level }} \
-            -DANDROID_STL=c++_shared \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build == 'debug' && 'Debug' || 'Release' }} \
-            -DOPTION_BUILD_LOADERS=ON \
-            -DOPTION_BUILD_SCRIPTS=OFF \
-            -DOPTION_BUILD_TESTS=ON \
-            -DOPTION_BUILD_EXAMPLES=OFF \
-            -DOPTION_BUILD_PORTS=OFF \
-            -DOPTION_BUILD_CLI=OFF \
-            -G Ninja
+        env:
+          ANDROID_API_LEVEL: ${{ matrix.api-level }}
+          ANDROID_ABI: ${{ matrix.abi }}
+        run: ../tools/metacall-configure.sh ${{ matrix.build }} base android scripts tests
 
-      # TODO: Move to metacall-configure.sh
       - name: Build
         working-directory: ./build
-        run: ninja
+        run: ../tools/metacall-build.sh ${{ matrix.build }} tests
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
-          path: ./build
+  #     - name: Upload build artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
+  #         path: ./build
 
-  android-emulator-test:
-    name: Android Emulator Test
-    needs: android-build
-    runs-on: ubuntu-latest
+  # android-emulator-test:
+  #   name: Android Emulator Test
+  #   needs: android-build
+  #   runs-on: ubuntu-latest
 
-    # TODO: Add more architectures
-    strategy:
-      fail-fast: false
-      matrix:
-        api-level: [30]
-        target: [google_apis]
-        arch: [x86_64]
-        build: [release]
+  #   # TODO: Add more architectures
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       api-level: [30]
+  #       target: [google_apis]
+  #       arch: [x86_64]
+  #       build: [release]
 
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  #   steps:
+  #     - name: Check out the repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
 
       - name: Enable KVM
         run: |
@@ -115,25 +102,25 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
-          path: build
+      # - name: Download build artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
+      #     path: build
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+      # - name: Set up JDK 17
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     java-version: '17'
+      #     distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # - name: Setup Android SDK
+      #   uses: android-actions/setup-android@v3
 
-      - name: Install Android NDK for libc++_shared.so
-        run: |
-          sdkmanager --install "ndk;26.1.10909125"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+      # - name: Install Android NDK for libc++_shared.so
+      #   run: |
+      #     sdkmanager --install "ndk;26.1.10909125"
+      #     echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
 
       - name: Run tests on Android Emulator
         uses: reactivecircus/android-emulator-runner@v2

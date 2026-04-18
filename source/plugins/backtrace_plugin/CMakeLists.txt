@@ -38,6 +38,7 @@ find_package(Backward
 
 if(NOT BACKWARD_FOUND)
 	message(WARNING "BackwardCpp could not be found, skipping backtrace plugin compilation")
+	set(OPTION_BUILD_PLUGINS_BACKTRACE OFF CACHE BOOL "" FORCE)
 	return()
 endif()
 

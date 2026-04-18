@@ -54,6 +54,7 @@ BUILD_CLANG=0
 BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
+BUILD_ANDROID=0
 
 # Operative System detection
 case "$(uname -s)" in
@@ -216,6 +217,10 @@ sub_options() {
 			echo "Build with memory sanitizer"
 			BUILD_MEMORY_SANITIZER=1
 		fi
+		if [ "$option" = 'android' ]; then
+			echo "Cross-compile to android"
+			BUILD_ANDROID=1
+		fi
 	done
 }
 
@@ -228,7 +233,6 @@ sub_configure() {
 	BUILD_STRING="-DOPTION_BUILD_LOG_PRETTY=Off \
 			-DOPTION_BUILD_LOADERS=On \
 			-DOPTION_BUILD_LOADERS_MOCK=On"
-
 
 	# Enable build with musl libc
 	if [ "$LINUX_DISTRO" = "alpine" ]; then
@@ -557,6 +561,20 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
 
+	# Android
+	if [ $BUILD_ANDROID = 1 ]; then
+		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-30}"
+		ANDROID_ABI="${ANDROID_ABI:-x86_64}"
+
+		BUILD_STRING="$BUILD_STRING \
+			-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+			-DANDROID_ABI=${ANDROID_ABI} \
+			-DANDROID_PLATFORM=android-${ANDROID_API_LEVEL} \
+			-DANDROID_STL=c++_shared \
+			-Wno-dev \
+			-G Ninja"
+	fi
+
 	# Split cmake config file line by line and add each line to the build string
 	CMAKE_CONFIG_FILE="$ROOT_DIR/CMakeConfig.txt"
 	if [ -f $CMAKE_CONFIG_FILE ]; then
@@ -614,6 +632,7 @@ sub_help() {
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
 	echo "	memory-sanitizer: build with memory sanitizer (requires clang)"
+	echo "	android: cross-compile to android"
 	echo ""
 }
 

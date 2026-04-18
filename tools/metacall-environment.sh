@@ -59,6 +59,7 @@ INSTALL_CLANG=0
 INSTALL_CLANGFORMAT=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
+INSTALL_ANDROID=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -965,6 +966,19 @@ sub_sandbox(){
 	fi
 }
 
+# Android (dependencies for cross-compiling for Android)
+sub_android(){
+	echo "configure android"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# TODO: We should install Android NDK and Java but it's done through GitHub Actions
+			$SUDO_CMD apt-get install -y --no-install-recommends ninja-build
+		fi
+	fi
+}
+
 # Install
 sub_install(){
 	if [ $APT_CACHE = 1 ]; then
@@ -1055,6 +1069,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_SANDBOX = 1 ]; then
 		sub_sandbox
+	fi
+	if [ $INSTALL_ANDROID = 1 ]; then
+		sub_android
 	fi
 	echo "install finished in workspace $ROOT_DIR"
 }
@@ -1206,6 +1223,10 @@ sub_options(){
 			echo "sandbox selected"
 			INSTALL_SANDBOX=1
 		fi
+		if [ "$option" = 'android' ]; then
+			echo "android selected"
+			INSTALL_ANDROID=1
+		fi
 	done
 }
 
@@ -1245,6 +1266,7 @@ sub_help() {
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"
+	echo "	android"
 	echo ""
 }
 
