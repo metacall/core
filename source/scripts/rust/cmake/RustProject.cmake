@@ -83,7 +83,7 @@ function(rust_package target version script)
 
 	set(RUST_EXTRA_FLAGS "")
 	if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-		set(RUST_EXTRA_FLAGS "-C link-arg=-Wl,--allow-shlib-undefined")
+		set(RUST_EXTRA_FLAGS "-Clink-arg=-Wl,--allow-shlib-undefined")
 	endif()
 
 	# Compile scripts
