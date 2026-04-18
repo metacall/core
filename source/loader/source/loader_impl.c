@@ -39,6 +39,8 @@
 
 #include <portability/portability_library_path.h>
 
+#include <dynlink/dynlink.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -709,7 +711,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		char base_path[LOADER_PATH_SIZE];
 		size_t base_path_length = 0;
 		static const char metacall_name[] = "metacall"
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || \
+	defined(__DEBUG) || defined(__DEBUG__))
 										   "d"
 #endif
 			;
@@ -719,7 +722,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		{
 			char root_path[LOADER_PATH_SIZE];
 			char config_path[LOADER_PATH_SIZE];
-			
+
 			/* root_path = base_path / .. */
 			size_t root_path_length = portability_path_get_directory(base_path, base_path_length + 1, root_path, LOADER_PATH_SIZE);
 
@@ -755,20 +758,22 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 			{
 				char rb_bin_path[LOADER_PATH_SIZE];
 				char py_home_path[LOADER_PATH_SIZE];
-				
+
 				/* Set DLL Directory for dependencies (Error 126 fix) */
 				SetDllDirectoryA(base_path);
 
 				/* Add Ruby runtime bin folder to DLL search path */
-				portability_path_join(root_path, root_path_length, "runtimes/ruby/bin", sizeof("runtimes/ruby/bin"), rb_bin_path, LOADER_PATH_SIZE);
-				
+				portability_path_join(root_path, root_path_length, "runtimes/ruby/bin",
+					sizeof("runtimes/ruby/bin"), rb_bin_path, LOADER_PATH_SIZE);
+
 				if (portability_path_is_directory(rb_bin_path, strnlen(rb_bin_path, LOADER_PATH_SIZE) + 1) == 0)
 				{
 					SetDllDirectoryA(rb_bin_path);
 				}
 
 				/* Bootstrapping PythonHome */
-				portability_path_join(root_path, root_path_length, "runtimes/python", sizeof("runtimes/python"), py_home_path, LOADER_PATH_SIZE);
+				portability_path_join(root_path, root_path_length, "runtimes/python",
+					sizeof("runtimes/python"), py_home_path, LOADER_PATH_SIZE);
 
 				if (portability_path_is_directory(py_home_path, strnlen(py_home_path, LOADER_PATH_SIZE) + 1) == 0)
 				{
