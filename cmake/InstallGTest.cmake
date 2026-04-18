@@ -68,7 +68,15 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	)
 
 	# Google Test include and binary directories
-	ExternalProject_Get_Property(google-test-depends source_dir install_dir)
+	ExternalProject_Get_Property(google-test-depends install_dir)
+
+	execute_process(
+		COMMAND ${CMAKE_COMMAND} -E echo "${install_dir}"
+	)
+
+	execute_process(
+		COMMAND ls -laR "${install_dir}"
+	)
 
 	# Create imported targets
 	add_library(gtest STATIC IMPORTED)
@@ -84,7 +92,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		INTERFACE_INCLUDE_DIRECTORIES "${install_dir}/include"
 	)
 
-	# Ensure build order (critical for Ninja)
+	# Ensure build order
 	add_dependencies(gtest google-test-depends)
 	add_dependencies(gmock google-test-depends)
 
