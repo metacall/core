@@ -1,5 +1,6 @@
 name: Release Ruby Gem
 
+# Triggering workflow to verify C++ centralized discovery fix
 on:
   workflow_dispatch:
   pull_request:
