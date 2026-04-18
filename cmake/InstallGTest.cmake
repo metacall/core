@@ -78,6 +78,14 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		COMMAND ls -laR "${install_dir}"
 	)
 
+	execute_process(
+		COMMAND ${CMAKE_COMMAND} -E echo "${CMAKE_CURRENT_BINARY_DIR}"
+	)
+
+	execute_process(
+		COMMAND ls -laR "${CMAKE_CURRENT_BINARY_DIR}"
+	)
+
 	# Create imported targets
 	add_library(gtest STATIC IMPORTED)
 	add_library(gmock STATIC IMPORTED)
