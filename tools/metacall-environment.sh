@@ -114,7 +114,7 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss libunwind libdwarf libelf
+		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
 	fi
 }
 
@@ -946,8 +946,8 @@ sub_backtrace(){
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# TODO: Apparently backward-cpp does not support FreeBSD
 		$SUDO_CMD pkg install -y libdwarf libelf libunwind
-		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
 	fi
 }
 
