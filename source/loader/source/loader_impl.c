@@ -743,7 +743,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 			}
 
 			/* Detect configuration path */
-			portability_path_join(root_path, root_path_length, "configurations", sizeof("configurations"), config_path, LOADER_PATH_SIZE);
+			portability_path_join(root_path, root_path_length, "configurations",
+				sizeof("configurations"), config_path, LOADER_PATH_SIZE);
 
 			if (portability_path_is_directory(config_path, strnlen(config_path, LOADER_PATH_SIZE) + 1) == 0)
 			{
@@ -752,6 +753,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 					environment_variable_set("CONFIGURATION_PATH", config_path);
 				}
 			}
+
+			log_write("metacall", LOG_LEVEL_INFO, "Centralized discovery: found engine at %s", base_path);
 
 #if defined(WIN32) || defined(_WIN32)
 			/* Windows-Specific Relocation Support */
@@ -762,6 +765,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 				/* Set DLL Directory for dependencies (Error 126 fix) */
 				SetDllDirectoryA(base_path);
 
+				log_write("metacall", LOG_LEVEL_INFO, "Windows bootstrapping: registered DLL directory %s", base_path);
+
 				/* Add Ruby runtime bin folder to DLL search path */
 				portability_path_join(root_path, root_path_length, "runtimes/ruby/bin",
 					sizeof("runtimes/ruby/bin"), rb_bin_path, LOADER_PATH_SIZE);
@@ -769,6 +774,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 				if (portability_path_is_directory(rb_bin_path, strnlen(rb_bin_path, LOADER_PATH_SIZE) + 1) == 0)
 				{
 					SetDllDirectoryA(rb_bin_path);
+					log_write("metacall", LOG_LEVEL_INFO, "Windows bootstrapping: registered Ruby runtime at %s", rb_bin_path);
 				}
 
 				/* Bootstrapping PythonHome */
