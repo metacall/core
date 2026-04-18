@@ -225,6 +225,8 @@ sub_ruby(){
 		echo "-DRuby_LIBRARY=$RUBY_PREFIX/lib/libruby.3.2.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y ruby
 	fi
 }
 
@@ -626,6 +628,8 @@ sub_wasm(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+      $SUDO_CMD pkg install -y libwasmtime
 	fi
 }
 
@@ -649,6 +653,14 @@ sub_java(){
 		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y openjdk17
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DJAVA_HOME=/usr/local/openjdk17" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH2=/usr/local/openjdk17/include/freebsd" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_AWT_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -763,6 +775,13 @@ sub_cobol(){
 		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.dylib" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y gnucobol
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DCOBOL_EXECUTABLE=/usr/local/bin/cobc" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_INCLUDE_DIR=/usr/local/include" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_LIBRARY=/usr/local/lib/libcob.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -779,6 +798,8 @@ sub_go(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install go
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+      $SUDO_CMD pkg install -y go
 	fi
 }
 
@@ -797,6 +818,9 @@ sub_rust(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		$SUDO_CMD pkg install -y patchelf
 	fi
 }
 
@@ -921,6 +945,9 @@ sub_backtrace(){
 		echo "-DLIBDWARF_INCLUDE_DIR=${LIBDWARD_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# TODO: Apparently backward-cpp does not support FreeBSD
+		$SUDO_CMD pkg install -y libdwarf libelf libunwind
 	fi
 }
 
