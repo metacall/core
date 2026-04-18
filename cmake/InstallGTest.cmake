@@ -51,68 +51,53 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
 		GIT_TAG v${GTEST_VERSION}
+		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
 		CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-Dgtest_build_samples=OFF
 			-Dgtest_build_tests=OFF
 			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
 			-Dgtest_force_shared_crt=ON
 			-Dgtest_hide_internal_symbols=OFF
-			-DINSTALL_GTEST=OFF
 			-DBUILD_GMOCK=ON
 			-Dgmock_build_tests=OFF
 			${SANITIZER_FLAGS}
-		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
 		UPDATE_COMMAND ""
 		INSTALL_COMMAND ""
 		TEST_COMMAND ""
 	)
 
 	# Google Test include and binary directories
-	ExternalProject_Get_Property(google-test-depends source_dir binary_dir)
+	ExternalProject_Get_Property(google-test-depends source_dir install_dir)
 
-	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
-	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
+	# Create imported targets
+	add_library(gtest STATIC IMPORTED)
+	add_library(gmock STATIC IMPORTED)
 
-	if(MSVC)
-		set(GTEST_LIB_PREFIX "")
-		set(GTEST_LIB_SUFFIX "lib")
-		set(GTEST_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
-		set(GMOCK_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
-	else()
-		set(GTEST_LIB_PREFIX "lib")
-		set(GTEST_LIB_SUFFIX "a")
-		set(GTEST_LIBS_DIR "${binary_dir}/lib")
-		set(GMOCK_LIBS_DIR "${binary_dir}/lib")
-	endif()
-
-	# Define Paths
-	set(GTEST_INCLUDE_DIRS
-		"${GTEST_INCLUDE_DIR}"
-		"${GMOCK_INCLUDE_DIR}"
+	set_target_properties(gtest PROPERTIES
+		IMPORTED_LOCATION "${install_dir}/lib/libgtest.a"
+		INTERFACE_INCLUDE_DIRECTORIES "${install_dir}/include"
 	)
 
-	set(GTEST_LIBRARY
-		"${GTEST_LIBS_DIR}/${GTEST_LIB_PREFIX}gtest.${GTEST_LIB_SUFFIX}"
+	set_target_properties(gmock PROPERTIES
+		IMPORTED_LOCATION "${install_dir}/lib/libgmock.a"
+		INTERFACE_INCLUDE_DIRECTORIES "${install_dir}/include"
 	)
 
-	set(GMOCK_LIBRARY
-		"${GMOCK_LIBS_DIR}/${GTEST_LIB_PREFIX}gmock.${GTEST_LIB_SUFFIX}"
-	)
+	# Ensure build order (critical for Ninja)
+	add_dependencies(gtest google-test-depends)
+	add_dependencies(gmock google-test-depends)
 
-	set(GTEST_LIBRARIES
-		"${GTEST_LIBRARY}"
-		"${GMOCK_LIBRARY}"
-		"${CMAKE_THREAD_LIBS_INIT}"
-	)
-
+	set(GTEST_LIBRARY gtest)
+	set(GMOCK_LIBRARY gmock)
+	set(GTEST_LIBRARIES gtest gmock Threads::Threads)
+	set(GTEST_INCLUDE_DIRS "${install_dir}/include")
 	set(GTEST_FOUND TRUE)
 
 	mark_as_advanced(
 		GTEST_LIBRARY
 		GMOCK_LIBRARY
 		GTEST_LIBRARIES
-		GTEST_INCLUDE_DIR
-		GMOCK_INCLUDE_DIR
 		GTEST_INCLUDE_DIRS
 	)
 
