@@ -704,6 +704,11 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
 
+	/* TODO: Check here about search_paths and load them */
+	/* TODO: Check here about environment and load them */
+	/* TODO: Implement the search_paths and environment_variables generation in CMake */
+	/* Reference: https://github.com/metacall/core/issues/760 */
+
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
 

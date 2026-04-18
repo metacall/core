@@ -985,8 +985,8 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		type_id id = type_index(t);
 		type_id value_id = value_type_id((value)args[args_count]);
 
-		/* We can accept pointers if we pass to an array or null to a pointer, it is unsafe but it improves efficiency */
-		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY) && !(value_id == TYPE_NULL && id == TYPE_PTR))
+		/* We can accept pointers if we pass to an array and null to a pointer or array, it is unsafe but it improves efficiency */
+		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY) && !(value_id == TYPE_NULL && id == TYPE_PTR) && !(value_id == TYPE_NULL && id == TYPE_ARRAY))
 		{
 			return metacall::metacall_error_throw("C Loader Error", 0, "",
 				"Type mismatch in when calling %s in argument number %" PRIuS

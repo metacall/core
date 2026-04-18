@@ -51,6 +51,9 @@ TEST_F(metacall_c_metacall_test, DefaultConstructor)
 
 	EXPECT_EQ((int)0, strncmp(metacall_value_to_string(ret), "MetaCall", 8));
 
+	printf("%s\n", metacall_value_to_string(ret));
+	fflush(stdout);
+
 	/* Print inspect information */
 	{
 		size_t size = 0;
