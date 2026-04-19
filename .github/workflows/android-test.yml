@@ -146,4 +146,4 @@ jobs:
             pwd
             ls -laR
             cd build
-            ../tools/metacall-build.sh ${{ matrix.build }} tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }} tests
