@@ -143,5 +143,7 @@ jobs:
             adb shell "ls -la /data/local/tmp/metacall/"
 
             echo "Run Test with emulator"
+            pwd
+            ls -laR
             cd build
             ../tools/metacall-build.sh ${{ matrix.build }} tests
