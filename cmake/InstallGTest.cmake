@@ -47,28 +47,41 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		endif()
 	endif()
 
+	if(NOT MSVC)
+		set(GTEST_BYPRODUCTS
+			BUILD_BYPRODUCTS
+				<INSTALL_DIR>/lib/libgtest.a
+				<INSTALL_DIR>/lib/libgmock.a
+		)
+	endif()
+
 	# Import Google Test Framework
 	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
 		GIT_TAG v${GTEST_VERSION}
+
+		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+
 		CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-Dgtest_build_samples=OFF
 			-Dgtest_build_tests=OFF
 			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
 			-Dgtest_force_shared_crt=ON
 			-Dgtest_hide_internal_symbols=OFF
-			-DINSTALL_GTEST=OFF
 			-DBUILD_GMOCK=ON
 			-Dgmock_build_tests=OFF
+			-DINSTALL_GTEST=ON
 			${SANITIZER_FLAGS}
-		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+
+		${GTEST_BYPRODUCTS}
+
 		UPDATE_COMMAND ""
-		INSTALL_COMMAND ""
 		TEST_COMMAND ""
 	)
 
 	# Google Test include and binary directories
-	ExternalProject_Get_Property(google-test-depends source_dir binary_dir)
+	ExternalProject_Get_Property(google-test-depends source_dir binary_dir install_dir)
 
 	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
 	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
@@ -81,8 +94,8 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	else()
 		set(GTEST_LIB_PREFIX "lib")
 		set(GTEST_LIB_SUFFIX "a")
-		set(GTEST_LIBS_DIR "${binary_dir}/lib")
-		set(GMOCK_LIBS_DIR "${binary_dir}/lib")
+		set(GTEST_LIBS_DIR "${install_dir}/lib")
+		set(GMOCK_LIBS_DIR "${install_dir}/lib")
 	endif()
 
 	# Define Paths

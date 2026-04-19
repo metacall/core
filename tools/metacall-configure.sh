@@ -571,6 +571,7 @@ sub_configure() {
 			-DANDROID_ABI=${ANDROID_ABI} \
 			-DANDROID_PLATFORM=android-${ANDROID_API_LEVEL} \
 			-DANDROID_STL=c++_shared \
+			-DOPTION_BUILD_PLUGINS_BACKTRACE=OFF \
 			-Wno-dev \
 			-G Ninja"
 	fi
