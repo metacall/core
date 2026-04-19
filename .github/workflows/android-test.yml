@@ -137,10 +137,11 @@ jobs:
             set -exu
 
             echo "Pushing test files to emulator"
-            adb push build/ /data/local/tmp/metacall/
+            adb shell "mkdir -p $(pwd)/build"
+            adb push build/ $(pwd)/build
 
             echo "Files on emulator"
-            adb shell "ls -la /data/local/tmp/metacall/"
+            adb shell "ls -la $(pwd)/build"
 
             echo "Run Test with emulator"
             cd build && sh ../tools/metacall-build.sh ${{ matrix.build }} tests
