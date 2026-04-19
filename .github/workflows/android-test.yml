@@ -34,10 +34,10 @@ jobs:
       ANDROID_NDK_VERSION: "26.1.10909125"
 
     steps:
-      - name: Testing hack
-        run: |
-          sudo mkdir -p /data/local/tmp/metacall/
-          cd /data/local/tmp/metacall/
+      # - name: Testing hack
+      #   run: |
+      #     sudo mkdir -p /data/local/tmp/metacall/
+      #     cd /data/local/tmp/metacall/
 
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -75,6 +75,10 @@ jobs:
       - name: Build
         working-directory: ./build
         run: ../tools/metacall-build.sh ${{ matrix.build }}
+
+      - name: Testing hack
+        working-directory: ./build
+        run: ./serial-test
 
 
   #     - name: Upload build artifacts
