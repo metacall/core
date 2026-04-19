@@ -144,6 +144,8 @@ jobs:
 
             echo "Run Test with emulator"
             pwd
-            ls -laR
+            ls -la
+            ls -la ./tools/metacall-build.sh
             cd build
+            ls -la ../tools/metacall-build.sh
             sh ../tools/metacall-build.sh ${{ matrix.build }} tests
