@@ -88,8 +88,9 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	else()
 		set(GTEST_LIB_PREFIX "lib")
 		set(GTEST_LIB_SUFFIX "a")
-		set(GTEST_LIBS_DIR "${binary_dir}/lib")
-		set(GMOCK_LIBS_DIR "${binary_dir}/lib")
+		# TODO: Review install_dir
+		set(GTEST_LIBS_DIR "${install_dir}/lib")
+		set(GMOCK_LIBS_DIR "${install_dir}/lib")
 	endif()
 
 	# Define Paths
