@@ -47,6 +47,14 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		endif()
 	endif()
 
+	if(NOT MSVC)
+		set(GTEST_BYPRODUCTS
+			BUILD_BYPRODUCTS
+				<INSTALL_DIR>/lib/libgtest.a
+				<INSTALL_DIR>/lib/libgmock.a
+		)
+	endif()
+
 	# Import Google Test Framework
 	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
@@ -66,9 +74,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 			-DINSTALL_GTEST=ON
 			${SANITIZER_FLAGS}
 
-		BUILD_BYPRODUCTS
-			<INSTALL_DIR>/lib/libgtest.a
-			<INSTALL_DIR>/lib/libgmock.a
+		${GTEST_BYPRODUCTS}
 
 		UPDATE_COMMAND ""
 		TEST_COMMAND ""
@@ -88,7 +94,6 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	else()
 		set(GTEST_LIB_PREFIX "lib")
 		set(GTEST_LIB_SUFFIX "a")
-		# TODO: Review install_dir
 		set(GTEST_LIBS_DIR "${install_dir}/lib")
 		set(GMOCK_LIBS_DIR "${install_dir}/lib")
 	endif()
