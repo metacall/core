@@ -134,5 +134,14 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
+            set -exuo pipefail
+
+            echo "Pushing test files to emulator"
+            adb push build/ /data/local/tmp/metacall/
+
+            echo "Files on emulator"
+            adb shell "ls -la /data/local/tmp/metacall/"
+
+            echo "Run Test with emulator"
             cd build
             ../tools/metacall-build.sh ${{ matrix.build }} tests
