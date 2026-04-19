@@ -57,16 +57,13 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
 			-Dgtest_force_shared_crt=ON
 			-Dgtest_hide_internal_symbols=OFF
-			-DINSTALL_GTEST=ON
+			-DINSTALL_GTEST=OFF
 			-DBUILD_GMOCK=ON
 			-Dgmock_build_tests=OFF
 			${SANITIZER_FLAGS}
 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
-		# TODO: make byproducts crossplatform
-		BUILD_BYPRODUCTS
-			<INSTALL_DIR>/lib/libgtest.a
-			<INSTALL_DIR>/lib/libgmock.a
 		UPDATE_COMMAND ""
+		INSTALL_COMMAND ""
 		TEST_COMMAND ""
 	)
 

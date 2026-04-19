@@ -42,10 +42,10 @@ target_link_libraries(GTest
 
 if(GTEST_INSTALL)
 	add_dependencies(GTest google-test-depends)
+	set_target_properties(GTest PROPERTIES
+		IMPORTED_LOCATION "${GTEST_LIBRARIES}"
+	)
 endif()
-
-# TODO: Remove this
-return()
 
 # Set memory check configuration
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
