@@ -72,7 +72,11 @@ jobs:
 
       - name: Build
         working-directory: ./build
-        run: ../tools/metacall-build.sh ${{ matrix.build }} tests
+        run: ../tools/metacall-build.sh ${{ matrix.build }} tests || true
+
+      - name: List
+        working-directory: ./build
+        run: ls -laR && exit 1
 
   #     - name: Upload build artifacts
   #       uses: actions/upload-artifact@v4

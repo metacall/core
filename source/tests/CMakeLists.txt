@@ -44,6 +44,9 @@ if(GTEST_INSTALL)
 	add_dependencies(GTest google-test-depends)
 endif()
 
+# TODO: Remove this
+return()
+
 # Set memory check configuration
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
 
