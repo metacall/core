@@ -114,6 +114,12 @@ static PyObject *py_loader_impl_func_call(PyObject *self, PyObject *args, PyObje
 		PyObject *py_ret = py_loader_impl_value_to_capi(wrapped->impl, value_type_id(ret), ret);
 		py_loader_thread_release();
 		value_type_destroy(ret);
+
+		if (py_ret == NULL && !PyErr_Occurred())
+		{
+			PyErr_SetString(PyExc_RuntimeError, "Failed to convert return value from foreign function call");
+		}
+
 		return py_ret;
 	}
 
