@@ -77,8 +77,14 @@ jobs:
         run: ../tools/metacall-build.sh ${{ matrix.build }}
 
       - name: Testing hack
+        run: |
+          ls -la
+
+      - name: Testing hack
         working-directory: ./build
-        run: ./serial-test
+        run: |
+          ls -la
+          ./serial-test
 
 
   #     - name: Upload build artifacts
