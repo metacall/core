@@ -41,7 +41,7 @@ target_link_libraries(GTest
 )
 
 if(GTEST_INSTALL)
-	add_dependencies(GTest google-test-depends)
+	add_dependencies(GTest googletest)
 	set_target_properties(GTest PROPERTIES
 		IMPORTED_LOCATION "${GTEST_LIBRARIES}"
 		INTERFACE_INCLUDE_DIRECTORIES "${GTEST_INCLUDE_DIRS}"
