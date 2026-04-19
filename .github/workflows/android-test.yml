@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: Testing hack
         run: |
-          mkdir -p /data/local/tmp/metacall/
+          sudo mkdir -p /data/local/tmp/metacall/
           cd /data/local/tmp/metacall/
 
       - name: Check out the repository
