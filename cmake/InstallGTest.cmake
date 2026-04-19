@@ -35,55 +35,84 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		set(GTEST_DISABLE_PTHREADS OFF)
 	endif()
 
-	# # TODO:
-	# if(MSVC AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	# 	if(OPTION_BUILD_THREAD_SANITIZER)
-	# 		set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=thread -DCMAKE_C_FLAGS=/fsanitize=thread)
-	# 	endif()
-	# 	if(OPTION_BUILD_ADDRESS_SANITIZER)
-	# 		set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=address -DCMAKE_C_FLAGS=/fsanitize=address)
-	# 	endif()
-	# 	if(OPTION_BUILD_MEMORY_SANITIZER)
-	# 		set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="/fsanitize=memory /fsanitize=leak" -DCMAKE_C_FLAGS="/fsanitize=memory /fsanitize=leak")
-	# 	endif()
-	# endif()
+	if(MSVC AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		if(OPTION_BUILD_THREAD_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=thread -DCMAKE_C_FLAGS=/fsanitize=thread)
+		endif()
+		if(OPTION_BUILD_ADDRESS_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=address -DCMAKE_C_FLAGS=/fsanitize=address)
+		endif()
+		if(OPTION_BUILD_MEMORY_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="/fsanitize=memory /fsanitize=leak" -DCMAKE_C_FLAGS="/fsanitize=memory /fsanitize=leak")
+		endif()
+	endif()
 
-	include(FetchContent)
-
-	FetchContent_Declare(
-		googletest
-		URL https://github.com/google/googletest/archive/refs/tags/v${GTEST_VERSION}.zip
+	# Import Google Test Framework
+	ExternalProject_Add(google-test-depends
+		GIT_REPOSITORY https://github.com/google/googletest.git
+		GIT_TAG v${GTEST_VERSION}
+		CMAKE_ARGS
+			-Dgtest_build_samples=OFF
+			-Dgtest_build_tests=OFF
+			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
+			-Dgtest_force_shared_crt=ON
+			-Dgtest_hide_internal_symbols=OFF
+			-DINSTALL_GTEST=OFF
+			-DBUILD_GMOCK=ON
+			-Dgmock_build_tests=OFF
+			${SANITIZER_FLAGS}
+		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+		UPDATE_COMMAND ""
+		INSTALL_COMMAND ""
+		TEST_COMMAND ""
 	)
 
-	# Setup
-	set(gtest_build_samples OFF CACHE BOOL "" FORCE)
-	set(gtest_build_tests OFF CACHE BOOL "" FORCE)
-	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
-	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	set(gtest_hide_internal_symbols OFF CACHE BOOL "" FORCE)
-	set(gmock_build_tests OFF CACHE BOOL "" FORCE)
+	# Google Test include and binary directories
+	ExternalProject_Get_Property(google-test-depends source_dir binary_dir)
 
-	FetchContent_MakeAvailable(googletest)
+	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
+	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
 
-	# Include dirs
+	if(MSVC)
+		set(GTEST_LIB_PREFIX "")
+		set(GTEST_LIB_SUFFIX "lib")
+		set(GTEST_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
+		set(GMOCK_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
+	else()
+		set(GTEST_LIB_PREFIX "lib")
+		set(GTEST_LIB_SUFFIX "a")
+		set(GTEST_LIBS_DIR "${binary_dir}/lib")
+		set(GMOCK_LIBS_DIR "${binary_dir}/lib")
+	endif()
+
+	# Define Paths
 	set(GTEST_INCLUDE_DIRS
-		${gtest_SOURCE_DIR}/googletest/include
-		${gmock_SOURCE_DIR}/googlemock/include
+		"${GTEST_INCLUDE_DIR}"
+		"${GMOCK_INCLUDE_DIR}"
 	)
 
-	# Librarie
-	set(GTEST_LIBRARY GTest::gtest)
-	set(GMOCK_LIBRARY GTest::gmock)
-	set(GTEST_LIBRARIES
-		GTEST_LIBRARY
-		GMOCK_LIBRARY
+	set(GTEST_LIBRARY
+		"${GTEST_LIBS_DIR}/${GTEST_LIB_PREFIX}gtest.${GTEST_LIB_SUFFIX}"
 	)
+
+	set(GMOCK_LIBRARY
+		"${GMOCK_LIBS_DIR}/${GTEST_LIB_PREFIX}gmock.${GTEST_LIB_SUFFIX}"
+	)
+
+	set(GTEST_LIBRARIES
+		"${GTEST_LIBRARY}"
+		"${GMOCK_LIBRARY}"
+		"${CMAKE_THREAD_LIBS_INIT}"
+	)
+
 	set(GTEST_FOUND TRUE)
 
 	mark_as_advanced(
 		GTEST_LIBRARY
 		GMOCK_LIBRARY
 		GTEST_LIBRARIES
+		GTEST_INCLUDE_DIR
+		GMOCK_INCLUDE_DIR
 		GTEST_INCLUDE_DIRS
 	)
 
