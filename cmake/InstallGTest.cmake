@@ -153,8 +153,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	set(gtest_build_tests OFF CACHE BOOL "" FORCE)
 	set(gmock_build_tests OFF CACHE BOOL "" FORCE)
 	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
-	# TODO: Revert gtest_force_shared_crt to ON
-	set(gtest_force_shared_crt OFF CACHE BOOL "" FORCE)
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 	set(gtest_hide_internal_symbols OFF CACHE BOOL "" FORCE)
 
 	FetchContent_Declare(

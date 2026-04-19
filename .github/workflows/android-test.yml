@@ -66,17 +66,10 @@ jobs:
           ANDROID_ABI: ${{ matrix.abi }}
         run: ../tools/metacall-configure.sh ${{ matrix.build }} base android scripts tests
 
-      - name: List
-        working-directory: ./build
-        run: ls -laR
-
       - name: Build
         working-directory: ./build
-        run: ../tools/metacall-build.sh ${{ matrix.build }} tests || true
+        run: ../tools/metacall-build.sh ${{ matrix.build }}
 
-      - name: List
-        working-directory: ./build
-        run: ls -laR && exit 1
 
   #     - name: Upload build artifacts
   #       uses: actions/upload-artifact@v4
@@ -140,11 +133,5 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            echo "=== Pushing test files to emulator ==="
-            adb push build/ /data/local/tmp/metacall/
-
-            echo ""
-            echo "=== Files on emulator ==="
-            adb shell "ls -la /data/local/tmp/metacall/"
-
-            echo "TODO: Run CTest with emulator"
+            cd build
+            ../tools/metacall-build.sh ${{ matrix.build }} tests
