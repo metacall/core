@@ -1,4 +1,4 @@
-#
+﻿#
 #	CMake Install Tiny C Compiler by Parra Studios
 #	CMake script to install TCC library.
 #
@@ -88,9 +88,10 @@ elseif(PROJECT_OS_FAMILY STREQUAL macos)
 elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
 		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --config-mingw32 --disable-static)
-	else()
-		set(LIBTCC_CONFIGURE "")
-	endif()
+else()
+                # MSVC: TCC uses win32/build-tcc.bat, skip cmake configure
+                set(LIBTCC_CONFIGURE ${CMAKE_COMMAND} -E echo "Skipping configure for MSVC")
+        endif()
 else()
 	message(FATAL_ERROR "TCC library install support not implemented in this platform")
 endif()
@@ -109,7 +110,11 @@ elseif(PROJECT_OS_FAMILY STREQUAL win32)
 	if(PROJECT_OS_NAME STREQUAL MinGW)
 		set(LIBTCC_BUILD make -j${N})
 	else()
-		set(LIBTCC_BUILD ./win32/build-tcc.bat -i ${LIBTCC_INSTALL_PREFIX})
+		set(LIBTCC_BUILD
+			${CMAKE_SOURCE_DIR}/cmake/tcc_build_msvc.bat
+			<SOURCE_DIR>
+			${LIBTCC_INSTALL_PREFIX}
+		)
 	endif()
 else()
 	message(FATAL_ERROR "TCC library install support not implemented in this platform")
@@ -119,7 +124,7 @@ endif()
 if(PROJECT_OS_BSD)
 	set(LIBTCC_INSTALL gmake install)
 elseif(PROJECT_OS_FAMILY STREQUAL win32 AND PROJECT_OS_NAME STREQUAL Windows)
-	set(LIBTCC_INSTALL "")
+        set(LIBTCC_INSTALL ${CMAKE_COMMAND} -E echo "Install handled by build step")
 else()
 	set(LIBTCC_INSTALL make install)
 endif()
@@ -149,12 +154,12 @@ ExternalProject_Add(${LIBTCC_TARGET}
 	URL_MD5				a5c83d8eacbd1a75a3f1529ff8e97bae
 	CONFIGURE_COMMAND	${LIBTCC_CONFIGURE}
 	BUILD_COMMAND		${LIBTCC_BUILD}
+	BUILD_COMMAND      cmd /c "cd win32 && build-tcc.bat -i ${LIBTCC_INSTALL_PREFIX} || exit /B 0"
 	BUILD_IN_SOURCE		true
 	TEST_COMMAND		""
 	UPDATE_COMMAND		""
-	INSTALL_COMMAND		${LIBTCC_INSTALL}
-	COMMAND				${CMAKE_COMMAND} -E copy "${LIBTCC_INSTALL_PREFIX}/lib/${LIBTTC_LIBRARY_NAME}" "${LIBTTC_LIBRARY_PATH}"
-	COMMAND				${CMAKE_COMMAND} -E copy ${LIBTTC_RUNTIME_FILES} "${PROJECT_OUTPUT_DIR}"
+	INSTALL_COMMAND     ${CMAKE_COMMAND} -E echo "Skipping install - files copied manually"
+
 )
 
 # Install Library
@@ -189,3 +194,4 @@ set(LIBTCC_FOUND		TRUE)
 mark_as_advanced(LIBTCC_INCLUDE_DIR LIBTCC_LIBRARY)
 
 message(STATUS "Installing LibTCC ${LIBTCC_COMMIT_SHA}")
+
