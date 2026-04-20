@@ -1283,11 +1283,27 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 			}
 
 			if (loader_impl_handle_name(manager, paths[0], path) > 1 && loader_impl_get_handle(impl, path) != NULL)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Load from file handle failed, handle with name %s already loaded", path);
+            {
+				if (handle_ptr !=NULL && *handle_ptr == NULL) {
+					*handle_ptr = loader_impl_get_handle(impl, path);
+				} else if (handle_ptr !=NULL && *handle_ptr !=NULL) {
+					loader_handle_impl existing = (loader_handle_impl)loader_impl_get_handle(impl, path);
+					loader_handle_impl target = (loader_handle_impl)*handle_ptr;
+					char *duplicated_key = NULL;
 
-				return 1;
-			}
+					if (context_contains(existing->ctx, target->ctx, &duplicated_key) ==0 && duplicated_key !=NULL) {
+						log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, existing->path);
+						return 1;
+					}
+					
+					if (context_append(target->ctx, existing->ctx) != 0) {
+						return 1;
+					}
+					vector_push_back_var(existing->populated_handles, target);
+				}
+				return 0;
+				
+            }
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
@@ -1348,16 +1364,30 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 			if (loader_impl_load_from_memory_name(impl, name, buffer, size) != 0)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Load from memory handle failed, name could not be generated correctly");
-
-				return 1;
+				return 0;
 			}
 
 			if (loader_impl_get_handle(impl, name) != NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Load from memory handle failed, handle with name %s already loaded", name);
+				if (handle_ptr !=NULL && *handle_ptr == NULL) {
+					*handle_ptr = loader_impl_get_handle(impl, name);
+				} else if (handle_ptr !=NULL && *handle_ptr !=NULL) {
+					loader_handle_impl existing = (loader_handle_impl)loader_impl_get_handle(impl, name);
+					loader_handle_impl target = (loader_handle_impl)*handle_ptr;
+					char *duplicated_key = NULL;
 
-				return 1;
+					if (context_contains(existing->ctx, target->ctx, &duplicated_key) ==0 && duplicated_key !=NULL) {
+						log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, existing->path);
+						return 1;
+					}
+					
+					if (context_append(target->ctx, existing->ctx) != 0) {
+						return 1;
+					}
+					vector_push_back_var(existing->populated_handles, target);
+				}
+				return 0;
+				
 			}
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
@@ -1394,9 +1424,25 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 			if (loader_impl_get_handle(impl, subpath) != NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Load from package handle failed, handle with name %s already loaded", subpath);
+				if (handle_ptr !=NULL && *handle_ptr == NULL) {
+					*handle_ptr = loader_impl_get_handle(impl, subpath);
+				} else if (handle_ptr !=NULL && *handle_ptr !=NULL) {
+					loader_handle_impl existing = (loader_handle_impl)loader_impl_get_handle(impl, subpath);
+					loader_handle_impl target = (loader_handle_impl)*handle_ptr;
+					char *duplicated_key = NULL;
 
-				return 1;
+					if (context_contains(existing->ctx, target->ctx, &duplicated_key) ==0 && duplicated_key !=NULL) {
+						log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, existing->path);
+						return 1;
+					}
+					
+					if (context_append(target->ctx, existing->ctx) != 0) {
+						return 1;
+					}
+					vector_push_back_var(existing->populated_handles, target);
+				}
+				return 0;
+				
 			}
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
@@ -1494,9 +1540,25 @@ int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl 
 
 	if (loader_impl_handle_name(manager, name, path) > 1 && loader_impl_get_handle(impl, path) != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Initialize handle failed, handle with name %s already loaded", path);
+		if (handle_ptr !=NULL && *handle_ptr == NULL) {
+			*handle_ptr = loader_impl_get_handle(impl, path);
+		} else if (handle_ptr !=NULL && *handle_ptr !=NULL) {
+			loader_handle_impl existing = (loader_handle_impl)loader_impl_get_handle(impl, path);
+			loader_handle_impl target = (loader_handle_impl)*handle_ptr;
+			char *duplicated_key = NULL;
 
-		return 1;
+			if (context_contains(existing->ctx, target->ctx, &duplicated_key) ==0 && duplicated_key !=NULL) {
+				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, existing->path);
+				return 1;
+			}
+			
+			if (context_append(target->ctx, existing->ctx) != 0) {
+				return 1;
+			}
+			vector_push_back_var(existing->populated_handles, target);
+		}
+		return 0;
+		
 	}
 
 	init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
