@@ -133,6 +133,7 @@ target_compile_features(${target}
 target_link_options(${target}
 	PRIVATE
 	-rdynamic
+	-Wl,-z,lazy
 	${DEFAULT_LINKER_OPTIONS}
 )
 
