@@ -1,9 +1,6 @@
-#include <stdbool.h>
-#include <stdio.h>
-
-bool ret_bool()
+int ret_bool()
 {
-	return true;
+	return 1;
 }
 
 char sum_char(char a, char b)

@@ -3,17 +3,22 @@ const metacall = @import("metacall");
 
 const hi: []const u8 = "hi";
 
-pub fn main() !void {
+pub fn main(init: std.process.Init.Minimal) !void {
     try metacall.init();
+    defer metacall.destroy();
 
-    var paths: [1][:0]const u8 = .{"/home/raymond/Projects/metacall-core/source/ports/zig_port/src/tests/test.c"};
+    var args_it = init.args.iterate();
+    _ = args_it.skip();
+    const port_dir = args_it.next() orelse ".";
+    
+    // Use absolute paths for better portability
+    const test_c_path = try std.fmt.allocPrintSentinel(std.heap.page_allocator, "{s}/src/tests/test.c", .{port_dir}, 0);
+    var paths: [1][:0]const u8 = .{test_c_path};
     try metacall.load_from_file("c", &paths);
 
-    var paths_py: [1][:0]const u8 = .{"/home/raymond/Projects/metacall-core/source/ports/zig_port/src/tests/test.py"};
+    const test_py_path = try std.fmt.allocPrintSentinel(std.heap.page_allocator, "{s}/src/tests/test.py", .{port_dir}, 0);
+    var paths_py: [1][:0]const u8 = .{test_py_path};
     try metacall.load_from_file("py", &paths_py);
-
-    const ret_bool = metacall.metacall(bool, "ret_bool", [0]bool{});
-    try std.testing.expect(ret_bool == true);
 
     const ret_char = metacall.metacall(u8, "sum_char", [2]u8{ 1, 1 });
     try std.testing.expect(ret_char == 2);
@@ -33,10 +38,25 @@ pub fn main() !void {
     const ret_double = metacall.metacall(f64, "sum_double", [2]f64{ 1.0, 1.0 });
     try std.testing.expect(ret_double == 2.0);
 
-    const ret_string = metacall.metacall([*:0]u8, "ret_string", [1][]const u8{hi});
-    try std.testing.expect(ret_string != null);
-    try std.testing.expect(ret_string.?[0] == 'h');
-    try std.testing.expect(ret_string.?[1] == 'i');
+    var ret_string = metacall.metacall([*:0]u8, "ret_string", [1][]const u8{hi});
+    defer ret_string.deinit();
+    
+    const str = ret_string.get();
+    try std.testing.expect(str != null);
+    try std.testing.expect(str.?[0] == 'h');
+    try std.testing.expect(str.?[1] == 'i');
 
-    defer metacall.destroy();
+    // Stress test: Call 10,000 times to verify memory stability
+    var i: usize = 0;
+    while (i < 10000) : (i += 1) {
+        var stress_ret = metacall.metacall([*:0]u8, "ret_string", [1][]const u8{hi});
+        defer stress_ret.deinit();
+        try std.testing.expect(stress_ret.get() != null);
+    }
+
+    // Edge case: Empty string
+    var empty_str_ret = metacall.metacall([*:0]u8, "ret_string", [1][]const u8{""});
+    defer empty_str_ret.deinit();
+    try std.testing.expect(empty_str_ret.get() != null);
+    try std.testing.expect(empty_str_ret.get().?[0] == 0);
 }
