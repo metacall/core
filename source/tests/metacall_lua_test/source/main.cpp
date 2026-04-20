@@ -1,10 +1,9 @@
 /*
  *	Loader Library by Parra Studios
- *	A plugin for loading python code at run-time into a process.
+ *	A plugin for loading lua code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
- *
- *	Licensed under the Apache License, Version 2.0 (the "License");
+ *  Licensed under the Apache License, Version 2.0(the "License");
  *	you may not use this file except in compliance with the License.
  *	You may obtain a copy of the License at
  *

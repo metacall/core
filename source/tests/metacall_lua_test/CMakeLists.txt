@@ -52,6 +52,12 @@ add_executable(${target}
 	${sources}
 )
 
+configure_file(
+	${source_path}/test.lua
+	${LOADER_SCRIPT_PATH}/test.lua
+	COPYONLY
+)
+
 # Create namespaced alias
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
@@ -95,6 +101,7 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+	LUA_LOADER_TEST_SCRIPT_ABSOLUTE_PATH="${LOADER_SCRIPT_PATH}/test.lua"
 )
 
 #
