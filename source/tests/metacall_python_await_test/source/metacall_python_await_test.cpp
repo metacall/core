@@ -41,6 +41,7 @@ TEST_F(metacall_python_await_test, DefaultConstructor)
 		static const char buffer[] =
 			"import asyncio\n"
 			"import sys\n"
+			"import threading\n"
 			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
 			"from metacall import metacall_load_from_memory, metacall_await\n"
 			"script = \"\"\"\n"

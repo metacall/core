@@ -127,6 +127,124 @@ def metacall_load_from_memory(tag, buffer):
 def metacall(function_name, *args):
 	return module.metacall(function_name, *args)
 
+# Await invocation - returns a Future
+def metacall_await(function_name, *args):
+	"""
+	Call an async function from another runtime and return a Future.
+
+	The returned Future can be awaited in async context:
+		result = await metacall_await('async_func', arg1, arg2)
+
+	Args:
+		function_name: Name of the async function to call
+		*args: Arguments to pass to the function
+
+	Returns:
+		A Future that resolves to the function's return value
+	"""
+	return module.metacall_await(function_name, *args)
+
+
+class MetaCallFunction:
+	"""
+	Wrapper for MetaCall functions that supports both sync and async calls.
+
+	For synchronous functions:
+		func = MetaCallFunction('my_sync_func', is_async=False)
+		result = func(arg1, arg2)
+
+	For asynchronous functions:
+		func = MetaCallFunction('my_async_func', is_async=True)
+		result = await func(arg1, arg2)
+
+	The wrapper can also be called with explicit methods:
+		result = func.call(arg1, arg2)           # Sync call
+		result = await func.async_call(arg1, arg2)  # Async call
+	"""
+
+	def __init__(self, name, is_async=False):
+		"""
+		Initialize a MetaCallFunction wrapper.
+
+		Args:
+			name: The name of the function in MetaCall
+			is_async: Whether the function is asynchronous
+		"""
+		self._name = name
+		self._is_async = is_async
+		self.__name__ = name
+		self.__qualname__ = name
+		self.__doc__ = f"MetaCall function '{name}' ({'async' if is_async else 'sync'})"
+
+	@property
+	def name(self):
+		"""Get the function name."""
+		return self._name
+
+	@property
+	def is_async(self):
+		"""Check if the function is asynchronous."""
+		return self._is_async
+
+	def __call__(self, *args):
+		"""
+		Call the function.
+
+		For async functions, returns a coroutine that must be awaited.
+		For sync functions, returns the result directly.
+		"""
+		if self._is_async:
+			return self._async_call_impl(*args)
+		else:
+			return metacall(self._name, *args)
+
+	def call(self, *args):
+		"""
+		Synchronous call to the function.
+
+		For async functions, this will block until the result is available.
+		"""
+		if self._is_async:
+			import asyncio
+			future = module.metacall_await(self._name, *args)
+			# If we're in an event loop, wrap the future
+			try:
+				loop = asyncio.get_running_loop()
+				# We're in an async context, return awaitable
+				return asyncio.wrap_future(future, loop=loop)
+			except RuntimeError:
+				# No running loop, block on the future
+				return future.result()
+		else:
+			return metacall(self._name, *args)
+
+	async def _async_call_impl(self, *args):
+		"""Internal async implementation."""
+		import asyncio
+		future = module.metacall_await(self._name, *args)
+		return await asyncio.wrap_future(future)
+
+	async def async_call(self, *args):
+		"""
+		Asynchronous call to the function.
+
+		Can be used for both sync and async functions.
+		For sync functions, the call is wrapped in an executor.
+		"""
+		if self._is_async:
+			return await self._async_call_impl(*args)
+		else:
+			import asyncio
+			loop = asyncio.get_running_loop()
+			return await loop.run_in_executor(None, lambda: metacall(self._name, *args))
+
+	def __repr__(self):
+		return f"MetaCallFunction('{self._name}', is_async={self._is_async})"
+
+	def __str__(self):
+		return f"<metacall function '{self._name}' ({'async' if self._is_async else 'sync'})>"
+
+
 # Wrap metacall inspect and transform the json string into a dict
 def metacall_inspect():
 	data = module.metacall_inspect()
@@ -174,12 +292,19 @@ except NameError as e:
 def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 
 	def find_handle(handle_name):
+		"""Find handle and create wrappers with async detection."""
 		metadata = metacall_inspect()
 
 		for loader in metadata.keys():
 			for handle in metadata[loader]:
 				if handle['name'] == handle_name:
-					return dict(functools.reduce(lambda symbols, func: {**symbols, func['name']: lambda *args: metacall(func['name'], *args) }, handle['scope']['funcs'], {}))
+					symbols = {}
+					for func in handle['scope']['funcs']:
+						func_name = func['name']
+						# Check for async property in function metadata
+						is_async = func.get('async', False)
+						symbols[func_name] = MetaCallFunction(func_name, is_async=is_async)
+					return symbols
 
 		return None
 

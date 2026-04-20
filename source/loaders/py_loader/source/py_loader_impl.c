@@ -1989,6 +1989,16 @@ error_after_asyncio_module:
 	return 1;
 }
 
+PyObject *py_loader_impl_get_asyncio_loop(loader_impl_py py_impl)
+{
+	return py_impl->asyncio_loop;
+}
+
+PyObject *py_loader_impl_get_thread_background_module(loader_impl_py py_impl)
+{
+	return py_impl->thread_background_module;
+}
+
 int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl)
 {
 	(void)impl;
