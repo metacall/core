@@ -50,3 +50,4 @@ jobs:
             mkdir -p build && cd build
             sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python ${{ matrix.extra-loaders }} ruby go java cobol file rpc tests
             sh ../tools/metacall-build.sh ${{ matrix.build }} ${{ matrix.extra-loaders }} ruby go java cobol file rpc tests
+            readelf -d detour-test || true 
