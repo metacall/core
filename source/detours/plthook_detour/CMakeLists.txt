@@ -14,8 +14,8 @@ if(NOT PLTHook_SOURCE_DIR)
 	set(PLTHook_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/plthook")
 
 	FetchContent_Declare(PLTHook
-		GIT_REPOSITORY https://github.com/metacall/plthook.git
-		GIT_TAG master
+		GIT_REPOSITORY https://github.com/yug105/plthook.git
+		GIT_TAG debug/detour-release-test
 		SOURCE_DIR ${PLTHook_SOURCE_DIR}
 	)
 
