@@ -32,8 +32,8 @@
 
 #include <log/log.h>
 
-#include <adt/adt_vector.h>
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
 
 #include <portability/portability_path.h>
 
@@ -666,14 +666,16 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 			/* Get parameter count using debug.getinfo */
 			int nparams = 0;
+			int isvararg = 0;
+			int getinfo_top = lua_gettop(L);
 			lua_getglobal(L, "debug");
 			if (lua_istable(L, -1))
 			{
 				lua_getfield(L, -1, "getinfo");
 				if (lua_isfunction(L, -1))
 				{
-					lua_pushvalue(L, -4);	/* Push the function (now at -4 due to debug + getinfo) */
-					lua_pushstring(L, "u"); /* 'u' for nups, 'a' for nparams in Lua 5.2+ */
+					lua_pushvalue(L, -3);	/* Push the function */
+					lua_pushstring(L, "u"); /* 'u' for nups in Lua 5.1/LuaJIT */
 					if (lua_pcall(L, 2, 1, 0) == 0 && lua_istable(L, -1))
 					{
 						lua_getfield(L, -1, "nparams");
@@ -682,18 +684,30 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 							nparams = (int)lua_tointeger(L, -1);
 						}
 						lua_pop(L, 1);
+
+						/* Check if function is variadic */
+						lua_getfield(L, -1, "isvararg");
+						if (lua_isboolean(L, -1))
+						{
+							isvararg = lua_toboolean(L, -1);
+						}
+						lua_pop(L, 1);
 					}
-					else
-					{
-						lua_pop(L, 1); /* Pop error or nil result */
-					}
+					/* Pop result table or error */
+					lua_pop(L, 1);
 				}
 				else
 				{
 					lua_pop(L, 1); /* Pop getinfo if not a function */
 				}
 			}
-			lua_pop(L, 1); /* Pop debug table */
+			lua_pop(L, 1);				/* Pop debug table */
+			lua_settop(L, getinfo_top); /* Restore stack to known state */
+
+			if (isvararg)
+			{
+				nparams = 64; /* Allow up to 64 arguments for variadic functions */
+			}
 
 			/* Set signature parameters */
 			for (int i = 0; i < nparams; i++)
@@ -709,7 +723,6 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 				lua_settop(L, top);
 				return 1;
 			}
-
 		}
 		lua_pop(L, 1);
 	}

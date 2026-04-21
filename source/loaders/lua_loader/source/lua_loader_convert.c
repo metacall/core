@@ -40,9 +40,30 @@ static int loader_impl_lua_is_array(lua_State *L, int index)
 {
 	int is_array = 1;
 	size_t len = 0;
+	size_t table_len;
 	int top = lua_gettop(L);
 
 	lua_pushvalue(L, index);
+
+	/* Empty tables should be maps */
+	table_len = (size_t)lua_objlen(L, -1);
+	if (table_len == 0)
+	{
+		int has_entries = 0;
+		lua_pushnil(L);
+		if (lua_next(L, -2) != 0)
+		{
+			has_entries = 1;
+			lua_pop(L, 2);
+		}
+		lua_settop(L, top);
+		/* Empty table -> map (return 0/false), table with only hash entries -> let the loop decide */
+		if (!has_entries)
+		{
+			return 0;
+		}
+		/* Has hash entries only, continue with loop to verify */
+	}
 
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0)
@@ -63,6 +84,11 @@ static int loader_impl_lua_is_array(lua_State *L, int index)
 		}
 
 		lua_pop(L, 1);
+	}
+
+	if (is_array && len != table_len)
+	{
+		is_array = 0;
 	}
 
 	lua_settop(L, top);
