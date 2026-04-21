@@ -50,9 +50,29 @@ function node_loader_trampoline_is_callable(value) {
 }
 
 function node_loader_trampoline_is_valid_symbol(node) {
-	// TODO: Enable more function types
 	return node.type === 'FunctionDeclaration'
-	 || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression';
+		|| node.type === 'FunctionExpression'
+		|| node.type === 'ArrowFunctionExpression'
+		|| node.type === 'ClassDeclaration'
+		|| node.type === 'ClassExpression';
+}
+
+function node_loader_trampoline_is_class(value) {
+	if (typeof value !== 'function') {
+		return false;
+	}
+
+	try {
+		const str = value.toString();
+		// ES6 classes start with "class " when converted to string
+		if (str.startsWith('class ') || str.startsWith('class{')) {
+			return true;
+		}
+	} catch (e) {
+		// Some native functions may throw
+	}
+
+	return false;
 }
 
 function node_loader_trampoline_module(m) {
@@ -308,6 +328,224 @@ function node_loader_trampoline_discover_function(func) {
 	}
 }
 
+function node_loader_trampoline_discover_klass_constructors(classNode) {
+	const constructors = [];
+
+	if (!classNode.body || !classNode.body.body) {
+		// Default constructor
+		constructors.push({
+			name: 'constructor',
+			signature: [],
+			paramCount: 0
+		});
+		return constructors;
+	}
+
+	const constructor = classNode.body.body.find(
+		m => m.type === 'MethodDefinition' && m.kind === 'constructor'
+	);
+
+	if (constructor) {
+		const params = node_loader_trampoline_discover_arguments(constructor.value);
+		constructors.push({
+			name: 'constructor',
+			signature: params,
+			paramCount: params.length
+		});
+	} else {
+		// Default constructor
+		constructors.push({
+			name: 'constructor',
+			signature: [],
+			paramCount: 0
+		});
+	}
+
+	return constructors;
+}
+
+function node_loader_trampoline_discover_klass_methods(classNode, klass) {
+	const methods = {};
+
+	if (!classNode.body || !classNode.body.body) {
+		return methods;
+	}
+
+	for (const member of classNode.body.body) {
+		// Handle MethodDefinition nodes
+		if (member.type === 'MethodDefinition') {
+			// Skip constructor - handled separately
+			if (member.kind === 'constructor') {
+				continue;
+			}
+
+			const methodName = member.key.type === 'Identifier'
+				? member.key.name
+				: (member.key.value || String(member.key.name));
+
+			const funcNode = member.value;
+			const params = node_loader_trampoline_discover_arguments(funcNode);
+
+			// Get the actual function reference
+			let ptr = null;
+			if (member.static) {
+				ptr = klass[methodName];
+			} else {
+				ptr = klass.prototype ? klass.prototype[methodName] : null;
+			}
+
+			methods[methodName] = {
+				ptr: ptr,
+				name: methodName,
+				signature: params,
+				async: funcNode.async || false,
+				static: member.static || false,
+				kind: member.kind
+			};
+		}
+	}
+
+	return methods;
+}
+
+function node_loader_trampoline_discover_klass_static_attributes(classNode, klass) {
+	const attributes = {};
+
+	if (!classNode.body || !classNode.body.body) {
+		return attributes;
+	}
+
+	for (const member of classNode.body.body) {
+		// Handle PropertyDefinition (ES2022 class fields)
+		if (member.type === 'PropertyDefinition' && member.static) {
+			// Skip if it's a method (arrow function assigned to property)
+			if (member.value && member.value.type === 'ArrowFunctionExpression') {
+				continue;
+			}
+
+			const attrName = member.key.type === 'Identifier'
+				? member.key.name
+				: (member.key.value || String(member.key.name));
+
+			attributes[attrName] = {
+				name: attrName,
+				static: true
+			};
+		}
+	}
+
+	// Also check runtime properties on the class itself
+	const ownProps = Object.getOwnPropertyNames(klass);
+	for (const prop of ownProps) {
+		if (prop === 'prototype' || prop === 'length' || prop === 'name') {
+			continue;
+		}
+		const descriptor = Object.getOwnPropertyDescriptor(klass, prop);
+		if (descriptor && typeof descriptor.value !== 'function') {
+			if (!attributes[prop]) {
+				attributes[prop] = {
+					name: prop,
+					static: true
+				};
+			}
+		}
+	}
+
+	return attributes;
+}
+
+function node_loader_trampoline_discover_klass_instance_attributes(classNode) {
+	const attributes = {};
+
+	if (!classNode.body || !classNode.body.body) {
+		return attributes;
+	}
+
+	// Find constructor and look for this.xxx = ... assignments
+	const constructor = classNode.body.body.find(
+		m => m.type === 'MethodDefinition' && m.kind === 'constructor'
+	);
+
+	if (constructor && constructor.value && constructor.value.body && constructor.value.body.body) {
+		for (const stmt of constructor.value.body.body) {
+			if (stmt.type === 'ExpressionStatement' &&
+				stmt.expression.type === 'AssignmentExpression' &&
+				stmt.expression.left.type === 'MemberExpression' &&
+				stmt.expression.left.object.type === 'ThisExpression' &&
+				stmt.expression.left.property.type === 'Identifier') {
+
+				const attrName = stmt.expression.left.property.name;
+				attributes[attrName] = {
+					name: attrName,
+					static: false
+				};
+			}
+		}
+	}
+
+	// Also check for class field definitions (non-static PropertyDefinition)
+	for (const member of classNode.body.body) {
+		if (member.type === 'PropertyDefinition' && !member.static) {
+			if (member.value && member.value.type === 'ArrowFunctionExpression') {
+				continue;
+			}
+
+			const attrName = member.key.type === 'Identifier'
+				? member.key.name
+				: (member.key.value || String(member.key.name));
+
+			attributes[attrName] = {
+				name: attrName,
+				static: false
+			};
+		}
+	}
+
+	return attributes;
+}
+
+function node_loader_trampoline_discover_klass(klass) {
+	try {
+		const str = klass.toString();
+		const ast = espree.parse(`(${str})`, { ecmaVersion: 14 });
+		const node = ast.body[0].type === 'ExpressionStatement'
+			? ast.body[0].expression
+			: ast.body[0];
+
+		if (node.type !== 'ClassExpression' && node.type !== 'ClassDeclaration') {
+			return undefined;
+		}
+
+		// Extract class name
+		const className = node.id ? node.id.name : klass.name;
+
+		// Discover constructors
+		const constructors = node_loader_trampoline_discover_klass_constructors(node);
+
+		// Discover own methods (with static detection via espree)
+		const methods = node_loader_trampoline_discover_klass_methods(node, klass);
+
+		// Discover static attributes
+		const staticAttributes = node_loader_trampoline_discover_klass_static_attributes(node, klass);
+
+		// Discover instance attributes
+		const instanceAttributes = node_loader_trampoline_discover_klass_instance_attributes(node);
+
+		return {
+			ptr: klass,
+			type: 'class',
+			name: className,
+			constructors: constructors,
+			methods: methods,
+			static_attributes: staticAttributes,
+			instance_attributes: instanceAttributes
+		};
+	} catch (ex) {
+		console.log(`Exception while parsing class '${klass?.name || klass}'`, ex);
+		return undefined;
+	}
+}
+
 function node_loader_trampoline_discover(handle) {
 	const discover = {};
 
@@ -320,11 +558,21 @@ function node_loader_trampoline_discover(handle) {
 
 			for (let j = 0; j < keys.length; ++j) {
 				const key = keys[j];
-				const func = exports[key];
-				const descriptor = node_loader_trampoline_discover_function(func);
+				const exported = exports[key];
 
-				if (descriptor !== undefined) {
-					discover[key] = descriptor;
+				// Check if it's a class first (before function check since classes are also functions)
+				if (node_loader_trampoline_is_class(exported)) {
+					const classDescriptor = node_loader_trampoline_discover_klass(exported);
+					if (classDescriptor !== undefined) {
+						discover[key] = classDescriptor;
+					}
+				}
+				// Check if it's a regular function
+				else if (node_loader_trampoline_is_callable(exported)) {
+					const funcDescriptor = node_loader_trampoline_discover_function(exported);
+					if (funcDescriptor !== undefined) {
+						discover[key] = funcDescriptor;
+					}
 				}
 			}
 		}
