@@ -300,6 +300,7 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		const char *path = paths[iterator];
+		loader_path join_path;
 		int loaded = 0;
 
 		/* Try to load directly first (absolute or relative to CWD) */
@@ -325,7 +326,6 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 			for (size_t i = 0; i < path_count; ++i)
 			{
 				char **exec_path = vector_at(lua_impl->execution_paths, i);
-				loader_path join_path;
 				size_t join_size = portability_path_join(*exec_path, strnlen(*exec_path, LOADER_PATH_SIZE) + 1,
 					path, strnlen(path, LOADER_PATH_SIZE) + 1, join_path, LOADER_PATH_SIZE);
 
