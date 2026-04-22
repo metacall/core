@@ -53,10 +53,27 @@
 
 2. **NaN/Infinity**: Converted to MetaCall doubles as per LuaJIT behavior
 
-3. **Recursion Limit**: Hardcoded at 10 levels in lua_loader_convert.c
+3. **Recursion Limit**: Hardcoded at 1000 levels in lua_loader_convert.c
 
 4. **Handle Isolation**: Each load creates a separate environment table, preventing variable leakage
 
-5. **Type Coercion**: Lua's dynamic typing is preserved; integers that fit in 32-bit become METACALL_INT, larger numbers become METACALL_DOUBLE
+5. **Type Coercion**: Lua's dynamic typing is preserved; integral numbers become METACALL_LONG, non-integral numbers become METACALL_DOUBLE. On the reverse direction (MetaCall to Lua), all integer types map to lua_pushinteger and all float types map to lua_pushnumber.
 
+## Implementation Details
+
+### Number Type Detection (Lua -> MetaCall)
+
+The Lua loader handles different Lua versions appropriately:
+
+- **Lua 5.3+**: Uses `lua_isinteger()` to detect native integer type. Integers are stored as `METACALL_LONG`, floats as `METACALL_DOUBLE`.
+
+- **Lua 5.1/5.2/LuaJIT**: These versions store all numbers as `lua_Number` (double). The loader checks if a number:
+  1. Is finite (not NaN or infinity)
+  2. Is within safe double integer range (2^53, approximately ±9e15) to avoid precision loss
+  3. Fits within platform `LONG_MIN` to `LONG_MAX` range
+  4. Has no fractional part (`n == floor(n)`)
+
+  If all conditions are met, the value is stored as `METACALL_LONG`; otherwise as `METACALL_DOUBLE`.
+
+  **Note**: Values outside the safe integer range (2^53) are stored as `METACALL_DOUBLE` even if they are whole numbers, because double cannot exactly represent integers beyond this range on 64-bit platforms.
 These tests complement the existing `metacall_lua_test` by focusing on boundary conditions and error scenarios rather than basic functionality.

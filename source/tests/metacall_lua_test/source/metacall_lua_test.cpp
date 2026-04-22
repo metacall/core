@@ -61,18 +61,18 @@ TEST_F(metacall_lua_test, DefaultConstructor)
 
 			EXPECT_NE((void *)NULL, (void *)ret);
 
-			/* Lua returns integers for whole numbers, check for either int or double */
-			if (metacall_value_id(ret) == METACALL_INT)
+			/* Lua returns integers as long, check for long */
+			if (metacall_value_id(ret) == METACALL_LONG)
 			{
-				EXPECT_EQ((int)metacall_value_to_int(ret), (int)3);
+				EXPECT_EQ((long)3, (long)metacall_value_to_long(ret));
 			}
 			else if (metacall_value_id(ret) == METACALL_DOUBLE)
 			{
-				EXPECT_EQ((double)metacall_value_to_double(ret), (double)3.0);
+				EXPECT_EQ((double)3.0, (double)metacall_value_to_double(ret));
 			}
 			else if (metacall_value_id(ret) == METACALL_FLOAT)
 			{
-				EXPECT_EQ((float)metacall_value_to_float(ret), (float)3.0f);
+				EXPECT_EQ((float)3.0f, (float)metacall_value_to_float(ret));
 			}
 
 			metacall_value_destroy(ret);
@@ -94,14 +94,14 @@ TEST_F(metacall_lua_test, DefaultConstructor)
 
 			EXPECT_NE((void *)NULL, (void *)ret);
 
-			/* Lua returns numbers as int or double depending on value */
-			if (metacall_value_id(ret) == METACALL_INT)
+			/* Lua returns numbers as long or double depending on value */
+			if (metacall_value_id(ret) == METACALL_LONG)
 			{
-				EXPECT_EQ((int)metacall_value_to_int(ret), (int)6);
+				EXPECT_EQ((long)6, (long)metacall_value_to_long(ret));
 			}
 			else if (metacall_value_id(ret) == METACALL_DOUBLE)
 			{
-				EXPECT_EQ((double)metacall_value_to_double(ret), (double)6.0);
+				EXPECT_EQ((double)6.0, (double)metacall_value_to_double(ret));
 			}
 
 			metacall_value_destroy(ret);
@@ -203,14 +203,14 @@ TEST_F(metacall_lua_test, DefaultConstructor)
 			void *ret_sum = metacallv_s("sum_array", array_args, 1);
 			EXPECT_NE((void *)NULL, (void *)ret_sum);
 
-			/* Lua returns numbers as int or double depending on value */
-			if (metacall_value_id(ret_sum) == METACALL_INT)
+			/* Lua returns numbers as long or double depending on value */
+			if (metacall_value_id(ret_sum) == METACALL_LONG)
 			{
-				EXPECT_EQ((int)metacall_value_to_int(ret_sum), (int)6);
+				EXPECT_EQ((long)6, (long)metacall_value_to_long(ret_sum));
 			}
 			else if (metacall_value_id(ret_sum) == METACALL_DOUBLE)
 			{
-				EXPECT_EQ((double)metacall_value_to_double(ret_sum), (double)6.0);
+				EXPECT_EQ((double)6.0, (double)metacall_value_to_double(ret_sum));
 			}
 
 			metacall_value_destroy(ret_sum);
@@ -270,18 +270,18 @@ TEST_F(metacall_lua_test, DefaultConstructor)
 			ASSERT_NE((void *)NULL, (void *)ret_a);
 			ASSERT_NE((void *)NULL, (void *)ret_b);
 
-			if (metacall_value_id(ret_a) == METACALL_INT)
+			if (metacall_value_id(ret_a) == METACALL_LONG)
 			{
-				EXPECT_EQ((int)111, (int)metacall_value_to_int(ret_a));
+				EXPECT_EQ((long)111, (long)metacall_value_to_long(ret_a));
 			}
 			else if (metacall_value_id(ret_a) == METACALL_DOUBLE)
 			{
 				EXPECT_EQ((double)111.0, (double)metacall_value_to_double(ret_a));
 			}
 
-			if (metacall_value_id(ret_b) == METACALL_INT)
+			if (metacall_value_id(ret_b) == METACALL_LONG)
 			{
-				EXPECT_EQ((int)222, (int)metacall_value_to_int(ret_b));
+				EXPECT_EQ((long)222, (long)metacall_value_to_long(ret_b));
 			}
 			else if (metacall_value_id(ret_b) == METACALL_DOUBLE)
 			{

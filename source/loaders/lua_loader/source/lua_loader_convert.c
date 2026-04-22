@@ -18,19 +18,68 @@
  *
  */
 
+#include <limits.h>
+#include <math.h>
+#include <stdint.h>
+
 #include <log/log.h>
 #include <reflect/reflect.h>
 
-#include "lauxlib.h"
-#include "lua.h"
-// safe limit for recursion depth
-#define LUA_LOADER_MAX_RECURSION_DEPTH 10
+#include <lauxlib.h>
+#include <lua.h>
 
-static int loader_impl_lua_is_integer(lua_State *L, int index)
+/* Safe limit for recursion depth */
+#define LUA_LOADER_MAX_RECURSION_DEPTH 1000
+
+/*
+ * Maximum integer that can be exactly represented in a double (2^53).
+ * Beyond this value, doubles lose integer precision.
+ * This is safer than using LONG_MAX on 64-bit platforms where
+ * long is 64-bit but double can only exactly represent up to 2^53.
+ */
+#define LUA_LOADER_SAFE_INTEGER_LIMIT ((lua_Number)9007199254740992.0) /* 2^53 */
+
+/*
+ * Check if a Lua number is a whole number that fits in a long.
+ * Lua 5.1/LuaJIT only have doubles; Lua 5.3+ has separate integer type.
+ */
+static int loader_impl_lua_is_whole_number(lua_State *L, int index)
 {
-	lua_Number n = lua_tonumber(L, index);
-	lua_Integer i = (lua_Integer)n;
-	return n == (lua_Number)i;
+	lua_Number n;
+
+	if (lua_type(L, index) != LUA_TNUMBER)
+	{
+		return 0;
+	}
+
+	n = lua_tonumber(L, index);
+
+	/*
+	 * Check if:
+	 * 1. Finite (not NaN or infinity)
+	 * 2. Within safe integer range for double representation
+	 * 3. Within actual long range for this platform
+	 * 4. Whole number (no fractional part)
+	 */
+	if (!isfinite(n))
+	{
+		return 0;
+	}
+
+	/* Use safe limit to avoid precision loss when converting to double */
+	if (n < -LUA_LOADER_SAFE_INTEGER_LIMIT || n > LUA_LOADER_SAFE_INTEGER_LIMIT)
+	{
+		return 0;
+	}
+
+	/* Also check platform-specific long range */
+	if (n < (lua_Number)LONG_MIN || n > (lua_Number)LONG_MAX)
+	{
+		return 0;
+	}
+
+	/* Check if whole number (no fractional part) */
+	return n == floor(n);
 }
 
 static int loader_impl_lua_is_array(lua_State *L, int index);
@@ -68,7 +117,7 @@ static int loader_impl_lua_is_array(lua_State *L, int index)
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0)
 	{
-		if (lua_type(L, -2) != LUA_TNUMBER || !loader_impl_lua_is_integer(L, -2))
+		if (lua_type(L, -2) != LUA_TNUMBER || !loader_impl_lua_is_whole_number(L, -2))
 		{
 			is_array = 0;
 			lua_pop(L, 2);
@@ -121,14 +170,24 @@ static value loader_impl_lua_lua_to_value_rec(lua_State *L, int index, int depth
 		}
 
 		case LUA_TNUMBER: {
-			lua_Number n = lua_tonumber(L, abs_index);
-			lua_Integer i = (lua_Integer)n;
-			if (n == (lua_Number)i)
+#if LUA_VERSION_NUM >= 503
+			/* Lua 5.3+ has native integer type */
+			if (lua_isinteger(L, abs_index))
 			{
-				return value_create_int((int)i);
+				lua_Integer i = lua_tointeger(L, abs_index);
+				return value_create_long((long)i);
 			}
-			else
+#endif
 			{
+				/* Lua 5.1/5.2/LuaJIT: check if double represents a whole number */
+				lua_Number n = lua_tonumber(L, abs_index);
+				if (isfinite(n) &&
+					n >= -LUA_LOADER_SAFE_INTEGER_LIMIT && n <= LUA_LOADER_SAFE_INTEGER_LIMIT &&
+					n >= (lua_Number)LONG_MIN && n <= (lua_Number)LONG_MAX &&
+					n == floor(n))
+				{
+					return value_create_long((long)n);
+				}
 				return value_create_double((double)n);
 			}
 		}
@@ -265,13 +324,22 @@ type_id loader_impl_lua_type_from_lua(lua_State *L, int index)
 			return TYPE_BOOL;
 
 		case LUA_TNUMBER: {
-			lua_Number n = lua_tonumber(L, index);
-			lua_Integer i = (lua_Integer)n;
-			if (n == (lua_Number)i)
+#if LUA_VERSION_NUM >= 503
+			/* Lua 5.3+ has native integer type */
+			if (lua_isinteger(L, index))
 			{
-				return TYPE_INT;
+				return TYPE_LONG;
 			}
-			return TYPE_DOUBLE;
+#endif
+			{
+				/* Lua 5.1/5.2/LuaJIT: check if double represents a whole number */
+				lua_Number n = lua_tonumber(L, index);
+				if (isfinite(n) && n >= (lua_Number)LONG_MIN && n <= (lua_Number)LONG_MAX && n == floor(n))
+				{
+					return TYPE_LONG;
+				}
+				return TYPE_DOUBLE;
+			}
 		}
 
 		case LUA_TSTRING:

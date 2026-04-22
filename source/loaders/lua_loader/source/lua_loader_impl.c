@@ -40,9 +40,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lauxlib.h"
-#include "lua.h"
-#include "lualib.h"
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
 
 typedef struct loader_impl_lua_type
 {

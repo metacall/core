@@ -44,7 +44,7 @@ TEST_F(metacall_lua_mixed_test, convert_integer_max_boundary)
 	{
 		static const char tag[] = "lua";
 
-		/* Test INT64_MAX boundary value */
+		/* Test INT64_MAX boundary value - stored as double in LuaJIT, classified as METACALL_DOUBLE */
 		static const char buffer[] =
 			"function lua_test_int_max()\n"
 			"	return 9223372036854775807\n"
@@ -55,15 +55,9 @@ TEST_F(metacall_lua_mixed_test, convert_integer_max_boundary)
 		void *ret = metacall("lua_test_int_max");
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		/* LuaJIT returns this as a double since it exceeds 32-bit int range */
-		if (metacall_value_id(ret) == METACALL_DOUBLE)
-		{
-			EXPECT_DOUBLE_EQ((double)9223372036854775807.0, (double)metacall_value_to_double(ret));
-		}
-		else if (metacall_value_id(ret) == METACALL_LONG)
-		{
-			EXPECT_EQ((long)9223372036854775807L, (long)metacall_value_to_long(ret));
-		}
+		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+		double val_max = metacall_value_to_double(ret);
+		EXPECT_TRUE(val_max > 9.22e18);
 
 		metacall_value_destroy(ret);
 	}
@@ -80,7 +74,7 @@ TEST_F(metacall_lua_mixed_test, convert_integer_min_boundary)
 	{
 		static const char tag[] = "lua";
 
-		/* Test INT64_MIN boundary value */
+		/* Test INT64_MIN boundary value - stored as double in LuaJIT, classified as METACALL_DOUBLE */
 		static const char buffer[] =
 			"function lua_test_int_min()\n"
 			"	return -9223372036854775808\n"
@@ -91,14 +85,10 @@ TEST_F(metacall_lua_mixed_test, convert_integer_min_boundary)
 		void *ret = metacall("lua_test_int_min");
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		if (metacall_value_id(ret) == METACALL_DOUBLE)
-		{
-			EXPECT_DOUBLE_EQ((double)-9223372036854775808.0, (double)metacall_value_to_double(ret));
-		}
-		else if (metacall_value_id(ret) == METACALL_LONG)
-		{
-			EXPECT_EQ((long)-9223372036854775808L, (long)metacall_value_to_long(ret));
-		}
+		/* LuaJIT stores this value as a double which exceeds the safe integer range */
+		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+		double val_min = metacall_value_to_double(ret);
+		EXPECT_TRUE(val_min < -9.22e18);
 
 		metacall_value_destroy(ret);
 	}
@@ -622,14 +612,8 @@ TEST_F(metacall_lua_mixed_test, call_zero_argument_function)
 		void *ret = metacall("lua_test_no_args");
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		if (metacall_value_id(ret) == METACALL_INT)
-		{
-			EXPECT_EQ((int)42, (int)metacall_value_to_int(ret));
-		}
-		else if (metacall_value_id(ret) == METACALL_DOUBLE)
-		{
-			EXPECT_DOUBLE_EQ((double)42.0, (double)metacall_value_to_double(ret));
-		}
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((long)42, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 	}
@@ -747,17 +731,8 @@ TEST_F(metacall_lua_mixed_test, call_variadic_function)
 		void *ret = metacallv_s("lua_test_variadic", args, 5);
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		int count = 0;
-		if (metacall_value_id(ret) == METACALL_INT)
-		{
-			count = metacall_value_to_int(ret);
-		}
-		else if (metacall_value_id(ret) == METACALL_DOUBLE)
-		{
-			count = (int)metacall_value_to_double(ret);
-		}
-
-		EXPECT_EQ((int)5, count);
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((long)5, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
@@ -796,17 +771,8 @@ TEST_F(metacall_lua_mixed_test, call_function_with_many_arguments)
 		void *ret = metacallt_s("lua_test_many_args", arg_types, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		int sum = 0;
-		if (metacall_value_id(ret) == METACALL_INT)
-		{
-			sum = metacall_value_to_int(ret);
-		}
-		else if (metacall_value_id(ret) == METACALL_DOUBLE)
-		{
-			sum = (int)metacall_value_to_double(ret);
-		}
-
-		EXPECT_EQ((int)55, sum); /* 1+2+3+...+10 = 55 */
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((long)55, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 	}
@@ -924,29 +890,11 @@ TEST_F(metacall_lua_mixed_test, multiple_handle_isolation)
 		EXPECT_NE((void *)NULL, (void *)ret_a);
 		EXPECT_NE((void *)NULL, (void *)ret_b);
 
-		/* Verify isolation - each should return its own value */
-		int val_a = 0, val_b = 0;
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret_a));
+		EXPECT_EQ((long)111, (long)metacall_value_to_long(ret_a));
 
-		if (metacall_value_id(ret_a) == METACALL_INT)
-		{
-			val_a = metacall_value_to_int(ret_a);
-		}
-		else if (metacall_value_id(ret_a) == METACALL_DOUBLE)
-		{
-			val_a = (int)metacall_value_to_double(ret_a);
-		}
-
-		if (metacall_value_id(ret_b) == METACALL_INT)
-		{
-			val_b = metacall_value_to_int(ret_b);
-		}
-		else if (metacall_value_id(ret_b) == METACALL_DOUBLE)
-		{
-			val_b = (int)metacall_value_to_double(ret_b);
-		}
-
-		EXPECT_EQ((int)111, val_a);
-		EXPECT_EQ((int)222, val_b);
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret_b));
+		EXPECT_EQ((long)222, (long)metacall_value_to_long(ret_b));
 
 		metacall_value_destroy(ret_a);
 		metacall_value_destroy(ret_b);
@@ -1018,7 +966,7 @@ TEST_F(metacall_lua_mixed_test, mixed_types_in_array)
 		EXPECT_NE((void **)NULL, (void **)values);
 
 		/* Verify mixed types */
-		EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(values[0]));
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(values[0]));
 		EXPECT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(values[1]));
 		EXPECT_EQ((enum metacall_value_id)METACALL_BOOL, (enum metacall_value_id)metacall_value_id(values[2]));
 		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(values[3]));

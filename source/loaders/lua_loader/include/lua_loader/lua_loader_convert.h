@@ -26,12 +26,7 @@
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_value.h>
 
-/*
-	Note that the expected include convention is #include "lua.h"
-	and not #include <lua/lua.h>. This is because, the lua location is not
-	standardized and may exist in locations other than lua/
-*/
-#include "lua.h"
+#include <lua.h>
 
 #ifdef __cplusplus
 extern "C" {
