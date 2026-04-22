@@ -97,7 +97,6 @@ static int loader_impl_lua_is_array(lua_State *L, int index)
 
 static value loader_impl_lua_lua_to_value_rec(lua_State *L, int index, int depth)
 {
-	value v = NULL;
 	int lua_type_val;
 	int abs_index;
 
@@ -113,14 +112,12 @@ static value loader_impl_lua_lua_to_value_rec(lua_State *L, int index, int depth
 	switch (lua_type_val)
 	{
 		case LUA_TNIL: {
-			v = value_create_null();
-			break;
+			return value_create_null();
 		}
 
 		case LUA_TBOOLEAN: {
 			int b = lua_toboolean(L, abs_index);
-			v = value_create_bool((boolean)b);
-			break;
+			return value_create_bool((boolean)b);
 		}
 
 		case LUA_TNUMBER: {
@@ -128,24 +125,23 @@ static value loader_impl_lua_lua_to_value_rec(lua_State *L, int index, int depth
 			lua_Integer i = (lua_Integer)n;
 			if (n == (lua_Number)i)
 			{
-				v = value_create_int((int)i);
+				return value_create_int((int)i);
 			}
 			else
 			{
-				v = value_create_double((double)n);
+				return value_create_double((double)n);
 			}
-			break;
 		}
 
 		case LUA_TSTRING: {
 			size_t len;
 			const char *str = lua_tolstring(L, abs_index, &len);
-			v = value_create_string(str, len);
-			break;
+			return value_create_string(str, len);
 		}
 
 		case LUA_TTABLE: {
 			int top = lua_gettop(L);
+			value v = NULL;
 			lua_pushvalue(L, abs_index);
 
 			if (loader_impl_lua_is_array(L, -1))
@@ -229,31 +225,26 @@ static value loader_impl_lua_lua_to_value_rec(lua_State *L, int index, int depth
 			}
 
 			lua_settop(L, top);
-			break;
+			return v;
 		}
 
 		case LUA_TFUNCTION: {
 			lua_pushvalue(L, abs_index);
 			int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-			v = value_create_int(ref);
-			break;
+			return value_create_int(ref);
 		}
 
 		case LUA_TUSERDATA:
 		case LUA_TLIGHTUSERDATA: {
 			void *ptr = lua_touserdata(L, abs_index);
-			v = value_create_ptr(ptr);
-			break;
+			return value_create_ptr(ptr);
 		}
 
 		default: {
 			log_write("metacall", LOG_LEVEL_WARNING, "Unsupported Lua type: %s", lua_typename(L, lua_type_val));
-			v = value_create_null();
-			break;
+			return value_create_null();
 		}
 	}
-
-	return v;
 }
 
 value loader_impl_lua_lua_to_value(lua_State *L, int index)

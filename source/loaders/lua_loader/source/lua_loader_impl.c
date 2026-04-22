@@ -60,9 +60,7 @@ typedef struct loader_impl_lua_handle_type
 typedef struct loader_impl_lua_function_type
 {
 	int func_ref;
-	char *name;
 	loader_impl impl;
-	loader_impl_lua_handle handle;
 } *loader_impl_lua_function;
 
 static int lua_loader_error_handler(lua_State *L)
@@ -518,7 +516,7 @@ static function_return function_lua_interface_invoke(function func, function_imp
 	if (status != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Lua function %s error: %s",
-			lua_func->name, lua_tostring(L, -1));
+			function_name(func), lua_tostring(L, -1));
 		lua_pop(L, 1);
 		lua_remove(L, errfunc_idx);
 		return NULL;
@@ -591,10 +589,6 @@ static void function_lua_interface_destroy(function func, function_impl impl)
 		{
 			luaL_unref(lua_impl->vm, LUA_REGISTRYINDEX, lua_func->func_ref);
 		}
-		if (lua_func->name != NULL)
-		{
-			free(lua_func->name);
-		}
 		free(lua_func);
 	}
 }
@@ -646,15 +640,12 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 			lua_pushvalue(L, -1);
 			lua_func->func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-			lua_func->name = strdup(func_name);
 			lua_func->impl = impl;
-			lua_func->handle = (loader_impl_lua_handle)handle;
 
 			function f = function_create(func_name, 0, lua_func, &function_lua_singleton);
 			if (f == NULL)
 			{
 				luaL_unref(L, LUA_REGISTRYINDEX, lua_func->func_ref);
-				free(lua_func->name);
 				free(lua_func);
 				lua_pop(L, 2);
 				lua_settop(L, top);
