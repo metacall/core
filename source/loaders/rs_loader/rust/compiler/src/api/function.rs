@@ -114,7 +114,7 @@ pub fn register_function(function_registration: FunctionRegistration) {
         unsafe {
             signature_set_return(
                 s,
-                loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
+                loader_impl_get_type(function_registration.loader_impl, ret.as_ptr()),
             );
         };
     } else {
@@ -123,7 +123,7 @@ pub fn register_function(function_registration: FunctionRegistration) {
         unsafe {
             signature_set_return(
                 s,
-                loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
+                loader_impl_get_type(function_registration.loader_impl, ret.as_ptr()),
             );
         };
     }
@@ -139,7 +139,7 @@ pub fn register_function(function_registration: FunctionRegistration) {
                 s,
                 index,
                 name.as_ptr(),
-                loader_impl_type(function_registration.loader_impl, t.as_ptr()),
+                loader_impl_get_type(function_registration.loader_impl, t.as_ptr()),
             )
         };
     }

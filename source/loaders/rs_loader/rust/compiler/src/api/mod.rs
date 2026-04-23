@@ -70,7 +70,7 @@ extern "C" {
 
     fn signature_set_return(signature: OpaqueType, t: OpaqueType);
 
-    fn loader_impl_type(loader_impl: OpaqueType, name: *const c_char) -> OpaqueType;
+    fn loader_impl_get_type(loader_impl: OpaqueType, name: *const c_char) -> OpaqueType;
 
     fn scope_define(scope: OpaqueType, key: *mut c_char, value: OpaqueType) -> c_int;
     fn class_create(

@@ -555,7 +555,7 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 			s = function_signature(f);
 
-			signature_set_return(s, loader_impl_type(impl, "Path"));
+			signature_set_return(s, loader_impl_get_type(impl, "Path"));
 
 			v = value_create_function(f);
 

@@ -1596,7 +1596,7 @@ int rb_loader_impl_discover_func(loader_impl impl, function f, rb_function_parse
 
 		for (index = 0; index < size; ++index)
 		{
-			signature_set(s, index, function_parser->params[index].name, loader_impl_type(impl, function_parser->params[index].type));
+			signature_set(s, index, function_parser->params[index].name, loader_impl_get_type(impl, function_parser->params[index].type));
 		}
 
 		return 0;

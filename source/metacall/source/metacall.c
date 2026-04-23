@@ -972,14 +972,14 @@ void *metacall_function(const char *name)
 	return f;
 }
 
-int metacall_handle_initialize(void *loader, const char *name, void **handle_ptr)
+int metacall_handle_initialize(void *loader_ptr, const char *name, void **handle_ptr)
 {
-	if (loader == NULL)
+	if (loader_ptr == NULL)
 	{
 		return 1;
 	}
 
-	return loader_handle_initialize(loader, name, handle_ptr);
+	return loader_handle_initialize(loader_ptr, name, handle_ptr);
 }
 
 int metacall_handle_populate(void *handle_dest, void *handle_src)
@@ -1633,9 +1633,9 @@ void *metacall_loader(const char *tag)
 	return loader_get_impl(tag);
 }
 
-int metacall_register_loaderv(void *loader, void *handle, const char *name, void *(*invoke)(size_t, void *[], void *), enum metacall_value_id return_type, size_t size, enum metacall_value_id types[], void *data)
+int metacall_register_loaderv(void *loader_ptr, void *handle, const char *name, void *(*invoke)(size_t, void *[], void *), enum metacall_value_id return_type, size_t size, enum metacall_value_id types[], void *data)
 {
-	return loader_register_handle(loader, handle, name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types, data);
+	return loader_register_handle(loader_ptr, handle, name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types, data);
 }
 
 void *metacall_await(const char *name, void *args[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)

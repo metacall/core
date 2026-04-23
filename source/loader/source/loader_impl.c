@@ -64,11 +64,11 @@
 
 /* -- Forward Declarations -- */
 
-struct loader_handle_impl_type;
+struct loader_handle_impl_s;
 
 /* -- Type Definitions -- */
 
-typedef struct loader_handle_impl_type *loader_handle_impl;
+typedef struct loader_handle_impl_s *loader_handle_impl;
 
 /* -- Member Data -- */
 
@@ -90,7 +90,7 @@ struct loader_impl_type
 	set detour_map;				   /* List of detour handles (detour_handle) to the dependencies of the loader and the loader itself */
 };
 
-struct loader_handle_impl_type
+struct loader_handle_impl_s
 {
 	uintptr_t magic;			 /* Magic number for detecting corrupted input by the user */
 	loader_impl impl;			 /* Reference to the loader which handle belongs to */
@@ -851,7 +851,7 @@ context loader_impl_context(loader_impl impl)
 	return NULL;
 }
 
-type loader_impl_type(loader_impl impl, const char *name)
+type loader_impl_get_type(loader_impl impl, const char *name)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{
@@ -873,7 +873,7 @@ int loader_impl_type_define(loader_impl impl, const char *name, type t)
 
 loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size)
 {
-	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
+	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_s));
 
 	if (handle_impl == NULL)
 	{
