@@ -1304,7 +1304,8 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 			if (PyList_SetItem(list, iterator, item) != 0)
 			{
-				/* TODO: Report error */
+				Py_DECREF(list);
+				return NULL;
 			}
 		}
 
@@ -3321,6 +3322,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
 
 		Py_DecRef(return_annotation);
+		Py_XDECREF(result);
 
 		return 0;
 	}
@@ -3334,6 +3336,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 			signature s = function_signature(f);
 
 			signature_set_return(s, NULL);
+			Py_XDECREF(result);
 
 			return 0;
 		}
@@ -3418,6 +3421,7 @@ int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, m_name, NULL));
 
 		Py_DecRef(return_annotation);
+		Py_XDECREF(result);
 
 		return 0;
 	}
@@ -3431,6 +3435,7 @@ int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method 
 			signature s = method_signature(m);
 
 			signature_set_return(s, NULL);
+			Py_XDECREF(result);
 
 			return 0;
 		}
@@ -3562,6 +3567,7 @@ int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_class, kl
 	}
 
 	Py_DecRef(parameters);
+	Py_XDECREF(result);
 
 	return ret;
 }
@@ -3704,6 +3710,8 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 				class_register_static_attribute(c, static_attr);
 				class_register_attribute(c, attr);
 			}
+
+			Py_XDECREF(method_static);
 		}
 
 		Py_DecRef(dict_items);
