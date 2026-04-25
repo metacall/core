@@ -1,0 +1,8 @@
+[memory]
+src:*/googletest/*
+src:*/googlemock/*
+src:*/gtest/*
+fun:testing::*
+src:*/c++/*
+src:*/libstdc++*
+fun:std::*
