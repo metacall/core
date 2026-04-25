@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_LUA OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_LUA)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_LUA OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_TESTS)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-lua-test)
+set(target metacall-lua-mixed-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,15 +32,15 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_lua_test.cpp
+	${source_path}/metacall_lua_mixed_test.cpp
 )
 
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
-source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
+source_group_by_path(${include_path} "\\.h$|\\.hpp$"
 	${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
+source_group_by_path(${source_path}  "\\.cpp$|\\.c$|\\.h$|\\.hpp$"
 	${source_group} ${sources})
 
 #
@@ -53,8 +53,8 @@ add_executable(${target}
 )
 
 configure_file(
-	${source_path}/test.lua
-	${LOADER_SCRIPT_PATH}/test.lua
+	${source_path}/mixed_test.lua
+	${LOADER_SCRIPT_PATH}/mixed_test.lua
 	COPYONLY
 )
 
@@ -101,7 +101,7 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
-	LUA_LOADER_TEST_SCRIPT_ABSOLUTE_PATH="${LOADER_SCRIPT_PATH}/test.lua"
+	LUA_LOADER_MIXED_TEST_SCRIPT_PATH="${LOADER_SCRIPT_PATH}/mixed_test.lua"
 )
 
 #
