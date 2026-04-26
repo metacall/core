@@ -65,6 +65,9 @@ jobs:
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests install
+          PYTHONHOME: C:\Program Files\Python3
+          PYTHONPATH: C:\Program Files\Python3\Lib;C:\Program Files\Python3\DLLs;C:\Program Files\Python3\Lib\site-packages
+
 
   windows-distributable:
     name: Windows Distributable Dispatch

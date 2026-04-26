@@ -704,10 +704,16 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
 
-	/* TODO: Check here about search_paths and load them */
-	/* TODO: Check here about environment and load them */
-	/* TODO: Implement the search_paths and environment_variables generation in CMake */
-	/* Reference: https://github.com/metacall/core/issues/760 */
+	/* Apply search_paths from config before loader initialization so the OS
+	 * can find dependent DLLs (e.g. python3xx.dll, libnode.dll) on Windows.
+	 * Reference: https://github.com/metacall/core/issues/760 */
+#if defined(WIN32) || defined(_WIN32)
+	if (impl->config != NULL)
+	{
+		const char *tag = plugin_name(p);
+		loader_impl_dependencies_search_paths(impl, tag);
+	}
+#endif
 
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
