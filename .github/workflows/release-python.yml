@@ -120,6 +120,8 @@ jobs:
         working-directory: source/ports/py_port
         env:
           LOADER_SCRIPT_PATH: ${{ github.workspace }}\source\ports\py_port\scripts
+          PYTHONHOME: C:\Program Files\Python3
+          PYTHONPATH: C:\Program Files\Python3\Lib;C:\Program Files\Python3\DLLs;C:\Program Files\Python3\Lib\site-packages
         run: python test.py
 
   release:
