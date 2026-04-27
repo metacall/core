@@ -221,11 +221,13 @@ int configuration_object_childs_valid(set_key key, set_value val)
 size_t configuration_object_child_path(configuration config, value v, char *path)
 {
 	const char *value_path = value_to_string(v);
-	size_t size = value_type_size(v);
+	size_t value_path_size = strnlen(value_path, PORTABILITY_PATH_SIZE);
+	size_t size = value_path_size + 1;
 
 	if (portability_path_is_absolute(value_path, size) == 0)
 	{
-		memcpy(path, value_path, size);
+		memcpy(path, value_path, value_path_size);
+		path[value_path_size] = '\0';
 	}
 	else
 	{

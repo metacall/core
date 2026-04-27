@@ -291,7 +291,7 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 		{
 			if (value_type_id(execution_paths_array[iterator]) == TYPE_STRING)
 			{
-				loader_path execution_path;
+				loader_path execution_path = { 0 };
 
 				configuration_object_child_path(impl->config, execution_paths_array[iterator], execution_path);
 
@@ -1011,7 +1011,20 @@ int loader_impl_execution_path(plugin p, loader_impl impl, const loader_path pat
 				}
 			}
 
-			vector_push_back(paths, (void *)path);
+			if (path != NULL)
+			{
+				loader_path normalized_path = { 0 };
+
+				strncpy(normalized_path, path, LOADER_PATH_SIZE - 1);
+
+				vector_push_back(paths, normalized_path);
+			}
+			else
+			{
+				loader_path empty_path = { 0 };
+
+				vector_push_back(paths, empty_path);
+			}
 
 			return 0;
 		}
