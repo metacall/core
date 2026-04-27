@@ -59,9 +59,10 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: source/ports/py_port
         run: |
-          $env:PYTHONHOME = "$env:LOCALAPPDATA\metacall\metacall\runtimes\python"
-          $env:PIP_TARGET = "$env:LOCALAPPDATA\metacall\metacall\runtimes\python\Lib\site-packages"
-          $env:PATH = "$env:LOCALAPPDATA\metacall\metacall\runtimes\python;$env:LOCALAPPDATA\metacall\metacall\runtimes\python\Scripts;$env:LOCALAPPDATA\metacall\metacall\runtimes\python\Lib\site-packages\bin;$env:PATH"
+          $loc = "$env:LOCALAPPDATA\metacall\metacall"
+          $env:PYTHONHOME = "$loc\runtimes\python"
+          $env:PIP_TARGET = "$loc\runtimes\python\Lib\site-packages"
+          $env:PATH = "$loc;$loc\lib;$loc\runtimes\python;$loc\runtimes\python\Scripts;$loc\runtimes\python\Lib\site-packages\bin;$loc\runtimes\ruby\bin;$loc\runtimes\ruby\bin\ruby_builtin_dlls;$env:PATH"
           & "$env:PYTHONHOME\python.exe" -m pip install -e .
 
       # macOS: pip-install the port so the package is findable.
@@ -125,8 +126,9 @@ jobs:
         env:
           LOADER_SCRIPT_PATH: ${{ github.workspace }}\source\ports\py_port\scripts
         run: |
-          $env:PYTHONHOME = "$env:LOCALAPPDATA\metacall\metacall\runtimes\python"
-          $env:PATH = "$env:LOCALAPPDATA\metacall\metacall\runtimes\python;$env:PATH"
+          $loc = "$env:LOCALAPPDATA\metacall\metacall"
+          $env:PYTHONHOME = "$loc\runtimes\python"
+          $env:PATH = "$loc;$loc\lib;$loc\runtimes\python;$loc\runtimes\ruby\bin;$loc\runtimes\ruby\bin\ruby_builtin_dlls;$env:PATH"
           & "$env:PYTHONHOME\python.exe" test.py
 
   release:
