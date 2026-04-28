@@ -17,11 +17,17 @@
 #	limitations under the License.
 #
 
+# MetaCall Dev base image
+ARG METACALL_DEV_IMAGE=metacall/core:dev
+
+# MetaCall Runtime base image
+ARG METACALL_RUNTIME_IMAGE=metacall/core:runtime
+
 # MetaCall Depends builder image
-FROM dev AS builder
+FROM ${METACALL_DEV_IMAGE} AS builder
 
 # MetaCall image
-FROM runtime AS cli
+FROM ${METACALL_RUNTIME_IMAGE} AS cli
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \

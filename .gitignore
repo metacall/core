@@ -68,3 +68,6 @@ _start-cmd.bat
 
 # Bake folder
 .bake
+
+# Auto-generated bake file
+docker-compose.bake.yml

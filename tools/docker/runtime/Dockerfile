@@ -20,8 +20,11 @@
 # Configure MetaCall base image
 ARG METACALL_BASE_IMAGE
 
+# MetaCall Dev base image
+ARG METACALL_DEV_IMAGE=metacall/core:dev
+
 # MetaCall Depends builder image
-FROM dev AS builder
+FROM ${METACALL_DEV_IMAGE} AS builder
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \

@@ -101,6 +101,7 @@ target "dev" {
 		METACALL_PATH = "${METACALL_PATH}"
 		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
 		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
+		METACALL_DEPS_IMAGE = "deps"
 	}
 	# Use the deps target as the base image
 	contexts = {
@@ -116,6 +117,7 @@ target "runtime" {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
 		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
+		METACALL_DEV_IMAGE = "dev"
 	}
 	# Use the dev target as the builder base image
 	contexts = {
@@ -127,6 +129,10 @@ target "runtime" {
 target "cli" {
 	context = "."
 	dockerfile = "tools/docker/cli/Dockerfile"
+	args = {
+		METACALL_DEV_IMAGE = "dev"
+		METACALL_RUNTIME_IMAGE = "runtime"
+	}
 	# Use both dev (for builder) and runtime (for base) targets
 	contexts = {
 		"dev" = "target:dev"
