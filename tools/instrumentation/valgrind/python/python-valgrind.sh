@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Usage:
-#   ./build-python-valgrind.sh <python-src-dir>
+#   ./python-valgrind.sh <python-src-dir>
 # Example:
-#   ./build-python-valgrind.sh ~/build/python3.13-*/
+#   ./python-valgrind.sh ~/build/python3.13-*/
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <python-src-dir>"

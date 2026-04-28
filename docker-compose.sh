@@ -88,10 +88,10 @@ sub_test() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	ln -sf tools/deps/.dockerignore .dockerignore
+	ln -sf tools/docker/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
+	ln -sf tools/docker/dev/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
@@ -115,10 +115,10 @@ sub_test_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	ln -sf tools/deps/.dockerignore .dockerignore
+	ln -sf tools/docker/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
+	ln -sf tools/docker/dev/.dockerignore .dockerignore
 
 	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
 		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
@@ -175,10 +175,10 @@ sub_coverage() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
+	ln -sf tools/docker/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
+	ln -sf tools/docker/dev/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
@@ -202,10 +202,10 @@ sub_test_memcheck() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
+	ln -sf tools/docker/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
+	ln -sf tools/docker/dev/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
@@ -229,10 +229,10 @@ sub_test_clang() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
+	ln -sf tools/docker/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
+	ln -sf tools/docker/dev/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
@@ -256,10 +256,10 @@ sub_test_memory_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
+	ln -sf tools/docker/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
+	ln -sf tools/docker/dev/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
@@ -345,7 +345,7 @@ sub_bake() {
 
 	# Generate the dockerignore file by merging all of them
 	echo "**" > .bake/.dockerignore
-	for f in tools/deps/.dockerignore tools/dev/.dockerignore tools/runtime/.dockerignore tools/cli/.dockerignore; do
+	for f in tools/docker/deps/.dockerignore tools/docker/dev/.dockerignore tools/docker/runtime/.dockerignore tools/docker/cli/.dockerignore; do
 		tail -n +2 "$f" >> .bake/.dockerignore
 	done
 	ln -sf .bake/.dockerignore .dockerignore

@@ -23,7 +23,7 @@ services:
     container_name: metacall_core_deps
     build:
       context: .
-      dockerfile: tools/deps/Dockerfile
+      dockerfile: tools/docker/deps/Dockerfile
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
@@ -47,7 +47,7 @@ services:
     container_name: metacall_core_dev
     build:
       context: .
-      dockerfile: tools/dev/Dockerfile
+      dockerfile: tools/docker/dev/Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
@@ -69,7 +69,7 @@ services:
     container_name: metacall_core_runtime
     build:
       context: .
-      dockerfile: tools/runtime/Dockerfile
+      dockerfile: tools/docker/runtime/Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
@@ -91,7 +91,7 @@ services:
     container_name: metacall_core_cli
     build:
       context: .
-      dockerfile: tools/cli/Dockerfile
+      dockerfile: tools/docker/cli/Dockerfile
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
