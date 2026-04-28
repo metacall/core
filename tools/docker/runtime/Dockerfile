@@ -20,8 +20,11 @@
 # Configure MetaCall base image
 ARG METACALL_BASE_IMAGE
 
+# MetaCall Dev base image
+ARG METACALL_DEV_IMAGE=metacall/core:dev
+
 # MetaCall Depends builder image
-FROM metacall/core:dev AS builder
+FROM ${METACALL_DEV_IMAGE} AS builder
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -42,7 +45,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 WORKDIR $METACALL_PATH
 
 # MetaCall image
-FROM ${METACALL_BASE_IMAGE} AS core
+FROM ${METACALL_BASE_IMAGE} AS runtime
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \

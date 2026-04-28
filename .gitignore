@@ -61,10 +61,13 @@ _start-cmd.bat
 
 # Linked dockerignore file in main context
 .dockerignore
-!tools/deps/.dockerignore
-!tools/dev/.dockerignore
-!tools/runtime/.dockerignore
-!tools/cli/.dockerignore
+!tools/docker/deps/.dockerignore
+!tools/docker/dev/.dockerignore
+!tools/docker/runtime/.dockerignore
+!tools/docker/cli/.dockerignore
 
 # Bake folder
 .bake
+
+# Auto-generated bake file
+docker-compose.bake.yml

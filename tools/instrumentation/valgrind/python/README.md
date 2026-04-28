@@ -6,7 +6,7 @@ Builds Python 3.13 from Debian source with Valgrind support and runs the MetaCal
 
 ```bash
 # From the repo root
-docker build -t metacall-python-valgrind -f tools/instrumentation/python-valgrind/Dockerfile .
+docker build -t metacall-python-valgrind -f Dockerfile .
 docker run --rm metacall-python-valgrind
 ```
 
@@ -15,7 +15,7 @@ docker run --rm metacall-python-valgrind
 ```bash
 docker run --rm metacall-python-valgrind valgrind --leak-check=full --num-callers=30 \
 	--suppressions=/app/memcheck/valgrind-ruby.supp \
-	--suppressions=tools/instrumentation/suppressions/valgrind-ruby-aggressive.supp \
+	--suppressions=python-valgrind.supp \
 	python3.13 test.py
 ```
 

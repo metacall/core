@@ -19,17 +19,17 @@
 
 services:
   deps:
-    image: metacall/core:deps
+    image: deps
     container_name: metacall_core_deps
     build:
       context: .
-      dockerfile: tools/deps/Dockerfile
+      dockerfile: tools/docker/deps/Dockerfile
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby nodejs typescript file rpc rapidjson pack backtrace # clangformat v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson backtrace sandbox # clangformat v8rep51 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
       # Work around https://github.com/dotnet/cli/issues/1582 until Docker releases a
@@ -43,15 +43,15 @@ services:
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
   dev:
-    image: metacall/core:dev
+    image: dev
     container_name: metacall_core_dev
     build:
       context: .
-      dockerfile: tools/dev/Dockerfile
+      dockerfile: tools/docker/dev/Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_BUILD_OPTIONS: python ruby nodejs typescript file rpc examples tests scripts ports install pack # v8 coverage benchmarks
+        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust ports install sandbox # v8 coverage benchmarks
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -65,15 +65,15 @@ services:
       NODE_PATH: /usr/lib/node_modules
 
   runtime:
-    image: metacall/core:runtime
+    image: runtime
     container_name: metacall_core_runtime
     build:
       context: .
-      dockerfile: tools/runtime/Dockerfile
+      dockerfile: tools/docker/runtime/Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_RUNTIME_OPTIONS: base python ruby nodejs typescript file rpc backtrace ports clean # v8
+        METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -87,11 +87,11 @@ services:
       NODE_PATH: /usr/local/lib/node_modules
 
   cli:
-    image: metacall/core:cli
+    image: cli
     container_name: metacall_core_cli
     build:
       context: .
-      dockerfile: tools/cli/Dockerfile
+      dockerfile: tools/docker/cli/Dockerfile
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

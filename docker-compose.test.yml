@@ -21,13 +21,13 @@ version: "3.7"
 
 services:
   deps:
-    image: metacall/core:deps
+    image: deps
     build:
       args:
         METACALL_BUILD_TYPE: ${METACALL_BUILD_TYPE}
         METACALL_INSTALL_OPTIONS: ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51
   dev:
-    image: metacall/core:dev
+    image: dev
     build:
       args:
         METACALL_BUILD_TYPE: ${METACALL_BUILD_TYPE}

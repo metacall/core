@@ -5,7 +5,7 @@ Builds LLVM/libc++ and GoogleTest with MemorySanitizer instrumentation for use w
 ## Build
 
 ```bash
-docker build -t metacall-msan -f tools/instrumentation/msan/Dockerfile .
+docker build -t metacall-msan -f Dockerfile .
 docker run --rm -it metacall-msan bash
 ```
 

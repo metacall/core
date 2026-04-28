@@ -17,8 +17,11 @@
 #	limitations under the License.
 #
 
+# MetaCall Depends base image
+ARG METACALL_DEPS_IMAGE=metacall/core:deps
+
 # MetaCall Depends image
-FROM metacall/core:deps AS dev
+FROM ${METACALL_DEPS_IMAGE} AS dev
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
