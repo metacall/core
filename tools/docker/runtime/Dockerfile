@@ -21,7 +21,7 @@
 ARG METACALL_BASE_IMAGE
 
 # MetaCall Depends builder image
-FROM metacall/core:dev AS builder
+FROM dev AS builder
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -42,7 +42,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 WORKDIR $METACALL_PATH
 
 # MetaCall image
-FROM ${METACALL_BASE_IMAGE} AS core
+FROM ${METACALL_BASE_IMAGE} AS runtime
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \

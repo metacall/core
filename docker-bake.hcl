@@ -104,7 +104,7 @@ target "dev" {
 	}
 	# Use the deps target as the base image
 	contexts = {
-		"metacall/core:deps" = "target:deps"
+		"deps" = "target:deps"
 	}
 }
 
@@ -119,7 +119,7 @@ target "runtime" {
 	}
 	# Use the dev target as the builder base image
 	contexts = {
-		"metacall/core:dev" = "target:dev"
+		"dev" = "target:dev"
 	}
 }
 
@@ -129,7 +129,7 @@ target "cli" {
 	dockerfile = "tools/docker/cli/Dockerfile"
 	# Use both dev (for builder) and runtime (for base) targets
 	contexts = {
-		"metacall/core:dev" = "target:dev"
-		"metacall/core:runtime" = "target:runtime"
+		"dev" = "target:dev"
+		"runtime" = "target:runtime"
 	}
 }

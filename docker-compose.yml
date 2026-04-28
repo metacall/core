@@ -19,7 +19,7 @@
 
 services:
   deps:
-    image: metacall/core:deps
+    image: deps
     container_name: metacall_core_deps
     build:
       context: .
@@ -43,7 +43,7 @@ services:
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
   dev:
-    image: metacall/core:dev
+    image: dev
     container_name: metacall_core_dev
     build:
       context: .
@@ -65,7 +65,7 @@ services:
       NODE_PATH: /usr/lib/node_modules
 
   runtime:
-    image: metacall/core:runtime
+    image: runtime
     container_name: metacall_core_runtime
     build:
       context: .
@@ -87,7 +87,7 @@ services:
       NODE_PATH: /usr/local/lib/node_modules
 
   cli:
-    image: metacall/core:cli
+    image: cli
     container_name: metacall_core_cli
     build:
       context: .

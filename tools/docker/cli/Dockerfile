@@ -18,10 +18,10 @@
 #
 
 # MetaCall Depends builder image
-FROM metacall/core:dev AS builder
+FROM dev AS builder
 
 # MetaCall image
-FROM metacall/core:runtime AS cli
+FROM runtime AS cli
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
