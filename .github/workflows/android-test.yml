@@ -28,11 +28,17 @@ jobs:
         build: [release]
         # TODO: This may be removed
         target: [google_apis]
+        arch: [x86_64]
 
     env:
       ANDROID_NDK_VERSION: "26.1.10909125"
 
     steps:
+      # - name: Testing hack
+      #   run: |
+      #     sudo mkdir -p /data/local/tmp/metacall/
+      #     cd /data/local/tmp/metacall/
+
       - name: Check out the repository
         uses: actions/checkout@v4
         with:
@@ -68,7 +74,18 @@ jobs:
 
       - name: Build
         working-directory: ./build
-        run: ../tools/metacall-build.sh ${{ matrix.build }} tests
+        run: ../tools/metacall-build.sh ${{ matrix.build }}
+
+      - name: Testing hack
+        run: |
+          ls -la
+
+      - name: Testing hack
+        working-directory: ./build
+        run: |
+          ls -la
+          ./serial-test
+
 
   #     - name: Upload build artifacts
   #       uses: actions/upload-artifact@v4
@@ -132,11 +149,14 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            echo "=== Pushing test files to emulator ==="
-            adb push build/ /data/local/tmp/metacall/
+            set -exu
 
-            echo ""
-            echo "=== Files on emulator ==="
+            echo "Pushing test files to emulator"
+            adb shell "mkdir -p /data/local/tmp/metacall/build"
+            adb push build/ /data/local/tmp/metacall/build/
+
+            echo "Files on emulator"
             adb shell "ls -la /data/local/tmp/metacall/"
 
-            echo "TODO: Run CTest with emulator"
+            echo "Run Test with emulator"
+            cd build && sh ../tools/metacall-build.sh ${{ matrix.build }} tests

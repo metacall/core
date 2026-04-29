@@ -567,10 +567,13 @@ sub_configure() {
 		ANDROID_ABI="${ANDROID_ABI:-x86_64}"
 
 		BUILD_STRING="$BUILD_STRING \
+			-DCMAKE_CROSSCOMPILING=On \
+			-DCMAKE_CROSSCOMPILING_EMULATOR=\"adb;shell\" \
 			-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
 			-DANDROID_ABI=${ANDROID_ABI} \
 			-DANDROID_PLATFORM=android-${ANDROID_API_LEVEL} \
 			-DANDROID_STL=c++_shared \
+			-DOPTION_BUILD_PLUGINS_BACKTRACE=Off \
 			-Wno-dev \
 			-G Ninja"
 	fi

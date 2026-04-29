@@ -22,6 +22,116 @@
 # GTEST_INCLUDE_DIRS - A list of directories where the Google Test headers are located.
 # GTEST_LIBRARIES - A list of directories where the Google Test libraries are located.
 
+# if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
+# 	if(NOT GTEST_VERSION OR USE_BUNDLED_GTEST)
+# 		set(GTEST_VERSION 1.16.0)
+# 	endif()
+
+# 	find_package(Threads REQUIRED)
+
+# 	if(MINGW)
+# 		set(GTEST_DISABLE_PTHREADS ON)
+# 	else()
+# 		set(GTEST_DISABLE_PTHREADS OFF)
+# 	endif()
+
+# 	if(MSVC AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+# 		if(OPTION_BUILD_THREAD_SANITIZER)
+# 			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=thread -DCMAKE_C_FLAGS=/fsanitize=thread)
+# 		endif()
+# 		if(OPTION_BUILD_ADDRESS_SANITIZER)
+# 			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=address -DCMAKE_C_FLAGS=/fsanitize=address)
+# 		endif()
+# 		if(OPTION_BUILD_MEMORY_SANITIZER)
+# 			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="/fsanitize=memory /fsanitize=leak" -DCMAKE_C_FLAGS="/fsanitize=memory /fsanitize=leak")
+# 		endif()
+# 	endif()
+
+# 	if(NOT MSVC)
+# 		set(GTEST_BYPRODUCTS
+# 			BUILD_BYPRODUCTS
+# 				<INSTALL_DIR>/lib/libgtest.a
+# 				<INSTALL_DIR>/lib/libgmock.a
+# 		)
+# 	endif()
+
+# 	# Import Google Test Framework
+# 	ExternalProject_Add(google-test-depends
+# 		GIT_REPOSITORY https://github.com/google/googletest.git
+# 		GIT_TAG v${GTEST_VERSION}
+
+# 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+
+# 		CMAKE_ARGS
+# 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+# 			-Dgtest_build_samples=OFF
+# 			-Dgtest_build_tests=OFF
+# 			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
+# 			-Dgtest_force_shared_crt=ON
+# 			-Dgtest_hide_internal_symbols=OFF
+# 			-DBUILD_GMOCK=ON
+# 			-Dgmock_build_tests=OFF
+# 			-DINSTALL_GTEST=ON
+# 			${SANITIZER_FLAGS}
+
+# 		${GTEST_BYPRODUCTS}
+
+# 		UPDATE_COMMAND ""
+# 		TEST_COMMAND ""
+# 	)
+
+# 	# Google Test include and binary directories
+# 	ExternalProject_Get_Property(google-test-depends source_dir binary_dir install_dir)
+
+# 	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
+# 	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
+
+# 	if(MSVC)
+# 		set(GTEST_LIB_PREFIX "")
+# 		set(GTEST_LIB_SUFFIX "lib")
+# 		set(GTEST_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
+# 		set(GMOCK_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
+# 	else()
+# 		set(GTEST_LIB_PREFIX "lib")
+# 		set(GTEST_LIB_SUFFIX "a")
+# 		set(GTEST_LIBS_DIR "${install_dir}/lib")
+# 		set(GMOCK_LIBS_DIR "${install_dir}/lib")
+# 	endif()
+
+# 	# Define Paths
+# 	set(GTEST_INCLUDE_DIRS
+# 		"${GTEST_INCLUDE_DIR}"
+# 		"${GMOCK_INCLUDE_DIR}"
+# 	)
+
+# 	set(GTEST_LIBRARY
+# 		"${GTEST_LIBS_DIR}/${GTEST_LIB_PREFIX}gtest.${GTEST_LIB_SUFFIX}"
+# 	)
+
+# 	set(GMOCK_LIBRARY
+# 		"${GMOCK_LIBS_DIR}/${GTEST_LIB_PREFIX}gmock.${GTEST_LIB_SUFFIX}"
+# 	)
+
+# 	set(GTEST_LIBRARIES
+# 		"${GTEST_LIBRARY}"
+# 		"${GMOCK_LIBRARY}"
+# 		"${CMAKE_THREAD_LIBS_INIT}"
+# 	)
+
+# 	set(GTEST_FOUND TRUE)
+
+# 	mark_as_advanced(
+# 		GTEST_LIBRARY
+# 		GMOCK_LIBRARY
+# 		GTEST_LIBRARIES
+# 		GTEST_INCLUDE_DIR
+# 		GMOCK_INCLUDE_DIR
+# 		GTEST_INCLUDE_DIRS
+# 	)
+
+# 	message(STATUS "Install Google Test v${GTEST_VERSION}")
+# endif()
+
 if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	if(NOT GTEST_VERSION OR USE_BUNDLED_GTEST)
 		set(GTEST_VERSION 1.16.0)
@@ -35,81 +145,49 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		set(GTEST_DISABLE_PTHREADS OFF)
 	endif()
 
-	if(MSVC AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		if(OPTION_BUILD_THREAD_SANITIZER)
-			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=thread -DCMAKE_C_FLAGS=/fsanitize=thread)
-		endif()
-		if(OPTION_BUILD_ADDRESS_SANITIZER)
-			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=address -DCMAKE_C_FLAGS=/fsanitize=address)
-		endif()
-		if(OPTION_BUILD_MEMORY_SANITIZER)
-			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="/fsanitize=memory /fsanitize=leak" -DCMAKE_C_FLAGS="/fsanitize=memory /fsanitize=leak")
-		endif()
-	endif()
+	include(FetchContent)
 
-	# Import Google Test Framework
-	ExternalProject_Add(google-test-depends
+	set(BUILD_GMOCK ON CACHE BOOL "" FORCE)
+	set(INSTALL_GTEST ON CACHE BOOL "" FORCE)
+	set(gtest_build_samples OFF CACHE BOOL "" FORCE)
+	set(gtest_build_tests OFF CACHE BOOL "" FORCE)
+	set(gmock_build_tests OFF CACHE BOOL "" FORCE)
+	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	set(gtest_hide_internal_symbols OFF CACHE BOOL "" FORCE)
+
+	FetchContent_Declare(
+		googletest
 		GIT_REPOSITORY https://github.com/google/googletest.git
 		GIT_TAG v${GTEST_VERSION}
-		CMAKE_ARGS
-			-Dgtest_build_samples=OFF
-			-Dgtest_build_tests=OFF
-			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
-			-Dgtest_force_shared_crt=ON
-			-Dgtest_hide_internal_symbols=OFF
-			-DINSTALL_GTEST=OFF
-			-DBUILD_GMOCK=ON
-			-Dgmock_build_tests=OFF
-			${SANITIZER_FLAGS}
-		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
-		UPDATE_COMMAND ""
-		INSTALL_COMMAND ""
-		TEST_COMMAND ""
 	)
 
-	# Google Test include and binary directories
-	ExternalProject_Get_Property(google-test-depends source_dir binary_dir)
+	FetchContent_MakeAvailable(googletest)
 
-	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
-	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
+	FetchContent_GetProperties(googletest)
 
-	if(MSVC)
-		set(GTEST_LIB_PREFIX "")
-		set(GTEST_LIB_SUFFIX "lib")
-		set(GTEST_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
-		set(GMOCK_LIBS_DIR "${binary_dir}/lib/${CMAKE_BUILD_TYPE}")
-	else()
-		set(GTEST_LIB_PREFIX "lib")
-		set(GTEST_LIB_SUFFIX "a")
-		set(GTEST_LIBS_DIR "${binary_dir}/lib")
-		set(GMOCK_LIBS_DIR "${binary_dir}/lib")
-	endif()
+	set(GTEST_INCLUDE_DIR
+		"${googletest_SOURCE_DIR}/googletest/include"
+	)
 
-	# Define Paths
+	set(GMOCK_INCLUDE_DIR
+		"${googletest_SOURCE_DIR}/googlemock/include"
+	)
+
 	set(GTEST_INCLUDE_DIRS
 		"${GTEST_INCLUDE_DIR}"
 		"${GMOCK_INCLUDE_DIR}"
 	)
 
-	set(GTEST_LIBRARY
-		"${GTEST_LIBS_DIR}/${GTEST_LIB_PREFIX}gtest.${GTEST_LIB_SUFFIX}"
-	)
-
-	set(GMOCK_LIBRARY
-		"${GMOCK_LIBS_DIR}/${GTEST_LIB_PREFIX}gmock.${GTEST_LIB_SUFFIX}"
-	)
-
 	set(GTEST_LIBRARIES
-		"${GTEST_LIBRARY}"
-		"${GMOCK_LIBRARY}"
-		"${CMAKE_THREAD_LIBS_INIT}"
+		GTest::gtest
+		GTest::gmock
+		Threads::Threads
 	)
 
 	set(GTEST_FOUND TRUE)
 
 	mark_as_advanced(
-		GTEST_LIBRARY
-		GMOCK_LIBRARY
 		GTEST_LIBRARIES
 		GTEST_INCLUDE_DIR
 		GMOCK_INCLUDE_DIR
@@ -117,4 +195,5 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	)
 
 	message(STATUS "Install Google Test v${GTEST_VERSION}")
+
 endif()
