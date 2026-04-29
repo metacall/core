@@ -75,10 +75,17 @@ case "$(uname -m)" in
 			ARCHITECTURE="amd64"
 		fi
 		;;
+	armv6*|armv7*|armhf|armel)
+		if grep -q "ARMv6" /proc/cpuinfo; then
+			ARCHITECTURE="armv6"
+		elif grep -q "ARMv7" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			ARCHITECTURE="armhf"
+		fi
+		;;
 	aarch64|arm64)	ARCHITECTURE="arm64";;
 	riscv64)		ARCHITECTURE="riscv64";;
-	armv6*)			ARCHITECTURE="armv6";;
-	armv7*)			ARCHITECTURE="armhf";;
 	i386|i686)		ARCHITECTURE="386";;
 	s390x)			ARCHITECTURE="s390x";;
 	ppc64le)		ARCHITECTURE="ppc64le";;
@@ -359,7 +366,7 @@ sub_configure() {
 
 	# NetCore 8
 	if [ $BUILD_NETCORE8 = 1 ]; then
-		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armv7" ]; then
 			echo "netcore8 has no support for ${ARCHITECTURE}"
 		else
 			BUILD_STRING="$BUILD_STRING \
@@ -435,7 +442,7 @@ sub_configure() {
 
 	# WebAssembly
 	if [ $BUILD_WASM = 1 ]; then
-		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ]; then
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
 			echo "wasmtime has no support for ${ARCHITECTURE}"
 		else
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_WASM=On"
