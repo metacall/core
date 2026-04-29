@@ -187,7 +187,7 @@ sub_netcore8(){
 	echo "configure netcore 8"
 	cd $ROOT_DIR
 
-	if [ "${ARCHITECTURE}" = "riscv64" || "${ARCHITECTURE}" = "386" ]; then
+	if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ]; then
 		echo "netcore8 has no support for ${ARCHITECTURE}"
 		return
 	fi
@@ -264,6 +264,11 @@ sub_rpc(){
 # WebAssembly
 sub_wasm(){
 	echo "configure wasm"
+
+	if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ]; then
+		echo "wasmtime has no support for ${ARCHITECTURE}"
+		return
+	fi
 
 	# TODO
 }

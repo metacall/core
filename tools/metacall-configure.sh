@@ -352,7 +352,7 @@ sub_configure() {
 
 	# NetCore 8
 	if [ $BUILD_NETCORE8 = 1 ]; then
-		if [ "${ARCHITECTURE}" = "riscv64" || "${ARCHITECTURE}" = "386" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ]; then
 			echo "netcore8 has no support for ${ARCHITECTURE}"
 		else
 			BUILD_STRING="$BUILD_STRING \
@@ -428,10 +428,14 @@ sub_configure() {
 
 	# WebAssembly
 	if [ $BUILD_WASM = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_WASM=On"
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ]; then
+			echo "wasmtime has no support for ${ARCHITECTURE}"
+		else
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_WASM=On"
 
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_WASM=On"
+			if [ $BUILD_SCRIPTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_WASM=On"
+			fi
 		fi
 	fi
 

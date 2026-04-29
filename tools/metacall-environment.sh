@@ -386,7 +386,7 @@ sub_netcore8(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${ARCHITECTURE}" = "riscv64" || "${ARCHITECTURE}" = "386" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ]; then
 			echo "netcore8 has no support for ${ARCHITECTURE}"
 			return
 		fi
@@ -633,6 +633,10 @@ sub_wasm(){
 	echo "configure webassembly"
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ]; then
+			echo "wasmtime has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing wasmtime libwasmtime
 		fi
