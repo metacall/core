@@ -75,7 +75,13 @@ esac
 
 # Architecture detection
 case "$(uname -m)" in
-	x86_64)			ARCHITECTURE="amd64";;
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
 	aarch64|arm64)	ARCHITECTURE="arm64";;
 	riscv64)		ARCHITECTURE="riscv64";;
 	armv7l)			ARCHITECTURE="armhf";;
@@ -719,13 +725,14 @@ sub_cobol(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
+			# echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
 
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
+			# $SUDO_CMD apt-get update
+			# $SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol
 
-			# Remove unstable from sources.list
-			$SUDO_CMD head -n -2 /etc/apt/sources.list
+			# # Remove unstable from sources.list
+			# $SUDO_CMD head -n -2 /etc/apt/sources.list
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol4
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then

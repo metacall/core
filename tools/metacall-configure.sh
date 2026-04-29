@@ -68,7 +68,13 @@ esac
 
 # Architecture detection
 case "$(uname -m)" in
-	x86_64)			ARCHITECTURE="amd64";;
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
 	aarch64|arm64)	ARCHITECTURE="arm64";;
 	riscv64)		ARCHITECTURE="riscv64";;
 	armv7l)			ARCHITECTURE="armhf";;
