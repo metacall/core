@@ -58,7 +58,12 @@ jobs:
       - name: Install Python Port (Windows)
         if: runner.os == 'Windows'
         working-directory: source/ports/py_port
-        run: pip install -e .
+        run: |
+          $loc = "$env:LOCALAPPDATA\metacall\metacall"
+          $env:PYTHONHOME = "$loc\runtimes\python"
+          $env:PIP_TARGET = "$loc\runtimes\python\Lib\site-packages"
+          $env:PATH = "$loc;$loc\lib;$loc\runtimes\python;$loc\runtimes\python\Scripts;$loc\runtimes\python\Lib\site-packages\bin;$loc\runtimes\ruby\bin;$loc\runtimes\ruby\bin\ruby_builtin_dlls;$env:PATH"
+          & "$env:PYTHONHOME\python.exe" -m pip install -e .
 
       # macOS: pip-install the port so the package is findable.
       - name: Install Python Port (macOS)
@@ -120,7 +125,11 @@ jobs:
         working-directory: source/ports/py_port
         env:
           LOADER_SCRIPT_PATH: ${{ github.workspace }}\source\ports\py_port\scripts
-        run: python test.py
+        run: |
+          $loc = "$env:LOCALAPPDATA\metacall\metacall"
+          $env:PYTHONHOME = "$loc\runtimes\python"
+          $env:PATH = "$loc;$loc\lib;$loc\runtimes\python;$loc\runtimes\ruby\bin;$loc\runtimes\ruby\bin\ruby_builtin_dlls;$env:PATH"
+          & "$env:PYTHONHOME\python.exe" test.py
 
   release:
     name: Release Python Port
