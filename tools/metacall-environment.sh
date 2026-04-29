@@ -669,46 +669,12 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
-
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# Ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
