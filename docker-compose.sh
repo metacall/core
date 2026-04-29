@@ -275,8 +275,13 @@ sub_platform() {
 	# Initialize QEMU for Buildkit
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
-	# Load, clear and export default environment variables
-	export $(cat .env | sed 's/#.*//g' | xargs)
+	# Get path where docker-compose.sh is located
+	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+	# Load default environment variables
+	set -a
+	. $BASE_DIR/.env
+	set +a
 
 	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
 	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
@@ -315,8 +320,13 @@ sub_bake() {
 	# Initialize QEMU for Buildkit
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
-	# Load, clear and export default environment variables
-	export $(cat .env | sed 's/#.*//g' | xargs)
+	# Get path where docker-compose.sh is located
+	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+	# Load default environment variables
+	set -a
+	. $BASE_DIR/.env
+	set +a
 
 	# Get the options from the compose file
 	export METACALL_INSTALL_OPTIONS=$(grep "METACALL_INSTALL_OPTIONS:" docker-compose.yml | head -n 1 | sed 's/.*METACALL_INSTALL_OPTIONS: //' | sed 's/#.*//g')
@@ -445,7 +455,9 @@ sub_pack() {
 	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 	# Load default environment variables
+	set -a
 	. $BASE_DIR/.env
+	set +a
 
 	# Run the package builds
 	docker run --name metacall_core_pack -i metacall/core:dev /bin/bash -c 'cd build && make pack'
