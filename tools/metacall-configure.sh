@@ -77,7 +77,8 @@ case "$(uname -m)" in
 		;;
 	aarch64|arm64)	ARCHITECTURE="arm64";;
 	riscv64)		ARCHITECTURE="riscv64";;
-	armv7l)			ARCHITECTURE="armhf";;
+	armv6*)			ARCHITECTURE="armv6";;
+	armv7*)			ARCHITECTURE="armhf";;
 	i386|i686)		ARCHITECTURE="386";;
 	s390x)			ARCHITECTURE="s390x";;
 	ppc64le)		ARCHITECTURE="ppc64le";;
@@ -492,14 +493,22 @@ sub_configure() {
 
 	# Rust
 	if [ $BUILD_RUST = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			echo "rust has no support for ${ARCHITECTURE}"
+		elif [ "${ARCHITECTURE}" = "arm64" ]; then
+			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
+			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+		else
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
 
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
-		fi
+			if [ $BUILD_SCRIPTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
+			fi
 
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
+			if [ $BUILD_PORTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
+			fi
 		fi
 	fi
 

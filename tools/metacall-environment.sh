@@ -84,7 +84,8 @@ case "$(uname -m)" in
 		;;
 	aarch64|arm64)	ARCHITECTURE="arm64";;
 	riscv64)		ARCHITECTURE="riscv64";;
-	armv7l)			ARCHITECTURE="armhf";;
+	armv6*)			ARCHITECTURE="armv6";;
+	armv7*)			ARCHITECTURE="armhf";;
 	i386|i686)		ARCHITECTURE="386";;
 	s390x)			ARCHITECTURE="s390x";;
 	ppc64le)		ARCHITECTURE="ppc64le";;
@@ -725,14 +726,7 @@ sub_cobol(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			# echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
-
-			# $SUDO_CMD apt-get update
-			# $SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol
-
-			# # Remove unstable from sources.list
-			# $SUDO_CMD head -n -2 /etc/apt/sources.list
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol4
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -796,12 +790,28 @@ sub_rust(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			echo "rust has no support for ${ARCHITECTURE}"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "arm64" ]; then
+			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
+			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			return
+		fi
+
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
-		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
+		if [ "${ARCHITECTURE}" = "386" ]; then
+			RUSTUP_DEFAULT_HOST="--default-host i686-unknown-linux-gnu"
+		fi
+
+		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default ${RUSTUP_DEFAULT_HOST:-}
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf

@@ -66,7 +66,8 @@ case "$(uname -m)" in
 		;;
 	aarch64|arm64)	ARCHITECTURE="arm64";;
 	riscv64)		ARCHITECTURE="riscv64";;
-	armv7l)			ARCHITECTURE="armhf";;
+	armv6*)			ARCHITECTURE="armv6";;
+	armv7*)			ARCHITECTURE="armhf";;
 	i386|i686)		ARCHITECTURE="386";;
 	s390x)			ARCHITECTURE="s390x";;
 	ppc64le)		ARCHITECTURE="ppc64le";;
