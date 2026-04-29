@@ -83,7 +83,7 @@ group "default" {
 # Base dependencies image
 target "deps" {
 	context = "."
-	dockerfile = "tools/docker/Dockerfile"
+	dockerfile = "Dockerfile"
 	target = "deps"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
@@ -91,6 +91,8 @@ target "deps" {
 		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
 		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
 		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
+		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
+		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
 	tags = [
 		"metacall/core:deps",
@@ -100,12 +102,16 @@ target "deps" {
 # Development image (depends on deps)
 target "dev" {
 	context = "."
-	dockerfile = "tools/docker/Dockerfile"
+	dockerfile = "Dockerfile"
 	target = "dev"
 	args = {
+		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
+		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
 		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
+		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
 		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
+		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
 	tags = [
 		"metacall/core:dev",
@@ -115,11 +121,15 @@ target "dev" {
 # Runtime image (depends on dev for builder stage)
 target "runtime" {
 	context = "."
-	dockerfile = "tools/docker/Dockerfile"
+	dockerfile = "Dockerfile"
 	target = "runtime"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
+		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
+		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
+		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
+		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
 		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
 	tags = [
@@ -130,8 +140,17 @@ target "runtime" {
 # CLI image (depends on dev for builder and runtime for base)
 target "cli" {
 	context = "."
+	dockerfile = "Dockerfile"
 	target = "cli"
-	dockerfile = "tools/docker/Dockerfile"
+	args = {
+		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
+		METACALL_PATH = "${METACALL_PATH}"
+		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
+		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
+		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
+		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
+		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
+	}
 	tags = [
 		"metacall/core:cli",
 	]

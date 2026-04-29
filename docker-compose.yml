@@ -23,14 +23,16 @@ services:
     container_name: metacall_core_deps
     build:
       context: .
-      dockerfile: tools/docker/Dockerfile
+      dockerfile: Dockerfile
       target: deps
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
       # Work around https://github.com/dotnet/cli/issues/1582 until Docker releases a
@@ -48,12 +50,16 @@ services:
     container_name: metacall_core_dev
     build:
       context: .
-      dockerfile: tools/docker/Dockerfile
+      dockerfile: Dockerfile
       target: dev
       args:
+        METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
+        METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust ports install sandbox # v8 coverage benchmarks
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -71,12 +77,16 @@ services:
     container_name: metacall_core_runtime
     build:
       context: .
-      dockerfile: tools/docker/Dockerfile
+      dockerfile: Dockerfile
       target: runtime
       args:
-        METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
+        METACALL_PATH: $METACALL_PATH
+        METACALL_TOOLS_PATH: $METACALL_PATH/tools
+        METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -94,8 +104,16 @@ services:
     container_name: metacall_core_cli
     build:
       context: .
-      dockerfile: tools/docker/Dockerfile
+      dockerfile: Dockerfile
       target: cli
+      args:
+        METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
+        METACALL_PATH: $METACALL_PATH
+        METACALL_TOOLS_PATH: $METACALL_PATH/tools
+        METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

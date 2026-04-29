@@ -59,9 +59,6 @@ _start-cmd.bat
 # Clang files
 .cache
 
-# Linked dockerignore file in main context
-.dockerignore
-
 # Bake folder
 .bake
 
