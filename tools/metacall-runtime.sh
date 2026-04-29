@@ -55,6 +55,31 @@ case "$(uname -s)" in
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
+# Architecture detection
+case "$(uname -m)" in
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			ARCHITECTURE="armv6"
+		fi
+		;;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
+esac
+
 # Check out for sudo
 if [ "`id -u`" = '0' ]; then
 	SUDO_CMD=""
@@ -175,6 +200,11 @@ sub_netcore8(){
 	echo "configure netcore 8"
 	cd $ROOT_DIR
 
+	if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
+		echo "netcore8 has no support for ${ARCHITECTURE}"
+		return
+	fi
+
 	# Install NET Core Runtime 8.x
 	wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin --runtime dotnet
 }
@@ -248,6 +278,11 @@ sub_rpc(){
 sub_wasm(){
 	echo "configure wasm"
 
+	if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
+		echo "wasmtime has no support for ${ARCHITECTURE}"
+		return
+	fi
+
 	# TODO
 }
 
@@ -262,46 +297,12 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
-
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1

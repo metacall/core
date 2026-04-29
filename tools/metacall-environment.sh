@@ -75,9 +75,27 @@ esac
 
 # Architecture detection
 case "$(uname -m)" in
-	x86_64)	ARCHITECTURE="amd64";;
-	arm64)	ARCHITECTURE="arm64";;
-	*)		ARCHITECTURE="Unknown";;
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			ARCHITECTURE="armv6"
+		fi
+		;;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
 esac
 
 # Check out for sudo
@@ -381,6 +399,10 @@ sub_netcore8(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
+			echo "netcore8 has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -624,6 +646,10 @@ sub_wasm(){
 	echo "configure webassembly"
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
+			echo "wasmtime has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing wasmtime libwasmtime
 		fi
@@ -669,46 +695,12 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
-
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# Ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
@@ -740,13 +732,7 @@ sub_cobol(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
-
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
-
-			# Remove unstable from sources.list
-			$SUDO_CMD head -n -2 /etc/apt/sources.list
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol4
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -810,12 +796,29 @@ sub_rust(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			echo "rust has no support for ${ARCHITECTURE}"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "arm64" ]; then
+			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
+			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			return
+		fi
+
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
+
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
+		if [ "${ARCHITECTURE}" = "386" ]; then
+			. "$HOME/.cargo/env"
+			rustup set default-host i686-unknown-linux-gnu --force-non-host
+		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf

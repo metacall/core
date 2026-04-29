@@ -1,4 +1,10 @@
 **
+
+# Deps
+!tools/metacall-environment.sh
+!tools/nobuildtest.patch
+
+# Dev
 !cmake/**
 !data/**
 !deploy/**
@@ -17,3 +23,6 @@
 !VERSION
 !WELCOME
 source/loaders/rs_loader/rust/target
+
+# Runtime
+!tools/metacall-runtime.sh
