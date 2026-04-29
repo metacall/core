@@ -265,9 +265,9 @@ sub_c(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			sub_apt_install_hold libffi libclang1
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			sub_apt_install_hold libffi libclang1
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
