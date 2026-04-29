@@ -55,7 +55,7 @@ sub_pull() {
 # Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf tools/${tag}/.dockerignore .dockerignore
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
 		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm ${tag}
 	done
 }
@@ -63,7 +63,7 @@ sub_build() {
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
 sub_rebuild() {
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf tools/${tag}/.dockerignore .dockerignore
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
 		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache ${tag}
 	done
 }
@@ -88,11 +88,11 @@ sub_test() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
@@ -115,10 +115,10 @@ sub_test_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	ln -sf tools/deps/.dockerignore .dockerignore
+	ln -sf tools/docker/.deps.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
-	ln -sf tools/dev/.dockerignore .dockerignore
+	ln -sf tools/docker/.dev.dockerignore .dockerignore
 
 	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
 		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
@@ -175,11 +175,11 @@ sub_coverage() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose with Valgrind for testing (link manually dockerignore files)
@@ -202,11 +202,11 @@ sub_test_memcheck() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose with Clang for testing (link manually dockerignore files)
@@ -229,11 +229,11 @@ sub_test_clang() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose with Memory Sanitizer for testing (link manually dockerignore files)
@@ -256,11 +256,11 @@ sub_test_memory_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -271,7 +271,7 @@ sub_cache() {
 	fi
 
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf tools/${tag}/.dockerignore .dockerignore
+		ln -sf tools/docker/.${tag}.dockerignore .dockerignore
 		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build ${tag}
 	done
 }
@@ -299,7 +299,7 @@ sub_platform() {
 
 	# Build with Bake, so the image can be loaded into local docker context
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf "tools/${tag}/.dockerignore" .dockerignore
+		ln -sf "tools/docker/.${tag}.dockerignore" .dockerignore
 		docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load "${tag}"
 	done
 
@@ -345,8 +345,8 @@ sub_bake() {
 
 	# Generate the dockerignore file by merging all of them
 	echo "**" > .bake/.dockerignore
-	for f in tools/deps/.dockerignore tools/dev/.dockerignore tools/runtime/.dockerignore tools/cli/.dockerignore; do
-		tail -n +2 "$f" >> .bake/.dockerignore
+	for f in "${METACALL_TAGS[@]}"; do
+		tail -n +2 "tools/docker/.${tag}.dockerignore" >> .bake/.dockerignore
 	done
 	ln -sf .bake/.dockerignore .dockerignore
 
