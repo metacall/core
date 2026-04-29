@@ -82,13 +82,12 @@ case "$(uname -m)" in
 			ARCHITECTURE="amd64"
 		fi
 		;;
-	armv6*|armv7*|armhf|armel)
-		if grep -q "ARMv6" /proc/cpuinfo; then
-			ARCHITECTURE="armv6"
-		elif grep -q "ARMv7" /proc/cpuinfo; then
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
 			ARCHITECTURE="armhf"
 		else
-			ARCHITECTURE="armhf"
+			ARCHITECTURE="armv6"
 		fi
 		;;
 	aarch64|arm64)	ARCHITECTURE="arm64";;
@@ -400,7 +399,7 @@ sub_netcore8(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armv7" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
 			echo "netcore8 has no support for ${ARCHITECTURE}"
 			return
 		fi
@@ -814,11 +813,12 @@ sub_rust(){
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
 
-		if [ "${ARCHITECTURE}" = "386" ]; then
-			RUSTUP_DEFAULT_HOST="--default-host i686-unknown-linux-gnu --force-non-host"
-		fi
+		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 
-		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default ${RUSTUP_DEFAULT_HOST:-}
+		if [ "${ARCHITECTURE}" = "386" ]; then
+			"$HOME/.cargo/env"
+			rustup set default-host i686-unknown-linux-gnu --force-non-host
+		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf
