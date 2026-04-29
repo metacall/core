@@ -816,7 +816,7 @@ sub_rust(){
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 
 		if [ "${ARCHITECTURE}" = "386" ]; then
-			"$HOME/.cargo/env"
+			. "$HOME/.cargo/env"
 			rustup set default-host i686-unknown-linux-gnu --force-non-host
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
