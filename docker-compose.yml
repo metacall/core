@@ -30,8 +30,8 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
         METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
@@ -57,8 +57,8 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
         METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
@@ -84,8 +84,8 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
         METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
@@ -111,8 +111,8 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} ports install sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
         METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
