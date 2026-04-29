@@ -66,6 +66,18 @@ case "$(uname -s)" in
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
+# Architecture detection
+case "$(uname -m)" in
+	x86_64)			ARCHITECTURE="amd64";;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	armv7l)			ARCHITECTURE="armhf";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
+esac
+
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
 	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces | Remove quotes
@@ -340,16 +352,20 @@ sub_configure() {
 
 	# NetCore 8
 	if [ $BUILD_NETCORE8 = 1 ]; then
-		BUILD_STRING="$BUILD_STRING \
-			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 8`"
+		if [ "${ARCHITECTURE}" = "riscv64" || "${ARCHITECTURE}" = "386" ]; then
+			echo "netcore8 has no support for ${ARCHITECTURE}"
+		else
+			BUILD_STRING="$BUILD_STRING \
+				-DOPTION_BUILD_LOADERS_CS=On \
+				-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 8`"
 
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
-		fi
+			if [ $BUILD_SCRIPTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
+			fi
 
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+			if [ $BUILD_PORTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+			fi
 		fi
 	fi
 

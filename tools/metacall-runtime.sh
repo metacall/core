@@ -55,6 +55,18 @@ case "$(uname -s)" in
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
+# Architecture detection
+case "$(uname -m)" in
+	x86_64)			ARCHITECTURE="amd64";;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	armv7l)			ARCHITECTURE="armhf";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
+esac
+
 # Check out for sudo
 if [ "`id -u`" = '0' ]; then
 	SUDO_CMD=""
@@ -174,6 +186,11 @@ sub_netcore7(){
 sub_netcore8(){
 	echo "configure netcore 8"
 	cd $ROOT_DIR
+
+	if [ "${ARCHITECTURE}" = "riscv64" || "${ARCHITECTURE}" = "386" ]; then
+		echo "netcore8 has no support for ${ARCHITECTURE}"
+		return
+	fi
 
 	# Install NET Core Runtime 8.x
 	wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin --runtime dotnet

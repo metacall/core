@@ -75,9 +75,14 @@ esac
 
 # Architecture detection
 case "$(uname -m)" in
-	x86_64)	ARCHITECTURE="amd64";;
-	arm64)	ARCHITECTURE="arm64";;
-	*)		ARCHITECTURE="Unknown";;
+	x86_64)			ARCHITECTURE="amd64";;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	armv7l)			ARCHITECTURE="armhf";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
 esac
 
 # Check out for sudo
@@ -381,6 +386,10 @@ sub_netcore8(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" || "${ARCHITECTURE}" = "386" ]; then
+			echo "netcore8 has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
