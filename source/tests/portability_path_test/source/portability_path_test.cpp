@@ -778,6 +778,4 @@ TEST_F(portability_path_test, portability_path_test_fullname)
 	EXPECT_NE((int)0, (int)exe_name_size);
 
 	EXPECT_STREQ(exe_name, "qemu-riscv64");
-
-	EXPECT_EQ(strncmp(exe_name, "qemu", std::min(exe_name_size, sizeof("qemu"))) - 1, 0);
 }
