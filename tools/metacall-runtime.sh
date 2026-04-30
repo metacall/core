@@ -69,6 +69,7 @@ case "$(uname -m)" in
 		if grep -q "vfpv3" /proc/cpuinfo; then
 			ARCHITECTURE="armhf"
 		else
+			# TODO: ARMv6 detection not working properly
 			ARCHITECTURE="armv6"
 		fi
 		;;

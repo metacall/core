@@ -768,3 +768,16 @@ TEST_F(portability_path_test, portability_path_test_compare_root_file)
 
 	EXPECT_EQ((int)1, (int)portability_path_compare(left, right));
 }
+
+TEST_F(portability_path_test, portability_path_test_fullname)
+{
+	static const char exe_path[] = "/usr/bin/qemu-riscv64";
+	char exe_name[PORTABILITY_PATH_SIZE];
+	size_t exe_name_size = portability_path_get_fullname(exe_path, sizeof(exe_path), exe_name, PORTABILITY_PATH_SIZE);
+
+	EXPECT_NE((int)0, (int)exe_name_size);
+
+	EXPECT_STREQ(exe_name, "qemu-riscv64");
+
+	EXPECT_EQ(strncmp(exe_name, "qemu", std::min(exe_name_size, sizeof("qemu"))) - 1, 0);
+}

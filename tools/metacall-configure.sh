@@ -80,6 +80,7 @@ case "$(uname -m)" in
 		if grep -q "vfpv3" /proc/cpuinfo; then
 			ARCHITECTURE="armhf"
 		else
+			# TODO: ARMv6 detection not working properly
 			ARCHITECTURE="armv6"
 		fi
 		;;
@@ -505,6 +506,24 @@ sub_configure() {
 			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
 			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
 			echo "open an issue or pull request here: https://github.com/metacall/core/"
+		elif [ "${ARCHITECTURE}" = "386" ]; then
+			# TODO: Rustup is not detecting this architecture properly
+			echo "rustup with 386 has a bug, it does not detect the architecture properly"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "rustup default nightly-2021-12-04-i686-unknown-linux-gnu"
+			echo "error: toolchain 'nightly-2021-12-04-i686-unknown-linux-gnu' may not be able to run on this system"
+			echo "note: to build software for that platform, try rustup target add i686-unknown-linux-gnu instead"
+			echo "note: add the --force-non-host flag to install the toolchain anyway"
+		elif [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			# TODO: Git does not work well with 32-bit nodes, this error has happened before
+			# in metacall/guix, for solving it the best way is to mount a tempfs folder with 64-bit nodes
+			# For more info check this issue: https://github.com/metacall/guix/issues/16
+			echo "cargo with armv6 and armv6 has a bug with git and long path names"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "warning: spurious network error (1 tries remaining): could not read directory '/root/.cargo/registry/index/github.com-1285ae84e5963aae/.git/refs': Value too large for defined data type; class=Os (2)"
+			echo "error: failed to get fastrand as a dependency of package compiler v0.1.0 (/usr/local/metacall/source/loaders/rs_loader/rust/compiler)"
 		else
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
 
