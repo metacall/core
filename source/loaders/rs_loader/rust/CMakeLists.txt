@@ -55,37 +55,32 @@ add_custom_target(${target}_runtime
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
-# On Linux, execute patchelf in order to patch rpath in the dependencies
-if(PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
-	# Find Patchelf
-	find_package(Patchelf)
-
-	if(NOT Patchelf_FOUND)
-		include(InstallPatchelf)
-
-		if(NOT Patchelf_FOUND)
-			message(SEND_ERROR "Patchelf not found")
-			return()
-		endif()
-
-		set(TARGET_INSTALL_DEPENDENCY Patchelf)
-	endif()
-
-	set(RUSTC_LIBS)
-	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime ${TARGET_INSTALL_DEPENDENCY})
-	foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
-		get_filename_component(rustc_lib_name ${rustc_lib} NAME)
-		list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
-		add_custom_command(TARGET ${target}_patchelf POST_BUILD
-			COMMAND ${Patchelf_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
-		)
-	endforeach()
-
-	set(TARGET_DEPENDENCY ${target}_patchelf)
+# Darwin: allow undefined metacall symbols (resolved at runtime via dynamic_lookup)
+# Linux: embed $ORIGIN rpath so sibling libraries resolve at load time
+if(APPLE)
+	set(CARGO_RUSTFLAGS "\"-C\", \"link-args=-Wl,-undefined,dynamic_lookup\"")
 else()
-	# TODO: Implement patchelf equivalent (if needed) for other platforms
-	set(RUSTC_LIBS ${Rust_RUSTC_LIBRARIES})
+	set(CARGO_RUSTFLAGS "\"-C\", \"link-args=-Wl,-rpath,$ORIGIN\"")
 endif()
+
+configure_file(
+	"${CMAKE_CURRENT_SOURCE_DIR}/.cargo/config.in"
+	"${CMAKE_CURRENT_SOURCE_DIR}/.cargo/config"
+	@ONLY
+)
+
+include(PatchRPath)
+
+set(RUSTC_LIBS)
+foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
+	get_filename_component(rustc_lib_name "${rustc_lib}" NAME)
+	list(APPEND RUSTC_LIBS "${PROJECT_OUTPUT_DIR}/${rustc_lib_name}")
+endforeach()
+
+# Patching runs after cargo build, not before
+set(PATCH_LIBS "${TARGET_OUTPUT}" ${RUSTC_LIBS})
+add_custom_target(${target}_rpath ALL DEPENDS ${target})
+metacall_patch_rpath(${target}_rpath "${PATCH_LIBS}" "${PROJECT_OUTPUT_DIR}")
 
 if(OPTION_BUILD_MUSL)
 	set(RUST_CTR_STATIC "-Ctarget-feature=-crt-static -Clink-self-contained=off -L/usr/lib/x86_64-linux-musl") #-Clink-args=--dynamic-linker /lib/ld-musl-x86_64.so.1
@@ -103,7 +98,7 @@ add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
-	DEPENDS ${target}_runtime ${TARGET_DEPENDENCY}
+	DEPENDS ${target}_runtime
 )
 
 add_dependencies(${target}
