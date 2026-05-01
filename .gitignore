@@ -1,56 +1,68 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
 
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
 *.a
-# Auto-generated bake file
-.bake
-# Bake folder
-/bin
+
+# Build dir
 **/build*
 build*
-# Build dir
-.cache
-# Clang files
+debug_build
+release_build
+/bin
+/lib
+/install
+/dependencies
+
 # CMake
 CMakeCache.txt
 CMakeFiles
+CMakeScripts
+Testing
+Makefile
 cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+# Qt cache
 CMakeLists.txt.user
 CMakeLists.txt.user.*
-CMakeScripts
-compile_commands.json
-# Compiled Dynamic libraries
-# Compiled Object files
-# Compiled Static libraries
-_configure.bat
-CTestTestfile.cmake
-debug_build
-/dependencies
-docker-compose.bake.yml
-.DS_Store
-*.dylib
+
 # IDE project files
-/install
-install_manifest.txt
-*.la
-*.lai
-/lib
-*.lo
-.localconfig
-# Local config unix
-# Local config windows
-# macOS files
-Makefile
-*.o
-_open-project.bat
-# Qt cache
-release_build
-*.slo
-*.so
-_start-cmake-gui.bat
-_start-cmd.bat
 *.sublime-project
 *.sublime-workspace
-Testing
-tools/instrumentation/**/*.log
-tools/instrumentation/msan/howto-check/
+
+# Local config windows
+_configure.bat
+_open-project.bat
+_start-cmake-gui.bat
+_start-cmd.bat
+
+# macOS files
+.DS_Store
+
+# Local config unix
+.localconfig
+
 # Visual Studio Code
 .vscode
+
+# Clang files
+.cache
+
+# Bake folder
+.bake
+
+# Auto-generated bake file
+docker-compose.bake.yml
+tools/instrumentation/msan/howto-check/
+tools/instrumentation/**/*.log
