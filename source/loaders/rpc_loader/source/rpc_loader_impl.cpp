@@ -65,7 +65,6 @@ struct rpc_async_context;
 typedef struct loader_impl_rpc_type
 {
 	CURL *discover_curl;
-	CURL *invoke_curl;
 	CURLM *async_multi;
 	std::thread poll_thread;
 	std::atomic<bool> exit_flag;
@@ -195,22 +194,39 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 		return NULL;
 	}
 
-	/* Execute a POST to the endpoint */
+	/* This creates a per-call CURL handle for thread safety */
+	CURL *easy = curl_easy_init();
+
+	if (easy == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL handle for sync call to %s", rpc_function->url.c_str());
+		metacall_allocator_free(rpc_impl->allocator, buffer);
+		return NULL;
+	}
+
 	loader_impl_rpc_write_data_type write_data;
 
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_URL, rpc_function->url.c_str());
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_POSTFIELDS, buffer);
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_POSTFIELDSIZE, body_request_size - 1);
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+	curl_easy_setopt(easy, CURLOPT_VERBOSE, CURL_VERBOSE);
+	curl_easy_setopt(easy, CURLOPT_HEADER, 0L);
+	curl_easy_setopt(easy, CURLOPT_CUSTOMREQUEST, "POST");
+	curl_easy_setopt(easy, CURLOPT_HTTPHEADER, rpc_impl->headers);
+	curl_easy_setopt(easy, CURLOPT_USERAGENT, "librpc_loader/0.1");
+	curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
+	curl_easy_setopt(easy, CURLOPT_URL, rpc_function->url.c_str());
+	curl_easy_setopt(easy, CURLOPT_POSTFIELDS, buffer);
+	curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE, body_request_size - 1);
+	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
 
-	CURLcode res = curl_easy_perform(rpc_impl->invoke_curl);
+	CURLcode res = curl_easy_perform(easy);
+
+	curl_easy_cleanup(easy);
 
 	/* Clear the request buffer */
 	metacall_allocator_free(rpc_function->rpc_impl->allocator, buffer);
 
 	if (res != CURLE_OK)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not call to the API endpoint %s [%]", rpc_function->url.c_str(), curl_easy_strerror(res));
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not call to the API endpoint %s [%s]", rpc_function->url.c_str(), curl_easy_strerror(res));
 		return NULL;
 	}
 
@@ -541,33 +557,10 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_HEADER, 0L);
 	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
 
-	/* Initialize invoke CURL object */
-	rpc_impl->invoke_curl = curl_easy_init();
-
-	if (rpc_impl->invoke_curl == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL invoke object");
-
-		curl_easy_cleanup(rpc_impl->discover_curl);
-
-		metacall_allocator_destroy(rpc_impl->allocator);
-
-		delete rpc_impl;
-
-		return NULL;
-	}
-
 	rpc_impl->headers = NULL;
 	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "Accept: application/json");
 	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "Content-Type: application/json");
 	rpc_impl->headers = curl_slist_append(rpc_impl->headers, "charset: utf-8");
-
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_VERBOSE, CURL_VERBOSE);
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HEADER, 0L);
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_CUSTOMREQUEST, "POST");
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HTTPHEADER, rpc_impl->headers);
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_USERAGENT, "librpc_loader/0.1");
-	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
 
 	/* Initialize async multi handle */
 	rpc_impl->async_multi = curl_multi_init();
@@ -577,7 +570,6 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL multi handle for async");
 
 		curl_easy_cleanup(rpc_impl->discover_curl);
-		curl_easy_cleanup(rpc_impl->invoke_curl);
 		metacall_allocator_destroy(rpc_impl->allocator);
 		delete rpc_impl;
 
@@ -598,7 +590,6 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 		curl_multi_cleanup(rpc_impl->async_multi);
 		curl_easy_cleanup(rpc_impl->discover_curl);
-		curl_easy_cleanup(rpc_impl->invoke_curl);
 		metacall_allocator_destroy(rpc_impl->allocator);
 		delete rpc_impl;
 
@@ -706,9 +697,11 @@ int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, c
 	return rpc_loader_impl_load_from_stream_handle(rpc_handle, stream);
 }
 
-loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
+
+	(void)data;
 
 	if (rpc_handle == nullptr)
 	{
@@ -732,12 +725,13 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_path
 	return static_cast<loader_handle>(rpc_handle);
 }
 
-loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
 
 	(void)impl;
 	(void)name;
+	(void)data;
 
 	if (rpc_handle == nullptr)
 	{
@@ -756,12 +750,13 @@ loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_na
 	return static_cast<loader_handle>(rpc_handle);
 }
 
-loader_handle rpc_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle rpc_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
 	/* TODO */
 
 	(void)impl;
 	(void)path;
+	(void)data;
 
 	return NULL;
 }
@@ -936,8 +931,6 @@ int rpc_loader_impl_destroy(loader_impl impl)
 	metacall_allocator_destroy(rpc_impl->allocator);
 
 	curl_easy_cleanup(rpc_impl->discover_curl);
-
-	curl_easy_cleanup(rpc_impl->invoke_curl);
 
 	curl_global_cleanup();
 

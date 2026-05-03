@@ -35,14 +35,30 @@ const server = http.createServer((req, res) => {
 	} else if (req.method === 'POST') {
 		if (req.url === '/viferga/example/v1/call/divide') {
 			data.then((body) => {
-				console.log('¡Call recieved!');
-				if (body !== '[50.0,10.0]') {
-					console.error('Invalid body:', body);
-					process.exit(1);
-				}
-				const result = '5.0';
+				console.log('Call received: divide', body);
+				const args = JSON.parse(body);
+				const result = args[0] / args[1];
 				res.setHeader('Content-Type', 'application/json');
-				res.end(result);
+				const str = Number.isInteger(result) ? result.toFixed(1) : JSON.stringify(result);
+				res.end(str);
+			});
+			return;
+		} else if (req.url === '/viferga/example/v1/call/sum') {
+			data.then((body) => {
+				console.log('Call received: sum', body);
+				const args = JSON.parse(body);
+				const result = args[0] + args[1];
+				res.setHeader('Content-Type', 'application/json');
+				res.end(JSON.stringify(result));
+			});
+			return;
+		} else if (req.url === '/viferga/example/v1/call/multiply') {
+			data.then((body) => {
+				console.log('Call received: multiply', body);
+				const args = JSON.parse(body);
+				const result = args[0] * args[1];
+				res.setHeader('Content-Type', 'application/json');
+				res.end(JSON.stringify(result));
 			});
 			return;
 		} else if (req.url === '/viferga/example/v1/await/async_divide') {

@@ -119,4 +119,6 @@ pub mod inline {
 
 #[allow(warnings)]
 #[doc(hidden)]
-pub mod bindings;
+pub mod bindings {
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}

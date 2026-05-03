@@ -167,7 +167,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
             wrapper_file.write_all(content.as_bytes())?;
 
-            let mut source = Source::new(Source::Package {
+            let mut source = Source::build(Source::Package {
                 path: path.to_path_buf(),
             });
             source.output = callbacks.source.output;
@@ -210,7 +210,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                     wrapper_file.write_all(content.as_bytes())?;
                     let dst = format!("include!({:?});", callbacks.source.input_path);
                     wrapper_file.write_all(dst.as_bytes())?;
-                    let mut source = Source::new(Source::File {
+                    let mut source = Source::build(Source::File {
                         path: temp_dir.join("wrapped_".to_owned() + &source_file),
                     });
                     source.output = callbacks.source.output;
@@ -244,7 +244,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                         wrapper_file.write_all(content.as_bytes())?;
                         let dst = format!("include!({:?});", source_path.join("script.rs"));
                         wrapper_file.write_all(dst.as_bytes())?;
-                        let mut source = Source::new(Source::File {
+                        let mut source = Source::build(Source::File {
                             path: source_path.join("wrapped_script.rs"),
                         });
                         source.output = callbacks.source.output;

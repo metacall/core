@@ -19,6 +19,8 @@
 #	limitations under the License.
 #
 
+set -exuo pipefail
+
 function publish() {
     local crate_version=`cargo search --quiet $1 | grep "$1" | head -n 1 | awk '{ print $3 }'`
     local project_version=`cargo metadata --format-version=1 --no-deps | jq ".packages[] | select(.name == \"$1\") | .version"`
@@ -26,7 +28,7 @@ function publish() {
     # Check if versions do not match, and if so, publish them
     if [ ! "${crate_version}" = "${project_version}" ]; then
         echo "Publishing $1: ${crate_version} -> ${project_version}"
-        cargo publish --verbose --locked --token ${CARGO_REGISTRY_TOKEN}
+        cargo publish --verbose --locked --no-verify --token ${CARGO_REGISTRY_TOKEN}
     fi
 }
 

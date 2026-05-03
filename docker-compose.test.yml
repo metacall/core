@@ -25,10 +25,10 @@ services:
     build:
       args:
         METACALL_BUILD_TYPE: ${METACALL_BUILD_TYPE}
-        METACALL_INSTALL_OPTIONS: ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51
+        METACALL_INSTALL_OPTIONS: ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51
   dev:
     image: metacall/core:dev
     build:
       args:
         METACALL_BUILD_TYPE: ${METACALL_BUILD_TYPE}
-        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks # v8
+        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks # v8

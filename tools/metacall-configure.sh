@@ -50,9 +50,11 @@ BUILD_PORTS=0
 BUILD_SANDBOX=0
 BUILD_COVERAGE=0
 BUILD_MEMCHECK=0
+BUILD_CLANG=0
 BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
+BUILD_ANDROID=0
 
 # Operative System detection
 case "$(uname -s)" in
@@ -60,7 +62,34 @@ case "$(uname -s)" in
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
 	*)			OPERATIVE_SYSTEM="Unknown"
+esac
+
+# Architecture detection
+case "$(uname -m)" in
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			# TODO: ARMv6 detection not working properly
+			ARCHITECTURE="armv6"
+		fi
+		;;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
 esac
 
 # Linux Distro detection
@@ -198,6 +227,10 @@ sub_options() {
 			echo "Build with memcheck"
 			BUILD_MEMCHECK=1
 		fi
+		if [ "$option" = 'clang' ]; then
+			echo "Build with clang compiler"
+			BUILD_CLANG=1
+		fi
 		if [ "$option" = 'address-sanitizer' ]; then
 			echo "Build with address sanitizer"
 			BUILD_ADDRESS_SANITIZER=1
@@ -209,6 +242,10 @@ sub_options() {
 		if [ "$option" = 'memory-sanitizer' ]; then
 			echo "Build with memory sanitizer"
 			BUILD_MEMORY_SANITIZER=1
+		fi
+		if [ "$option" = 'android' ]; then
+			echo "Cross-compile to android"
+			BUILD_ANDROID=1
 		fi
 	done
 }
@@ -222,7 +259,6 @@ sub_configure() {
 	BUILD_STRING="-DOPTION_BUILD_LOG_PRETTY=Off \
 			-DOPTION_BUILD_LOADERS=On \
 			-DOPTION_BUILD_LOADERS_MOCK=On"
-
 
 	# Enable build with musl libc
 	if [ "$LINUX_DISTRO" = "alpine" ]; then
@@ -330,16 +366,20 @@ sub_configure() {
 
 	# NetCore 8
 	if [ $BUILD_NETCORE8 = 1 ]; then
-		BUILD_STRING="$BUILD_STRING \
-			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 8`"
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
+			echo "netcore8 has no support for ${ARCHITECTURE}"
+		else
+			BUILD_STRING="$BUILD_STRING \
+				-DOPTION_BUILD_LOADERS_CS=On \
+				-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 8`"
 
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
-		fi
+			if [ $BUILD_SCRIPTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
+			fi
 
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+			if [ $BUILD_PORTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+			fi
 		fi
 	fi
 
@@ -402,10 +442,14 @@ sub_configure() {
 
 	# WebAssembly
 	if [ $BUILD_WASM = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_WASM=On"
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
+			echo "wasmtime has no support for ${ARCHITECTURE}"
+		else
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_WASM=On"
 
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_WASM=On"
+			if [ $BUILD_SCRIPTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_WASM=On"
+			fi
 		fi
 	fi
 
@@ -456,14 +500,40 @@ sub_configure() {
 
 	# Rust
 	if [ $BUILD_RUST = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			echo "rust has no support for ${ARCHITECTURE}"
+		elif [ "${ARCHITECTURE}" = "arm64" ]; then
+			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
+			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+		elif [ "${ARCHITECTURE}" = "386" ]; then
+			# TODO: Rustup is not detecting this architecture properly
+			echo "rustup with 386 has a bug, it does not detect the architecture properly"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "rustup default nightly-2021-12-04-i686-unknown-linux-gnu"
+			echo "error: toolchain 'nightly-2021-12-04-i686-unknown-linux-gnu' may not be able to run on this system"
+			echo "note: to build software for that platform, try rustup target add i686-unknown-linux-gnu instead"
+			echo "note: add the --force-non-host flag to install the toolchain anyway"
+		elif [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			# TODO: Git does not work well with 32-bit nodes, this error has happened before
+			# in metacall/guix, for solving it the best way is to mount a tempfs folder with 64-bit nodes
+			# For more info check this issue: https://github.com/metacall/guix/issues/16
+			echo "cargo with armv6 and armv6 has a bug with git and long path names"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "warning: spurious network error (1 tries remaining): could not read directory '/root/.cargo/registry/index/github.com-1285ae84e5963aae/.git/refs': Value too large for defined data type; class=Os (2)"
+			echo "error: failed to get fastrand as a dependency of package compiler v0.1.0 (/usr/local/metacall/source/loaders/rs_loader/rust/compiler)"
+		else
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
 
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
-		fi
+			if [ $BUILD_SCRIPTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
+			fi
 
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
+			if [ $BUILD_PORTS = 1 ]; then
+				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
+			fi
 		fi
 	fi
 
@@ -551,6 +621,20 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
 
+	# Android
+	if [ $BUILD_ANDROID = 1 ]; then
+		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-30}"
+		ANDROID_ABI="${ANDROID_ABI:-x86_64}"
+
+		BUILD_STRING="$BUILD_STRING \
+			-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+			-DANDROID_ABI=${ANDROID_ABI} \
+			-DANDROID_PLATFORM=android-${ANDROID_API_LEVEL} \
+			-DANDROID_STL=c++_shared \
+			-Wno-dev \
+			-G Ninja"
+	fi
+
 	# Split cmake config file line by line and add each line to the build string
 	CMAKE_CONFIG_FILE="$ROOT_DIR/CMakeConfig.txt"
 	if [ -f $CMAKE_CONFIG_FILE ]; then
@@ -564,6 +648,10 @@ sub_configure() {
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 	
 	# Execute CMake
+	if [ $BUILD_CLANG = 1 ]; then
+		export CC=clang
+		export CXX=clang++
+	fi
 	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
 }
 
@@ -600,9 +688,11 @@ sub_help() {
 	echo "	sandbox: build with sandboxing support"
 	echo "	coverage: build all coverage reports"
 	echo "	memcheck: build with memcheck"
+	echo "	clang: build with clang compiler"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
-	echo "	memory-sanitizer: build with memory sanitizer"
+	echo "	memory-sanitizer: build with memory sanitizer (requires clang)"
+	echo "	android: cross-compile to android"
 	echo ""
 }
 

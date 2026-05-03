@@ -52,23 +52,21 @@ sub_pull() {
 	done
 }
 
-# Build MetaCall Docker Compose (link manually dockerignore files)
+# Build MetaCall Docker Compose
 sub_build() {
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf tools/${tag}/.dockerignore .dockerignore
 		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm ${tag}
 	done
 }
 
-# Build MetaCall Docker Compose without cache (link manually dockerignore files)
+# Build MetaCall Docker Compose without cache
 sub_rebuild() {
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf tools/${tag}/.dockerignore .dockerignore
 		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache ${tag}
 	done
 }
 
-# Build MetaCall Docker Compose for testing (link manually dockerignore files)
+# Build MetaCall Docker Compose for testing
 sub_test() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
@@ -76,6 +74,9 @@ sub_test() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
 
@@ -85,14 +86,13 @@ sub_test() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
-# Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
+# Build MetaCall Docker Compose with Sanitizer for testing
 sub_test_sanitizer() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
@@ -100,6 +100,9 @@ sub_test_sanitizer() {
 	# Enable build with sanitizer
 	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
 
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
+
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
 
@@ -109,10 +112,7 @@ sub_test_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	ln -sf tools/deps/.dockerignore .dockerignore
 	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
 
 	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
 		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
@@ -149,13 +149,16 @@ sub_test_sanitizer() {
 	fi
 }
 
-# Build MetaCall Docker Compose for coverage (link manually dockerignore files)
+# Build MetaCall Docker Compose for coverage
 sub_coverage() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
 
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
+
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
 
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=coverage
@@ -166,20 +169,22 @@ sub_coverage() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
-# Build MetaCall Docker Compose with Valgrind for testing (link manually dockerignore files)
+# Build MetaCall Docker Compose with Valgrind for testing
 sub_test_memcheck() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
 
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
+
+	# Disable build with clang
+	export METACALL_BUILD_CLANG=
 
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=
@@ -190,14 +195,65 @@ sub_test_memcheck() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	ln -sf tools/deps/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
-
-	ln -sf tools/dev/.dockerignore .dockerignore
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
 }
 
-# Build MetaCall Docker Compose with caching (link manually dockerignore files)
+# Build MetaCall Docker Compose with Clang for testing
+sub_test_clang() {
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
+
+	# Disable build with sanitizer
+	export METACALL_BUILD_SANITIZER=
+
+	# Enable build with clang
+	export METACALL_BUILD_CLANG=clang
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
+
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
+
+	# Define build type
+	export METACALL_BUILD_TYPE=debug
+
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
+}
+
+# Build MetaCall Docker Compose with Memory Sanitizer for testing
+sub_test_memory_sanitizer() {
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
+
+	# Enable build with clang
+	export METACALL_BUILD_CLANG=clang
+
+	# Enable build with memory sanitizer
+	export METACALL_BUILD_SANITIZER=memory-sanitizer
+
+	# Disable build with coverage
+	export METACALL_BUILD_COVERAGE=
+
+	# Disable build with memcheck
+	export METACALL_BUILD_MEMCHECK=
+
+	# Define build type
+	export METACALL_BUILD_TYPE=debug
+
+	METACALL_TAGS=("deps" "dev")
+	for tag in "${METACALL_TAGS[@]}"; do
+		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+	done
+}
+
+# Build MetaCall Docker Compose with caching
 sub_cache() {
 	if [ -z "${IMAGE_REGISTRY+x}" ]; then
 		echo "Error: IMAGE_REGISTRY variable not defined"
@@ -205,12 +261,11 @@ sub_cache() {
 	fi
 
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf tools/${tag}/.dockerignore .dockerignore
 		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build ${tag}
 	done
 }
 
-# Build MetaCall Docker Compose with multi-platform specifier (link manually dockerignore files)
+# Build MetaCall Docker Compose with multi-platform specifier
 sub_platform() {
 	if [ -z "${METACALL_PLATFORM+x}" ]; then
 		echo "Error: METACALL_PLATFORM variable not defined"
@@ -220,8 +275,13 @@ sub_platform() {
 	# Initialize QEMU for Buildkit
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
-	# Load, clear and export default environment variables
-	export $(cat .env | sed 's/#.*//g' | xargs)
+	# Get path where docker-compose.sh is located
+	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+	# Load default environment variables
+	set -a
+	. $BASE_DIR/.env
+	set +a
 
 	# Debian in Docker Hub does not support LoongArch64 yet, let's use official LoongArch repository instead
 	if [ "$METACALL_PLATFORM" = "linux/loong64" ]; then
@@ -233,7 +293,6 @@ sub_platform() {
 
 	# Build with Bake, so the image can be loaded into local docker context
 	for tag in "${METACALL_TAGS[@]}"; do
-		ln -sf "tools/${tag}/.dockerignore" .dockerignore
 		docker buildx bake -f docker-compose.bake.yml --set *.platform="${METACALL_PLATFORM}" --load "${tag}"
 	done
 
@@ -261,8 +320,13 @@ sub_bake() {
 	# Initialize QEMU for Buildkit
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
-	# Load, clear and export default environment variables
-	export $(cat .env | sed 's/#.*//g' | xargs)
+	# Get path where docker-compose.sh is located
+	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+	# Load default environment variables
+	set -a
+	. $BASE_DIR/.env
+	set +a
 
 	# Get the options from the compose file
 	export METACALL_INSTALL_OPTIONS=$(grep "METACALL_INSTALL_OPTIONS:" docker-compose.yml | head -n 1 | sed 's/.*METACALL_INSTALL_OPTIONS: //' | sed 's/#.*//g')
@@ -277,12 +341,8 @@ sub_bake() {
 	# Create temporal folder for storing metadata
 	mkdir -p .bake
 
-	# Generate the dockerignore file by merging all of them
-	echo "**" > .bake/.dockerignore
-	for f in tools/deps/.dockerignore tools/dev/.dockerignore tools/runtime/.dockerignore tools/cli/.dockerignore; do
-		tail -n +2 "$f" >> .bake/.dockerignore
-	done
-	ln -sf .bake/.dockerignore .dockerignore
+	# Copy the docker ingore file
+	cp .dockerignore .bake/.dockerignore
 
 	# Build all images all at once
 	docker buildx bake \
@@ -395,7 +455,9 @@ sub_pack() {
 	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 	# Load default environment variables
+	set -a
 	. $BASE_DIR/.env
+	set +a
 
 	# Run the package builds
 	docker run --name metacall_core_pack -i metacall/core:dev /bin/bash -c 'cd build && make pack'
@@ -426,6 +488,7 @@ sub_help() {
 	echo "	test-memory-sanitizer"
 	echo "	coverage"
 	echo "	test-memcheck"
+	echo "	test-clang"
 	echo "	cache"
 	echo "	platform"
 	echo "	push"
@@ -455,14 +518,16 @@ case "$1" in
 		sub_test_sanitizer
 		;;
 	test-memory-sanitizer)
-		export METACALL_BUILD_SANITIZER="memory-sanitizer"
-		sub_test_sanitizer
+		sub_test_memory_sanitizer
 		;;
 	coverage)
 		sub_coverage
 		;;
 	test-memcheck)
 		sub_test_memcheck
+		;;
+	test-clang)
+		sub_test_clang
 		;;
 	cache)
 		sub_cache

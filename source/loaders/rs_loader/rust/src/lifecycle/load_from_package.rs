@@ -6,6 +6,7 @@ use std::path::PathBuf;
 pub extern "C" fn rs_loader_impl_load_from_package(
     loader_impl: *mut c_void,
     path: *mut *const c_char,
+    _data: *mut c_void,
 ) -> *mut c_void {
     loader::load(
         loader_impl,

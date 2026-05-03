@@ -35,11 +35,11 @@ EXT_LOADER_API loader_impl_data ext_loader_impl_initialize(loader_impl impl, con
 
 EXT_LOADER_API int ext_loader_impl_execution_path(loader_impl impl, const loader_path path);
 
-EXT_LOADER_API loader_handle ext_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size);
+EXT_LOADER_API loader_handle ext_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data);
 
-EXT_LOADER_API loader_handle ext_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size);
+EXT_LOADER_API loader_handle ext_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data);
 
-EXT_LOADER_API loader_handle ext_loader_impl_load_from_package(loader_impl impl, const loader_path path);
+EXT_LOADER_API loader_handle ext_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data);
 
 EXT_LOADER_API int ext_loader_impl_clear(loader_impl impl, loader_handle handle);
 

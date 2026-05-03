@@ -704,6 +704,11 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
 
+	/* TODO: Check here about search_paths and load them */
+	/* TODO: Check here about environment and load them */
+	/* TODO: Implement the search_paths and environment_variables generation in CMake */
+	/* Reference: https://github.com/metacall/core/issues/760 */
+
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
 
@@ -1249,7 +1254,7 @@ size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, l
 	return length;
 }
 
-int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr)
+int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr, void *data)
 {
 	if (impl != NULL)
 	{
@@ -1286,7 +1291,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
-			handle = iface->load_from_file(impl, paths, size);
+			handle = iface->load_from_file(impl, paths, size, data);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
@@ -1320,7 +1325,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_name name, const 
 	return 1;
 }
 
-int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl impl, const char *buffer, size_t size, void **handle_ptr)
+int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl impl, const char *buffer, size_t size, void **handle_ptr, void *data)
 {
 	if (impl != NULL && buffer != NULL && size > 0)
 	{
@@ -1357,7 +1362,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
-			handle = iface->load_from_memory(impl, name, buffer, size);
+			handle = iface->load_from_memory(impl, name, buffer, size, data);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
@@ -1369,7 +1374,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 	return 1;
 }
 
-int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl impl, const loader_path path, void **handle_ptr)
+int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl impl, const loader_path path, void **handle_ptr, void *data)
 {
 	if (impl != NULL)
 	{
@@ -1396,7 +1401,7 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
-			handle = iface->load_from_package(impl, path);
+			handle = iface->load_from_package(impl, path, data);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */

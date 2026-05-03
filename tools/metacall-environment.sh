@@ -55,9 +55,11 @@ INSTALL_RUST=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
+INSTALL_CLANG=0
 INSTALL_CLANGFORMAT=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
+INSTALL_ANDROID=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -67,14 +69,34 @@ case "$(uname -s)" in
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
 # Architecture detection
 case "$(uname -m)" in
-	x86_64)	ARCHITECTURE="amd64";;
-	arm64)	ARCHITECTURE="arm64";;
-	*)		ARCHITECTURE="Unknown";;
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			# TODO: ARMv6 detection not working properly
+			ARCHITECTURE="armv6"
+		fi
+		;;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
 esac
 
 # Check out for sudo
@@ -111,6 +133,8 @@ sub_base(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
 	fi
 }
 
@@ -189,6 +213,8 @@ sub_python(){
 		pip3 install numpy
 		pip3 install joblib
 		pip3 install scikit-learn
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y python3
 	fi
 }
 
@@ -219,6 +245,8 @@ sub_ruby(){
 		echo "-DRuby_LIBRARY=$RUBY_PREFIX/lib/libruby.3.2.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y ruby
 	fi
 }
 
@@ -372,6 +400,10 @@ sub_netcore8(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
+			echo "netcore8 has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -553,6 +585,23 @@ sub_nodejs(){
 			brew install libgit2@1.8
 			brew link libgit2@1.8 --force --overwrite
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y node22 npm-node22 python3 gmake
+		NODE_VERSION=$(node --version | sed 's/v//')
+		fetch -o /tmp/node-v${NODE_VERSION}.tar.gz https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz
+		tar xzf /tmp/node-v${NODE_VERSION}.tar.gz -C /tmp
+		# TODO: Dirty fix, review or delete this
+		sed -i '' '/ASSERT_TRIVIALLY_COPYABLE(T);/d' /tmp/node-v${NODE_VERSION}/deps/v8/src/base/small-vector.h
+		cd /tmp/node-v${NODE_VERSION}
+		CC=cc CXX=c++ ./configure --shared
+		gmake -j$(sysctl -n hw.ncpu)
+		$SUDO_CMD cp out/Release/obj.target/libnode.so.* /usr/local/lib/
+		$SUDO_CMD ln -sf libnode.so.127 /usr/local/lib/libnode.so
+		cd $ROOT_DIR
+		rm -rf /tmp/node-v${NODE_VERSION} /tmp/node-v${NODE_VERSION}.tar.gz
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DNodeJS_EXECUTABLE=/usr/local/bin/node" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -598,11 +647,17 @@ sub_wasm(){
 	echo "configure webassembly"
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
+			echo "wasmtime has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing wasmtime libwasmtime
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+      $SUDO_CMD pkg install -y libwasmtime
 	fi
 }
 
@@ -626,6 +681,14 @@ sub_java(){
 		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y openjdk17
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DJAVA_HOME=/usr/local/openjdk17" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH2=/usr/local/openjdk17/include/freebsd" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_AWT_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -633,46 +696,12 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
-
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# Ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
@@ -688,6 +717,13 @@ sub_c(){
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		LLVM_VERSION_STRING=19
+		$SUDO_CMD pkg install -y libffi llvm${LLVM_VERSION_STRING} gcc
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DLibClang_INCLUDE_DIR=/usr/local/llvm${LLVM_VERSION_STRING}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=/usr/local/llvm${LLVM_VERSION_STRING}/lib/libclang.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -697,13 +733,7 @@ sub_cobol(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
-
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
-
-			# Remove unstable from sources.list
-			$SUDO_CMD head -n -2 /etc/apt/sources.list
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol4
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -733,6 +763,13 @@ sub_cobol(){
 		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.dylib" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y gnucobol
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DCOBOL_EXECUTABLE=/usr/local/bin/cobc" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_INCLUDE_DIR=/usr/local/include" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_LIBRARY=/usr/local/lib/libcob.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -749,6 +786,8 @@ sub_go(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install go
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+      $SUDO_CMD pkg install -y go
 	fi
 }
 
@@ -758,15 +797,58 @@ sub_rust(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			echo "rust has no support for ${ARCHITECTURE}"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "arm64" ]; then
+			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
+			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "386" ]; then
+			# TODO: Rustup is not detecting this architecture properly
+			echo "rustup with 386 has a bug, it does not detect the architecture properly"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "rustup default nightly-2021-12-04-i686-unknown-linux-gnu"
+			echo "error: toolchain 'nightly-2021-12-04-i686-unknown-linux-gnu' may not be able to run on this system"
+			echo "note: to build software for that platform, try rustup target add i686-unknown-linux-gnu instead"
+			echo "note: add the --force-non-host flag to install the toolchain anyway"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			# TODO: Git does not work well with 32-bit nodes, this error has happened before
+			# in metacall/guix, for solving it the best way is to mount a tempfs folder with 64-bit nodes
+			# For more info check this issue: https://github.com/metacall/guix/issues/16
+			echo "cargo with armv6 and armv6 has a bug with git and long path names"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "warning: spurious network error (1 tries remaining): could not read directory '/root/.cargo/registry/index/github.com-1285ae84e5963aae/.git/refs': Value too large for defined data type; class=Os (2)"
+			echo "error: failed to get fastrand as a dependency of package compiler v0.1.0 (/usr/local/metacall/source/loaders/rs_loader/rust/compiler)"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
+
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
+		# TODO:
+		# if [ "${ARCHITECTURE}" = "386" ]; then
+		# 	. "$HOME/.cargo/env"
+		# 	rustup toolchain install nightly-2021-12-04-i686-unknown-linux-gnu --force-non-host
+		# 	rustup default nightly-2021-12-04-i686-unknown-linux-gnu
+		# fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 		brew install patchelf
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		$SUDO_CMD pkg install -y patchelf
 	fi
 }
 
@@ -811,6 +893,13 @@ sub_memcheck(){
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends valgrind
 		fi
+	fi
+}
+
+sub_clang(){
+	echo "configure clang"
+	if [ "$(uname)" = 'Linux' ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
 	fi
 }
 
@@ -884,6 +973,9 @@ sub_backtrace(){
 		echo "-DLIBDWARF_INCLUDE_DIR=${LIBDWARD_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# TODO: Apparently backward-cpp does not support FreeBSD
+		$SUDO_CMD pkg install -y libdwarf libelf libunwind
 	fi
 }
 
@@ -897,6 +989,19 @@ sub_sandbox(){
 			$SUDO_CMD apt-get install -y --no-install-recommends libseccomp-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libseccomp-dev
+		fi
+	fi
+}
+
+# Android (dependencies for cross-compiling for Android)
+sub_android(){
+	echo "configure android"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# TODO: We should install Android NDK and Java but it's done through GitHub Actions
+			$SUDO_CMD apt-get install -y --no-install-recommends ninja-build
 		fi
 	fi
 }
@@ -980,6 +1085,9 @@ sub_install(){
 	if [ $INSTALL_MEMCHECK = 1 ]; then
 		sub_memcheck
 	fi
+	if [ $INSTALL_CLANG = 1 ]; then
+		sub_clang
+	fi
 	if [ $INSTALL_CLANGFORMAT = 1 ]; then
 		sub_clangformat
 	fi
@@ -988,6 +1096,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_SANDBOX = 1 ]; then
 		sub_sandbox
+	fi
+	if [ $INSTALL_ANDROID = 1 ]; then
+		sub_android
 	fi
 	echo "install finished in workspace $ROOT_DIR"
 }
@@ -1123,6 +1234,10 @@ sub_options(){
 			echo "memcheck selected"
 			INSTALL_MEMCHECK=1
 		fi
+		if [ "$option" = 'clang' ]; then
+			echo "clang selected"
+			INSTALL_CLANG=1
+		fi
 		if [ "$option" = 'clangformat' ]; then
 			echo "clangformat selected"
 			INSTALL_CLANGFORMAT=1
@@ -1134,6 +1249,10 @@ sub_options(){
 		if [ "$option" = 'sandbox' ]; then
 			echo "sandbox selected"
 			INSTALL_SANDBOX=1
+		fi
+		if [ "$option" = 'android' ]; then
+			echo "android selected"
+			INSTALL_ANDROID=1
 		fi
 	done
 }
@@ -1170,9 +1289,11 @@ sub_help() {
 	echo "	pack"
 	echo "	coverage"
 	echo "	memcheck"
+	echo "	clang"
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"
+	echo "	android"
 	echo ""
 }
 

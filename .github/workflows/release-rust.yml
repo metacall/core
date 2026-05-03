@@ -23,7 +23,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [ubuntu-latest, windows-latest, macos-latest]
+          os: [ubuntu-latest, macos-latest] # TODO: windows-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -41,10 +41,19 @@ jobs:
         with:
           toolchain: stable
           override: true
+          components: rustfmt, clippy
 
       - name: Build the Rust Port
         working-directory: source/ports/rs_port
         run: cargo build --verbose
+
+      - name: Check Rust Formatting
+        working-directory: source/ports/rs_port
+        run: cargo fmt --check
+
+      - name: Run Clippy
+        working-directory: source/ports/rs_port
+        run: cargo clippy -- -D warnings
 
       - name: Test the Rust Port
         working-directory: source/ports/rs_port

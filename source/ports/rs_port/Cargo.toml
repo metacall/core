@@ -19,7 +19,7 @@ path = "src/lib.rs"
 metacall-inline = { version = "0.2.0", path = "./inline" }
 
 [build-dependencies]
-metacall-sys = { version = "0.1.4", path = "./sys" }
+metacall-sys = { version = "0.1.5", path = "./sys" }
 bindgen = "0.72.1"
 
 [workspace]

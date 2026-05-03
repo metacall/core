@@ -542,7 +542,14 @@ impl ToMetaResult for i64 {
         // Meanwhile as a workaround, we just panic if it does not fit.
         // Here the error is wrose than in rs_port because the bindings.rs are hardcoded,
         // and not regenerated for each target platform so they will break ABI when using this.
-        Ok(unsafe { metacall_value_create_long(self).try_into().unwrap() })
+        #[cfg(any(target_pointer_width = "32", windows))]
+        {
+            Ok(unsafe { metacall_value_create_long(self.try_into().unwrap()) })
+        }
+        #[cfg(not(any(target_pointer_width = "32", windows)))]
+        {
+            Ok(unsafe { metacall_value_create_long(self) })
+        }
     }
 }
 

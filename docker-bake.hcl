@@ -83,53 +83,75 @@ group "default" {
 # Base dependencies image
 target "deps" {
 	context = "."
-	dockerfile = "tools/deps/Dockerfile"
+	dockerfile = "Dockerfile"
+	target = "deps"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
 		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
 		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
 		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
+		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
+		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
+	tags = [
+		"metacall/core:deps",
+	]
 }
 
 # Development image (depends on deps)
 target "dev" {
 	context = "."
-	dockerfile = "tools/dev/Dockerfile"
+	dockerfile = "Dockerfile"
+	target = "dev"
 	args = {
+		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
+		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
 		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
+		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
 		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
+		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
-	# Use the deps target as the base image
-	contexts = {
-		"metacall/core:deps" = "target:deps"
-	}
+	tags = [
+		"metacall/core:dev",
+	]
 }
 
 # Runtime image (depends on dev for builder stage)
 target "runtime" {
 	context = "."
-	dockerfile = "tools/runtime/Dockerfile"
+	dockerfile = "Dockerfile"
+	target = "runtime"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
 		METACALL_PATH = "${METACALL_PATH}"
+		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
+		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
+		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
+		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
 		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
-	# Use the dev target as the builder base image
-	contexts = {
-		"metacall/core:dev" = "target:dev"
-	}
+	tags = [
+		"metacall/core:runtime",
+	]
 }
 
 # CLI image (depends on dev for builder and runtime for base)
 target "cli" {
 	context = "."
-	dockerfile = "tools/cli/Dockerfile"
-	# Use both dev (for builder) and runtime (for base) targets
-	contexts = {
-		"metacall/core:dev" = "target:dev"
-		"metacall/core:runtime" = "target:runtime"
+	dockerfile = "Dockerfile"
+	target = "cli"
+	args = {
+		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
+		METACALL_PATH = "${METACALL_PATH}"
+		METACALL_TOOLS_PATH = "${METACALL_PATH}/tools"
+		METACALL_BUILD_TYPE = "${METACALL_BUILD_TYPE}"
+		METACALL_INSTALL_OPTIONS = "${METACALL_INSTALL_OPTIONS}"
+		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
+		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
+	tags = [
+		"metacall/core:cli",
+	]
 }

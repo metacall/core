@@ -169,7 +169,14 @@ impl MetaCallValue for i64 {
         // We are not sure yet if we should use fixed sizes in the core, or adapt all the loaders
         // and ports to the standard C int type definition. We should define this but it's not yet.
         // Meanwhile as a workaround, we just panic if it does not fit.
-        unsafe { metacall_value_create_long(self).try_into().unwrap() }
+        #[cfg(any(target_pointer_width = "32", windows))]
+        {
+            unsafe { metacall_value_create_long(self.try_into().unwrap()) }
+        }
+        #[cfg(not(any(target_pointer_width = "32", windows)))]
+        {
+            unsafe { metacall_value_create_long(self) }
+        }
     }
 }
 /// Equivalent to MetaCall float type.
