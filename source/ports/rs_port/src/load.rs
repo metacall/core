@@ -113,7 +113,7 @@ impl Drop for Handle {
 pub fn from_single_file(
     tag: Tag,
     path: impl AsRef<Path>,
-    handle: Option<&mut Handle>,
+    handle: Option<Option<&mut Handle>Handle>,
 ) -> Result<(), MetaCallLoaderError> {
     from_file(tag, [path], handle)
 }
@@ -126,7 +126,7 @@ pub fn from_single_file(
 pub fn from_file(
     tag: Tag,
     paths: impl IntoIterator<Item = impl AsRef<Path>>,
-    handle: Option<&mut Handle>,
+    handle: Option<Option<&mut Handle>Handle>,
 ) -> Result<(), MetaCallLoaderError> {
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
     let mut c_path: CString;
@@ -180,7 +180,7 @@ pub fn from_file(
 pub fn from_memory(
     tag: Tag,
     script: impl ToString,
-    handle: Option<&mut Handle>,
+    handle: Option<Option<&mut Handle>Handle>,
 ) -> Result<(), MetaCallLoaderError> {
     let script = script.to_string();
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;

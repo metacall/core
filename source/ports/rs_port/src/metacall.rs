@@ -34,7 +34,7 @@ fn metacall_inner(
 }
 
 fn metacall_inner_handle(
-    handle: &mut Handle,
+    handle: handle: &mut HandleHandle,
     func: impl ToString,
     args: impl IntoIterator<Item = impl MetaCallValue>,
 ) -> Result<*mut c_void, MetaCallError> {
@@ -106,7 +106,7 @@ pub fn metacall<T: MetaCallValue>(
 /// let sum = metacall::metacall_handle::<i32>(handle, "sum", [1, 2]).unwrap();
 /// ```
 pub fn metacall_handle<T: MetaCallValue>(
-    handle: &mut Handle,
+    handle: handle: &mut HandleHandle,
     func: impl ToString,
     args: impl IntoIterator<Item = impl MetaCallValue>,
 ) -> Result<T, MetaCallError> {
@@ -130,7 +130,7 @@ pub fn metacall_no_arg<T: MetaCallValue>(func: impl ToString) -> Result<T, MetaC
 /// let greet = metacall::metacall_handle_no_arg::<String>(handle, "greet").unwrap();
 /// ```
 pub fn metacall_handle_no_arg<T: MetaCallValue>(
-    handle: &mut Handle,
+    handle: handle: &mut HandleHandle,
     func: impl ToString,
 ) -> Result<T, MetaCallError> {
     metacall_handle::<T>(handle, func, [] as [MetaCallNull; 0])
