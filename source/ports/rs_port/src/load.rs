@@ -68,22 +68,14 @@ impl fmt::Display for Tag {
     }
 }
 
-/// A MetaCall Handle is basically a C Pointer, One can pass it to when loading a script
-/// (pass it to [[from_single_file]] for example) to keep the script in a local scope related to
-/// this specific [[Handle]]
-/// [[Handle]] implements Send + Sync traits because we are sure 100% and guarantee developers that
-/// it is thread-safe. The Handle is a read-only pointer so there is no problem here.
 pub struct Handle(*mut c_void);
-
-unsafe impl Send for Handle {}
-unsafe impl Sync for Handle {}
 
 impl Handle {
     pub fn new() -> Self {
         Self(null_mut())
     }
 
-    pub fn as_mut_raw_ptr(&mut self) -> *mut c_void {
+    pub fn as_mut_raw_ptr(&self) -> *mut c_void {
         self.0
     }
 }
@@ -113,7 +105,7 @@ impl Drop for Handle {
 pub fn from_single_file(
     tag: Tag,
     path: impl AsRef<Path>,
-    handle: Option<Option<&mut Handle>Handle>,
+    handle: Option<&mut Handle>,
 ) -> Result<(), MetaCallLoaderError> {
     from_file(tag, [path], handle)
 }
@@ -126,7 +118,7 @@ pub fn from_single_file(
 pub fn from_file(
     tag: Tag,
     paths: impl IntoIterator<Item = impl AsRef<Path>>,
-    handle: Option<Option<&mut Handle>Handle>,
+    handle: Option<&mut Handle>,
 ) -> Result<(), MetaCallLoaderError> {
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
     let mut c_path: CString;
@@ -180,7 +172,7 @@ pub fn from_file(
 pub fn from_memory(
     tag: Tag,
     script: impl ToString,
-    handle: Option<Option<&mut Handle>Handle>,
+    handle: Option<&mut Handle>,
 ) -> Result<(), MetaCallLoaderError> {
     let script = script.to_string();
     let c_tag = cstring_enum!(tag, MetaCallLoaderError)?;
