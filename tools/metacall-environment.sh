@@ -698,10 +698,11 @@ sub_c(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
-		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
+		if [ "${ARCHITECTURE}" = "386" ]; then
+			C_EXTRA_PACKAGES="libc6-dev"
+		fi
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev ${C_EXTRA_PACKAGES}
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
