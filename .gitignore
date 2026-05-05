@@ -64,5 +64,3 @@ _start-cmd.bat
 
 # Auto-generated bake file
 docker-compose.bake.yml
-tools/instrumentation/msan/howto-check/
-tools/instrumentation/**/*.log
