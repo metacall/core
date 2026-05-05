@@ -3,6 +3,7 @@ package metacall
 import (
 	"bytes"
 	"log"
+	"math"
 	"os"
 	"reflect"
 	"sync"
@@ -145,8 +146,8 @@ func TestValues(t *testing.T) {
 		{"int_min", int(-2147483648), int(-2147483648)},
 		{"int_max", int(2147483647), int(2147483647)},
 		{"long", int64(3), int64(3)},
-		{"long_min", int64(-9223372036854775808), int64(-9223372036854775808)},
-		{"long_max", int64(9223372036854775807), int64(9223372036854775807)},
+		{"long_min", math.MinInt, math.MinInt},
+		{"long_max", math.MaxInt, math.MaxInt},
 		{"float", float32(1.0), float32(1.0)},
 		{"float_min", float32(1.2e-38), float32(1.2e-38)},
 		{"float_max", float32(3.4e+38), float32(3.4e+38)},

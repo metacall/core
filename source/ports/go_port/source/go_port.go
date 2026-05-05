@@ -182,20 +182,30 @@ func Initialize() error {
 func LoadFromFileUnsafe(tag string, scripts []string) error {
 	size := len(scripts)
 
+	if size == 0 {
+		return fmt.Errorf("Failed to load scripts of length 0 with tag %s", tag)
+	}
+
 	cTag := C.CString(tag)
 	defer C.free(unsafe.Pointer(cTag))
 
-	cScripts := C.malloc(C.size_t(size) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cScripts := C.malloc(C.size_t(size) * C.size_t(unsafe.Sizeof((*C.char)(nil))))
 	defer C.free(unsafe.Pointer(cScripts))
 
 	// Convert cScripts to a Go Array so we can index it
-	goScripts := (*[1<<30 - 1]*C.char)(cScripts)
+	goScripts := unsafe.Slice((**C.char)(unsafe.Pointer(cScripts)), size)
 
 	for index, script := range scripts {
 		goScripts[index] = C.CString(script)
 	}
 
-	if int(C.metacall_load_from_file(cTag, (**C.char)(cScripts), (C.size_t)(size), nil)) != 0 {
+	defer func() {
+		for i := 0; i < size; i++ {
+			C.free(unsafe.Pointer(goScripts[i]))
+		}
+	}()
+
+	if int(C.metacall_load_from_file(cTag, (**C.char)(unsafe.Pointer(cScripts)), (C.size_t)(size), nil)) != 0 {
 		return fmt.Errorf("%s loader failed to load a script from the list: %v", tag, scripts)
 	}
 
