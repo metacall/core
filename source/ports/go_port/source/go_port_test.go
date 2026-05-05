@@ -3,7 +3,6 @@ package metacall
 import (
 	"bytes"
 	"log"
-	"math"
 	"os"
 	"reflect"
 	"sync"
@@ -128,6 +127,13 @@ func TestNodeJSAwait(t *testing.T) {
 }
 
 func TestValues(t *testing.T) {
+	// BitsPerWord is 32 or 64
+	const BitsPerWord = 32 << (^uint(0) >> 63)
+
+	// Calculate MIN and MAX based on BitsPerWord
+	const MIN_LONG = int64(-1 << (BitsPerWord - 1))
+	const MAX_LONG = int64(1<<(BitsPerWord-1) - 1)
+
 	tests := []struct {
 		name  string
 		input interface{}
@@ -146,8 +152,8 @@ func TestValues(t *testing.T) {
 		{"int_min", int(-2147483648), int(-2147483648)},
 		{"int_max", int(2147483647), int(2147483647)},
 		{"long", int64(3), int64(3)},
-		{"long_min", math.MinInt, math.MinInt},
-		{"long_max", math.MaxInt, math.MaxInt},
+		{"long_min", MIN_LONG, MIN_LONG},
+		{"long_max", MAX_LONG, MAX_LONG},
 		{"float", float32(1.0), float32(1.0)},
 		{"float_min", float32(1.2e-38), float32(1.2e-38)},
 		{"float_max", float32(3.4e+38), float32(3.4e+38)},
@@ -156,7 +162,7 @@ func TestValues(t *testing.T) {
 		{"double_max", float64(1.7e+308), float64(1.7e+308)},
 		{"string", "hello", "hello"},
 		{"buffer_empty", *bytes.NewBuffer([]byte{}), *bytes.NewBuffer([]byte{})},
-		{"buffer_nil", *bytes.NewBuffer(nil), *bytes.NewBuffer([]byte{})}, // TODO(iyear): how to handle nil buffer?
+		{"buffer_nil", *bytes.NewBuffer(nil), *bytes.NewBuffer([]byte{})}, // TODO: how to handle nil buffer?
 		{"buffer_ascii", *bytes.NewBuffer([]byte{'A', 'B', 'C'}), *bytes.NewBuffer([]byte{'A', 'B', 'C'})},
 		{"buffer_unicode", *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9")), *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9"))},
 		{"array", [3]interface{}{1, 2, 3}, []interface{}{1, 2, 3}},
