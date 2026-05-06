@@ -54,5 +54,6 @@ RUN valgrind \
 	--show-reachable=yes \
 	--error-exitcode=1 \
 	--suppressions=/app/memcheck/valgrind-dl.supp \
+    --suppressions=/app/memcheck/valgrind-python.supp \
 	--suppressions=/app/memcheck/valgrind-python-all.supp \
 	python3.13 test.py
