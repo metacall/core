@@ -49,6 +49,7 @@ RUN valgrind \
 	--trace-children=yes \
 	--track-origins=yes \
 	--error-limit=no \
+	--max-stackframe=8368224 \
 	--read-var-info=yes \
 	--show-reachable=yes \
 	--error-exitcode=1 \
