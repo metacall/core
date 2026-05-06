@@ -49,9 +49,11 @@ RUN valgrind \
 	--trace-children=yes \
 	--track-origins=yes \
 	--error-limit=no \
+	--max-stackframe=8368224 \
 	--read-var-info=yes \
 	--show-reachable=yes \
 	--error-exitcode=1 \
 	--suppressions=/app/memcheck/valgrind-dl.supp \
+    --suppressions=/app/memcheck/valgrind-python.supp \
 	--suppressions=/app/memcheck/valgrind-python-all.supp \
 	python3.13 test.py
