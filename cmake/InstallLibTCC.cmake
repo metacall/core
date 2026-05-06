@@ -41,7 +41,7 @@ endif()
 
 # Configure
 if(PROJECT_OS_FAMILY STREQUAL unix)
-	if(CMAKE_SIZEOF_VOID_P EQUAL 4 AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[3-6]86|i86pc|BePC|i686-AT386)$")
+	if(CMAKE_SIZEOF_VOID_P EQUAL 4 AND "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 		# i386 is not being detected properly by TCC build system
 		set(LIBTCC_CONFIGURE_CPU --cpu=i386)
 	endif()
