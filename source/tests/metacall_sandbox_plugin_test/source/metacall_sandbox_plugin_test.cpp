@@ -162,15 +162,11 @@ void invalid_filesystems_syscall(void *sandbox_ctx, void *handle)
 		metacall_value_destroy(args[1]);
 	}
 
-	int fd = open("/tmp/testfile", O_CREAT | O_RDWR, 0644);
-
-	if (fd == -1)
+	if (mkdir("/tmp/testfolder", 0777) != 0)
 	{
-		perror("open");
+		perror("mkdir");
 		exit(EXIT_FAILURE);
 	}
-
-	close(fd);
 }
 
 #include <time.h>
