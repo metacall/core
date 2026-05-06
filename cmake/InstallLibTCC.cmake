@@ -41,11 +41,17 @@ endif()
 
 # Configure
 if(PROJECT_OS_FAMILY STREQUAL unix)
-	if(OPTION_BUILD_MUSL)
-		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --config-musl)
-	else()
-		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static --with-selinux)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+		# i386 is not being detected properly by TCC build system
+		set(LIBTCC_CONFIGURE_CPU --cpu=i386)
 	endif()
+	if(OPTION_BUILD_MUSL)
+		set(LIBTCC_CONFIGURE_EXTRA_FLAGS --config-musl)
+	else()
+		set(LIBTCC_CONFIGURE_EXTRA_FLAGS --with-selinux)
+	endif()
+
+	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} ${LIBTCC_DEBUG} --disable-static ${LIBTCC_CONFIGURE_CPU} ${LIBTCC_CONFIGURE_EXTRA_FLAGS})
 elseif(PROJECT_OS_FAMILY STREQUAL macos)
 	# TODO: --disable-static is not working on MacOS, this should be reported or further investigated
 
@@ -125,7 +131,7 @@ else()
 endif()
 
 set(LIBTCC_TARGET libtcc-depends)
-set(LIBTCC_COMMIT_SHA "4fccaf61241a5eb72b0777b3a44bd7abbea48604")
+set(LIBTCC_COMMIT_SHA "30afb50e6436175e0eacf4b6d407d2eb867b265a")
 if(PROJECT_OS_FAMILY STREQUAL macos)
 	# TODO: --disable-static is not working on MacOS, this should be reported or further investigated, remove this when it is solved
 	set(LIBTTC_LIBRARY_NAME "${CMAKE_STATIC_LIBRARY_PREFIX}tcc${CMAKE_STATIC_LIBRARY_SUFFIX}")
@@ -146,7 +152,7 @@ set(LIBTTC_RUNTIME_FILES
 ExternalProject_Add(${LIBTCC_TARGET}
 	DOWNLOAD_NAME		tinycc.tar.gz
 	URL					https://github.com/metacall/tinycc/archive/${LIBTCC_COMMIT_SHA}.tar.gz
-	URL_MD5				a5c83d8eacbd1a75a3f1529ff8e97bae
+	URL_MD5				388d7f7868d9e96b46df8a832a0900a8
 	CONFIGURE_COMMAND	${LIBTCC_CONFIGURE}
 	BUILD_COMMAND		${LIBTCC_BUILD}
 	BUILD_IN_SOURCE		true

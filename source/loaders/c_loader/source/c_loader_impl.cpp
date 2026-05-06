@@ -1054,62 +1054,31 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	}
 
 	type_id ret_id = type_index(signature_get_return(s));
-	size_t ret_size = value_type_id_size(ret_id);
+	size_t ret_size = c_function->cif.rtype->size;
 	void *ret = NULL;
 
-	if (ret_size <= sizeof(ffi_arg) && (type_id_integer(ret_id) == 0 || type_id_decimal(ret_id) == 0))
+	if (ret_id == TYPE_NULL)
 	{
-		ffi_arg result;
-
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, c_function->values);
-
-		ret = value_type_create(&result, ret_size, ret_id);
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), NULL, c_function->values);
+		ret = value_create_null();
 	}
 	else
 	{
-		void *result = NULL;
-		void *result_ptr = &result;
+		/* Always allocate ABI-sized buffer */
+		void *storage = alloca(ret_size);
 
-		if (ret_id == TYPE_NULL)
-		{
-			ret = value_create_null();
-			result_ptr = NULL;
-		}
-		else if (ret_id != TYPE_STRING && ret_id != TYPE_BUFFER && ret_id != TYPE_ARRAY && ret_id != TYPE_PTR)
-		{
-			/* TODO: This is not tested and we do not know how to handle it */
-			/* TODO: result = ret = value_type_create(NULL, ret_size, ret_id); */
-
-			return metacall::metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), result_ptr, c_function->values);
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), storage, c_function->values);
 
 		if (ret_id == TYPE_STRING)
 		{
-			char *str = (char *)result;
+			/* Convert string pointer into string.
+			* TODO: is this unsafe? It is assuming nullchar strings. */
+			char *str = *(char **)storage;
 			ret = value_create_string(str, strlen(str));
 		}
-		else if (ret_id == TYPE_BUFFER)
+		else
 		{
-			return metacall::metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported, buffer is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-		else if (ret_id == TYPE_ARRAY)
-		{
-			return metacall::metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported, array is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-		else if (ret_id == TYPE_PTR)
-		{
-			ret = value_create_ptr(result);
+			ret = value_type_create(storage, ret_size, ret_id);
 		}
 	}
 

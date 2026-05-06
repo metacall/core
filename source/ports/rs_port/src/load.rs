@@ -120,7 +120,7 @@ impl Handle {
         Self(null_mut())
     }
 
-    pub fn as_mut_raw_ptr(&mut self) -> *mut c_void {
+    pub fn as_mut_raw_ptr(&self) -> *mut c_void {
         self.0
     }
 }
