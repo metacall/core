@@ -1,0 +1,18 @@
+{
+    Ruby libruby aggressive suppression for all leaks
+    Memcheck:Leak
+    ...
+    obj:*libruby*
+}
+{
+    Ruby libruby aggressive suppression for uninitialized value reads
+    Memcheck:Value8
+    ...
+    obj:*libruby*
+}
+{
+    Ruby libruby aggressive suppression for conditional jumps on uninitialized values
+    Memcheck:Cond
+    ...
+    obj:*libruby*
+}

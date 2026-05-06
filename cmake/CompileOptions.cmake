@@ -119,9 +119,9 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 		"__THREAD_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(SANITIZER_LIBRARIES -fsanitize=memory)
+	set(SANITIZER_LIBRARIES -fsanitize=memory -fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer"
+		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.supp"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__MEMORY_SANITIZER__=1"
@@ -408,6 +408,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 		add_compile_options(-fsanitize=memory)
 		add_compile_options(-fsanitize-memory-track-origins)
 		add_compile_options(-fsanitize-memory-use-after-dtor)
+		add_compile_options(-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
 		add_link_options(-fsanitize=undefined)
 		add_link_options(-fsanitize=memory)
 		add_link_options(-fsanitize-memory-track-origins)
