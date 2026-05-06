@@ -1,5 +1,6 @@
 {
 	"search_paths": [ @LOADER_SEARCH_PATHS@ ],
+	"env": [ @LOADER_ENV@ ],
 	"dependencies": {
 		@LOADER_DEPENDENCIES@
 	}

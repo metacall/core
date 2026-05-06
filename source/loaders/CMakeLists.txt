@@ -75,6 +75,7 @@ set(LOADER_CONFIGURATION_DEFAULT_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/loader.js
 # Define loader configuration for a specific loader
 macro(loader_configuration_begin TARGET)
 	set(LOADER_DEPENDENCIES "")
+	set(LOADER_ENV "")
 	set(OPTIONAL_TEMPLATE "${ARGV1}")
 
 	# Optional argument for template
@@ -101,6 +102,28 @@ macro(loader_configuration_paths LIBRARY_PATHS_LIST)
 	else()
 		set(LOADER_SEARCH_PATHS)
 	endif()
+endmacro()
+
+# Generate configuration with environment variables for a loader
+#
+#	"env": [
+#		{ "name": "PYTHONHOME", "value": "C:/Python311" },
+#		{ "name": "PYTHONPATH", "value": "C:/Python311/Lib" }
+#	]
+#
+# Loaded at init time only when the loader is NOT host and the var is not
+# already defined in the process environment.
+macro(loader_configuration_env NAME VALUE)
+	# Add comma separator for previous entry
+	if(NOT "${LOADER_ENV}" STREQUAL "")
+		string(APPEND LOADER_ENV ", ")
+	endif()
+
+	# Normalize backslashes for JSON
+	string(REPLACE "\\" "/" ENV_VALUE "${VALUE}")
+
+	# Append { "name": "NAME", "value": "VALUE" }
+	string(APPEND LOADER_ENV "{ \"name\": \"${NAME}\", \"value\": \"${ENV_VALUE}\" }")
 endmacro()
 
 # Generate configuration with dependencies for a loader
@@ -147,6 +170,7 @@ macro(loader_configuartion_end_development)
 	configure_file(${LOADER_CONFIGURATION_TEMPLATE} ${CONFIGURATION_DIR}/${LOADER_CONFIGURATION_TARGET}.json)
 
 	unset(LOADER_DEPENDENCIES)
+	unset(LOADER_ENV)
 	unset(LOADER_CONFIGURATION_TEMPLATE)
 	unset(LOADER_CONFIGURATION_TARGET)
 endmacro()
@@ -160,6 +184,7 @@ macro(loader_configuartion_end_install)
 	configure_file(${LOADER_CONFIGURATION_TEMPLATE} ${CONFIGURATION_DIR}/install/configurations/${LOADER_CONFIGURATION_TARGET}.json)
 
 	unset(LOADER_DEPENDENCIES)
+	unset(LOADER_ENV)
 	unset(LOADER_CONFIGURATION_TEMPLATE)
 	unset(LOADER_CONFIGURATION_TARGET)
 endmacro()
@@ -174,6 +199,7 @@ macro(loader_configuartion_end)
 	configure_file(${LOADER_CONFIGURATION_TEMPLATE} ${CONFIGURATION_DIR}/install/configurations/${LOADER_CONFIGURATION_TARGET}.json)
 
 	unset(LOADER_DEPENDENCIES)
+	unset(LOADER_ENV)
 	unset(LOADER_CONFIGURATION_TEMPLATE)
 	unset(LOADER_CONFIGURATION_TARGET)
 endmacro()

@@ -296,10 +296,16 @@ endif()
 
 # Development
 loader_configuration_begin(py_loader)
+if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_ROOT_DIR)
+	loader_configuration_env(PYTHONHOME "${Python3_ROOT_DIR}")
+endif()
 loader_configuration_deps(python "${Python3_LIBRARY_DEVELOPMENT}")
 loader_configuartion_end_development()
 
 # Install
 loader_configuration_begin(py_loader)
+if(PROJECT_OS_FAMILY STREQUAL win32 AND Python3_ROOT_DIR)
+	loader_configuration_env(PYTHONHOME "${Python3_ROOT_DIR}")
+endif()
 loader_configuration_deps(python "${Python3_LIBRARY_INSTALL}")
 loader_configuartion_end_install()

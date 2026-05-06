@@ -118,6 +118,8 @@ static int loader_impl_dependencies_load(loader_impl impl, const char *key_str, 
 static void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag tag);
 #endif
 
+static void loader_impl_apply_env(loader_impl impl);
+
 static configuration loader_impl_initialize_configuration(const loader_tag tag);
 
 static int loader_impl_initialize_registered(plugin_manager manager, plugin p);
@@ -412,6 +414,92 @@ void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag ta
 	}
 }
 #endif
+
+void loader_impl_apply_env(loader_impl impl)
+{
+	/* Apply env from config — only when the loader is NOT host and the
+	 * variable is not already defined in the process. Format:
+	 * "env": [
+	 *     { "name": "PYTHONHOME", "value": "C:/Python311" },
+	 *     ...
+	 * ]
+	 * Reference: https://github.com/metacall/core/issues/760 */
+	if (impl->config == NULL || loader_impl_get_option_host(impl) == 1)
+	{
+		return;
+	}
+
+	value env_array_value = configuration_value_type(impl->config, "env", TYPE_ARRAY);
+
+	if (env_array_value == NULL)
+	{
+		return;
+	}
+
+	size_t entry_count = value_type_count(env_array_value);
+	value *entries = value_to_array(env_array_value);
+
+	for (size_t i = 0; i < entry_count; ++i)
+	{
+		if (value_type_id(entries[i]) != TYPE_MAP)
+		{
+			continue;
+		}
+
+		size_t pair_count = value_type_count(entries[i]);
+		value *map = value_to_map(entries[i]);
+
+		const char *env_name = NULL;
+		const char *env_value = NULL;
+
+		for (size_t j = 0; j < pair_count; ++j)
+		{
+			if (value_type_id(map[j]) != TYPE_ARRAY)
+			{
+				continue;
+			}
+
+			value *kv = value_to_array(map[j]);
+
+			if (value_type_id(kv[0]) != TYPE_STRING || value_type_id(kv[1]) != TYPE_STRING)
+			{
+				continue;
+			}
+
+			const char *key = value_to_string(kv[0]);
+			const char *val = value_to_string(kv[1]);
+
+			if (strcmp(key, "name") == 0)
+			{
+				env_name = val;
+			}
+			else if (strcmp(key, "value") == 0)
+			{
+				env_value = val;
+			}
+		}
+
+		if (env_name == NULL || env_value == NULL)
+		{
+			continue;
+		}
+
+		/* Only set if not already defined in the process env */
+		if (getenv(env_name) != NULL)
+		{
+			continue;
+		}
+
+#if defined(WIN32) || defined(_WIN32)
+		/* CRT env (used by getenv inside the loaded runtime) */
+		_putenv_s(env_name, env_value);
+		/* Win32 process env (used by GetEnvironmentVariable) */
+		SetEnvironmentVariableA(env_name, env_value);
+#else
+		setenv(env_name, env_value, 0);
+#endif
+	}
+}
 
 int loader_impl_dependencies(loader_impl impl, detour d, const loader_tag tag)
 {
@@ -714,6 +802,10 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		loader_impl_dependencies_search_paths(impl, tag);
 	}
 #endif
+
+	/* Apply env vars from config (e.g. PYTHONHOME) before runtime starts.
+	 * Cross-platform: language runtimes read these via getenv at init. */
+	loader_impl_apply_env(impl);
 
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
