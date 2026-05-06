@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
 
@@ -55,8 +55,8 @@ jobs:
           . /gnu/etc/profile
           pip install -e .
 
-      - name: Install Python Port (Windows)
-        if: runner.os == 'Windows'
+      - name: Install Python Port (MacOS & Windows)
+        if: runner.os != 'Linux'
         working-directory: source/ports/py_port
         run: |
           $loc = "$env:LOCALAPPDATA\metacall\metacall"
@@ -65,13 +65,6 @@ jobs:
           $env:PATH = "$loc;$loc\lib;$loc\runtimes\python;$loc\runtimes\python\Scripts;$loc\runtimes\python\Lib\site-packages\bin;$loc\runtimes\ruby\bin;$loc\runtimes\ruby\bin\ruby_builtin_dlls;$env:PATH"
           & "$env:PYTHONHOME\python.exe" -m pip install -e .
 
-      # macOS: pip-install the port so the package is findable.
-      - name: Install Python Port (macOS)
-        if: runner.os == 'macOS'
-        working-directory: source/ports/py_port
-        run: pip install -e .
-
-      # Single unified copy step
       - name: Populate scripts directory
         shell: bash
         run: |
@@ -82,14 +75,14 @@ jobs:
 
           # Python scripts
           cp source/scripts/python/helloworld/source/helloworld.py source/ports/py_port/scripts/
-          cp source/scripts/python/example/source/example.py       source/ports/py_port/scripts/
+          cp source/scripts/python/example/source/example.py source/ports/py_port/scripts/
 
           # Ruby scripts
-          cp source/scripts/ruby/hello/source/hello.rb             source/ports/py_port/scripts/
-          cp source/scripts/ruby/second/source/second.rb           source/ports/py_port/scripts/
+          cp source/scripts/ruby/hello/source/hello.rb source/ports/py_port/scripts/
+          cp source/scripts/ruby/second/source/second.rb source/ports/py_port/scripts/
 
-          # NodeJS scripts — derpyramda.js is self-contained (no npm deps)
-          cp source/scripts/node/derpyramda/source/derpyramda.js   source/ports/py_port/scripts/
+          # NodeJS scripts
+          cp source/scripts/node/derpyramda/source/derpyramda.js source/ports/py_port/scripts/
 
       - name: Test the Python Port (Linux)
         if: runner.os == 'Linux'
@@ -105,8 +98,7 @@ jobs:
         working-directory: source/ports/py_port
         env:
           LOADER_SCRIPT_PATH: ${{ github.workspace }}/source/ports/py_port/scripts
-          # Include both the port package and the scripts dir so `import example`
-          # (no file extension — falls through to plain Python import) resolves.
+          # TODO: PYTHONPATH workaround must be removed https://github.com/metacall/core/pull/786
           PYTHONPATH: ${{ github.workspace }}/source/ports/py_port:${{ github.workspace }}/source/ports/py_port/scripts
         run: |
           # Derive loader paths from the installed Homebrew prefix — version-agnostic.
@@ -131,6 +123,19 @@ jobs:
           $env:PATH = "$loc;$loc\lib;$loc\runtimes\python;$loc\runtimes\ruby\bin;$loc\runtimes\ruby\bin\ruby_builtin_dlls;$env:PATH"
           & "$env:PYTHONHOME\python.exe" test.py
 
+  valgrind:
+    name: Python Port Instrumented Valgrind Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Run valgrind test
+        run: docker build -t metacall/core:python-valgrind -f tools/instrumentation/valgrind/python/Dockerfile .
+
   release:
     name: Release Python Port
     runs-on: ubuntu-latest
@@ -138,7 +143,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
       - name: Release the port

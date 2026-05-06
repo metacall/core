@@ -1,0 +1,64 @@
+# For testing Python with Valgrind instrumentation, we disable all
+# the library errors in order to have more visibility only for Python errors
+
+
+# Ruby
+{
+    Ruby libruby suppression for all leaks
+    Memcheck:Leak
+    ...
+    obj:*libruby*
+    ...
+}
+{
+    Ruby libruby suppression for uninitialized value reads
+    Memcheck:Value8
+    ...
+    obj:*libruby*
+    ...
+}
+{
+    Ruby libruby suppression for conditional jumps on uninitialized values
+    Memcheck:Cond
+    ...
+    obj:*libruby*
+    ...
+}
+{
+    Ruby libruby suppression for invalid write
+    Memcheck:Addr1
+    ...
+    obj:*libruby*
+    ...
+}
+
+
+# NodeJS
+{
+    Ruby libnode suppression for all leaks
+    Memcheck:Leak
+    ...
+    obj:*libnode*
+    ...
+}
+{
+    Ruby libnode suppression for uninitialized value reads
+    Memcheck:Value8
+    ...
+    obj:*libnode*
+    ...
+}
+{
+    Ruby libnode suppression for conditional jumps on uninitialized values
+    Memcheck:Cond
+    ...
+    obj:*libnode*
+    ...
+}
+{
+    Ruby libnode suppression for invalid write
+    Memcheck:Addr1
+    ...
+    obj:*libnode*
+    ...
+}
