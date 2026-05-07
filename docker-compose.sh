@@ -88,7 +88,7 @@ sub_test() {
 
 	METACALL_TAGS=("deps" "dev")
 	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
 	done
 }
 
@@ -112,12 +112,12 @@ sub_test_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
+	$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm deps
 
 	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm dev
 	else
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output
 
 		# Retrieve all the summaries
 		SUMMARY=$(grep "SUMMARY:" /tmp/metacall-test-output)
@@ -171,7 +171,7 @@ sub_coverage() {
 
 	METACALL_TAGS=("deps" "dev")
 	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
 	done
 }
 
@@ -197,7 +197,7 @@ sub_test_memcheck() {
 
 	METACALL_TAGS=("deps" "dev")
 	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
 	done
 }
 
@@ -223,7 +223,7 @@ sub_test_clang() {
 
 	METACALL_TAGS=("deps" "dev")
 	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
 	done
 }
 
@@ -249,7 +249,7 @@ sub_test_memory_sanitizer() {
 
 	METACALL_TAGS=("deps" "dev")
 	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.test.yml build --force-rm ${tag}
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
 	done
 }
 
@@ -261,7 +261,7 @@ sub_cache() {
 	fi
 
 	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.cache.yml build ${tag}
+		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.cache.yml build ${tag}
 	done
 }
 

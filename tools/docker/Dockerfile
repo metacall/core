@@ -58,17 +58,6 @@ RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh \
 # MetaCall Dev image
 FROM deps AS dev
 
-# Image descriptor
-LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
-	copyright.address="vic798@gmail.com" \
-	maintainer.name="Vicente Eduardo Ferrer Garcia" \
-	maintainer.address="vic798@gmail.com" \
-	vendor="MetaCall Inc." \
-	version="0.1"
-
-# Arguments
-ARG METACALL_PATH
-
 # Environment variables
 ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 	LOADER_SCRIPT_PATH=$METACALL_PATH/build/scripts \
@@ -100,6 +89,21 @@ RUN cd $METACALL_PATH/build \
 # Build test and install MetaCall libraries
 RUN cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+
+# MetaCall Builder image
+FROM dev AS builder
+
+# Copy all installed files for export them later on in Runtime image
+# Skip the CLI because we will copy it at the end in the CLI image
+RUN mkdir -p /dist \
+	&& while IFS= read -r file; do \
+		[ -e "$file" ] || continue; \
+		case "$file" in \
+			/usr/local/bin/metacallcli|/usr/local/bin/metacallclid) continue ;; \
+		esac; \
+		mkdir -p "/dist/$(dirname "${file#/}")"; \
+		cp -a "$file" "/dist/${file#/}"; \
+	done < "$METACALL_PATH/build/install_manifest.txt"
 
 # MetaCall Runtime image
 FROM ${METACALL_BASE_IMAGE} AS runtime
@@ -140,48 +144,11 @@ RUN mkdir -p /usr/local/scripts \
 	&& $METACALL_PATH/metacall-runtime.sh ${METACALL_RUNTIME_OPTIONS} \
 	&& rm -rf $METACALL_PATH/metacall-runtime.sh
 
-# Copy libraries from dev
-COPY --from=dev /usr/local/lib/ /usr/local/lib/
-
-# Delete unwanted files from libraries
-RUN ls /usr/local/lib/ \
-	| grep -v '.*\.so$' \
-	| grep -v '.*\.so.*' \
-	| grep -v '.*\.dll$' \
-	| grep -v '.*\.js$' \
-	| grep -v '.*\.ts$' \
-	| grep -v '.*\.node$' \
-	| grep -v '^plugins$' \
-	| grep -v '^node_modules$' \
-	| grep -v '^python3\..*' \
-	| xargs rm -rf
-
-# Copy headers from dev
-COPY --from=dev /usr/local/include/metacall /usr/local/include/metacall
-
-# Copy configuration from dev
-COPY --from=dev /usr/local/share/metacall/configurations/* /usr/local/share/metacall/configurations/
+# Copy all files from builder
+COPY --from=builder /dist/ /
 
 # MetaCall CLI image
 FROM runtime AS cli
-
-# Image descriptor
-LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
-	copyright.address="vic798@gmail.com" \
-	maintainer.name="Vicente Eduardo Ferrer Garcia" \
-	maintainer.address="vic798@gmail.com" \
-	vendor="MetaCall Inc." \
-	version="0.1"
-
-# Environment variables
-ENV LOADER_LIBRARY_PATH=/usr/local/lib \
-	LOADER_SCRIPT_PATH=/usr/local/scripts \
-	CONFIGURATION_PATH=/usr/local/share/metacall/configurations/global.json \
-	SERIAL_LIBRARY_PATH=/usr/local/lib \
-	DETOUR_LIBRARY_PATH=/usr/local/lib \
-	DEBIAN_FRONTEND=noninteractive \
-	NODE_PATH=/usr/local/lib/node_modules \
-	DOTNET_CLI_TELEMETRY_OPTOUT=true
 
 # Define working directory
 WORKDIR $LOADER_SCRIPT_PATH

@@ -23,7 +23,7 @@ services:
     container_name: metacall_core_deps
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: tools/docker/Dockerfile
       target: deps
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
@@ -50,7 +50,7 @@ services:
     container_name: metacall_core_dev
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: tools/docker/Dockerfile
       target: dev
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
@@ -77,7 +77,7 @@ services:
     container_name: metacall_core_runtime
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: tools/docker/Dockerfile
       target: runtime
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
@@ -104,7 +104,7 @@ services:
     container_name: metacall_core_cli
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: tools/docker/Dockerfile
       target: cli
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE

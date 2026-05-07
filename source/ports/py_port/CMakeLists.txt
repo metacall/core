@@ -26,7 +26,28 @@ if(NOT OPTION_BUILD_GUIX)
 		set(PIP_BACKWARD_COMPATIBILITY "${CMAKE_COMMAND} -E env SETUPTOOLS_USE_DISTUTILS=stdlib")
 	endif()
 
-	install(CODE "execute_process(COMMAND ${PIP_BACKWARD_COMPATIBILITY} ${Python3_EXECUTABLE} -m pip install ${PIP_BREAK_SYSTEM_PACKAGES} ${CMAKE_CURRENT_SOURCE_DIR})")
+	# Retrieve the default system install path
+	execute_process(
+		COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_paths()['purelib'])"
+		OUTPUT_VARIABLE Python3_SITE_PACKAGES
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	# Install into a temporary folder so we can track the installed files in the install_manifest.txt
+	set(PY_PORT_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install")
+
+	add_custom_target(py_port_install ALL
+		COMMAND ${PIP_BACKWARD_COMPATIBILITY} ${Python3_EXECUTABLE} -m pip install
+				${PIP_BREAK_SYSTEM_PACKAGES}
+				--prefix=${PY_PORT_INSTALL_DIR}
+				${CMAKE_CURRENT_SOURCE_DIR}
+	)
+
+	# Install into the default system install path
+	install(
+		DIRECTORY "${PY_PORT_INSTALL_DIR}/"
+		DESTINATION "${Python3_SITE_PACKAGES}"
+	)
 endif()
 
 # Check if loaders are enabled

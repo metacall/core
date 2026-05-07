@@ -83,7 +83,7 @@ group "default" {
 # Base dependencies image
 target "deps" {
 	context = "."
-	dockerfile = "Dockerfile"
+	dockerfile = "tools/docker/Dockerfile"
 	target = "deps"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
@@ -94,15 +94,12 @@ target "deps" {
 		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
 		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
-	tags = [
-		"metacall/core:deps",
-	]
 }
 
 # Development image (depends on deps)
 target "dev" {
 	context = "."
-	dockerfile = "Dockerfile"
+	dockerfile = "tools/docker/Dockerfile"
 	target = "dev"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
@@ -113,15 +110,12 @@ target "dev" {
 		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
 		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
-	tags = [
-		"metacall/core:dev",
-	]
 }
 
 # Runtime image (depends on dev for builder stage)
 target "runtime" {
 	context = "."
-	dockerfile = "Dockerfile"
+	dockerfile = "tools/docker/Dockerfile"
 	target = "runtime"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
@@ -132,15 +126,12 @@ target "runtime" {
 		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
 		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
-	tags = [
-		"metacall/core:runtime",
-	]
 }
 
 # CLI image (depends on dev for builder and runtime for base)
 target "cli" {
 	context = "."
-	dockerfile = "Dockerfile"
+	dockerfile = "tools/docker/Dockerfile"
 	target = "cli"
 	args = {
 		METACALL_BASE_IMAGE = "${METACALL_BASE_IMAGE}"
@@ -151,7 +142,4 @@ target "cli" {
 		METACALL_BUILD_OPTIONS = "${METACALL_BUILD_OPTIONS}"
 		METACALL_RUNTIME_OPTIONS = "${METACALL_RUNTIME_OPTIONS}"
 	}
-	tags = [
-		"metacall/core:cli",
-	]
 }
