@@ -21,9 +21,9 @@ message(STATUS "Port ${target}")
 
 if(NOT OPTION_BUILD_GUIX)
 	if(Python3_VERSION_MAJOR EQUAL 3 AND Python3_VERSION_MINOR GREATER_EQUAL 11)
-		set(PIP_BREAK_SYSTEM_PACKAGES "--break-system-packages")
+		set(PIP_BREAK_SYSTEM_PACKAGES --break-system-packages)
 	else()
-		set(PIP_BACKWARD_COMPATIBILITY "${CMAKE_COMMAND} -E env SETUPTOOLS_USE_DISTUTILS=stdlib")
+		set(PIP_BACKWARD_COMPATIBILITY ${CMAKE_COMMAND} -E env SETUPTOOLS_USE_DISTUTILS=stdlib)
 	endif()
 
 	# Retrieve the default system install path
@@ -33,17 +33,29 @@ if(NOT OPTION_BUILD_GUIX)
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	# Install into a temporary folder so we can track the installed files in the install_manifest.txt
-	set(PY_PORT_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install")
-
-	add_custom_target(py_port_install ALL
-		COMMAND ${PIP_BACKWARD_COMPATIBILITY} ${Python3_EXECUTABLE} -m pip install
-				${PIP_BREAK_SYSTEM_PACKAGES}
-				--prefix=${PY_PORT_INSTALL_DIR}
-				${CMAKE_CURRENT_SOURCE_DIR}
+	# Retrieve the install suffix
+	execute_process(
+		COMMAND ${Python3_EXECUTABLE} -c
+		"import sys; print('lib/python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor) + '/site-packages')"
+		OUTPUT_VARIABLE PY_PORT_INSTALL_SUFFIX
+		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	# Install into the default system install path
+	# Install into a temporary folder so we can track the installed files in the install_manifest.txt
+	set(PY_PORT_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install/${PY_PORT_INSTALL_SUFFIX}")
+
+	add_custom_target(py_port_install ALL
+		COMMAND 
+			${PIP_BACKWARD_COMPATIBILITY}
+			${Python3_EXECUTABLE} -m pip install
+			--ignore-installed
+			--no-deps
+			${PIP_BREAK_SYSTEM_PACKAGES}
+			--prefix=${PY_PORT_INSTALL_DIR}
+			${CMAKE_CURRENT_SOURCE_DIR}
+	)
+
+	# Install into the default system install path (note that --prefix replicates the site packages subtree)
 	install(
 		DIRECTORY "${PY_PORT_INSTALL_DIR}/"
 		DESTINATION "${Python3_SITE_PACKAGES}"
