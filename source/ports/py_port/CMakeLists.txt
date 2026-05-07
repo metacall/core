@@ -33,19 +33,11 @@ if(NOT OPTION_BUILD_GUIX)
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	# Retrieve the install suffix
-	execute_process(
-		COMMAND ${Python3_EXECUTABLE} -c
-		"import sys; print('lib/python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor) + '/site-packages')"
-		OUTPUT_VARIABLE PY_PORT_INSTALL_SUFFIX
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
-
 	# Install into a temporary folder so we can track the installed files in the install_manifest.txt
-	set(PY_PORT_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install/${PY_PORT_INSTALL_SUFFIX}")
+	set(PY_PORT_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install")
 
 	add_custom_target(py_port_install ALL
-		COMMAND 
+		COMMAND
 			${PIP_BACKWARD_COMPATIBILITY}
 			${Python3_EXECUTABLE} -m pip install
 			--ignore-installed
@@ -57,8 +49,10 @@ if(NOT OPTION_BUILD_GUIX)
 
 	# Install into the default system install path (note that --prefix replicates the site packages subtree)
 	install(
-		DIRECTORY "${PY_PORT_INSTALL_DIR}/"
-		DESTINATION "${Python3_SITE_PACKAGES}"
+		DIRECTORY
+			"${PY_PORT_INSTALL_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/"
+		DESTINATION
+			"${Python3_SITE_PACKAGES}"
 	)
 endif()
 
