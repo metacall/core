@@ -29,6 +29,6 @@ ENV LOADER_SCRIPT_PATH=/test
 
 COPY scripts/ .
 
-RUN pwd \
-    && ls -laR \
-    && metacallcli index.py
+RUN echo "Running metacall/core:cli integration tests" \
+    && metacallcli index.py \
+    && metacallcli index.js
