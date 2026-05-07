@@ -43,16 +43,14 @@ if(NOT OPTION_BUILD_GUIX)
 			--ignore-installed
 			--no-deps
 			${PIP_BREAK_SYSTEM_PACKAGES}
-			--prefix=${PY_PORT_INSTALL_DIR}
+			--target=${PY_PORT_INSTALL_DIR}
 			${CMAKE_CURRENT_SOURCE_DIR}
 	)
 
-	# Install into the default system install path (note that --prefix replicates the site packages subtree)
+	# Install into the default system install path
 	install(
-		DIRECTORY
-			"${PY_PORT_INSTALL_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/"
-		DESTINATION
-			"${Python3_SITE_PACKAGES}"
+		DIRECTORY "${PY_PORT_INSTALL_DIR}/"
+		DESTINATION "${Python3_SITE_PACKAGES}"
 	)
 endif()
 
