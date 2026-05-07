@@ -58,6 +58,9 @@ RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh \
 # MetaCall Dev image
 FROM deps AS dev
 
+# Arguments
+ARG METACALL_PATH
+
 # Environment variables
 ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 	LOADER_SCRIPT_PATH=$METACALL_PATH/build/scripts \
@@ -93,6 +96,9 @@ RUN cd $METACALL_PATH/build \
 # MetaCall Builder image
 FROM dev AS builder
 
+# Arguments
+ARG METACALL_PATH
+
 # Copy all installed files for export them later on in Runtime image
 # Skip the CLI because we will copy it at the end in the CLI image
 RUN mkdir -p /dist \
@@ -116,9 +122,6 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 	vendor="MetaCall Inc." \
 	version="0.1"
 
-# Arguments
-ARG METACALL_PATH
-
 # Environment variables
 ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	LOADER_SCRIPT_PATH=/usr/local/scripts \
@@ -128,6 +131,9 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	DEBIAN_FRONTEND=noninteractive \
 	NODE_PATH=/usr/local/lib/node_modules \
 	DOTNET_CLI_TELEMETRY_OPTOUT=true
+
+# Arguments
+ARG METACALL_PATH
 
 # Define working directory
 WORKDIR $METACALL_PATH
