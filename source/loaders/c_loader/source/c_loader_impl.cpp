@@ -1629,6 +1629,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 		else
 		{
 			bool found = false;
+			std::vector<std::string> failed_paths;
 
 			/* Otherwise, check the execution paths */
 			for (auto exec_path : c_impl->execution_paths)
@@ -1645,11 +1646,27 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 						break;
 					}
 				}
+				else
+				{
+					failed_paths.push_back(path);
+				}
 			}
 
 			if (found == false)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
+				std::string error_message = "    ";
+
+				for (size_t i = 0; i < failed_paths.size(); ++i)
+				{
+					error_message += failed_paths[i];
+
+					if (i < failed_paths.size() - 1)
+					{
+						error_message += "\n    ";
+					}
+				}
+
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: '%s'. Tried to load the following paths:\n%s", paths[iterator], error_message.c_str());
 				goto error;
 			}
 		}

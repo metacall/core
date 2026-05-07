@@ -178,7 +178,7 @@ install(DIRECTORY
 	FILES_MATCHING
 	PATTERN "*.a"
 	PATTERN "*.o"
-	PATTERN "include" EXCLUDE
+	PATTERN "include"
 )
 
 # Header files

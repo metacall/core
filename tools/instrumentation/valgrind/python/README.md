@@ -10,15 +10,6 @@ docker build -t metacall-python-valgrind -f tools/instrumentation/valgrind/pytho
 docker run --rm metacall-python-valgrind
 ```
 
-## With aggressive ruby suppressions
-
-```bash
-docker run --rm metacall-python-valgrind valgrind --leak-check=full --num-callers=30 \
-	--suppressions=/app/memcheck/valgrind-ruby.supp \
-	--suppressions=tools/instrumentation/suppressions/valgrind-ruby-aggressive.supp \
-	python3.13 test.py
-```
-
 ## Python build flags
 
 - `--with-pydebug` -- enables debug hooks
