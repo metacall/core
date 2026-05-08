@@ -108,6 +108,8 @@ static loader_impl loader_impl_allocate(const loader_tag tag);
 
 static void loader_impl_configuration_execution_paths(loader_impl_interface iface, loader_impl impl);
 
+static void loader_impl_configuration_environment(loader_impl impl);
+
 static int loader_impl_dependencies_self_list(const char *library, void *data);
 
 static int loader_impl_dependencies_self_find(loader_impl impl, const char *key_str, vector dependencies_self);
@@ -298,6 +300,37 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 				if (iface->execution_path(impl, execution_path) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load execution path %s in configuration %s", execution_path, configuration_object_name(impl->config));
+				}
+			}
+		}
+	}
+}
+
+void loader_impl_configuration_environment(loader_impl impl)
+{
+	value environment_value = configuration_value_type(impl->config, "environment", TYPE_MAP);
+
+	if (environment_value != NULL)
+	{
+		size_t environment_size = value_type_count(environment_value);
+		value *environment_map = value_to_map(environment_value);
+		size_t env_var;
+
+		for (env_var = 0; env_var < environment_size; ++env_var)
+		{
+			if (value_type_id(environment_map[env_var]) == TYPE_ARRAY)
+			{
+				value *pair_array = value_to_array(environment_map[env_var]);
+
+				if (value_type_id(pair_array[0]) == TYPE_STRING && value_type_id(pair_array[1]) == TYPE_STRING)
+				{
+					const char *pair_key = value_to_string(pair_array[0]);
+					const char *pair_value = value_to_string(pair_array[1]);
+
+					if (setenv(pair_key, pair_value, 0) != 0)
+					{
+						log_write("metacall", LOG_LEVEL_ERROR, "Failed to set the environment variable '%s': '%s'", pair_key, pair_value);
+					}
 				}
 			}
 		}
@@ -704,10 +737,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
 
-	/* TODO: Check here about search_paths and load them */
-	/* TODO: Check here about environment and load them */
-	/* TODO: Implement the search_paths and environment_variables generation in CMake */
-	/* Reference: https://github.com/metacall/core/issues/760 */
+	/* Check here about environment and load them only if they are not already defined */
+	loader_impl_configuration_environment(impl);
 
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
