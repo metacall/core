@@ -103,7 +103,7 @@ jobs:
         run: |
           set -exuo pipefail
           ./docker-compose.sh platform
-          docker buildx build --build-arg METACALL_BASE_IMAGE=metacall/core:cli --progress=plain --platform ${{ matrix.platform }} -f tools/docker/tests/Dockerfile -t metacall/core:test tools/docker/tests
+          docker build --build-arg METACALL_BASE_IMAGE=metacall/core:cli --progress=plain --platform ${{ matrix.platform }} -f tools/docker/tests/Dockerfile -t metacall/core:test tools/docker/tests
 
       - name: Build MetaCall Docker Images (registry)
         if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'

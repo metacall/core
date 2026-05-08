@@ -30,9 +30,9 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
-        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
+        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       # Work around https://github.com/dotnet/cli/issues/1582 until Docker releases a
@@ -57,9 +57,9 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
-        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
+        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -84,9 +84,9 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
-        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
+        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -111,9 +111,9 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base ${METACALL_LANGUAGES} rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: ${METACALL_LANGUAGES} examples tests scripts ports install pack sandbox # coverage benchmarks
-        METACALL_RUNTIME_OPTIONS: base ${METACALL_LANGUAGES} backtrace ports clean
+        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
+        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

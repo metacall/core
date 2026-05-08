@@ -308,7 +308,7 @@ sub_bake() {
 	fi
 
 	if [ -z "${DOCKER_USERNAME+x}" ]; then
-		echo "Error: IMAGE_NAME variable not defined"
+		echo "Error: DOCKER_USERNAME variable not defined"
 		exit 1
 	fi
 
