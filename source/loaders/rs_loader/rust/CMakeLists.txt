@@ -141,3 +141,17 @@ install(FILES
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
+
+# Rust STD (pack the Rust standard library)
+install(FILES
+	${Rust_RUSTC_STD_LIBRARIES}
+	DESTINATION ${INSTALL_LIB}/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib
+	COMPONENT runtime
+)
+
+# Rust Source (pack the Rust source)
+install(DIRECTORY
+	${Rust_RUSTC_SOURCE_DIR}
+	DESTINATION ${INSTALL_LIB}/rustlib/src
+	COMPONENT runtime
+)
