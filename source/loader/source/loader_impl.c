@@ -39,6 +39,8 @@
 
 #include <portability/portability_library_path.h>
 
+#include <environment/environment_variable.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -327,9 +329,12 @@ void loader_impl_configuration_environment(loader_impl impl)
 					const char *pair_key = value_to_string(pair_array[0]);
 					const char *pair_value = value_to_string(pair_array[1]);
 
-					if (setenv(pair_key, pair_value, 0) != 0)
+					if (environment_variable_get(pair_key, NULL) == NULL)
 					{
-						log_write("metacall", LOG_LEVEL_ERROR, "Failed to set the environment variable '%s': '%s'", pair_key, pair_value);
+						if (environment_variable_set(pair_key, pair_value) != 0)
+						{
+							log_write("metacall", LOG_LEVEL_ERROR, "Failed to set the environment variable '%s': '%s'", pair_key, pair_value);
+						}
 					}
 				}
 			}

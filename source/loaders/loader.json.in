@@ -2,5 +2,8 @@
 	"search_paths": [ @LOADER_SEARCH_PATHS@ ],
 	"dependencies": {
 		@LOADER_DEPENDENCIES@
+	},
+	"environment": {
+		@LOADER_ENVIRONMENT@
 	}
 }
