@@ -16,4 +16,4 @@ result = metacall('pairwise_suffix_sum', [4.4, 5.5, 6.6, 7.7])
 
 print(result)
 
-assert isinstance(result, float) and result == 0.0, f"Expected non-zero float, but got {type(result)} with value {result}"
+assert isinstance(result, float) and result != 0.0, f"Expected non-zero float, but got {type(result)} with value {result}"

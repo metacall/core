@@ -125,6 +125,34 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.vscode/launch.json.in ${CMAKE_CURREN
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.vscode/settings.json.in ${CMAKE_CURRENT_SOURCE_DIR}/.vscode/settings.json @ONLY)
 
 #
+# Configuration
+#
+
+# Development
+loader_configuration_begin(rs_loader)
+# TODO:
+# loader_configuration_deps(LLVM "")
+# loader_configuration_deps(rustc_driver "")
+# loader_configuration_deps(std "")
+# loader_configuration_deps(test "")
+loader_configuration_env(
+	"SYSROOT=${Rust_RUSTC_SYSROOT}"
+)
+loader_configuartion_end_development()
+
+# Install
+loader_configuration_begin(rs_loader)
+# TODO:
+# loader_configuration_deps(LLVM "")
+# loader_configuration_deps(rustc_driver "")
+# loader_configuration_deps(std "")
+# loader_configuration_deps(test "")
+loader_configuration_env(
+	"SYSROOT=${CMAKE_INSTALL_PREFIX}"
+)
+loader_configuartion_end_install()
+
+#
 # Deployment
 #
 
