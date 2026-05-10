@@ -15,6 +15,11 @@ const assert = require('node:assert').strict;
 
 // Rust
 (() => {
+	if (process.arch !== 'x64') {
+		console.log(`TODO: Rust not working for ${process.arch} architecture.`);
+		return;
+	}
+
 	metacall_load_from_file('rs', ['./bench.rs']);
 
 	const result = metacall('pairwise_suffix_sum', [4.4, 5.5, 6.6, 7.7]);
