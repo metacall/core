@@ -372,7 +372,6 @@ sub_rust(){
 			return
 		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends curl ca-certificates
 			# TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
 			$SUDO_CMD apt-get install -y --no-install-recommends gcc libc6-dev
 			sub_apt_install_hold gcc libc6-dev
@@ -383,13 +382,7 @@ sub_rust(){
 		fi
 
 		# Install minimal profile
-		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minimal
-
-		# Remove build dependencies
-		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get purge -y curl ca-certificates
-			$SUDO_CMD apt-get autoremove -y
-		fi
+		wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minimal
 
 		# TODO:
 		# if [ "${ARCHITECTURE}" = "386" ]; then
