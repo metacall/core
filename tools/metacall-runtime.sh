@@ -373,7 +373,6 @@ sub_rust(){
 		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			# TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
-			$SUDO_CMD apt-get install -y --no-install-recommends gcc libc6-dev
 			sub_apt_install_hold gcc libc6-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			# TODO:
