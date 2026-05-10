@@ -328,16 +328,7 @@ sub_c(){
 sub_cobol(){
 	echo "configure cobol"
 
-	if [ "${LINUX_DISTRO}" = "debian" ]; then
-		echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
-
-		$SUDO_CMD apt-get update
-		sub_apt_install_hold libcob4t64
-
-		# Remove unstable from sources.list
-		$SUDO_CMD head -n -2 /etc/apt/sources.list
-		$SUDO_CMD apt-get update
-	elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+	if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 		sub_apt_install_hold libcob4t64
 	fi
 }
