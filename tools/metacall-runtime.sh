@@ -39,6 +39,7 @@ INSTALL_WASM=0
 INSTALL_JAVA=0
 INSTALL_C=0
 INSTALL_COBOL=0
+INSTALL_RUST=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
 INSTALL_PORTS=0
@@ -327,7 +328,7 @@ sub_c(){
 sub_cobol(){
 	echo "configure cobol"
 
-	if [ "${LINUX_DISTRO}" == "debian" ]; then
+	if [ "${LINUX_DISTRO}" = "debian" ]; then
 		echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
 
 		$SUDO_CMD apt-get update
@@ -336,8 +337,83 @@ sub_cobol(){
 		# Remove unstable from sources.list
 		$SUDO_CMD head -n -2 /etc/apt/sources.list
 		$SUDO_CMD apt-get update
-	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
+	elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 		sub_apt_install_hold libcob4
+	fi
+}
+
+# Rust
+sub_rust(){
+	echo "configure rust"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			echo "rust has no support for ${ARCHITECTURE}"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "arm64" ]; then
+			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
+			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "386" ]; then
+			# TODO: Rustup is not detecting this architecture properly
+			echo "rustup with 386 has a bug, it does not detect the architecture properly"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "rustup default nightly-2021-12-04-i686-unknown-linux-gnu"
+			echo "error: toolchain 'nightly-2021-12-04-i686-unknown-linux-gnu' may not be able to run on this system"
+			echo "note: to build software for that platform, try rustup target add i686-unknown-linux-gnu instead"
+			echo "note: add the --force-non-host flag to install the toolchain anyway"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			# TODO: Git does not work well with 32-bit nodes, this error has happened before
+			# in metacall/guix, for solving it the best way is to mount a tempfs folder with 64-bit nodes
+			# For more info check this issue: https://github.com/metacall/guix/issues/16
+			echo "cargo with armv6 and armv6 has a bug with git and long path names"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "warning: spurious network error (1 tries remaining): could not read directory '/root/.cargo/registry/index/github.com-1285ae84e5963aae/.git/refs': Value too large for defined data type; class=Os (2)"
+			echo "error: failed to get fastrand as a dependency of package compiler v0.1.0 (/usr/local/metacall/source/loaders/rs_loader/rust/compiler)"
+			return
+		fi
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get install -y --no-install-recommends curl ca-certificates
+			# TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
+			$SUDO_CMD apt-get install -y --no-install-recommends gcc libc6-dev
+			sub_apt_install_hold gcc libc6-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			# TODO:
+			echo "alpine not implemented"
+			return
+		fi
+
+		# Install minimal profile
+		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minimal
+
+		# Remove build dependencies
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get purge -y curl ca-certificates
+			$SUDO_CMD apt-get autoremove -y
+		fi
+
+		# TODO:
+		# if [ "${ARCHITECTURE}" = "386" ]; then
+		# 	. "$HOME/.cargo/env"
+		# 	rustup toolchain install nightly-2021-12-04-i686-unknown-linux-gnu --force-non-host
+		# 	rustup default nightly-2021-12-04-i686-unknown-linux-gnu
+		# fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		# TODO:
+		echo "darwin not implemented"
+		return
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# TODO:
+		echo "freebsd not implemented"
+		return
 	fi
 }
 
@@ -451,6 +527,9 @@ sub_install(){
 	if [ $INSTALL_COBOL = 1 ]; then
 		sub_cobol
 	fi
+	if [ $INSTALL_RUST = 1 ]; then
+		sub_rust
+	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
 	fi
@@ -547,6 +626,10 @@ sub_options(){
 			echo "cobol selected"
 			INSTALL_COBOL=1
 		fi
+		if [ "$option" = 'rust' ]; then
+			echo "rust selected"
+			INSTALL_RUST=1
+		fi
 		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
@@ -585,6 +668,7 @@ sub_help() {
 	echo "	java"
 	echo "	c"
 	echo "	cobol"
+	echo "	rust"
 	echo "	backtrace"
 	echo "	sandbox"
 	echo "	ports"

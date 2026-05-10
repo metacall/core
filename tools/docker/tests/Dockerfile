@@ -30,12 +30,6 @@ FROM ${METACALL_BASE_IMAGE} AS test
 # Python: PYTHONPATH
 # NodeJS: NODE_PATH
 # Ruby: GEM_PATH, and what else?
-# Rust: SYSROOT (not working)
-
-# TODO: Uncomment this for making Rust work
-# RUN apt-get update \
-# 	&& apt-get install -y curl ca-certificates build-essential \
-# 	&& curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04
 
 WORKDIR /test
 

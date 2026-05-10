@@ -22,5 +22,5 @@ const assert = require('node:assert').strict;
 	console.log(result);
 
 	assert.ok(typeof result === 'number', `Expected float, but got ${typeof result}`);
-	assert.notstrictEqual(result, 0.0, `Expected non-zero, but got ${result}`);
+	assert.notStrictEqual(result, 0.0, `Expected non-zero, but got ${result}`);
 })();

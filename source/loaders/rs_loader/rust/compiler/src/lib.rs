@@ -185,10 +185,8 @@ fn compiler_sys_root() -> Option<PathBuf> {
     // - compile-time environment
     //    - SYSROOT
     //    - RUSTUP_HOME, MULTIRUST_HOME, RUSTUP_TOOLCHAIN, MULTIRUST_TOOLCHAIN
-    let sysroot_env = std::env::var("SYSROOT").ok();
-    eprintln!("DEBUG: SYSROOT = {:?}", sysroot_env);
-
-    sysroot_env
+    std::env::var("SYSROOT")
+        .ok()
         .map(PathBuf::from)
         .or_else(|| {
             let home = std::env::var("RUSTUP_HOME")
