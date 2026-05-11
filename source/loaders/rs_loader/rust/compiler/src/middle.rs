@@ -1,8 +1,7 @@
 use crate::Attribute;
 
 use super::rustc_middle::ty::{
-    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyCtxt, TyKind, UintTy,
-    Visibility,
+    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyCtxt, TyKind, UintTy, Visibility,
 };
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
@@ -110,9 +109,9 @@ pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident])
 
 pub fn extract_attribute_from_export(tcx: TyCtxt<'_>, def_id: DefId) -> Option<Function> {
     if tcx.def_kind(def_id) != rustc_hir::def::DefKind::Fn {
-    return None;
+        return None;
     }
-    
+
     let sig = tcx.fn_sig(def_id);
     let sig = sig.instantiate_identity();
 

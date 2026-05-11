@@ -40,7 +40,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                                 }
                             }
                             GenericArgs::Parenthesized(_) => {}
-                            GenericArgs::ParenthesizedElided(_) => {},
+                            GenericArgs::ParenthesizedElided(_) => {}
                         }
                     }
                 }
