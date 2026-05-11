@@ -139,6 +139,12 @@ foreach(tgt ${unity_build_depends})
 	)
 endforeach()
 
+# MetaCall C++ Port includes
+set(unity_build_include_list
+	${unity_build_include_list}
+	${CMAKE_SOURCE_DIR}/source/ports/cxx_port/include
+)
+
 # Build library
 add_library(${target}
 	${unity_build_source_list}
@@ -182,9 +188,15 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	PUBLIC
+	# Dependencies Includes
+	${unity_build_include_list}
+
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
 	INTERFACE
+	# Dependencies Includes
+	${unity_build_include_list}
+
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 	$<INSTALL_INTERFACE:include>

@@ -15,7 +15,8 @@ module MetaCall
 
 		if Dir.exist?(root_dir)
 			Find.find(root_dir) do |path|
-				matches << path if File.file?(path) && regex.match?(File.basename(path))
+				filename = File.basename(path)
+				matches << path if File.file?(path) && regex.match?(filename)
 			end
 		end
 
@@ -28,18 +29,26 @@ module MetaCall
 		case host_os
 		when /mswin|mingw|cygwin/
 			{
-				paths: [ File.join(ENV['LOCALAPPDATA'].to_s, 'MetaCall', 'metacall') ],
-				name: 'metacall\.dll'
+				paths: [ 
+					File.join(ENV['LOCALAPPDATA'].to_s, 'MetaCall', 'metacall'),
+				],
+				name: '^metacall(d)?\.dll$'
 			}
 		when /darwin/
 			{
-				paths: [ '/opt/homebrew/lib/', '/usr/local/lib/' ],
-				name: 'libmetacall\.dylib'
+				paths: [ 
+					'/opt/homebrew/lib/', 
+					'/usr/local/lib/', 
+				],
+				name: '^libmetacall(d)?\.dylib$'
 			}
 		when /linux/
 			{
-				paths: [ '/usr/local/lib/', '/gnu/lib/' ],
-				name: 'libmetacall\.so'
+				paths: [ 
+					'/usr/local/lib/', 
+					'/gnu/lib/', 
+				],
+				name: '^libmetacall(d)?\.so(\.\d+)*$'
 			}
 		else
 			raise "Platform #{host_os} not supported"
@@ -52,7 +61,7 @@ module MetaCall
 		if custom_path
 			{
 				paths: [ custom_path ],
-				name: '^(lib)?metacall(d)?\.(so|dylib|dll)$'
+				name: '^(lib)?metacall(d)?\.(so|dylib|dll)(\.\d+)*$'
 			}
 		else
 			platform_install_paths
@@ -89,6 +98,36 @@ module MetaCall
 
 		# Find and load the MetaCall shared library
 		library_path = find_library
+
+		# Platform-specific environment fixes
+		# TODO: Should we add this in the loader itself?
+		# https://github.com/metacall/core/issues/760
+		# TODO: Even with this trick it seems not to work...
+		if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+			# Define library and root directories
+			library_dir = File.dirname(library_path)
+			root_dir = File.dirname(library_dir)
+
+			# TODO: None of both path lists works, they are equivalent because the runtime install copies always all libraries to lib folder
+			# paths = [library_dir, File.join(library_dir, 'ruby_builtin_dlls')]
+			paths = [File.join(root_dir, 'runtimes', 'ruby', 'bin'), File.join(root_dir, 'runtimes', 'ruby', 'bin', 'ruby_builtin_dlls')]
+
+			# Ruby 3+ ignores ENV['PATH'] for DLL loading. We must use SetDllDirectory 
+			# to allow metacall.dll to find its plugins and dependencies.
+			begin
+				kernel32 = Fiddle.dlopen('kernel32.dll')
+				set_dll_dir = Fiddle::Function.new(kernel32['SetDllDirectoryW'], [Fiddle::TYPE_VOIDP], Fiddle::TYPE_INT)
+
+				paths.each do |path|
+				  set_dll_dir.call(path.encode('UTF-16LE')) if Dir.exist?(path)
+				end
+			rescue => e
+				# Fallback to PATH for older Ruby versions
+				paths.each do |path|
+					ENV['PATH'] = "#{path};#{ENV['PATH']}"
+				end
+			end
+		end
 
 		begin
 			# Load the shared library globally

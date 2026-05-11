@@ -9,6 +9,7 @@ pub extern "C" fn rs_loader_impl_load_from_file(
     loader_impl: *mut c_void,
     paths: *mut *const c_char,
     size: usize,
+    _data: *mut c_void,
 ) -> *mut c_void {
     loader::load(
         loader_impl,

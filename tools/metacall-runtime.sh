@@ -39,6 +39,7 @@ INSTALL_WASM=0
 INSTALL_JAVA=0
 INSTALL_C=0
 INSTALL_COBOL=0
+INSTALL_RUST=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
 INSTALL_PORTS=0
@@ -53,6 +54,32 @@ case "$(uname -s)" in
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
 	*)			OPERATIVE_SYSTEM="Unknown"
+esac
+
+# Architecture detection
+case "$(uname -m)" in
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			# TODO: ARMv6 detection not working properly
+			ARCHITECTURE="armv6"
+		fi
+		;;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
 esac
 
 # Check out for sudo
@@ -175,6 +202,11 @@ sub_netcore8(){
 	echo "configure netcore 8"
 	cd $ROOT_DIR
 
+	if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
+		echo "netcore8 has no support for ${ARCHITECTURE}"
+		return
+	fi
+
 	# Install NET Core Runtime 8.x
 	wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin --runtime dotnet
 }
@@ -248,6 +280,11 @@ sub_rpc(){
 sub_wasm(){
 	echo "configure wasm"
 
+	if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
+		echo "wasmtime has no support for ${ARCHITECTURE}"
+		return
+	fi
+
 	# TODO
 }
 
@@ -262,46 +299,12 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
-
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
@@ -325,17 +328,82 @@ sub_c(){
 sub_cobol(){
 	echo "configure cobol"
 
-	if [ "${LINUX_DISTRO}" == "debian" ]; then
-		echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
+	if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+		# Obtain VERSION_CODENAME
+		. /etc/os-release
 
-		$SUDO_CMD apt-get update
-		sub_apt_install_hold libcob4
+		if [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "jammy" ]; then
+			sub_apt_install_hold libcob4
+		else
+			sub_apt_install_hold libcob4t64
+		fi
+	fi
+}
 
-		# Remove unstable from sources.list
-		$SUDO_CMD head -n -2 /etc/apt/sources.list
-		$SUDO_CMD apt-get update
-	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
-		sub_apt_install_hold libcob4
+# Rust
+sub_rust(){
+	echo "configure rust"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			echo "rust has no support for ${ARCHITECTURE}"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "arm64" ]; then
+			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
+			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "386" ]; then
+			# TODO: Rustup is not detecting this architecture properly
+			echo "rustup with 386 has a bug, it does not detect the architecture properly"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "rustup default nightly-2021-12-04-i686-unknown-linux-gnu"
+			echo "error: toolchain 'nightly-2021-12-04-i686-unknown-linux-gnu' may not be able to run on this system"
+			echo "note: to build software for that platform, try rustup target add i686-unknown-linux-gnu instead"
+			echo "note: add the --force-non-host flag to install the toolchain anyway"
+			return
+		fi
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
+			# TODO: Git does not work well with 32-bit nodes, this error has happened before
+			# in metacall/guix, for solving it the best way is to mount a tempfs folder with 64-bit nodes
+			# For more info check this issue: https://github.com/metacall/guix/issues/16
+			echo "cargo with armv6 and armv6 has a bug with git and long path names"
+			echo "open an issue or pull request here: https://github.com/metacall/core/"
+			echo
+			echo "warning: spurious network error (1 tries remaining): could not read directory '/root/.cargo/registry/index/github.com-1285ae84e5963aae/.git/refs': Value too large for defined data type; class=Os (2)"
+			echo "error: failed to get fastrand as a dependency of package compiler v0.1.0 (/usr/local/metacall/source/loaders/rs_loader/rust/compiler)"
+			return
+		fi
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
+			sub_apt_install_hold gcc libc6-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			# TODO:
+			echo "alpine not implemented"
+			return
+		fi
+
+		# Install minimal profile
+		wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minimal
+
+		# TODO:
+		# if [ "${ARCHITECTURE}" = "386" ]; then
+		# 	. "$HOME/.cargo/env"
+		# 	rustup toolchain install nightly-2021-12-04-i686-unknown-linux-gnu --force-non-host
+		# 	rustup default nightly-2021-12-04-i686-unknown-linux-gnu
+		# fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		# TODO:
+		echo "darwin not implemented"
+		return
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# TODO:
+		echo "freebsd not implemented"
+		return
 	fi
 }
 
@@ -449,6 +517,9 @@ sub_install(){
 	if [ $INSTALL_COBOL = 1 ]; then
 		sub_cobol
 	fi
+	if [ $INSTALL_RUST = 1 ]; then
+		sub_rust
+	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
 	fi
@@ -545,6 +616,10 @@ sub_options(){
 			echo "cobol selected"
 			INSTALL_COBOL=1
 		fi
+		if [ "$option" = 'rust' ]; then
+			echo "rust selected"
+			INSTALL_RUST=1
+		fi
 		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
@@ -583,6 +658,7 @@ sub_help() {
 	echo "	java"
 	echo "	c"
 	echo "	cobol"
+	echo "	rust"
 	echo "	backtrace"
 	echo "	sandbox"
 	echo "	ports"

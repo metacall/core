@@ -39,6 +39,8 @@
 
 #include <portability/portability_library_path.h>
 
+#include <environment/environment_variable.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -107,6 +109,8 @@ struct loader_handle_impl_type
 static loader_impl loader_impl_allocate(const loader_tag tag);
 
 static void loader_impl_configuration_execution_paths(loader_impl_interface iface, loader_impl impl);
+
+static void loader_impl_configuration_environment(loader_impl impl);
 
 static int loader_impl_dependencies_self_list(const char *library, void *data);
 
@@ -298,6 +302,40 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 				if (iface->execution_path(impl, execution_path) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load execution path %s in configuration %s", execution_path, configuration_object_name(impl->config));
+				}
+			}
+		}
+	}
+}
+
+void loader_impl_configuration_environment(loader_impl impl)
+{
+	value environment_value = configuration_value_type(impl->config, "environment", TYPE_MAP);
+
+	if (environment_value != NULL)
+	{
+		size_t environment_size = value_type_count(environment_value);
+		value *environment_map = value_to_map(environment_value);
+		size_t env_var;
+
+		for (env_var = 0; env_var < environment_size; ++env_var)
+		{
+			if (value_type_id(environment_map[env_var]) == TYPE_ARRAY)
+			{
+				value *pair_array = value_to_array(environment_map[env_var]);
+
+				if (value_type_id(pair_array[0]) == TYPE_STRING && value_type_id(pair_array[1]) == TYPE_STRING)
+				{
+					const char *pair_key = value_to_string(pair_array[0]);
+					const char *pair_value = value_to_string(pair_array[1]);
+
+					if (environment_variable_get(pair_key, NULL) == NULL)
+					{
+						if (environment_variable_set(pair_key, pair_value) != 0)
+						{
+							log_write("metacall", LOG_LEVEL_ERROR, "Failed to set the environment variable '%s': '%s'", pair_key, pair_value);
+						}
+					}
 				}
 			}
 		}
@@ -703,6 +741,9 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		loader_library_path_value = value_create_string(library_path, strnlen(library_path, LOADER_PATH_SIZE));
 		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
+
+	/* Check here about environment and load them only if they are not already defined */
+	loader_impl_configuration_environment(impl);
 
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
@@ -1249,7 +1290,7 @@ size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, l
 	return length;
 }
 
-int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr)
+int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr, void *data)
 {
 	if (impl != NULL)
 	{
@@ -1286,7 +1327,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
-			handle = iface->load_from_file(impl, paths, size);
+			handle = iface->load_from_file(impl, paths, size, data);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
@@ -1320,7 +1361,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_name name, const 
 	return 1;
 }
 
-int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl impl, const char *buffer, size_t size, void **handle_ptr)
+int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl impl, const char *buffer, size_t size, void **handle_ptr, void *data)
 {
 	if (impl != NULL && buffer != NULL && size > 0)
 	{
@@ -1357,7 +1398,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
-			handle = iface->load_from_memory(impl, name, buffer, size);
+			handle = iface->load_from_memory(impl, name, buffer, size, data);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
@@ -1369,7 +1410,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 	return 1;
 }
 
-int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl impl, const loader_path path, void **handle_ptr)
+int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl impl, const loader_path path, void **handle_ptr, void *data)
 {
 	if (impl != NULL)
 	{
@@ -1396,7 +1437,7 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 			init_order_not_initialized = loader_impl_handle_init_order(impl, handle_ptr, &init_order);
 
-			handle = iface->load_from_package(impl, path);
+			handle = iface->load_from_package(impl, path, data);
 
 			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */

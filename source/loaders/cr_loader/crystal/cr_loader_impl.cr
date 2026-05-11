@@ -44,19 +44,19 @@ fun cr_loader_impl_execution_path(impl : Void*, path : LibC::Char*) : LibC::Int
 	return 0
 end
 
-fun cr_loader_impl_load_from_file(impl : Void*, paths : LibC::Char**, size : LibC::SizeT) : Void*
+fun cr_loader_impl_load_from_file(impl : Void*, paths : LibC::Char**, size : LibC::SizeT, data : Void*) : Void*
 	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
 
 	return nil
 end
 
-fun cr_loader_impl_load_from_memory(impl : Void*, name : LibC::Char*, buffer : LibC::Char*, size : LibC::SizeT) : Void*
+fun cr_loader_impl_load_from_memory(impl : Void*, name : LibC::Char*, buffer : LibC::Char*, size : LibC::SizeT, data : Void*) : Void*
 	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
 
 	return nil
 end
 
-fun cr_loader_impl_load_from_package(impl : Void*, path : LibC::Char*) : Void*
+fun cr_loader_impl_load_from_package(impl : Void*, path : LibC::Char*, data : Void*) : Void*
 	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
 
 	return nil

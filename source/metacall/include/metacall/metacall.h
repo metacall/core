@@ -262,6 +262,38 @@ METACALL_API int metacall_load_from_file(const char *tag, const char *paths[], s
 
 /**
 *  @brief
+*    Loads a script from file specified by @path
+*
+*  @param[in] tag
+*    Extension of the script
+*
+*  @param[in] paths
+*    Path array of files
+*
+*  @param[in] size
+*    Size of the array @paths
+*
+*  @param[inout] handle
+*    Optional pointer to reference of loaded handle. If the parameter is NULL, the symbols loaded are
+*    propagated to the loader scope (i.e they will share the scope between all previously loaded files and they can collide).
+*    Otherwise, if we pass a void* pointer set to NULL, it will behave as output parameter, obtaining the reference to the
+*    created handle, which can be later on used for calling to functions of that handle. The symbols will not be propagated
+*    to the loader scope and they will be private (this prevents collisions). The last case is if we pass an already allocated
+*    handle (i.e a void* pointer pointing to an previously loaded handle), then in this case, the symbols loaded will be propagated
+*    to the previously allocated handle, and it will behave as a in parameter.
+*
+*  @param[in] data
+*    A MetaCall value that represents some kind of configuration or loading flags to be passed into the loader.
+*    The type of is defined for each loader and it depends on each loader, for example in the C Loader,
+*    it can be used to pass additional include paths and libraries.
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_load_from_file_ex(const char *tag, const char *paths[], size_t size, void **handle, void *data);
+
+/**
+*  @brief
 *    Loads a script from memory
 *
 *  @param[in] tag
@@ -289,6 +321,38 @@ METACALL_API int metacall_load_from_memory(const char *tag, const char *buffer, 
 
 /**
 *  @brief
+*    Loads a script from memory
+*
+*  @param[in] tag
+*    Extension of the script
+*
+*  @param[in] buffer
+*    Memory block representing the string of the script
+*
+*  @param[in] size
+*    Memory block representing the string of the script
+*
+*  @param[inout] handle
+*    Optional pointer to reference of loaded handle. If the parameter is NULL, the symbols loaded are
+*    propagated to the loader scope (i.e they will share the scope between all previously loaded files and they can collide).
+*    Otherwise, if we pass a void* pointer set to NULL, it will behave as output parameter, obtaining the reference to the
+*    created handle, which can be later on used for calling to functions of that handle. The symbols will not be propagated
+*    to the loader scope and they will be private (this prevents collisions). The last case is if we pass an already allocated
+*    handle (i.e a void* pointer pointing to an previously loaded handle), then in this case, the symbols loaded will be propagated
+*    to the previously allocated handle, and it will behave as a in parameter.
+*
+*  @param[in] data
+*    A MetaCall value that represents some kind of configuration or loading flags to be passed into the loader.
+*    The type of is defined for each loader and it depends on each loader, for example in the C Loader,
+*    it can be used to pass additional include paths and libraries.
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_load_from_memory_ex(const char *tag, const char *buffer, size_t size, void **handle, void *data);
+
+/**
+*  @brief
 *    Loads a package of scripts from file specified by @path into loader defined by @extension
 *
 *  @param[in] tag
@@ -310,6 +374,35 @@ METACALL_API int metacall_load_from_memory(const char *tag, const char *buffer, 
 *    Zero if success, different from zero otherwise
 */
 METACALL_API int metacall_load_from_package(const char *tag, const char *path, void **handle);
+
+/**
+*  @brief
+*    Loads a package of scripts from file specified by @path into loader defined by @extension
+*
+*  @param[in] tag
+*    Extension of the script
+*
+*  @param[in] path
+*    Path of the package
+*
+*  @param[inout] handle
+*    Optional pointer to reference of loaded handle. If the parameter is NULL, the symbols loaded are
+*    propagated to the loader scope (i.e they will share the scope between all previously loaded files and they can collide).
+*    Otherwise, if we pass a void* pointer set to NULL, it will behave as output parameter, obtaining the reference to the
+*    created handle, which can be later on used for calling to functions of that handle. The symbols will not be propagated
+*    to the loader scope and they will be private (this prevents collisions). The last case is if we pass an already allocated
+*    handle (i.e a void* pointer pointing to an previously loaded handle), then in this case, the symbols loaded will be propagated
+*    to the previously allocated handle, and it will behave as a in parameter.
+*
+*  @param[in] data
+*    A MetaCall value that represents some kind of configuration or loading flags to be passed into the loader.
+*    The type of is defined for each loader and it depends on each loader, for example in the C Loader,
+*    it can be used to pass additional include paths and libraries.
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_load_from_package_ex(const char *tag, const char *path, void **handle, void *data);
 
 /**
 *  @brief

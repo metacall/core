@@ -154,8 +154,10 @@ add_dependencies(${target}
 #
 
 set_property(TEST ${target}
+	PROPERTY LABELS ${target}
+
 	# Disable valgrind when testing backtracing for segfaults
-	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)

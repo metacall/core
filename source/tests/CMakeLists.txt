@@ -56,25 +56,17 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUI
 	# TODO: Memory check does not work properly with CoreCLR
 	#
 	# 	Remove MEMCHECK_IGNORE label from the following tests:
-	#		- cs-loader-test
+	#		- metacall-cs-test
+	#		- metacall-cs-call-bench
+	#		- metacall-csharp-static-class-test
 	#		- metacall-test
 	#		- metacall-distributable-test
 	#		- metacall-inspect-test
 	#		- metacall-integration-test
 
-	include(ProcessorCount)
-
-	ProcessorCount(N)
-
 	add_custom_target(memcheck
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		COMMAND ${CMAKE_CTEST_COMMAND}
-			-j${N}
-			--label-exclude MEMCHECK_IGNORE
-			--force-new-ctest-process
-			--test-action memcheck
-			--timeout 5400
-		COMMAND ${CMAKE_COMMAND} -E cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/memcheck/memcheck.cmake
 	)
 endif()
 
@@ -129,6 +121,7 @@ add_subdirectory(metacall_node_port_test)
 add_subdirectory(metacall_node_port_await_test)
 add_subdirectory(metacall_node_port_rs_test)
 add_subdirectory(metacall_node_port_c_lib_test)
+add_subdirectory(metacall_node_port_c_lib_metacall_test)
 add_subdirectory(metacall_node_python_port_mock_test)
 add_subdirectory(metacall_node_python_port_ruby_test)
 add_subdirectory(metacall_node_python_ruby_test)
@@ -235,6 +228,7 @@ add_subdirectory(metacall_rust_load_from_package_class_test)
 add_subdirectory(metacall_rust_class_test)
 add_subdirectory(metacall_c_test)
 add_subdirectory(metacall_c_lib_test)
+add_subdirectory(metacall_c_metacall_test)
 add_subdirectory(metacall_version_test)
 add_subdirectory(metacall_dynlink_path_test)
 add_subdirectory(metacall_library_path_without_env_vars_test)

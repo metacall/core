@@ -148,6 +148,9 @@ add_dependencies(${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+
+	# TODO: Valgrind also fails with C#
+	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)

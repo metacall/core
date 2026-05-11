@@ -35,11 +35,11 @@ CR_LOADER_API loader_impl_data cr_loader_impl_initialize(loader_impl impl, confi
 
 CR_LOADER_API int cr_loader_impl_execution_path(loader_impl impl, const loader_path path);
 
-CR_LOADER_API loader_handle cr_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size);
+CR_LOADER_API loader_handle cr_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data);
 
-CR_LOADER_API loader_handle cr_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size);
+CR_LOADER_API loader_handle cr_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data);
 
-CR_LOADER_API loader_handle cr_loader_impl_load_from_package(loader_impl impl, const loader_path path);
+CR_LOADER_API loader_handle cr_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data);
 
 CR_LOADER_API int cr_loader_impl_clear(loader_impl impl, loader_handle handle);
 

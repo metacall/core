@@ -35,7 +35,7 @@
 
 #include <log/log.h>
 
-#include <metacall/metacall.h>
+#include <metacall/metacall.hpp>
 
 #include <map>
 #include <optional>
@@ -359,8 +359,52 @@ public:
 		return true;
 	}
 
-	bool initialize(loader_impl_c c_impl, const loader_path path)
+	bool initialize(loader_impl_c c_impl, const loader_path path, void *data)
 	{
+		// Try to initialize from options first
+		if (data != NULL)
+		{
+			metacall::map<std::string, metacall::array> options(data);
+
+			auto libs = options("libs");
+
+			if (!(libs.has_value() && libs.value().count() > 0))
+			{
+				return false;
+			}
+
+			this->lib = dynlink_load_absolute(libs.value()[0].as<std::string>().c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+
+			if (this->lib == NULL)
+			{
+				return false;
+			}
+
+			auto headers = options("headers");
+
+			if (headers.has_value())
+			{
+				for (size_t i = 0; i < headers.value().count(); ++i)
+				{
+					auto header = headers.value()[i].as<std::string>();
+					this->add(header);
+				}
+			}
+
+			std::optional<metacall::array> include_search_paths = options("include_search_paths");
+
+			if (include_search_paths.has_value())
+			{
+				for (size_t i = 0; i < include_search_paths.value().count(); ++i)
+				{
+					auto include_search_path = include_search_paths.value()[i].as<std::string>();
+					c_impl->execution_paths.push_back(include_search_path);
+				}
+			}
+
+			return true;
+		}
+
 		size_t path_size = strnlen(path, LOADER_PATH_SIZE);
 		char library_directory[PORTABILITY_PATH_SIZE];
 		size_t library_directory_size = portability_path_get_directory(path, path_size, library_directory, PORTABILITY_PATH_SIZE);
@@ -662,26 +706,26 @@ public:
 
 	void *generate_c_array(void *array, size_t args_count, function func, void **error)
 	{
-		size_t count = metacall_value_count(array);
+		size_t count = metacall::metacall_value_count(array);
 
 		/* Check if array size is correct */
 		if (size.has_value())
 		{
 			if (count != static_cast<size_t>(*size))
 			{
-				*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " of type array with different size when calling %s (expecting an array of size %d, received an array of size %" PRIuS ")", args_count, function_name(func), *size, count);
+				*error = metacall::metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " of type array with different size when calling %s (expecting an array of size %d, received an array of size %" PRIuS ")", args_count, function_name(func), *size, count);
 				return NULL;
 			}
 		}
 
 		/* Check if array type is correct */
-		void **array_ptr = metacall_value_to_array(array);
+		void **array_ptr = metacall::metacall_value_to_array(array);
 
 		for (size_t it = 0; it < count; ++it)
 		{
-			if (metacall_value_id(array_ptr[it]) != id)
+			if (metacall::metacall_value_id(array_ptr[it]) != id)
 			{
-				*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " of type array with different type when calling %s (expecting an array of type %s, received an array of type %s in the element %" PRIuS ")", args_count, function_name(func), type_id_name(id), metacall_value_type_name(array_ptr[it]), it);
+				*error = metacall::metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " of type array with different type when calling %s (expecting an array of type %s, received an array of type %s in the element %" PRIuS ")", args_count, function_name(func), type_id_name(id), metacall::metacall_value_type_name(array_ptr[it]), it);
 				return NULL;
 			}
 		}
@@ -692,7 +736,7 @@ public:
 
 		if (memory_ptr == NULL)
 		{
-			*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " failed to allocate memory pointer for the array when calling %s", args_count, function_name(func));
+			*error = metacall::metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " failed to allocate memory pointer for the array when calling %s", args_count, function_name(func));
 			return NULL;
 		}
 
@@ -700,7 +744,7 @@ public:
 
 		if (memory == NULL)
 		{
-			*error = metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " failed to allocate memory for the array when calling %s", args_count, function_name(func));
+			*error = metacall::metacall_error_throw("C Loader Error", 0, "", "Argument %" PRIuS " failed to allocate memory for the array when calling %s", args_count, function_name(func));
 			free(memory_ptr);
 			return NULL;
 		}
@@ -771,7 +815,7 @@ void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void 
 		values[args_count] = value_type_create(args[args_count], value_type_id_size(id), id);
 	}
 
-	void *ret_val = metacallfv_s(f, values, args_size);
+	void *ret_val = metacall::metacallfv_s(f, values, args_size);
 	size_t ret_size = value_type_size(ret_val);
 
 	if (ret_size <= sizeof(ffi_arg))
@@ -929,7 +973,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 	if (args_size != signature_count(s))
 	{
-		return metacall_error_throw("C Loader Error", 0, "", "Invalid number of arguments when calling %s (canceling call in order to avoid a segfault)", function_name(func));
+		return metacall::metacall_error_throw("C Loader Error", 0, "", "Invalid number of arguments when calling %s (canceling call in order to avoid a segfault)", function_name(func));
 	}
 
 	loader_impl_c_function c_function = static_cast<loader_impl_c_function>(impl);
@@ -941,10 +985,10 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		type_id id = type_index(t);
 		type_id value_id = value_type_id((value)args[args_count]);
 
-		/* We can accept pointers if we pass to an array, it is unsafe but it improves efficiency */
-		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY))
+		/* We can accept pointers if we pass to an array and null to a pointer or array, it is unsafe but it improves efficiency */
+		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY) && !(value_id == TYPE_NULL && id == TYPE_PTR) && !(value_id == TYPE_NULL && id == TYPE_ARRAY))
 		{
-			return metacall_error_throw("C Loader Error", 0, "",
+			return metacall::metacall_error_throw("C Loader Error", 0, "",
 				"Type mismatch in when calling %s in argument number %" PRIuS
 				" (expected %s of type %s and received %s)."
 				" Canceling call in order to avoid a segfault.",
@@ -994,9 +1038,14 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 			/* Primitive types already have the pointer indirection */
 			c_function->values[args_count] = value_data((value)args[args_count]);
 		}
+		else if (value_id == TYPE_NULL)
+		{
+			static void *null_ptr = NULL;
+			c_function->values[args_count] = &null_ptr;
+		}
 		else
 		{
-			return metacall_error_throw("C Loader Error", 0, "",
+			return metacall::metacall_error_throw("C Loader Error", 0, "",
 				"Type %s in argument number %" PRIuS " of function %s is not supported.",
 				type_id_name(id),
 				args_count,
@@ -1005,62 +1054,31 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	}
 
 	type_id ret_id = type_index(signature_get_return(s));
-	size_t ret_size = value_type_id_size(ret_id);
+	size_t ret_size = c_function->cif.rtype->size;
 	void *ret = NULL;
 
-	if (ret_size <= sizeof(ffi_arg) && (type_id_integer(ret_id) == 0 || type_id_decimal(ret_id) == 0))
+	if (ret_id == TYPE_NULL)
 	{
-		ffi_arg result;
-
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, c_function->values);
-
-		ret = value_type_create(&result, ret_size, ret_id);
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), NULL, c_function->values);
+		ret = value_create_null();
 	}
 	else
 	{
-		void *result = NULL;
-		void *result_ptr = &result;
+		/* Always allocate ABI-sized buffer */
+		void *storage = alloca(ret_size);
 
-		if (ret_id == TYPE_NULL)
-		{
-			ret = value_create_null();
-			result_ptr = NULL;
-		}
-		else if (ret_id != TYPE_STRING && ret_id != TYPE_BUFFER && ret_id != TYPE_ARRAY && ret_id != TYPE_PTR)
-		{
-			/* TODO: This is not tested and we do not know how to handle it */
-			/* TODO: result = ret = value_type_create(NULL, ret_size, ret_id); */
-
-			return metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), result_ptr, c_function->values);
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), storage, c_function->values);
 
 		if (ret_id == TYPE_STRING)
 		{
-			char *str = (char *)result;
+			/* Convert string pointer into string.
+			* TODO: is this unsafe? It is assuming nullchar strings. */
+			char *str = *(char **)storage;
 			ret = value_create_string(str, strlen(str));
 		}
-		else if (ret_id == TYPE_BUFFER)
+		else
 		{
-			return metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported, buffer is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-		else if (ret_id == TYPE_ARRAY)
-		{
-			return metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported, array is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-		else if (ret_id == TYPE_PTR)
-		{
-			ret = value_create_ptr(result);
+			ret = value_type_create(storage, ret_size, ret_id);
 		}
 	}
 
@@ -1581,10 +1599,12 @@ static int c_loader_impl_tcc_relocate(TCCState *state)
 #endif
 }
 
-loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle_tcc_file c_handle = new loader_impl_c_handle_tcc_file_type();
+
+	(void)data;
 
 	if (c_handle->initialize(c_impl) == false)
 	{
@@ -1609,6 +1629,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 		else
 		{
 			bool found = false;
+			std::vector<std::string> failed_paths;
 
 			/* Otherwise, check the execution paths */
 			for (auto exec_path : c_impl->execution_paths)
@@ -1625,11 +1646,27 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 						break;
 					}
 				}
+				else
+				{
+					failed_paths.push_back(path);
+				}
 			}
 
 			if (found == false)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
+				std::string error_message = "    ";
+
+				for (size_t i = 0; i < failed_paths.size(); ++i)
+				{
+					error_message += failed_paths[i];
+
+					if (i < failed_paths.size() - 1)
+					{
+						error_message += "\n    ";
+					}
+				}
+
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: '%s'. Tried to load the following paths:\n%s", paths[iterator], error_message.c_str());
 				goto error;
 			}
 		}
@@ -1648,13 +1685,14 @@ error:
 	return NULL;
 }
 
-loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle_tcc_memory c_handle = new loader_impl_c_handle_tcc_memory_type();
 
 	/* Apparently TCC has an unsafe API for compiling strings */
 	(void)size;
+	(void)data;
 
 	if (c_handle->initialize(c_impl) == false)
 	{
@@ -1684,12 +1722,12 @@ error:
 	return NULL;
 }
 
-loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle_dynlink c_handle = new loader_impl_c_handle_dynlink_type();
 
-	if (c_handle->initialize(c_impl, path) == false)
+	if (c_handle->initialize(c_impl, path, data) == false)
 	{
 		delete c_handle;
 		return NULL;

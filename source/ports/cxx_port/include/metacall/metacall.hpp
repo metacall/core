@@ -26,6 +26,7 @@
 #include <array>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -55,6 +56,18 @@ public:
 	void *release()
 	{
 		return value_ptr.release();
+	}
+
+	// Get the size in bytes of the value
+	size_t size() const
+	{
+		return metacall_value_size(value_ptr.get());
+	}
+
+	// The number of elements of the value
+	size_t count() const
+	{
+		return metacall_value_count(value_ptr.get());
 	}
 
 protected:
@@ -398,6 +411,9 @@ public:
 	array(array &arr) :
 		value_base(arr.to_raw(), &value_base::noop_destructor) {}
 
+	array(const array &arr) :
+		value_base(arr.to_raw(), &value_base::noop_destructor) {}
+
 	array(array &&arr) noexcept :
 		value_base(arr.value_ptr.release(), arr.value_ptr.get_deleter()) {}
 
@@ -461,9 +477,11 @@ private:
 	template <typename... Args>
 	static void create_array(void **array_ptr, std::size_t index, Args &&...args)
 	{
-		// Use initializer list trick to expand the pack
-		((
-			 array_ptr[index++] = value<std::decay_t<Args>>::create(std::forward<Args>(args))),
+		(([&] {
+			using Decayed = std::decay_t<Args>;
+			Decayed decayed = std::forward<Args>(args);
+			array_ptr[index++] = value<Decayed>::create(decayed);
+		}()),
 			...);
 	}
 };
@@ -473,6 +491,14 @@ template <>
 inline void *value<array>::create(array &v)
 {
 	return v.release();
+}
+
+template <>
+template <>
+inline void *value<array>::create(metacall::array const &v)
+{
+	// TODO: Can be this avoided in order to avoid copying?
+	return metacall_value_copy(v.to_raw());
 }
 
 template <>
@@ -540,6 +566,18 @@ public:
 	V operator[](const K &key) const
 	{
 		return m.at(key).second.to_value();
+	}
+
+	std::optional<V> operator()(const K &key) const
+	{
+		auto it = m.find(key);
+
+		if (it == m.end())
+		{
+			return std::nullopt;
+		}
+
+		return it->second.second.to_value();
 	}
 
 	static enum metacall_value_id id()

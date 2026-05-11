@@ -270,6 +270,22 @@ const metacall_load_from_package_export = (tag, pkg) => {
 	return addon.metacall_load_from_package_export(tag, pkg);
 };
 
+const metacall_load_from_package_ex = (tag, pkg, options) => {
+	if (Object.prototype.toString.call(tag) !== '[object String]') {
+		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
+	}
+
+	if (Object.prototype.toString.call(pkg) !== '[object String]') {
+		throw Error('Package should be a string with the id or path to the package.');
+	}
+
+	if (typeof options !== 'object' || options === null) {
+		throw Error('Options should be an object with loader options (e.g. include_search_paths, headers, libs).');
+	}
+
+	return addon.metacall_load_from_package_ex(tag, pkg, options);
+};
+
 const metacall_load_from_configuration = (path) => {
 	if (Object.prototype.toString.call(path) !== '[object String]') {
 		throw Error('Path should be a string indicating the path where the metacall.json is located.');
@@ -334,6 +350,7 @@ const module_exports = {
 	metacall_load_from_memory_export,
 	metacall_load_from_package,
 	metacall_load_from_package_export,
+	metacall_load_from_package_ex,
 	metacall_load_from_configuration,
 	metacall_load_from_configuration_export,
 	metacall_handle,

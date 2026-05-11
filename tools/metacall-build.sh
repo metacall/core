@@ -25,6 +25,7 @@ BUILD_TYPE=Release
 BUILD_TESTS=0
 BUILD_BENCHMARKS=0
 BUILD_COVERAGE=0
+BUILD_MEMCHECK=0
 BUILD_INSTALL=0
 
 # Check out for sudo
@@ -61,6 +62,10 @@ sub_options() {
 			echo "Build coverage reports"
 			BUILD_COVERAGE=1
 		fi
+		if [ "$option" = 'memcheck' ]; then
+			echo "Build and run all tests with memcheck"
+			BUILD_MEMCHECK=1
+		fi
 		if [ "$option" = 'install' ]; then
 			echo "Install all libraries"
 			BUILD_INSTALL=1
@@ -71,26 +76,31 @@ sub_options() {
 sub_build() {
 
 	# Build the project
-	make -j$(getconf _NPROCESSORS_ONLN)
+	cmake --build . -j$(getconf _NPROCESSORS_ONLN)
 
-	# Tests (coverage needs to run the tests)
-	if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS = 1 ] || [ $BUILD_COVERAGE = 1 ]; then
-		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
-	fi
+	# Memcheck
+	if [ $BUILD_MEMCHECK = 1 ]; then
+		cmake --build . -j$(getconf _NPROCESSORS_ONLN) --target memcheck
+	else
+		# Tests (coverage needs to run the tests)
+		if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS = 1 ] || [ $BUILD_COVERAGE = 1 ]; then
+			ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
+		fi
 
-	# Coverage
-	if [ $BUILD_COVERAGE = 1 ]; then
-		ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T Coverage
-		gcovr -r ../source/ . --html-details coverage.html
+		# Coverage
+		if [ $BUILD_COVERAGE = 1 ]; then
+			ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 -T Coverage
+			gcovr -r ../source/ . --html-details coverage.html
+		fi
 	fi
 
 	# Install
 	if [ $BUILD_INSTALL = 1 ]; then
 		if [ "$SUDO_CMD" = "" ]; then
-			make install
+			cmake --build . --target install
 		else
 			# Needed for rustup in order to install rust loader properly
-			$SUDO_CMD HOME="$HOME" make install
+			$SUDO_CMD HOME="$HOME" cmake --build . --target install
 		fi
 	fi
 }
@@ -101,6 +111,7 @@ sub_help() {
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	tests: build and run all tests"
 	echo "	coverage: build coverage reports"
+	echo "	memcheck: build and run all tests with memcheck"
 	echo "	install: install all libraries"
 	echo ""
 }

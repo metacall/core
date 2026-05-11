@@ -11,7 +11,7 @@ pub struct PackageRegistration {
 
 impl PackageRegistration {
     pub fn new(path_to_file: PathBuf) -> Result<PackageRegistration, RegistrationError> {
-        let state = match compile(Source::new(Source::Package {
+        let state = match compile(Source::build(Source::Package {
             path: path_to_file.clone(),
         })) {
             Ok(state) => state,

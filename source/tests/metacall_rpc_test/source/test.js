@@ -83,6 +83,7 @@ process.on('uncaughtException', killTest);
 		if (code !== 0) {
 			killTest(`Error: Test exited with code ${code}`);
 		}
+		server.kill('SIGINT');
 		process.exit(0);
 	});
 })();

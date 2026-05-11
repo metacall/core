@@ -218,3 +218,29 @@
     fun:*try_statx*
     ...
 }
+{
+    strscan_do_scan in strscan.c will sometimes replace the ptr of the regex, which can be reported as a memory leak if the regex is stored in an iseq. https://github.com/ruby/ruby/pull/8136
+    Memcheck:Leak
+    ...
+    fun:rb_reg_prepare_re
+    fun:strscan_do_scan
+    ...
+}
+{
+    The callcache table (RCLASS_CC_TBL) is lazily created, so it is allocated when the first method that gets cached. If this happens in a native extension, it may be reported as a memory leak.
+    Memcheck:Leak
+    ...
+    fun:rb_id_table_create
+    ...
+    fun:rb_callable_method_entry
+    ...
+}
+{
+    The date library lazily initializes Regexps using static local variables through the function `regcomp`. The Regexp will end up being reported as a memory leak.
+    Memcheck:Leak
+    ...
+    fun:rb_enc_reg_new
+    ...
+    fun:date__parse
+    ...
+}

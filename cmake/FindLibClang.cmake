@@ -71,11 +71,14 @@ set(LibClang_INCLUDE_HEADERS
 )
 
 if(NOT LibClang_INCLUDE_DIR)
-	find_path(LibClang_INCLUDE_DIR
+	find_path(LibClang_INCLUDE_DIR_CLANG_C
 		NAMES ${LibClang_INCLUDE_HEADERS}
 		PATHS ${LibClang_INCLUDE_PATHS} /usr/include/clang-c # Use this path as a fallback
 	)
-	get_filename_component(LibClang_INCLUDE_DIR ${LibClang_INCLUDE_DIR} DIRECTORY)
+	if(LibClang_INCLUDE_DIR_CLANG_C)
+		get_filename_component(LibClang_INCLUDE_DIR ${LibClang_INCLUDE_DIR_CLANG_C} DIRECTORY)
+		set(LibClang_INCLUDE_DIR "${LibClang_INCLUDE_DIR}" CACHE PATH "LibClang include directory")
+	endif()
 endif()
 
 # Define LibClang cmake module

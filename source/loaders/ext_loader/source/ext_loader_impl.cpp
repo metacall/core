@@ -238,9 +238,11 @@ int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_
 	return 0;
 }
 
-loader_handle ext_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle ext_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
 	loader_impl_ext ext_impl = static_cast<loader_impl_ext>(loader_impl_get(impl));
+
+	(void)data;
 
 	if (ext_impl == NULL)
 	{
@@ -265,21 +267,24 @@ loader_handle ext_loader_impl_load_from_file(loader_impl impl, const loader_path
 	return ext_handle;
 }
 
-loader_handle ext_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle ext_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
 	(void)impl;
 	(void)name;
 	(void)buffer;
 	(void)size;
+	(void)data;
 
 	/* TODO: Here we should load the symbols from the process itself */
 
 	return NULL;
 }
 
-loader_handle ext_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle ext_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
 	loader_impl_ext ext_impl = static_cast<loader_impl_ext>(loader_impl_get(impl));
+
+	(void)data;
 
 	if (ext_impl == NULL)
 	{

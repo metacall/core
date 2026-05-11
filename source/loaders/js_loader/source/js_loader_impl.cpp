@@ -764,9 +764,11 @@ int js_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	return 0;
 }
 
-loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
+
+	(void)data;
 
 	if (js_impl != nullptr)
 	{
@@ -781,11 +783,12 @@ loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	return NULL;
 }
 
-loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
 	(void)name;
+	(void)data;
 
 	if (js_impl != nullptr)
 	{
@@ -800,12 +803,13 @@ loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return NULL;
 }
 
-loader_handle js_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle js_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
 	/* TODO */
 
 	(void)impl;
 	(void)path;
+	(void)data;
 
 	return NULL;
 }

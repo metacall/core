@@ -275,7 +275,7 @@ int llvm_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	return 0;
 }
 
-loader_handle llvm_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
+loader_handle llvm_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
 	loader_impl_llvm llvm_impl = static_cast<loader_impl_llvm>(loader_impl_get(impl));
 	loader_impl_llvm_handle llvm_handle = new loader_impl_llvm_handle_type();
@@ -292,12 +292,13 @@ loader_handle llvm_loader_impl_load_from_file(loader_impl impl, const loader_pat
 	(void)llvm_impl;
 	(void)paths;
 	(void)size;
+	(void)data;
 
 	// TODO: Return here the pointer to loader_impl_llvm_handle_type
 	return static_cast<loader_handle>(llvm_handle);
 }
 
-loader_handle llvm_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+loader_handle llvm_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
 	loader_impl_llvm llvm_impl = static_cast<loader_impl_llvm>(loader_impl_get(impl));
 	loader_impl_llvm_handle llvm_handle = new loader_impl_llvm_handle_type();
@@ -315,12 +316,13 @@ loader_handle llvm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	(void)name;
 	(void)buffer;
 	(void)size;
+	(void)data;
 
 	// TODO: Return here the pointer to loader_impl_llvm_handle_type
 	return static_cast<loader_handle>(llvm_handle);
 }
 
-loader_handle llvm_loader_impl_load_from_package(loader_impl impl, const loader_path path)
+loader_handle llvm_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
 {
 	loader_impl_llvm llvm_impl = static_cast<loader_impl_llvm>(loader_impl_get(impl));
 	loader_impl_llvm_handle llvm_handle = new loader_impl_llvm_handle_type();
@@ -336,6 +338,7 @@ loader_handle llvm_loader_impl_load_from_package(loader_impl impl, const loader_
 
 	(void)llvm_impl;
 	(void)path;
+	(void)data;
 
 	// TODO: Return here the pointer to loader_impl_llvm_handle_type
 	return static_cast<loader_handle>(llvm_handle);
