@@ -15,7 +15,7 @@ const assert = require('node:assert').strict;
 
 // Rust
 (() => {
-	if (process.arch !== 'x64') {
+	if (process.arch === 'x64') {
 		console.log(`TODO: Rust not working for ${process.arch} architecture.`);
 		return;
 	}

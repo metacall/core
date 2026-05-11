@@ -329,7 +329,14 @@ sub_cobol(){
 	echo "configure cobol"
 
 	if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-		sub_apt_install_hold libcob4t64
+		# Obtain VERSION_CODENAME
+		. /etc/os-release
+
+		if [ "${VERSION_CODENAME}" = "bookworm" ]; then
+			sub_apt_install_hold libcob4
+		else
+			sub_apt_install_hold libcob4t64
+		fi
 	fi
 }
 
