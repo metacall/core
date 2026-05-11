@@ -400,7 +400,17 @@ value py_object_interface_method_invoke(object obj, object_impl impl, method m, 
 
 	for (size_t i = 0; i < argc; i++)
 	{
-		PyTuple_SET_ITEM(args_tuple, i, py_loader_impl_value_to_capi(obj_impl->impl, value_type_id(args[i]), args[i]));
+		PyObject *arg = py_loader_impl_value_to_capi(obj_impl->impl, value_type_id(args[i]), args[i]);
+
+		if (arg == NULL)
+		{
+			if (!PyErr_Occurred())
+				PyErr_Format(PyExc_TypeError, "Failed to convert argument %zu for method call", i);
+			Py_DecRef(args_tuple);
+			goto release;
+		}
+
+		PyTuple_SET_ITEM(args_tuple, i, arg);
 	}
 
 	PyObject *python_object = PyObject_CallMethod(obj_impl->obj, method_name(m), "O", args_tuple, NULL);
@@ -531,7 +541,19 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 
 	for (size_t i = 0; i < argc; i++)
 	{
-		PyTuple_SET_ITEM(args_tuple, i, py_loader_impl_value_to_capi(py_cls->impl, value_type_id(args[i]), args[i]));
+		PyObject *arg = py_loader_impl_value_to_capi(py_cls->impl, value_type_id(args[i]), args[i]);
+
+		if (arg == NULL)
+		{
+			if (!PyErr_Occurred())
+				PyErr_Format(PyExc_TypeError, "Failed to convert argument %zu for class construction", i);
+			Py_DecRef(args_tuple);
+			py_loader_thread_release();
+			object_destroy(obj);
+			return NULL;
+		}
+
+		PyTuple_SET_ITEM(args_tuple, i, arg);
 	}
 
 	/* Calling the class will create an instance (object) */
@@ -637,7 +659,18 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 
 	for (size_t i = 0; i < argc; i++)
 	{
-		PyTuple_SET_ITEM(args_tuple, i, py_loader_impl_value_to_capi(cls_impl->impl, value_type_id(args[i]), args[i]));
+		PyObject *arg = py_loader_impl_value_to_capi(cls_impl->impl, value_type_id(args[i]), args[i]);
+
+		if (arg == NULL)
+		{
+			if (!PyErr_Occurred())
+				PyErr_Format(PyExc_TypeError, "Failed to convert argument %zu for static method call", i);
+			Py_DecRef(args_tuple);
+			Py_DecRef(method);
+			goto cleanup;
+		}
+
+		PyTuple_SET_ITEM(args_tuple, i, arg);
 	}
 
 	PyObject *python_object = PyObject_Call(method, args_tuple, NULL);
@@ -1302,9 +1335,21 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 		{
 			PyObject *item = py_loader_impl_value_to_capi(impl, value_type_id((value)array_value[iterator]), (value)array_value[iterator]);
 
+			if (item == NULL)
+			{
+				/* Conversion failed (e.g. nested throwable) - abort to avoid storing NULL in the list */
+				if (!PyErr_Occurred())
+				{
+					PyErr_Format(PyExc_RuntimeError, "Failed to convert array element %zd", iterator);
+				}
+				Py_DecRef(list);
+				return NULL;
+			}
+
 			if (PyList_SetItem(list, iterator, item) != 0)
 			{
-				/* TODO: Report error */
+				Py_DecRef(list);
+				return NULL;
 			}
 		}
 
@@ -1323,12 +1368,40 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			value *pair_value = value_to_array(map_value[iterator]);
 
 			PyObject *key = py_loader_impl_value_to_capi(impl, value_type_id((value)pair_value[0]), (value)pair_value[0]);
+
+			if (key == NULL)
+			{
+				if (!PyErr_Occurred())
+				{
+					PyErr_Format(PyExc_RuntimeError, "Failed to convert map key at index %zd", iterator);
+				}
+				Py_DecRef(dict);
+				return NULL;
+			}
+
 			PyObject *item = py_loader_impl_value_to_capi(impl, value_type_id((value)pair_value[1]), (value)pair_value[1]);
+
+			if (item == NULL)
+			{
+				if (!PyErr_Occurred())
+				{
+					PyErr_Format(PyExc_RuntimeError, "Failed to convert map value at index %zd", iterator);
+				}
+				Py_DecRef(key);
+				Py_DecRef(dict);
+				return NULL;
+			}
 
 			if (PyDict_SetItem(dict, key, item) != 0)
 			{
-				/* TODO: Report error */
+				Py_DecRef(key);
+				Py_DecRef(item);
+				Py_DecRef(dict);
+				return NULL;
 			}
+
+			Py_DecRef(key);
+			Py_DecRef(item);
 		}
 
 		return dict;
@@ -1392,6 +1465,34 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 		}
 
 		return obj_impl->obj;
+	}
+	else if (id == TYPE_THROWABLE)
+	{
+		throwable th = value_to_throwable(v);
+		value inner = throwable_value(th);
+
+		if (inner != NULL && value_type_id(inner) == TYPE_EXCEPTION)
+		{
+			exception ex = value_to_exception(inner);
+			const char *message = exception_message(ex);
+			const char *label = exception_label(ex);
+			const char *stacktrace = exception_stacktrace(ex);
+
+			if (stacktrace != NULL && stacktrace[0] != '\0')
+			{
+				PyErr_Format(PyExc_RuntimeError, "%s: %s\n%s", label ? label : "Error", message ? message : "Unknown error", stacktrace);
+			}
+			else
+			{
+				PyErr_Format(PyExc_RuntimeError, "%s: %s", label ? label : "Error", message ? message : "Unknown error");
+			}
+		}
+		else
+		{
+			PyErr_SetString(PyExc_RuntimeError, "An error was thrown from a foreign function call");
+		}
+
+		return NULL;
 	}
 	else
 	{
@@ -1528,10 +1629,18 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		type_id id = t == NULL ? value_type_id((value)args[args_count]) : type_index(t);
 		values[args_count] = py_loader_impl_value_to_capi(py_func->impl, id, args[args_count]);
 
-		if (values[args_count] != NULL)
+		if (values[args_count] == NULL)
 		{
-			PyTuple_SET_ITEM(tuple_args, args_count, values[args_count]);
+			if (!PyErr_Occurred())
+				PyErr_Format(PyExc_TypeError, "Failed to convert argument %zu for Python function call", args_count);
+			Py_DecRef(tuple_args);
+			Py_LeaveRecursiveCall();
+			if (is_var_args)
+				free(values);
+			goto finalize;
 		}
+
+		PyTuple_SET_ITEM(tuple_args, args_count, values[args_count]);
 	}
 
 	PyObject *result = PyObject_CallObject(py_func->func, tuple_args);
@@ -1606,10 +1715,17 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 		values[args_count] = py_loader_impl_value_to_capi(py_func->impl, id, args[args_count]);
 
-		if (values[args_count] != NULL)
+		if (values[args_count] == NULL)
 		{
-			PyTuple_SetItem(tuple_args, args_count, values[args_count]);
+			if (!PyErr_Occurred())
+				PyErr_Format(PyExc_TypeError, "Failed to convert argument %zu for Python async function call", args_count);
+			Py_DecRef(tuple_args);
+			if (args_size > signature_args_size)
+				free(values);
+			goto error;
 		}
+
+		PyTuple_SetItem(tuple_args, args_count, values[args_count]);
 	}
 
 	PyObject *coroutine = PyObject_CallObject(py_func->func, tuple_args);
@@ -3729,7 +3845,7 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover object member %s, type %s",
 					  PyUnicode_AsUTF8(dict_key),
 					  type_id_name(py_loader_impl_capi_to_value_type(dict_val)));
-			
+
 		}
 	}
 
