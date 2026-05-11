@@ -425,7 +425,10 @@ void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag ta
 	{
 		"search_paths": ["C:\Program Files\ruby\bin\ruby_builtin_dlls"]
 	}
-	*/
+	Relative paths are resolved against the loader configuration file's directory
+	(via configuration_object_child_path) before being registered with the OS,
+	so SetDllDirectoryA always receives an absolute path independent of CWD.
+	Reference: https://github.com/metacall/core/issues/760 */
 	value search_paths_value = configuration_value_type(impl->config, "search_paths", TYPE_ARRAY);
 
 	/* Check if the loader has search paths and initialize them */
@@ -439,11 +442,13 @@ void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag ta
 		{
 			if (value_type_id(search_paths_array[iterator]) == TYPE_STRING)
 			{
-				const char *key_str = value_to_string(search_paths_array[iterator]);
+				char resolved_path[PORTABILITY_PATH_SIZE];
 
-				if (SetDllDirectoryA(key_str) == FALSE)
+				configuration_object_child_path(impl->config, search_paths_array[iterator], resolved_path);
+
+				if (SetDllDirectoryA(resolved_path) == FALSE)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register the DLL directory %s in loader '%s'; dependencies with other dependant DLLs may fail to load", key_str, tag);
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register the DLL directory %s in loader '%s'; dependencies with other dependant DLLs may fail to load", resolved_path, tag);
 				}
 			}
 		}
