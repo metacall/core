@@ -121,20 +121,20 @@ pub fn extract_attribute_from_export(tcx: TyCtxt<'_>, def_id: DefId) -> Option<F
     Some(handle_fn(name, &sig, &[]))
 }
 
-pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
-    let Export {
-        ident, res, vis, ..
-    } = export;
-    // skip non public items
-    if !matches!(vis, Visibility::Public) {
-        return None;
-    }
-    match res {
-        Res::Def(DefKind::AssocFn, def_id) => {
-            let fn_sig = ctxt.fn_sig(*def_id);
-            let names = ctxt.hir_name(*def_id);
-            Some(handle_fn(ident.to_string(), &fn_sig, names))
-        }
-        _ => None,
-    }
-}
+// pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
+//     let Export {
+//         ident, res, vis, ..
+//     } = export;
+//     // skip non public items
+//     if !matches!(vis, Visibility::Public) {
+//         return None;
+//     }
+//     match res {
+//         Res::Def(DefKind::AssocFn, def_id) => {
+//             let fn_sig = ctxt.fn_sig(*def_id);
+//             let names = ctxt.hir_name(*def_id);
+//             Some(handle_fn(ident.to_string(), &fn_sig, names))
+//         }
+//         _ => None,
+//     }
+// }

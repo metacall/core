@@ -19,6 +19,10 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 
+use rustc_driver::Compilation;
+use rustc_interface::passes;
+use rustc_interface::create_and_enter_global_ctxt;
+use rustc_interface::Linker;
 use rustc_errors::translation::Translator;
 use rustc_errors::emitter::stderr_destination;
 use rustc_errors::DiagCtxt;
@@ -728,7 +732,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                 //                 }
                 //             }
                 //         } else {
-                //             // Static method
+                //             
                 //             match &sig.decl.output {
                 //                 rustc_ast::FnRetTy::Ty(p) => {
                 //                     let rustc_ast::Ty { kind, .. } = &**p;
@@ -833,11 +837,13 @@ fn run_compiler(
     callbacks: &mut (dyn rustc_driver::Callbacks + Send),
     diagnostics_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
     errors_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
-) -> Result<(), std::error::Error> {
+) {
     let mut config = Config {
         // Command line options
         opts: config::Options {
-            //maybe_sysroot: compiler_sys_root(),
+            sysroot: compiler_sys_root()
+                .map(|p| config::Sysroot::new(Some(p)))
+                .unwrap_or_else(|| config::Sysroot::new(None)),
             crate_types: vec![CrateType::Cdylib],
             ..Default::default()
         },
@@ -883,8 +889,31 @@ fn run_compiler(
     callbacks.config(&mut config);
 
     interface::run_compiler(config, |compiler| {
-        // future work TODO
-    })
+    let krate = passes::parse(&compiler.sess);
+    
+    let linker = create_and_enter_global_ctxt(compiler, krate, |tcx| {
+        let early_exit = || {
+            compiler.sess.dcx().abort_if_errors();
+            None
+        };
+
+        if callbacks.after_expansion(compiler, tcx) == Compilation::Stop {
+            return early_exit();
+        }
+
+        tcx.ensure_ok().analysis(());
+
+        if callbacks.after_analysis(compiler, tcx) == Compilation::Stop {
+            return early_exit();
+        }
+
+        Some(Linker::codegen_and_build_linker(tcx, &*compiler.codegen_backend))
+    });
+
+    if let Some(linker) = linker {
+        linker.link(&compiler.sess, &*compiler.codegen_backend);
+    }
+});
         
 }
 
@@ -913,7 +942,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let parsing_result: Result<(), CompilerError> = match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
     })
-    .and_then(|result| result)
+    .and_then(|result| Ok(result))
     {
         Ok(()) => Ok(()),
         Err(err) => {
@@ -956,7 +985,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut patched_callback, &diagnostics_buffer, &errors_buffer)
     })
-    .and_then(|result| result)
+    .and_then(|result| Ok(result))
     {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),

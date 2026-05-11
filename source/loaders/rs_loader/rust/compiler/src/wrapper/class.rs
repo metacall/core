@@ -12,7 +12,7 @@ use std::sync::Arc;
 type Result<T, E = i32> = core::result::Result<T, E>;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 
-extern "C" {
+unsafe extern "C" {
     fn value_type_count(v: *mut c_void) -> c_int;
     fn value_type_id(v: *mut c_void) -> c_int;
     // fn metacall_value_id(v: *mut c_void) -> c_int;
