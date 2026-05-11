@@ -8,9 +8,9 @@ print(result)
 assert isinstance(result, float) and result != 0.0, f"Expected non-zero float, but got {type(result)} with value {result}"
 
 # Rust
-if platform.machine().lower() not in ("x86_64", "amd64")
+if platform.machine().lower() not in ("x86_64", "amd64"):
 	print(f"TODO: Rust not working for {platform.machine()} architecture.")
-else
+else:
 	assert metacall_load_from_file('rs', ['./bench.rs'])
 	result = metacall('pairwise_suffix_sum', [4.4, 5.5, 6.6, 7.7])
 	print(result)
