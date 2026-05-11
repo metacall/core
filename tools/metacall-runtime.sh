@@ -332,7 +332,7 @@ sub_cobol(){
 		# Obtain VERSION_CODENAME
 		. /etc/os-release
 
-		if [ "${VERSION_CODENAME}" = "bookworm" ]; then
+		if [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "jammy" ]; then
 			sub_apt_install_hold libcob4
 		else
 			sub_apt_install_hold libcob4t64
