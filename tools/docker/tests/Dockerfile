@@ -17,6 +17,8 @@
 #	limitations under the License.
 #
 
+# docker build -t metacall/core:test .
+
 # Configure MetaCall CLI base image
 ARG METACALL_BASE_IMAGE=metacall/core:cli
 

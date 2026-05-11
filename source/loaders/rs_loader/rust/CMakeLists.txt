@@ -51,59 +51,31 @@ endif()
 
 set(TARGET_OUTPUT ${PROJECT_OUTPUT_DIR}/${TARGET_OUTPUT_NAME})
 
-add_custom_target(${target}_runtime
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
-)
+# Rust linker flags
+set(RUST_LINK_FLAGS "")
 
-# On Linux, execute patchelf in order to patch rpath in the dependencies
-if(PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
-	# Find Patchelf
-	find_package(Patchelf)
-
-	if(NOT Patchelf_FOUND)
-		include(InstallPatchelf)
-
-		if(NOT Patchelf_FOUND)
-			message(SEND_ERROR "Patchelf not found")
-			return()
-		endif()
-
-		set(TARGET_INSTALL_DEPENDENCY Patchelf)
-	endif()
-
-	set(RUSTC_LIBS)
-	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime ${TARGET_INSTALL_DEPENDENCY})
-	foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
-		get_filename_component(rustc_lib_name ${rustc_lib} NAME)
-		list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
-		add_custom_command(TARGET ${target}_patchelf POST_BUILD
-			COMMAND ${Patchelf_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
-		)
-	endforeach()
-
-	set(TARGET_DEPENDENCY ${target}_patchelf)
-else()
-	# TODO: Implement patchelf equivalent (if needed) for other platforms
-	set(RUSTC_LIBS ${Rust_RUSTC_LIBRARIES})
-endif()
+# Add paths to standard library and Rust compiler
+foreach(LIB_DIR IN LISTS Rust_RUSTC_LIBRARY_DIRS)
+	string(APPEND RUST_LINK_FLAGS "-Clink-arg=-Wl,-rpath,${LIB_DIR} ")
+endforeach()
 
 if(OPTION_BUILD_MUSL)
-	set(RUST_CTR_STATIC "-Ctarget-feature=-crt-static -Clink-self-contained=off -L/usr/lib/x86_64-linux-musl") #-Clink-args=--dynamic-linker /lib/ld-musl-x86_64.so.1
-	set(RUSTFLAGS ${CMAKE_COMMAND} -E env RUSTFLAGS=${RUST_CTR_STATIC})
-else()
-	set(RUSTFLAGS)
+	string(APPEND RUST_LINK_FLAGS
+		"-Ctarget-feature=-crt-static -Clink-self-contained=off -L/usr/lib/x86_64-linux-musl "
+	)
 endif()
 
+set(RUSTFLAGS ${CMAKE_COMMAND} -E env "RUSTFLAGS=${RUST_LINK_FLAGS}")
+
 add_custom_target(${target}_clippy ALL
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} clippy ${TARGET_BUILD_TYPE} -- -D warnings
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} clippy ${TARGET_BUILD_TYPE} -- -D warnings
 )
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${RUSTFLAGS} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
-	DEPENDS ${target}_runtime ${TARGET_DEPENDENCY}
 )
 
 add_dependencies(${target}
@@ -132,26 +104,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.vscode/settings.json.in ${CMAKE_CURR
 install(FILES
 	${TARGET_OUTPUT}
 	DESTINATION ${INSTALL_LIB}
-	COMPONENT runtime
-)
-
-# Rust Runtime (pack the runtime meanwhile Rust runtime is not distributed as a library)
-install(FILES
-	${RUSTC_LIBS}
-	DESTINATION ${INSTALL_LIB}
-	COMPONENT runtime
-)
-
-# Rust STD (pack the Rust standard library)
-install(FILES
-	${Rust_RUSTC_STD_LIBRARIES}
-	DESTINATION ${INSTALL_LIB}/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib
-	COMPONENT runtime
-)
-
-# Rust Source (pack the Rust source)
-install(DIRECTORY
-	${Rust_RUSTC_SOURCE_DIR}
-	DESTINATION ${INSTALL_LIB}/rustlib/src
 	COMPONENT runtime
 )
