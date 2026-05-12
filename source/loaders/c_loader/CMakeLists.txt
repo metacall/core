@@ -42,6 +42,22 @@ set(target c_loader)
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
 
+if(APPLE)
+	message(STATUS "Configuring ${target} for macOS")
+
+	set(CMAKE_MACOSX_RPATH ON)
+
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+		message(STATUS "macOS Apple Silicon detected for ${target}")
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
+		message(STATUS "macOS Intel detected for ${target}")
+	else()
+		message(STATUS "macOS unknown architecture detected for ${target}: ${CMAKE_SYSTEM_PROCESSOR}")
+	endif()
+
+	message(STATUS "macOS C Loader uses dynamic lookup for MetaCall symbols")
+endif()
+
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
 set(export_file  "include/${target}/${target}_api.h")
