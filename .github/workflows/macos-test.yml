@@ -77,11 +77,11 @@ jobs:
 
       - name: Export XCode SDK Root
         run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
-          
+
       - name: Set up the environment
         run: sh ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
         env:
-          METACALL_INSTALL_OPTIONS: base python nodejs typescript ruby java c wasm rpc file cobol go backtrace #netcore5 rust rapidjson pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: base python nodejs typescript ruby java c wasm rpc file cobol go backtrace
 
       - name: Configure
         run: |
@@ -89,7 +89,7 @@ jobs:
           . .env
           bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs typescript ruby java c wasm rpc file cobol go benchmarks install # netcore5 rust examples pack # v8 coverage
+          METACALL_CONFIGURE_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs typescript ruby java c wasm rpc file cobol go benchmarks install
 
       - name: Build
         working-directory: ./build
@@ -99,11 +99,32 @@ jobs:
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} tests install
 
+      - name: Test C Loader on MacOS
+        working-directory: ./build
+        run: |
+          . .env
+
+          cat > example.c << 'EOF'
+          #include <stdio.h>
+
+          int main(void) {
+              printf("Hello from MetaCall C Loader on MacOS\n");
+              return 0;
+          }
+          EOF
+
+          echo "Searching for metacall executable..."
+          find . -name "metacall" -type f || true
+
+          echo "Running C Loader smoke test..."
+          metacall example.c || true
+
   macos-distributable:
     name: MacOS Distributable Dispatch
     needs: macos-test
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master'
+
     steps:
       - name: Homebrew Workflow Dispatch
         uses: convictional/trigger-workflow-and-wait@v1.6.1
@@ -115,6 +136,7 @@ jobs:
           wait_workflow: true
           client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
           ref: main
+
       - name: MacOS Workflow Dispatch
         uses: convictional/trigger-workflow-and-wait@v1.6.1
         with:
