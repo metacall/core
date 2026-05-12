@@ -6,7 +6,7 @@ fn generate_function_wrapper(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
             func.name
         ));
         ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
@@ -19,7 +19,7 @@ fn generate_class_wrapper(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
             class.name
         ));
         ret.push_str(&format!(
@@ -76,7 +76,7 @@ fn generate_function_wrapper_for_package(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
             func.name
         ));
         ret.push_str(&format!(
@@ -91,7 +91,7 @@ fn generate_class_wrapper_for_package(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
             class.name
         ));
         ret.push_str(&format!(

@@ -516,6 +516,7 @@ impl CompilerCallbacks {
 
             match item.kind {
                 rustc_hir::ItemKind::Struct(_, _, _) => {
+                    eprintln!("found function: {}", tcx.item_name(def_id));
                     let mut class = Class::default();
                     class.name = tcx.item_name(def_id).to_string();
 
@@ -570,6 +571,7 @@ impl CompilerCallbacks {
                 }
 
                 rustc_hir::ItemKind::Fn { .. } => {
+                    eprintln!("found function: {}", tcx.item_name(def_id));
                     let fn_sig = tcx.fn_sig(def_id).instantiate_identity();
 
                     let names = get_param_names(tcx, def_id);
@@ -708,6 +710,22 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
             // we have finished the parsing process.
             rustc_driver::Compilation::Continue
         }
+    }
+
+    fn after_crate_root_parsing(
+        &mut self,
+        _compiler: &Compiler,
+        krate: &mut rustc_ast::Crate,
+    ) -> rustc_driver::Compilation {
+        if self.is_parsing {
+            match self.source.source {
+                Source::File { .. } | Source::Memory { .. } => {
+                    self.analyze_source(krate);
+                }
+                _ => {}
+            }
+        }
+        rustc_driver::Compilation::Continue
     }
 }
 
@@ -957,7 +975,11 @@ fn run_compiler(
     callbacks.config(&mut config);
 
     interface::run_compiler(config, |compiler| {
-        let krate = passes::parse(&compiler.sess);
+        let mut krate = passes::parse(&compiler.sess);
+
+        if callbacks.after_crate_root_parsing(compiler, &mut krate) == Compilation::Stop {
+            return;
+        }
 
         let linker = create_and_enter_global_ctxt(compiler, krate, |tcx| {
             let early_exit = || {

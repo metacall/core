@@ -40,6 +40,14 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
         TyKind::Bool => result.ty = FunctionType::bool,
         TyKind::Char => result.ty = FunctionType::char,
         TyKind::Str => result.ty = FunctionType::str,
+        TyKind::Ref(_, inner_ty, _) => {
+            let mut inner = handle_ty(inner_ty);
+            inner.reference = Reference::Yes;
+            result = inner;
+        }
+        TyKind::RawPtr(inner_ty, _) => {
+            result.ty = FunctionType::Ptr;
+        }
         TyKind::Adt(def, gen) => {
             let def_ident = format!("{:?}", def);
             match def_ident.as_str() {
