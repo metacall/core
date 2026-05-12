@@ -115,6 +115,10 @@ module = metacall_module_load()
 def metacall_load_from_file(tag, paths):
 	return module.metacall_load_from_file(tag, paths)
 
+# Load from file export
+def metacall_load_from_file_export(tag, paths):
+	return module.metacall_load_from_file_export(tag, paths)
+
 # Load from package
 def metacall_load_from_package(tag, path):
 	return module.metacall_load_from_package(tag, path)
@@ -234,7 +238,9 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		# Rust Loader
 		'rs': 'rs',
 		# C Loader
-		'c': 'c'
+		'c': 'c',
+		# Java Loader
+		'java': 'java'
 
 		# Note: By default js extension uses NodeJS loader instead of JavaScript V8
 		# Probably in the future we can differenciate between them, but it is not trivial
@@ -247,6 +253,8 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		'wasm': 'wasm',
 		# Rust Loader
 		'rlib': 'rs',
+		# Java Loader
+		'jar': 'java'
 	}
 
 	# Set containing all tags

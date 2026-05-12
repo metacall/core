@@ -71,8 +71,6 @@ public class bootstrap {
           Boolean call = task.call(); // main method to compile the file into class
 
           if (call) {
-            System.out.println("Compilation Successful");
-
             Path path = Paths.get(pathFile.getCanonicalPath());
             String classname = path.getFileName().toString().split(".java")[0];
 
@@ -82,13 +80,14 @@ public class bootstrap {
             handleObject[i] = clsLoader.loadClass(classname);
             clsLoader.close();
 
-            System.out.println(classname + " Class Loading Successful");
+            System.out.println(classname + " class loaded successfully");
             break;
           } else {
-            System.out.println("Compilation Failed");
+            System.out.println("Compilation failed");
           }
 
-          for (Diagnostic<? extends JavaFileObject> d : ds.getDiagnostics()) { // diagnostic error printing
+          for (Diagnostic<? extends JavaFileObject> d : ds.getDiagnostics()) {
+            // Diagnostic error printing
             System.out.format("DIAGNOSTIC Line: %d, %s in %s\n", d.getLineNumber(), d.getMessage(null),
                 d.getSource().getName());
           }
