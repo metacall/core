@@ -399,9 +399,15 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 	{
 		if (value_type_id(paths_array[iterator]) == TYPE_STRING)
 		{
-			const char *library_path = value_to_string(paths_array[iterator]);
+			/* Resolve the path against the loader config file's directory so
+			 * relative paths like "../lib/python39.dll" in py_loader.json
+			 * resolve correctly regardless of CWD.
+			 * Reference: https://github.com/metacall/core/issues/760 */
+			char library_path[PORTABILITY_PATH_SIZE];
 
-			if (library_path != NULL)
+			configuration_object_child_path(impl->config, paths_array[iterator], library_path);
+
+			if (library_path[0] != '\0')
 			{
 				dynlink handle = dynlink_load_absolute(library_path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
