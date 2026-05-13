@@ -93,9 +93,18 @@ pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident])
     };
     // parse input and output
     let inputs = sig.inputs().skip_binder();
-    for (name, ty) in zip(names, inputs) {
+    for (idx,ty) in inputs.iter().enumerate() {
         let mut func_parameter = handle_ty(ty);
-        func_parameter.name = name.to_string();
+
+        if idx == 0 {
+            let ty_str = format!("{:?}", ty);
+            if ty_str.contains("Self") || ty_str.contains("&Self") || ty_str.contains("Book") {
+                func_parameter.ty = FunctionType::This;
+            } 
+        }
+
+        func_parameter.name = names.get(idx).map(|n| n.to_string()).unwrap_or_else(|| format!("arg{}", idx));
+
         function.args.push(func_parameter);
     }
     let output = sig.output().skip_binder();

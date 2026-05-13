@@ -391,7 +391,7 @@ impl Function {
         if self.args.is_empty() {
             return false;
         }
-        self.args[0].name == "self"
+        matches!(self.args[0].ty, FunctionType::This)
     }
 }
 
@@ -501,27 +501,54 @@ impl CompilerCallbacks {
     }
 
     fn analyze_metadata<'tcx>(&mut self, tcx: TyCtxt<'tcx>) {
+        use rustc_hir::def::{DefKind, Res};
         let mut class_map: HashMap<DefId, Class> = HashMap::new();
 
-        let hir = tcx.hir_crate_items(());
+        let crate_name = self
+            .source
+            .input_path
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .trim_start_matches("lib");
 
-        for item_id in hir.free_items() {
-            let item = tcx.hir_item(item_id);
+        let metacall_crate = tcx
+            .crates(())
+            .iter()
+            .find(|&&krate| tcx.crate_name(krate).as_str() == crate_name);
 
-            let def_id = item.owner_id.to_def_id();
+        let krate = match metacall_crate {
+            Some(k) => *k,
+            None => {
+                eprintln!("Rust Loader: Available crates:");
+                for krate in tcx.crates(()) {
+                    eprintln!("  - {}", tcx.crate_name(*krate));
+                }
+                return;
+            }
+        };
 
-            if !tcx.visibility(def_id).is_public() {
+        eprintln!("DEBUG: found metacall_package crate: {:?}", krate);
+
+        for child in tcx.module_children(krate.as_def_id()) {
+            let def_id = match child.res {
+                Res::Def(_, def_id) => def_id,
+                _ => continue,
+            };
+
+            if def_id.krate != krate {
                 continue;
             }
+            let ident = child.ident;
+            let res = child.res;
 
-            match item.kind {
-                rustc_hir::ItemKind::Struct(_, _, _) => {
-                    eprintln!("found function: {}", tcx.item_name(def_id));
+            match res {
+                Res::Def(DefKind::Struct, def_id) => {
                     let mut class = Class::default();
-                    class.name = tcx.item_name(def_id).to_string();
+                    class.name = ident.to_string();
 
                     let adt = tcx.adt_def(def_id);
-
                     for field in adt.all_fields() {
                         class.attributes.push(Attribute {
                             name: field.ident(tcx).to_string(),
@@ -536,26 +563,28 @@ impl CompilerCallbacks {
                     }
 
                     for impl_def_id in tcx.inherent_impls(def_id) {
+                        if impl_def_id.krate != krate {
+                            continue;
+                        }
                         for assoc in tcx.associated_items(impl_def_id).in_definition_order() {
+                            if assoc.def_id.krate != krate {
+                                continue;
+                            }
                             if let AssocKind::Fn { .. } = assoc.kind {
                                 let fn_def_id = assoc.def_id;
-
                                 let fn_sig = tcx.fn_sig(fn_def_id).instantiate_identity();
-
-                                let names = get_method_param_names(tcx, fn_def_id);
-
+                                let names: Vec<rustc_span::Ident> = fn_sig
+                                    .skip_binder()
+                                    .inputs()
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(i, _)| rustc_span::Ident::from_str(&format!("arg{}", i)))
+                                    .collect();
                                 let function = middle::handle_fn(
                                     assoc.ident(tcx).to_string(),
                                     &fn_sig,
                                     &names,
                                 );
-
-                                let function = middle::handle_fn(
-                                    assoc.ident(tcx).to_string(),
-                                    &fn_sig,
-                                    &names,
-                                );
-
                                 if function.name == "new" {
                                     class.constructor = Some(function);
                                 } else if function.has_self() {
@@ -570,17 +599,17 @@ impl CompilerCallbacks {
                     class_map.insert(def_id, class);
                 }
 
-                rustc_hir::ItemKind::Fn { .. } => {
-                    eprintln!("found function: {}", tcx.item_name(def_id));
+                Res::Def(DefKind::Fn, def_id) => {
                     let fn_sig = tcx.fn_sig(def_id).instantiate_identity();
-
-                    let names = get_param_names(tcx, def_id);
-
-                    self.functions.push(middle::handle_fn(
-                        tcx.item_name(def_id).to_string(),
-                        &fn_sig,
-                        &names,
-                    ));
+                    let names: Vec<rustc_span::Ident> = fn_sig
+                        .skip_binder()
+                        .inputs()
+                        .iter()
+                        .enumerate()
+                        .map(|(i, _)| rustc_span::Ident::from_str(&format!("arg{}", i)))
+                        .collect();
+                    self.functions
+                        .push(middle::handle_fn(ident.to_string(), &fn_sig, &names));
                 }
 
                 _ => {}
@@ -640,7 +669,10 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
 
             config.opts.externs = Externs::new(externs);
 
-            // We hardcode the dependency path for now
+            eprintln!("DEBUG EXTERNS:");
+            for (name, entry) in config.opts.externs.iter() {
+                eprintln!("extern crate: {} -> {:?}", name, entry);
+            }
             let dep_path = self
                 .source
                 .input_path
@@ -648,12 +680,10 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                 .parent()
                 .expect("Unable to get parent dir")
                 .join("deps");
-            // println!("include dep: {}", dep_path.display());
             config
                 .opts
                 .search_paths
                 .push(SearchPath::new(PathKind::Dependency, dep_path.clone()));
-            // Set up inputs
             let wrapped_script_path = self.destination.join("metacall_wrapped_package.rs");
             if self.is_parsing {
                 let mut wrapped_script = std::fs::File::create(&wrapped_script_path)
@@ -663,14 +693,10 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                     .expect("Unablt to write wrapped script");
             }
 
-            config.input = Input::File(wrapped_script_path.clone()); // self.source.input.clone().0;
-                                                                     //config.input_path = Input::File(wrapped_script_path);
+            config.input = Input::File(wrapped_script_path.clone());
         } else {
-            // Set up inputs
             config.input = self.source.input.clone().0;
-            //config.input_path = Input::file(self.source.input_path.clone());
         }
-        // Set up output
         if self.is_parsing {
             let output_path = self.source.output.clone();
             let file_name = output_path.file_name().expect("Unable to get the filename");
@@ -692,24 +718,28 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         _compiler: &Compiler,
         tcx: TyCtxt<'tcx>,
     ) -> rustc_driver::Compilation {
-        // analysis
-        // is_parsing will be set to false after generating wrappers.
         if self.is_parsing {
             match self.source.source {
-                Source::File { .. } | Source::Memory { .. } => {
-                    // TODO: Move this to parse-phase callback
-                    // self.analyze_source(tcx);
-                    rustc_driver::Compilation::Stop
-                }
-                Source::Package { .. } => {
-                    self.analyze_metadata(tcx);
-                    rustc_driver::Compilation::Stop
-                }
+                Source::File { .. } | Source::Memory { .. } => rustc_driver::Compilation::Stop,
+                Source::Package { .. } => rustc_driver::Compilation::Continue,
             }
         } else {
-            // we have finished the parsing process.
             rustc_driver::Compilation::Continue
         }
+    }
+
+    fn after_analysis<'tcx>(
+        &mut self,
+        _compiler: &Compiler,
+        tcx: TyCtxt<'tcx>,
+    ) -> rustc_driver::Compilation {
+        if self.is_parsing {
+            if let Source::Package { .. } = self.source.source {
+                self.analyze_metadata(tcx);
+                return rustc_driver::Compilation::Stop;
+            }
+        }
+        rustc_driver::Compilation::Continue
     }
 
     fn after_crate_root_parsing(
