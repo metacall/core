@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
 using System.IO;
+using System.Reflection.Metadata;
 using Microsoft.CodeAnalysis.Emit;
 using static CSLoader.MetacallDef;
 using CSLoader.Contracts;
@@ -35,7 +36,8 @@ namespace CSLoader.Providers
     {
         protected readonly ILog log;
         protected readonly List<string> paths = new List<string>();
-        protected LoaderBase(ILog log)
+
+protected LoaderBase(ILog log)
         {
             this.log = log;
         }
@@ -69,7 +71,7 @@ namespace CSLoader.Providers
             return Array.Empty<string>();
         }
 
-        protected abstract Assembly MakeAssembly(MemoryStream stream);
+        protected abstract Assembly MakeAssembly(MemoryStream stream, string scriptHandle);
 
         private static bool IsFullPath(string path)
         {
@@ -127,7 +129,7 @@ namespace CSLoader.Providers
                 return false;
             }
 
-            return LoadFromSourceFunctions(sources.ToArray());
+            return LoadFromSourceFunctions(sources.ToArray()) != null ;
         }
 
         private int PrintDiagnostics(ImmutableArray<Diagnostic> diagnostics)
@@ -150,7 +152,14 @@ namespace CSLoader.Providers
             return errorCount;
         }
 
-        public bool LoadFromSourceFunctions(string[] source)
+		// existing contract
+        public string LoadFromSourceFunctions(string[] source)
+        {
+			string scriptHandle = Guid.NewGuid().ToString();
+			bool success =  LoadFromSourceFunctions(source, scriptHandle);
+			return success ? scriptHandle : null;
+		}
+        public bool LoadFromSourceFunctions(string[] source, string scriptHandle)
         {
             Assembly assembly = null;
 
@@ -158,14 +167,32 @@ namespace CSLoader.Providers
 
             SyntaxTree[] syntaxTrees = source.Select(x => CSharpSyntaxTree.ParseText(x, parseOptions)).ToArray();
 
-            string assemblyName = Path.GetRandomFileName();
+			bool hasTopLevelStatements = syntaxTrees.Any(tree => tree.GetRoot().DescendantNodes().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.GlobalStatementSyntax>().Any());
+
+			var outputKind = hasTopLevelStatements ? OutputKind.ConsoleApplication : OutputKind.DynamicallyLinkedLibrary;
+
+			string assemblyName = Path.GetRandomFileName();
 
             MetadataReference[] references;
 
             var mainPath = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location) + Path.DirectorySeparatorChar;
             var assemblyFiles = System.IO.Directory.GetFiles(mainPath, "*.dll");
+			// filter to managed assemblies only
+			// This is necessary to avoid loading native assemblies which would cause MetadataReference.CreateFromFile to throw an exception
+			assemblyFiles = assemblyFiles.Where(x =>
+			{
+				try
+				{
+					System.Reflection.AssemblyName.GetAssemblyName(x);
+					return true;
+				}
+				catch
+				{
+					return false;
+				}
+			}).ToArray();
 
-            assemblyFiles = assemblyFiles.Concat(this.AdditionalLibs()).Distinct().ToArray();
+			assemblyFiles = assemblyFiles.Concat(this.AdditionalLibs()).Distinct().ToArray();
 
             // Console exists in both System.Console and System.Private.CoreLib in NetCore 1.x
             // So it must be removed in order to avoid name collision
@@ -173,14 +200,26 @@ namespace CSLoader.Providers
                 assemblyFiles = assemblyFiles.Where(asm => !asm.Contains("System.Console")).ToArray();
             #endif
 
-            references = assemblyFiles.Select(x => MetadataReference.CreateFromFile(x)).ToArray();
+            references = assemblyFiles.Select(x =>
+            {
+	            try
+	            {
+					return (MetadataReference)MetadataReference.CreateFromFile(x);
+	            }
+	            catch
+	            {
+		            return null;
+	            }
+            })
+	            .Where(r => r != null)
+	            .ToArray();
 
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
                 syntaxTrees: syntaxTrees,
                 references: references,
                 options: new CSharpCompilationOptions(
-                    OutputKind.DynamicallyLinkedLibrary,
+                    outputKind,
                     #if DEBUG
                     optimizationLevel: OptimizationLevel.Debug,
                     #else
@@ -216,9 +255,9 @@ namespace CSLoader.Providers
                 {
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    assembly = this.MakeAssembly(ms);
+                    assembly = this.MakeAssembly(ms, scriptHandle);
 
-                    this.LoadFunctions(assembly);
+                    this.LoadFunctions(assembly, scriptHandle);
 
                     ms.Dispose();
 
@@ -227,28 +266,96 @@ namespace CSLoader.Providers
             }
         }
 
-        public void LoadFunctions(Assembly assembly)
+        public void LoadFunctions(Assembly assembly, string scriptHandle)
         {
-            foreach (var item in assembly.DefinedTypes.SelectMany(x => x.GetMethods()).Where(x => x.IsStatic))
-            {
-                var con = new FunctionContainer(item);
+			this.log.Info(" >>> NEW C# LOADER IS ACTUALLY RUNNING! <<<");
+			try
+			{
+				Type[] types = assembly.GetTypes();
+				this.log.Info($"[CSLoader] Found {types.Length} types in assembly {assembly.FullName}");
+				foreach (Type type in types)
+				{
+					this.log.Info($"[CSLoader] Inspecting Type: {type.Name}");
 
-                this.log.Info("CSLoader loading function: " + item.Name);
+					// Handle top-level function class
+					bool isTopLevelClass = (type.Name == "<Program>$" || type.Name == "Program") && type.GetMethod("<Main>$", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly) != null;
 
-                if (!this.functions.ContainsKey(item.Name))
-                {
-                    this.functions.Add(item.Name, con);
-                }
-                else
-                {
-                    this.functions[item.Name] = con;
-                }
-            }
+
+					if (isTopLevelClass)
+					{
+						const string prefix = "<<Main>$>g__";
+						var allMethods =
+							type.GetMethods(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
+						foreach (var m in allMethods)
+						{
+							if (m.Name.StartsWith(prefix))
+							{
+								int pipe = m.Name.IndexOf('|');
+								if (pipe > 0)
+								{
+									string funcName = m.Name.Substring(prefix.Length, pipe - prefix.Length);
+									this.functions[funcName] = new FunctionContainer(m, null, scriptHandle, funcName);
+									this.log.Info($"[CSLoader] Loading top-level function: {funcName}");
+								}
+							}
+						}
+						continue;
+					}
+
+					if (type.Name.StartsWith("<") && type.Name != "<Program>$") continue;
+
+					bool isStaticClass = type.IsAbstract && type.IsSealed;
+
+					if (type.IsClass && (!type.IsAbstract || isStaticClass))
+					{
+						object classInstance = null;
+						if (!isStaticClass)
+						{
+							try
+							{
+								classInstance = Activator.CreateInstance(type);
+								this.log.Info($"[CSLoader] Instantiated: {type.Name}");
+							}
+							catch (Exception ex)
+							{
+								this.log.Info($"[CSLoader] Could not instantiate '{type.Name}': {ex.Message}");
+							}
+						}
+						
+						var methods = type.GetMethods((BindingFlags.Public | BindingFlags.Instance |
+						                               BindingFlags.Static | BindingFlags.DeclaredOnly));
+						this.log.Info($"[CSLoader] Found {methods.Length} methods in {type.Name}");
+
+						foreach (MethodInfo method in methods)
+						{
+							if (method.DeclaringType == typeof(object)) continue;
+
+							//string exportedName = $"{type.Name}.{method.Name}";
+							// Change it back later
+							string exportedName = method.Name;
+							object target = method.IsStatic ? null : classInstance;
+
+
+							var con = new FunctionContainer(method, target, scriptHandle);
+
+							this.log.Info($"[CSLoader] Loading function: {exportedName} | Static: {method.IsStatic}");
+
+							
+							this.functions[exportedName] = con;
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				this.log.Info($"[SCREAMING DEBUG] FATAL CRASH IN C#: {ex.Message}");
+			}
+			
 
             GC.Collect();
         }
 
-        public bool LoadFromAssembly(string assemblyFile)
+        public string LoadFromAssembly(string assemblyFile)
         {
             Assembly asm = null;
 
@@ -259,9 +366,10 @@ namespace CSLoader.Providers
                 paths.Add(path);
             }
 
+
             try
             {
-                asm = this.LoadFile(assemblyFile);
+                asm = this.LoadFile(assemblyFile, assemblyFile);
             }
             catch (Exception ex)
             {
@@ -269,22 +377,22 @@ namespace CSLoader.Providers
 
                 try
                 {
-                    asm = this.Load(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
+                    asm = this.Load(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)), assemblyFile);
                 }
                 catch (Exception exName)
                 {
                     this.log.Error(exName.Message, exName);
-                    return false;
+                    return null;
                 }
             }
 
             if (asm != null)
             {
-                this.LoadFunctions(asm);
-                return true;
+                this.LoadFunctions(asm, assemblyFile);
+				return assemblyFile;
             }
 
-            return false;
+			return null;
         }
 
         public unsafe ExecutionResult* Execute(string function, Parameters[] parameters)
@@ -298,15 +406,15 @@ namespace CSLoader.Providers
                 objs[i] = MetacallDef.GetValue(parameters[i].type, parameters[i].ptr);
             }
 
-            var result = con.Method.Invoke(null, objs.Take(con.Parameters.Length).ToArray());
+            var result = con.Method.Invoke(con.TargetInstance, objs.Take(con.Parameters.Length).ToArray());
 
             if (result == null)
             {
-                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType));
+                return CreateExecutionResult(false, MetacallDef.Get(con.ReturnType));
             }
             else
             {
-                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType), result);
+                return CreateExecutionResult(false, MetacallDef.Get(con.ReturnType), result);
             }
         }
 
@@ -315,15 +423,15 @@ namespace CSLoader.Providers
             var con = this.functions[function];
             try
             {
-                var result = con.Method.Invoke(null, null);
+                var result = con.Method.Invoke(con.TargetInstance, null);
 
                 if (result == null)
                 {
-                    return CreateExecutionResult(false, MetacallDef.Get(con.RetunType));
+                    return CreateExecutionResult(false, MetacallDef.Get(con.ReturnType));
                 }
                 else
                 {
-                    return CreateExecutionResult(false, MetacallDef.Get(con.RetunType), result);
+                    return CreateExecutionResult(false, MetacallDef.Get(con.ReturnType), result);
                 }
             }
             catch (Exception ex)
@@ -354,7 +462,7 @@ namespace CSLoader.Providers
         }
 
         public abstract void Unload();
-        protected abstract Assembly Load(AssemblyName assemblyName);
-        protected abstract Assembly LoadFile(string assemblyFile);
+        protected abstract Assembly Load(AssemblyName assemblyName, string scriptHandle);
+        protected abstract Assembly LoadFile(string assemblyFile, string scriptHandle);
     }
 }

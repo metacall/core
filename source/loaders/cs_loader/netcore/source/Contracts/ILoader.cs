@@ -17,9 +17,9 @@ namespace CSLoader.Contracts
     {
         ReflectFunction[] Functions();
 
-        bool LoadFromSourceFunctions(string[] source);
-        void LoadFunctions(Assembly assembly);
-        bool LoadFromAssembly(string assemblyFile);
+        string LoadFromSourceFunctions(string[] source);
+        void LoadFunctions(Assembly assembly, string scriptHandle);
+        string LoadFromAssembly(string assemblyFile);
 
         unsafe ExecutionResult* Execute(string function, Parameters[] parameters);
         unsafe ExecutionResult* Execute(string function);
