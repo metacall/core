@@ -123,6 +123,10 @@ def metacall_load_from_file_export(tag, paths):
 def metacall_load_from_package(tag, path):
 	return module.metacall_load_from_package(tag, path)
 
+# Load from package with extended options (include paths, headers, libs)
+def metacall_load_from_package_ex(tag, path, options):
+	return module.metacall_load_from_package_ex(tag, path, options)
+
 # Load from memory
 def metacall_load_from_memory(tag, buffer):
 	return module.metacall_load_from_memory(tag, buffer)
