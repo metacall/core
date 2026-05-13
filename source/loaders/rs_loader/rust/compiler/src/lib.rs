@@ -523,7 +523,7 @@ impl CompilerCallbacks {
             None => {
                 eprintln!("Rust Loader: Available crates:");
                 for krate in tcx.crates(()) {
-                    eprintln!("  - {}", tcx.crate_name(*krate));
+                    eprintln!(" here - {}", tcx.crate_name(*krate));
                 }
                 return;
             }
