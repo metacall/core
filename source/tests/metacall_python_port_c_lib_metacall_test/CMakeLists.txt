@@ -100,8 +100,10 @@ target_compile_definitions(${target}
 	METACALL_PYTHON_PORT_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port"
 
 	# MetaCall paths
+	# Source dir holds the static headers; binary dir holds generated headers
+	# (metacall_version.h, metacall_loaders.h) under source/include/metacall/.
 	METACALL_INCLUDE_DIR="${CMAKE_SOURCE_DIR}/source/metacall/include"
-	METACALL_API_INCLUDE_DIR="${CMAKE_BINARY_DIR}/source/metacall/include"
+	METACALL_API_INCLUDE_DIR="${CMAKE_BINARY_DIR}/source/include"
 	METACALL_LIBRARY="$<TARGET_FILE:metacall>"
 )
 
