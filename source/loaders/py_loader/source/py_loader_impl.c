@@ -1393,6 +1393,15 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		return obj_impl->obj;
 	}
+	else if (id == TYPE_THROWABLE)
+	{
+		/* Unwrap the throwable and convert the inner value, mirroring the
+		 * node_loader behaviour at node_loader_impl.cpp */
+		throwable th = value_to_throwable(v);
+		value inner = throwable_value(th);
+
+		return py_loader_impl_value_to_capi(impl, value_type_id(inner), inner);
+	}
 	else
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type: %d", id);
