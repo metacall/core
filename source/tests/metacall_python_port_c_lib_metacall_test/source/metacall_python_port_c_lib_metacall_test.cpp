@@ -42,7 +42,7 @@ TEST_F(metacall_python_port_c_lib_metacall_test, DefaultConstructor)
 		"from metacall import metacall_load_from_package_ex\n"
 		/* MetaCall require with options */
 		"metacall_lib = metacall_load_from_package_ex('c', 'metacall', {\n"
-		"    'include_search_paths': ['" METACALL_API_INCLUDE_DIR "', '" METACALL_INCLUDE_DIR "'],\n"
+		"    'include_search_paths': ['" METACALL_API_INCLUDE_DIR "', '" METACALL_API_BUILD_INCLUDE_DIR "', '" METACALL_INCLUDE_DIR "'],\n"
 		"    'headers': ['" METACALL_INCLUDE_DIR "/metacall/metacall.h'],\n"
 		"    'libs': ['" METACALL_LIBRARY "']\n"
 		"})\n"
