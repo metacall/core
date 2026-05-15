@@ -1393,6 +1393,23 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		return obj_impl->obj;
 	}
+	else if (id == TYPE_EXCEPTION)
+	{
+		/* Build a Python Exception instance from the metacall exception, so
+		 * the caller receives a usable Python object instead of NULL.
+		 * Mirrors node_loader_impl.cpp */
+		exception ex = value_to_exception(v);
+		const char *message = exception_message(ex);
+
+		PyObject *args = PyTuple_New(1);
+		PyObject *msg = PyUnicode_FromString(message != NULL ? message : "");
+		PyTuple_SetItem(args, 0, msg);
+
+		PyObject *exc_instance = PyObject_CallObject(PyExc_ExceptionPtr(), args);
+		Py_DecRef(args);
+
+		return exc_instance;
+	}
 	else if (id == TYPE_THROWABLE)
 	{
 		/* Unwrap the throwable and convert the inner value, mirroring the
