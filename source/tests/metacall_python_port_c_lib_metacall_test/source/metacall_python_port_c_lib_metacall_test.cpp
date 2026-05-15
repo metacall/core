@@ -51,7 +51,7 @@ TEST_F(metacall_python_port_c_lib_metacall_test, DefaultConstructor)
 		/* Print info */
 		"metacall_lib['metacall_print_info']()\n"
 		/* MetaCall Load from Memory */
-		"script = b'module.exports = { metacircular: () => 46 }'\n"
+		"script = 'module.exports = { metacircular: () => 46 }'\n"
 		"assert metacall_lib['metacall_load_from_memory']('node', script, len(script) + 1, None) == 0, 'metacall load from memory failed'\n"
 		"result = metacall_lib['metacall']('metacircular')\n"
 		"print(result)\n"
