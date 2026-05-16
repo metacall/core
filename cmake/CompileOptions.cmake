@@ -413,7 +413,11 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 		add_link_options(-fsanitize=memory)
 		add_link_options(-fsanitize-memory-track-origins)
 		add_link_options(-fsanitize-memory-use-after-dtor)
-	endif()
+		add_compile_options(-stdlib=libc++)
+		add_link_options(-stdlib=libc++)
+		add_link_options(-L/opt/llvm-msan/lib)
+		add_link_options(-Wl,-rpath,/opt/llvm-msan/lib)
+		endif()
 
 	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
