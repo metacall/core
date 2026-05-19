@@ -424,11 +424,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 
 	# Optimizations
 	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-			add_compile_options(-O2)
-		else()
-			add_compile_options(-O3)
-		endif()
+		add_compile_options(-O3)
 	endif()
 endif()
 
