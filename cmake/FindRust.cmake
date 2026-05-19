@@ -77,51 +77,51 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 	list(GET Rust_FIND_COMPONENTS 0 Rust_TOOLCHAIN)
 
 	if(Rust_TOOLCHAIN)
-		execute_process(
-			COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --force
-			OUTPUT_VARIABLE Rust_OUTPUT
-			ERROR_VARIABLE Rust_OUTPUT
-			RESULT_VARIABLE Rust_STATUS
-		)
+		# execute_process(
+		# 	COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --force
+		# 	OUTPUT_VARIABLE Rust_OUTPUT
+		# 	ERROR_VARIABLE Rust_OUTPUT
+		# 	RESULT_VARIABLE Rust_STATUS
+		# )
 
-		if(Rust_CMAKE_DEBUG)
-			message(STATUS "${Rust_OUTPUT}")
-		else()
-			if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
-				message(FATAL_ERROR "${Rust_OUTPUT}")
-			endif()
-		endif()
+		# if(Rust_CMAKE_DEBUG)
+		# 	message(STATUS "${Rust_OUTPUT}")
+		# else()
+		# 	if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+		# 		message(FATAL_ERROR "${Rust_OUTPUT}")
+		# 	endif()
+		# endif()
 
-		execute_process(
-			COMMAND ${Rust_RUSTUP_EXECUTABLE} default ${Rust_TOOLCHAIN}
-			OUTPUT_VARIABLE Rust_OUTPUT
-			ERROR_VARIABLE Rust_OUTPUT
-			RESULT_VARIABLE Rust_STATUS
-		)
+		# execute_process(
+		# 	COMMAND ${Rust_RUSTUP_EXECUTABLE} default ${Rust_TOOLCHAIN}
+		# 	OUTPUT_VARIABLE Rust_OUTPUT
+		# 	ERROR_VARIABLE Rust_OUTPUT
+		# 	RESULT_VARIABLE Rust_STATUS
+		# )
 
-		if(Rust_CMAKE_DEBUG)
-			message(STATUS "${Rust_OUTPUT}")
-		else()
-			if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
-				message(FATAL_ERROR "${Rust_OUTPUT}")
-			endif()
-		endif()
+		# if(Rust_CMAKE_DEBUG)
+		# 	message(STATUS "${Rust_OUTPUT}")
+		# else()
+		# 	if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+		# 		message(FATAL_ERROR "${Rust_OUTPUT}")
+		# 	endif()
+		# endif()
 
 		foreach(Rust_TOOLCHAIN_COMPONENT ${Rust_TOOLCHAIN_COMPONENT_LIST})
-			execute_process(
-				COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --component ${Rust_TOOLCHAIN_COMPONENT}
-				OUTPUT_VARIABLE Rust_OUTPUT
-				ERROR_VARIABLE Rust_OUTPUT
-				RESULT_VARIABLE Rust_STATUS
-			)
+			# execute_process(
+			# 	COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --component ${Rust_TOOLCHAIN_COMPONENT}
+			# 	OUTPUT_VARIABLE Rust_OUTPUT
+			# 	ERROR_VARIABLE Rust_OUTPUT
+			# 	RESULT_VARIABLE Rust_STATUS
+			# )
 
-			if(Rust_CMAKE_DEBUG)
-				message(STATUS "${Rust_OUTPUT}")
-			else()
-				if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
-					message(FATAL_ERROR "${Rust_OUTPUT}")
-				endif()
-			endif()
+			# if(Rust_CMAKE_DEBUG)
+			# 	message(STATUS "${Rust_OUTPUT}")
+			# else()
+			# 	if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+			# 		message(FATAL_ERROR "${Rust_OUTPUT}")
+			# 	endif()
+			# endif()
 		endforeach()
 
 		# Obtain toolchain full name and triplet
@@ -176,6 +176,18 @@ if(Rust_RUSTC_EXECUTABLE)
 		OUTPUT_VARIABLE Rust_RUSTC_SYSROOT
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
+
+	if(NOT Rust_TOOLCHAIN_TRIPLET OR Rust_TOOLCHAIN_TRIPLET STREQUAL "" OR NOT Rust_TOOLCHAIN_TRIPLET MATCHES "-")
+		execute_process(
+			COMMAND ${Rust_RUSTC_EXECUTABLE} --version --verbose
+			OUTPUT_VARIABLE Rust_RUSTC_VERBOSE
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+		string(REGEX MATCH "host: ([^\n]+)" _ "${Rust_RUSTC_VERBOSE}")
+		if(CMAKE_MATCH_1)
+			set(Rust_TOOLCHAIN_TRIPLET "${CMAKE_MATCH_1}")
+		endif()
+	endif()
 
 	file(
 		GLOB Rust_RUSTC_LIBRARIES
