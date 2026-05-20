@@ -21,6 +21,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
+#include <csignal>
 
 class metacall_wasm_test : public testing::Test
 {
