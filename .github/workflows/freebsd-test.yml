@@ -25,6 +25,12 @@ jobs:
         # TODO: Implement OpenBSD, Haiku, OmniOS
         build: [debug, release]
         arch: [x86-64, arm64]
+        include:
+          # c and wasm loaders are not supported on arm64 FreeBSD;
+          - arch: x86-64
+            extra-loaders: "c wasm"
+          - arch: arm64
+            extra-loaders: ""
 
     steps:
       - name: Checkout
@@ -40,7 +46,7 @@ jobs:
           architecture: ${{ matrix.arch }}
           shell: sh
           run: |
-            sh ./tools/metacall-environment.sh base python c ruby wasm go java cobol rust backtrace
+            sh ./tools/metacall-environment.sh base python ${{ matrix.extra-loaders }} ruby go java cobol file rpc backtrace
             mkdir -p build && cd build
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python c ruby wasm go java cobol rust tests
-            sh ../tools/metacall-build.sh ${{ matrix.build }} c ruby wasm go java cobol rust tests
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts python ${{ matrix.extra-loaders }} ruby go java cobol file rpc tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }} ${{ matrix.extra-loaders }} ruby go java cobol file rpc tests

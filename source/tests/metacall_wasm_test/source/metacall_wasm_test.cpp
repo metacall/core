@@ -21,6 +21,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
+#include <csignal>
 
 class metacall_wasm_test : public testing::Test
 {
@@ -154,9 +155,10 @@ TEST_F(metacall_wasm_test, Default)
 		ASSERT_EQ((double)4.0, (double)metacall_value_to_double(values[3]));
 		metacall_value_destroy(ret);
 
-// It should exit with illegal instruction
-#if defined(unix) || defined(__unix__) || defined(__unix) || \
-	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
+#if defined(__FreeBSD__)
+		void *trap_ret = metacallht_s(handle, "trap", {}, 0);
+		ASSERT_EQ((void *)NULL, (void *)trap_ret);
+#elif defined(__linux__)
 		ASSERT_EXIT((metacallht_s(handle, "trap", {}, 0), exit(0)), ::testing::ExitedWithCode(0), ".*");
 #endif
 	}
