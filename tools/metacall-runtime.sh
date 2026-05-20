@@ -389,6 +389,10 @@ sub_rust(){
 
 		# Install minimal profile
 		wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minimal
+		
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
+		sed -i '/tls-model=initial-exec/d' ~/.rustup/toolchains/*/lib/rustlib/src/rust/src/bootstrap/src/bin/rustc.rs || true
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
 
 		# TODO:
 		# if [ "${ARCHITECTURE}" = "386" ]; then

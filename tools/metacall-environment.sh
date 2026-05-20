@@ -835,6 +835,10 @@ sub_rust(){
 
 		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
+		sed -i '/tls-model=initial-exec/d' ~/.rustup/toolchains/*/lib/rustlib/src/rust/src/bootstrap/src/bin/rustc.rs || true
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
+
 		# TODO:
 		# if [ "${ARCHITECTURE}" = "386" ]; then
 		# 	. "$HOME/.cargo/env"
@@ -843,8 +847,16 @@ sub_rust(){
 		# fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
+		sed -i '/tls-model=initial-exec/d' ~/.rustup/toolchains/*/lib/rustlib/src/rust/src/bootstrap/src/bin/rustc.rs || true
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
+		sed -i '/tls-model=initial-exec/d' ~/.rustup/toolchains/*/lib/rustlib/src/rust/src/bootstrap/src/bin/rustc.rs || true
+		grep -R "tls-model=initial-exec" ~/.rustup/toolchains || true
 	fi
 }
 

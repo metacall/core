@@ -65,8 +65,6 @@ if(OPTION_BUILD_MUSL)
 	)
 endif()
 
-string(APPEND RUST_LINK_FLAGS "-Clink-arg=-L${Rust_RUSTC_SYSROOT}/lib ")
-
 set(RUSTFLAGS ${CMAKE_COMMAND} -E env "RUSTFLAGS=${RUST_LINK_FLAGS}")
 
 # add_custom_target(${target}_clippy ALL

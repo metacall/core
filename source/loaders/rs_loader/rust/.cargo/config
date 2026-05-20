@@ -3,9 +3,5 @@ parallel-compiler = true
 [build]
 rustflags = [
   "-C",
-  "link-args=-Wl,-rpath=$ORIGIN",
-  "-L",
-  "native=/run/media/rusat/SR_IMAGE/rust-work/patched-rust/lib",
-  "-C",
-  "link-arg=-Wl,-rpath,/run/media/rusat/SR_IMAGE/rust-work/patched-rust/lib"
+  "link-args=-Wl,-rpath=$ORIGIN"
 ]
