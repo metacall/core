@@ -156,7 +156,8 @@ TEST_F(metacall_wasm_test, Default)
 		metacall_value_destroy(ret);
 
 #if defined(__FreeBSD__)
-		ASSERT_EXIT(metacallht_s(handle, "trap", {}, 0), ::testing::KilledBySignal(SIGILL), ".*");
+		void *trap_ret = metacallht_s(handle, "trap", {}, 0);
+		ASSERT_EQ((void *)NULL, (void *)trap_ret);
 #elif defined(__linux__)
 		ASSERT_EXIT((metacallht_s(handle, "trap", {}, 0), exit(0)), ::testing::ExitedWithCode(0), ".*");
 #endif
