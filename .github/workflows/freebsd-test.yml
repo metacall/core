@@ -23,8 +23,14 @@ jobs:
       matrix:
         # TODO: Implement more architectures and versions matrix
         # TODO: Implement OpenBSD, Haiku, OmniOS
-        build: [debug, release]
+        build: [debug, relwithdebinfo, release]
         arch: [x86-64, arm64]
+        sanitizer: ["", "address-sanitizer", "thread-sanitizer"]
+        exclude:
+          - build: release
+            sanitizer: address-sanitizer
+          - build: release
+            sanitizer: thread-sanitizer
 
     steps:
       - name: Checkout
