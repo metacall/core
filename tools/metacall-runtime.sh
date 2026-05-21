@@ -388,7 +388,9 @@ sub_rust(){
 		fi
 
 		# Install minimal profile
-		wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minimal
+		#wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minimal
+
+		wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
 
         . "$HOME/.cargo/env"
 
@@ -402,9 +404,9 @@ sub_rust(){
 
         ./install.sh --prefix="$HOME/.patched-rust"
 
-        rustup toolchain link patched "$HOME/.patched-rust"
+        rustup toolchain link nightly-2026-01-15 "$HOME/.patched-rust"
 
-        rustup default patched
+        rustup default nightly-2026-01-15
 
 		# TODO:
 		# if [ "${ARCHITECTURE}" = "386" ]; then
