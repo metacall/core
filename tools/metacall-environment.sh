@@ -849,9 +849,9 @@ sub_rust(){
 
         ./install.sh --prefix="$HOME/.patched-rust"
 
-        rustup toolchain link patched "$HOME/.patched-rust"
+        rustup toolchain link patched-x86_64-unknown-linux-gnu "$HOME/.patched-rust"
 
-        rustup default patched
+        rustup default patched-x86_64-unknown-linux-gnu
 
 		# TODO:
 		# if [ "${ARCHITECTURE}" = "386" ]; then
