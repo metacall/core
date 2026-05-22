@@ -36,20 +36,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run FreeBSD VM
+      - name: Start FreeBSD VM
         uses: cross-platform-actions/action@v0.32.0
         with:
           operating_system: freebsd
           version: 14.2
           architecture: ${{ matrix.arch }}
           shell: sh
-          run: |
-            sudo pkg install -y tmate || pkg install -y tmate
 
-            echo "FreeBSD debug VM is ready"
-            uname -a
-            pwd
-            ls -la
-
-            echo "Starting tmate. Connect using the SSH URL printed below."
-            tmate -F
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
