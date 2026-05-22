@@ -43,6 +43,9 @@ jobs:
           version: 14.2
           architecture: ${{ matrix.arch }}
           shell: sh
+          shutdown_vm: false
+          run: |
+            true
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
