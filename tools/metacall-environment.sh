@@ -118,6 +118,11 @@ else
 	LINUX_VERSION_ID=unknown
 fi
 
+# Disable warnings from apt
+if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+	export DEBIAN_FRONTEND="noninteractive"
+fi
+
 # Base packages
 sub_base(){
 	echo "configure base packages"

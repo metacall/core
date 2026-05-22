@@ -30,8 +30,8 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS:  ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51
+        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
@@ -57,20 +57,15 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS:  ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51
+        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
-      DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
-      LOADER_LIBRARY_PATH: $METACALL_PATH/build
-      LOADER_SCRIPT_PATH: $METACALL_PATH/build/scripts
-      CONFIGURATION_PATH: $METACALL_PATH/build/configurations/global.json
-      SERIAL_LIBRARY_PATH: $METACALL_PATH/build
-      DETOUR_LIBRARY_PATH: $METACALL_PATH/build
-      NODE_PATH: /usr/lib/node_modules
+      # TODO: Remove this with environment variable support in loaders
+      NODE_PATH: /usr/local/lib/node_modules
 
   runtime:
     image: metacall/core:runtime
@@ -84,19 +79,14 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS:  ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51
+        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
-      DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
-      LOADER_LIBRARY_PATH: /usr/local/lib
-      LOADER_SCRIPT_PATH: /usr/local/scripts
-      CONFIGURATION_PATH: /usr/local/share/metacall/configurations/global.json
-      SERIAL_LIBRARY_PATH: /usr/local/lib
-      DETOUR_LIBRARY_PATH: /usr/local/lib
+      # TODO: Remove this with environment variable support in loaders
       NODE_PATH: /usr/local/lib/node_modules
 
   cli:
@@ -111,17 +101,12 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51 coverage
-        METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox # coverage benchmarks
+        METACALL_INSTALL_OPTIONS:  ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox # clangformat v8rep51
+        METACALL_BUILD_OPTIONS: ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
-      DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
-      LOADER_LIBRARY_PATH: /usr/local/lib
-      LOADER_SCRIPT_PATH: /usr/local/scripts
-      CONFIGURATION_PATH: /usr/local/share/metacall/configurations/global.json
-      SERIAL_LIBRARY_PATH: /usr/local/lib
-      DETOUR_LIBRARY_PATH: /usr/local/lib
+      # TODO: Remove this with environment variable support in loaders
       NODE_PATH: /usr/local/lib/node_modules

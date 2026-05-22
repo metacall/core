@@ -101,6 +101,11 @@ else
 	LINUX_VERSION_ID=unknown
 fi
 
+# Disable warnings from apt
+if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+	export DEBIAN_FRONTEND="noninteractive"
+fi
+
 # Install and mark packages to avoid autoremove
 sub_apt_install_hold(){
 	$SUDO_CMD apt-get -y install --no-install-recommends $@

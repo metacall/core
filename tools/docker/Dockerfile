@@ -18,7 +18,7 @@
 #
 
 # Configure MetaCall Depends node image
-ARG METACALL_BASE_IMAGE
+ARG METACALL_BASE_IMAGE=debian:trixie-slim
 
 # MetaCall Depends image
 FROM ${METACALL_BASE_IMAGE} AS deps
@@ -34,12 +34,6 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 # Arguments
 ARG METACALL_PATH
 ARG METACALL_TOOLS_PATH
-
-# Environment variables
-ENV DEBIAN_FRONTEND=noninteractive \
-	LTTNG_UST_REGISTER_TIMEOUT=0 \
-	NUGET_XMLDOC_MODE=skip \
-	DOTNET_CLI_TELEMETRY_OPTOUT=true
 
 # Define working directory
 WORKDIR $METACALL_PATH
@@ -66,10 +60,7 @@ ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 	LOADER_SCRIPT_PATH=$METACALL_PATH/build/scripts \
 	CONFIGURATION_PATH=$METACALL_PATH/build/configurations/global.json \
 	SERIAL_LIBRARY_PATH=$METACALL_PATH/build \
-	DETOUR_LIBRARY_PATH=$METACALL_PATH/build \
-	DEBIAN_FRONTEND=noninteractive \
-	NODE_PATH=/usr/lib/node_modules \
-	DOTNET_CLI_TELEMETRY_OPTOUT=true
+	DETOUR_LIBRARY_PATH=$METACALL_PATH/build
 
 # Define working directory
 WORKDIR $METACALL_PATH
@@ -127,10 +118,7 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	LOADER_SCRIPT_PATH=/usr/local/scripts \
 	CONFIGURATION_PATH=/usr/local/share/metacall/configurations/global.json \
 	SERIAL_LIBRARY_PATH=/usr/local/lib \
-	DETOUR_LIBRARY_PATH=/usr/local/lib \
-	DEBIAN_FRONTEND=noninteractive \
-	NODE_PATH=/usr/local/lib/node_modules \
-	DOTNET_CLI_TELEMETRY_OPTOUT=true
+	DETOUR_LIBRARY_PATH=/usr/local/lib
 
 # Arguments
 ARG METACALL_PATH

@@ -54,23 +54,16 @@ sub_pull() {
 
 # Build MetaCall Docker Compose
 sub_build() {
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm cli
 }
 
 # Build MetaCall Docker Compose without cache
 sub_rebuild() {
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache cli
 }
 
 # Build MetaCall Docker Compose for testing
 sub_test() {
-	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
-	export DOCKER_BUILDKIT=0
-
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
@@ -86,17 +79,11 @@ sub_test() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	METACALL_TAGS=("deps" "dev")
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Sanitizer for testing
 sub_test_sanitizer() {
-	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
-	export DOCKER_BUILDKIT=0
-
 	# Enable build with sanitizer
 	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
 
@@ -112,12 +99,10 @@ sub_test_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm deps
-
 	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm dev
+		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
 	else
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output
+		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev | tee /tmp/metacall-test-output
 
 		# Retrieve all the summaries
 		SUMMARY=$(grep "SUMMARY:" /tmp/metacall-test-output)
@@ -151,9 +136,6 @@ sub_test_sanitizer() {
 
 # Build MetaCall Docker Compose for coverage
 sub_coverage() {
-	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
-	export DOCKER_BUILDKIT=0
-
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
@@ -169,17 +151,11 @@ sub_coverage() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	METACALL_TAGS=("deps" "dev")
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Valgrind for testing
 sub_test_memcheck() {
-	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
-	export DOCKER_BUILDKIT=0
-
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
@@ -195,10 +171,7 @@ sub_test_memcheck() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	METACALL_TAGS=("deps" "dev")
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Clang for testing
@@ -221,10 +194,7 @@ sub_test_clang() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	METACALL_TAGS=("deps" "dev")
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Memory Sanitizer for testing
@@ -247,10 +217,7 @@ sub_test_memory_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	METACALL_TAGS=("deps" "dev")
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.test.yml build --force-rm ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with caching
@@ -260,9 +227,7 @@ sub_cache() {
 		exit 1
 	fi
 
-	for tag in "${METACALL_TAGS[@]}"; do
-		$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.cache.yml build ${tag}
-	done
+	$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.cache.yml build cli
 }
 
 # Build MetaCall Docker Compose with multi-platform specifier

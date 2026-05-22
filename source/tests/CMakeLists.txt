@@ -47,7 +47,6 @@ endif()
 # Set memory check configuration
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
 
-
 if(OPTION_TEST_MEMORYCHECK AND (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER))
 	message(WARNING "OPTION_TEST_MEMORYCHECK and OPTION_BUILD_{ADDRESS,THREAD,MEMORY}_SANITIZER are not compatible, disabling memcheck tests.")
 endif()
