@@ -524,7 +524,7 @@ void trie_node_iterate(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_
 
 				if (back->childs != NULL)
 				{
-					struct set_iterator_type it;
+					struct set_iterator_type it = { 0 };
 
 					for (set_iterator_begin(&it, back->childs); set_iterator_end(&it) > 0; set_iterator_next(&it))
 					{
@@ -610,7 +610,7 @@ int trie_node_clear(trie t, trie_node n)
 
 				if (back->childs != NULL)
 				{
-					struct set_iterator_type it;
+					struct set_iterator_type it = { 0 };
 
 					for (set_iterator_begin(&it, back->childs); set_iterator_end(&it) > 0; set_iterator_next(&it))
 					{
@@ -682,7 +682,7 @@ trie_node trie_node_find(trie t, trie_key key)
 			if (back_ptr != NULL && *back_ptr != NULL)
 			{
 				trie_node back = *back_ptr;
-				struct set_iterator_type it;
+				struct set_iterator_type it = { 0 };
 
 				if (back->childs != NULL)
 				{

@@ -901,6 +901,12 @@ sub_clang(){
 	echo "configure clang"
 	if [ "$(uname)" = 'Linux' ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+		CLANG_BIN=$(ls /usr/bin/clang-[0-9]* 2>/dev/null | sort -V | tail -1)
+		if [ -n "$CLANG_BIN" ]; then
+			$SUDO_CMD ln -sf "$CLANG_BIN" /usr/bin/clang
+			$SUDO_CMD ln -sf "$(echo "$CLANG_BIN" | sed 's/clang/clang++/')" /usr/bin/clang++
+			$SUDO_CMD ln -sf "$(echo "$CLANG_BIN" | sed 's/clang/llvm-symbolizer/')" /usr/bin/llvm-symbolizer || true
+		fi
 	fi
 }
 
