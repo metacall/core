@@ -56,7 +56,8 @@ INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
 INSTALL_CLANG=0
-INSTALL_CLANGFORMAT=0
+INSTALL_CLANG_MSAN=0
+INSTALL_CLANG_FORMAT=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
 INSTALL_ANDROID=0
@@ -899,20 +900,71 @@ sub_memcheck(){
 
 sub_clang(){
 	echo "configure clang"
+	cd $ROOT_DIR
+
 	if [ "$(uname)" = 'Linux' ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
-		CLANG_BIN=$(ls /usr/bin/clang-[0-9]* 2>/dev/null | sort -V | tail -1)
-		if [ -n "$CLANG_BIN" ]; then
-			$SUDO_CMD ln -sf "$CLANG_BIN" /usr/bin/clang
-			$SUDO_CMD ln -sf "$(echo "$CLANG_BIN" | sed 's/clang/clang++/')" /usr/bin/clang++
-			$SUDO_CMD ln -sf "$(echo "$CLANG_BIN" | sed 's/clang/llvm-symbolizer/')" /usr/bin/llvm-symbolizer || true
-		fi
+	fi
+}
+
+sub_clang_msan(){
+	echo "configure clang msan"
+	cd $ROOT_DIR
+
+	if [ "$(uname)" = 'Linux' ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+			clang lld libclang-rt-dev llvm-dev \
+			build-essential cmake ninja-build git ca-certificates \
+			python3 python3-dev
+
+		mkdir -p /tmp/msan
+		git clone --depth=1 https://github.com/llvm/llvm-project -b "llvmorg-19.1.6" /tmp/msan/llvm-project
+
+		# Stage 1: build clang without MSan
+		cmake \
+			-G Ninja -B /tmp/msan/clang_build/ \
+			-DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DLLVM_TARGETS_TO_BUILD=Native \
+			-S /tmp/msan/llvm-project/llvm
+		ninja -C /tmp/msan/clang_build/ -j$(nproc)
+
+		# Stage 2: build libc++ WITH MSan using stage 1 clang
+		cmake \
+			-G Ninja -B /tmp/msan/cxx_build/ \
+			-DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DLLVM_USE_SANITIZER=MemoryWithOrigins \
+			-DCMAKE_C_COMPILER=/tmp/msan/clang_build/bin/clang \
+			-DCMAKE_CXX_COMPILER=/tmp/msan/clang_build/bin/clang++ \
+			-DLLVM_TARGETS_TO_BUILD=Native \
+			-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF \
+			-DLIBCXXABI_USE_LLVM_UNWINDER=OFF \
+			-S /tmp/msan/llvm-project/runtimes
+		ninja -C /tmp/msan/cxx_build/ -j$(nproc)
+		$SUDO_CMD ninja -C /tmp/msan/cxx_build/ install
+
+		# TODO:
+		# RUN printf "[memory]\nsrc:*/googletest/*\nfun:testing::*\n" > /build/gtest/msan-ignorelist.txt && \
+		#     git clone --depth=1 https://github.com/google/googletest.git && \
+		#     cmake -S googletest -B gtest-msan-build -G Ninja \
+		#         -DCMAKE_BUILD_TYPE=Release \
+		#         -DCMAKE_INSTALL_PREFIX=/opt/gtest-msan \
+		#         -DCMAKE_C_COMPILER=/msan/clang_build/bin/clang \
+		#         -DCMAKE_CXX_COMPILER=/msan/clang_build/bin/clang++ \
+		#         -DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -stdlib=libc++ -isystem /opt/llvm-msan/include/c++/v1 -fsanitize-ignorelist=/build/gtest/msan-ignorelist.txt" \
+		#         -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++ -L/opt/llvm-msan/lib -Wl,-rpath,/opt/llvm-msan/lib" \
+		#         -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++ -L/opt/llvm-msan/lib -Wl,-rpath,/opt/llvm-msan/lib" && \
+		#     cmake --build gtest-msan-build -j$(nproc) && \
+		#     cmake --install gtest-msan-build
+
+		rm -rf /tmp/msan/llvm-project /tmp/msan/cxx_build
 	fi
 }
 
 # Clang format
-sub_clangformat(){
-	echo "configure clangformat"
+sub_clang_format(){
+	echo "configure clang format"
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
@@ -1095,8 +1147,11 @@ sub_install(){
 	if [ $INSTALL_CLANG = 1 ]; then
 		sub_clang
 	fi
-	if [ $INSTALL_CLANGFORMAT = 1 ]; then
-		sub_clangformat
+	if [ $INSTALL_CLANG_MSAN = 1 ]; then
+		sub_clang_msan
+	fi
+	if [ $INSTALL_CLANG_FORMAT = 1 ]; then
+		sub_clang_format
 	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
@@ -1245,9 +1300,13 @@ sub_options(){
 			echo "clang selected"
 			INSTALL_CLANG=1
 		fi
+		if [ "$option" = 'clangmsan' ]; then
+			echo "clangmsan selected"
+			INSTALL_CLANG_MSAN=1
+		fi
 		if [ "$option" = 'clangformat' ]; then
 			echo "clangformat selected"
-			INSTALL_CLANGFORMAT=1
+			INSTALL_CLANG_FORMAT=1
 		fi
 		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
@@ -1297,6 +1356,7 @@ sub_help() {
 	echo "	coverage"
 	echo "	memcheck"
 	echo "	clang"
+	echo "	clangmsan"
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"

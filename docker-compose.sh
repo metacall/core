@@ -176,9 +176,6 @@ sub_test_memcheck() {
 
 # Build MetaCall Docker Compose with Clang for testing
 sub_test_clang() {
-	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
-	export DOCKER_BUILDKIT=0
-
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
@@ -199,11 +196,8 @@ sub_test_clang() {
 
 # Build MetaCall Docker Compose with Memory Sanitizer for testing
 sub_test_memory_sanitizer() {
-	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
-	export DOCKER_BUILDKIT=0
-
 	# Enable build with clang
-	export METACALL_BUILD_CLANG=clang
+	export METACALL_BUILD_CLANG=clangmsan
 
 	# Enable build with memory sanitizer
 	export METACALL_BUILD_SANITIZER=memory-sanitizer
