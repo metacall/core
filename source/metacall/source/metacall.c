@@ -41,6 +41,7 @@
 #include <portability/portability_constructor.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* -- Definitions -- */
@@ -52,6 +53,12 @@
 /* -- Type Definitions -- */
 
 typedef value (*method_invoke_ptr)(void *, method, void *[], size_t);
+
+struct metacall_loader_types_fill_context
+{
+	struct metacall_loader_type *array;
+	size_t index;
+};
 
 /* -- Global Variables -- */
 
@@ -381,6 +388,62 @@ int metacall_is_initialized(const char *tag)
 	}
 
 	return loader_is_initialized(tag);
+}
+
+static void metacall_loader_types_fill_cb(const char *name, type_id id, void *userdata)
+{
+	struct metacall_loader_types_fill_context *ctx = (struct metacall_loader_types_fill_context *)userdata;
+
+	ctx->array[ctx->index].name = name;
+	ctx->array[ctx->index].id = (enum metacall_value_id)id;
+	ctx->index++;
+}
+
+int metacall_loader_types(const char *tag, struct metacall_loader_type **out_array, size_t *size)
+{
+	loader_impl impl;
+	size_t count;
+	struct metacall_loader_type *array;
+	struct metacall_loader_types_fill_context ctx;
+
+	if (tag == NULL || out_array == NULL || size == NULL)
+	{
+		return 1;
+	}
+
+	*out_array = NULL;
+	*size = 0;
+
+	impl = loader_get_impl(tag);
+
+	if (impl == NULL)
+	{
+		return 1;
+	}
+
+	count = loader_impl_type_count(impl);
+
+	if (count == 0)
+	{
+		return 0;
+	}
+
+	array = malloc(count * sizeof(struct metacall_loader_type));
+
+	if (array == NULL)
+	{
+		return 1;
+	}
+
+	ctx.array = array;
+	ctx.index = 0;
+
+	loader_impl_type_iterate(impl, &metacall_loader_types_fill_cb, &ctx);
+
+	*out_array = array;
+	*size = count;
+
+	return 0;
 }
 
 size_t metacall_args_size(void)

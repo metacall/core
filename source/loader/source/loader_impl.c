@@ -968,6 +968,33 @@ int loader_impl_type_define(loader_impl impl, const char *name, type t)
 	return 1;
 }
 
+size_t loader_impl_type_count(loader_impl impl)
+{
+	if (impl != NULL && impl->type_info_map != NULL)
+	{
+		return set_size(impl->type_info_map);
+	}
+
+	return 0;
+}
+
+void loader_impl_type_iterate(loader_impl impl, void (*cb)(const char *name, type_id id, void *userdata), void *userdata)
+{
+	struct set_iterator_type it;
+
+	if (impl == NULL || impl->type_info_map == NULL || cb == NULL)
+	{
+		return;
+	}
+
+	for (set_iterator_begin(&it, impl->type_info_map); set_iterator_end(&it) != 0; set_iterator_next(&it))
+	{
+		type t = (type)set_iterator_value(&it);
+
+		cb((const char *)set_iterator_key(&it), type_index(t), userdata);
+	}
+}
+
 loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));

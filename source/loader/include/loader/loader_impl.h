@@ -67,6 +67,10 @@ LOADER_API type loader_impl_type(loader_impl impl, const char *name);
 
 LOADER_API int loader_impl_type_define(loader_impl impl, const char *name, type t);
 
+LOADER_API size_t loader_impl_type_count(loader_impl impl);
+
+LOADER_API void loader_impl_type_iterate(loader_impl impl, void (*cb)(const char *name, type_id id, void *userdata), void *userdata);
+
 LOADER_API int loader_impl_execution_path(plugin p, loader_impl impl, const loader_path path);
 
 LOADER_API int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr, void *data);
