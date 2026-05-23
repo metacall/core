@@ -56,12 +56,14 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 		endif()
 		if(OPTION_BUILD_MEMORY_SANITIZER)
 			if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+				set(GTEST_MSAN_IGNORELIST "${CMAKE_CURRENT_BINARY_DIR}/gtest-msan-ignorelist.txt")
+				file(WRITE "${GTEST_MSAN_IGNORELIST}" "[memory]\nsrc:*/googletest/*\nfun:testing::*\n")
 				set(SANITIZER_FLAGS
 					-DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"
 					-DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}"
-					-DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -stdlib=libc++"
-					-DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++"
-					-DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++"
+					-DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -stdlib=libc++ -isystem /opt/llvm-msan/include/c++/v1 -fsanitize-ignorelist=${GTEST_MSAN_IGNORELIST}"
+					-DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++ -L/opt/llvm-msan/lib -Wl,-rpath,/opt/llvm-msan/lib"
+					-DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++ -L/opt/llvm-msan/lib -Wl,-rpath,/opt/llvm-msan/lib"
 				)
 			else()
 				set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize=leak" -DCMAKE_C_FLAGS="-fsanitize=memory -fsanitize=leak")

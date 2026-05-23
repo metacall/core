@@ -51,6 +51,7 @@ BUILD_SANDBOX=0
 BUILD_COVERAGE=0
 BUILD_MEMCHECK=0
 BUILD_CLANG=0
+BUILD_CLANG_MSAN=0
 BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
@@ -230,6 +231,10 @@ sub_options() {
 		if [ "$option" = 'clang' ] || [ "$option" = 'clangmsan' ]; then
 			echo "Build with clang compiler"
 			BUILD_CLANG=1
+		fi
+		if [ "$option" = 'clangmsan' ]; then
+			echo "Build with clang msan compiler"
+			BUILD_CLANG_MSAN=1
 		fi
 		if [ "$option" = 'address-sanitizer' ]; then
 			echo "Build with address sanitizer"
@@ -648,9 +653,12 @@ sub_configure() {
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 	
 	# Execute CMake
-	if [ $BUILD_CLANG = 1 ]; then
-		export CC=/usr/bin/clang
-		export CXX=/usr/bin/clang++
+	if [ $BUILD_CLANG_MSAN = 1 ]; then
+		export CC=/tmp/msan/clang_build/bin/clang
+		export CXX=/tmp/msan/clang_build/bin/clang++
+	elif [ $BUILD_CLANG = 1 ]; then
+		export CC=clang
+		export CXX=clang++
 	fi
 	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
 }
