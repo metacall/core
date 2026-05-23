@@ -27,6 +27,12 @@ export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 export PROGRESS_NO_TRUNC=1
 
+# MetaCall build options
+export METACALL_BUILD_SANITIZER=
+export METACALL_BUILD_CLANG=
+export METACALL_BUILD_COVERAGE=
+export METACALL_BUILD_MEMCHECK=
+
 # Check if docker compose command is available
 if [ -x "$(command -v docker-compose)" ]; then
 	DOCKER_COMPOSE="docker-compose"
@@ -64,18 +70,6 @@ sub_rebuild() {
 
 # Build MetaCall Docker Compose for testing
 sub_test() {
-	# Disable build with sanitizer
-	export METACALL_BUILD_SANITIZER=
-
-	# Disable build with clang
-	export METACALL_BUILD_CLANG=
-
-	# Disable build with coverage
-	export METACALL_BUILD_COVERAGE=
-
-	# Disable build with memcheck
-	export METACALL_BUILD_MEMCHECK=
-
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
@@ -86,15 +80,6 @@ sub_test() {
 sub_test_sanitizer() {
 	# Enable build with sanitizer
 	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-address-sanitizer}
-
-	# Disable build with clang
-	export METACALL_BUILD_CLANG=
-
-	# Disable build with coverage
-	export METACALL_BUILD_COVERAGE=
-
-	# Disable build with memcheck
-	export METACALL_BUILD_MEMCHECK=
 
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
@@ -136,17 +121,8 @@ sub_test_sanitizer() {
 
 # Build MetaCall Docker Compose for coverage
 sub_coverage() {
-	# Disable build with sanitizer
-	export METACALL_BUILD_SANITIZER=
-
-	# Disable build with clang
-	export METACALL_BUILD_CLANG=
-
 	# Disable build with coverage
 	export METACALL_BUILD_COVERAGE=coverage
-
-	# Disable build with memcheck
-	export METACALL_BUILD_MEMCHECK=
 
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
@@ -156,15 +132,6 @@ sub_coverage() {
 
 # Build MetaCall Docker Compose with Valgrind for testing
 sub_test_memcheck() {
-	# Disable build with sanitizer
-	export METACALL_BUILD_SANITIZER=
-
-	# Disable build with clang
-	export METACALL_BUILD_CLANG=
-
-	# Disable build with coverage
-	export METACALL_BUILD_COVERAGE=
-
 	# Enable build with memcheck
 	export METACALL_BUILD_MEMCHECK=memcheck
 
@@ -176,17 +143,8 @@ sub_test_memcheck() {
 
 # Build MetaCall Docker Compose with Clang for testing
 sub_test_clang() {
-	# Disable build with sanitizer
-	export METACALL_BUILD_SANITIZER=
-
 	# Enable build with clang
 	export METACALL_BUILD_CLANG=clang
-
-	# Disable build with coverage
-	export METACALL_BUILD_COVERAGE=
-
-	# Disable build with memcheck
-	export METACALL_BUILD_MEMCHECK=
 
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
@@ -201,12 +159,6 @@ sub_test_memory_sanitizer() {
 
 	# Enable build with memory sanitizer
 	export METACALL_BUILD_SANITIZER=memory-sanitizer
-
-	# Disable build with coverage
-	export METACALL_BUILD_COVERAGE=
-
-	# Disable build with memcheck
-	export METACALL_BUILD_MEMCHECK=
 
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
