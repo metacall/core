@@ -227,7 +227,7 @@ sub_options() {
 			echo "Build with memcheck"
 			BUILD_MEMCHECK=1
 		fi
-		if [ "$option" = 'clang' ]; then
+		if [ "$option" = 'clang' ] || [ "$option" = 'clangmsan' ]; then
 			echo "Build with clang compiler"
 			BUILD_CLANG=1
 		fi
@@ -649,8 +649,8 @@ sub_configure() {
 	
 	# Execute CMake
 	if [ $BUILD_CLANG = 1 ]; then
-		export CC=clang
-		export CXX=clang++
+		export CC=/usr/bin/clang
+		export CXX=/usr/bin/clang++
 	fi
 	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
 }

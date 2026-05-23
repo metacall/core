@@ -36,14 +36,36 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	endif()
 
 	if(MSVC AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		if(OPTION_BUILD_THREAD_SANITIZER)
-			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=thread -DCMAKE_C_FLAGS=/fsanitize=thread)
-		endif()
 		if(OPTION_BUILD_ADDRESS_SANITIZER)
 			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=address -DCMAKE_C_FLAGS=/fsanitize=address)
 		endif()
+		if(OPTION_BUILD_THREAD_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS=/fsanitize=thread -DCMAKE_C_FLAGS=/fsanitize=thread)
+		endif()
 		if(OPTION_BUILD_MEMORY_SANITIZER)
 			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="/fsanitize=memory /fsanitize=leak" -DCMAKE_C_FLAGS="/fsanitize=memory /fsanitize=leak")
+			endif()
+	endif()
+
+	if((CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU") AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		if(OPTION_BUILD_ADDRESS_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="-fsanitize=address" -DCMAKE_C_FLAGS="-fsanitize=address")
+		endif()
+		if(OPTION_BUILD_THREAD_SANITIZER)
+			set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="-fsanitize=thread" -DCMAKE_C_FLAGS="-fsanitize=thread")
+		endif()
+		if(OPTION_BUILD_MEMORY_SANITIZER)
+			if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+				set(SANITIZER_FLAGS
+					-DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"
+					-DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}"
+					-DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -stdlib=libc++"
+					-DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++"
+					-DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++"
+				)
+			else()
+				set(SANITIZER_FLAGS -DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize=leak" -DCMAKE_C_FLAGS="-fsanitize=memory -fsanitize=leak")
+			endif()
 		endif()
 	endif()
 
