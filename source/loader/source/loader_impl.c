@@ -310,33 +310,87 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 
 void loader_impl_configuration_environment(loader_impl impl)
 {
-	value environment_value = configuration_value_type(impl->config, "environment", TYPE_MAP);
+	/* Apply env from config, only when the loader is NOT host and the
+	 * variable is not already defined in the process. Format:
+	 * "env": [
+	 *     { "name": "PYTHONHOME", "value": "C:/Python311" },
+	 *     ...
+	 * ]
+	 * Reference: https://github.com/metacall/core/issues/760
+	*/
 
-	if (environment_value != NULL)
+	value env_array_value;
+	size_t entry_count;
+	value *entries;
+
+	if (impl->config == NULL || loader_impl_get_option_host(impl) == 1)
 	{
-		size_t environment_size = value_type_count(environment_value);
-		value *environment_map = value_to_map(environment_value);
-		size_t env_var;
+		return;
+	}
 
-		for (env_var = 0; env_var < environment_size; ++env_var)
+	env_array_value = configuration_value_type(impl->config, "environment", TYPE_ARRAY);
+
+	if (env_array_value == NULL)
+	{
+		return;
+	}
+
+	entry_count = value_type_count(env_array_value);
+	entries = value_to_array(env_array_value);
+
+	for (size_t i = 0; i < entry_count; ++i)
+	{
+		size_t pair_count;
+		value *env_map;
+		const char *env_name = NULL;
+		const char *env_value = NULL;
+
+		if (value_type_id(entries[i]) != TYPE_MAP)
 		{
-			if (value_type_id(environment_map[env_var]) == TYPE_ARRAY)
+			continue;
+		}
+
+		pair_count = value_type_count(entries[i]);
+		env_map = value_to_map(entries[i]);
+
+		for (size_t j = 0; j < pair_count; ++j)
+		{
+			value *kv;
+
+			if (value_type_id(env_map[j]) != TYPE_ARRAY)
 			{
-				value *pair_array = value_to_array(environment_map[env_var]);
+				continue;
+			}
 
-				if (value_type_id(pair_array[0]) == TYPE_STRING && value_type_id(pair_array[1]) == TYPE_STRING)
+			kv = value_to_array(env_map[j]);
+
+			if (value_type_id(kv[0]) == TYPE_STRING && value_type_id(kv[1]) == TYPE_STRING)
+			{
+				const char *key = value_to_string(kv[0]);
+				const char *val = value_to_string(kv[1]);
+
+				if (strcmp(key, "name") == 0)
 				{
-					const char *pair_key = value_to_string(pair_array[0]);
-					const char *pair_value = value_to_string(pair_array[1]);
-
-					if (environment_variable_get(pair_key, NULL) == NULL)
-					{
-						if (environment_variable_set(pair_key, pair_value) != 0)
-						{
-							log_write("metacall", LOG_LEVEL_ERROR, "Failed to set the environment variable '%s': '%s'", pair_key, pair_value);
-						}
-					}
+					env_name = val;
 				}
+				else if (strcmp(key, "value") == 0)
+				{
+					env_value = val;
+				}
+			}
+		}
+
+		if (env_name == NULL || env_value == NULL)
+		{
+			continue;
+		}
+
+		/* Only set if not already defined */
+		if (environment_variable_get(env_name, NULL) == NULL)
+		{
+			if (environment_variable_set(env_name, env_value) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to set the environment variable '%s': '%s'", env_name, env_value);
 			}
 		}
 	}

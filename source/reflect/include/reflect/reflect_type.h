@@ -30,8 +30,6 @@
 extern "C" {
 #endif
 
-#include <stdlib.h>
-
 struct type_type;
 
 typedef struct type_type *type;

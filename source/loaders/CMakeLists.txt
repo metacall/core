@@ -147,16 +147,18 @@ endmacro()
 
 # Generate configuration with environment variables for a loader
 #
-#   "environment": {
-#       "PYTHONPATH": "/path/to/python",
-#       "PYTHONHOME": "/opt/python"
-#   }
+#	"environment": [
+#		{ "name": "PYTHONHOME", "value": "C:/Python311" },
+#		{ "name": "PYTHONPATH", "value": "C:/Python311/Lib" }
+#	]
 #
 #	loader_configuration_env(
-#		"PYTHONPATH=/path/to/python"
-#		"PYTHONHOME=/opt/python"
+#		"PYTHONPATH=C:/Python311"
+#		"PYTHONHOME=C:/Python311/Lib"
 #	)
 #
+# Loaded at init time only when the loader is NOT host and the variable is not
+# already defined in the process environment.
 macro(loader_configuration_env)
 	if(NOT "${LOADER_ENVIRONMENT}" STREQUAL "")
 		string(APPEND LOADER_ENVIRONMENT ",\n\t\t")
@@ -173,10 +175,10 @@ macro(loader_configuration_env)
 		list(GET ENV_SPLIT 1 ENV_VALUE)
 
 		if(${FIRST_ARGUMENT} EQUAL 0)
-			string(APPEND LOADER_ENVIRONMENT "\"${ENV_KEY}\": \"${ENV_VALUE}\"")
+			string(APPEND LOADER_ENVIRONMENT "{ \"name\": \"${ENV_KEY}\", \"value\": \"${ENV_VALUE}\" }")
 			set(FIRST_ARGUMENT 1)
 		else()
-			string(APPEND LOADER_ENVIRONMENT ",\n\t\t\"${ENV_KEY}\": \"${ENV_VALUE}\"")
+			string(APPEND LOADER_ENVIRONMENT ",\n\t\t\{ \"name\": \"${ENV_KEY}\", \"value\": \"${ENV_VALUE}\" }")
 		endif()
 	endforeach()
 endmacro()

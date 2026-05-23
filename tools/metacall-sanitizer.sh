@@ -38,7 +38,6 @@ fi
 "${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} rapidjson pack backtrace
 
 # Configure and Build
-export NODE_PATH="/usr/lib/node_modules"
 export LOADER_LIBRARY_PATH="${BUILD_DIR}"
 export LOADER_SCRIPT_PATH="${BUILD_DIR}/scripts"
 export CONFIGURATION_PATH="${BUILD_DIR}/configurations/global.json"
