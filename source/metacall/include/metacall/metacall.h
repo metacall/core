@@ -197,7 +197,9 @@ METACALL_API int metacall_is_initialized(const char *tag);
 /**
 *  @brief
 *    Get the list of types supported by the loader identified by @tag,
-*    together with their language-side names
+*    together with their language-side names. The loader must already
+*    be initialized (e.g. via a previous @ref metacall_load_from_memory
+*    or @ref metacall_load_from_file with the same tag).
 *
 *  @param[in] tag
 *    Extension of the script (e.g. "py", "node")

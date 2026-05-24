@@ -414,6 +414,11 @@ int metacall_loader_types(const char *tag, struct metacall_loader_type **out_arr
 	*out_array = NULL;
 	*size = 0;
 
+	if (loader_is_initialized(tag) != 0)
+	{
+		return 1;
+	}
+
 	impl = loader_get_impl(tag);
 
 	if (impl == NULL)
