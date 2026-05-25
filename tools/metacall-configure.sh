@@ -654,8 +654,8 @@ sub_configure() {
 	
 	# Execute CMake
 	if [ $BUILD_CLANG_MSAN = 1 ]; then
-		export CC=/tmp/msan/clang_build/bin/clang
-		export CXX=/tmp/msan/clang_build/bin/clang++
+		export CC=/usr/lib/llvm-19/bin/clang
+		export CXX=/usr/lib/llvm-19/bin/clang++
 	elif [ $BUILD_CLANG = 1 ]; then
 		export CC=clang
 		export CXX=clang++
