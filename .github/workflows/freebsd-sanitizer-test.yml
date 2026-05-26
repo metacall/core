@@ -20,9 +20,10 @@ jobs:
         sanitizer: [none, address-sanitizer, thread-sanitizer]
         arch: [x86-64]
         include:
-          # c and wasm loaders are not supported on arm64 FreeBSD;
+          # Keep this workflow focused on the Python teardown crash; C and Java
+          # require extra system SDKs on FreeBSD and fail before tests run.
           - arch: x86-64
-            extra-loaders: "c wasm"
+            extra-loaders: "wasm"
 
     steps:
       - name: Checkout
@@ -45,12 +46,12 @@ jobs:
               SANITIZER_ARG="${{ matrix.sanitizer }}"
             fi
 
-            sh ./tools/metacall-environment.sh base python ${{ matrix.extra-loaders }} ruby go java cobol file rpc backtrace
+            sh ./tools/metacall-environment.sh base python ${{ matrix.extra-loaders }} ruby go cobol file rpc backtrace
             rm -rf build
             mkdir -p build
             cd build
 
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} $SANITIZER_ARG scripts python ${{ matrix.extra-loaders }} ruby go java cobol file rpc tests
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} $SANITIZER_ARG scripts python ${{ matrix.extra-loaders }} ruby go cobol file rpc tests
             cmake --build . -j$(getconf _NPROCESSORS_ONLN)
 
             command -v gdb || sudo pkg install -y gdb
@@ -61,9 +62,11 @@ jobs:
             sysctl kern.coredump=1 || sudo sysctl kern.coredump=1 || true
             sysctl kern.corefile=/home/runner/work/core/core/build/%N.%P.core || sudo sysctl kern.corefile=/home/runner/work/core/core/build/%N.%P.core || true
 
+            CTEST_STATUS=0
+
             ctest -VV -j$(getconf _NPROCESSORS_ONLN) \
               --output-on-failure \
-              --test-output-size-failed 3221000000 || true
+              --test-output-size-failed 3221000000 || CTEST_STATUS=$?
 
             echo "================ CORES ================"
             find . -name "*.core" -type f -ls || true
@@ -108,6 +111,4 @@ jobs:
               echo "No metacall-python-exception core found"
             fi
 
-            if [ "${{ matrix.sanitizer }}" = "none" ]; then
-              exit 1
-            fi
+            exit $CTEST_STATUS
