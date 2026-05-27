@@ -17,7 +17,7 @@ jobs:
         # TODO: Implement more architectures and versions matrix
         # TODO: Implement OpenBSD, Haiku, OmniOS
         build: [relwithdebinfo]
-        sanitizer: [address-sanitizer, thread-sanitizer]
+        sanitizer: [none, address-sanitizer, thread-sanitizer]
         arch: [x86-64]
         include:
           # c and wasm loaders are not supported on arm64 FreeBSD;
