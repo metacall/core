@@ -968,6 +968,11 @@ int loader_impl_type_define(loader_impl impl, const char *name, type t)
 	return 1;
 }
 
+set loader_impl_types(loader_impl impl)
+{
+	return impl->type_info_map;
+}
+
 loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));

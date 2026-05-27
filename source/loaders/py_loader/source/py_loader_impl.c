@@ -2462,16 +2462,15 @@ error_set_item:
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	const int host = loader_impl_get_option_host(impl);
-
-	(void)impl;
-	(void)config;
-
 	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
 	int traceback_initialized = 1;
 #if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	int gc_initialized = 1;
 #endif
 	int gil_release;
+
+	(void)impl;
+	(void)config;
 
 	if (py_impl == NULL)
 	{

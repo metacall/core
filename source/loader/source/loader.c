@@ -589,6 +589,19 @@ value loader_get_option(const loader_tag tag, const char *field)
 	return loader_impl_get_option(plugin_impl_type(p, loader_impl), field);
 }
 
+set loader_get_types(const loader_tag tag)
+{
+	plugin p = loader_get_impl_plugin(tag);
+	loader_impl impl = plugin_impl_type(p, loader_impl);
+
+	if (loader_impl_initialize(&loader_manager, p, impl) != 0)
+	{
+		return NULL;
+	}
+
+	return loader_impl_types(impl);
+}
+
 int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr)
 {
 	if (loader_initialize() == 1)

@@ -82,6 +82,12 @@ struct metacall_version_type
 	const char *name;
 };
 
+struct metacall_loader_type
+{
+	const char *name;
+	enum metacall_value_id id;
+};
+
 /* -- Global Variables -- */
 
 METACALL_API extern void *metacall_null_args[1];
@@ -187,6 +193,30 @@ METACALL_API char **metacall_argv(void);
 *    Zero if context is initialized, different from zero otherwise
 */
 METACALL_API int metacall_is_initialized(const char *tag);
+
+/**
+*  @brief
+*    Get the list of types supported by the loader identified by @tag,
+*    together with their language-side names. The loader will be initialized
+*    if it is not already initialized.
+*
+*  @param[in] tag
+*    Extension of the script (e.g. "py", "node")
+*
+*  @param[out] out_array
+*    Receives a pointer to a malloc'd array of @ref metacall_loader_type
+*    entries. Caller takes ownership and must free it with @c free. The
+*    @c name field of each entry points to loader-owned memory and must
+*    not be freed. If there is no types, it will be initialized to NULL.
+*
+*  @param[out] size
+*    Receives the number of entries written to @c *out_array. May be zero
+*    if the loader has no registered types
+*
+*  @return
+*    Zero on success, different from zero otherwise
+*/
+METACALL_API int metacall_loader_types(const char *tag, struct metacall_loader_type **out_array, size_t *size);
 
 /**
 *  @brief

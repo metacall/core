@@ -41,6 +41,7 @@
 #include <portability/portability_constructor.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* -- Definitions -- */
@@ -381,6 +382,56 @@ int metacall_is_initialized(const char *tag)
 	}
 
 	return loader_is_initialized(tag);
+}
+
+int metacall_loader_types(const char *tag, struct metacall_loader_type **out_array, size_t *size)
+{
+	set types;
+	struct set_iterator_type it;
+	size_t type_it = 0;
+
+	if (tag == NULL || out_array == NULL || size == NULL)
+	{
+		goto args_error;
+	}
+
+	types = loader_get_types(tag);
+
+	if (types == NULL)
+	{
+		goto invalid_types_error;
+	}
+
+	*size = set_size(types);
+
+	if (*size == 0)
+	{
+		*out_array = NULL;
+		return 0;
+	}
+
+	*out_array = malloc((*size) * sizeof(struct metacall_loader_type));
+
+	if (*out_array == NULL)
+	{
+		goto invalid_types_error;
+	}
+
+	for (set_iterator_begin(&it, types); set_iterator_end(&it) != 0; set_iterator_next(&it), ++type_it)
+	{
+		type t = (type)set_iterator_value(&it);
+
+		(*out_array)[type_it].name = type_name(t);
+		(*out_array)[type_it].id = type_index(t);
+	}
+
+	return 0;
+
+invalid_types_error:
+	*out_array = NULL;
+	*size = 0;
+args_error:
+	return 1;
 }
 
 size_t metacall_args_size(void)
