@@ -85,6 +85,8 @@ LOADER_API value loader_get_options(const loader_tag tag);
 
 LOADER_API value loader_get_option(const loader_tag tag, const char *field);
 
+LOADER_API set loader_get_types(const loader_tag tag);
+
 LOADER_API int loader_handle_initialize(loader_impl impl, const loader_path name, void **handle_ptr);
 
 LOADER_API const char *loader_handle_id(void *handle);
