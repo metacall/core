@@ -902,7 +902,7 @@ sub_clang(){
 	echo "configure clang"
 	cd $ROOT_DIR
 
-	if [ "$(uname)" = 'Linux' ]; then
+	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
 	fi
 }
@@ -911,7 +911,7 @@ sub_clang_msan(){
 	echo "configure clang msan"
 	cd $ROOT_DIR
 
-	if [ "$(uname)" = 'Linux' ]; then
+	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
 			clang lld libclang-rt-dev llvm-dev \
 			build-essential cmake ninja-build git ca-certificates \
