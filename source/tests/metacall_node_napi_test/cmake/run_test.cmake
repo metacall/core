@@ -17,10 +17,10 @@ endif()
 set(rspack_package "${TEST_DIR}/node_modules/@rspack/core/package.json")
 
 if(NOT EXISTS "${rspack_package}")
-	message(STATUS "Installing @rspack/core into ${TEST_DIR}")
+	message(STATUS "Installing @rspack/core@1.7.8 into ${TEST_DIR}")
 
 	execute_process(
-		COMMAND "${NPM_EXECUTABLE}" --prefix "${TEST_DIR}" install @rspack/core
+		COMMAND "${NPM_EXECUTABLE}" --prefix "${TEST_DIR}" install @rspack/core@1.7.8
 		WORKING_DIRECTORY "${TEST_DIR}"
 		RESULT_VARIABLE npm_result
 		OUTPUT_VARIABLE npm_output
