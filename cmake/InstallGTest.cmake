@@ -52,7 +52,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
 
 	if(MSVC)
-		# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+		# Build statically on Windows for avoiding DLL location issues
 		set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 	endif()
 
