@@ -51,9 +51,10 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	endif()
 	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
 
-	# if(MSVC)
-	# 	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	# endif()
+	if(MSVC)
+		# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+		set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+	endif()
 
 	FetchContent_MakeAvailable(googletest)
 
