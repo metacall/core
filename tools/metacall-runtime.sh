@@ -53,6 +53,7 @@ case "$(uname -s)" in
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
