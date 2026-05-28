@@ -119,7 +119,7 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 		"__THREAD_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(SANITIZER_LIBRARIES -fsanitize=memory -fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
+	set(SANITIZER_LIBRARIES -lmsan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.supp"
 	)
@@ -150,6 +150,18 @@ else()
 	set(SANITIZER_COMPILE_DEFINITIONS)
 endif()
 
+# TODO: find_sanitizer is wacky, reimplement it with:
+#
+# gcc -print-file-name=libasan.so
+# gcc -print-file-name=libubsan.so
+# gcc -print-file-name=libtsan.so
+# gcc -print-file-name=libmsan.so
+#
+# clang -print-file-name=libclang_rt.asan-x86_64.so
+# clang -print-file-name=libclang_rt.ubsan_standalone-x86_64.so
+# clang -print-file-name=libclang_rt.tsan-x86_64.so
+# clang -print-file-name=libclang_rt.msan-x86_64.so
+#
 function(find_sanitizer NAME LINK_OPTION)
 	string(TOUPPER "${NAME}" NAME_UPPER)
 	set(SANITIZER_PROGRAM_CODE "int main() {return 0;}")
@@ -189,8 +201,13 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL 
 		set(SANITIZER_LIBRARIES_PATH
 			"${LIBTSAN_PATH}"
 		)
-	elseif(OPTION_BUILD_MEMORY_SANITIZER)
-		set(SANITIZER_LIBRARIES_PATH)
+	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+		find_sanitizer(msan -fsanitize=memory)
+		find_sanitizer(ubsan -fsanitize=undefined)
+		set(SANITIZER_LIBRARIES_PATH
+			"${LIBMSAN_PATH}"
+			"${LIBUBSAN_PATH}"
+		)
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER)
 		find_sanitizer(asan -fsanitize=address)
 		find_sanitizer(ubsan -fsanitize=undefined)
@@ -409,15 +426,13 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 		add_compile_options(-fsanitize-memory-track-origins)
 		add_compile_options(-fsanitize-memory-use-after-dtor)
 		add_compile_options(-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
+		add_compile_options(-stdlib=libc++)
 		add_link_options(-fsanitize=undefined)
 		add_link_options(-fsanitize=memory)
 		add_link_options(-fsanitize-memory-track-origins)
 		add_link_options(-fsanitize-memory-use-after-dtor)
-		add_compile_options(-stdlib=libc++)
 		add_link_options(-stdlib=libc++)
-		add_link_options(-L/opt/llvm-msan/lib)
-		add_link_options(-Wl,-rpath,/opt/llvm-msan/lib)
-		endif()
+	endif()
 
 	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
