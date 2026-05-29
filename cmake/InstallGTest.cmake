@@ -52,8 +52,8 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
 
 	if(MSVC)
-		# Build statically on Windows for avoiding DLL location issues
-		set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+		# Build statically on Windows for avoiding DLL location issues (avoid populating the variable to the cache)
+		set(BUILD_SHARED_LIBS OFF)
 	endif()
 
 	FetchContent_MakeAvailable(googletest)
