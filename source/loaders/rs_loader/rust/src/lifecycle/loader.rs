@@ -38,7 +38,7 @@ impl LoadingMethod {
                     Some(dl) => Ok(dl),
                     None => Err(String::from("consume_dlib was called more than once")),
                 }
-            },
+            }
         }
     }
 }
