@@ -183,12 +183,12 @@ int loader_host_register(loader_impl host, context ctx, const char *name, loader
 	{
 		static const char empty_argument_name[] = "";
 
-		type t = loader_impl_type(host, type_id_name(args_type_id[iterator]));
+		type t = loader_impl_get_type(host, type_id_name(args_type_id[iterator]));
 
 		signature_set(s, iterator, empty_argument_name, t);
 	}
 
-	type t = loader_impl_type(host, type_id_name(return_type));
+	type t = loader_impl_get_type(host, type_id_name(return_type));
 
 	signature_set_return(s, t);
 

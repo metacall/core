@@ -138,13 +138,13 @@ static type valkind_to_type(loader_impl impl, wasm_valkind_t kind)
 	switch (kind)
 	{
 		case WASM_I32:
-			return loader_impl_type(impl, "i32");
+			return loader_impl_get_type(impl, "i32");
 		case WASM_I64:
-			return loader_impl_type(impl, "i64");
+			return loader_impl_get_type(impl, "i64");
 		case WASM_F32:
-			return loader_impl_type(impl, "f32");
+			return loader_impl_get_type(impl, "f32");
 		case WASM_F64:
-			return loader_impl_type(impl, "f64");
+			return loader_impl_get_type(impl, "f64");
 		default:
 			return NULL;
 	}
@@ -191,7 +191,7 @@ static int discover_function(loader_impl impl, scope scp, const wasm_externtype_
 
 	if (results->size > 0)
 	{
-		type ret_type = results->size == 1 ? valkind_to_type(impl, wasm_valtype_kind(results->data[0])) : loader_impl_type(impl, "array");
+		type ret_type = results->size == 1 ? valkind_to_type(impl, wasm_valtype_kind(results->data[0])) : loader_impl_get_type(impl, "array");
 		signature_set_return(sig, ret_type);
 	}
 

@@ -25,11 +25,11 @@
 extern "C" {
 #endif
 
-struct attribute_type;
+struct attribute_s;
 
 typedef void *attribute_impl;
 
-typedef struct attribute_type *attribute;
+typedef struct attribute_s *attribute;
 
 typedef void (*attribute_impl_interface_destroy)(attribute, attribute_impl);
 

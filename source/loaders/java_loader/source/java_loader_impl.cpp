@@ -84,7 +84,7 @@ static type_interface type_java_singleton(void);
 
 static type java_loader_impl_type(loader_impl impl, const char *type_str, const char *type_signature)
 {
-	type t = loader_impl_type(impl, type_str);
+	type t = loader_impl_get_type(impl, type_str);
 
 	if (t != NULL)
 	{

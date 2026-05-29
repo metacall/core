@@ -63,7 +63,7 @@ LOADER_API value loader_impl_get_value(loader_impl impl, const char *name);
 
 LOADER_API context loader_impl_context(loader_impl impl);
 
-LOADER_API type loader_impl_type(loader_impl impl, const char *name);
+LOADER_API type loader_impl_get_type(loader_impl impl, const char *name);
 
 LOADER_API int loader_impl_type_define(loader_impl impl, const char *name, type t);
 

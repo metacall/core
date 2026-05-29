@@ -543,9 +543,9 @@ value value_from_string(value v, const char *str, size_t length)
 
 			if (bytes > current_size)
 			{
-				char *str = value_to_string(v);
+				char *v_str = value_to_string(v);
 
-				str[size - 1] = '\0';
+				v_str[size - 1] = '\0';
 			}
 		}
 	}

@@ -175,7 +175,7 @@ pub fn register_class(class_registration: ClassRegistration) {
                     ctor,
                     idx,
                     name.as_ptr(),
-                    loader_impl_type(class_registration.loader_impl, t.as_ptr()),
+                    loader_impl_get_type(class_registration.loader_impl, t.as_ptr()),
                 )
             };
         }
@@ -195,7 +195,7 @@ pub fn register_class(class_registration: ClassRegistration) {
             attribute_create(
                 class,
                 name.as_ptr(),
-                loader_impl_type(class_registration.loader_impl, ty.as_ptr()),
+                loader_impl_get_type(class_registration.loader_impl, ty.as_ptr()),
                 std::ptr::null_mut(),
                 0,
                 std::ptr::null_mut(),
@@ -233,7 +233,7 @@ pub fn register_class(class_registration: ClassRegistration) {
             unsafe {
                 signature_set_return(
                     s,
-                    loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
+                    loader_impl_get_type(class_registration.loader_impl, ret.as_ptr()),
                 );
             };
         } else {
@@ -242,7 +242,7 @@ pub fn register_class(class_registration: ClassRegistration) {
             unsafe {
                 signature_set_return(
                     s,
-                    loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
+                    loader_impl_get_type(class_registration.loader_impl, ret.as_ptr()),
                 );
             };
         }
@@ -257,7 +257,7 @@ pub fn register_class(class_registration: ClassRegistration) {
                     s,
                     idx,
                     name.as_ptr(),
-                    loader_impl_type(class_registration.loader_impl, t.as_ptr()),
+                    loader_impl_get_type(class_registration.loader_impl, t.as_ptr()),
                 )
             };
         }
@@ -286,7 +286,7 @@ pub fn register_class(class_registration: ClassRegistration) {
             unsafe {
                 signature_set_return(
                     s,
-                    loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
+                    loader_impl_get_type(class_registration.loader_impl, ret.as_ptr()),
                 );
             };
         } else {
@@ -295,7 +295,7 @@ pub fn register_class(class_registration: ClassRegistration) {
             unsafe {
                 signature_set_return(
                     s,
-                    loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
+                    loader_impl_get_type(class_registration.loader_impl, ret.as_ptr()),
                 );
             };
         }
@@ -310,7 +310,7 @@ pub fn register_class(class_registration: ClassRegistration) {
                     s,
                     idx,
                     name.as_ptr(),
-                    loader_impl_type(class_registration.loader_impl, t.as_ptr()),
+                    loader_impl_get_type(class_registration.loader_impl, t.as_ptr()),
                 )
             };
         }

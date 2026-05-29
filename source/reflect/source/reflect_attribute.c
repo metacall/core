@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct attribute_type
+struct attribute_s
 {
 	klass cls;
 	char *name;
@@ -40,7 +40,7 @@ static value attribute_metadata_visibility(attribute attr);
 
 attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility, attribute_impl_interface_singleton singleton)
 {
-	attribute attr = malloc(sizeof(struct attribute_type));
+	attribute attr = malloc(sizeof(struct attribute_s));
 
 	if (attr == NULL)
 	{

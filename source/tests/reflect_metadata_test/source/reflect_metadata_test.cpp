@@ -79,7 +79,7 @@ function_return function_example_interface_invoke(function func, function_impl f
 	return NULL;
 }
 
-function_return function_example_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+function_return function_example_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *ctx)
 {
 	/* TODO */
 
@@ -89,7 +89,7 @@ function_return function_example_interface_await(function func, function_impl im
 	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
-	(void)context;
+	(void)ctx;
 
 	return NULL;
 }
