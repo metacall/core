@@ -1,15 +1,16 @@
 use crate::Attribute;
 
 use super::rustc_middle::ty::{
-    subst::GenericArgKind, Binder, FloatTy, FnSig, IntTy, TyCtxt, TyKind, TyS, UintTy, Visibility,
+    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyCtxt, TyKind, UintTy, Visibility,
 };
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 use rustc_hir::def::{DefKind, Res};
-use rustc_middle::hir::exports::Export;
+//use rustc_middle::hir::exports::Export;
+use rustc_hir::def_id::DefId;
 use std::iter::zip;
 
-pub fn handle_ty(ty: &TyS) -> FunctionParameter {
+pub fn handle_ty(ty: &Ty) -> FunctionParameter {
     let mut result = FunctionParameter {
         name: String::new(),
         mutability: Mutability::No,
@@ -34,10 +35,19 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
         TyKind::Float(f) => match f {
             FloatTy::F32 => result.ty = FunctionType::f32,
             FloatTy::F64 => result.ty = FunctionType::f64,
+            _ => result.ty = FunctionType::Null,
         },
         TyKind::Bool => result.ty = FunctionType::bool,
         TyKind::Char => result.ty = FunctionType::char,
         TyKind::Str => result.ty = FunctionType::str,
+        TyKind::Ref(_, inner_ty, _) => {
+            let mut inner = handle_ty(inner_ty);
+            inner.reference = Reference::Yes;
+            result = inner;
+        }
+        TyKind::RawPtr(inner_ty, _) => {
+            result.ty = FunctionType::Ptr;
+        }
         TyKind::Adt(def, gen) => {
             let def_ident = format!("{:?}", def);
             match def_ident.as_str() {
@@ -45,8 +55,8 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                     result.ty = FunctionType::Array;
                     dbg!(gen);
                     let gen_arg = gen[0];
-                    if let GenericArgKind::Type(ty) = gen_arg.unpack() {
-                        result.generic.push(handle_ty(ty));
+                    if let GenericArgKind::Type(ty) = gen_arg.kind() {
+                        result.generic.push(handle_ty(&ty));
                     } else {
                         eprintln!("Rust Loader: Expect generic arg, get nothing");
                     }
@@ -54,14 +64,14 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
                 "std::collections::HashMap" => {
                     result.ty = FunctionType::Map;
                     let key = gen[0];
-                    if let GenericArgKind::Type(ty) = key.unpack() {
-                        result.generic.push(handle_ty(ty));
+                    if let GenericArgKind::Type(ty) = key.kind() {
+                        result.generic.push(handle_ty(&ty));
                     } else {
                         eprintln!("Rust Loader: Expect key, get nothing");
                     }
                     let value = gen[1];
-                    if let GenericArgKind::Type(ty) = value.unpack() {
-                        result.generic.push(handle_ty(ty));
+                    if let GenericArgKind::Type(ty) = value.kind() {
+                        result.generic.push(handle_ty(&ty));
                     } else {
                         eprintln!("Rust Loader: Expect value, get nothing");
                     }
@@ -75,7 +85,7 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
     result
 }
 
-pub fn handle_fn(name: String, sig: &Binder<FnSig>, names: &[Ident]) -> Function {
+pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident]) -> Function {
     let mut function = Function {
         name,
         ret: None,
@@ -83,9 +93,18 @@ pub fn handle_fn(name: String, sig: &Binder<FnSig>, names: &[Ident]) -> Function
     };
     // parse input and output
     let inputs = sig.inputs().skip_binder();
-    for (name, ty) in zip(names, inputs) {
+    for (idx,ty) in inputs.iter().enumerate() {
         let mut func_parameter = handle_ty(ty);
-        func_parameter.name = name.to_string();
+
+        if idx == 0 {
+            let ty_str = format!("{:?}", ty);
+            if ty_str.contains("Self") || ty_str.contains("&Self") || ty_str.contains("Book") {
+                func_parameter.ty = FunctionType::This;
+            } 
+        }
+
+        func_parameter.name = names.get(idx).map(|n| n.to_string()).unwrap_or_else(|| format!("arg{}", idx));
+
         function.args.push(func_parameter);
     }
     let output = sig.output().skip_binder();
@@ -95,47 +114,43 @@ pub fn handle_fn(name: String, sig: &Binder<FnSig>, names: &[Ident]) -> Function
             if arg.len() == 0 {
                 function.ret = None;
             } else {
-                function.ret = Some(handle_ty(output));
+                function.ret = Some(handle_ty(&output));
             }
         }
         _ => {
-            function.ret = Some(handle_ty(output));
+            function.ret = Some(handle_ty(&output));
         }
     }
     function
 }
 
-pub fn extract_attribute_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Attribute> {
-    let Export {
-        ident, res, vis, ..
-    } = export;
-    // skip non-public items
-    if !matches!(vis, Visibility::Public) {
+pub fn extract_attribute_from_export(tcx: TyCtxt<'_>, def_id: DefId) -> Option<Function> {
+    if tcx.def_kind(def_id) != rustc_hir::def::DefKind::Fn {
         return None;
     }
-    match res {
-        Res::Def(DefKind::Field, def_id) => Some(Attribute {
-            name: ident.to_string(),
-            ty: handle_ty(ctxt.type_of(*def_id)),
-        }),
-        _ => None,
-    }
+
+    let sig = tcx.fn_sig(def_id);
+    let sig = sig.instantiate_identity();
+
+    let name = tcx.def_path_str(def_id);
+
+    Some(handle_fn(name, &sig, &[]))
 }
 
-pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
-    let Export {
-        ident, res, vis, ..
-    } = export;
-    // skip non-public items
-    if !matches!(vis, Visibility::Public) {
-        return None;
-    }
-    match res {
-        Res::Def(DefKind::AssocFn, def_id) => {
-            let fn_sig = ctxt.fn_sig(*def_id);
-            let names = ctxt.fn_arg_names(*def_id);
-            Some(handle_fn(ident.to_string(), &fn_sig, names))
-        }
-        _ => None,
-    }
-}
+// pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
+//     let Export {
+//         ident, res, vis, ..
+//     } = export;
+//     // skip non public items
+//     if !matches!(vis, Visibility::Public) {
+//         return None;
+//     }
+//     match res {
+//         Res::Def(DefKind::AssocFn, def_id) => {
+//             let fn_sig = ctxt.fn_sig(*def_id);
+//             let names = ctxt.hir_name(*def_id);
+//             Some(handle_fn(ident.to_string(), &fn_sig, names))
+//         }
+//         _ => None,
+//     }
+// }

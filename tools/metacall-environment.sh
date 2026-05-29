@@ -839,7 +839,25 @@ sub_rust(){
 			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
 		fi
 
-		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		#curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
+        wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
+
+        . "$HOME/.cargo/env"
+
+        cd /tmp
+
+        wget https://github.com/SATVIKsynopsis/metacall-rust-toolchain/releases/download/v0.1-patched-rust/rust-1.94.0-dev-x86_64-unknown-linux-gnu.tar.xz -O rust-toolchain.tar.xz
+
+        tar -xJf rust-toolchain.tar.xz
+
+        cd rust-1.94.0-dev-x86_64-unknown-linux-gnu
+
+        ./install.sh --prefix="$HOME/.patched-rust"
+
+        rustup toolchain link patched "$HOME/.patched-rust"
+
+        rustup default patched
 
 		# TODO:
 		# if [ "${ARCHITECTURE}" = "386" ]; then
@@ -849,8 +867,10 @@ sub_rust(){
 		# fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+
 	fi
 }
 

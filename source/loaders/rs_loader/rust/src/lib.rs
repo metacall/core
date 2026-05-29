@@ -1,3 +1,5 @@
+#![feature(rustc_private)]
+
 mod lifecycle;
 
 pub use lifecycle::rs_loader_impl_clear;
