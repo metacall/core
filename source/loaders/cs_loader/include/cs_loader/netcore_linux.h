@@ -40,6 +40,7 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 #include <functional>
+#include <string>
 
 #include <unistd.h>
 
@@ -109,7 +110,7 @@ private:
 
 	void AddFilesFromDirectoryToTpaList(std::string directory, std::string &tpaList)
 	{
-		for (auto &dirent : std::experimental::filesystem::directory_iterator(directory))
+		for (auto &dirent : fs::directory_iterator(directory))
 		{
 			std::string path = dirent.path();
 
