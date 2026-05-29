@@ -210,6 +210,7 @@ add_subdirectory(metacall_typescript_tsx_loop_fail_test)
 add_subdirectory(metacall_typescript_require_test)
 add_subdirectory(metacall_typescript_jsx_default_test)
 add_subdirectory(metacall_lua_test)
+add_subdirectory(metacall_lua_mixed_test)
 add_subdirectory(metacall_rpc_test)
 #add_subdirectory(metacall_csharp_function_test) # TODO: C# 9.0 seems not to work so top level expressions do not work
 add_subdirectory(metacall_csharp_static_class_test)
