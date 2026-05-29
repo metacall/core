@@ -42,10 +42,16 @@ if(NOT GBENCH_FOUND OR USE_BUNDLED_GBENCH)
 
 	if(MSVC)
 		# Build statically on Windows for avoiding DLL location issues (avoid populating the variable to the cache)
+		set(_CACHE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 		set(BUILD_SHARED_LIBS OFF)
 	endif()
 
 	FetchContent_MakeAvailable(googlebenchmark)
+
+	if(MSVC)
+		# Restore shared library value
+		set(BUILD_SHARED_LIBS ${_CACHE_BUILD_SHARED_LIBS})
+	endif()
 
 	set(GBENCH_ROOT_DIR
 		${googlebenchmark_SOURCE_DIR}
