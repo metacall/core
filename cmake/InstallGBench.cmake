@@ -25,33 +25,52 @@
 if(NOT GBENCH_FOUND OR USE_BUNDLED_GBENCH)
 	if(NOT GBENCH_VERSION OR USE_BUNDLED_GBENCH)
 		set(GBENCH_VERSION 1.6.1)
-		set(GBENCH_URL_MD5 8c33c51f9b7154e6c290df3750081c87)
 	endif()
 
-	ExternalProject_Add(google-bench-depends
-		DOWNLOAD_NAME	GBench-${GBENCH_VERSION}.tar.gz
-		URL				https://github.com/google/benchmark/archive/v${GBENCH_VERSION}.tar.gz
-		URL_MD5			${GBENCH_URL_MD5}
-		CMAKE_ARGS		-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DBENCHMARK_ENABLE_TESTING=OFF
-		TEST_COMMAND	""
+	include(FetchContent)
+
+	# Import Google Benchmark
+	FetchContent_Declare(
+		googlebenchmark
+		GIT_REPOSITORY https://github.com/google/benchmark.git
+		GIT_TAG v${GBENCH_VERSION}
 	)
 
-	ExternalProject_Get_Property(google-bench-depends INSTALL_DIR)
+	# Benchmark options
+	set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON CACHE BOOL "" FORCE)
+	set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 
 	if(MSVC)
-		set(GBENCH_LIB_PREFIX "")
-		set(GBENCH_LIB_SUFFIX "lib")
-	else()
-		set(GBENCH_LIB_PREFIX "lib")
-		set(GBENCH_LIB_SUFFIX "a")
+		# Build statically on Windows for avoiding DLL location issues (avoid populating the variable to the cache)
+		set(_CACHE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+		set(BUILD_SHARED_LIBS OFF)
 	endif()
 
-	set(GBENCH_ROOT_DIR			"${INSTALL_DIR}")
-	set(GBENCH_INCLUDE_DIR		"${GBENCH_ROOT_DIR}/include")
-	set(GBENCH_LIBRARY			"${GBENCH_ROOT_DIR}/lib/${GBENCH_LIB_PREFIX}benchmark.${GBENCH_LIB_SUFFIX}")
-	set(GBENCH_FOUND			TRUE)
+	FetchContent_MakeAvailable(googlebenchmark)
 
-	mark_as_advanced(GBENCH_INCLUDE_DIR GBENCH_LIBRARY)
+	if(MSVC)
+		# Restore shared library value
+		set(BUILD_SHARED_LIBS ${_CACHE_BUILD_SHARED_LIBS})
+	endif()
 
-	message(STATUS "Install Google Benchmark v${GBENCH_VERSION}")
-endif ()
+	set(GBENCH_ROOT_DIR
+		${googlebenchmark_SOURCE_DIR}
+	)
+
+	set(GBENCH_INCLUDE_DIR
+		${googlebenchmark_SOURCE_DIR}/include
+	)
+
+	set(GBENCH_LIBRARY
+		benchmark
+	)
+
+	set(GBENCH_FOUND TRUE)
+
+	mark_as_advanced(
+		GBENCH_INCLUDE_DIR
+		GBENCH_LIBRARY
+	)
+
+	message(STATUS "Fetch Google Benchmark v${GBENCH_VERSION}")
+endif()

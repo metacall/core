@@ -902,7 +902,7 @@ sub_clang(){
 	echo "configure clang"
 	cd $ROOT_DIR
 
-	if [ "$(uname)" = 'Linux' ]; then
+	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
 	fi
 }
@@ -911,7 +911,7 @@ sub_clang_msan(){
 	echo "configure clang msan"
 	cd $ROOT_DIR
 
-	if [ "$(uname)" = 'Linux' ]; then
+	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
 			clang lld libclang-rt-dev llvm-dev \
 			build-essential cmake ninja-build git ca-certificates \
@@ -957,27 +957,6 @@ sub_clang_msan(){
 
 		ninja -C /tmp/msan/cxx_build/ -j$(nproc)
 		$SUDO_CMD ninja -C /tmp/msan/cxx_build/ install
-
-		# TODO: Move this to InstallGTest.cmake (only ignore list left)
-
-		# # Build googletest with memory sanitizer
-		# mkdir -p /tmp/msan/gtest
-		# printf "[memory]\nsrc:*/googletest/*\nfun:testing::*\n" > /tmp/msan/gtest/msan-ignorelist.txt
-		# git clone --depth=1 --branch v1.16.0 https://github.com/google/googletest.git /tmp/msan/gtest/googletest
-		# 
-		# cmake \
-		# 	-S /tmp/msan/gtest/googletest \
-		# 	-B /tmp/msan/gtest/build \
-		# 	-G Ninja \
-		# 	-DCMAKE_BUILD_TYPE=Release \
-		# 	-DCMAKE_INSTALL_PREFIX=/usr/local \
-		# 	-DCMAKE_C_COMPILER=/usr/bin/clang \
-		# 	-DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-		# 	-DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -stdlib=libc++ -fsanitize-ignorelist=/tmp/msan/gtest/msan-ignorelist.txt" \
-		# 	-DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++" \
-		# 	-DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=memory -stdlib=libc++"
-		# cmake --build /tmp/msan/gtest/build -j$(nproc)
-		# $SUDO_CMD cmake --install /tmp/msan/gtest/build
 
 		rm -rf /tmp/msan
 	fi

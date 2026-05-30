@@ -119,7 +119,7 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 		"__THREAD_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(SANITIZER_LIBRARIES -fsanitize=memory -fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
+	set(SANITIZER_LIBRARIES -lmsan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.supp"
 	)
@@ -150,54 +150,65 @@ else()
 	set(SANITIZER_COMPILE_DEFINITIONS)
 endif()
 
-function(find_sanitizer NAME LINK_OPTION)
+function(find_sanitizer NAME)
 	string(TOUPPER "${NAME}" NAME_UPPER)
-	set(SANITIZER_PROGRAM_CODE "int main() {return 0;}")
-	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate.cpp" "${SANITIZER_PROGRAM_CODE}")
 
-	try_compile(
-		STATUS
-			${PROJECT_OUTPUT_DIR}
-			${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate.cpp
-		OUTPUT_VARIABLE SANITIZER_COMPILER_OUTPUT
-		LINK_OPTIONS ${LINK_OPTION}
-		COPY_FILE ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate
-	)
+	if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+		execute_process(
+			COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=lib${NAME}.so
+			OUTPUT_VARIABLE LIB_PATH
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+	elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		execute_process(
+			COMMAND ${CMAKE_CXX_COMPILER} --print-runtime-dir
+			OUTPUT_VARIABLE RUNTIME_DIR
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
 
-	if(NOT STATUS)
-		message(FATAL_ERROR "Could not find location for lib${NAME}: ${SANITIZER_COMPILER_OUTPUT}")
-		return()
+		file(GLOB RUNTIME_CANDIDATES
+			"${RUNTIME_DIR}/*${NAME}*.so"
+			"${RUNTIME_DIR}/*${NAME}*.dylib"
+		)
+
+		list(LENGTH RUNTIME_CANDIDATES NUM_FOUND)
+
+		if(NUM_FOUND GREATER 0)
+			list(GET RUNTIME_CANDIDATES 0 LIB_PATH)
+		endif()
 	endif()
 
-	file(GET_RUNTIME_DEPENDENCIES
-		EXECUTABLES ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate
-		RESOLVED_DEPENDENCIES_VAR SANITIZER_PROGRAM_LIBRARIES
-	)
-
-	foreach(DEPENDENCY IN LISTS SANITIZER_PROGRAM_LIBRARIES)
-		string(FIND "${DEPENDENCY}" "${NAME}" POSITION)
-		if(POSITION GREATER -1)
-			set(LIB${NAME_UPPER}_PATH "${DEPENDENCY}" PARENT_SCOPE)
-			return()
-		endif()
-	endforeach()
+	if(LIB_PATH)
+		set(LIB${NAME_UPPER}_PATH "${LIB_PATH}" PARENT_SCOPE)
+	endif()
 endfunction()
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 	if(OPTION_BUILD_THREAD_SANITIZER)
-		find_sanitizer(tsan -fsanitize=thread)
-		set(SANITIZER_LIBRARIES_PATH
-			"${LIBTSAN_PATH}"
-		)
-	elseif(OPTION_BUILD_MEMORY_SANITIZER)
-		set(SANITIZER_LIBRARIES_PATH)
+		find_sanitizer(tsan)
+		if(LIBTSAN_PATH)
+			set(SANITIZER_LIBRARIES_PATH
+				"${LIBTSAN_PATH}"
+			)
+		endif()
+	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+		find_sanitizer(msan)
+		find_sanitizer(ubsan)
+		if(LIBMSAN_PATH AND LIBUBSAN_PATH)
+			set(SANITIZER_LIBRARIES_PATH
+				"${LIBMSAN_PATH}"
+				"${LIBUBSAN_PATH}"
+			)
+		endif()
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER)
-		find_sanitizer(asan -fsanitize=address)
-		find_sanitizer(ubsan -fsanitize=undefined)
-		set(SANITIZER_LIBRARIES_PATH
-			"${LIBASAN_PATH}"
-			"${LIBUBSAN_PATH}"
-		)
+		find_sanitizer(asan)
+		find_sanitizer(ubsan)
+		if(LIBASAN_PATH AND LIBUBSAN_PATH)
+			set(SANITIZER_LIBRARIES_PATH
+				"${LIBASAN_PATH}"
+				"${LIBUBSAN_PATH}"
+			)
+		endif()
 	endif()
 endif()
 
@@ -413,11 +424,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 		add_link_options(-fsanitize=memory)
 		add_link_options(-fsanitize-memory-track-origins)
 		add_link_options(-fsanitize-memory-use-after-dtor)
-		add_compile_options(-stdlib=libc++)
-		add_link_options(-stdlib=libc++)
-		add_link_options(-L/opt/llvm-msan/lib)
-		add_link_options(-Wl,-rpath,/opt/llvm-msan/lib)
-		endif()
+	endif()
 
 	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")

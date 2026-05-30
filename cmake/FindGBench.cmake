@@ -42,8 +42,26 @@ if(GBENCH_FOUND)
 	if(NOT GBENCH_FIND_QUIETLY)
 		message(STATUS "Found Google Benchmark:\n\tLibrary: ${GBENCH_LIBRARY}\n\tIncludes: ${GBENCH_INCLUDE_PATH}")
 	endif(NOT GBENCH_FIND_QUIETLY)
-else(GBENCH_FOUND)
+
+	# Create interface library to link against Google Bench
+	add_library(benchmark INTERFACE)
+
+	target_include_directories(benchmark
+		SYSTEM INTERFACE
+		${GBENCH_INCLUDE_DIR}
+	)
+
+	if(MSVC)
+		set(DEFAULT_GBENCH_OPTIONS Shlwapi.lib)
+	endif()
+
+	target_link_libraries(benchmark
+		INTERFACE
+		${GBENCH_LIBRARY}
+		${DEFAULT_GBENCH_OPTIONS}
+	)
+else()
 	if(GBENCH_FIND_REQUIRED)
 		message(FATAL_ERROR "Could not find Google Benchmark library")
 	endif(GBENCH_FIND_REQUIRED)
-endif(GBENCH_FOUND)
+endif()

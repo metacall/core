@@ -25,29 +25,7 @@ if(NOT GBENCH_FOUND)
 	set(GBENCH_INSTALL TRUE)
 endif()
 
-# Create interface library to link against Google Bench
-add_library(GBench INTERFACE)
-
-target_include_directories(GBench
-	SYSTEM INTERFACE
-	${GBENCH_INCLUDE_DIR}
-)
-
-if(MSVC)
-	set(DEFAULT_GBENCH_OPTIONS Shlwapi.lib)
-else()
-	set(DEFAULT_GBENCH_OPTIONS)
-endif()
-
-target_link_libraries(GBench
-	INTERFACE
-	${GBENCH_LIBRARY}
-	${DEFAULT_GBENCH_OPTIONS}
-)
-
-if(GBENCH_INSTALL)
-	add_dependencies(GBench google-bench-depends)
-endif()
+add_library(GBench ALIAS benchmark)
 
 # Create output directory
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/benchmarks)

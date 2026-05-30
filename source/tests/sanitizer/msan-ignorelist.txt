@@ -5,13 +5,10 @@
 
 [memory]
 
-# TODO: Rigth now we have tried to instrumetn libc++ and gtest but it is giving us problems
-# We need to rebuild LLVM libc++ with MSan support and the same with GTest library for making
-# tests work properly, meanwhile we have added this here. Eventually we should delete everything.
+# GoogleTest is ignored because it is built with MSan support
+# but its internal implementation triggers false positives. The googletest
+# library is instrumented separately with the correct MSan flags and ignorelist
+# via InstallGTest.cmake, so we suppress the googletest sources here to avoid
+# noise from the testing framework itself.
 src:*/googletest/*
-src:*/googlemock/*
-src:*/gtest/*
 fun:testing::*
-src:*/c++/*
-src:*/libstdc++*
-fun:std::*
