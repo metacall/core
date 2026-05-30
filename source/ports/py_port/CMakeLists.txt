@@ -109,6 +109,12 @@ if(OPTION_BUILD_ADDRESS_SANITIZER)
 	endif()
 endif()
 
+# Check if we can use preloaded sanitizers
+if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	AND NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
+	return()
+endif()
+
 message(STATUS "Test ${py_port_test_exec}")
 
 # Add test (Python)

@@ -159,10 +159,6 @@ function(find_sanitizer NAME)
 			OUTPUT_VARIABLE LIB_PATH
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
-
-		if(LIB_PATH STREQUAL "lib${NAME}.so")
-			message(FATAL_ERROR "Could not locate ${NAME} sanitizer runtime")
-		endif()
 	elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		execute_process(
 			COMMAND ${CMAKE_CXX_COMPILER} --print-runtime-dir
@@ -177,11 +173,9 @@ function(find_sanitizer NAME)
 
 		list(LENGTH RUNTIME_CANDIDATES NUM_FOUND)
 
-		if(NUM_FOUND EQUAL 0)
-			message(FATAL_ERROR "Could not locate ${NAME} sanitizer runtime in ${RUNTIME_DIR}")
+		if(NUM_FOUND GREATER 0)
+			list(GET RUNTIME_CANDIDATES 0 LIB_PATH)
 		endif()
-
-		list(GET RUNTIME_CANDIDATES 0 LIB_PATH)
 	endif()
 
 	if(LIB_PATH)
@@ -192,23 +186,29 @@ endfunction()
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 	if(OPTION_BUILD_THREAD_SANITIZER)
 		find_sanitizer(tsan)
-		set(SANITIZER_LIBRARIES_PATH
-			"${LIBTSAN_PATH}"
-		)
+		if(LIBTSAN_PATH)
+			set(SANITIZER_LIBRARIES_PATH
+				"${LIBTSAN_PATH}"
+			)
+		endif()
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 		find_sanitizer(msan)
 		find_sanitizer(ubsan)
-		set(SANITIZER_LIBRARIES_PATH
-			"${LIBMSAN_PATH}"
-			"${LIBUBSAN_PATH}"
-		)
+		if(LIBMSAN_PATH AND LIBUBSAN_PATH)
+			set(SANITIZER_LIBRARIES_PATH
+				"${LIBMSAN_PATH}"
+				"${LIBUBSAN_PATH}"
+			)
+		endif()
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER)
 		find_sanitizer(asan)
 		find_sanitizer(ubsan)
-		set(SANITIZER_LIBRARIES_PATH
-			"${LIBASAN_PATH}"
-			"${LIBUBSAN_PATH}"
-		)
+		if(LIBASAN_PATH AND LIBUBSAN_PATH)
+			set(SANITIZER_LIBRARIES_PATH
+				"${LIBASAN_PATH}"
+				"${LIBUBSAN_PATH}"
+			)
+		endif()
 	endif()
 endif()
 
