@@ -474,14 +474,16 @@ typedef struct loader_impl_interface_type
 
 A loader must implement it to be considered a valid loader.
 
-- `initialize` starts up the run-time.
+- `initialize` starts up the run-time for that loader instance.
 - `execution_path` defines a new import path to the run-time.
-- `load_from_file` loads a code from file into the run-time and returns a handle which represents it.
-- `load_from_memory` loads a code from memory into the run-time and returns a handle which represents it.
-- `load_from_package` loads a code from a compiled library or package into the run-time and returns a handle which represents it.
-- `clear` unloads a handle from the run-time.
-- `discover` inspects a handle previously loaded.
-- `destroy` shutdowns the run-time.
+- `load_from_file` loads code from one or more files into the run-time and returns a handle which represents that loaded unit.
+- `load_from_memory` loads code from memory into the run-time and returns a handle which represents that loaded unit.
+- `load_from_package` loads code from a compiled library or package into the run-time and returns a handle which represents it. The exact meaning of a package is loader specific.
+- `discover` inspects a handle previously loaded and populates the **METACALL** reflection context with the exported symbols, signatures, classes, and other metadata required for interoperation. In the common flow, this step is triggered by the core immediately after a successful `load_from_*`.
+- `clear` unloads a handle from the run-time. This is a per-handle operation and invalidates that handle and the symbols associated with it.
+- `destroy` shutdowns the run-time. This is the final per-loader operation and tears down the loader instance itself.
+
+The common lifecycle is `initialize` -> optional `execution_path` -> `load_from_file`, `load_from_memory`, or `load_from_package` -> `discover` -> call or inspect through the **METACALL** API -> `clear` -> `destroy`. After a successful load, the returned handle becomes managed by **METACALL** and remains valid until it is cleared or the loader is destroyed during shutdown. Depending on the loader and loading mode, a single handle may represent multiple files loaded together, while symbols loaded without a private handle may be propagated to the loader scope instead.
 
 ##### 5.3.1.1 Python
 
