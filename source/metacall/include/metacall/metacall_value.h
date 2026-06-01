@@ -71,6 +71,18 @@ enum metacall_value_id
 
 /**
 *  @brief
+*    Create a value of type @id initialized to a default value.
+*
+*  @param[in] id
+*    Type of the value that will be created and initialized to a default value
+*
+*  @return
+*    Pointer to value of type @id if success, null otherwise
+*/
+METACALL_API void *metacall_value_create(enum metacall_value_id id);
+
+/**
+*  @brief
 *    Create a value from boolean @b
 *
 *  @param[in] b
