@@ -21,8 +21,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO: Implement more architectures and versions matrix
-        # TODO: Implement OpenBSD, Haiku, OmniOS
         build: [debug, relwithdebinfo, release]
         arch: [x86-64, arm64]
         sanitizer: ["", "address-sanitizer", "thread-sanitizer"]
@@ -34,6 +32,8 @@ jobs:
         include:
           - arch: x86-64
             extra-loaders: "c wasm"
+          - arch: arm64
+            extra-loaders: "c"
 
     steps:
       - name: Checkout
