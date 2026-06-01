@@ -33,6 +33,8 @@ TEST_F(metacall_node_conversion_test, DefaultConstructor)
 {
 	metacall_print_info();
 
+	metacall_log_null();
+
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	{
@@ -42,13 +44,35 @@ TEST_F(metacall_node_conversion_test, DefaultConstructor)
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", script, sizeof(script), &handle));
 
-		void *args[1] = { metacall_value_create(METACALL_INT) };
+		{
+			void *args[1] = { metacall_value_create(METACALL_INT) };
 
-		ret = metacallhv(handle, "identity", args);
+			ret = metacallhv(handle, "identity", args);
 
-		EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		// TODO:
+		/*
+		for (size_t id = 0; id < METACALL_SIZE; ++id)
+		{
+			void *args[1] = { metacall_value_create((enum metacall_value_id)id) };
+
+			ret = metacallhv(handle, "identity", args);
+
+			EXPECT_NE((void *)NULL, (void *)ret);
+
+			std::cout << metacall_value_id_name((enum metacall_value_id)id) << " => " << metacall_value_id_name(metacall_value_id(ret)) << std::endl;
+
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+		*/
 	}
 
 	metacall_destroy();
