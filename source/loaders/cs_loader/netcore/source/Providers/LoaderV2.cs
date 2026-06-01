@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using System.Runtime.CompilerServices;
 using CSLoader.Contracts;
 
 namespace CSLoader.Providers
@@ -16,7 +17,7 @@ namespace CSLoader.Providers
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
             AppDomain.CurrentDomain.TypeResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
 
-            loadContext = new CollectibleAssemblyLoadContext();
+            loadContext = new Dictionary<string, CollectibleAssemblyLoadContext>();
         }
 
         private Assembly AssemblyResolveEventHandler(object sender, ResolveEventArgs args)
@@ -72,68 +73,128 @@ namespace CSLoader.Providers
             return System.IO.Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll");
         }
 
-        protected override Assembly MakeAssembly(MemoryStream stream)
+        protected override Assembly MakeAssembly(MemoryStream stream, string scriptHandle)
         {
-            return loadContext.LoadFromStream(stream);
+	        var alc = new CollectibleAssemblyLoadContext();
+			loadContext[scriptHandle] = alc;
+            return alc.LoadFromStream(stream);
         }
 
-        protected override Assembly Load(AssemblyName assemblyName)
+        protected override Assembly Load(AssemblyName assemblyName, string scriptHandle)
         {
-            // First check default context to resolve references
-            Assembly asm = null;
-
-            try
+            // Use alc for the current handle if it exits
+			if (loadContext.TryGetValue(scriptHandle, out var alc))
             {
-                asm = loadContext.LoadFromAssemblyName(assemblyName);
+                try
+                {
+                    return alc.LoadFromAssemblyName(assemblyName);
+                }
+                catch
+                {
+                    // Fall through to default load
+                }
             }
-            catch
-            {
-                // Fallback to default load
-                asm = Assembly.Load(assemblyName);
-            }
-
-            return asm;
+			// fallback to default
+            return Assembly.Load(assemblyName);
         }
 
-        protected override Assembly LoadFile(string assemblyFile)
+        protected override Assembly LoadFile(string assemblyFile, string scriptHandle)
         {
+	        var alc = new CollectibleAssemblyLoadContext();
+	        loadContext[scriptHandle] = alc;
             using (var fs = new FileStream(assemblyFile, FileMode.Open, FileAccess.Read))
             {
-                return loadContext.LoadFromStream(fs);
+                return alc.LoadFromStream(fs);
             }
         }
+
+        public Dictionary<string, int> GetLoadedFunctionsMetadata()
+        {
+	        var metadata = new Dictionary<string, int>();
+
+	        foreach (var kvp in this.functions)
+	        {
+		        string functionName = kvp.Key;
+		        int parameterCount = kvp.Value.Parameters.Length;
+
+				metadata.Add(functionName, parameterCount);
+	        }
+
+	        return metadata;
+        }
+
+        // get the count of loaded context for testing
+        public int LoadContextCount => loadContext.Count;
+
+		// returns a handle so test can ref it
+        public string LoadFromSourceFunctionsWithHandle(string[] source)
+        {
+			string handle = Guid.NewGuid().ToString();
+			LoadFromSourceFunctions(source, handle);
+			return handle;
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void UnloadContext(string scriptHandle)
+        {
+			// Remove all functions in this script
+	        var toRemove = new List<string>();
+
+	        foreach (var kvp in functions)
+	        {
+				if (kvp.Value.ScriptHandle == scriptHandle) toRemove.Add(kvp.Key);
+	        }
+	        foreach (var key in toRemove)
+	        {
+		        functions.Remove(key);
+	        }
+
+	        if (loadContext.TryGetValue(scriptHandle, out var alc))
+	        {
+				alc.Unload();
+				loadContext.Remove(scriptHandle);
+	        }
+        }
+
+        public void UnloadScript(string scriptHandle)
+        {
+			if (!loadContext.ContainsKey(scriptHandle)) return;
+
+			var weakRef = new WeakReference(loadContext[scriptHandle], true);
+
+			// JIT will fully exit before the GC loop
+			UnloadContext(scriptHandle);
+
+			for (int i = 0; weakRef.IsAlive && i < 20; i++)
+			{
+				GC.Collect();
+				GC.WaitForPendingFinalizers();
+				GC.Collect();
+			}
+
+			if (weakRef.IsAlive)
+			{
+				log.Error($"AssemblyLoadContext for script {scriptHandle} did not unload.");
+			}
+			else
+			{
+				log.Info($"AssemblyLoadContext for script {scriptHandle} unloaded successfully.");
+			}
+		}
 
         public override void Unload()
         {
-            if (loadContext != null)
-            {
-                contextWeakRef = new WeakReference(loadContext);
-                loadContext.Unload();
-                loadContext = null;
+			// finally unload all scripts
+			var handles = new List<string>(loadContext.Keys);
+			foreach (var handle in handles)
+			{
+				UnloadScript(handle);
+			}
 
-                // Clear strong references to allow unload
-                functions.Clear();
+			AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolveEventHandler;
+			AppDomain.CurrentDomain.TypeResolve -= AssemblyResolveEventHandler;
+		}
 
-                for (int i = 0; contextWeakRef.IsAlive && i < 10; i++)
-                {
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    GC.Collect();
-                }
-
-                if (contextWeakRef.IsAlive)
-                {
-                    // TODO: Review this?
-                    log.Error("AssemblyLoadContext did not unload.");
-                }
-                else
-                {
-                    log.Info("AssemblyLoadContext unloaded successfully.");
-                }
-            }
-        }
-
-        private CollectibleAssemblyLoadContext loadContext;
+        private readonly Dictionary<string, CollectibleAssemblyLoadContext> loadContext = new Dictionary<string, CollectibleAssemblyLoadContext>();
         private WeakReference contextWeakRef;
     }
 }
