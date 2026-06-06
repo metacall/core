@@ -63,6 +63,7 @@ case "$(uname -s)" in
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
 	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
+	Haiku*)		OPERATIVE_SYSTEM=Haiku;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 

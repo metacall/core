@@ -71,6 +71,7 @@ case "$(uname -s)" in
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
 	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
+	Haiku*)		OPERATIVE_SYSTEM=Haiku;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
@@ -142,7 +143,7 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
-		pkgman install -y cmake git make wget 
+		pkgman install -y cmake git make wget getconf
 	fi
 }
 
