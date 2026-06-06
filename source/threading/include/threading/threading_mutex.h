@@ -42,6 +42,7 @@ typedef CRITICAL_SECTION threading_mutex_impl_type;
 	defined(__FreeBSD__) || \
 	defined(__NetBSD__) || \
 	defined(__OpenBSD__) || \
+	defined(__HAIKU__) || \
 	(defined(bsdi) || defined(__bsdi__)) || \
 	defined(__DragonFly__)
 	#include <pthread.h>

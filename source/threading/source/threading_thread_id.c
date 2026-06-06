@@ -55,7 +55,7 @@
 #elif defined(__FreeBSD__)
 	#include <sys/thr.h>
 #elif defined(__HAIKU__) || defined(__BEOS__)
-	#include <be/kernel/OS.h>
+	#include <kernel/OS.h>
 #else
 	#error "Unsupported platform thread id"
 #endif
@@ -89,7 +89,7 @@ uint64_t thread_id_get_current(void)
 
 	return (thread_id < 0) ? 0 : (uint64_t)thread_id;
 #elif defined(__HAIKU__) || defined(__BEOS__)
-	return (uint64_t)thread_get_current_thread_id();
+	return (uint64_t)find_thread(NULL);
 #else
 	return THREAD_ID_INVALID;
 #endif
