@@ -1340,8 +1340,14 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 		}
 		else if (napi_is_buffer(env, v, &result) == napi_ok && result == true)
 		{
-			/* TODO */
-			napi_throw_error(env, nullptr, "NodeJS Loader buffer is not implemented");
+			void *data;
+			size_t length;
+
+			status = napi_get_buffer_info(env, v, &data, &length);
+
+			node_loader_impl_exception(env, status);
+
+			ret = value_create_buffer(data, length);
 		}
 		else if (napi_is_error(env, v, &result) == napi_ok && result == true)
 		{
@@ -1708,6 +1714,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 
 		napi_define_class(env, cls->name, NAPI_AUTO_LENGTH, )
 		*/
+		napi_throw_error(env, nullptr, "NodeJS Loader class is not implemented");
 	}
 	else if (id == TYPE_OBJECT)
 	{
