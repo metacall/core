@@ -38,6 +38,8 @@ jobs:
           architecture: ${{ matrix.arch }}
           shell: sh
           run: |
+            pkgman search gcc
+            pkgman search libssp
             sh ./tools/metacall-environment.sh base
             mkdir -p build && cd build
             sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts
