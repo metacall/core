@@ -143,7 +143,7 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
-		pkgman install -y cmake git make wget getconf gcc_devel
+		pkgman install -y cmake git make wget getconf
 	fi
 }
 
