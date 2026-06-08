@@ -27,7 +27,7 @@ static int portability_library_path_ends_with(const char path[], const char name
 
 #if defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__)
+	defined(__FreeBSD__) ||  defined(__HAIKU__)
 
 	#ifndef _GNU_SOURCE
 		#define _GNU_SOURCE
@@ -69,7 +69,7 @@ int portability_library_path_ends_with(const char path[], const char name[])
 
 #if defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__)
+	defined(__FreeBSD__) || defined(__HAIKU__)
 
 /* -- Type Definitions -- */
 
@@ -126,7 +126,7 @@ int portability_library_path_find(const char name[], portability_library_path_st
 {
 #if defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__)
+	defined(__FreeBSD__) || defined(__HAIKU__)
 
 	struct portability_library_path_find_phdr_type data = {
 		name,
@@ -232,7 +232,7 @@ int portability_library_path_list(portability_library_path_list_cb callback, voi
 	}
 
 #if defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__FreeBSD__)
+	defined(__FreeBSD__) || defined(__HAIKU__)
 	{
 		struct portability_library_path_list_phdr_type list_phdr = {
 			callback,
