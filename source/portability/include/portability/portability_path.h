@@ -72,6 +72,13 @@
 	#include <sys/stat.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
+#elif defined(__HAIKU__) || defined(__BEOS__)
+	#include <limits.h>
+	#include <sys/stat.h>
+	#include <unistd.h>
+	#include <stddef.h>
+
+	#define PORTABILITY_PATH_SIZE PATH_MAX
 #else
 	#error "Unimplemented platform, please add support to it"
 #endif

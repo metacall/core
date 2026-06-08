@@ -45,6 +45,8 @@ typedef ssize_t portability_executable_path_length;
 typedef uint32_t portability_executable_path_length;
 #elif defined(sun) || defined(__sun)
 typedef size_t portability_executable_path_length;
+#elif defined(__HAIKU__) || defined(__BEOS__)
+typedef size_t portability_executable_path_length;
 #else
 	#error "Unimplemented platform, please add support to it"
 #endif

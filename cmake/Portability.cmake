@@ -82,15 +82,15 @@ if(PROJECT_OS_HAIKU)
 
 	# Workaround to enable Haiku with export headers
 	# This can be removed once export headers support Haiku
-	if(PROJECT_OS_HAIKU)
-		# As the function is already patched, repatch it again
-		function(_GENERATE_EXPORT_HEADER)
-			set(WIN32 1)
-			# When the function is redefined, the old function can be accessed through underscore
-			__GENERATE_EXPORT_HEADER(${ARGN})
-			unset(WIN32)
-		endfunction()
-	endif()
+	# if(PROJECT_OS_HAIKU)
+	# 	# As the function is already patched, repatch it again
+	# 	function(_GENERATE_EXPORT_HEADER)
+	# 		set(WIN32 1)
+	# 		# When the function is redefined, the old function can be accessed through underscore
+	# 		__GENERATE_EXPORT_HEADER(${ARGN})
+	# 		unset(WIN32)
+	# 	endfunction()
+	# endif()
 endif()
 
 # Check Windows
