@@ -835,24 +835,34 @@ sub_rust(){
 
 		#curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 
-        wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
+        . /etc/os-release  
 
-        . "$HOME/.cargo/env"
+		RUST_DISTRO="${VERSION_CODENAME}"
+		DEV_PACKAGE="rust-toolchain-dev-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
+        RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.1"
 
         cd /tmp
 
-        wget https://github.com/SATVIKsynopsis/metacall-rust-toolchain/releases/download/v0.1-patched-rust/rust-1.94.0-dev-x86_64-unknown-linux-gnu.tar.xz -O rust-toolchain.tar.xz
+        wget -O "${DEV_PACKAGE}" \
+		        "${RUST_RELEASE_URL}/${DEV_PACKAGE}"
 
-        tar -xJf rust-toolchain.tar.xz
+        cd /
 
-        cd rust-1.94.0-dev-x86_64-unknown-linux-gnu
+        tar -xzf "/tmp/${DEV_PACKAGE}"
 
-        ./install.sh --prefix="$HOME/.patched-rust"
+		# ln -sf /usr/local/lib/libLLVM-21-rust-1.94.0-nightly.so \
+        # /usr/local/lib/rustlib/x86_64-unknown-linux-gnu/lib/libLLVM-21-rust-1.94.0-nightly.so
 
-        rustup toolchain link patched-x86_64-unknown-linux-gnu "$HOME/.patched-rust"
+        # ln -sf /usr/local/lib/libLLVM.so.21.1-rust-1.94.0-nightly \
+        # /usr/local/lib/rustlib/x86_64-unknown-linux-gnu/lib/libLLVM.so.21.1-rust-1.94.0-nightly
 
-        rustup default patched-x86_64-unknown-linux-gnu
+        ldconfig
 
+        rustc -Vv
+        cargo -V
+	    cargo clippy --version
+	    rustfmt --version
+	
 		# TODO:
 		# if [ "${ARCHITECTURE}" = "386" ]; then
 		# 	. "$HOME/.cargo/env"
