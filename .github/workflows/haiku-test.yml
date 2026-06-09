@@ -40,5 +40,5 @@ jobs:
           run: |
             sh ./tools/metacall-environment.sh base
             mkdir -p build && cd build
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts
-            sh ../tools/metacall-build.sh ${{ matrix.build }} 
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }} tests
