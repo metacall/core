@@ -22,7 +22,6 @@ jobs:
           os: [macos-latest, ubuntu-latest]
 
     env:
-      LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
@@ -134,7 +133,6 @@ jobs:
           os: [windows-2022, windows-2025]
 
     env:
-      LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 

@@ -269,4 +269,7 @@ loader_configuartion_end_development()
 # Install
 loader_configuration_begin(node_loader)
 loader_configuration_deps(node "${NodeJS_LIBRARY_INSTALL}")
+loader_configuration_env(
+	"NODE_PATH=${CMAKE_INSTALL_PREFIX}/lib/node_modules"
+)
 loader_configuartion_end_install()

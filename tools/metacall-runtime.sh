@@ -53,6 +53,7 @@ case "$(uname -s)" in
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
@@ -99,6 +100,11 @@ else
 	# TODO: Implement more distros or better detection
 	LINUX_DISTRO=unknown
 	LINUX_VERSION_ID=unknown
+fi
+
+# Disable warnings from apt
+if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+	export DEBIAN_FRONTEND="noninteractive"
 fi
 
 # Install and mark packages to avoid autoremove

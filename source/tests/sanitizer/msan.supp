@@ -1,8 +1,1 @@
-# TODO: Rigth now we have tried to instrumetn libc++ and gtest but it is giving us problems
-# We need to rebuild LLVM libc++ with MSan support and the same with GTest library for making
-# tests work properly, meanwhile we have added this here. Eventually we should delete everything.
-fun:testing::internal::*
-fun:testing::UnitTest*
-fun:testing::Test*
-fun:testing::internal::GetTestTypeId*
-fun:testing::internal::CodeLocation*
+# TODO

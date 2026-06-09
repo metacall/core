@@ -68,6 +68,11 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
       - [5.3.3 Detours](#533-detours)
         - [5.3.3.1 PLTHook](#5331-plthook)
     - [5.4 Ports](#54-ports)
+      - [5.4.1 Responsibilities](#541-responsibilities)
+      - [5.4.2 Port Implementations](#542-port-implementations)
+      - [5.4.3 Representative Examples](#543-representative-examples)
+      - [5.4.4 Lifecycle](#544-lifecycle)
+      - [5.4.5 Limitations and Future Work](#545-limitations-and-future-work)
     - [5.5 Serialization](#55-serialization)
     - [5.6 Memory Layout](#56-memory-layout)
     - [5.7 Fork Model](#57-fork-model)
@@ -469,14 +474,16 @@ typedef struct loader_impl_interface_type
 
 A loader must implement it to be considered a valid loader.
 
-- `initialize` starts up the run-time.
+- `initialize` starts up the run-time for that loader instance.
 - `execution_path` defines a new import path to the run-time.
-- `load_from_file` loads a code from file into the run-time and returns a handle which represents it.
-- `load_from_memory` loads a code from memory into the run-time and returns a handle which represents it.
-- `load_from_package` loads a code from a compiled library or package into the run-time and returns a handle which represents it.
-- `clear` unloads a handle from the run-time.
-- `discover` inspects a handle previously loaded.
-- `destroy` shutdowns the run-time.
+- `load_from_file` loads code from one or more files into the run-time and returns a handle which represents that loaded unit.
+- `load_from_memory` loads code from memory into the run-time and returns a handle which represents that loaded unit.
+- `load_from_package` loads code from a compiled library or package into the run-time and returns a handle which represents it. The exact meaning of a package is loader specific.
+- `discover` inspects a handle previously loaded and populates the **METACALL** reflection context with the exported symbols, signatures, classes, and other metadata required for interoperation. In the common flow, this step is triggered by the core immediately after a successful `load_from_*`.
+- `clear` unloads a handle from the run-time. This is a per-handle operation and invalidates that handle and the symbols associated with it.
+- `destroy` shutdowns the run-time. This is the final per-loader operation and tears down the loader instance itself.
+
+The common lifecycle is `initialize` -> optional `execution_path` -> `load_from_file`, `load_from_memory`, or `load_from_package` -> `discover` -> call or inspect through the **METACALL** API -> `clear` -> `destroy`. After a successful load, the returned handle becomes managed by **METACALL** and remains valid until it is cleared or the loader is destroyed during shutdown. Depending on the loader and loading mode, a single handle may represent multiple files loaded together, while symbols loaded without a private handle may be propagated to the loader scope instead.
 
 ##### 5.3.1.1 Python
 
@@ -503,6 +510,94 @@ A loader must implement it to be considered a valid loader.
 ##### 5.3.3.1 PLTHook
 
 ### 5.4 Ports
+
+Ports are the frontends to the **METACALL C API**. If [`loaders`](#531-loaders) allow **METACALL** to embed a foreign run-time into C, ports allow a host language to embed **METACALL** into itself. Both layers are complementary and in most real applications they are used together.
+
+```
+Host Language -> Port -> MetaCall C API -> MetaCall Core -> Loader -> Foreign Run-time
+```
+
+For example, when Python uses the Python Port to call Ruby code, the Python Port translates Python values and control flow into **METACALL** API calls, and the Ruby Loader is the component that actually embeds the Ruby run-time and executes the target function.
+
+Unlike loaders, ports do not implement a single formal plugin interface inside the core. They are language specific wrappers built around the same **METACALL C API**, so what is shared between ports is a common lifecycle and conceptual model rather than a single ABI or vtable shape.
+
+In the common case, ports are used explicitly through their API. The host language initializes **METACALL**, loads foreign code with helpers such as `metacall_load_from_file`, `metacall_load_from_memory`, or `metacall_load_from_package`, and then invokes exported symbols with `metacall` or the equivalent call helpers provided by that port. This explicit workflow is the default interoperability model and it is the one every port can provide consistently.
+
+As a convenience, some ports also support direct import patterns such as `require('./sum.py')` or `import script.js`. This is optional sugar layered on top of the explicit API, not a separate loading mechanism. In order to support it, a port must integrate with the host language import or module system, map file extensions or prefixes to the appropriate loader tags, and rely on an existing loader for the target language. That integration may be implemented by monkey patching, custom import hooks, native module loader extension points, or any other mechanism offered by the host language. If any of those pieces are missing, the explicit port API remains the standard way to call foreign code. In most implementations, the imported value is not a native module loaded directly by the host runtime, but a host language object or module synthesized by the port from a **METACALL** handle and the exported symbols discovered by the loader. For example, the Python Port implements this behavior in [`py_port/metacall/api.py`](/source/ports/py_port/metacall/api.py): `__metacall_import__` overrides the import flow, `file_extensions_to_tag` and `package_extensions_to_tag` resolve the correct loader tag, and the actual loading is delegated to `module.metacall_load_from_file_export(...)` or `module.metacall_load_from_package_export(...)` before a Python module object is generated from the returned handle.
+
+#### 5.4.1 Responsibilities
+
+Although the concrete implementation varies between languages, every port has the same general responsibilities:
+
+- Initialize and destroy the **METACALL** core from the host language.
+
+- Expose the loading API (`metacall_load_from_file`, `metacall_load_from_memory`, `metacall_load_from_package`, and configuration based loading when available).
+
+- Expose the invocation API (`metacall`, handle based calls, inspection, futures or await helpers when supported).
+
+- Convert host language values to [`reflect`](#52-reflect) values and convert returned values back to native host language types.
+
+- Hide the manual memory management required by the C API.
+
+- Adapt callbacks, exceptions, promises or futures, and thread affinity to the semantics of the host language.
+
+- Optionally integrate with the module or import system of the host language for a more idiomatic user experience.
+
+Compiled host languages still need this boundary. Being compiled does not provide a common reflection model, calling convention, ownership model, or asynchronous interface. For languages such as Go or Rust, the port is mainly responsible for bridging the ABI and the type system, not for embedding an interpreter.
+
+#### 5.4.2 Port Implementations
+
+The current source tree contains two families of ports:
+
+- Standalone or native ports, implemented directly with the host language tooling. At the moment this includes [`cxx_port`](/source/ports/cxx_port), [`node_port`](/source/ports/node_port), [`py_port`](/source/ports/py_port), [`go_port`](/source/ports/go_port), and [`rs_port`](/source/ports/rs_port).
+
+- SWIG based ports, kept mostly for compatibility or bootstrap purposes. The current build system still includes ports such as [`cs_port`](/source/ports/cs_port), [`d_port`](/source/ports/d_port), [`java_port`](/source/ports/java_port), [`js_port`](/source/ports/js_port), [`lua_port`](/source/ports/lua_port), [`php_port`](/source/ports/php_port), [`pl_port`](/source/ports/pl_port), [`r_port`](/source/ports/r_port), and [`rb_port`](/source/ports/rb_port).
+
+The project is gradually moving away from SWIG. The current build scripts already document this as a transitional architecture and the long term intention is to unify ports and loaders more cleanly.
+
+#### 5.4.3 Representative Examples
+
+The following examples show that ports are not identical wrappers; each one adapts **METACALL** to the expectations of the host ecosystem.
+
+- The NodeJS Port combines a native addon with a JavaScript layer. Besides exposing explicit functions such as `metacall_load_from_file`, it monkey patches `require` so expressions like `require('./script.py')` can be resolved through the correct loader transparently.
+
+- The Python Port loads a platform specific extension module and monkey patches `__import__`. This allows patterns such as `import script.js` or `from metacall.node import ramda` while presenting the loaded handle as a normal Python module.
+
+- The Go Port is implemented over `cgo`. It wraps the C API, translates Go values and callbacks, and serializes work through a goroutine locked to an operating system thread in order to adapt to thread sensitive loader behavior.
+
+- The Rust Port uses generated bindings together with a safe wrapper API. It exposes typed `Result` based calls, loader helpers, and higher level abstractions over the raw C interface.
+
+- The C++ Port is a native library layer over the C API intended to provide a more idiomatic C++ integration without changing the core architecture.
+
+#### 5.4.4 Lifecycle
+
+In general, the lifecycle of a port is the following one:
+
+1. Initialize **METACALL** from the host language.
+
+2. Load one or more scripts or packages by specifying the loader tag.
+
+3. Invoke functions, inspect handles, or await asynchronous results through the port API.
+
+4. Destroy **METACALL** when the host process is finished with the runtime.
+
+This lifecycle is intentionally similar across ports so that the operational model remains constant even if the syntax of each language changes.
+
+#### 5.4.5 Limitations and Future Work
+
+Ports do not replace loaders; they depend on them. A port can only call into run-times for which a loader exists and has been correctly configured. In the same way, ports inherit many constraints from the core, such as the threading and fork safety limitations described in the following sections.
+
+Current limitations in the port layer include:
+
+- Different maturity levels between ports.
+
+- Remaining SWIG based wrappers.
+
+- Host language specific deadlocks or callback limitations when multiple run-times are mixed together.
+
+- Duplication of conversion logic between ports.
+
+The long term goal of the ports architecture is to provide the same conceptual API and behavior in every host language while reducing wrapper specific code and converging on native implementations where possible.
 
 ### 5.5 Serialization
 

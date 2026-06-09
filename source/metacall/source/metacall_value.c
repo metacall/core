@@ -24,6 +24,10 @@
 
 #include <portability/portability_assert.h>
 
+#include <reflect/reflect_class.h>
+#include <reflect/reflect_function.h>
+#include <reflect/reflect_future.h>
+#include <reflect/reflect_object.h>
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type.h>
 
@@ -83,6 +87,74 @@ portability_static_assert((int)sizeof(value_id_map) / sizeof(value_id_map[0]) ==
 	"Size of value id map does not match the type size");
 
 /* -- Methods -- */
+
+void *metacall_value_create(enum metacall_value_id id)
+{
+	switch (id)
+	{
+		case METACALL_BOOL:
+			return value_create_bool(0L);
+
+		case METACALL_CHAR:
+			return value_create_char(0);
+
+		case METACALL_SHORT:
+			return value_create_short(0);
+
+		case METACALL_INT:
+			return value_create_int(0);
+
+		case METACALL_LONG:
+			return value_create_long(0L);
+
+		case METACALL_FLOAT:
+			return value_create_float(0.0f);
+
+		case METACALL_DOUBLE:
+			return value_create_double(0.0f);
+
+		case METACALL_STRING:
+			return value_create_string("", 0);
+
+		case METACALL_BUFFER:
+			return value_create_buffer("", 1);
+
+		case METACALL_ARRAY:
+			return value_create_array(NULL, 0);
+
+		case METACALL_MAP:
+			return value_create_map(NULL, 0);
+
+		case METACALL_PTR:
+			return value_create_ptr(NULL);
+
+		case METACALL_FUTURE:
+			return value_create_future(future_create(NULL, NULL));
+
+		case METACALL_FUNCTION:
+			return value_create_function(function_create(NULL, 0, NULL, NULL));
+
+		case METACALL_NULL:
+			return value_create_null();
+
+		case METACALL_CLASS:
+			return value_create_class(class_create(NULL, ACCESSOR_TYPE_STATIC, NULL, NULL));
+
+		case METACALL_OBJECT:
+			return value_create_object(object_create("", ACCESSOR_TYPE_STATIC, NULL, NULL, metacall_value_create(METACALL_CLASS)));
+
+		case METACALL_EXCEPTION:
+			return value_create_exception(exception_create_const("", "", 0, ""));
+
+		case METACALL_THROWABLE:
+			return value_create_throwable(throwable_create(metacall_value_create(METACALL_EXCEPTION)));
+
+		case METACALL_SIZE:
+		case METACALL_INVALID:
+		default:
+			return NULL;
+	}
+}
 
 void *metacall_value_create_bool(boolean b)
 {

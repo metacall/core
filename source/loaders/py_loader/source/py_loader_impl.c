@@ -1393,6 +1393,32 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		return obj_impl->obj;
 	}
+	else if (id == TYPE_EXCEPTION)
+	{
+		/* Build a Python Exception instance from the metacall exception, so
+		 * the caller receives a usable Python object instead of NULL.
+		 * Mirrors node_loader_impl.cpp */
+		exception ex = value_to_exception(v);
+		const char *message = exception_message(ex);
+
+		PyObject *args = PyTuple_New(1);
+		PyObject *msg = PyUnicode_FromString(message != NULL ? message : "");
+		PyTuple_SetItem(args, 0, msg);
+
+		PyObject *exc_instance = PyObject_CallObject(PyExc_ExceptionPtr(), args);
+		Py_DecRef(args);
+
+		return exc_instance;
+	}
+	else if (id == TYPE_THROWABLE)
+	{
+		/* Unwrap the throwable and convert the inner value, mirroring the
+		 * node_loader behaviour at node_loader_impl.cpp */
+		throwable th = value_to_throwable(v);
+		value inner = throwable_value(th);
+
+		return py_loader_impl_value_to_capi(impl, value_type_id(inner), inner);
+	}
 	else
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type: %d", id);
@@ -2436,16 +2462,15 @@ error_set_item:
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	const int host = loader_impl_get_option_host(impl);
-
-	(void)impl;
-	(void)config;
-
 	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
 	int traceback_initialized = 1;
 #if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	int gc_initialized = 1;
 #endif
 	int gil_release;
+
+	(void)impl;
+	(void)config;
 
 	if (py_impl == NULL)
 	{
