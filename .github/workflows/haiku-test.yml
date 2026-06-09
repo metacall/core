@@ -41,4 +41,9 @@ jobs:
             sh ./tools/metacall-environment.sh base
             mkdir -p build && cd build
             sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
-            sh ../tools/metacall-build.sh ${{ matrix.build }} tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }}
+            readelf -d ./log-test* | grep -iE "rpath|runpath|needed"
+            ls -la *.so lib/*.so 2>/dev/null | head -20
+            ./log-test* || echo "exit code: $?"
+            env | grep -i library || true
+            ctest -j2 --timeout 5400 --output-on-failure -C ${{ matrix.build }}
