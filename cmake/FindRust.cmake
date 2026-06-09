@@ -203,7 +203,7 @@ if(Rust_RUSTC_EXECUTABLE)
 		${Rust_RUSTC_SYSROOT}/lib
 		${Rust_RUSTC_SYSROOT}/lib/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib
 	)
-	message(STATUS "Rust_RUSTC_LIBRARY_DIRS=${Rust_RUSTC_LIBRARY_DIRS}")
+
 	set(Rust_RUSTC_SOURCE_DIR ${Rust_RUSTC_SYSROOT}/lib/rustlib/src/rust)
 endif()
 
