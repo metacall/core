@@ -362,7 +362,7 @@ if(WIN32 AND MSVC)
 
 endif()
 
-if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
+if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "beos")
 
 	if(PROJECT_OS_FAMILY MATCHES "macos")
 		# We cannot enable "stack-protector-strong" On OS X due to a bug in clang compiler (current version 7.0.2)
