@@ -359,8 +359,8 @@ sub_rust(){
 				return
 			fi
 
-			# # TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
-			# sub_apt_install_hold gcc libc6-dev
+			# TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
+			sub_apt_install_hold gcc libc6-dev
 
 			. /etc/os-release
 
