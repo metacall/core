@@ -2143,35 +2143,27 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 {
 	if (v == NULL)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented (bad allocation)", name, target);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is not implemented (bad allocation)", name, target);
 	}
 
 	if (vector_size(v) == 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented", name, target);
 		vector_destroy(v);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is not implemented", name, target);
 	}
 
 	if (vector_size(v) > 1)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is overloaded, you should use 'metacallt_class' instead for disambiguate the call", name, target);
 		vector_destroy(v);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is overloaded, you should use 'metacallt_class' instead for disambiguate the call", name, target);
 	}
 
 	method m = vector_at_type(v, 0, method);
 
 	if (m == NULL)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is invalid (NULL)", name, target);
 		vector_destroy(v);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is invalid (NULL)", name, target);
 	}
 
 	signature s = method_signature(m);
@@ -2181,10 +2173,8 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 	{
 		if (value_validate(args[iterator]) != 0)
 		{
-			// TODO: Implement type error return a value
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallv_method", iterator);
 			vector_destroy(v);
-			return NULL;
+			return metacall_error_throw("metacall", -1, NULL, "Invalid argument at position %" PRIuS " when calling to metacallv_method", iterator);
 		}
 
 		type t = signature_get_type(s, iterator);
@@ -2267,8 +2257,7 @@ void *metacallt_class(void *cls, const char *name, const enum metacall_value_id 
 
 	if (m == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in class <%p> is not implemented with the parameter types being received", name, cls);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in class <%p> is not implemented with the parameter types being received", name, cls);
 	}
 
 	return class_static_call(cls, m, args, size);
@@ -2305,8 +2294,7 @@ void *metacallt_object(void *obj, const char *name, const enum metacall_value_id
 
 	if (m == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in object <%p> is not implemented with the parameter types being received", name, obj);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in object <%p> is not implemented with the parameter types being received", name, obj);
 	}
 
 	return object_call(obj, m, args, size);
