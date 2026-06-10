@@ -1175,9 +1175,7 @@ void *metacallfv_s(void *func, void *args[], size_t size)
 		{
 			if (value_validate(args[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallfv_s", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid argument at position %" PRIuS " when calling to metacallfv_s", iterator);
 			}
 
 			type t = signature_get_type(s, iterator);
@@ -1428,16 +1426,12 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 		{
 			if (value_validate(keys[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid key at position %" PRIuS " when calling to metacallfmv", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid key at position %" PRIuS " when calling to metacallfmv", iterator);
 			}
 
 			if (value_validate(values[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid value at position %" PRIuS " when calling to metacallfmv", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid value at position %" PRIuS " when calling to metacallfmv", iterator);
 			}
 
 			type_id key_id = value_type_id((value)keys[iterator]);
@@ -1771,16 +1765,12 @@ void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size,
 		{
 			if (value_validate(keys[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid key at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid key at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
 			}
 
 			if (value_validate(values[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid value at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid value at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
 			}
 
 			type_id key_id = value_type_id((value)keys[iterator]);
