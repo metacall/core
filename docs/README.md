@@ -984,6 +984,7 @@ The following platforms and architectures have been tested and are known to work
 |   **`debian`**   | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`ppc64le`** **`arm/v7`** **`arm/v6`** **`loong64`** |  **`gcc`**  |
 |   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
 |  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
+|  **`freebsd`**   |                                                        **`amd64`** **`arm64`**                                                      | **`clang`** |
 
 
 ## 8.1 Docker Support

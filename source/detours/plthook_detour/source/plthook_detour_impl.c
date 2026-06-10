@@ -10,6 +10,8 @@
 
 #include <plthook_detour/plthook_detour_impl.h>
 
+#include <log/log.h>
+
 #include <plthook.h>
 
 /* -- Methods -- */
@@ -29,6 +31,7 @@ int plthook_detour_impl_initialize_file(detour_impl_handle *handle, const char *
 	if (result != PLTHOOK_SUCCESS)
 	{
 		*handle = NULL;
+		log_write("metacall", LOG_LEVEL_ERROR, "PLTHook failed to open (code %d, path %s): %s", result, path ? path : "NULL", plthook_error());
 		return result;
 	}
 
