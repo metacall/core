@@ -4011,6 +4011,26 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	return NULL;
 }
 
+#if defined(__MEMORY_SANITIZER__)
+	#include <sanitizer/msan_interface.h>
+
+static int node_loader_impl_start(int argc, char **argv)
+{
+	// Disable MSan reporting temporarily
+	__msan_scoped_disable_interceptor_checks();
+
+	// Call NodeJS uninstrumented library
+	int result = node::Start(argc, argv);
+
+	// Re-enable MSan tracking for your code
+	__msan_scoped_enable_interceptor_checks();
+
+	return result;
+}
+#else
+	#define node_loader_impl_start node::Start
+#endif
+
 void node_loader_impl_thread(void *data)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(data);
@@ -4085,7 +4105,7 @@ void node_loader_impl_thread(void *data)
 	uv_mutex_unlock(&node_impl->mutex);
 
 	/* Start NodeJS runtime */
-	int result = node::Start(argc, reinterpret_cast<char **>(argv));
+	int result = node_loader_impl_start(argc, reinterpret_cast<char **>(argv));
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
