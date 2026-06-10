@@ -31,6 +31,7 @@ jobs:
             sanitizer: address-sanitizer
           - build: release
             sanitizer: thread-sanitizer
+        # TODO: Implement support for arm64 of c and wasm
         include:
           - arch: x86-64
             extra-loaders: "c wasm"
