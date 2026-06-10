@@ -1,10 +1,5 @@
 #![feature(rustc_private)]
-// Allow us to match on Box<T>s:
 #![feature(box_patterns)]
-//#![feature(let_else)]
-//#![feature(iter_zip)]
-// Allow us to get file prefix
-//#![feature(path_file_prefix)]
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_attr_parsing;
@@ -26,31 +21,23 @@ use rustc_driver::DEFAULT_LOCALE_RESOURCES;
 use rustc_errors::emitter::stderr_destination;
 use rustc_errors::translation::Translator;
 use rustc_errors::DiagCtxt;
-//use rustc_feature::UnstableFeatures;
-//use rustc_hash::FxHashSet;
-//use rustc_hir::def::{DefKind, Res};
+
 use rustc_hir::def_id::DefId;
 use rustc_interface::create_and_enter_global_ctxt;
 use rustc_interface::interface;
 use rustc_interface::passes;
 use rustc_interface::Linker;
 use rustc_interface::{interface::Compiler, Config};
-//use rustc_middle::hir;
 use rustc_middle::ty::AssocKind;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config::OutFileName;
-//use rustc_session::search_paths::FilesIndex;
 use rustc_session::search_paths::PathKind;
-//use std::process::Output;
 use std::sync::atomic::AtomicBool;
-//use rustc_middle::hir::exports::Export;
-//use rustc_middle::ty::Visibility;
 use rustc_session::config::{
     self, CrateType, ExternEntry, ExternLocation, Externs, Input,
 };
 use rustc_session::search_paths::SearchPath;
 use rustc_session::utils::CanonicalizedPath;
-//use rustc_span::source_map;
 use std::io::Write;
 use std::iter::{self, FromIterator};
 use std::{
@@ -431,67 +418,6 @@ pub struct CompilerCallbacks {
     destination: PathBuf,
     functions: Vec<Function>,
     classes: Vec<Class>,
-}
-
-#[allow(dead_code)]
-fn get_param_names<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> Vec<rustc_span::Ident> {
-    use rustc_hir::Node;
-    if let Node::Item(item) = tcx.hir_node_by_def_id(def_id.expect_local()) {
-        if let rustc_hir::ItemKind::Fn {
-            sig: _, body: body_id, ..
-        } = &item.kind
-        {
-            let body = tcx.hir_body(*body_id);
-            return body
-                .params
-                .iter()
-                .map(|param| match param.pat.kind {
-                    rustc_hir::PatKind::Binding(_, _, ident, _) => ident,
-                    _ => rustc_span::Ident::from_str("_"),
-                })
-                .collect();
-        }
-    }
-    vec![]
-}
-
-#[allow(dead_code)]
-fn get_method_param_names<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> Vec<rustc_span::Ident> {
-    use rustc_hir::Node;
-    if let Node::TraitItem(item) = tcx.hir_node_by_def_id(def_id.expect_local()) {
-        if let rustc_hir::TraitItemKind::Fn(_, trait_fn) = &item.kind {
-            let body_id = match trait_fn {
-                rustc_hir::TraitFn::Provided(body_id) => body_id,
-                rustc_hir::TraitFn::Required(_) => return vec![],
-            };
-
-            let body = tcx.hir_body(*body_id);
-
-            return body
-                .params
-                .iter()
-                .map(|param| match param.pat.kind {
-                    rustc_hir::PatKind::Binding(_, _, ident, _) => ident,
-                    _ => rustc_span::Ident::from_str("_"),
-                })
-                .collect();
-        }
-    }
-    if let Node::ImplItem(item) = tcx.hir_node_by_def_id(def_id.expect_local()) {
-        if let rustc_hir::ImplItemKind::Fn(_, body_id) = &item.kind {
-            let body = tcx.hir_body(*body_id);
-
-            return body
-                .params
-                .iter()
-                .map(|param| match param.pat.kind {
-                    rustc_hir::PatKind::Binding(_, _, ident, _) => ident,
-                    _ => rustc_span::Ident::from_str("_"),
-                })
-                .collect();
-        }
-    }
-    vec![]
 }
 
 impl CompilerCallbacks {
