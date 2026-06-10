@@ -65,11 +65,10 @@ if(OPTION_BUILD_MUSL)
 	)
 endif()
 
-# TODO: Uncomment this
-# add_custom_target(${target}_clippy ALL
-# 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-# 	COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS="${RUST_LINK_FLAGS}" ${Rust_CARGO_EXECUTABLE} clippy ${TARGET_BUILD_TYPE} -- -D warnings
-# )
+add_custom_target(${target}_clippy ALL
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS="${RUST_LINK_FLAGS}" ${Rust_CARGO_EXECUTABLE} clippy ${TARGET_BUILD_TYPE} -- -D warnings
+)
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -77,10 +76,9 @@ add_custom_target(${target} ALL
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
 )
 
-# TODO: Uncomment this
-# add_dependencies(${target}
-# 	${target}_clippy
-# )
+add_dependencies(${target}
+	${target}_clippy
+)
 
 set_property(TARGET ${target}
 	PROPERTY OUTPUT_NAME ${TARGET_OUTPUT}
