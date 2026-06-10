@@ -1,5 +1,3 @@
-//use crate::Attribute;
-
 use super::rustc_middle::ty::{
     Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyKind, UintTy,
 };
