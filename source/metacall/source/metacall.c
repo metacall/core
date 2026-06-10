@@ -563,9 +563,7 @@ void *metacallhv(void *handle, const char *name, void *args[])
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallhv is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacallhv is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -583,9 +581,7 @@ void *metacallhv_s(void *handle, const char *name, void *args[], size_t size)
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallhv_s is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacallhv_s is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -908,9 +904,7 @@ void *metacallht_s(void *handle, const char *name, const enum metacall_value_id 
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallht_s is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacallht_s is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -1047,9 +1041,7 @@ void *metacall_handle_function(void *handle, const char *name)
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_function is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacall_handle_function is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -1147,9 +1139,7 @@ void *metacall_handle_export(void *handle)
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_export is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacall_handle_export is not valid", handle);
 	}
 
 	return loader_handle_export(handle);
