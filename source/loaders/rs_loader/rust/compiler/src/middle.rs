@@ -1,14 +1,14 @@
-use crate::Attribute;
+//use crate::Attribute;
 
 use super::rustc_middle::ty::{
-    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyCtxt, TyKind, UintTy, Visibility,
+    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyCtxt, TyKind, UintTy,
 };
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
-use rustc_hir::def::{DefKind, Res};
+//use rustc_hir::def::{DefKind, Res};
 //use rustc_middle::hir::exports::Export;
 use rustc_hir::def_id::DefId;
-use std::iter::zip;
+//use std::iter::zip;
 
 pub fn handle_ty(ty: &Ty) -> FunctionParameter {
     let mut result = FunctionParameter {
@@ -45,7 +45,7 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
             inner.reference = Reference::Yes;
             result = inner;
         }
-        TyKind::RawPtr(inner_ty, _) => {
+        TyKind::RawPtr(_inner_ty, _) => {
             result.ty = FunctionType::Ptr;
         }
         TyKind::Adt(def, gen) => {
@@ -124,6 +124,7 @@ pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident])
     function
 }
 
+#[allow(dead_code)]
 pub fn extract_attribute_from_export(tcx: TyCtxt<'_>, def_id: DefId) -> Option<Function> {
     if tcx.def_kind(def_id) != rustc_hir::def::DefKind::Fn {
         return None;

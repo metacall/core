@@ -11,7 +11,7 @@ pub extern "C" fn rs_loader_impl_destroy(loader_impl: *mut c_void) -> c_int {
 
     // drop the state
     unsafe {
-        Box::from_raw(loader_lifecycle_state);
+        drop(Box::from_raw(loader_lifecycle_state));
     }
 
     0_i32

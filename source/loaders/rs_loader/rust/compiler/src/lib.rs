@@ -1,10 +1,10 @@
 #![feature(rustc_private)]
 // Allow us to match on Box<T>s:
 #![feature(box_patterns)]
-#![feature(let_else)]
-#![feature(iter_zip)]
+//#![feature(let_else)]
+//#![feature(iter_zip)]
 // Allow us to get file prefix
-#![feature(path_file_prefix)]
+//#![feature(path_file_prefix)]
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_attr_parsing;
@@ -26,31 +26,31 @@ use rustc_driver::DEFAULT_LOCALE_RESOURCES;
 use rustc_errors::emitter::stderr_destination;
 use rustc_errors::translation::Translator;
 use rustc_errors::DiagCtxt;
-use rustc_feature::UnstableFeatures;
-use rustc_hash::FxHashSet;
-use rustc_hir::def::{DefKind, Res};
+//use rustc_feature::UnstableFeatures;
+//use rustc_hash::FxHashSet;
+//use rustc_hir::def::{DefKind, Res};
 use rustc_hir::def_id::DefId;
 use rustc_interface::create_and_enter_global_ctxt;
 use rustc_interface::interface;
 use rustc_interface::passes;
 use rustc_interface::Linker;
 use rustc_interface::{interface::Compiler, Config};
-use rustc_middle::hir;
+//use rustc_middle::hir;
 use rustc_middle::ty::AssocKind;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config::OutFileName;
-use rustc_session::search_paths::FilesIndex;
+//use rustc_session::search_paths::FilesIndex;
 use rustc_session::search_paths::PathKind;
-use std::process::Output;
+//use std::process::Output;
 use std::sync::atomic::AtomicBool;
 //use rustc_middle::hir::exports::Export;
-use rustc_middle::ty::Visibility;
+//use rustc_middle::ty::Visibility;
 use rustc_session::config::{
-    self, CrateType, ErrorOutputType, ExternEntry, ExternLocation, Externs, Input,
+    self, CrateType, ExternEntry, ExternLocation, Externs, Input,
 };
 use rustc_session::search_paths::SearchPath;
 use rustc_session::utils::CanonicalizedPath;
-use rustc_span::source_map;
+//use rustc_span::source_map;
 use std::io::Write;
 use std::iter::{self, FromIterator};
 use std::{
@@ -433,11 +433,12 @@ pub struct CompilerCallbacks {
     classes: Vec<Class>,
 }
 
+#[allow(dead_code)]
 fn get_param_names<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> Vec<rustc_span::Ident> {
     use rustc_hir::Node;
     if let Node::Item(item) = tcx.hir_node_by_def_id(def_id.expect_local()) {
         if let rustc_hir::ItemKind::Fn {
-            sig, body: body_id, ..
+            sig: _, body: body_id, ..
         } = &item.kind
         {
             let body = tcx.hir_body(*body_id);
@@ -454,6 +455,7 @@ fn get_param_names<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> Vec<rustc_span::Id
     vec![]
 }
 
+#[allow(dead_code)]
 fn get_method_param_names<'tcx>(tcx: TyCtxt<'tcx>, def_id: DefId) -> Vec<rustc_span::Ident> {
     use rustc_hir::Node;
     if let Node::TraitItem(item) = tcx.hir_node_by_def_id(def_id.expect_local()) {
@@ -521,15 +523,12 @@ impl CompilerCallbacks {
         let krate = match metacall_crate {
             Some(k) => *k,
             None => {
-                eprintln!("Rust Loader: Available crates:");
                 for krate in tcx.crates(()) {
                     eprintln!(" here - {}", tcx.crate_name(*krate));
                 }
                 return;
             }
         };
-
-        eprintln!("DEBUG: found metacall_package crate: {:?}", krate);
 
         for child in tcx.module_children(krate.as_def_id()) {
             let def_id = match child.res {
@@ -716,7 +715,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
     fn after_expansion<'tcx>(
         &mut self,
         _compiler: &Compiler,
-        tcx: TyCtxt<'tcx>,
+        _tcx: TyCtxt<'tcx>,
     ) -> rustc_driver::Compilation {
         if self.is_parsing {
             match self.source.source {
@@ -878,6 +877,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
 
 // Buffer diagnostics in a Vec<u8>
 #[derive(Clone)]
+#[allow(dead_code)]
 struct DiagnosticSink(sync::Arc<sync::Mutex<Vec<u8>>>);
 
 impl std::io::Write for DiagnosticSink {
@@ -892,7 +892,7 @@ impl std::io::Write for DiagnosticSink {
 const BUG_REPORT_URL: &str = "https://github.com/metacall/core/issues/new";
 
 static ICE_HOOK: std::sync::LazyLock<
-    Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>,
+    Box<dyn Fn(&std::panic::PanicHookInfo<'_>) + Sync + Send + 'static>,
 > = std::sync::LazyLock::new(|| {
     let hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|info| {
@@ -902,10 +902,10 @@ static ICE_HOOK: std::sync::LazyLock<
 });
 
 fn report_ice(
-    info: &std::panic::PanicInfo<'_>,
+    info: &std::panic::PanicHookInfo<'_>,
     bug_report_url: &str,
-    extra_info: fn(&DiagCtxt),
-    using_internal_features: &AtomicBool,
+    _extra_info: fn(&DiagCtxt),
+    _using_internal_features: &AtomicBool,
 ) {
     // Invoke our ICE handler, which prints the actual panic message and optionally a backtrace
     (*ICE_HOOK)(info);
@@ -952,8 +952,8 @@ pub fn initialize() {
 
 fn run_compiler(
     callbacks: &mut (dyn rustc_driver::Callbacks + Send),
-    diagnostics_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
-    errors_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
+    _diagnostics_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
+    _errors_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
 ) {
     let mut config = Config {
         // Command line options

@@ -246,11 +246,11 @@ impl Instance {
         attr.invoke(value, self)
     }
 
-    pub fn borrow(&self) -> Ref<dyn std::any::Any + Send + Sync> {
+    pub fn borrow(&self) -> Ref<'_, dyn std::any::Any + Send + Sync> {
         self.inner.as_ref().borrow()
     }
 
-    pub fn borrow_mut(&self) -> RefMut<dyn std::any::Any + Send + Sync> {
+    pub fn borrow_mut(&self) -> RefMut<'_, dyn std::any::Any + Send + Sync> {
         self.inner.as_ref().borrow_mut()
     }
 
