@@ -198,6 +198,7 @@ if(Rust_RUSTC_EXECUTABLE)
 		GLOB Rust_RUSTC_STD_LIBRARIES
 		${Rust_RUSTC_SYSROOT}/lib/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib/*
 	)
+
 	set(Rust_RUSTC_LIBRARY_DIRS
 		${Rust_RUSTC_SYSROOT}/lib
 		${Rust_RUSTC_SYSROOT}/lib/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib
