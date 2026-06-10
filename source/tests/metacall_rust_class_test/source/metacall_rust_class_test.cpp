@@ -59,12 +59,11 @@ TEST_F(metacall_rust_class_test, DefaultConstructor)
 		void *book_class = metacall_class("Book");
 		ASSERT_NE((void *)NULL, (void *)book_class);
 
-		void *ret_value = metacallv_class(book_class, "get_number", nullptr, 0);
+		void *ret_value = metacallv_class(book_class, "get_number", metacall_null_args, 0);
 
 		ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret_value));
 		ASSERT_EQ((int)123, (int)metacall_value_to_int(ret_value));
 		metacall_value_destroy(ret_value);
-		// metacall_value_destroy(book_class);
 	}
 	{
 		void *book_class = metacall_class("Book");
@@ -77,7 +76,7 @@ TEST_F(metacall_rust_class_test, DefaultConstructor)
 		metacall_value_destroy(constructor_params[0]);
 		void *new_object = metacall_value_to_object(new_object_v);
 
-		void *ret = metacallv_object(new_object, "get_price", nullptr, 0);
+		void *ret = metacallv_object(new_object, "get_price", metacall_null_args, 0);
 		ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
 		ASSERT_EQ((int)111, (int)metacall_value_to_int(ret));
 
@@ -99,8 +98,6 @@ TEST_F(metacall_rust_class_test, DefaultConstructor)
 
 		metacall_value_destroy(new_object_v);
 		metacall_value_destroy(ret);
-		// metacall_value_destroy(myclass_value);
-		// metacall_value_destroy(book_class);
 	}
 
 	metacall_destroy();

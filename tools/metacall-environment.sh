@@ -663,7 +663,7 @@ sub_wasm(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-      $SUDO_CMD pkg install -y libwasmtime
+		$SUDO_CMD pkg install -y libwasmtime
 	fi
 }
 
@@ -791,7 +791,7 @@ sub_go(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install go
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-      $SUDO_CMD pkg install -y go
+		$SUDO_CMD pkg install -y go
 	fi
 }
 
@@ -808,6 +808,7 @@ sub_rust(){
 				return
 			fi
 
+			# TODO: Review this
 			# if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			# 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
 			# elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -818,20 +819,18 @@ sub_rust(){
 
 			RUST_DISTRO="${VERSION_CODENAME}"
 			DEV_PACKAGE="rust-toolchain-dev-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
-			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.1"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.2"
 
 			wget -qO- "${RUST_RELEASE_URL}/${DEV_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
-
-			# ln -sf /usr/local/lib/libLLVM-21-rust-1.94.0-nightly.so \
-			# /usr/local/lib/rustlib/x86_64-unknown-linux-gnu/lib/libLLVM-21-rust-1.94.0-nightly.so
-
-			# ln -sf /usr/local/lib/libLLVM.so.21.1-rust-1.94.0-nightly \
-			# /usr/local/lib/rustlib/x86_64-unknown-linux-gnu/lib/libLLVM.so.21.1-rust-1.94.0-nightly
 
 			rustc -Vv
 			cargo -V
 			cargo clippy --version
 			rustfmt --version
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			# TODO:
+			echo "alpine not implemented"
+			return
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default

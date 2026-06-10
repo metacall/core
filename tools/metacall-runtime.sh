@@ -352,83 +352,31 @@ sub_rust(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
-			echo "rust has no support for ${ARCHITECTURE}"
-			return
-		fi
-		if [ "${ARCHITECTURE}" = "arm64" ]; then
-			# TODO: Implement rs_port in rs_loader, so we can use bindings.rs from the port
-			echo "rust with arm64 has a bug, it must be refactored for using rs_port in rs_loader"
-			echo "open an issue or pull request here: https://github.com/metacall/core/"
-			return
-		fi
-		if [ "${ARCHITECTURE}" = "386" ]; then
-			# TODO: Rustup is not detecting this architecture properly
-			echo "rustup with 386 has a bug, it does not detect the architecture properly"
-			echo "open an issue or pull request here: https://github.com/metacall/core/"
-			echo
-			echo "rustup default nightly-2021-12-04-i686-unknown-linux-gnu"
-			echo "error: toolchain 'nightly-2021-12-04-i686-unknown-linux-gnu' may not be able to run on this system"
-			echo "note: to build software for that platform, try rustup target add i686-unknown-linux-gnu instead"
-			echo "note: add the --force-non-host flag to install the toolchain anyway"
-			return
-		fi
-		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "armv6" ]; then
-			# TODO: Git does not work well with 32-bit nodes, this error has happened before
-			# in metacall/guix, for solving it the best way is to mount a tempfs folder with 64-bit nodes
-			# For more info check this issue: https://github.com/metacall/guix/issues/16
-			echo "cargo with armv6 and armv6 has a bug with git and long path names"
-			echo "open an issue or pull request here: https://github.com/metacall/core/"
-			echo
-			echo "warning: spurious network error (1 tries remaining): could not read directory '/root/.cargo/registry/index/github.com-1285ae84e5963aae/.git/refs': Value too large for defined data type; class=Os (2)"
-			echo "error: failed to get fastrand as a dependency of package compiler v0.1.0 (/usr/local/metacall/source/loaders/rs_loader/rust/compiler)"
-			return
-		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
-			sub_apt_install_hold gcc libc6-dev
+			if [ "${ARCHITECTURE}" != "amd64" ]; then
+				# TODO: Implement more architectures
+				echo "rust has no support for ${ARCHITECTURE}"
+				return
+			fi
+
+			# # TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
+			# sub_apt_install_hold gcc libc6-dev
+
+			. /etc/os-release
+
+			RUST_DISTRO="${VERSION_CODENAME}"
+			RUNTIME_PACKAGE="rust-toolchain-runtime-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.2"
+
+			wget -qO- "${RUST_RELEASE_URL}/${RUNTIME_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
+
+			rustc -Vv
+			cargo -V
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			# TODO:
 			echo "alpine not implemented"
 			return
 		fi
-
-		# Install minimal profile
-		##wget -qO- https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile minima
-
-	    . /etc/os-release  
-
-        RUST_DISTRO="${VERSION_CODENAME}"
-        RUNTIME_PACKAGE="rust-toolchain-runtime-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
-		RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.1"
-
-	    cd /tmp
-
-        wget -O "${RUNTIME_PACKAGE}" \
-		        "${RUST_RELEASE_URL}/${RUNTIME_PACKAGE}"
-
-        cd /
-
-        tar -xzf "/tmp/${RUNTIME_PACKAGE}"
-
-		# ln -sf /usr/local/lib/libLLVM-21-rust-1.94.0-nightly.so \
-        # /usr/local/lib/rustlib/x86_64-unknown-linux-gnu/lib/libLLVM-21-rust-1.94.0-nightly.so
-
-        # ln -sf /usr/local/lib/libLLVM.so.21.1-rust-1.94.0-nightly \
-        # /usr/local/lib/rustlib/x86_64-unknown-linux-gnu/lib/libLLVM.so.21.1-rust-1.94.0-nightly
-
-        ldconfig
-
-        rustc -Vv
-        cargo -V	
-		
-
-		# TODO:
-		# if [ "${ARCHITECTURE}" = "386" ]; then
-		# 	. "$HOME/.cargo/env"
-		# 	rustup toolchain install nightly-2021-12-04-i686-unknown-linux-gnu --force-non-host
-		# 	rustup default nightly-2021-12-04-i686-unknown-linux-gnu
-		# fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		# TODO:
 		echo "darwin not implemented"

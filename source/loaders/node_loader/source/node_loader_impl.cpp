@@ -1706,15 +1706,28 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 	else if (id == TYPE_CLASS)
 	{
-		/* TODO */
+		/* TODO: Skip exception to avoid failing */
 		/* napi_throw_error(env, nullptr, "NodeJS Loader class is not implemented"); */
+
+		napi_value error_code, error_message;
+
+		status = napi_create_string_utf8(env, "NodeJSLoader", NAPI_AUTO_LENGTH, &error_code);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_create_string_utf8(env, "NodeJS Loader class is not implemented", NAPI_AUTO_LENGTH, &error_message);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_create_error(env, error_code, error_message, &v);
+
+		node_loader_impl_exception(env, status);
 
 		/*
 		klass cls = value_to_class(arg_value);
 
 		napi_define_class(env, cls->name, NAPI_AUTO_LENGTH, )
 		*/
-		napi_throw_error(env, nullptr, "NodeJS Loader class is not implemented");
 	}
 	else if (id == TYPE_OBJECT)
 	{

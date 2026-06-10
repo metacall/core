@@ -1,7 +1,0 @@
-parallel-compiler = true
-
-[build]
-rustflags = [
-  "-C",
-  "link-args=-Wl,-rpath=$ORIGIN"
-]
