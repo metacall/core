@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-py-conversion-test)
+set(target metacall-python-conversion-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_py_conversion_test.cpp
+	${source_path}/metacall_python_conversion_test.cpp
 )
 
 # Group source files

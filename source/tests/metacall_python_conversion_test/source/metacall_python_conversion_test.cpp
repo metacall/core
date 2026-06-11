@@ -24,12 +24,12 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-class metacall_py_conversion_test : public testing::Test
+class metacall_python_conversion_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_py_conversion_test, DefaultConstructor)
+TEST_F(metacall_python_conversion_test, DefaultConstructor)
 {
 	metacall_print_info();
 
