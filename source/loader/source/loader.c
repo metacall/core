@@ -511,7 +511,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 			}
 			else
 			{
-				loader_path join_path;
+				loader_path join_path = { 0 };
 
 				size_t join_path_size = portability_path_join(context_path_str, context_path_size, str, str_size, join_path, LOADER_PATH_SIZE);
 
