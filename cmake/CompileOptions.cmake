@@ -187,11 +187,30 @@ endfunction()
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 	if(OPTION_BUILD_THREAD_SANITIZER)
-		find_sanitizer(tsan)
-		if(LIBTSAN_PATH)
-			set(SANITIZER_LIBRARIES_PATH
-				"${LIBTSAN_PATH}"
-			)
+		if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" AND PROJECT_OS_FAMILY MATCHES "macos")
+			# Here there is the list of all libraries for different MacOS platforms:
+			#
+			# libclang_rt.tsan_iossim_dynamic.dylib
+			# libclang_rt.tsan_osx_dynamic.dylib
+			# libclang_rt.tsan_tvossim_dynamic.dylib
+			# libclang_rt.tsan_watchossim_dynamic.dylib
+			# libclang_rt.tsan_xros_dynamic.dylib
+			# libclang_rt.tsan_xrossim_dynamic.dylib
+			#
+			# We are supporting OSX only for now.
+			find_sanitizer(tsan_osx_dynamic)
+			if(LIBTSAN_OSX_DYNAMIC_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBTSAN_OSX_DYNAMIC_PATH}"
+				)
+			endif()
+		else()
+			find_sanitizer(tsan)
+			if(LIBTSAN_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBTSAN_PATH}"
+				)
+			endif()
 		endif()
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 		find_sanitizer(msan)
