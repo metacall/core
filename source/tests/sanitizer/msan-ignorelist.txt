@@ -13,5 +13,9 @@
 src:*/googletest/*
 fun:testing::*
 
-# Google Benchmark library not built with MSan
-src:*/_deps/googlebenchmark*
+# Google Benchmark is ignored because it is built with MSan support
+# but its internal implementation triggers false positives. The googlebenchmark
+# library is instrumented separately with the correct MSan flags and ignorelist
+# via InstallGBench.cmake, so we suppress the googlebenchmark sources here to avoid
+# noise from the benchmark framework itself.
+src:*/googlebenchmark/*
