@@ -455,8 +455,9 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 		{
 			/* Resolve the path against the loader config file's directory so
 			 * relative paths like "../lib/python39.dll" resolve correctly.
-			 * Reference: https://github.com/metacall/core/issues/760 */
-			char library_path[PORTABILITY_PATH_SIZE];
+			 * Reference: https://github.com/metacall/core/issues/760
+			 */
+			char library_path[PORTABILITY_PATH_SIZE] = { 0 };
 
 			configuration_object_child_path(impl->config, paths_array[iterator], library_path);
 
@@ -1375,8 +1376,8 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 		if (iface != NULL)
 		{
 			loader_handle handle;
-			loader_path path;
-			size_t init_order;
+			loader_path path = { 0 };
+			size_t init_order = 0;
 			int init_order_not_initialized;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
