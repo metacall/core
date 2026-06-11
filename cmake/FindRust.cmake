@@ -177,6 +177,18 @@ if(Rust_RUSTC_EXECUTABLE)
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
+	if(NOT Rust_TOOLCHAIN_TRIPLET OR Rust_TOOLCHAIN_TRIPLET STREQUAL "" OR NOT Rust_TOOLCHAIN_TRIPLET MATCHES "-")
+		execute_process(
+			COMMAND ${Rust_RUSTC_EXECUTABLE} --version --verbose
+			OUTPUT_VARIABLE Rust_RUSTC_VERBOSE
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+		string(REGEX MATCH "host: ([^\n]+)" _ "${Rust_RUSTC_VERBOSE}")
+		if(CMAKE_MATCH_1)
+			set(Rust_TOOLCHAIN_TRIPLET "${CMAKE_MATCH_1}")
+		endif()
+	endif()
+
 	file(
 		GLOB Rust_RUSTC_LIBRARIES
 		${Rust_RUSTC_SYSROOT}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -191,6 +203,7 @@ if(Rust_RUSTC_EXECUTABLE)
 		${Rust_RUSTC_SYSROOT}/lib
 		${Rust_RUSTC_SYSROOT}/lib/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib
 	)
+
 	set(Rust_RUSTC_SOURCE_DIR ${Rust_RUSTC_SYSROOT}/lib/rustlib/src/rust)
 endif()
 
