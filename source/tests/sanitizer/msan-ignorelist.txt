@@ -12,3 +12,6 @@
 # noise from the testing framework itself.
 src:*/googletest/*
 fun:testing::*
+
+# Google Benchmark library not built with MSan
+src:*/_deps/googlebenchmark*
