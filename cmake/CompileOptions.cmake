@@ -187,7 +187,7 @@ endfunction()
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 	if(OPTION_BUILD_THREAD_SANITIZER)
-		if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" AND PROJECT_OS_FAMILY MATCHES "macos")
+		if(PROJECT_OS_FAMILY MATCHES "macos" AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
 			# Here there is the list of all libraries for different MacOS platforms:
 			#
 			# libclang_rt.tsan_iossim_dynamic.dylib
