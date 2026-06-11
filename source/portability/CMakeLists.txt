@@ -119,6 +119,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
+	$<$<BOOL:${PROJECT_OS_HAIKU}>:bsd>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

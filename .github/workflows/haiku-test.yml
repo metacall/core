@@ -42,6 +42,8 @@ jobs:
             mkdir -p build && cd build
             sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
             sh ../tools/metacall-build.sh ${{ matrix.build }}
+            nm -D --undefined-only ./libportabilityd.so 2>&1 | head -30
+            cat /boot/system/var/log/syslog 2>/dev/null | grep -i "resolve\|missing\|symbol" | tail -20
             readelf -d ./log-test* | grep -iE "rpath|runpath|needed"
             ls -la *.so lib/*.so 2>/dev/null | head -20
             ./log-test* 2>&1 || echo "exit code: $?"
