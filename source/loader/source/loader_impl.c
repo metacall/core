@@ -295,7 +295,7 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 		{
 			if (value_type_id(execution_paths_array[iterator]) == TYPE_STRING)
 			{
-				loader_path execution_path;
+				loader_path execution_path = { 0 };
 
 				configuration_object_child_path(impl->config, execution_paths_array[iterator], execution_path);
 
@@ -1482,8 +1482,8 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 	if (impl != NULL)
 	{
 		loader_impl_interface iface = loader_iface(p);
-		loader_path subpath;
-		size_t init_order;
+		loader_path subpath = { 0 };
+		size_t init_order = 0;
 		int init_order_not_initialized;
 
 		if (iface != NULL && loader_impl_handle_name(manager, path, subpath) > 1)
@@ -1581,8 +1581,8 @@ int loader_impl_get_option_host(loader_impl impl)
 
 int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr)
 {
-	loader_path path;
-	size_t init_order;
+	loader_path path = { 0 };
+	size_t init_order = 0;
 	int init_order_not_initialized;
 
 	if (impl == NULL)

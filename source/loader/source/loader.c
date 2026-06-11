@@ -397,12 +397,12 @@ int loader_load_from_package(const loader_tag tag, const loader_path path, void 
 
 int loader_load_from_configuration(const loader_path path, void **handle, void *allocator)
 {
-	loader_name config_name;
+	loader_name config_name = { 0 };
 	configuration config;
 	value tag, scripts, context_path;
 	value *scripts_array;
 	loader_path *paths;
-	loader_path context_path_str;
+	loader_path context_path_str = { 0 };
 	size_t context_path_size = 0;
 	size_t iterator, size;
 
