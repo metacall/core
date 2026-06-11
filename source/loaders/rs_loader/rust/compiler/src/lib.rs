@@ -31,15 +31,13 @@ use rustc_interface::{interface::Compiler, Config};
 use rustc_middle::ty::AssocKind;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config::OutFileName;
+use rustc_session::config::{self, CrateType, ExternEntry, ExternLocation, Externs, Input};
 use rustc_session::search_paths::PathKind;
-use std::sync::atomic::AtomicBool;
-use rustc_session::config::{
-    self, CrateType, ExternEntry, ExternLocation, Externs, Input,
-};
 use rustc_session::search_paths::SearchPath;
 use rustc_session::utils::CanonicalizedPath;
 use std::io::Write;
 use std::iter::{self, FromIterator};
+use std::sync::atomic::AtomicBool;
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     fmt,
@@ -421,9 +419,9 @@ pub struct CompilerCallbacks {
 }
 
 impl CompilerCallbacks {
-    fn analyze_source<'tcx>(&mut self, krate: &rustc_ast::Crate) {
+    fn analyze_source(&mut self, krate: &rustc_ast::Crate) {
         let mut item_visitor = ItemVisitor::new();
-        rustc_ast::visit::walk_crate(&mut item_visitor, &krate);
+        rustc_ast::visit::walk_crate(&mut item_visitor, krate);
         self.classes = item_visitor.classes.into_values().collect();
         self.functions = item_visitor.functions;
     }
@@ -470,8 +468,10 @@ impl CompilerCallbacks {
 
             match res {
                 Res::Def(DefKind::Struct, def_id) => {
-                    let mut class = Class::default();
-                    class.name = ident.to_string();
+                    let mut class = Class {
+                        name: ident.to_string(),
+                        ..Default::default()
+                    };
 
                     let adt = tcx.adt_def(def_id);
                     for field in adt.all_fields() {
@@ -817,9 +817,9 @@ impl std::io::Write for DiagnosticSink {
 
 const BUG_REPORT_URL: &str = "https://github.com/metacall/core/issues/new";
 
-static ICE_HOOK: std::sync::LazyLock<
-    Box<dyn Fn(&std::panic::PanicHookInfo<'_>) + Sync + Send + 'static>,
-> = std::sync::LazyLock::new(|| {
+type IceHook = Box<dyn for<'a> Fn(&std::panic::PanicHookInfo<'a>) + Sync + Send + 'static>;
+
+static ICE_HOOK: std::sync::LazyLock<IceHook> = std::sync::LazyLock::new(|| {
     let hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|info| {
         report_ice(info, BUG_REPORT_URL, |_| {}, &USING_INTERNAL_FEATURES)
@@ -864,7 +864,7 @@ fn report_ice(
     ));
 
     // If backtraces are enabled, also print the query stack
-    let backtrace = std::env::var_os("RUST_BACKTRACE").map_or(false, |x| &x != "0");
+    let backtrace = std::env::var_os("RUST_BACKTRACE").is_some_and(|x| &x != "0");
 
     let limit_frames = if backtrace { None } else { Some(2) };
 
@@ -989,9 +989,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     // Parse and generate wrapper
     let parsing_result: Result<(), CompilerError> = match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
-    })
-    .and_then(|result| Ok(result))
-    {
+    }) {
         Ok(()) => Ok(()),
         Err(err) => {
             // Read buffered diagnostics
@@ -1023,18 +1021,14 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     };
 
     // Parse fails, stop
-    if let Err(e) = parsing_result {
-        return Err(e);
-    }
+    parsing_result?;
 
     let mut patched_callback = generate_wrapper(callbacks).expect("Unable to generate wrapper");
 
     // Generate binary
     match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut patched_callback, &diagnostics_buffer, &errors_buffer)
-    })
-    .and_then(|result| Ok(result))
-    {
+    }) {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
             functions: patched_callback.functions,

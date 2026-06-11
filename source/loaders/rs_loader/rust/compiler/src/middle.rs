@@ -4,7 +4,6 @@ use super::rustc_middle::ty::{
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 
-
 pub fn handle_ty(ty: &Ty) -> FunctionParameter {
     let mut result = FunctionParameter {
         name: String::new(),
@@ -88,17 +87,20 @@ pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident])
     };
     // parse input and output
     let inputs = sig.inputs().skip_binder();
-    for (idx,ty) in inputs.iter().enumerate() {
+    for (idx, ty) in inputs.iter().enumerate() {
         let mut func_parameter = handle_ty(ty);
 
         if idx == 0 {
             let ty_str = format!("{:?}", ty);
             if ty_str.contains("Self") || ty_str.contains("&Self") || ty_str.contains("Book") {
                 func_parameter.ty = FunctionType::This;
-            } 
+            }
         }
 
-        func_parameter.name = names.get(idx).map(|n| n.to_string()).unwrap_or_else(|| format!("arg{}", idx));
+        func_parameter.name = names
+            .get(idx)
+            .map(|n| n.to_string())
+            .unwrap_or_else(|| format!("arg{}", idx));
 
         function.args.push(func_parameter);
     }
@@ -106,7 +108,7 @@ pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident])
     match output.kind() {
         TyKind::Tuple(arg) => {
             // default return
-            if arg.len() == 0 {
+            if arg.is_empty() {
                 function.ret = None;
             } else {
                 function.ret = Some(handle_ty(&output));

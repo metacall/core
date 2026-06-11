@@ -48,7 +48,7 @@ impl MemoryRegistration {
 
 impl Drop for MemoryRegistration {
     fn drop(&mut self) {
-        drop(std::mem::replace(&mut self.dynlink, None));
+        self.dynlink.take();
 
         let mut path = std::mem::take(&mut self.state.output);
         if path.pop() {

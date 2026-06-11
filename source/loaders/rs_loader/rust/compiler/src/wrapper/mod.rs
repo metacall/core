@@ -205,7 +205,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
 
                     // Include class module
                     let mut wrapper_file =
-                        File::create(&temp_dir.join("wrapped_".to_owned() + &source_file))?;
+                        File::create(temp_dir.join("wrapped_".to_owned() + &source_file))?;
                     wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
                     wrapper_file.write_all(content.as_bytes())?;
                     let dst = format!("include!({:?});", callbacks.source.input_path);

@@ -33,12 +33,12 @@ impl LoadingMethod {
                 None => Err(String::from("consume_dlib was called more than once")),
             },
             Self::Memory(mut memory) => {
-                let dl = std::mem::replace(&mut memory.dynlink, None);
+                let dl = memory.dynlink.take();
                 match dl {
                     Some(dl) => Ok(dl),
                     None => Err(String::from("consume_dlib was called more than once")),
                 }
-            },
+            }
         }
     }
 }
