@@ -330,7 +330,7 @@ struct loader_impl_threadsafe_type
 
 	void initialize(napi_env env, std::string name, void (*safe_func_ptr)(napi_env, T *), bool release_safe = false)
 	{
-		napi_value func_safe_ptr;
+		napi_value func_safe_ptr = nullptr;
 
 		/* Initialize safe function with context */
 		napi_status status = napi_create_function(env, nullptr, 0, &node_loader_impl_async_threadsafe_empty, nullptr, &func_safe_ptr);
@@ -338,7 +338,7 @@ struct loader_impl_threadsafe_type
 		node_loader_impl_exception(env, status);
 
 		/* Create safe function */
-		napi_value threadsafe_func_name;
+		napi_value threadsafe_func_name = nullptr;
 
 		status = napi_create_string_utf8(env, name.c_str(), name.length(), &threadsafe_func_name);
 
@@ -694,9 +694,9 @@ typedef struct node_loader_impl_startup_args_type
 struct loader_impl_node_type
 {
 	/* TODO: The current implementation may not support multi-isolate environments. We should test it. */
-	napi_env env;						/* Used for storing environment for reentrant calls */
-	napi_ref global_ref;				/* Store global reference */
-	napi_ref function_table_object_ref; /* Store function table reference registered by the trampoline */
+	napi_env env = nullptr;						  /* Used for storing environment for reentrant calls */
+	napi_ref global_ref = nullptr;				  /* Store global reference */
+	napi_ref function_table_object_ref = nullptr; /* Store function table reference registered by the trampoline */
 
 	loader_impl_threadsafe_type<loader_impl_async_initialize_safe_type> threadsafe_initialize;
 	loader_impl_threadsafe_type<loader_impl_async_execution_path_safe_type> threadsafe_execution_path;
@@ -711,34 +711,33 @@ struct loader_impl_node_type
 	loader_impl_threadsafe_type<loader_impl_async_future_delete_safe_type> threadsafe_future_delete;
 	loader_impl_threadsafe_type<loader_impl_async_destroy_safe_type> threadsafe_destroy;
 
-	uv_thread_t thread;
-	uv_loop_t *thread_loop;
-	std::vector<std::string> *delayed_execution_paths;
+	uv_thread_t thread{};
+	uv_loop_t *thread_loop = nullptr;
+	std::vector<std::string> *delayed_execution_paths = nullptr;
+	uv_mutex_t mutex{};
+	uv_cond_t cond{};
 
-	uv_mutex_t mutex;
-	uv_cond_t cond;
-
-	int stdin_copy;
-	int stdout_copy;
-	int stderr_copy;
+	int stdin_copy = -1;
+	int stdout_copy = -1;
+	int stderr_copy = -1;
 
 #ifdef __ANDROID__
-	int pfd[2];
-	uv_thread_t thread_log_id;
+	int pfd[2] = { -1, -1 };
+	uv_thread_t thread_log_id{};
 #endif
 
-	node_loader_impl_startup_args_type thread_data;
-	int result;
+	node_loader_impl_startup_args_type thread_data{};
+	int result = 1;
 
 	/* TODO: This implementation won't work for multi-isolate environments. We should test it. */
-	std::thread::id js_thread_id;
+	std::thread::id js_thread_id{};
 
-	uint64_t base_active_handles;
-	std::atomic_uint64_t extra_active_handles;
-	uv_prepare_t destroy_prepare;
-	uv_check_t destroy_check;
-	std::atomic_bool event_loop_empty;
-	loader_impl impl;
+	uint64_t base_active_handles = 0;
+	std::atomic_uint64_t extra_active_handles{ 0 };
+	uv_prepare_t destroy_prepare{};
+	uv_check_t destroy_check{};
+	std::atomic_bool event_loop_empty{ false };
+	loader_impl impl = nullptr;
 };
 
 template <typename T>
@@ -1010,9 +1009,9 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 		}
 		else
 		{
-			napi_value error, message;
-			bool result;
-			napi_valuetype valuetype;
+			napi_value error = nullptr, message = nullptr;
+			bool result = false;
+			napi_valuetype valuetype{};
 
 			status = napi_get_and_clear_last_exception(env, &error);
 
@@ -1106,8 +1105,8 @@ value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env,
 		}
 		else
 		{
-			napi_value error;
-			bool result;
+			napi_value error = nullptr;
+			bool result = false;
 
 			status = napi_get_and_clear_last_exception(env, &error);
 
@@ -1151,7 +1150,7 @@ void node_loader_impl_finalizer_impl(napi_env env, napi_value v, void *data, T f
 // Create a finalizer for the value
 #if (NAPI_VERSION < 5)
 	{
-		napi_value symbol, external;
+		napi_value symbol = nullptr, external = nullptr;
 
 		status = napi_create_symbol(env, nullptr, &symbol);
 
@@ -1202,8 +1201,8 @@ void node_loader_impl_finalizer(napi_env env, napi_value v, void *data)
 
 napi_value node_loader_impl_get_property_as_string(napi_env env, napi_value obj, const char *prop)
 {
-	napi_valuetype valuetype;
-	napi_value result;
+	napi_valuetype valuetype{};
+	napi_value result = nullptr;
 	napi_status status = napi_get_named_property(env, obj, prop, &result);
 
 	node_loader_impl_exception(env, status);
@@ -1214,7 +1213,7 @@ napi_value node_loader_impl_get_property_as_string(napi_env env, napi_value obj,
 
 	if (valuetype != napi_string)
 	{
-		napi_value result_as_string;
+		napi_value result_as_string = nullptr;
 
 		status = napi_coerce_to_string(env, result, &result_as_string);
 
@@ -1229,7 +1228,7 @@ napi_value node_loader_impl_get_property_as_string(napi_env env, napi_value obj,
 char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const char *prop)
 {
 	napi_value prop_value = node_loader_impl_get_property_as_string(env, obj, prop);
-	size_t length;
+	size_t length = 0;
 	napi_status status = napi_get_value_string_utf8(env, prop_value, nullptr, 0, &length);
 
 	node_loader_impl_exception(env, status);
@@ -1252,8 +1251,7 @@ char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const 
 value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v)
 {
 	value ret = NULL;
-
-	napi_valuetype valuetype;
+	napi_valuetype valuetype{};
 
 	napi_status status = napi_typeof(env, v, &valuetype);
 
@@ -1328,7 +1326,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 			for (iterator = 0; iterator < length; ++iterator)
 			{
-				napi_value element;
+				napi_value element = nullptr;
 
 				status = napi_get_element(env, v, iterator, &element);
 
@@ -1407,11 +1405,8 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 		else
 		{
 			/* TODO: Strict check if it is an object (map) */
-			uint32_t iterator, length = 0;
-
-			napi_value keys;
-
-			value *map_value;
+			uint32_t length = 0;
+			napi_value keys = nullptr;
 
 			status = napi_get_property_names(env, v, &keys);
 
@@ -1423,20 +1418,17 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 			ret = value_create_map(NULL, static_cast<size_t>(length));
 
-			map_value = value_to_map(ret);
+			value *map_value = value_to_map(ret);
 
-			for (iterator = 0; iterator < length; ++iterator)
+			for (uint32_t iterator = 0; iterator < length; ++iterator)
 			{
-				napi_value key;
-
-				size_t key_length;
-
-				value *tupla;
+				napi_value key = nullptr;
+				size_t key_length = 0;
 
 				/* Create tupla */
 				map_value[iterator] = value_create_array(NULL, 2);
 
-				tupla = value_to_array(map_value[iterator]);
+				value *tupla = value_to_array(map_value[iterator]);
 
 				/* Get key from object */
 				status = napi_get_element(env, keys, iterator, &key);
@@ -1452,8 +1444,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 				if (tupla[0] != NULL)
 				{
-					napi_value element;
-
+					napi_value element = nullptr;
 					char *str = value_to_string(tupla[0]);
 
 					status = napi_get_value_string_utf8(env, key, str, key_length + 1, &key_length);
@@ -1496,13 +1487,12 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info)
 {
-	size_t iterator, argc = 0;
-
+	size_t argc = 0;
 	napi_get_cb_info(env, info, &argc, nullptr, nullptr, nullptr);
 
 	napi_value *argv = new napi_value[argc];
 	void **args = new void *[argc];
-	napi_value recv;
+	napi_value recv = nullptr;
 	loader_impl_async_safe_cast<loader_impl_napi_to_value_callback_closure> closure_cast = { nullptr };
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, &closure_cast.ptr);
@@ -1510,7 +1500,7 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	/* Set environment */
 	closure_cast.safe->node_impl->env = env;
 
-	for (iterator = 0; iterator < argc; ++iterator)
+	for (size_t iterator = 0; iterator < argc; ++iterator)
 	{
 		args[iterator] = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, recv, argv[iterator]);
 	}
@@ -1524,7 +1514,7 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 		napi_throw(env, result);
 	}
 
-	for (iterator = 0; iterator < argc; ++iterator)
+	for (size_t iterator = 0; iterator < argc; ++iterator)
 	{
 		value_type_destroy(args[iterator]);
 	}
@@ -1543,9 +1533,7 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg_value)
 {
 	type_id id = value_type_id(arg_value);
-
 	napi_status status;
-
 	napi_value v = nullptr;
 
 	if (id == TYPE_BOOL)
@@ -1729,7 +1717,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 	else if (id == TYPE_EXCEPTION)
 	{
-		napi_value message_value, label_value, stack_value;
+		napi_value message_value = nullptr, label_value = nullptr, stack_value = nullptr;
 
 		exception ex = value_to_exception(arg_value);
 
@@ -2017,10 +2005,10 @@ future_interface future_node_singleton()
 void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe_type *initialize_safe)
 {
 	static const char initialize_str[] = "initialize";
-	napi_value function_table_object;
-	napi_value initialize_str_value;
+	napi_value function_table_object = nullptr;
+	napi_value initialize_str_value = nullptr;
 	bool result = false;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 	loader_impl_node node_impl = initialize_safe->node_impl;
 
 	/* Create scope */
@@ -2045,9 +2033,9 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 
 	if (result == true)
 	{
-		napi_value function_trampoline_initialize;
-		napi_valuetype valuetype;
-		napi_value argv[1];
+		napi_value function_trampoline_initialize = nullptr;
+		napi_valuetype valuetype{};
+		napi_value argv[1] = {};
 
 		status = napi_get_named_property(env, function_table_object, initialize_str, &function_trampoline_initialize);
 
@@ -2068,7 +2056,7 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 		node_loader_impl_exception(env, status);
 
 		/* Call to load from file function */
-		napi_value global, return_value;
+		napi_value global = nullptr, return_value = nullptr;
 
 		status = napi_get_reference_value(env, node_impl->global_ref, &global);
 
@@ -2088,10 +2076,10 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execution_path_safe_type *execution_path_safe)
 {
 	static const char execution_path_str[] = "execution_path";
-	napi_value function_table_object;
-	napi_value execution_path_str_value;
+	napi_value function_table_object = nullptr;
+	napi_value execution_path_str_value = nullptr;
 	bool result = false;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 	loader_impl_node node_impl = execution_path_safe->node_impl;
 
 	/* Create scope */
@@ -2116,9 +2104,9 @@ void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execut
 
 	if (result == true)
 	{
-		napi_value function_trampoline_execution_path;
-		napi_valuetype valuetype;
-		napi_value argv[1];
+		napi_value function_trampoline_execution_path = nullptr;
+		napi_valuetype valuetype{};
+		napi_value argv[1] = {};
 
 		status = napi_get_named_property(env, function_table_object, execution_path_str, &function_trampoline_execution_path);
 
@@ -2139,7 +2127,7 @@ void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execut
 		node_loader_impl_exception(env, status);
 
 		/* Call to load from file function */
-		napi_value global, return_value;
+		napi_value global = nullptr, return_value = nullptr;
 
 		status = napi_get_reference_value(env, node_impl->global_ref, &global);
 
@@ -2158,22 +2146,15 @@ void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execut
 
 void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe_type *func_call_safe)
 {
-	napi_handle_scope handle_scope;
-	size_t args_size;
-	value *args;
-	napi_value *argv;
-	loader_impl_node_function node_func;
-	size_t args_count;
+	napi_handle_scope handle_scope = nullptr;
+	size_t args_size = func_call_safe->size;
+	value *args = func_call_safe->args;
+	loader_impl_node_function node_func = func_call_safe->node_func;
 	signature s = function_signature(func_call_safe->func);
 	const size_t signature_args_size = signature_count(s);
 
-	/* Get function data */
-	args_size = func_call_safe->size;
-	node_func = func_call_safe->node_func;
-	args = func_call_safe->args;
-
 	/* Allocate dynamically more space for values in case of variable arguments */
-	argv = args_size > signature_args_size ? new napi_value[args_size] : node_func->argv;
+	napi_value *argv = args_size > signature_args_size ? new napi_value[args_size] : node_func->argv;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2181,28 +2162,28 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 	node_loader_impl_exception(env, status);
 
 	/* Build parameters */
-	for (args_count = 0; args_count < args_size; ++args_count)
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
 		/* Define parameter */
 		argv[args_count] = node_loader_impl_value_to_napi(func_call_safe->node_impl, env, args[args_count]);
 	}
 
 	/* Get function reference */
-	napi_value function_ptr;
+	napi_value function_ptr = nullptr;
 
 	status = napi_get_reference_value(env, node_func->func_ref, &function_ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Get global */
-	napi_value global;
+	napi_value global = nullptr;
 
 	status = napi_get_reference_value(env, func_call_safe->node_impl->global_ref, &global);
 
 	node_loader_impl_exception(env, status);
 
 	/* Call to function */
-	napi_value func_return;
+	napi_value func_return = nullptr;
 
 	status = napi_call_function(env, global, function_ptr, args_size, argv, &func_return);
 
@@ -2234,7 +2215,7 @@ void node_loader_impl_async_func_await_finalize(napi_env, void *finalize_data, v
 
 napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_env env, function_resolve_callback resolve, napi_value recv, napi_value v, void *context)
 {
-	napi_value result;
+	napi_value result = nullptr;
 	value arg, ret;
 
 	if (node_impl == nullptr || resolve == NULL)
@@ -2276,7 +2257,7 @@ napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_
 
 napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_env env, function_reject_callback reject, napi_value recv, napi_value v, void *context)
 {
-	napi_value result;
+	napi_value result = nullptr;
 	value arg, ret;
 
 	if (node_impl == nullptr || reject == NULL)
@@ -2319,12 +2300,12 @@ napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_e
 void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe_type *func_await_safe)
 {
 	static const char await_str[] = "await_function";
-	napi_value await_str_value;
-	napi_value function_table_object;
-	napi_value function_await;
+	napi_value await_str_value = nullptr;
+	napi_value function_table_object = nullptr;
+	napi_value function_await = nullptr;
 	bool result = false;
-	napi_value argv[3];
-	napi_handle_scope handle_scope;
+	napi_value argv[3] = {};
+	napi_handle_scope handle_scope = nullptr;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2347,7 +2328,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 	if (result == true)
 	{
-		napi_valuetype valuetype;
+		napi_valuetype valuetype{};
 
 		status = napi_get_named_property(env, function_table_object, await_str, &function_await);
 
@@ -2368,16 +2349,12 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 			if (trampoline != nullptr)
 			{
-				size_t args_size;
-				value *args;
-				loader_impl_node_function node_func;
-				size_t args_count;
-				napi_value *func_argv;
 				signature s = function_signature(func_await_safe->func);
 				const size_t signature_args_size = signature_count(s);
+				loader_impl_node_function node_func = func_await_safe->node_func;
 
 				/* Get function reference */
-				status = napi_get_reference_value(env, func_await_safe->node_func->func_ref, &argv[0]);
+				status = napi_get_reference_value(env, node_func->func_ref, &argv[0]);
 
 				node_loader_impl_exception(env, status);
 
@@ -2387,22 +2364,21 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 				node_loader_impl_exception(env, status);
 
 				/* Get push property from array */
-				napi_value push_func;
+				napi_value push_func = nullptr;
 
 				status = napi_get_named_property(env, argv[1], "push", &push_func);
 
 				node_loader_impl_exception(env, status);
 
 				/* Get function data */
-				args_size = func_await_safe->size;
-				args = static_cast<value *>(func_await_safe->args);
-				node_func = func_await_safe->node_func;
+				size_t args_size = func_await_safe->size;
+				value *args = static_cast<value *>(func_await_safe->args);
 
 				/* Allocate dynamically more space for values in case of variable arguments */
-				func_argv = args_size > signature_args_size ? new napi_value[args_size] : node_func->argv;
+				napi_value *func_argv = args_size > signature_args_size ? new napi_value[args_size] : node_func->argv;
 
 				/* Build parameters */
-				for (args_count = 0; args_count < args_size; ++args_count)
+				for (size_t args_count = 0; args_count < args_size; ++args_count)
 				{
 					/* Define parameter */
 					func_argv[args_count] = node_loader_impl_value_to_napi(func_await_safe->node_impl, env, args[args_count]);
@@ -2431,7 +2407,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 				node_loader_impl_exception(env, status);
 
 				/* Call to function */
-				napi_value global, await_return;
+				napi_value global = nullptr, await_return = nullptr;
 
 				status = napi_get_reference_value(env, func_await_safe->node_impl->global_ref, &global);
 
@@ -2481,12 +2457,12 @@ void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_des
 void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_await_safe_type *future_await_safe)
 {
 	static const char await_str[] = "await_future";
-	napi_value await_str_value;
-	napi_value function_table_object;
-	napi_value future_await;
+	napi_value await_str_value = nullptr;
+	napi_value function_table_object = nullptr;
+	napi_value future_await = nullptr;
 	bool result = false;
-	napi_value argv[2];
-	napi_handle_scope handle_scope;
+	napi_value argv[2] = {};
+	napi_handle_scope handle_scope = nullptr;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2509,7 +2485,7 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 
 	if (result == true)
 	{
-		napi_valuetype valuetype;
+		napi_valuetype valuetype{};
 
 		status = napi_get_named_property(env, function_table_object, await_str, &future_await);
 
@@ -2553,7 +2529,7 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 				node_loader_impl_exception(env, status);
 
 				/* Call to function */
-				napi_value global, await_return;
+				napi_value global = nullptr, await_return = nullptr;
 
 				status = napi_get_reference_value(env, future_await_safe->node_impl->global_ref, &global);
 
@@ -2598,10 +2574,10 @@ void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_
 void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_from_file_safe_type *load_from_file_safe)
 {
 	static const char load_from_file_str[] = "load_from_file";
-	napi_value function_table_object;
-	napi_value load_from_file_str_value;
+	napi_value function_table_object = nullptr;
+	napi_value load_from_file_str_value = nullptr;
 	bool result = false;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2625,9 +2601,9 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 
 	if (result == true)
 	{
-		napi_value function_trampoline_load_from_file;
-		napi_valuetype valuetype;
-		napi_value argv[1];
+		napi_value function_trampoline_load_from_file = nullptr;
+		napi_valuetype valuetype{};
+		napi_value argv[1] = {};
 
 		status = napi_get_named_property(env, function_table_object, load_from_file_str, &function_trampoline_load_from_file);
 
@@ -2649,7 +2625,7 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 
 		for (size_t index = 0; index < load_from_file_safe->size; ++index)
 		{
-			napi_value path_str;
+			napi_value path_str = nullptr;
 
 			size_t length = strnlen(load_from_file_safe->paths[index], LOADER_PATH_SIZE);
 
@@ -2663,7 +2639,7 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 		}
 
 		/* Call to load from file function */
-		napi_value global, return_value;
+		napi_value global = nullptr, return_value = nullptr;
 
 		status = napi_get_reference_value(env, load_from_file_safe->node_impl->global_ref, &global);
 
@@ -2674,7 +2650,7 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 		node_loader_impl_exception(env, status);
 
 		/* Check return value */
-		napi_valuetype return_valuetype;
+		napi_valuetype return_valuetype{};
 
 		status = napi_typeof(env, return_value, &return_valuetype);
 
@@ -2698,10 +2674,10 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load_from_memory_safe_type *load_from_memory_safe)
 {
 	static const char load_from_memory_str[] = "load_from_memory";
-	napi_value function_table_object;
-	napi_value load_from_memory_str_value;
+	napi_value function_table_object = nullptr;
+	napi_value load_from_memory_str_value = nullptr;
 	bool result = false;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2725,9 +2701,9 @@ void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load
 
 	if (result == true)
 	{
-		napi_value function_trampoline_load_from_memory;
-		napi_valuetype valuetype;
-		napi_value argv[3];
+		napi_value function_trampoline_load_from_memory = nullptr;
+		napi_valuetype valuetype{};
+		napi_value argv[3] = {};
 
 		status = napi_get_named_property(env, function_table_object, load_from_memory_str, &function_trampoline_load_from_memory);
 
@@ -2756,7 +2732,7 @@ void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load
 		node_loader_impl_exception(env, status);
 
 		/* Call to load from memory function */
-		napi_value global, return_value;
+		napi_value global = nullptr, return_value = nullptr;
 
 		status = napi_get_reference_value(env, load_from_memory_safe->node_impl->global_ref, &global);
 
@@ -2767,7 +2743,7 @@ void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load
 		node_loader_impl_exception(env, status);
 
 		/* Check return value */
-		napi_valuetype return_valuetype;
+		napi_valuetype return_valuetype{};
 
 		status = napi_typeof(env, return_value, &return_valuetype);
 
@@ -2791,10 +2767,10 @@ void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load
 void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type *clear_safe)
 {
 	static const char clear_str[] = "clear";
-	napi_value function_table_object;
-	napi_value clear_str_value;
+	napi_value function_table_object = nullptr;
+	napi_value clear_str_value = nullptr;
 	bool result = false;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -2818,9 +2794,9 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type
 
 	if (result == true)
 	{
-		napi_value function_trampoline_clear;
-		napi_valuetype valuetype;
-		napi_value argv[1];
+		napi_value function_trampoline_clear = nullptr;
+		napi_valuetype valuetype{};
+		napi_value argv[1] = {};
 
 		status = napi_get_named_property(env, function_table_object, clear_str, &function_trampoline_clear);
 
@@ -2841,7 +2817,7 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type
 		node_loader_impl_exception(env, status);
 
 		/* Call to load from file function */
-		napi_value global, clear_return;
+		napi_value global = nullptr, clear_return = nullptr;
 
 		status = napi_get_reference_value(env, clear_safe->node_impl->global_ref, &global);
 
@@ -2866,10 +2842,10 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe_type
 value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe_type *discover_function_safe)
 {
 	static const char discover_function_str[] = "discover_function";
-	napi_value discover_function_str_value;
-	napi_value function_table_object;
+	napi_value discover_function_str_value = nullptr;
+	napi_value function_table_object = nullptr;
 	bool result = false;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 	value function_value = NULL;
 
 	/* Create scope */
@@ -2894,9 +2870,9 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 
 	if (result == true)
 	{
-		napi_value function_trampoline_discover;
-		napi_valuetype valuetype;
-		napi_value argv[1];
+		napi_value function_trampoline_discover = nullptr;
+		napi_valuetype valuetype{};
+		napi_value argv[1] = {};
 
 		status = napi_get_named_property(env, function_table_object, discover_function_str, &function_trampoline_discover);
 
@@ -2915,7 +2891,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 		argv[0] = discover_function_safe->func;
 
 		/* Call to load from file function */
-		napi_value global, function_descriptor;
+		napi_value global = nullptr, function_descriptor = nullptr;
 
 		status = napi_get_reference_value(env, discover_function_safe->node_impl->global_ref, &global);
 
@@ -2926,7 +2902,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 		node_loader_impl_exception(env, status);
 
 		/* Convert return value (discover object) to context */
-		napi_value func_name;
+		napi_value func_name = nullptr;
 		char *func_name_str = nullptr;
 		bool has_name = false;
 
@@ -2959,11 +2935,11 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 		}
 
 		/* Retrieve the function properties */
-		napi_value function_sig;
+		napi_value function_sig = nullptr;
 		napi_value function_types = nullptr;
 		napi_value function_ret = nullptr;
-		napi_value function_is_async;
-		uint32_t function_sig_length;
+		napi_value function_is_async = nullptr;
+		uint32_t function_sig_length = 0;
 
 		/* Get function signature */
 		status = napi_get_named_property(env, function_descriptor, "signature", &function_sig);
@@ -3109,8 +3085,8 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 			/* Set signature */
 			for (uint32_t arg_index = 0; arg_index < function_sig_length; ++arg_index)
 			{
-				napi_value parameter_name;
-				size_t parameter_name_length;
+				napi_value parameter_name = nullptr;
+				size_t parameter_name_length = 0;
 				char *parameter_name_str = nullptr;
 
 				/* Get signature parameter name */
@@ -3136,8 +3112,8 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 				/* Check if type info is available */
 				if (has_types)
 				{
-					napi_value parameter_type;
-					size_t parameter_type_length;
+					napi_value parameter_type = nullptr;
+					size_t parameter_type_length = 0;
 					char *parameter_type_str = nullptr;
 
 					/* Get signature parameter type */
@@ -3204,10 +3180,10 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe_type *discover_safe)
 {
 	static const char discover_str[] = "discover";
-	napi_value function_table_object;
-	napi_value discover_str_value;
+	napi_value function_table_object = nullptr;
+	napi_value discover_str_value = nullptr;
 	bool result = false;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -3231,9 +3207,9 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 	if (result == true)
 	{
-		napi_value function_trampoline_discover;
-		napi_valuetype valuetype;
-		napi_value argv[1];
+		napi_value function_trampoline_discover = nullptr;
+		napi_valuetype valuetype{};
+		napi_value argv[1] = {};
 
 		status = napi_get_named_property(env, function_table_object, discover_str, &function_trampoline_discover);
 
@@ -3254,7 +3230,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 		node_loader_impl_exception(env, status);
 
 		/* Call to load from file function */
-		napi_value global, discover_map;
+		napi_value global = nullptr, discover_map = nullptr;
 
 		status = napi_get_reference_value(env, discover_safe->node_impl->global_ref, &global);
 
@@ -3265,8 +3241,8 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 		node_loader_impl_exception(env, status);
 
 		/* Convert return value (discover object) to context */
-		napi_value func_names;
-		uint32_t func_names_length;
+		napi_value func_names = nullptr;
+		uint32_t func_names_length = 0;
 
 		status = napi_get_property_names(env, discover_map, &func_names);
 
@@ -3278,8 +3254,8 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 		for (uint32_t index = 0; index < func_names_length; ++index)
 		{
-			napi_value func_name;
-			size_t func_name_length;
+			napi_value func_name = nullptr;
+			size_t func_name_length = 0;
 			char *func_name_str = nullptr;
 
 			status = napi_get_element(env, func_names, index, &func_name);
@@ -3297,13 +3273,13 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 			if (func_name_str != nullptr)
 			{
-				napi_value function_descriptor;
-				napi_value function_ptr;
-				napi_value function_sig;
+				napi_value function_descriptor = nullptr;
+				napi_value function_ptr = nullptr;
+				napi_value function_sig = nullptr;
 				napi_value function_types = nullptr;
 				napi_value function_ret = nullptr;
-				napi_value function_is_async;
-				uint32_t function_sig_length;
+				napi_value function_is_async = nullptr;
+				uint32_t function_sig_length = 0;
 
 				/* Get function name */
 				status = napi_get_value_string_utf8(env, func_name, func_name_str, func_name_length + 1, &func_name_length);
@@ -3474,8 +3450,8 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					/* Set signature */
 					for (uint32_t arg_index = 0; arg_index < function_sig_length; ++arg_index)
 					{
-						napi_value parameter_name;
-						size_t parameter_name_length;
+						napi_value parameter_name = nullptr;
+						size_t parameter_name_length = 0;
 						char *parameter_name_str = nullptr;
 
 						/* Get signature parameter name */
@@ -3501,8 +3477,8 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 						/* Check if type info is available */
 						if (has_types)
 						{
-							napi_value parameter_type;
-							size_t parameter_type_length;
+							napi_value parameter_type = nullptr;
+							size_t parameter_type_length = 0;
 							char *parameter_type_str = nullptr;
 
 							/* Get signature parameter type */
@@ -3758,10 +3734,10 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
 	napi_env env;
-	napi_value function_table_object;
-	napi_value global;
+	napi_value function_table_object = nullptr;
+	napi_value global = nullptr;
 	napi_status status;
-	napi_handle_scope handle_scope;
+	napi_handle_scope handle_scope = nullptr;
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
@@ -3813,8 +3789,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	{
 		static const char test_str[] = "test";
-		napi_value test_str_value;
-
+		napi_value test_str_value = nullptr;
 		bool result = false;
 
 		/* Retrieve test function from object table */
@@ -3828,8 +3803,8 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 		if (result == true)
 		{
-			napi_value function_trampoline_test;
-			napi_valuetype valuetype;
+			napi_value function_trampoline_test = nullptr;
+			napi_valuetype valuetype{};
 
 			status = napi_get_named_property(env, function_table_object, test_str, &function_trampoline_test);
 
@@ -3845,7 +3820,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 			}
 
 			/* Call to test function */
-			napi_value return_value;
+			napi_value return_value = nullptr;
 
 			status = napi_call_function(env, global, function_trampoline_test, 0, nullptr, &return_value);
 
@@ -4311,7 +4286,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 napi_value node_loader_impl_register_bootstrap_startup(loader_impl_node node_impl, napi_env env)
 {
 	node_loader_impl_startup_args args = &node_impl->thread_data;
-	napi_value argv[4], v;
+	napi_value argv[4] = {}, v = nullptr;
 	napi_status status;
 
 	status = napi_create_array_with_length(env, 4, &v);
