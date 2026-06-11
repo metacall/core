@@ -84,6 +84,12 @@ add_custom_target(${target}_clippy ALL
 	DEPENDS ${META_PROJECT_NAME}::metacall
 )
 
+add_custom_target(${target}_fmt ALL
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${Rust_CARGO_EXECUTABLE} fmt -- --check
+    COMMENT "Checking Rust code formatting for ${target}"
+)
+
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR} PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR} ${SANITIZER_FLAGS}
@@ -93,6 +99,7 @@ add_custom_target(${target} ALL
 
 add_dependencies(${target}
 	${target}_clippy
+	${target}_fmt
 )
 
 if(RUSTUP_NIGTHLY_INSTALL_SRC)
