@@ -9,6 +9,8 @@
 #include <node_loader/node_loader_impl.h>
 #include <node_loader/node_loader_trampoline.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <cinttypes>
 #include <cstdio> /* TODO: Improve this trick */
 
@@ -143,6 +145,9 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 
 		return undefined_value;
 	}
+
+	/* End of skip node::ResetSignalHandlers use-of-uninitialized-value from node::Start of uninstrumented libnode */
+	memory_sanitizer_disable();
 }
 
 napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)

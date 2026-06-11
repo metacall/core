@@ -18,28 +18,31 @@
  *
  */
 
-#ifndef MEMORY_H
-#define MEMORY_H 1
+#ifndef MEMORY_SANITIZER_H
+#define MEMORY_SANITIZER_H 1
 
 /* -- Headers -- */
 
 #include <memory/memory_api.h>
 
-#include <memory/memory_allocator.h>
-#include <memory/memory_allocator_nginx.h>
-#include <memory/memory_allocator_std.h>
-#include <memory/memory_sanitizer.h>
+#if defined(__MEMORY_SANITIZER__)
+	#include <sanitizer/msan_interface.h>
 
-#ifdef __cplusplus
-extern "C" {
+	#define memory_sanitizer_uninstrumented(...) \
+		do \
+		{ \
+			__msan_scoped_disable_interceptor_checks(); \
+			__VA_ARGS__ \
+			__msan_scoped_enable_interceptor_checks(); \
+		} while (0)
+
+	#define memory_sanitizer_disable() __msan_scoped_disable_interceptor_checks()
+	#define memory_sanitizer_enable()  __msan_scoped_enable_interceptor_checks()
+
+#else
+	#define memory_sanitizer_uninstrumented(...) __VA_ARGS__
+	#define memory_sanitizer_disable()
+	#define memory_sanitizer_enable()
 #endif
 
-/* -- Methods -- */
-
-MEMORY_API const char *memory_print_info(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* MEMORY_H */
+#endif /* MEMORY_SANITIZER_H */

@@ -2,9 +2,3 @@
 # left here just in case we need it or we make it work
 # Also for non-instrumented libraries msan-ignorelist.txt
 # does not work either.
-
-# NodeJS
-fun:node::ResetSignalHandlers
-
-# Python
-fun:Py_InitializeEx

@@ -485,7 +485,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 		}
 		else
 		{
-			loader_path path_base, join_path;
+			loader_path path_base = { 0 }, join_path = { 0 };
 
 			size_t path_base_size = portability_path_get_directory(path, strnlen(path, LOADER_PATH_SIZE) + 1, path_base, LOADER_PATH_SIZE);
 

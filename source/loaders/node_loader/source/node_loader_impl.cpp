@@ -70,6 +70,8 @@ extern char **environ;
 /* TODO: Make logs thread safe */
 #include <log/log.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <metacall/metacall.h>
 
 #include <cstdio>
@@ -325,8 +327,8 @@ static napi_value node_loader_impl_async_threadsafe_empty(napi_env, napi_callbac
 template <typename T>
 struct loader_impl_threadsafe_type
 {
-	napi_threadsafe_function threadsafe_function;
-	std::atomic<bool> threadsafe_function_released;
+	napi_threadsafe_function threadsafe_function = nullptr;
+	std::atomic<bool> threadsafe_function_released{};
 
 	void initialize(napi_env env, std::string name, void (*safe_func_ptr)(napi_env, T *), bool release_safe = false)
 	{
@@ -3999,26 +4001,6 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	return NULL;
 }
 
-#if defined(__MEMORY_SANITIZER__)
-	#include <sanitizer/msan_interface.h>
-
-static int node_loader_impl_start(int argc, char **argv)
-{
-	// Disable MSan reporting temporarily
-	__msan_scoped_disable_interceptor_checks();
-
-	// Call NodeJS uninstrumented library
-	int result = node::Start(argc, argv);
-
-	// Re-enable MSan tracking for your code
-	__msan_scoped_enable_interceptor_checks();
-
-	return result;
-}
-#else
-	#define node_loader_impl_start node::Start
-#endif
-
 void node_loader_impl_thread(void *data)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(data);
@@ -4092,8 +4074,11 @@ void node_loader_impl_thread(void *data)
 	/* Unlock node implementation mutex */
 	uv_mutex_unlock(&node_impl->mutex);
 
+	/* Skip node::ResetSignalHandlers use-of-uninitialized-value from node::Start of uninstrumented libnode */
+	memory_sanitizer_disable();
+
 	/* Start NodeJS runtime */
-	int result = node_loader_impl_start(argc, reinterpret_cast<char **>(argv));
+	int result = node::Start(argc, reinterpret_cast<char **>(argv));
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
