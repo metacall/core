@@ -13,6 +13,8 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
+#include <metacall/metacall_error.h>
+
 #include <portability/portability_path.h>
 
 #include <reflect/reflect_context.h>
@@ -593,11 +595,9 @@ value rb_object_interface_get(object obj, object_impl impl, struct accessor_type
 
 	if (exception != Qnil)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error getting object '%s' member '%s'", object_name(obj), key);
-
 		rb_set_errinfo(Qnil);
 
-		return NULL;
+		return metacall_error_throw("rb_loader", -1, NULL, "Error getting object '%s' member '%s'", object_name(obj), key);
 	}
 
 	value result = NULL;
@@ -772,11 +772,9 @@ value rb_class_interface_static_get(klass cls, class_impl impl, struct accessor_
 
 	if (exception != Qnil)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error getting class '%s' member '%s'", class_name(cls), attr_name);
-
 		rb_set_errinfo(Qnil);
 
-		return NULL;
+		return metacall_error_throw("rb_loader", -1, NULL, "Error getting class '%s' member '%s'", class_name(cls), attr_name);
 	}
 
 	value result = NULL;
