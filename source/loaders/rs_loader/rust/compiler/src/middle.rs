@@ -1,6 +1,4 @@
-use super::rustc_middle::ty::{
-    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyKind, UintTy,
-};
+use super::rustc_middle::ty::{Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyKind, UintTy};
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 
