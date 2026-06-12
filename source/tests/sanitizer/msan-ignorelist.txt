@@ -12,4 +12,4 @@
 # we suppress the googletest and googlebenchmark sources here to avoid
 # noise from the testing and benchmarking frameworks themselves.
 src:*/googletest/*
-src:*/googlebenchmark/*
+src:*/googlebenchmark-src/*
