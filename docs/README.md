@@ -122,7 +122,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [Java](https://www.java.com)                                       | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)                                                                                             |                **>=11**                 | java |
 | [WebAssembly](https://webassembly.org/)                            | [Wasmtime](https://github.com/bytecodealliance/wasmtime)                                                                                              |          **>= 0.27 <= 8.0.1**           | wasm |
 | [C](<https://en.wikipedia.org/wiki/C_(programming_language)>)      | [libclang](https://clang.llvm.org/doxygen/group__CINDEX.html) - [Tiny C Compiler](https://bellard.org/tcc/) - [libffi](http://sourceware.org/libffi/) | **>=12** - **>=2021-10-30** - **>=3.2** |  c   |
-| [Rust](https://www.rust-lang.org/)                                 | [rustc](https://doc.rust-lang.org/rustc/what-is-rustc.html) - [libffi](http://sourceware.org/libffi/)                                                 |         **nightly-2021-12-04**          |  rs  |
+| [Rust](https://www.rust-lang.org/)                                 | [rustc](https://doc.rust-lang.org/rustc/what-is-rustc.html) - [libffi](http://sourceware.org/libffi/)                                                 |         **nightly-2026-01-15**          |  rs  |
 
 - Languages and run-times under construction:
 
@@ -984,6 +984,7 @@ The following platforms and architectures have been tested and are known to work
 |   **`debian`**   | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`ppc64le`** **`arm/v7`** **`arm/v6`** **`loong64`** |  **`gcc`**  |
 |   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
 |  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
+|  **`freebsd`**   |                                                        **`amd64`** **`arm64`**                                                      | **`clang`** |
 
 
 ## 8.1 Docker Support

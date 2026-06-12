@@ -230,6 +230,7 @@ void signature_set(signature s, size_t index, const char *name, type t)
 			return;
 		}
 
+		/* Delete the previous name if any */
 		if (node->name != NULL)
 		{
 			free(node->name);

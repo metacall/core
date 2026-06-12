@@ -144,10 +144,10 @@ void *metacall_value_create(enum metacall_value_id id)
 			return value_create_object(object_create("", ACCESSOR_TYPE_STATIC, NULL, NULL, metacall_value_create(METACALL_CLASS)));
 
 		case METACALL_EXCEPTION:
-			return exception_create_const("", "", 0, "");
+			return value_create_exception(exception_create_const("", "", 0, ""));
 
 		case METACALL_THROWABLE:
-			return throwable_create(metacall_value_create(METACALL_EXCEPTION));
+			return value_create_throwable(throwable_create(metacall_value_create(METACALL_EXCEPTION)));
 
 		case METACALL_SIZE:
 		case METACALL_INVALID:

@@ -35,6 +35,8 @@
 
 #include <log/log.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <metacall/metacall.hpp>
 
 #include <map>
@@ -1592,10 +1594,15 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 
 static int c_loader_impl_tcc_relocate(TCCState *state)
 {
+	/* Skip tcc_relocate use-of-uninitialized-value from heap allocation of tcc_basename in libtcc */
 #ifdef TCC_RELOCATE_AUTO
-	return tcc_relocate(state, TCC_RELOCATE_AUTO);
+	memory_sanitizer_uninstrumented({
+		return tcc_relocate(state, TCC_RELOCATE_AUTO);
+	});
 #else
-	return tcc_relocate(state);
+	memory_sanitizer_uninstrumented({
+		return tcc_relocate(state);
+	});
 #endif
 }
 
@@ -1639,7 +1646,14 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 
 				if (portability_path_file_exists(path) == 0)
 				{
-					if (tcc_add_file(c_handle->state, path) != -1)
+					int add_file_result;
+
+					/* Skip tcc_compile use-of-uninitialized-value from heap allocation of cstr_cat in libtcc */
+					memory_sanitizer_uninstrumented({
+						add_file_result = tcc_add_file(c_handle->state, path);
+					});
+
+					if (add_file_result != -1)
 					{
 						c_handle->add(path, path_size);
 						found = true;

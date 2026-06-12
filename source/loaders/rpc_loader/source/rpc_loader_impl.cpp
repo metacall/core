@@ -34,6 +34,8 @@
 
 #include <log/log.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <metacall/metacall.h>
 
 #include <curl/curl.h>
@@ -217,9 +219,13 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE, body_request_size - 1);
 	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
 
-	CURLcode res = curl_easy_perform(easy);
+	CURLcode res;
 
-	curl_easy_cleanup(easy);
+	/* Skip curl_multi_perform and curl_multi_cleanup use-of-uninitialized-value from heap allocation in uninstrumented libcurl */
+	memory_sanitizer_uninstrumented({
+		res = curl_easy_perform(easy);
+		curl_easy_cleanup(easy);
+	});
 
 	/* Clear the request buffer */
 	metacall_allocator_free(rpc_function->rpc_impl->allocator, buffer);
@@ -262,8 +268,11 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 			curl_multi_add_handle(rpc_impl->async_multi, ctx->easy);
 		}
 
-		/* Drive all active transfers forward */
-		curl_multi_perform(rpc_impl->async_multi, &still_running);
+		/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
+		memory_sanitizer_uninstrumented({
+			/* Drive all active transfers forward */
+			curl_multi_perform(rpc_impl->async_multi, &still_running);
+		});
 
 		/* Check for completed transfers */
 		CURLMsg *msg;
@@ -282,7 +291,11 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 
 				/* Remove from multi handle */
 				curl_multi_remove_handle(rpc_impl->async_multi, easy);
-				curl_easy_cleanup(easy);
+
+				/* Skip curl_easy_cleanup and curl_multi_cleanup use-of-uninitialized-value from heap allocation in uninstrumented libcurl */
+				memory_sanitizer_uninstrumented({
+					curl_easy_cleanup(easy);
+				});
 
 				if (done_ctx == NULL)
 				{
@@ -537,7 +550,10 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	curl_global_init(CURL_GLOBAL_ALL);
+	/* Skip OPENSSL_init_crypto use-of-uninitialized-value from heap allocation of CRYPTO_malloc in uninstrumented libcrypto */
+	memory_sanitizer_uninstrumented({
+		curl_global_init(CURL_GLOBAL_ALL);
+	});
 
 	/* Initialize discover CURL object */
 	rpc_impl->discover_curl = curl_easy_init();
@@ -670,7 +686,7 @@ int rpc_loader_impl_load_from_file_execution_paths(loader_impl_rpc rpc_impl, loa
 	{
 		for (auto it : rpc_impl->execution_paths)
 		{
-			loader_path absolute_path;
+			loader_path absolute_path = {};
 
 			(void)portability_path_join(it.c_str(), it.size(), path, strnlen(path, LOADER_PATH_SIZE) + 1, absolute_path, LOADER_PATH_SIZE);
 
@@ -872,13 +888,16 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 	for (size_t iterator = 0; iterator < rpc_handle->urls.size(); ++iterator)
 	{
 		loader_impl_rpc_write_data_type write_data;
-
 		std::string inspect_url = rpc_handle->urls[iterator] + "inspect";
+		CURLcode res;
 
 		curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
 		curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
 
-		CURLcode res = curl_easy_perform(rpc_impl->discover_curl);
+		/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
+		memory_sanitizer_uninstrumented({
+			res = curl_easy_perform(rpc_impl->discover_curl);
+		});
 
 		if (res != CURLE_OK)
 		{
@@ -923,14 +942,16 @@ int rpc_loader_impl_destroy(loader_impl impl)
 		rpc_impl->poll_thread.join();
 	}
 
-	/* Clean up async multi handle */
-	curl_multi_cleanup(rpc_impl->async_multi);
+	/* Skip curl_multi_cleanup use-of-uninitialized-value from heap allocation in uninstrumented libcurl */
+	memory_sanitizer_uninstrumented({
+		/* Clean up async multi and discover handle */
+		curl_multi_cleanup(rpc_impl->async_multi);
+		curl_easy_cleanup(rpc_impl->discover_curl);
+	});
 
 	curl_slist_free_all(rpc_impl->headers);
 
 	metacall_allocator_destroy(rpc_impl->allocator);
-
-	curl_easy_cleanup(rpc_impl->discover_curl);
 
 	curl_global_cleanup();
 

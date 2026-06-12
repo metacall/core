@@ -4,7 +4,12 @@ use std::os::raw::{c_int, c_void};
 use compiler::api;
 
 #[no_mangle]
-pub extern "C" fn rs_loader_impl_clear(loader_impl: *mut c_void, handle: *mut c_void) -> c_int {
+/// # Safety
+/// `loader_impl` must be a valid pointer supplied by MetaCall.
+pub unsafe extern "C" fn rs_loader_impl_clear(
+    loader_impl: *mut c_void,
+    handle: *mut c_void,
+) -> c_int {
     let loader_lifecycle_state = unsafe {
         api::get_loader_lifecycle_state(loader_impl)
             .as_mut()
