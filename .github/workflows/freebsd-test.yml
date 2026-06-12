@@ -31,6 +31,7 @@ jobs:
             sanitizer: address-sanitizer
           - build: release
             sanitizer: thread-sanitizer
+        # TODO: Implement support for arm64 of c and wasm
         include:
           - arch: x86-64
             extra-loaders: "c wasm"
@@ -42,7 +43,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run FreeBSD VM
-        uses: cross-platform-actions/action@v0.32.0
+        uses: cross-platform-actions/action@v1.1.0
         with:
           operating_system: freebsd
           version: 14.2

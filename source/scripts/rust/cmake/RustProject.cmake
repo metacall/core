@@ -87,17 +87,19 @@ function(rust_package target version script)
 	endif()
 
 	# Compile scripts
+	if(Rust_RUSTUP_EXECUTABLE)
+		list(APPEND RUSTUP_COMMAND COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2026-01-15)
+	endif()
+
 	add_custom_command(TARGET ${custom_target} POST_BUILD
 		# Fix the version of rustc
-		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
+		${RUSTUP_COMMAND}
 		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=lib ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
 		COMMAND ${Rust_RUSTC_EXECUTABLE} ${RUST_EXTRA_FLAGS} --verbose --crate-type=dylib -Cprefer-dynamic ${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs --out-dir ${PROJECT_OUTPUT_DIR}
 	)
 
 	# Include generated project file
 	include(${CMAKE_CURRENT_BINARY_DIR}/${custom_target}-config.cmake)
-
-
 endfunction()
 
 function(cargo_package target version)
@@ -132,9 +134,13 @@ function(cargo_package target version)
 	)
 
 	# Compile project
+	if(Rust_RUSTUP_EXECUTABLE)
+		list(APPEND RUSTUP_COMMAND COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2026-01-15)
+	endif()
+
 	add_custom_command(TARGET ${custom_target} POST_BUILD
 		# Fix the version of rustc
-		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
+		${RUSTUP_COMMAND}
 		COMMAND ${Rust_CARGO_EXECUTABLE} build --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml --target-dir ${PROJECT_OUTPUT_DIR}
 	)
 

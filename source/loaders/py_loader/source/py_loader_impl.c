@@ -39,6 +39,8 @@
 
 #include <log/log.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <threading/threading_thread_id.h>
 
 #include <metacall/metacall.h>
@@ -2315,7 +2317,10 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 
 	static const loader_name name = "py_loader_impl_thread_background";
 
-	py_impl->thread_background_module = py_loader_impl_load_from_memory_compile(py_impl, name, thread_background_module_str);
+	/* Skip OBJ_txt2obj use-of-uninitialized-value from heap allocation of CRYPTO_malloc in uninstrumented libcrypto */
+	memory_sanitizer_uninstrumented({
+		py_impl->thread_background_module = py_loader_impl_load_from_memory_compile(py_impl, name, thread_background_module_str);
+	});
 
 	if (py_impl->thread_background_module == NULL)
 	{
@@ -2792,7 +2797,7 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 	}
 	else
 	{
-		loader_name name;
+		loader_name name = { 0 };
 		size_t size = portability_path_get_fullname(path, strnlen(path, LOADER_PATH_SIZE) + 1, name, LOADER_NAME_SIZE);
 
 		*exception = NULL;
@@ -2927,7 +2932,7 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 		PyObject *elem = PyList_GetItem(system_paths, index);
 		Py_ssize_t length = 0;
 		const char *system_path_str = PyUnicode_AsUTF8AndSize(elem, &length);
-		loader_path join_path, canonical_path;
+		loader_path join_path = { 0 }, canonical_path = { 0 };
 		size_t join_path_size = portability_path_join(system_path_str, length + 1, path, strnlen(path, LOADER_PATH_SIZE) + 1, join_path, LOADER_PATH_SIZE);
 		portability_path_canonical(join_path, join_path_size, canonical_path, LOADER_PATH_SIZE);
 
@@ -3775,7 +3780,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 	// This should never fail since `module` is a valid module object
 	PyObject *module_dict = PyModule_GetDict(module);
 	Py_ssize_t position = 0;
-	PyObject *module_dict_key, *module_dict_val;
+	PyObject *module_dict_key = NULL, *module_dict_val = NULL;
 	loader_impl_py py_impl = loader_impl_get(impl);
 
 	while (PyDict_Next(module_dict, &position, &module_dict_key, &module_dict_val))
@@ -3895,21 +3900,15 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 	static const char error_format_str[] = "Python %s: %s\n%s";
 	static const char separator_str[] = "";
 	static const char traceback_not_found[] = "Traceback not available";
-
-	PyObject *type, *value, *traceback;
-
-	PyObject *type_str_obj, *value_str_obj, *traceback_str_obj;
-
-	PyObject *traceback_list, *separator;
-
-	const char *type_str, *value_str, *traceback_str;
+	PyObject *type = NULL, *value = NULL, *traceback = NULL;
+	PyObject *type_str_obj = NULL, *value_str_obj = NULL, *traceback_str_obj = NULL;
+	PyObject *traceback_list = NULL, *separator = NULL;
+	const char *type_str = NULL, *value_str = NULL, *traceback_str = NULL;
 
 	PyErr_Fetch(&type, &value, &traceback);
 
 	type_str_obj = PyObject_Str(type);
-
 	value_str_obj = PyObject_Str(value);
-
 	traceback_list = PyObject_CallFunctionObjArgs(py_impl->traceback_format_exception, type, value, traceback, NULL);
 
 #if PY_MAJOR_VERSION == 2

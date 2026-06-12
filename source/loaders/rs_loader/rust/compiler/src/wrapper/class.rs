@@ -12,7 +12,7 @@ use std::sync::Arc;
 type Result<T, E = i32> = core::result::Result<T, E>;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 
-extern "C" {
+unsafe extern "C" {
     fn value_type_count(v: *mut c_void) -> c_int;
     fn value_type_id(v: *mut c_void) -> c_int;
     // fn metacall_value_id(v: *mut c_void) -> c_int;
@@ -246,11 +246,11 @@ impl Instance {
         attr.invoke(value, self)
     }
 
-    pub fn borrow(&self) -> Ref<dyn std::any::Any + Send + Sync> {
+    pub fn borrow(&self) -> Ref<'_, dyn std::any::Any + Send + Sync> {
         self.inner.as_ref().borrow()
     }
 
-    pub fn borrow_mut(&self) -> RefMut<dyn std::any::Any + Send + Sync> {
+    pub fn borrow_mut(&self) -> RefMut<'_, dyn std::any::Any + Send + Sync> {
         self.inner.as_ref().borrow_mut()
     }
 
@@ -348,7 +348,7 @@ impl Constructor {
         F::Result: Send + Sync + 'static,
     {
         Constructor(Arc::new(move |args: Vec<MetacallValue>| {
-            Args::from_meta_list(&args).map(|args| Instance::new(f.invoke(args)))
+            unsafe { Args::from_meta_list(&args) }.map(|args| Instance::new(f.invoke(args)))
         }))
     }
 
@@ -357,8 +357,10 @@ impl Constructor {
     }
 }
 
+type AttributeGetterFn = dyn Fn(&Instance) -> Result<MetacallValue> + Send + Sync;
+
 #[derive(Clone)]
-pub struct AttributeGetter(Arc<dyn Fn(&Instance) -> Result<MetacallValue> + Send + Sync>);
+pub struct AttributeGetter(Arc<AttributeGetterFn>);
 impl AttributeGetter {
     pub fn new<T, F, R>(f: F) -> Self
     where
@@ -380,8 +382,10 @@ impl AttributeGetter {
     }
 }
 
+type AttributeSetterFn = dyn Fn(MetacallValue, &mut Instance);
+
 #[derive(Clone)]
-pub struct AttributeSetter(Arc<dyn Fn(MetacallValue, &mut Instance)>);
+pub struct AttributeSetter(Arc<AttributeSetterFn>);
 impl AttributeSetter {
     pub fn new<T, F, Arg>(f: F) -> Self
     where
@@ -394,7 +398,7 @@ impl AttributeSetter {
             let receiver = borrowed_receiver
                 .downcast_mut::<T>()
                 .expect("Unable to downcast");
-            f(FromMeta::from_meta(value).unwrap(), receiver)
+            f(unsafe { FromMeta::from_meta(value) }.unwrap(), receiver)
         }))
     }
 
@@ -421,7 +425,7 @@ impl InstanceMethod {
                     .downcast_ref::<T>()
                     .expect("Unable to downcast"));
 
-                let args = Args::from_meta_list(&args);
+                let args = unsafe { Args::from_meta_list(&args) };
 
                 join(receiver, args)
                     .and_then(|(receiver, args)| f.invoke(receiver, args).to_meta_result())
@@ -445,7 +449,7 @@ impl ClassMethod {
         F::Result: ToMetaResult + std::fmt::Debug,
     {
         Self(Arc::new(move |args: Vec<MetacallValue>| {
-            Args::from_meta_list(&args).and_then(|args| {
+            unsafe { Args::from_meta_list(&args) }.and_then(|args| {
                 let res = f.invoke(args);
                 res.to_meta_result()
             })
@@ -469,7 +473,7 @@ impl Function {
         F::Result: ToMetaResult + std::fmt::Debug,
     {
         Self(Arc::new(move |args: Vec<MetacallValue>| {
-            Args::from_meta_list(&args).and_then(|args| {
+            unsafe { Args::from_meta_list(&args) }.and_then(|args| {
                 let res = f.invoke(args);
                 res.to_meta_result()
             })
@@ -606,7 +610,7 @@ where
             let ret_map = self
                 .into_iter()
                 .map(|(key, val)| {
-                    let pair = vec![key.to_meta_result().unwrap(), val.to_meta_result().unwrap()];
+                    let pair = [key.to_meta_result().unwrap(), val.to_meta_result().unwrap()];
                     metacall_value_create_array(pair.as_ptr(), pair.len())
                 })
                 .collect::<Vec<*mut c_void>>();
@@ -615,16 +619,20 @@ where
     }
 }
 pub trait FromMetaList {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self>
+    /// # Safety
+    /// Every value must be a valid MetaCall value pointer for the conversion.
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self>
     where
         Self: Sized;
 }
 pub trait FromMeta: Clone {
-    fn from_meta(val: MetacallValue) -> Result<Self>;
+    /// # Safety
+    /// `val` must be a valid MetaCall value pointer of a compatible type.
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self>;
 }
 
 impl FromMeta for MetacallValue {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(val)
     }
 }
@@ -723,38 +731,38 @@ macro_rules! convert_to {
 }
 
 impl FromMeta for i8 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe { metacall_value_to_char(val) })
     }
 }
 impl FromMeta for i16 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         convert_to!(i16, val)
     }
 }
 impl FromMeta for i32 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         convert_to!(i32, val)
     }
 }
 impl FromMeta for i64 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         convert_to!(i64, val)
     }
 }
 impl FromMeta for f32 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         convert_to!(f32, val)
     }
 }
 impl FromMeta for f64 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         convert_to!(f64, val)
     }
 }
 
 impl FromMeta for String {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe {
             let s = metacall_value_to_string(val);
             CStr::from_ptr(s)
@@ -766,7 +774,7 @@ impl FromMeta for String {
 }
 
 impl FromMeta for &str {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe {
             let s = metacall_value_to_string(val);
             CStr::from_ptr(s)
@@ -780,7 +788,7 @@ impl<T> FromMeta for Vec<T>
 where
     T: Clone + FromMeta,
 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe {
             let arr = metacall_value_to_array(val);
             let count = value_type_count(val);
@@ -798,7 +806,7 @@ where
     K: Clone + FromMeta + std::cmp::Eq + std::hash::Hash,
     V: Clone + FromMeta,
 {
-    fn from_meta(val: MetacallValue) -> Result<Self> {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe {
             let map = metacall_value_to_map(val);
             let count = value_type_count(val);
@@ -832,14 +840,14 @@ where
 
 #[allow(unused)]
 impl FromMetaList for () {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok(())
     }
 }
 #[allow(unused)]
 impl<TupleElement0: FromMeta> FromMetaList for (TupleElement0,) {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((TupleElement0::from_meta(*iter.next().unwrap())?,))
     }
@@ -848,7 +856,7 @@ impl<TupleElement0: FromMeta> FromMetaList for (TupleElement0,) {
 impl<TupleElement0: FromMeta, TupleElement1: FromMeta> FromMetaList
     for (TupleElement0, TupleElement1)
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -860,7 +868,7 @@ impl<TupleElement0: FromMeta, TupleElement1: FromMeta> FromMetaList
 impl<TupleElement0: FromMeta, TupleElement1: FromMeta, TupleElement2: FromMeta> FromMetaList
     for (TupleElement0, TupleElement1, TupleElement2)
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -877,7 +885,7 @@ impl<
         TupleElement3: FromMeta,
     > FromMetaList for (TupleElement0, TupleElement1, TupleElement2, TupleElement3)
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -903,7 +911,7 @@ impl<
         TupleElement4,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -932,7 +940,7 @@ impl<
         TupleElement5,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -964,7 +972,7 @@ impl<
         TupleElement6,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -999,7 +1007,7 @@ impl<
         TupleElement7,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1037,7 +1045,7 @@ impl<
         TupleElement8,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1078,7 +1086,7 @@ impl<
         TupleElement9,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1122,7 +1130,7 @@ impl<
         TupleElement10,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1169,7 +1177,7 @@ impl<
         TupleElement11,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1219,7 +1227,7 @@ impl<
         TupleElement12,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1272,7 +1280,7 @@ impl<
         TupleElement13,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1328,7 +1336,7 @@ impl<
         TupleElement14,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,
@@ -1387,7 +1395,7 @@ impl<
         TupleElement15,
     )
 {
-    fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
+    unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
             TupleElement0::from_meta(*iter.next().unwrap())?,

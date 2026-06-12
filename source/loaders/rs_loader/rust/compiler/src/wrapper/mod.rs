@@ -1,12 +1,12 @@
 pub mod class;
-use super::{config::Input, source_map::FileName::Custom, CompilerCallbacks, Function, Source};
+use super::{config::Input, rustc_span::FileName::Custom, CompilerCallbacks, Function, Source};
 use std::fs::File;
 use std::io::Write;
 fn generate_function_wrapper(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
             func.name
         ));
         ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
@@ -19,7 +19,7 @@ fn generate_class_wrapper(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
             class.name
         ));
         ret.push_str(&format!(
@@ -76,7 +76,7 @@ fn generate_function_wrapper_for_package(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
             func.name
         ));
         ret.push_str(&format!(
@@ -91,7 +91,7 @@ fn generate_class_wrapper_for_package(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
-            "#[no_mangle]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
+            "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_class_{}() -> *mut Class {{\n",
             class.name
         ));
         ret.push_str(&format!(
@@ -205,7 +205,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
 
                     // Include class module
                     let mut wrapper_file =
-                        File::create(&temp_dir.join("wrapped_".to_owned() + &source_file))?;
+                        File::create(temp_dir.join("wrapped_".to_owned() + &source_file))?;
                     wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
                     wrapper_file.write_all(content.as_bytes())?;
                     let dst = format!("include!({:?});", callbacks.source.input_path);

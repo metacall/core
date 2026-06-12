@@ -26,6 +26,8 @@
 
 #include <log/log.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -1007,29 +1009,32 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 			*/
 			/* ruby_init_loadpath(); */
 
-			/* When using ruby_options (tested on version 2.7 and 3.3), Ruby tries to parse the
-			* command line arguments and run it like a CLI, so basically it is expecting a file to
-			* be run (ruby ./script.rb) or inline code (ruby -e "<code>"). The main issue of this
-			* is that if you do not pass any file inside argv, it tries to read from stdin because it
-			* wants to launch the REPL and then blocks everything. Normally this is unnecesary if
-			* you are embedding. In order to avoid this, we check if ruby is being embedded (i.e is not host)
-			* and also we have no argv available, and then we provide dummy arguments to skip the problem,
-			* this nasty but is still better than using ruby_ini_loadpath because it initializes properly
-			* all ruby gems paths and builtins.
-			*
-			* We check against argc equal to 1 because it still can pass an argument like the executable name
-			* and this will generate the same issue, it requires at least two arguments for skipping it,
-			* i.e ruby ./script.rb
-			*/
-			if (rb_loader_impl_interactive_terminal() && (argv == NULL || argc <= 1))
-			{
-				static char *proxy_argv[] = { "ruby", "-e", "\"\"" };
-				ruby_options(3, proxy_argv);
-			}
-			else
-			{
-				ruby_options(argc, argv);
-			}
+			/* Skip ruby_options use-of-uninitialized-value from uninstrumented libruby */
+			memory_sanitizer_uninstrumented({
+				/* When using ruby_options (tested on version 2.7 and 3.3), Ruby tries to parse the
+				* command line arguments and run it like a CLI, so basically it is expecting a file to
+				* be run (ruby ./script.rb) or inline code (ruby -e "<code>"). The main issue of this
+				* is that if you do not pass any file inside argv, it tries to read from stdin because it
+				* wants to launch the REPL and then blocks everything. Normally this is unnecesary if
+				* you are embedding. In order to avoid this, we check if ruby is being embedded (i.e is not host)
+				* and also we have no argv available, and then we provide dummy arguments to skip the problem,
+				* this nasty but is still better than using ruby_ini_loadpath because it initializes properly
+				* all ruby gems paths and builtins.
+				*
+				* We check against argc equal to 1 because it still can pass an argument like the executable name
+				* and this will generate the same issue, it requires at least two arguments for skipping it,
+				* i.e ruby ./script.rb
+				*/
+				if (rb_loader_impl_interactive_terminal() && (argv == NULL || argc <= 1))
+				{
+					static char *proxy_argv[] = { "ruby", "-e", "\"\"" };
+					ruby_options(3, proxy_argv);
+				}
+				else
+				{
+					ruby_options(argc, argv);
+				}
+			});
 		}
 	}
 
@@ -1119,13 +1124,9 @@ VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
 VALUE rb_loader_impl_load_data(loader_impl impl, const loader_path path)
 {
 	VALUE load_path_array = rb_gv_get("$:");
-
 	VALUE load_path_array_size = rb_funcallv(load_path_array, rb_intern("size"), 0, NULL);
-
 	VALUE module_path = rb_str_new_cstr(path);
-
 	int index, size = FIX2INT(load_path_array_size);
-
 	VALUE module = rb_loader_impl_load_data_absolute(module_path);
 
 	(void)impl;
@@ -1138,10 +1139,13 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_path path)
 	for (index = 0; index < size; ++index)
 	{
 		VALUE load_path_entry = rb_ary_entry(load_path_array, index);
+		VALUE module_absolute_path;
 
-		VALUE module_absolute_path = rb_funcall(rb_cFile, rb_intern("join"), 2, load_path_entry, module_path);
-
-		module = rb_loader_impl_load_data_absolute(module_absolute_path);
+		/* Skip uninitialized bytes in memchr at offset in uninstrumented libruby */
+		memory_sanitizer_uninstrumented({
+			module_absolute_path = rb_funcall(rb_cFile, rb_intern("join"), 2, load_path_entry, module_path);
+			module = rb_loader_impl_load_data_absolute(module_absolute_path);
+		});
 
 		if (module != Qnil)
 		{
@@ -1252,10 +1256,13 @@ loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE
 loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_path path, const loader_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
-
 	VALUE name_capitalized = rb_funcallv(name_value, rb_intern("capitalize"), 0, NULL);
+	VALUE module;
 
-	VALUE module = rb_define_module(RSTRING_PTR(name_capitalized));
+	/* Skip rb_define_module use-of-uninitialized-value from uninstrumented libruby */
+	memory_sanitizer_uninstrumented({
+		module = rb_define_module(RSTRING_PTR(name_capitalized));
+	});
 
 	if (module != Qnil)
 	{

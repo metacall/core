@@ -262,6 +262,7 @@ int metacall_initialize(void)
 			if (metacall_fork_initialize() != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
+				return 1;
 			}
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");

@@ -397,12 +397,12 @@ int loader_load_from_package(const loader_tag tag, const loader_path path, void 
 
 int loader_load_from_configuration(const loader_path path, void **handle, void *allocator)
 {
-	loader_name config_name;
+	loader_name config_name = { 0 };
 	configuration config;
 	value tag, scripts, context_path;
 	value *scripts_array;
 	loader_path *paths;
-	loader_path context_path_str;
+	loader_path context_path_str = { 0 };
 	size_t context_path_size = 0;
 	size_t iterator, size;
 
@@ -485,7 +485,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 		}
 		else
 		{
-			loader_path path_base, join_path;
+			loader_path path_base = { 0 }, join_path = { 0 };
 
 			size_t path_base_size = portability_path_get_directory(path, strnlen(path, LOADER_PATH_SIZE) + 1, path_base, LOADER_PATH_SIZE);
 
@@ -511,7 +511,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 			}
 			else
 			{
-				loader_path join_path;
+				loader_path join_path = { 0 };
 
 				size_t join_path_size = portability_path_join(context_path_str, context_path_size, str, str_size, join_path, LOADER_PATH_SIZE);
 

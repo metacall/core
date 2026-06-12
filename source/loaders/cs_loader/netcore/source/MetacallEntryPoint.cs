@@ -38,7 +38,7 @@ namespace CSLoader
         public unsafe static bool LoadFromPointer(string[] source)
         {
             try {
-                return loader.LoadFromSourceFunctions(source);
+                return loader.LoadFromSourceFunctions(source) != null;
             } catch (Exception ex) {
                 // TODO: Implement error handling
                 log.Error(ex.Message, ex);
@@ -60,7 +60,7 @@ namespace CSLoader
         {
             try
             {
-                return loader.LoadFromSourceFunctions(new string[] { source });
+                return loader.LoadFromSourceFunctions(new string[] { source }) != null;
             }
             catch (Exception ex)
             {
@@ -169,7 +169,7 @@ namespace CSLoader
 
         public static bool LoadFromAssembly(string assemblyFile)
         {
-            return loader.LoadFromAssembly(assemblyFile);
+            return loader.LoadFromAssembly(assemblyFile) != null;
         }
 
         public static bool LoadFromAssemblyC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string assemblyFile)

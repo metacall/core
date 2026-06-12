@@ -162,34 +162,53 @@ function(find_sanitizer NAME)
 	elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		execute_process(
 			COMMAND ${CMAKE_CXX_COMPILER} --print-runtime-dir
-			OUTPUT_VARIABLE RUNTIME_DIR
+			OUTPUT_VARIABLE CLANG_RUNTIME_DIR
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 
-		file(GLOB RUNTIME_CANDIDATES
-			"${RUNTIME_DIR}/*${NAME}*.so"
-			"${RUNTIME_DIR}/*${NAME}*.dylib"
+		file(GLOB CLANG_RUNTIME_CANDIDATES
+			"${CLANG_RUNTIME_DIR}/*${NAME}*.so"
+			"${CLANG_RUNTIME_DIR}/*${NAME}*.dylib"
 		)
 
-		list(LENGTH RUNTIME_CANDIDATES NUM_FOUND)
+		list(LENGTH CLANG_RUNTIME_CANDIDATES CLANG_RUNTIME_CANDIDATES_SIZE)
 
-		if(NUM_FOUND GREATER 0)
-			list(GET RUNTIME_CANDIDATES 0 LIB_PATH)
+		if(CLANG_RUNTIME_CANDIDATES_SIZE GREATER 0)
+			list(GET CLANG_RUNTIME_CANDIDATES 0 CLANG_LIB_PATH)
 		endif()
 	endif()
 
-	if(LIB_PATH)
-		set(LIB${NAME_UPPER}_PATH "${LIB_PATH}" PARENT_SCOPE)
+	if(CLANG_LIB_PATH)
+		set(LIB${NAME_UPPER}_PATH "${CLANG_LIB_PATH}" PARENT_SCOPE)
 	endif()
 endfunction()
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 	if(OPTION_BUILD_THREAD_SANITIZER)
-		find_sanitizer(tsan)
-		if(LIBTSAN_PATH)
-			set(SANITIZER_LIBRARIES_PATH
-				"${LIBTSAN_PATH}"
-			)
+		if(PROJECT_OS_FAMILY MATCHES "macos" AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			# Here there is the list of all libraries for different MacOS platforms:
+			#
+			# libclang_rt.tsan_iossim_dynamic.dylib
+			# libclang_rt.tsan_osx_dynamic.dylib
+			# libclang_rt.tsan_tvossim_dynamic.dylib
+			# libclang_rt.tsan_watchossim_dynamic.dylib
+			# libclang_rt.tsan_xros_dynamic.dylib
+			# libclang_rt.tsan_xrossim_dynamic.dylib
+			#
+			# We are supporting OSX only for now.
+			find_sanitizer(tsan_osx_dynamic)
+			if(LIBTSAN_OSX_DYNAMIC_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBTSAN_OSX_DYNAMIC_PATH}"
+				)
+			endif()
+		else()
+			find_sanitizer(tsan)
+			if(LIBTSAN_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBTSAN_PATH}"
+				)
+			endif()
 		endif()
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 		find_sanitizer(msan)
@@ -413,6 +432,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PRO
 			add_link_options(-fsanitize-address-use-after-scope)
 		endif()
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 		add_compile_options(-fno-omit-frame-pointer)
 		add_compile_options(-fno-optimize-sibling-calls)
 		add_compile_options(-fsanitize=undefined)
@@ -420,6 +440,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PRO
 		add_compile_options(-fsanitize-memory-track-origins)
 		add_compile_options(-fsanitize-memory-use-after-dtor)
 		add_compile_options(-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
+		add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 		add_link_options(-fsanitize=undefined)
 		add_link_options(-fsanitize=memory)
 		add_link_options(-fsanitize-memory-track-origins)

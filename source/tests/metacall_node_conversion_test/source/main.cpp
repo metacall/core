@@ -1,6 +1,6 @@
 /*
- *	Memory Library by Parra Studios
- *	A generic cross-platform memory utility.
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,28 +18,11 @@
  *
  */
 
-#ifndef MEMORY_H
-#define MEMORY_H 1
+#include <gtest/gtest.h>
 
-/* -- Headers -- */
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
 
-#include <memory/memory_api.h>
-
-#include <memory/memory_allocator.h>
-#include <memory/memory_allocator_nginx.h>
-#include <memory/memory_allocator_std.h>
-#include <memory/memory_sanitizer.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* -- Methods -- */
-
-MEMORY_API const char *memory_print_info(void);
-
-#ifdef __cplusplus
+	return RUN_ALL_TESTS();
 }
-#endif
-
-#endif /* MEMORY_H */
