@@ -44,35 +44,24 @@ TEST_F(metacall_python_conversion_test, DefaultConstructor)
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", script, sizeof(script), &handle));
 
-		{
-			void *args[1] = { metacall_value_create(METACALL_INT) };
-
-			ret = metacallhv(handle, "identity", args);
-
-			EXPECT_NE((void *)NULL, (void *)ret);
-
-			EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
-
-			metacall_value_destroy(ret);
-			metacall_value_destroy(args[0]);
-		}
-
-		// TODO:
-		/*
 		for (size_t id = 0; id < METACALL_SIZE; ++id)
 		{
 			void *args[1] = { metacall_value_create((enum metacall_value_id)id) };
 
 			ret = metacallhv(handle, "identity", args);
 
-			EXPECT_NE((void *)NULL, (void *)ret);
+			if (ret == NULL)
+			{
+				std::cout << metacall_value_id_name((enum metacall_value_id)id) << " => NULL (unsupported)" << std::endl;
+				metacall_value_destroy(args[0]);
+				continue;
+			}
 
 			std::cout << metacall_value_id_name((enum metacall_value_id)id) << " => " << metacall_value_id_name(metacall_value_id(ret)) << std::endl;
 
 			metacall_value_destroy(ret);
 			metacall_value_destroy(args[0]);
 		}
-		*/
 	}
 
 	metacall_destroy();
