@@ -408,9 +408,9 @@ public:
 		}
 
 		size_t path_size = strnlen(path, LOADER_PATH_SIZE);
-		char library_directory[PORTABILITY_PATH_SIZE];
+		char library_directory[PORTABILITY_PATH_SIZE] = {};
 		size_t library_directory_size = portability_path_get_directory(path, path_size, library_directory, PORTABILITY_PATH_SIZE);
-		char library_name[PORTABILITY_PATH_SIZE];
+		char library_name[PORTABILITY_PATH_SIZE] = {};
 		size_t library_name_size = portability_path_get_fullname(path, path_size, library_name, PORTABILITY_PATH_SIZE);
 
 		if (portability_path_is_absolute(path, path_size) == 0)
