@@ -1406,7 +1406,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 	return 1;
 }
 
-int loader_impl_load_from_memory_name(loader_impl impl, loader_name name, const char *buffer, size_t size)
+int loader_impl_load_from_memory_name(loader_impl impl, loader_name *name, const char *buffer, size_t size)
 {
 	/* TODO: Improve name with time or uuid */
 	static const char format[] = "%p-%p-%" PRIuS "-%u";
@@ -1417,7 +1417,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_name name, const 
 
 	if (length > 0 && length < LOADER_NAME_SIZE)
 	{
-		size_t written = snprintf(name, length + 1, format, (const void *)impl, (const void *)buffer, size, (unsigned int)h);
+		size_t written = snprintf(*name, length + 1, format, (const void *)impl, (const void *)buffer, size, (unsigned int)h);
 
 		if (written == length)
 		{
@@ -1439,9 +1439,9 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 		if (iface != NULL)
 		{
-			loader_name name;
+			loader_name name = { 0 };
 			loader_handle handle = NULL;
-			size_t init_order;
+			size_t init_order = 0;
 			int init_order_not_initialized;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
@@ -1449,7 +1449,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 				return 1;
 			}
 
-			if (loader_impl_load_from_memory_name(impl, name, buffer, size) != 0)
+			if (loader_impl_load_from_memory_name(impl, &name, buffer, size) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Load from memory handle failed, name could not be generated correctly");
 
