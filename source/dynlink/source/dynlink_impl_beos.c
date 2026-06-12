@@ -27,6 +27,8 @@
 
 #include <string.h>
 
+#include <dlfcn.h>
+
 #include <be/kernel/image.h>
 
 /* -- Methods -- */
@@ -52,21 +54,43 @@ dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 
 	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
 	{
-		image_info info;
-		int32 cookie = 0;
+		int mode;
+		void *self_impl;
 
-		if (get_next_image_info(0, &cookie, &info) != B_OK)
+		DYNLINK_FLAGS_SET(mode, 0);
+
+		if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NOW))
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku image add-on on current executable");
+			DYNLINK_FLAGS_ADD(mode, RTLD_NOW);
+		}
+
+		if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LAZY))
+		{
+			DYNLINK_FLAGS_ADD(mode, RTLD_LAZY);
+		}
+
+		if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LOCAL))
+		{
+			DYNLINK_FLAGS_ADD(mode, RTLD_LOCAL);
+		}
+
+		if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_GLOBAL))
+		{
+			DYNLINK_FLAGS_ADD(mode, RTLD_GLOBAL);
+		}
+
+		self_impl = dlopen(NULL, mode);
+
+		if (self_impl == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: %s", dlerror());
 			return NULL;
 		}
 
-		impl = load_add_on(info.name);
+		return self_impl;
 	}
-	else
-	{
-		impl = load_add_on(dynlink_get_path(handle));
-	}
+
+	impl = load_add_on(dynlink_get_path(handle));
 
 	if (impl < B_NO_ERROR)
 	{
@@ -81,14 +105,19 @@ int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, const 
 {
 	void *symbol = NULL;
 
-	int err = get_image_symbol((image_id)impl, name, B_SYMBOL_TYPE_ANY, &symbol);
-
-	(void)handle;
-
-	if (err != B_OK)
+	if (DYNLINK_FLAGS_CHECK(dynlink_get_flags(handle), DYNLINK_FLAGS_BIND_SELF))
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku symbol %s", name);
-		return 1;
+		symbol = dlsym(impl, name);
+	}
+	else
+	{
+		int err = get_image_symbol((image_id)impl, name, B_SYMBOL_TYPE_ANY, &symbol);
+
+		if (err != B_OK)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku symbol %s", name);
+			return 1;
+		}
 	}
 
 	dynlink_symbol_cast(void *, symbol, *addr);
