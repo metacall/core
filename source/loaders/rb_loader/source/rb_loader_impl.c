@@ -10,6 +10,8 @@
 #include <rb_loader/rb_loader_impl_parser.h>
 #include <rb_loader/rb_loader_port.h>
 
+#include <ruby/io/buffer.h>
+
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
@@ -180,14 +182,8 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 	else if (v_type == T_STRING)
 	{
 		long length = RSTRING_LEN(v);
-
 		char *str = StringValuePtr(v);
-
-		if (length > 0 && str != NULL)
-		{
-			*result = value_create_string(str, (size_t)length);
-		}
-
+		*result = value_create_string(str != NULL ? str : "", (size_t)length);
 		return "String";
 	}
 	else if (v_type == T_ARRAY)
@@ -215,6 +211,36 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 		*result = value_create_null();
 
 		return "NilClass";
+	}
+	else if (v_type == T_HASH)
+	{
+		size_t size = (size_t)rb_hash_size_num(v);
+		*result = value_create_map(NULL, size);
+		if (size > 0 && *result != NULL)
+		{
+			value *v_map_ptr = value_to_map(*result);
+			size_t i = 0;
+			VALUE keys = rb_funcall(v, rb_intern("keys"), 0);
+			for (i = 0; i < size; ++i)
+			{
+				VALUE key = rb_ary_entry(keys, (long)i);
+				VALUE val = rb_hash_aref(v, key);
+				value *pair = value_create_array(NULL, 2);
+				value *pair_ptr = value_to_array(pair);
+				(void)rb_type_deserialize(impl, key, &pair_ptr[0]);
+				(void)rb_type_deserialize(impl, val, &pair_ptr[1]);
+				v_map_ptr[i] = pair;
+			}
+		}
+		return "Hash";
+	}
+	else if (rb_obj_is_kind_of(v, rb_cIOBuffer))
+	{
+		const void *base;
+		size_t size;
+		rb_io_buffer_get_bytes_for_reading(v, &base, &size);
+		*result = value_create_buffer(base, size);
+		return "IO::Buffer";
 	}
 	else if (v_type == T_OBJECT)
 	{
@@ -289,6 +315,14 @@ VALUE rb_type_serialize(value v)
 	{
 		return (value_to_bool(v) == 0L) ? Qfalse : Qtrue;
 	}
+	else if (v_type == TYPE_CHAR)
+	{
+		return INT2NUM((int)value_to_char(v));
+	}
+	else if (v_type == TYPE_SHORT)
+	{
+		return INT2NUM((int)value_to_short(v));
+	}
 	else if (v_type == TYPE_INT)
 	{
 		return INT2NUM(value_to_int(v));
@@ -315,11 +349,47 @@ VALUE rb_type_serialize(value v)
 	{
 		return Qnil;
 	}
+	else if (v_type == TYPE_BUFFER)
+	{
+		const char *buf = value_to_buffer(v);
+		size_t size = value_type_size(v);
+		/* Copy the data into a Ruby String first to avoid memory lifetime issues */
+		VALUE str = rb_str_new(buf, (long)size);
+		/* TODO: Reference original memory instead of copying once lifetime is guaranteed */
+		/* return rb_io_buffer_new((void *)buf, size, RB_IO_BUFFER_READONLY); */
+		return rb_io_buffer_new(RSTRING_PTR(str), size, RB_IO_BUFFER_READONLY);
+	}
+	else if (v_type == TYPE_ARRAY)
+	{
+		size_t size = value_type_count(v);
+		VALUE arr = rb_ary_new2((long)size);
+		value *v_array = value_to_array(v);
+		for (size_t i = 0; i < size; ++i)
+		{
+			rb_ary_store(arr, (long)i, rb_type_serialize(v_array[i]));
+		}
+		return arr;
+	}
+	else if (v_type == TYPE_MAP)
+	{
+		size_t size = value_type_count(v);
+		VALUE hash = rb_hash_new();
+		value *v_map = value_to_map(v);
+		for (size_t i = 0; i < size; ++i)
+		{
+			value *pair = value_to_array(v_map[i]);
+			VALUE key = rb_type_serialize(pair[0]);
+			VALUE val = rb_type_serialize(pair[1]);
+			rb_hash_aset(hash, key, val);
+		}
+		return hash;
+	}
 	else
 	{
-		rb_raise(rb_eArgError, "Unsupported return type");
-
-		return Qnil;
+		/* Return the TypeError class directly as a VALUE instead of raising,
+		 * to avoid longjmp issues when called outside rb_protect.
+		 * This will deserialize as METACALL_CLASS on return. */
+		return rb_eTypeError;
 	}
 }
 
