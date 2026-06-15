@@ -56,6 +56,107 @@ TEST_F(metacall_ruby_conversion_test, DefaultConstructor)
 			metacall_value_destroy(args[0]);
 		}
 
+		/* Test BOOL round-trip */
+		{
+			void *args[1] = { metacall_value_create_bool(1L) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_BOOL, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_EQ((boolean)1L, metacall_value_to_bool(ret));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		/* Test INT round-trip */
+		{
+			void *args[1] = { metacall_value_create_int(42) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_EQ((int)42, metacall_value_to_int(ret));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		/* Test LONG round-trip */
+		{
+			void *args[1] = { metacall_value_create_long(123456789L) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		/* Test DOUBLE round-trip */
+		{
+			void *args[1] = { metacall_value_create_double(3.14) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_DOUBLE_EQ((double)3.14, metacall_value_to_double(ret));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		/* Test STRING round-trip */
+		{
+			void *args[1] = { metacall_value_create_string("hello", 5) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_STREQ("hello", metacall_value_to_string(ret));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		/* Test ARRAY round-trip */
+		{
+			void *arr[3] = {
+				metacall_value_create_int(1),
+				metacall_value_create_int(2),
+				metacall_value_create_int(3)
+			};
+			void *args[1] = { metacall_value_create_array((const void **)arr, 3) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_ARRAY, (enum metacall_value_id)metacall_value_id(ret));
+			void **ret_arr = metacall_value_to_array(ret);
+			EXPECT_EQ((size_t)3, metacall_value_count(ret));
+			EXPECT_EQ((int)1, metacall_value_to_int(ret_arr[0]));
+			EXPECT_EQ((int)2, metacall_value_to_int(ret_arr[1]));
+			EXPECT_EQ((int)3, metacall_value_to_int(ret_arr[2]));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		/* Test MAP round-trip */
+		{
+			void *pairs[2];
+			void *kv0[2] = { metacall_value_create_string("key", 3), metacall_value_create_int(99) };
+			void *kv1[2] = { metacall_value_create_string("lang", 4), metacall_value_create_string("ruby", 4) };
+			pairs[0] = metacall_value_create_array((const void **)kv0, 2);
+			pairs[1] = metacall_value_create_array((const void **)kv1, 2);
+			void *args[1] = { metacall_value_create_map((const void **)pairs, 2) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_MAP, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_EQ((size_t)2, metacall_value_count(ret));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
+		/* Test BUFFER round-trip */
+		{
+			const char data[] = { 0x01, 0x02, 0x03, 0x04 };
+			void *args[1] = { metacall_value_create_buffer(data, sizeof(data)) };
+			void *ret = metacallhv(handle, "identity", args);
+			EXPECT_NE((void *)NULL, (void *)ret);
+			EXPECT_EQ((enum metacall_value_id)METACALL_BUFFER, (enum metacall_value_id)metacall_value_id(ret));
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+
 		// TODO: We need to implement assertions
 		for (size_t id = 0; id < METACALL_SIZE; ++id)
 		{
