@@ -35,6 +35,20 @@ extern "C" {
 struct loader_impl_node_type;
 typedef struct loader_impl_node_type *loader_impl_node;
 
+typedef napi_value (*function_resolve_trampoline)(loader_impl_node, napi_env, function_resolve_callback, napi_value, napi_value, void *);
+typedef napi_value (*function_reject_trampoline)(loader_impl_node, napi_env, function_reject_callback, napi_value, napi_value, void *);
+
+typedef struct loader_impl_async_func_await_trampoline_type
+{
+	loader_impl_node node_impl;
+	function_resolve_trampoline resolve_trampoline;
+	function_reject_trampoline reject_trampoline;
+	function_resolve_callback resolve_callback;
+	function_resolve_callback reject_callback;
+	void *context;
+
+} * loader_impl_async_func_await_trampoline;
+
 NODE_LOADER_API loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config);
 
 NODE_LOADER_API int node_loader_impl_execution_path(loader_impl impl, const loader_path path);
