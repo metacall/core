@@ -37,6 +37,7 @@
 #endif
 
 #include <ruby.h>
+#include <ruby/version.h>
 
 /* Disable warnings from Ruby */
 #if defined(__clang__)
