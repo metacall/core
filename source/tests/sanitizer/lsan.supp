@@ -18,6 +18,7 @@ leak:_PyMem_RawRealloc
 leak:_PyMem_RawMalloc
 leak:PyThread_allocate_lock
 leak:libpython*
+leak:CRYPTO_malloc
 #
 # NodeJS
 #
