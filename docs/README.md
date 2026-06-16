@@ -88,6 +88,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
     - [8.1 Docker Support](#81-docker-support)
     - [8.1.1 Docker Development](#811-docker-development)
     - [8.1.2 Docker Testing](#812-docker-testing)
+    - [8.1.3 Docker MSan Development (Local Iteration)](#813-docker-msan-development-local-iteration)
   - [9. Benchmarks](#9-benchmarks)
   - [10. License](#10-license)
 
@@ -1093,6 +1094,93 @@ runtime __metacall_host__
 ```
 
 Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.
+### 8.1.3 Docker MSan Development (Local Iteration)
+
+This method is used for iterating on **Memory Sanitizer** (MSan) fixes locally without waiting for CI on every change. The idea is to build the Docker image **once** (with a trick to allow build errors), then mount your local `source/` and `cmake/` directories so code changes are reflected instantly inside the running container.
+
+#### Prerequisites
+- At least **20GB** of free disk space
+- Close all heavy applications before building  this maxes out CPU and RAM
+
+#### Step 1: Clean Docker completely
+```sh
+docker system prune --all
+docker buildx prune --all
+```
+Type `y` when prompted.
+
+#### Step 2: Patch the Dockerfile to allow build errors
+In `tools/docker/Dockerfile` near line 85, add `|| true` at the end of the build command (same line):
+
+```dockerfile
+RUN cd $METACALL_PATH/build \
+    && $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS} || true
+```
+
+This prevents Docker from aborting the image build if compilation has errors — since MSan builds often have expected failures during development.
+
+#### Step 3: Build the Docker image (once)
+In one terminal:
+```sh
+./docker-compose.sh test-memory-sanitizer &> output.txt
+```
+In a second terminal, watch progress live:
+```sh
+tail -f output.txt
+```
+
+> For a lighter build without MSan (useful for contributors with less disk space):
+> ```sh
+> ./docker-compose.sh test &> output.txt
+> # or
+> ./docker-compose.sh test-address-sanitizer &> output.txt
+> ```
+
+#### Step 4: Run the container with shared volumes
+```sh
+docker run --rm \
+  -v `pwd`/cmake:/usr/local/metacall/cmake \
+  -v `pwd`/source:/usr/local/metacall/source \
+  -it metacall/core:dev
+```
+
+Edit source files in VSCode on the host  changes are reflected instantly inside the container.
+
+#### Step 5: Build and test inside the container
+```sh
+cd /usr/local/metacall/build
+cmake ..                          # required after any ignorelist or CMake changes
+make -j8 <target>                  # build a specific target
+```
+
+Example targets:
+```sh
+make -j8 metacall-py-call-bench
+make -j8 metacall-node-call-bench
+make -j8 metacall-node-bench
+```
+
+Run a specific test:
+```sh
+ctest -VV -R <test-name>
+```
+
+Run all benchmarks and save full log:
+```sh
+ctest -VV -R bench &> log.txt
+```
+
+Quick triage show only MSan error summaries:
+```sh
+grep "SUMMARY:" log.txt
+```
+
+Full stack trace for a specific error:
+```sh
+grep -B5 -A 30 "use-of-uninitialized-value\|WARNING: MemorySanitizer" log.txt
+```
+
+> **Note:** The `msan-ignorelist.txt` file is compile-time only. After editing it, always run `cmake ..` followed by a rebuild  otherwise changes are silently ignored since `make` reuses cached object files compiled under the old rules.
 
 ## 9. Benchmarks
 
