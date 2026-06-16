@@ -204,7 +204,7 @@ sub_python(){
 				$SUDO_CMD ln -sf /usr/local/bin/python3.13d /usr/bin/python3
 
 				# Install Pip
-				wget -O- https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python3.13d
+				wget -qO- https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python3.13d
 
 				# Bootstrap pip and install python test dependencies
 				$SUDO_CMD python3 -m pip install --upgrade \
