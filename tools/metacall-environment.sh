@@ -178,6 +178,7 @@ sub_python(){
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | awk '{print $2}')
 				$SUDO_CMD apt-get source ${PYTHON_PKG}
 				$SUDO_CMD apt-get build-dep -y ${PYTHON_PKG}
+				ls -laR # TODO: Renove this
 				cd ${PYTHON_PKG}-*
 				if [ $INSTALL_MEMCHECK = 1 ]; then
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
@@ -195,7 +196,7 @@ sub_python(){
 					export CXX="/usr/bin/clang++"
 					
 				fi
-				./configure --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				./configure --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
@@ -203,7 +204,7 @@ sub_python(){
 				$SUDO_CMD ln -sf /usr/local/bin/python3.13d /usr/bin/python3
 
 				# Install Pip
-				wget -qO- https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python3.13d
+				wget -O- https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python3.13d
 
 				# Bootstrap pip and install python test dependencies
 				$SUDO_CMD python3 -m pip install --upgrade \
