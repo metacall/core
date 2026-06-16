@@ -184,10 +184,16 @@ sub_python(){
 					BUILD_FLAGS="--with-valgrind"
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
+					export LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-thread-sanitizer"
+					export LDFLAGS="-fsanitize=thread"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-memory-sanitizer"
+					export LDFLAGS="-fsanitize=memory"
+					export CC="/usr/bin/clang"
+					export CXX="/usr/bin/clang++"
+					
 				fi
 				./configure --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
 				make -j$(nproc)
