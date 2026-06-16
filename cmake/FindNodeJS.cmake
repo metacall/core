@@ -66,6 +66,7 @@ set(NodeJS_PATHS
 	/opt/csw # Blastwave
 	/opt
 	/usr/freeware
+	/lib64 # Fedora
 )
 
 # Find NodeJS include directories

@@ -132,14 +132,14 @@ elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR 
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
 		# Specify handle_segv=0 and detect_leaks=0 for the JVM (https://blog.gypsyengineer.com/en/security/running-java-with-addresssanitizer.html)
-		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=0"
+		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200"
 
 		# TODO: We should document each flag why is it used, because now we do not know what runtime has each requirement and why.
 		# Another option should be to separate by runtimes and only set up them on the ASAN tests that require them,
 		# because we do not need to disable all features on all tests, this may hide bugs in the core library for example.
 
 		# Specify use_sigaltstack=0 as CoreCLR uses own alternate stack for signal handlers (https://github.com/swgillespie/coreclr/commit/bec020aa466d08e49e007d0011b0e79f8f7c7a62)
-		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1"
+		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__ADDRESS_SANITIZER__=1"
@@ -422,9 +422,9 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 			if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 				add_compile_options(-fsanitize=pointer-compare)
 				add_compile_options(-fsanitize=pointer-subtract)
-				add_compile_options(-fuse-ld=gold)
+			elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+				add_compile_options(-fsanitize-address-poison-custom-array-cookie)
 			endif()
-			add_compile_options(-fsanitize=leak)
 		endif()
 		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
 			add_link_options(-fsanitize=undefined)
@@ -437,13 +437,13 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 		add_compile_options(-fno-optimize-sibling-calls)
 		add_compile_options(-fsanitize=undefined)
 		add_compile_options(-fsanitize=memory)
-		add_compile_options(-fsanitize-memory-track-origins)
+		add_compile_options(-fsanitize-memory-track-origins=2)
 		add_compile_options(-fsanitize-memory-use-after-dtor)
 		add_compile_options(-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
 		add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 		add_link_options(-fsanitize=undefined)
 		add_link_options(-fsanitize=memory)
-		add_link_options(-fsanitize-memory-track-origins)
+		add_link_options(-fsanitize-memory-track-origins=2)
 		add_link_options(-fsanitize-memory-use-after-dtor)
 	endif()
 

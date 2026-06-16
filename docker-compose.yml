@@ -30,7 +30,7 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # clangformat v8rep51
+        METACALL_INSTALL_OPTIONS: base ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} # clangformat v8rep51
         METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
@@ -57,7 +57,7 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # clangformat v8rep51
+        METACALL_INSTALL_OPTIONS: base ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} # clangformat v8rep51
         METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
@@ -77,7 +77,7 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # clangformat v8rep51
+        METACALL_INSTALL_OPTIONS: base ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} # clangformat v8rep51
         METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:
@@ -97,7 +97,7 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_INSTALL_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # clangformat v8rep51
+        METACALL_INSTALL_OPTIONS: base ${METACALL_BUILD_CLANG} python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust rapidjson pack backtrace sandbox ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} # clangformat v8rep51
         METACALL_BUILD_OPTIONS: python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust examples tests scripts ports install pack sandbox benchmarks ${METACALL_BUILD_SANITIZER} ${METACALL_BUILD_MEMCHECK} ${METACALL_BUILD_COVERAGE} ${METACALL_BUILD_CLANG} # v8
         METACALL_RUNTIME_OPTIONS: base python ruby netcore8 nodejs typescript file rpc wasm java c cobol go rust backtrace ports clean # v8
     environment:

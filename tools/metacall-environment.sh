@@ -55,6 +55,9 @@ INSTALL_RUST=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
+INSTALL_ADDRESS_SANITIZER=0
+INSTALL_THREAD_SANITIZER=0
+INSTALL_MEMORY_SANITIZER=0
 INSTALL_CLANG=0
 INSTALL_CLANG_MSAN=0
 INSTALL_CLANG_FORMAT=0
@@ -151,25 +154,83 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			if [ "${BUILD_TYPE}" = "Debug" ]; then
-				PYTHON3_PKG=python3-dbg
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# Enable deb-src for both formats
+				for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+					[ -e "$f" ] || continue
+
+					# Old-style .list files
+					if grep -qE '^#?deb ' "$f"; then
+						sed -i 's/^# *deb-src/deb-src/' "$f" 2>/dev/null || true
+						sed -i 's/^# *deb /deb/' "$f" 2>/dev/null || true
+					fi
+
+					# New-style .sources files (Debian 12+, Ubuntu 22.04+)
+					if grep -q '^Types:' "$f"; then
+						sed -i 's/^Types: deb$/Types: deb deb-src/' "$f"
+						sed -i 's/^Types: deb /Types: deb deb-src /' "$f"
+					fi
+				done
+
+				$SUDO_CMD apt-get update
+
+				# Build Python with valgrind instrumentation
+				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | awk '{print $2}')
+				$SUDO_CMD apt-get source ${PYTHON_PKG}
+				$SUDO_CMD apt-get build-dep -y ${PYTHON_PKG}
+				cd ${PYTHON_PKG}-*
+				if [ $INSTALL_MEMCHECK = 1 ]; then
+					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
+					BUILD_FLAGS="--with-valgrind"
+				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
+				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+					BUILD_FLAGS="--with-thread-sanitizer"
+				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+					BUILD_FLAGS="--with-memory-sanitizer"
+				fi
+				./configure --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				make -j$(nproc)
+				$SUDO_CMD make altinstall
+
+				# Define python as the default one
+				$SUDO_CMD ln -sf /usr/local/bin/python3.13d /usr/bin/python3
+
+				# Install Pip
+				wget -qO- https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python3.13d
+
+				# Bootstrap pip and install python test dependencies
+				$SUDO_CMD python3 -m pip install --upgrade \
+					requests \
+					setuptools \
+					wheel \
+					rsa \
+					scipy \
+					numpy \
+					scikit-learn \
+					joblib
+				cd ..
+				rm -rf ${PYTHON_PKG}*
 			else
-				PYTHON3_PKG=python3
+				if [ "${BUILD_TYPE}" = "Debug" ]; then
+					PYTHON3_PKG=python3-dbg
+				else
+					PYTHON3_PKG=python3
+				fi
+
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends $PYTHON3_PKG python3-dev python3-pip
+
+				# Python test dependencies
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+					python3-requests \
+					python3-setuptools \
+					python3-wheel \
+					python3-rsa \
+					python3-scipy \
+					python3-numpy \
+					python3-sklearn \
+					python3-joblib
 			fi
-
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends $PYTHON3_PKG python3-dev python3-pip
-
-			# Python test dependencies
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-				python3-requests \
-				python3-setuptools \
-				python3-wheel \
-				python3-rsa \
-				python3-scipy \
-				python3-numpy \
-				python3-sklearn \
-				python3-joblib
-
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			# Fix to a lower Python version (3.9) in order avoid conflicts with Python dependency of Clang from C Loader
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main python3=3.9.16-r0 python3-dev=3.9.16-r0
@@ -1283,12 +1344,24 @@ sub_options(){
 			echo "memcheck selected"
 			INSTALL_MEMCHECK=1
 		fi
+		if [ "$option" = 'address-sanitizer' ]; then
+			echo "address sanitizer selected"
+			INSTALL_ADDRESS_SANITIZER=1
+		fi
+		if [ "$option" = 'thread-sanitizer' ]; then
+			echo "thread sanitizer selected"
+			INSTALL_THREAD_SANITIZER=1
+		fi
+		if [ "$option" = 'memory-sanitizer' ]; then
+			echo "memory sanitizer selected"
+			INSTALL_MEMORY_SANITIZER=1
+		fi
 		if [ "$option" = 'clang' ]; then
 			echo "clang selected"
 			INSTALL_CLANG=1
 		fi
-		if [ "$option" = 'clangmsan' ]; then
-			echo "clangmsan selected"
+		if [ "$option" = 'clang-msan' ]; then
+			echo "clang memory sanitizer selected"
 			INSTALL_CLANG_MSAN=1
 		fi
 		if [ "$option" = 'clangformat' ]; then
@@ -1342,8 +1415,11 @@ sub_help() {
 	echo "	pack"
 	echo "	coverage"
 	echo "	memcheck"
+	echo "	address-sanitizer"
+	echo "	thread-sanitizer"
+	echo "	memory-sanitizer"
 	echo "	clang"
-	echo "	clangmsan"
+	echo "	clang-msan"
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"
