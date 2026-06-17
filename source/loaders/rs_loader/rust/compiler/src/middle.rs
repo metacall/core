@@ -1,6 +1,4 @@
-use super::rustc_middle::ty::{
-    Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyKind, UintTy,
-};
+use super::rustc_middle::ty::{Binder, FloatTy, FnSig, GenericArgKind, IntTy, Ty, TyKind, UintTy};
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 
@@ -14,6 +12,7 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
     };
     match &ty.kind() {
         TyKind::Int(i) => match i {
+            IntTy::I8 => result.ty = FunctionType::char,
             IntTy::I16 => result.ty = FunctionType::i16,
             IntTy::I32 => result.ty = FunctionType::i32,
             IntTy::I64 => result.ty = FunctionType::i64,

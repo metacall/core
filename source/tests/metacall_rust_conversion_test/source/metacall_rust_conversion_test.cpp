@@ -38,7 +38,7 @@ TEST_F(metacall_rust_conversion_test, DefaultConstructor) {
     {
         static const char *identity_fn[METACALL_SIZE] = { NULL }; 
 
-        //identity_fn[METACALL_BOOL] = "identity_bool";
+        identity_fn[METACALL_BOOL] = "identity_bool";
         identity_fn[METACALL_CHAR] = "identity_char";
         identity_fn[METACALL_SHORT] = "identity_short";
         identity_fn[METACALL_INT] = "identity_int";
@@ -46,6 +46,8 @@ TEST_F(metacall_rust_conversion_test, DefaultConstructor) {
         identity_fn[METACALL_FLOAT] = "identity_float";
         identity_fn[METACALL_DOUBLE] = "identity_double";
         identity_fn[METACALL_STRING] = "identity_string";
+        identity_fn[METACALL_ARRAY] = "identity_array";
+        identity_fn[METACALL_MAP]   = "identity_map";
 
     const char *scripts[] = { "identity.rs" };
     void *handle = NULL;
