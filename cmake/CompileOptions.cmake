@@ -455,7 +455,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PRO
 
 	# Optimizations
 	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		add_compile_options(-O3)
+		add_compile_options(-O2)
 	endif()
 endif()
 
