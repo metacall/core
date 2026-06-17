@@ -47,7 +47,7 @@
 /* -- Definitions -- */
 
 #define METACALL_ARGS_SIZE 0x10
-#define METACALL_SERIAL	   "rapid_json"
+#define METACALL_SERIAL	   "metacall"
 #define METACALL_DETOUR	   "plthook"
 
 /* -- Type Definitions -- */
