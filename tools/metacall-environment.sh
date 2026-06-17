@@ -184,7 +184,8 @@ sub_python(){
 
 				# Build Python with instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
-					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+					printf "leak:*libpython*" &> ./asan.supp
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
 					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
