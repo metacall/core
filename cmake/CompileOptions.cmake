@@ -449,16 +449,20 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 
 	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		add_compile_options(-g)
+		if(OPTION_TEST_MEMORYCHECK AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			add_compile_options(-ggdb3)
+		else()
+			add_compile_options(-g)
+		endif()
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
 	endif()
 
 	# Optimizations
 	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		add_compile_options(-O3)
-	endif()
-
-	if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	elseif(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+		add_compile_options(-O1)
+	elseif(OPTION_TEST_MEMORYCHECK)
 		add_compile_options(-O0)
 	endif()
 endif()
