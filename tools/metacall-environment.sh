@@ -1186,9 +1186,25 @@ sub_install(){
 			APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
 		fi
 	fi
+
+	# Install build dependencies first
 	if [ $INSTALL_BASE = 1 ]; then
 		sub_base
 	fi
+	if [ $INSTALL_CLANG = 1 ]; then
+		sub_clang
+	fi
+	if [ $INSTALL_CLANG_MSAN = 1 ]; then
+		sub_clang_msan
+	fi
+	if [ $INSTALL_MEMCHECK = 1 ]; then
+		sub_memcheck
+	fi
+	if [ $INSTALL_ANDROID = 1 ]; then
+		sub_android
+	fi
+
+	# Install runtime dependencies
 	if [ $INSTALL_PYTHON = 1 ]; then
 		sub_python
 	fi
@@ -1255,15 +1271,6 @@ sub_install(){
 	if [ $INSTALL_COVERAGE = 1 ]; then
 		sub_coverage
 	fi
-	if [ $INSTALL_MEMCHECK = 1 ]; then
-		sub_memcheck
-	fi
-	if [ $INSTALL_CLANG = 1 ]; then
-		sub_clang
-	fi
-	if [ $INSTALL_CLANG_MSAN = 1 ]; then
-		sub_clang_msan
-	fi
 	if [ $INSTALL_CLANG_FORMAT = 1 ]; then
 		sub_clang_format
 	fi
@@ -1272,9 +1279,6 @@ sub_install(){
 	fi
 	if [ $INSTALL_SANDBOX = 1 ]; then
 		sub_sandbox
-	fi
-	if [ $INSTALL_ANDROID = 1 ]; then
-		sub_android
 	fi
 	echo "install finished in workspace $ROOT_DIR"
 }
