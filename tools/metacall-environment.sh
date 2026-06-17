@@ -178,25 +178,26 @@ sub_python(){
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | awk '{print $2}')
 				$SUDO_CMD apt-get source ${PYTHON_PKG}
 				$SUDO_CMD apt-get build-dep -y ${PYTHON_PKG}
-				ls -laR # TODO: Renove this
+				ls -laR # TODO: Remove this
 				cd ${PYTHON_PKG}-*
 				if [ $INSTALL_MEMCHECK = 1 ]; then
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
-					export LDFLAGS="-fsanitize=address -fsanitize=undefined"
+					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-thread-sanitizer"
-					export LDFLAGS="-fsanitize=thread"
+					BUILD_LDFLAGS="-fsanitize=thread"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-memory-sanitizer"
-					export LDFLAGS="-fsanitize=memory"
+					BUILD_LDFLAGS="-fsanitize=memory"
 					export CC="/usr/bin/clang"
 					export CXX="/usr/bin/clang++"
-					
 				fi
-				./configure --prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				./configure \
+					LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}" \
+					--prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
