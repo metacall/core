@@ -11,7 +11,7 @@
 #include <rb_loader/rb_loader_port.h>
 
 #if RUBY_API_VERSION_MAJOR >= 3
-#	include <ruby/io/buffer.h>
+	#include <ruby/io/buffer.h>
 #endif
 
 #include <loader/loader.h>
