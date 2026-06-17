@@ -196,7 +196,7 @@ sub_python(){
 					export CXX="/usr/bin/clang++"
 					
 				fi
-				./configure --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				./configure --prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
