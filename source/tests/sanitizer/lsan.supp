@@ -9,20 +9,20 @@
 # We disable them until we debug those cases (if any) in depth.
 #
 #
-# Python
+# Crypto (Python)
 #
-#leak:CRYPTO_malloc
+leak:CRYPTO_malloc
 #
 # NodeJS
 #
 # Suppress small (intentional) leaks in glibc
 leak:libc.so
 # Supress node library (for now)
-#leak:libnode*
+leak:libnode*
 #
 # Ruby
 #
-#leak:libruby*
+leak:libruby*
 #
 # DotNet Core
 #
@@ -32,4 +32,4 @@ leak:SystemNative_LowLevelMonitor_Create
 #
 # Rust
 #
-#leak:libLLVM*
+leak:libLLVM*

@@ -184,16 +184,20 @@ sub_python(){
 
 				# Build Python with instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
 					BUILD_LDFLAGS=""
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-thread-sanitizer"
 					BUILD_LDFLAGS="-fsanitize=thread"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-memory-sanitizer"
 					BUILD_LDFLAGS="-fsanitize=memory"
 					export CC="/usr/bin/clang"
