@@ -80,7 +80,7 @@ if(OPTION_TEST_MEMORYCHECK)
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-reachable=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-origins=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=100")
-	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all-non-file") # for JITs
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all") # for JITs
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-dl.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-python.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-node.supp")
@@ -121,7 +121,7 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -lmsan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.supp"
+		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__MEMORY_SANITIZER__=1"
@@ -456,6 +456,10 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 	# Optimizations
 	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		add_compile_options(-O3)
+	endif()
+
+	if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+		add_compile_options(-O0)
 	endif()
 endif()
 
