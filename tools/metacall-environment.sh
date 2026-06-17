@@ -186,6 +186,7 @@ sub_python(){
 				if [ $INSTALL_MEMCHECK = 1 ]; then
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
+					BUILD_LDFLAGS=""
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
