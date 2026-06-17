@@ -176,7 +176,7 @@ sub_python(){
 
 				# Download Python source
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | awk '{print $2}' | cut -d',' -f1)
-				SOURCE_PKG=$(apt-cache show "${PYTHON_PKG}" | grep ^Source: | awk '{print $2}' | head -n 1)
+				SOURCE_PKG=$(apt-cache showsrc "${PYTHON_PKG}" 2>/dev/null | grep ^Package: | awk '{print $2}' | head -n 1)
 				if [ -z "$SOURCE_PKG" ]; then
 					SOURCE_PKG="${PYTHON_PKG}"
 				fi
