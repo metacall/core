@@ -174,12 +174,18 @@ sub_python(){
 
 				$SUDO_CMD apt-get update
 
-				# Build Python with valgrind instrumentation
-				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | awk '{print $2}')
-				$SUDO_CMD apt-get source ${PYTHON_PKG}
-				$SUDO_CMD apt-get build-dep -y ${PYTHON_PKG}
-				ls -laR # TODO: Remove this
-				cd ${PYTHON_PKG}-*
+				# Download Python source
+				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | awk '{print $2}' | cut -d',' -f1)
+				SOURCE_PKG=$(apt-cache show "${PYTHON_PKG}" | grep ^Source: | awk '{print $2}' | head -n 1)
+				if [ -z "$SOURCE_PKG" ]; then
+					SOURCE_PKG="${PYTHON_PKG}"
+				fi
+				$SUDO_CMD apt-get build-dep -y "${SOURCE_PKG}"
+				apt-get source "${SOURCE_PKG}"
+				SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
+				cd "$SRC_DIR"
+
+				# Build Python with instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
