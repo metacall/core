@@ -17,7 +17,7 @@ unsafe extern "C" {
     fn value_type_id(v: *mut c_void) -> c_int;
     // fn metacall_value_id(v: *mut c_void) -> c_int;
     fn metacall_value_to_int(v: *mut c_void) -> c_int;
-    // fn metacall_value_to_bool(v: *mut c_void) -> c_int;
+    fn metacall_value_to_bool(v: *mut c_void) -> c_int;
     fn metacall_value_to_char(v: *mut c_void) -> c_char;
     fn metacall_value_to_long(v: *mut c_void) -> c_long;
     fn metacall_value_to_short(v: *mut c_void) -> c_short;
@@ -642,11 +642,11 @@ impl FromMeta for MetacallValue {
 //         Ok(val as u32)
 //     }
 // }
-// impl FromMeta for bool {
-//     fn from_meta(val: MetacallValue) -> Result<Self> {
-//         Ok(unsafe { metacall_value_to_bool(val) as bool })
-//     }
-// }
+impl FromMeta for bool {
+    unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
+        Ok(unsafe { metacall_value_to_bool(val) != 0 })
+    }
+}
 // impl FromMeta for char {
 //     fn from_meta(val: MetacallValue) -> Result<Self> {
 //         Ok(unsafe { metacall_value_to_char(val) as char })
@@ -789,15 +789,16 @@ where
     T: Clone + FromMeta,
 {
     unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
-        Ok(unsafe {
-            let arr = metacall_value_to_array(val);
-            let count = value_type_count(val);
-            let vec = std::slice::from_raw_parts(arr, count as usize)
-                .iter()
-                .map(|p| FromMeta::from_meta(*p).unwrap())
-                .collect::<Vec<T>>();
-            vec
-        })
+        let count = value_type_count(val) as usize;
+        if count == 0 {
+            return Ok(Vec::new());
+        }
+        let arr = metacall_value_to_array(val);
+        let vec = std::slice::from_raw_parts(arr, count)
+            .iter()
+            .map(|p| FromMeta::from_meta(*p).unwrap())
+            .collect();
+        Ok(vec)
     }
 }
 
@@ -808,12 +809,18 @@ where
 {
     unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe {
+            let count = value_type_count(val) as usize;
+            if count == 0 {
+                return Ok(HashMap::new());
+            }
             let map = metacall_value_to_map(val);
             let count = value_type_count(val);
             let map = std::slice::from_raw_parts(map, count as usize);
             let mut r_map: HashMap<K, V> = HashMap::new();
             for map_value in map {
+                println!("map_value = {:?}", *map_value);
                 let m_pair = metacall_value_to_array(*map_value);
+                println!("m_pair = {:?}", m_pair);
                 let m_pair = std::slice::from_raw_parts(m_pair, 2);
                 let key = FromMeta::from_meta(m_pair[0]).unwrap();
                 let val = FromMeta::from_meta(m_pair[1]).unwrap();
