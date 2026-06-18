@@ -10,7 +10,7 @@
 #include <rb_loader/rb_loader_impl_parser.h>
 #include <rb_loader/rb_loader_port.h>
 
-#if defined(HAVE_RUBY_IO_BUFFER)
+#if defined(HAVE_RUBY_IO_BUFFER) && defined(RUBY_API_VERSION_MAJOR) && RUBY_API_VERSION_MAJOR >= 3
 	#include <ruby/io/buffer.h>
 #endif
 
@@ -236,7 +236,7 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 		}
 		return "Hash";
 	}
-#if defined(HAVE_RUBY_IO_BUFFER)
+#if defined(HAVE_RUBY_IO_BUFFER) && defined(RUBY_API_VERSION_MAJOR) && RUBY_API_VERSION_MAJOR >= 3
 	else if (rb_obj_is_kind_of(v, rb_cIOBuffer))
 	{
 		const void *base;
@@ -359,7 +359,7 @@ VALUE rb_type_serialize(value v)
 		size_t size = value_type_size(v);
 		/* Copy the data into a Ruby String first to avoid memory lifetime issues */
 		VALUE str = rb_str_new(buf, (long)size);
-#if defined(HAVE_RUBY_IO_BUFFER)
+#if defined(HAVE_RUBY_IO_BUFFER) && defined(RUBY_API_VERSION_MAJOR) && RUBY_API_VERSION_MAJOR >= 3
 		/* TODO: Reference original memory instead of copying once lifetime is guaranteed */
 		/* return rb_io_buffer_new((void *)buf, size, RB_IO_BUFFER_READONLY); */
 		return rb_io_buffer_new(RSTRING_PTR(str), size, RB_IO_BUFFER_READONLY);

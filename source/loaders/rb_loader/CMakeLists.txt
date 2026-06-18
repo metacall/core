@@ -166,7 +166,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	$<$<BOOL:${HAVE_RUBY_IO_BUFFER}>:HAVE_RUBY_IO_BUFFER>
+	$<$<BOOL:${HAVE_RUBY_IO_BUFFER}>:HAVE_RUBY_IO_BUFFER=1>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
