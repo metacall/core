@@ -24,59 +24,85 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-class metacall_rust_conversion_test : public testing::Test {
-    public:
+#include <sstream>
+#include <string>
+
+class metacall_rust_conversion_test : public testing::Test
+{
+public:
 };
 
-TEST_F(metacall_rust_conversion_test, DefaultConstructor) {
-    metacall_print_info();
+TEST_F(metacall_rust_conversion_test, DefaultConstructor)
+{
+	metacall_print_info();
 
-    // metacall_log_null();
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-    ASSERT_EQ((int)0, (int)metacall_initialize()); 
+	// Initialize the script
+	{
+		std::ostringstream oss;
 
-    {
-        static const char *identity_fn[METACALL_SIZE] = { NULL }; 
+		oss << "use std::collections::HashMap;" << std::endl;
 
-        identity_fn[METACALL_BOOL] = "identity_bool";
-        identity_fn[METACALL_CHAR] = "identity_char";
-        identity_fn[METACALL_SHORT] = "identity_short";
-        identity_fn[METACALL_INT] = "identity_int";
-        identity_fn[METACALL_LONG] = "identity_long";
-        identity_fn[METACALL_FLOAT] = "identity_float";
-        identity_fn[METACALL_DOUBLE] = "identity_double";
-        identity_fn[METACALL_STRING] = "identity_string";
-        identity_fn[METACALL_ARRAY] = "identity_array";
-        identity_fn[METACALL_MAP]   = "identity_map";
+		// TODO: We can infer this with metacall_loader_types(...)
+		// but right now templates are not supported, and the types
+		// are registered in a way that cannot be converted into code
+		// porperly, you can check pub unsafe fn define_type(...)
+		// in rs_loader_impl_initialize for understanding it
+		const char *rust_types[] = {
+			"bool",
+			"i8",
+			"i16",
+			"i32",
+			"i64",
+			"f32",
+			"f64",
+			"String",
+			"Vec<i32>",
+			"HashMap<String, String>",
+		};
 
-    const char *scripts[] = { "identity.rs" };
-    void *handle = NULL;
-    void *ret;
+		size_t id = 0;
 
-    ASSERT_EQ((int)0, (int)metacall_load_from_file("rs", scripts, 1, &handle));
+		for (const auto &t : rust_types)
+		{
+			oss << "fn identity_" << metacall_value_id_name((enum metacall_value_id)id) << "(x: " << t << ") -> " << t << " { x }";
+			++id;
+		}
 
-    for(size_t id = 0; id < METACALL_SIZE; ++id) {
+		std::string identity_script = oss.str();
 
-        if(identity_fn[id] == NULL) {
-            std::cout << metacall_value_id_name((enum metacall_value_id)id) << " => NULL (unsupported)" << std::endl;
-            continue;
-        }
+		std::cout << identity_script << std::endl;
 
-        void *args[1] = { metacall_value_create((enum metacall_value_id)id)};
-        ret = metacallhv(handle, identity_fn[id], args);
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("rs", identity_script.c_str(), identity_script.length(), NULL));
+	}
 
-        ASSERT_NE(ret, nullptr);
-        ASSERT_EQ(metacall_value_id(ret), (enum metacall_value_id)id);
+	// Test identity
+	{
+		for (size_t id = 0; id < METACALL_SIZE; ++id)
+		{
+			const char *type_id_name = metacall_value_id_name((enum metacall_value_id)id);
+			std::string func_name = std::string("identity_") + type_id_name;
+			void *f = metacall_function(func_name.c_str());
 
-        std::cout << metacall_value_id_name((enum metacall_value_id)id) << " => " << metacall_value_id_name(metacall_value_id(ret)) << std::endl;
+			if (f == NULL)
+			{
+				std::cout << type_id_name << " => NULL (unsupported)" << std::endl;
+				continue;
+			}
 
-        metacall_value_destroy(ret);
-        metacall_value_destroy(args[0]);
+			void *args[1] = { metacall_value_create((enum metacall_value_id)id) };
+			void *ret = metacallfv(f, args);
 
-    } 
+			ASSERT_NE(ret, nullptr);
+			ASSERT_EQ(metacall_value_id(ret), (enum metacall_value_id)id);
+
+			std::cout << type_id_name << " => " << metacall_value_id_name(metacall_value_id(ret)) << std::endl;
+
+			metacall_value_destroy(ret);
+			metacall_value_destroy(args[0]);
+		}
+	}
+
+	metacall_destroy();
 }
-
-    metacall_destroy();
-
-}
-
