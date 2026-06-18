@@ -148,24 +148,24 @@ object_impl object_impl_get(object obj)
 	return obj->impl;
 }
 
-vector object_methods(object obj, const char *key)
+vector object_get_methods(object obj, const char *key)
 {
 	if (obj == NULL || key == NULL)
 	{
 		return NULL;
 	}
 
-	return class_methods(obj->cls, key);
+	return class_get_methods(obj->cls, key);
 }
 
-method object_method(object obj, const char *key, type_id ret, type_id args[], size_t size)
+method object_get_method(object obj, const char *key, type_id ret, type_id args[], size_t size)
 {
 	if (obj == NULL || key == NULL)
 	{
 		return NULL;
 	}
 
-	return class_method(obj->cls, key, ret, args, size);
+	return class_get_method(obj->cls, key, ret, args, size);
 }
 
 const char *object_name(object obj)
@@ -245,12 +245,12 @@ value object_metadata(object obj)
 	return f;
 }
 
-value object_get(object obj, const char *key)
+value object_get_attribute(object obj, const char *key)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->get != NULL)
 	{
 		struct accessor_type accessor;
-		attribute attr = class_attribute(obj->cls, key);
+		attribute attr = class_get_attribute(obj->cls, key);
 
 		if (attr == NULL)
 		{
@@ -287,12 +287,12 @@ value object_get(object obj, const char *key)
 	return NULL;
 }
 
-int object_set(object obj, const char *key, value v)
+int object_set_attribute(object obj, const char *key, value v)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->set != NULL)
 	{
 		struct accessor_type accessor;
-		attribute attr = class_attribute(obj->cls, key);
+		attribute attr = class_get_attribute(obj->cls, key);
 
 		if (attr == NULL)
 		{

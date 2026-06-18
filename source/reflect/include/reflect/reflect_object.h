@@ -81,17 +81,17 @@ REFLECT_API int object_decrement_reference(object obj);
 
 REFLECT_API object_impl object_impl_get(object obj);
 
-REFLECT_API int object_set(object obj, const char *key, value v);
+REFLECT_API int object_set_attribute(object obj, const char *key, value v);
 
-REFLECT_API value object_get(object obj, const char *key);
+REFLECT_API value object_get_attribute(object obj, const char *key);
 
 REFLECT_API value object_call(object obj, method m, object_args args, size_t size);
 
 REFLECT_API value object_await(object obj, method m, object_args args, size_t size, object_resolve_callback resolve_callback, object_reject_callback reject_callback, void *context);
 
-REFLECT_API vector object_methods(object obj, const char *key);
+REFLECT_API vector object_get_methods(object obj, const char *key);
 
-REFLECT_API method object_method(object obj, const char *key, type_id ret, type_id args[], size_t size);
+REFLECT_API method object_get_method(object obj, const char *key, type_id ret, type_id args[], size_t size);
 
 REFLECT_API const char *object_name(object obj);
 

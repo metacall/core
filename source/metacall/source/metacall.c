@@ -2116,7 +2116,7 @@ void *metacall_class_new(void *cls, const char *name, void *args[], size_t size)
 {
 	type_id *ids = metacall_type_ids(args, size);
 
-	constructor ctor = class_constructor(cls, ids, size);
+	constructor ctor = class_get_constructor(cls, ids, size);
 
 	object o = class_new(cls, name, ctor, args, size);
 
@@ -2242,7 +2242,7 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 
 void *metacallv_class(void *cls, const char *name, void *args[], size_t size)
 {
-	return metacallv_method(cls, name, (method_invoke_ptr)&class_static_call, class_static_methods(cls, name), args, size);
+	return metacallv_method(cls, name, (method_invoke_ptr)&class_static_call, class_get_static_methods(cls, name), args, size);
 }
 
 type_id *metacall_type_ids(void *args[], size_t size)
@@ -2269,7 +2269,7 @@ void *metacallt_class(void *cls, const char *name, const enum metacall_value_id 
 {
 	type_id *ids = metacall_type_ids(args, size);
 
-	method m = class_static_method(cls, name, ret, ids, size);
+	method m = class_get_static_method(cls, name, ret, ids, size);
 
 	if (ids != NULL)
 	{
@@ -2287,7 +2287,7 @@ void *metacallt_class(void *cls, const char *name, const enum metacall_value_id 
 
 void *metacallv_object(void *obj, const char *name, void *args[], size_t size)
 {
-	return metacallv_method(obj, name, (method_invoke_ptr)&object_call, object_methods(obj, name), args, size);
+	return metacallv_method(obj, name, (method_invoke_ptr)&object_call, object_get_methods(obj, name), args, size);
 }
 
 void *metacallt_object(void *obj, const char *name, const enum metacall_value_id ret, void *args[], size_t size)
@@ -2307,7 +2307,7 @@ void *metacallt_object(void *obj, const char *name, const enum metacall_value_id
 		}
 	}
 
-	method m = object_method(obj, name, ret, ids, size);
+	method m = object_get_method(obj, name, ret, ids, size);
 
 	if (ids != NULL)
 	{
@@ -2325,12 +2325,12 @@ void *metacallt_object(void *obj, const char *name, const enum metacall_value_id
 
 void *metacall_object_get(void *obj, const char *key)
 {
-	return object_get(obj, key);
+	return object_get_attribute(obj, key);
 }
 
 int metacall_object_set(void *obj, const char *key, void *v)
 {
-	return object_set(obj, key, v);
+	return object_set_attribute(obj, key, v);
 }
 
 void *metacall_throwable_value(void *th)

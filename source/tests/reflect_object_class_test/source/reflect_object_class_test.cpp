@@ -451,7 +451,7 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			TYPE_INVALID
 		};
 
-		constructor ctor = class_constructor(cls, ctor_ids, 0);
+		constructor ctor = class_get_constructor(cls, ctor_ids, 0);
 
 		ASSERT_EQ((constructor)ctor, (constructor)default_ctor);
 
@@ -460,27 +460,27 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 		// Get & set attributes from object
 		{
-			value d = object_get(obj, "d");
+			value d = object_get_attribute(obj, "d");
 			ASSERT_NE((value)NULL, (value)d);
 			EXPECT_EQ((char)'d', (char)value_to_char(d));
 			value_type_destroy(d);
 
-			value e = object_get(obj, "e");
+			value e = object_get_attribute(obj, "e");
 			ASSERT_NE((value)NULL, (value)e);
 			EXPECT_EQ((long)55L, (long)value_to_long(e));
 			value_type_destroy(e);
 
 			value new_d = value_create_char('M');
-			ASSERT_EQ((char)0, (char)object_set(obj, "d", new_d));
-			d = object_get(obj, "d");
+			ASSERT_EQ((char)0, (char)object_set_attribute(obj, "d", new_d));
+			d = object_get_attribute(obj, "d");
 			EXPECT_NE((value)NULL, (value)d);
 			EXPECT_EQ((char)'M', (char)value_to_char(d));
 			value_type_destroy(d);
 			value_type_destroy(new_d);
 
 			value new_e = value_create_long(1234);
-			ASSERT_EQ((long)0, (long)object_set(obj, "e", new_e));
-			e = object_get(obj, "e");
+			ASSERT_EQ((long)0, (long)object_set_attribute(obj, "e", new_e));
+			e = object_get_attribute(obj, "e");
 			EXPECT_NE((value)NULL, (value)e);
 			EXPECT_EQ((long)1234L, (long)value_to_long(e));
 			value_type_destroy(e);
@@ -492,7 +492,7 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			TYPE_INVALID
 		};
 
-		method m = class_method(cls, "test_func", TYPE_STRING, method_ids, 0);
+		method m = class_get_method(cls, "test_func", TYPE_STRING, method_ids, 0);
 
 		ASSERT_EQ((method)m, (method)test_func_method);
 
@@ -521,7 +521,7 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			TYPE_LONG
 		};
 
-		constructor ctor = class_constructor(cls, ctor_ids, 2);
+		constructor ctor = class_get_constructor(cls, ctor_ids, 2);
 
 		ASSERT_EQ((constructor)ctor, (constructor)custom_ctor);
 
@@ -533,12 +533,12 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 		// Get attributes from object
 		{
-			value d = object_get(obj, "d");
+			value d = object_get_attribute(obj, "d");
 			ASSERT_NE((value)NULL, (value)d);
 			EXPECT_EQ((char)'F', (char)value_to_char(d));
 			value_type_destroy(d);
 
-			value e = object_get(obj, "e");
+			value e = object_get_attribute(obj, "e");
 			ASSERT_NE((value)NULL, (value)e);
 			EXPECT_EQ((long)3435L, (long)value_to_long(e));
 			value_type_destroy(e);
@@ -549,7 +549,7 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			TYPE_INVALID
 		};
 
-		method m = class_method(cls, "test_func", TYPE_STRING, method_ids, 0);
+		method m = class_get_method(cls, "test_func", TYPE_STRING, method_ids, 0);
 
 		ASSERT_EQ((method)m, (method)test_func_method);
 

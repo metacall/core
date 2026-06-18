@@ -18,6 +18,7 @@
  *
  */
 
+#include <py_loader/py_loader_class.h>
 #include <py_loader/py_loader_dict.h>
 #include <py_loader/py_loader_func.h>
 #include <py_loader/py_loader_impl.h>
@@ -1362,20 +1363,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_CLASS)
 	{
-		klass obj = value_to_class(v);
-
-		/* TODO: This is completely wrong and it needs a refactor */
-		/* TODO: The return value of class_impl_get may not be a loader_impl_py_class, it can be a loader_impl_node_class too */
-		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the class dynamically */
-		loader_impl_py_class obj_impl = class_impl_get(obj);
-
-		if (obj_impl == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_class when converting value to python capi");
-			return NULL;
-		}
-
-		return obj_impl->cls;
+		return py_loader_impl_class_value_to_capi(impl, loader_impl_get(impl), v);
 	}
 	else if (id == TYPE_OBJECT)
 	{
@@ -1397,9 +1385,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_EXCEPTION)
 	{
-		/* Build a Python Exception instance from the metacall exception, so
-		 * the caller receives a usable Python object instead of NULL.
-		 * Mirrors node_loader_impl.cpp */
+		/* Build a Python Exception instance from the MetaCall Exception */
 		exception ex = value_to_exception(v);
 		const char *message = exception_message(ex);
 
@@ -1414,8 +1400,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_THROWABLE)
 	{
-		/* Unwrap the throwable and convert the inner value, mirroring the
-		 * node_loader behaviour at node_loader_impl.cpp */
+		/* Unwrap the throwable and convert the inner value */
 		throwable th = value_to_throwable(v);
 		value inner = throwable_value(th);
 

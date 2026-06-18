@@ -169,12 +169,52 @@ class_impl class_impl_get(klass cls)
 
 const char *class_name(klass cls)
 {
-	if (cls != NULL)
+	if (cls == NULL)
 	{
-		return cls->name;
+		return NULL;
 	}
 
-	return NULL;
+	return cls->name;
+}
+
+map class_methods(klass cls)
+{
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	return cls->methods;
+}
+
+map class_static_methods(klass cls)
+{
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	return cls->static_methods;
+}
+
+set class_attributes(klass cls)
+{
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	return cls->attributes;
+}
+
+set class_static_attributes(klass cls)
+{
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	return cls->static_attributes;
 }
 
 value class_metadata_name(klass cls)
@@ -538,7 +578,7 @@ int class_static_set(klass cls, const char *key, value v)
 	return 1;
 }
 
-vector class_constructors(klass cls)
+vector class_get_constructors(klass cls)
 {
 	if (cls == NULL)
 	{
@@ -548,7 +588,7 @@ vector class_constructors(klass cls)
 	return cls->constructors;
 }
 
-constructor class_default_constructor(klass cls)
+constructor class_get_default_constructor(klass cls)
 {
 	if (cls == NULL)
 	{
@@ -558,7 +598,7 @@ constructor class_default_constructor(klass cls)
 	return (constructor)vector_at(cls->constructors, 0);
 }
 
-constructor class_constructor(klass cls, type_id args[], size_t size)
+constructor class_get_constructor(klass cls, type_id args[], size_t size)
 {
 	/* This method tries to find a valid constructor with correct types,
 	* if this cannot be achieved, we return the default constructor and
@@ -594,7 +634,7 @@ constructor class_constructor(klass cls, type_id args[], size_t size)
 	return vector_at_type(cls->constructors, 0, constructor);
 }
 
-vector class_static_methods(klass cls, const char *key)
+vector class_get_static_methods(klass cls, const char *key)
 {
 	if (cls == NULL || key == NULL)
 	{
@@ -604,7 +644,7 @@ vector class_static_methods(klass cls, const char *key)
 	return map_get(cls->static_methods, (map_key)key);
 }
 
-vector class_methods(klass cls, const char *key)
+vector class_get_methods(klass cls, const char *key)
 {
 	if (cls == NULL || key == NULL)
 	{
@@ -637,17 +677,17 @@ method class_get_method_type_safe(vector v, type_id ret, type_id args[], size_t 
 	return NULL;
 }
 
-method class_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
+method class_get_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
 {
-	return class_get_method_type_safe(class_static_methods(cls, key), ret, args, size);
+	return class_get_method_type_safe(class_get_static_methods(cls, key), ret, args, size);
 }
 
-method class_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
+method class_get_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
 {
-	return class_get_method_type_safe(class_methods(cls, key), ret, args, size);
+	return class_get_method_type_safe(class_get_methods(cls, key), ret, args, size);
 }
 
-attribute class_static_attribute(klass cls, const char *key)
+attribute class_get_static_attribute(klass cls, const char *key)
 {
 	if (cls == NULL || key == NULL)
 	{
@@ -657,7 +697,7 @@ attribute class_static_attribute(klass cls, const char *key)
 	return set_get(cls->static_attributes, (set_key)key);
 }
 
-attribute class_attribute(klass cls, const char *key)
+attribute class_get_attribute(klass cls, const char *key)
 {
 	if (cls == NULL || key == NULL)
 	{

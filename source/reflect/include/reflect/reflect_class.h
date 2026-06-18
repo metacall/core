@@ -21,6 +21,8 @@
 #ifndef REFLECT_CLASS_H
 #define REFLECT_CLASS_H 1
 
+#include <adt/adt_map.h>
+#include <adt/adt_set.h>
 #include <adt/adt_vector.h>
 
 #include <reflect/reflect_accessor.h>
@@ -85,23 +87,23 @@ REFLECT_API value class_static_get(klass cls, const char *key);
 
 REFLECT_API int class_static_set(klass cls, const char *key, value v);
 
-REFLECT_API vector class_constructors(klass cls);
+REFLECT_API vector class_get_constructors(klass cls);
 
-REFLECT_API constructor class_default_constructor(klass cls);
+REFLECT_API constructor class_get_default_constructor(klass cls);
 
-REFLECT_API constructor class_constructor(klass cls, type_id args[], size_t size);
+REFLECT_API constructor class_get_constructor(klass cls, type_id args[], size_t size);
 
-REFLECT_API vector class_static_methods(klass cls, const char *key);
+REFLECT_API vector class_get_static_methods(klass cls, const char *key);
 
-REFLECT_API vector class_methods(klass cls, const char *key);
+REFLECT_API vector class_get_methods(klass cls, const char *key);
 
-REFLECT_API method class_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size);
+REFLECT_API method class_get_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size);
 
-REFLECT_API method class_method(klass cls, const char *key, type_id ret, type_id args[], size_t size);
+REFLECT_API method class_get_method(klass cls, const char *key, type_id ret, type_id args[], size_t size);
 
-REFLECT_API attribute class_static_attribute(klass cls, const char *key);
+REFLECT_API attribute class_get_static_attribute(klass cls, const char *key);
 
-REFLECT_API attribute class_attribute(klass cls, const char *key);
+REFLECT_API attribute class_get_attribute(klass cls, const char *key);
 
 REFLECT_API int class_register_constructor(klass cls, constructor ctor);
 
@@ -118,6 +120,14 @@ REFLECT_API value class_static_call(klass cls, method m, class_args args, size_t
 REFLECT_API value class_static_await(klass cls, method m, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context);
 
 REFLECT_API const char *class_name(klass cls);
+
+REFLECT_API map class_methods(klass cls);
+
+REFLECT_API map class_static_methods(klass cls);
+
+REFLECT_API set class_attributes(klass cls);
+
+REFLECT_API set class_static_attributes(klass cls);
 
 REFLECT_API value class_metadata(klass cls);
 
