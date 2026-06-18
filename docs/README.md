@@ -88,7 +88,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
     - [8.1 Docker Support](#81-docker-support)
     - [8.1.1 Docker Development](#811-docker-development)
     - [8.1.2 Docker Testing](#812-docker-testing)
-    - [8.1.3 Docker MSan Development (Local Iteration)](#813-docker-msan-development-local-iteration)
+    - [8.1.3 Docker MSan Development](#813-docker-msan-development)
   - [9. Benchmarks](#9-benchmarks)
   - [10. License](#10-license)
 
@@ -1094,22 +1094,21 @@ runtime __metacall_host__
 ```
 
 Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.
-### 8.1.3 Docker MSan Development (Local Iteration)
+### 8.1.3 Docker MSan Development
 
 This method is used for iterating on **Memory Sanitizer** (MSan) fixes locally without waiting for CI on every change. The idea is to build the Docker image **once** (with a trick to allow build errors), then mount your local `source/` and `cmake/` directories so code changes are reflected instantly inside the running container.
 
-#### Prerequisites
+Prerequisites:
 - At least **20GB** of free disk space
 - Close all heavy applications before building  this maxes out CPU and RAM
 
-#### Step 1: Clean Docker completely
+1. Clean Docker completely
 ```sh
-docker system prune --all
-docker buildx prune --all
+docker system prune --all -f
+docker buildx prune --all -f
 ```
-Type `y` when prompted.
 
-#### Step 2: Patch the Dockerfile to allow build errors
+2. Patch the Dockerfile to allow build errors
 In `tools/docker/Dockerfile` near line 85, add `|| true` at the end of the build command (same line):
 
 ```dockerfile
@@ -1119,7 +1118,7 @@ RUN cd $METACALL_PATH/build \
 
 This prevents Docker from aborting the image build if compilation has errors — since MSan builds often have expected failures during development.
 
-#### Step 3: Build the Docker image (once)
+3. Build the Docker image (once)
 In one terminal:
 ```sh
 ./docker-compose.sh test-memory-sanitizer &> output.txt
@@ -1131,12 +1130,13 @@ tail -f output.txt
 
 > For a lighter build without MSan (useful for contributors with less disk space):
 > ```sh
+> # Completely disable sanitizers:
 > ./docker-compose.sh test &> output.txt
-> # or
+> # Or with address sanitizer:
 > ./docker-compose.sh test-address-sanitizer &> output.txt
 > ```
 
-#### Step 4: Run the container with shared volumes
+4. Run the container with shared volumes
 ```sh
 docker run --rm \
   -v `pwd`/cmake:/usr/local/metacall/cmake \
@@ -1146,7 +1146,7 @@ docker run --rm \
 
 Edit source files in VSCode on the host  changes are reflected instantly inside the container.
 
-#### Step 5: Build and test inside the container
+5. Build and test inside the container
 ```sh
 cd /usr/local/metacall/build
 cmake ..                          # required after any ignorelist or CMake changes
