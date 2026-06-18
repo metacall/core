@@ -14,12 +14,6 @@ if(NOT Ruby_FOUND)
 	return()
 endif()
 
-# Check if ruby/io/buffer.h is available (only present in some Ruby 3.x dev packages)
-include(CheckIncludeFiles)
-set(CMAKE_REQUIRED_INCLUDES ${Ruby_INCLUDE_DIRS})
-check_include_files("ruby/io/buffer.h" HAVE_RUBY_IO_BUFFER LANGUAGE C)
-unset(CMAKE_REQUIRED_INCLUDES)
-
 # TODO: Search Ruby_LIBRARY_NAME_PATH like in Python?
 if(Ruby_LIBRARY_NAME)
 	set(Ruby_LIBRARY_NAME_PATH "${Ruby_LIBRARY_NAME}")
@@ -166,7 +160,6 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	$<$<BOOL:${HAVE_RUBY_IO_BUFFER}>:HAVE_RUBY_IO_BUFFER=1>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
