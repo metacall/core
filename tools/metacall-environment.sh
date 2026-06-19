@@ -311,63 +311,37 @@ sub_ruby(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# TODO:
-			# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-			# 	# Download Ruby source
-			# 	RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
-			# 	$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
-			# 	mkdir ruby && cd ruby
-			# 	apt-get source "${RUBY_PKG}"
-			# 	SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
-			# 	cd "$SRC_DIR"
+                        if [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+                                # ASan requires Ruby 3.4.0+ and Clang 18+ due to cross-thread fork mechanics
+                                $SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+                                        clang-18 llvm-18 build-essential libssl-dev libyaml-dev libreadline-dev zlib1g-dev git curl
 
-			# 	# Build Ruby with instrumentation
-			# 	if [ $INSTALL_MEMCHECK = 1 ]; then
-			# 		# TODO: Apparently valgrind does not need instrumentation?
-			# 		BUILD_CFLAGS=""
-			# 		BUILD_LDFLAGS=""
-			# 	elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
-			# 		export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
-			# 		export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
-			# 		BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
-			# 	elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
-			# 		export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=thread"
-			# 		BUILD_LDFLAGS="-fsanitize=thread"
-			# 	elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-			# 		export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=memory"
-			# 		BUILD_LDFLAGS="-fsanitize=memory"
-			# 		export CC="/usr/bin/clang"
-			# 		export CXX="/usr/bin/clang++"
-			# 	fi
+                                export CC=clang-18
+                                export CFLAGS="-fsanitize=address -fno-omit-frame-pointer -g -O1"
+                                export LDFLAGS="-fsanitize=address"
+                                export RUBY_CONFIGURE_OPTS="cppflags=-DUSE_MN_THREADS=0 --disable-install-doc"
 
-			# 	./autogen.sh
-			# 	mkdir build && cd build
-			# 	../configure \
-			# 		--enable-shared \
-			# 		--enable-debug-env \
-			# 		cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer" \
-			# 		ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
-			# 		cppflags="-DUSE_RUBY_DEBUG_LOG=1" \
-			# 		optflags="-O0" \
-			# 		debugflags="-ggdb3" \
-			# 		--prefix=/usr/local
+                                export RBENV_ROOT="/usr/local/rbenv"
+                                git clone https://github.com/rbenv/rbenv.git "$RBENV_ROOT"
+                                mkdir -p "$RBENV_ROOT/plugins"
+                                git clone https://github.com/rbenv/ruby-build.git "$RBENV_ROOT/plugins/ruby-build"
+                                export PATH="$RBENV_ROOT/bin:$RBENV_ROOT/shims:$PATH"
+                                eval "$(rbenv init -)"
 
-			# 	make -j$(nproc)
-			# 	$SUDO_CMD make install
+                                rbenv install 3.4.1
+                                rbenv global 3.4.1
 
-			# 	cd ../../..
-			# 	rm -rf ./ruby
-			# else
-				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
+                                $SUDO_CMD ln -sf "$RBENV_ROOT/versions/3.4.1/bin/ruby" /usr/local/bin/ruby
+                                $SUDO_CMD ln -sf "$RBENV_ROOT/versions/3.4.1/lib/libruby.so.3.4" /usr/local/lib/
+                                $SUDO_CMD ldconfig
+                        else
+                                $SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
 
-				# TODO: Review conflict with NodeJS (currently rails test is disabled)
-				#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
-				#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
-				#$SUDO_CMD gem install rails
-			# fi
+                                # TODO: Review conflict with NodeJS (currently rails test is disabled)
+                                #wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
+                                #$SUDO_CMD apt-get -y --no-install-recommends install nodejs
+                                #$SUDO_CMD gem install rails
+                        fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache ruby ruby-dev
 		fi
