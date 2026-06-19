@@ -64,3 +64,12 @@ _start-cmd.bat
 
 # Auto-generated bake file
 docker-compose.bake.yml
+
+.venv/
+.vs/
+*.sln
+full.xml
+bin/
+obj/
+TestResults/
+

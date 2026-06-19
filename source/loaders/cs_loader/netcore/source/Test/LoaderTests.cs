@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using CSLoader.Contracts;
 using CSLoader.Providers;
+using Xunit;
 
 namespace CSLoader.Tests
 {
