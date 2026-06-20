@@ -49,25 +49,29 @@ TEST_F(metacall_rust_conversion_test, DefaultConstructor)
 		// are registered in a way that cannot be converted into code
 		// porperly, you can check pub unsafe fn define_type(...)
 		// in rs_loader_impl_initialize for understanding it
-		const char *rust_types[] = {
-			"bool",
-			"i8",
-			"i16",
-			"i32",
-			"i64",
-			"f32",
-			"f64",
-			"String",
-			"Vec<i32>",
-			"HashMap<String, String>",
-		};
+		struct rust_type_mapping {
+            enum metacall_value_id id;
+            const char *rust_type;
+        };
+
+        const rust_type_mapping rust_types[] = {
+            { METACALL_BOOL, "bool" },
+            { METACALL_CHAR, "i8" },
+            { METACALL_SHORT, "i16" },
+            { METACALL_INT, "i32" },
+            { METACALL_LONG, "i64" },
+            { METACALL_FLOAT, "f32" },
+            { METACALL_DOUBLE, "f64" },
+            { METACALL_STRING, "String" },
+            { METACALL_ARRAY, "Vec<i32>" },
+            { METACALL_MAP, "HashMap<String, String>" },
+        };
 
 		size_t id = 0;
 
 		for (const auto &t : rust_types)
 		{
-			oss << "fn identity_" << metacall_value_id_name((enum metacall_value_id)id) << "(x: " << t << ") -> " << t << " { x }";
-			++id;
+            oss << "fn identity_" << metacall_value_id_name(t.id) << "(x: " << t.rust_type << ") -> " << t.rust_type << " { x }";
 		}
 
 		std::string identity_script = oss.str();
