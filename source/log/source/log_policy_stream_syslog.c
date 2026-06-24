@@ -134,7 +134,7 @@ static int log_policy_stream_syslog_write(log_policy policy, const void *buffer,
 		NULL, 1, 0, (LPTSTR *)lpt_str, NULL);
 #elif defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__FreeBSD__) || \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || defined(__HAIKU__) || defined(__BEOS__)
 	(void)syslog_data;
 
 	syslog(LOG_INFO, "%s", (const char *)buffer);
