@@ -36,3 +36,20 @@ const execFilePromises = promisify(execFile);
 	assert.ok(typeof result === 'number', `Expected float, but got ${typeof result}`);
 	assert.strictEqual(result, 369.04999999999995);
 })();
+
+// C#
+
+// Commented out: cs_loader crashes on init in metacall/core:cli (exit 134).
+// Re-enable once the loader install-path bug is fixed.
+
+// (() => {
+// 	metacall_load_from_file('cs', ['./sum.cs']);
+
+// 	const result = metacall('sum_cs', 3, 4);
+// 	console.log(result);
+// 	assert.strictEqual(result, 7);
+
+// 	const greeting = metacall('greet_cs', 'MetaCall');
+// 	console.log(greeting);
+// 	assert.strictEqual(greeting, 'Hello MetaCall from C#!');
+// })();

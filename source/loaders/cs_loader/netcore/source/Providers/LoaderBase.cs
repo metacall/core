@@ -37,7 +37,7 @@ namespace CSLoader.Providers
         protected readonly ILog log;
         protected readonly List<string> paths = new List<string>();
 
-protected LoaderBase(ILog log)
+		protected LoaderBase(ILog log)
         {
             this.log = log;
         }
