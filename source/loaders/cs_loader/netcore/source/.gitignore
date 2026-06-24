@@ -405,3 +405,11 @@ __pycache__/
 
 ### VisualStudio Patch ###
 build/
+
+
+### CS Loader (local) ###
+# Locally generated VS solution (the project builds via CMake; no .sln is committed)
+*.sln
+
+# Generated test/coverage report
+full.xml
