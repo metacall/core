@@ -30,6 +30,8 @@
 
 #include <string.h>
 
+#include <stdint.h>
+
 #include <dlfcn.h>
 
 #include <be/kernel/image.h>
@@ -101,7 +103,7 @@ dynlink_impl dynlink_impl_interface_load_haiku(dynlink handle)
 		return NULL;
 	}
 
-	return (dynlink_impl)impl;
+	return (dynlink_impl)(intptr_t)impl;
 }
 
 int dynlink_impl_interface_symbol_haiku(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
@@ -114,7 +116,7 @@ int dynlink_impl_interface_symbol_haiku(dynlink handle, dynlink_impl impl, const
 	}
 	else
 	{
-		int err = get_image_symbol((image_id)impl, name, B_SYMBOL_TYPE_ANY, &symbol);
+		int err = get_image_symbol((image_id)(intptr_t)impl, name, B_SYMBOL_TYPE_ANY, &symbol);
 
 		if (err != B_OK)
 		{
@@ -145,7 +147,7 @@ int dynlink_impl_interface_unload_haiku(dynlink handle, dynlink_impl impl)
 	(void)impl;
 	return 0;
 #else
-	return ((image_id)impl > 0) && (unload_add_on((image_id)impl) < B_NO_ERROR);
+	return ((image_id)(intptr_t)impl > 0) && (unload_add_on((image_id)(intptr_t)impl) < B_NO_ERROR);
 #endif
 }
 
