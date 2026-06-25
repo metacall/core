@@ -185,7 +185,17 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 	{
 		long length = RSTRING_LEN(v);
 		char *str = StringValuePtr(v);
-		*result = value_create_string(str != NULL ? str : "", (size_t)length);
+
+		if (length > 0 && str != NULL)
+		{
+			*result = value_create_string(str, (size_t)length);
+		}
+		else
+		{
+			/* TODO: Return exception in the future? */
+			*result = value_create_string("", 1);
+		}
+
 		return "String";
 	}
 	else if (v_type == T_ARRAY)
@@ -395,10 +405,9 @@ VALUE rb_type_serialize(value v)
 	}
 	else
 	{
-		/* Return the TypeError class directly as a VALUE instead of raising,
-		 * to avoid longjmp issues when called outside rb_protect.
-		 * This will deserialize as METACALL_CLASS on return. */
-		return rb_eTypeError;
+		rb_raise(rb_eArgError, "Unsupported return type");
+
+		return Qnil;
 	}
 }
 
