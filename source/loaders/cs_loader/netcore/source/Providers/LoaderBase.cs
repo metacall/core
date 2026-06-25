@@ -268,7 +268,6 @@ namespace CSLoader.Providers
 
         public void LoadFunctions(Assembly assembly, string scriptHandle)
         {
-			this.log.Info(" >>> NEW C# LOADER IS ACTUALLY RUNNING! <<<");
 			try
 			{
 				Type[] types = assembly.GetTypes();
@@ -279,7 +278,6 @@ namespace CSLoader.Providers
 
 					// Handle top-level function class
 					bool isTopLevelClass = (type.Name == "<Program>$" || type.Name == "Program") && type.GetMethod("<Main>$", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly) != null;
-
 
 					if (isTopLevelClass)
 					{

@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_CS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS)
 	return()
 endif()
 
@@ -14,16 +14,12 @@ if(NOT DOTNET_FOUND)
 	return()
 endif()
 
-if(DOTNET_VERSION VERSION_LESS "5.0")
-	return()
-endif()
-
 #
 # Executable name and options
 #
 
 # Target name
-set(target metacall-csharp-function-test)
+set(target metacall-csharp-empty-configuration-test)
 message(STATUS "Test ${target}")
 
 #
@@ -47,7 +43,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_csharp_function_test.cpp
+	${source_path}/metacall_csharp_empty_configuration_test.cpp
 )
 
 # Group source files
@@ -180,5 +176,12 @@ include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
 	""
-	${TESTS_ENVIRONMENT_VARIABLES}
+	${TESTS_LOADER_ENVIRONMENT_VARIABLES}
+	${TESTS_SERIAL_ENVIRONMENT_VARIABLES}
+	${TESTS_DETOUR_ENVIRONMENT_VARIABLES}
+	${TESTS_SANITIZER_ENVIRONMENT_VARIABLES}
+	${TESTS_MEMCHECK_ENVIRONMENT_VARIABLES}
+	${EXTRA_ENVIRONMENT_VARIABLES}
+	# Define the global configuration without proper cs_loader.json configuration to make it fail
+	"CONFIGURATION_PATH=${CMAKE_CURRENT_SOURCE_DIR}/data/global.json"
 )
