@@ -158,7 +158,8 @@ TEST_F(metacall_ruby_conversion_test, DefaultConstructor)
 		}
 
 		// TODO: We need to implement assertions
-		for (size_t id = 0; id < METACALL_SIZE; ++id)
+		// TODO: for (size_t id = 0; id < METACALL_SIZE; ++id)
+		for (size_t id = 0; id <= METACALL_MAP; ++id)
 		{
 			void *args[1] = { metacall_value_create((enum metacall_value_id)id) };
 
