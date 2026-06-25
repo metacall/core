@@ -22,6 +22,7 @@
 #define _NETCORELINUX_H_
 
 #include <cs_loader/netcore.h>
+#include <log/log.h>
 
 #include <dynlink/dynlink.h>
 
@@ -110,16 +111,14 @@ private:
 
 	void AddFilesFromDirectoryToTpaList(std::string directory, std::string &tpaList)
 	{
-		// #789: a missing/unreadable directory must not abort the process.
 		// Use the error_code overload so it can't throw an uncaught filesystem_error.
 		std::error_code ec;
 		fs::directory_iterator it(directory, ec);
 		if (ec)
 		{
-			// If neccesary we can log this as a warning, but for now we will just silently skip it
-			// log_write("metacall", LOG_LEVEL_WARNING,
-			//	"cs_loader: skipping unreadable TPA directory '%s' (%s)",
-			//	directory.c_str(), ec.message().c_str());
+			 log_write("metacall", LOG_LEVEL_ERROR,
+				"cs_loader: skipping unreadable TPA directory '%s' (%s)",
+				directory.c_str(), ec.message().c_str());
 			return; // bad config dir -> skip gracefully instead of std::terminate
 		}
 
