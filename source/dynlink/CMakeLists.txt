@@ -40,7 +40,7 @@ if(APPLE AND PROJECT_OS_VERSION GREATER 8)
 	# From macOS 10.5 (version 9), dlopen compatible library is available
 	set(DYNLINK_IMPL_INTERFACE_NAME unix)
 elseif(PROJECT_OS_HAIKU)
-	set(DYNLINK_IMPL_INTERFACE_NAME haiku)
+	set(DYNLINK_IMPL_INTERFACE_NAME beos)
 else()
 	set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
 endif()
