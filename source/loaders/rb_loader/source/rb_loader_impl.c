@@ -193,7 +193,7 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 		else
 		{
 			/* TODO: Return exception in the future? */
-			*result = value_create_string("", 1);
+			*result = value_create_string("", 0);
 		}
 
 		return "String";
