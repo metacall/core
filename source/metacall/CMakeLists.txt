@@ -217,6 +217,9 @@ target_link_libraries(${target}
 	# Fix issues with atomics in armv6 and armv7
 	$<$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},armv7l>:-latomic>
 
+	# Haiku dependencies
+	$<$<BOOL:${PROJECT_OS_HAIKU}>:bsd>
+
 	INTERFACE
 )
 

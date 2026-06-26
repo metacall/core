@@ -350,7 +350,10 @@ TEST_F(serial_test, DefaultConstructor)
 	#else
 			"0x000A7EF2",
 	#endif
-#elif defined(__linux) || defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+#elif defined(__linux) || defined(__linux__) || \
+	defined(__APPLE__) || \
+	defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || \
+	defined(__HAIKU__) || defined(__BEOS__)
 			"0xa7ef2",
 #else
 			"<unknown>",
