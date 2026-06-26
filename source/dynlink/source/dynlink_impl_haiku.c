@@ -147,9 +147,9 @@ int dynlink_impl_interface_unload_haiku(dynlink handle, dynlink_impl impl)
 	(void)impl;
 	return 0;
 #else
-	// return ((image_id)(intptr_t)impl > 0) && (unload_add_on((image_id)(intptr_t)impl) < B_NO_ERROR);
-	(void)impl;
-	return 0;
+	return ((image_id)(intptr_t)impl > 0) && (unload_add_on((image_id)(intptr_t)impl) < B_NO_ERROR);
+	// (void)impl;
+	// return 0;
 #endif
 }
 

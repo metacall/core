@@ -57,7 +57,9 @@ static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 /* -- Classes -- */
 
-static thread_local rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
+static thread_local rapidjson::MemoryPoolAllocator<> *rapid_json_allocator_ptr = nullptr;
+
+
 
 /* -- Methods -- */
 
@@ -76,7 +78,6 @@ serial_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 	{
 		return NULL;
 	}
-
 	document->allocator = allocator;
 
 	return (serial_handle)document;
@@ -84,6 +85,11 @@ serial_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 
 void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 {
+	if (rapid_json_allocator_ptr == nullptr)
+	{
+		rapid_json_allocator_ptr = new rapidjson::MemoryPoolAllocator<>();
+	}
+	rapidjson::MemoryPoolAllocator<> &rapid_json_allocator = *rapid_json_allocator_ptr;
 	type_id id = value_type_id(v);
 
 	if (id == TYPE_BOOL)
