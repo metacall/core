@@ -114,9 +114,8 @@ size_t bucket_capacity(size_t prime)
 
 bucket bucket_create(size_t size)
 {
-	bucket buckets;
-
-	size_t iterator;
+	bucket buckets = NULL;
+	size_t iterator = 0;
 
 	if (size == 0)
 	{
@@ -188,7 +187,7 @@ int bucket_realloc_pairs(bucket b, size_t new_capacity)
 
 pair bucket_get_pair(bucket b, comparable_callback compare_cb, void *key)
 {
-	size_t iterator;
+	size_t iterator = 0;
 
 	if (b->pairs == NULL || b->count == 0)
 	{
@@ -210,8 +209,8 @@ pair bucket_get_pair(bucket b, comparable_callback compare_cb, void *key)
 
 vector bucket_get_pairs_value(bucket b, comparable_callback compare_cb, void *key)
 {
-	size_t iterator;
-	vector v;
+	size_t iterator = 0;
+	vector v = NULL;
 
 	if (b->pairs == NULL)
 	{
@@ -235,7 +234,7 @@ vector bucket_get_pairs_value(bucket b, comparable_callback compare_cb, void *ke
 
 int bucket_insert(bucket b, void *key, void *value)
 {
-	pair p;
+	pair p = NULL;
 
 	if (b == NULL || key == NULL || value == NULL)
 	{
@@ -270,7 +269,7 @@ int bucket_insert(bucket b, void *key, void *value)
 
 int bucket_remove(bucket b, comparable_callback compare_cb, void *key, void **value)
 {
-	size_t iterator;
+	size_t iterator = 0;
 
 	if (b == NULL || compare_cb == NULL || key == NULL)
 	{

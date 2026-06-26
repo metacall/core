@@ -261,10 +261,7 @@ macro(add_loader_dependencies TARGET)
 
 		# Check if the loader is enabled
 		if(${OPTION_BUILD_LOADERS_${LOADER_TAG}})
-			set(LOADERS_LIST
-				${LOADERS_LIST}
-				${loader}
-			)
+			list(APPEND LOADERS_LIST ${LOADER})
 		endif()
 	endforeach()
 

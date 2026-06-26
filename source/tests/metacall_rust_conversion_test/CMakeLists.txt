@@ -1,20 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_CS)
-	return()
-endif()
-
-#
-# External dependencies
-#
-
-find_package(DotNET)
-
-if(NOT DOTNET_FOUND)
-	message(SEND_ERROR "DotNET command not found")
-	return()
-endif()
-
-if(DOTNET_VERSION VERSION_LESS "5.0")
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_RS)
 	return()
 endif()
 
@@ -23,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-csharp-function-test)
+set(target metacall-rust-conversion-test)
 message(STATUS "Test ${target}")
 
 #
@@ -47,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_csharp_function_test.cpp
+	${source_path}/metacall_rust_conversion_test.cpp
 )
 
 # Group source files
@@ -140,29 +125,19 @@ target_link_options(${target}
 )
 
 #
+# Define test
+#
+
+add_test(NAME ${target}
+	COMMAND $<TARGET_FILE:${target}>
+)
+
+#
 # Define dependencies
 #
 
 add_dependencies(${target}
-	cs_loader
-)
-
-#
-# Define test
-#
-
-if(OPTION_BUILD_THREAD_SANITIZER)
-	check_tsan_executable("${DOTNET_CORE_LIBRARY}" DotNET_TSAN)
-	if(NOT DotNET_TSAN)
-		# This test fails when run with thread sanitizer due to C# when CoreCLR is not compiled with TSAN:
-		# coreclr_initialize status (0x8007ff0b)
-		# For solving this, we should enable C# support for sanitizers and debug it properly
-		return()
-	endif()
-endif()
-
-add_test(NAME ${target}
-	COMMAND $<TARGET_FILE:${target}>
+	rs_loader
 )
 
 #
@@ -171,9 +146,6 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
-
-	# TODO: Valgrind also fails with C#
-	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)
@@ -181,4 +153,8 @@ include(TestEnvironmentVariables)
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
+
+	# Enable Rust backtrace and logs for better debugging
+	RUST_BACKTRACE=1
+	RUST_LOG=INFO
 )

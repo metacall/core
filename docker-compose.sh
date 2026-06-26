@@ -155,7 +155,7 @@ sub_test_clang() {
 # Build MetaCall Docker Compose with Memory Sanitizer for testing
 sub_test_memory_sanitizer() {
 	# Enable build with clang
-	export METACALL_BUILD_CLANG=clangmsan
+	export METACALL_BUILD_CLANG=clang-msan
 
 	# Enable build with memory sanitizer
 	export METACALL_BUILD_SANITIZER=memory-sanitizer

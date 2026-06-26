@@ -814,20 +814,6 @@ struct loader_impl_async_handle_promise_safe_type
 	}
 };
 
-typedef napi_value (*function_resolve_trampoline)(loader_impl_node, napi_env, function_resolve_callback, napi_value, napi_value, void *);
-typedef napi_value (*function_reject_trampoline)(loader_impl_node, napi_env, function_reject_callback, napi_value, napi_value, void *);
-
-typedef struct loader_impl_async_func_await_trampoline_type
-{
-	loader_impl_node node_loader;
-	function_resolve_trampoline resolve_trampoline;
-	function_reject_trampoline reject_trampoline;
-	function_resolve_callback resolve_callback;
-	function_resolve_callback reject_callback;
-	void *context;
-
-} * loader_impl_async_func_await_trampoline;
-
 typedef struct loader_impl_napi_to_value_callback_closure_type
 {
 	value func;
@@ -2221,13 +2207,6 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 	}
 }
 
-void node_loader_impl_async_func_await_finalize(napi_env, void *finalize_data, void *)
-{
-	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(finalize_data);
-
-	delete trampoline;
-}
-
 napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_env env, function_resolve_callback resolve, napi_value recv, napi_value v, void *context)
 {
 	napi_value result = nullptr;
@@ -2310,6 +2289,13 @@ napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_e
 	value_type_destroy(ret);
 
 	return result;
+}
+
+void node_loader_impl_async_func_await_finalize(napi_env, void *finalize_data, void *)
+{
+	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(finalize_data);
+
+	delete trampoline;
 }
 
 void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe_type *func_await_safe)
@@ -2405,7 +2391,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 				}
 
 				/* Set trampoline object values */
-				trampoline->node_loader = func_await_safe->node_impl;
+				trampoline->node_impl = func_await_safe->node_impl;
 				trampoline->resolve_trampoline = &node_loader_impl_async_func_resolve;
 				trampoline->reject_trampoline = &node_loader_impl_async_func_reject;
 				trampoline->resolve_callback = func_await_safe->resolve_callback;
@@ -2417,7 +2403,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 				node_loader_impl_exception(env, status);
 
-				status = napi_wrap(env, argv[2], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, NULL);
+				status = napi_wrap(env, argv[2], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, nullptr, nullptr);
 
 				node_loader_impl_exception(env, status);
 
@@ -2527,7 +2513,7 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 				node_loader_impl_exception(env, status);
 
 				/* Set trampoline object values */
-				trampoline->node_loader = future_await_safe->node_impl;
+				trampoline->node_impl = future_await_safe->node_impl;
 				trampoline->resolve_trampoline = &node_loader_impl_async_func_resolve;
 				trampoline->reject_trampoline = &node_loader_impl_async_func_reject;
 				trampoline->resolve_callback = future_await_safe->resolve_callback;

@@ -97,6 +97,7 @@ static void *plugin_load_from_path(size_t argc, void *args[], void *data)
 	void *config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
 	auto i = fs::recursive_directory_iterator(ext_path);
+
 	while (i != fs::recursive_directory_iterator())
 	{
 		if (i.depth() == 1)
@@ -105,24 +106,27 @@ static void *plugin_load_from_path(size_t argc, void *args[], void *data)
 		}
 
 		fs::directory_entry dir(*i);
+
 		if (dir.is_regular_file())
 		{
-			std::string config = dir.path().filename().string();
+			auto dir_path = dir.path();
+			auto filename = dir_path.filename();
+			std::string config = filename.string();
 
 			if (config == "metacall.json" ||
 				(config.substr(0, m_begins.size()) == m_begins &&
 					config.substr(config.size() - m_ends.size()) == m_ends))
 			{
-				std::string dir_path = dir.path().string();
+				std::string dir_path_str = dir_path.string();
 				void *current_handle = NULL;
 				void **current_handle_ptr = (handle_ptr != NULL && *handle_ptr != NULL) ? &current_handle : NULL;
 
-				log_write("metacall", LOG_LEVEL_DEBUG, "Loading plugin: %s", dir_path.c_str());
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loading plugin: %s", dir_path_str.c_str());
 
 				/* On each iteration, pass a new handle to metacall_load_from_configuration */
-				if (metacall_load_from_configuration(dir_path.c_str(), current_handle_ptr, config_allocator) != 0)
+				if (metacall_load_from_configuration(dir_path_str.c_str(), current_handle_ptr, config_allocator) != 0)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load plugin: %s", dir_path.c_str());
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load plugin: %s", dir_path_str.c_str());
 					metacall_allocator_destroy(config_allocator);
 					return metacall_value_create_int(4);
 				}
@@ -132,7 +136,7 @@ static void *plugin_load_from_path(size_t argc, void *args[], void *data)
 				{
 					if (metacall_handle_populate(*handle_ptr, current_handle) != 0)
 					{
-						log_write("metacall", LOG_LEVEL_ERROR, "Failed to populate handle in plugin: %s", dir_path.c_str());
+						log_write("metacall", LOG_LEVEL_ERROR, "Failed to populate handle in plugin: %s", dir_path_str.c_str());
 					}
 				}
 
@@ -142,6 +146,7 @@ static void *plugin_load_from_path(size_t argc, void *args[], void *data)
 				{
 					i.pop();
 				}
+
 				continue;
 			}
 		}

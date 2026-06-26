@@ -55,6 +55,9 @@ INSTALL_RUST=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
+INSTALL_ADDRESS_SANITIZER=0
+INSTALL_THREAD_SANITIZER=0
+INSTALL_MEMORY_SANITIZER=0
 INSTALL_CLANG=0
 INSTALL_CLANG_MSAN=0
 INSTALL_CLANG_FORMAT=0
@@ -132,6 +135,25 @@ sub_base(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# Enable deb-src for both formats
+				for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+					[ -e "$f" ] || continue
+
+					# Old-style .list files
+					if grep -qE '^#?deb ' "$f"; then
+						$SUDO_CMD sed -i 's/^# *deb-src/deb-src/' "$f" 2>/dev/null || true
+						$SUDO_CMD sed -i 's/^# *deb /deb/' "$f" 2>/dev/null || true
+					fi
+
+					# New-style .sources files (Debian 12+, Ubuntu 22.04+)
+					if grep -q '^Types:' "$f"; then
+						$SUDO_CMD sed -i 's/^Types: deb$/Types: deb deb-src/' "$f"
+						$SUDO_CMD sed -i 's/^Types: deb /Types: deb deb-src /' "$f"
+					fi
+				done
+			fi
+
 			$SUDO_CMD apt-get update
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -154,25 +176,80 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			if [ "${BUILD_TYPE}" = "Debug" ]; then
-				PYTHON3_PKG=python3-dbg
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# Download Python source
+				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
+				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
+				mkdir python && cd python
+				apt-get source "${PYTHON_PKG}"
+				SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
+				cd "$SRC_DIR"
+
+				# Build Python with instrumentation
+				if [ $INSTALL_MEMCHECK = 1 ]; then
+					printf "leak:*libpython*" &> ./asan.supp
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
+					BUILD_FLAGS="--with-valgrind"
+					BUILD_LDFLAGS=""
+				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
+					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+					BUILD_FLAGS="--with-thread-sanitizer"
+					BUILD_LDFLAGS="-fsanitize=thread"
+				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-memory-sanitizer"
+					BUILD_LDFLAGS="-fsanitize=memory"
+					export CC="/usr/bin/clang"
+					export CXX="/usr/bin/clang++"
+				fi
+				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
+				./configure --prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				make -j$(nproc)
+				$SUDO_CMD make altinstall
+
+				# Define python as the default one
+				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_PKG}d" /usr/bin/python3
+
+				# Install Pip
+				wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
+
+				# Bootstrap pip and install python test dependencies
+				$SUDO_CMD python3 -m pip install --upgrade \
+					requests \
+					setuptools \
+					wheel \
+					rsa \
+					scipy \
+					numpy \
+					scikit-learn \
+					joblib
+				cd ../..
+				rm -rf ./python
 			else
-				PYTHON3_PKG=python3
+				if [ "${BUILD_TYPE}" = "Debug" ]; then
+					PYTHON3_PKG=python3-dbg
+				else
+					PYTHON3_PKG=python3
+				fi
+
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends $PYTHON3_PKG python3-dev python3-pip
+
+				# Python test dependencies
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+					python3-requests \
+					python3-setuptools \
+					python3-wheel \
+					python3-rsa \
+					python3-scipy \
+					python3-numpy \
+					python3-sklearn \
+					python3-joblib
 			fi
-
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends $PYTHON3_PKG python3-dev python3-pip
-
-			# Python test dependencies
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-				python3-requests \
-				python3-setuptools \
-				python3-wheel \
-				python3-rsa \
-				python3-scipy \
-				python3-numpy \
-				python3-sklearn \
-				python3-joblib
-
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			# Fix to a lower Python version (3.9) in order avoid conflicts with Python dependency of Clang from C Loader
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main python3=3.9.16-r0 python3-dev=3.9.16-r0
@@ -234,12 +311,63 @@ sub_ruby(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
+			# TODO:
+			# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+			# 	# Download Ruby source
+			# 	RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
+			# 	$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
+			# 	mkdir ruby && cd ruby
+			# 	apt-get source "${RUBY_PKG}"
+			# 	SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
+			# 	cd "$SRC_DIR"
 
-			# TODO: Review conflict with NodeJS (currently rails test is disabled)
-			#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
-			#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
-			#$SUDO_CMD gem install rails
+			# 	# Build Ruby with instrumentation
+			# 	if [ $INSTALL_MEMCHECK = 1 ]; then
+			# 		# TODO: Apparently valgrind does not need instrumentation?
+			# 		BUILD_CFLAGS=""
+			# 		BUILD_LDFLAGS=""
+			# 	elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+			# 		export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+			# 		export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+			# 		BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
+			# 		BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+			# 	elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+			# 		export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+			# 		BUILD_CFLAGS="-fsanitize=thread"
+			# 		BUILD_LDFLAGS="-fsanitize=thread"
+			# 	elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+			# 		export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+			# 		BUILD_CFLAGS="-fsanitize=memory"
+			# 		BUILD_LDFLAGS="-fsanitize=memory"
+			# 		export CC="/usr/bin/clang"
+			# 		export CXX="/usr/bin/clang++"
+			# 	fi
+
+			# 	./autogen.sh
+			# 	mkdir build && cd build
+			# 	../configure \
+			# 		--enable-shared \
+			# 		--enable-debug-env \
+			# 		cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer" \
+			# 		ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+			# 		cppflags="-DUSE_RUBY_DEBUG_LOG=1" \
+			# 		optflags="-O0" \
+			# 		debugflags="-ggdb3" \
+			# 		--prefix=/usr/local
+
+			# 	make -j$(nproc)
+			# 	$SUDO_CMD make install
+
+			# 	cd ../../..
+			# 	rm -rf ./ruby
+			# else
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
+
+				# TODO: Review conflict with NodeJS (currently rails test is disabled)
+				#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
+				#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
+				#$SUDO_CMD gem install rails
+			# fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache ruby ruby-dev
 		fi
@@ -1062,9 +1190,25 @@ sub_install(){
 			APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
 		fi
 	fi
+
+	# Install build dependencies first
 	if [ $INSTALL_BASE = 1 ]; then
 		sub_base
 	fi
+	if [ $INSTALL_CLANG = 1 ]; then
+		sub_clang
+	fi
+	if [ $INSTALL_CLANG_MSAN = 1 ]; then
+		sub_clang_msan
+	fi
+	if [ $INSTALL_MEMCHECK = 1 ]; then
+		sub_memcheck
+	fi
+	if [ $INSTALL_ANDROID = 1 ]; then
+		sub_android
+	fi
+
+	# Install runtime dependencies
 	if [ $INSTALL_PYTHON = 1 ]; then
 		sub_python
 	fi
@@ -1131,15 +1275,6 @@ sub_install(){
 	if [ $INSTALL_COVERAGE = 1 ]; then
 		sub_coverage
 	fi
-	if [ $INSTALL_MEMCHECK = 1 ]; then
-		sub_memcheck
-	fi
-	if [ $INSTALL_CLANG = 1 ]; then
-		sub_clang
-	fi
-	if [ $INSTALL_CLANG_MSAN = 1 ]; then
-		sub_clang_msan
-	fi
 	if [ $INSTALL_CLANG_FORMAT = 1 ]; then
 		sub_clang_format
 	fi
@@ -1148,9 +1283,6 @@ sub_install(){
 	fi
 	if [ $INSTALL_SANDBOX = 1 ]; then
 		sub_sandbox
-	fi
-	if [ $INSTALL_ANDROID = 1 ]; then
-		sub_android
 	fi
 	echo "install finished in workspace $ROOT_DIR"
 }
@@ -1286,12 +1418,24 @@ sub_options(){
 			echo "memcheck selected"
 			INSTALL_MEMCHECK=1
 		fi
+		if [ "$option" = 'address-sanitizer' ]; then
+			echo "address sanitizer selected"
+			INSTALL_ADDRESS_SANITIZER=1
+		fi
+		if [ "$option" = 'thread-sanitizer' ]; then
+			echo "thread sanitizer selected"
+			INSTALL_THREAD_SANITIZER=1
+		fi
+		if [ "$option" = 'memory-sanitizer' ]; then
+			echo "memory sanitizer selected"
+			INSTALL_MEMORY_SANITIZER=1
+		fi
 		if [ "$option" = 'clang' ]; then
 			echo "clang selected"
 			INSTALL_CLANG=1
 		fi
-		if [ "$option" = 'clangmsan' ]; then
-			echo "clangmsan selected"
+		if [ "$option" = 'clang-msan' ]; then
+			echo "clang memory sanitizer selected"
 			INSTALL_CLANG_MSAN=1
 		fi
 		if [ "$option" = 'clangformat' ]; then
@@ -1345,8 +1489,11 @@ sub_help() {
 	echo "	pack"
 	echo "	coverage"
 	echo "	memcheck"
+	echo "	address-sanitizer"
+	echo "	thread-sanitizer"
+	echo "	memory-sanitizer"
 	echo "	clang"
-	echo "	clangmsan"
+	echo "	clang-msan"
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"

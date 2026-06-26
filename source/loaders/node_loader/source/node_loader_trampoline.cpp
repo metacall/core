@@ -19,23 +19,6 @@
 		name, 0, func, 0, 0, 0, napi_default, 0 \
 	}
 
-typedef void *(*future_resolve_callback)(void *, void *);
-typedef void *(*future_reject_callback)(void *, void *);
-
-typedef napi_value (*future_resolve_trampoline)(void *, napi_env, future_resolve_callback, napi_value, napi_value, void *);
-typedef napi_value (*future_reject_trampoline)(void *, napi_env, future_reject_callback, napi_value, napi_value, void *);
-
-typedef struct loader_impl_async_future_await_trampoline_type
-{
-	loader_impl_node node_impl;
-	future_resolve_trampoline resolve_trampoline;
-	future_reject_trampoline reject_trampoline;
-	future_resolve_callback resolve_callback;
-	future_reject_callback reject_callback;
-	void *context;
-
-} * loader_impl_async_future_await_trampoline;
-
 template <typename T>
 union loader_impl_trampoline_cast
 {
@@ -200,7 +183,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	}
 
 	/* Execute the callback */
-	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(result);
 
 	return trampoline->resolve_trampoline(trampoline->node_impl, env, trampoline->resolve_callback, recv, args[1], trampoline->context);
 }
@@ -255,7 +238,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	}
 
 	/* Execute the callback */
-	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(result);
 
 	return trampoline->reject_trampoline(trampoline->node_impl, env, trampoline->reject_callback, recv, args[1], trampoline->context);
 }

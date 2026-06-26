@@ -3940,7 +3940,7 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 value py_loader_impl_error_value(loader_impl_py py_impl)
 {
-	PyObject *type_obj, *value_obj, *traceback_obj;
+	PyObject *type_obj = NULL, *value_obj = NULL, *traceback_obj = NULL;
 
 	PyErr_Fetch(&type_obj, &value_obj, &traceback_obj);
 

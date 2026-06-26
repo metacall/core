@@ -228,7 +228,7 @@ sub_options() {
 			echo "Build with memcheck"
 			BUILD_MEMCHECK=1
 		fi
-		if [ "$option" = 'clang' ] || [ "$option" = 'clangmsan' ]; then
+		if [ "$option" = 'clang' ] || [ "$option" = 'clang-msan' ]; then
 			echo "Build with clang compiler"
 			BUILD_CLANG=1
 		fi
@@ -690,9 +690,10 @@ sub_help() {
 	echo "	coverage: build all coverage reports"
 	echo "	memcheck: build with memcheck"
 	echo "	clang: build with clang compiler"
+	echo "	clang-msan: build with clang compiler with memory sanitizer"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
-	echo "	memory-sanitizer: build with memory sanitizer (requires clang)"
+	echo "	memory-sanitizer: build with memory sanitizer (requires clang-msan)"
 	echo "	android: cross-compile to android"
 	echo ""
 }
