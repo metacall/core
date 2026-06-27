@@ -42,24 +42,19 @@
 
 typedef struct rapid_json_document_type
 {
+	rapidjson::MemoryPoolAllocator<> json_allocator;
 	rapidjson::Document impl;
 	memory_allocator allocator;
 
-} * rapid_json_document;
+} *rapid_json_document;
 
 /* -- Private Methods -- */
 
-static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v);
+static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v, rapidjson::MemoryPoolAllocator<> &rapid_json_allocator);
 
 static char *rapid_json_serial_impl_document_stringify(rapid_json_document document, size_t *size);
 
 static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v);
-
-/* -- Classes -- */
-
-static thread_local rapidjson::MemoryPoolAllocator<> *rapid_json_allocator_ptr = nullptr;
-
-
 
 /* -- Methods -- */
 
@@ -83,13 +78,8 @@ serial_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 	return (serial_handle)document;
 }
 
-void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
+void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v, rapidjson::MemoryPoolAllocator<> &rapid_json_allocator)
 {
-	if (rapid_json_allocator_ptr == nullptr)
-	{
-		rapid_json_allocator_ptr = new rapidjson::MemoryPoolAllocator<>();
-	}
-	rapidjson::MemoryPoolAllocator<> &rapid_json_allocator = *rapid_json_allocator_ptr;
 	type_id id = value_type_id(v);
 
 	if (id == TYPE_BOOL)
@@ -203,7 +193,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 			rapidjson::Value json_inner_value;
 
-			rapid_json_serial_impl_serialize_value(current_value, &json_inner_value);
+			rapid_json_serial_impl_serialize_value(current_value, &json_inner_value, rapid_json_allocator);
 
 			json_array.PushBack(json_inner_value, rapid_json_allocator);
 		}
@@ -224,9 +214,9 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 			rapidjson::Value json_member, json_inner_value;
 
-			rapid_json_serial_impl_serialize_value(tupla_array[0], &json_member);
+			rapid_json_serial_impl_serialize_value(tupla_array[0], &json_member, rapid_json_allocator);
 
-			rapid_json_serial_impl_serialize_value(tupla_array[1], &json_inner_value);
+			rapid_json_serial_impl_serialize_value(tupla_array[1], &json_inner_value, rapid_json_allocator);
 
 			json_map.AddMember(json_member, json_inner_value, rapid_json_allocator);
 		}
@@ -325,7 +315,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		json_member.SetString(str, length);
 
-		rapid_json_serial_impl_serialize_value(throwable_value(th), &json_inner_value);
+		rapid_json_serial_impl_serialize_value(throwable_value(th), &json_inner_value, rapid_json_allocator);
 
 		json_map.AddMember(json_member, json_inner_value, rapid_json_allocator);
 	}
@@ -380,7 +370,9 @@ char *rapid_json_serial_impl_serialize(serial_handle handle, value v, size_t *si
 		return NULL;
 	}
 
-	rapid_json_serial_impl_serialize_value(v, &document->impl);
+	thread_local rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
+
+	rapid_json_serial_impl_serialize_value(v, &document->impl, rapid_json_allocator);
 
 	return rapid_json_serial_impl_document_stringify(document, size);
 }
