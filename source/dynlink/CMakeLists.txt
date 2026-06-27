@@ -39,8 +39,12 @@ set(generated_source_path  "${CMAKE_CURRENT_BINARY_DIR}/source")
 if(APPLE AND PROJECT_OS_VERSION GREATER 8)
 	# From macOS 10.5 (version 9), dlopen compatible library is available
 	set(DYNLINK_IMPL_INTERFACE_NAME unix)
+elseif(PROJECT_OS_HAIKU)
+	# Haiku can use dlopen although it's BeOS family
+	set(DYNLINK_IMPL_INTERFACE_NAME haiku)
 else()
 	set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
+
 endif()
 
 set(headers

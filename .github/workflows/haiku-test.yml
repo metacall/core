@@ -1,0 +1,61 @@
+name: Haiku Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
+    tags:
+      - v*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Haiku Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [debug, relwithdebinfo, release]
+        arch: [x86-64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Haiku VM
+        uses: cross-platform-actions/action@v1.2.0
+        with:
+          operating_system: haiku
+          version: r1beta5
+          architecture: ${{ matrix.arch }}
+          shell: sh
+          run: |
+            mkdir -p /boot/home/config/settings/system/debug_server
+            printf 'default_action report\n' > /boot/home/config/settings/system/debug_server/settings
+
+            sh ./tools/metacall-environment.sh base
+
+            mkdir -p build && cd build
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
+
+            sh ../tools/metacall-build.sh ${{ matrix.build }}
+
+            echo "===== HAIKU DESKTOP FILES ====="
+            ctest -j2 --timeout 120 --output-on-failure -C ${{ matrix.build }} || res=$?
+            ls -la /boot/home/Desktop/ 2>/dev/null || true
+
+            echo "===== HAIKU CRASH REPORTS ====="
+            cat /boot/home/Desktop/*report* 2>/dev/null || true
+
+            echo "===== HAIKU SYSLOG TAIL ====="
+            tail -n 200 /boot/system/var/log/syslog 2>/dev/null || true
+
+            exit ${res:-0}
