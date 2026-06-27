@@ -370,9 +370,9 @@ char *rapid_json_serial_impl_serialize(serial_handle handle, value v, size_t *si
 		return NULL;
 	}
 
-	thread_local rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
+	// thread_local rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
 
-	rapid_json_serial_impl_serialize_value(v, &document->impl, rapid_json_allocator);
+	rapid_json_serial_impl_serialize_value(v, &document->impl, document->json_allocator);
 
 	return rapid_json_serial_impl_document_stringify(document, size);
 }
