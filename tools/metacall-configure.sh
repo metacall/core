@@ -63,6 +63,7 @@ case "$(uname -s)" in
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
 	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
+	Haiku*)		OPERATIVE_SYSTEM=Haiku;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
@@ -633,6 +634,13 @@ sub_configure() {
 			-DANDROID_STL=c++_shared \
 			-Wno-dev \
 			-G Ninja"
+	fi
+
+	# Haiku
+	if [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
+		# By default Haiku does not support stack protection
+		BUILD_STRING="$BUILD_STRING \
+			-DOPTION_BUILD_SECURITY=Off"
 	fi
 
 	# Split cmake config file line by line and add each line to the build string

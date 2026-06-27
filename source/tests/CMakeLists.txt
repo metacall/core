@@ -58,6 +58,8 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUI
 	#		- metacall-cs-test
 	#		- metacall-cs-call-bench
 	#		- metacall-csharp-static-class-test
+	#		- metacall-csharp-function-test
+	#		- metacall-csharp-invalid-configuration-test
 	#		- metacall-test
 	#		- metacall-distributable-test
 	#		- metacall-inspect-test
@@ -212,11 +214,14 @@ add_subdirectory(metacall_typescript_require_test)
 add_subdirectory(metacall_typescript_jsx_default_test)
 add_subdirectory(metacall_lua_test)
 add_subdirectory(metacall_rpc_test)
-#add_subdirectory(metacall_csharp_function_test) # TODO: C# 9.0 seems not to work so top level expressions do not work
-add_subdirectory(metacall_csharp_static_class_test)
 add_subdirectory(metacall_llvm_test)
 add_subdirectory(metacall_ruby_test)
 add_subdirectory(metacall_cs_test)
+add_subdirectory(metacall_csharp_static_class_test)
+# TODO:
+# add_subdirectory(metacall_csharp_function_test)
+# add_subdirectory(metacall_csharp_empty_configuration_test)
+# add_subdirectory(metacall_csharp_invalid_configuration_test)
 add_subdirectory(metacall_julia_test)
 add_subdirectory(metacall_java_test)
 add_subdirectory(metacall_wasm_test)
