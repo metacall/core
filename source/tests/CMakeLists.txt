@@ -221,7 +221,7 @@ add_subdirectory(metacall_csharp_static_class_test)
 # TODO:
 # add_subdirectory(metacall_csharp_function_test)
 # add_subdirectory(metacall_csharp_empty_configuration_test)
-# add_subdirectory(metacall_csharp_invalid_configuration_test)
+add_subdirectory(metacall_csharp_invalid_configuration_test)
 add_subdirectory(metacall_julia_test)
 add_subdirectory(metacall_java_test)
 add_subdirectory(metacall_wasm_test)
