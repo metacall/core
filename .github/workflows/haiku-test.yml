@@ -38,24 +38,10 @@ jobs:
           architecture: ${{ matrix.arch }}
           shell: sh
           run: |
-            mkdir -p /boot/home/config/settings/system/debug_server
-            printf 'default_action report\n' > /boot/home/config/settings/system/debug_server/settings
-
             sh ./tools/metacall-environment.sh base
 
             mkdir -p build && cd build
+
             sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
 
-            sh ../tools/metacall-build.sh ${{ matrix.build }}
-
-            echo "===== HAIKU DESKTOP FILES ====="
-            ctest -j2 --timeout 120 --output-on-failure -C ${{ matrix.build }} || res=$?
-            ls -la /boot/home/Desktop/ 2>/dev/null || true
-
-            echo "===== HAIKU CRASH REPORTS ====="
-            cat /boot/home/Desktop/*report* 2>/dev/null || true
-
-            echo "===== HAIKU SYSLOG TAIL ====="
-            tail -n 200 /boot/system/var/log/syslog 2>/dev/null || true
-
-            exit ${res:-0}
+            sh ../tools/metacall-build.sh ${{ matrix.build }} tests
