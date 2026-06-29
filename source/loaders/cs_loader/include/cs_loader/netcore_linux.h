@@ -109,29 +109,31 @@ private:
 
 	bool LoadMain();
 
-	void AddFilesFromDirectoryToTpaList(std::string directory, std::string &tpaList)
+	bool AddFilesFromDirectoryToTpaList(std::string directory, std::string &tpaList)
 	{
-		// Use the error_code overload so it can't throw an uncaught filesystem_error.
+		// Use the error_code overload so it can't throw an uncaught filesystem_error
 		std::error_code ec;
 		fs::directory_iterator it(directory, ec);
 		if (ec)
 		{
-			 log_write("metacall", LOG_LEVEL_ERROR,
-				"cs_loader: skipping unreadable TPA directory '%s' (%s)",
+			// Bad config directory, skip gracefully instead of std::terminate
+			log_write("metacall", LOG_LEVEL_ERROR, "cs_loader: skipping unreadable TPA directory '%s' (%s)",
 				directory.c_str(), ec.message().c_str());
-			return; // bad config dir -> skip gracefully instead of std::terminate
+			return false;
 		}
 
 		for (const auto &dirent : it)
 		{
 			std::string path = dirent.path();
 
-			// length guard avoids size_t underflow for names shorter than 4 chars
+			// Length guard avoids size_t underflow for names shorter than 4 chars
 			if (path.length() >= 4 && path.compare(path.length() - 4, 4, ".dll") == 0)
 			{
 				tpaList.append(path + ":");
 			}
 		}
+
+		return true;
 	}
 
 public:
