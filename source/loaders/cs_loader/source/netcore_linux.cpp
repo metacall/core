@@ -84,7 +84,10 @@ bool netcore_linux::ConfigAssemblyName()
 		if (this->dotnet_loader_assembly_path[0] == '/')
 		{
 			this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
-			AddFilesFromDirectoryToTpaList(dotnet_loader_assembly_directory, tpaList);
+			if (AddFilesFromDirectoryToTpaList(dotnet_loader_assembly_directory, tpaList) == false)
+			{
+				return false;
+			}
 		}
 		else
 		{
@@ -108,7 +111,10 @@ bool netcore_linux::ConfigAssemblyName()
 	this->nativeDllSearchDirs.append(":");
 	this->nativeDllSearchDirs.append(this->runtimePath);
 
-	AddFilesFromDirectoryToTpaList(this->runtimePath, tpaList);
+	if (AddFilesFromDirectoryToTpaList(this->runtimePath, tpaList) == false)
+	{
+		return false;
+	}
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "NetCore application absolute path: %s", this->appPath);
 

@@ -45,7 +45,7 @@ TEST_F(metacall_csharp_invalid_configuration_test, DefaultConstructor)
 		"\t}\n"
 		"}\n";
 
-	ASSERT_EQ((int)0, (int)metacall_load_from_memory("cs", sum, sizeof(sum), NULL));
+	ASSERT_NE((int)0, (int)metacall_load_from_memory("cs", sum, sizeof(sum), NULL));
 
 	metacall_destroy();
 }
