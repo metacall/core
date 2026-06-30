@@ -42,6 +42,7 @@ set(headers
 	${include_path}/adt_trie.h
 	${include_path}/adt_vector.h
 	${include_path}/adt_string.h
+	${include_path}/adt_atomic_set.h
 )
 
 set(sources
@@ -53,6 +54,7 @@ set(sources
 	${source_path}/adt_bucket.c
 	${source_path}/adt_trie.c
 	${source_path}/adt_vector.c
+	${source_path}/adt_atomic_set.c
 )
 
 # Group source files
