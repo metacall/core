@@ -397,6 +397,8 @@ sub_help() {
 	echo "	test-address-sanitizer"
 	echo "	test-thread-sanitizer"
 	echo "	test-memory-sanitizer"
+	echo "	test-clang-address-sanitizer"
+	echo "	test-clang-thread-sanitizer"
 	echo "	coverage"
 	echo "	test-memcheck"
 	echo "	test-clang"
@@ -425,6 +427,16 @@ case "$1" in
 		sub_test_sanitizer
 		;;
 	test-thread-sanitizer)
+		export METACALL_BUILD_SANITIZER="thread-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-clang-address-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
+		export METACALL_BUILD_SANITIZER="address-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-clang-thread-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
 		export METACALL_BUILD_SANITIZER="thread-sanitizer"
 		sub_test_sanitizer
 		;;

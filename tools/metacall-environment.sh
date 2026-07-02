@@ -311,24 +311,34 @@ sub_ruby(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-                        if [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
-                                # ASan requires Ruby 3.4.0+ and Clang 18+ due to cross-thread fork mechanics
+                        if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ]; }; then
                                 $SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-                                        clang-18 llvm-18 build-essential libssl-dev libyaml-dev libreadline-dev zlib1g-dev git curl
+                                        libssl-dev libyaml-dev libreadline-dev zlib1g-dev git curl
 
-                                export CC=clang-18
-                                export CFLAGS="-fsanitize=address -fno-omit-frame-pointer -g -O1"
-                                export LDFLAGS="-fsanitize=address"
+                                export CC=clang
                                 export RUBY_CONFIGURE_OPTS="cppflags=-DUSE_MN_THREADS=0 --disable-install-doc"
 
+                                if [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+                                        export CFLAGS="-fsanitize=address -fno-omit-frame-pointer -g -O1"
+                                        export LDFLAGS="-fsanitize=address"
+                                elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+                                        export CFLAGS="-fsanitize=thread -g -O1"
+                                        export LDFLAGS="-fsanitize=thread"
+                                fi
+
                                 export RBENV_ROOT="/usr/local/rbenv"
+                                $SUDO_CMD rm -rf "$RBENV_ROOT"
                                 git clone https://github.com/rbenv/rbenv.git "$RBENV_ROOT"
                                 mkdir -p "$RBENV_ROOT/plugins"
                                 git clone https://github.com/rbenv/ruby-build.git "$RBENV_ROOT/plugins/ruby-build"
                                 export PATH="$RBENV_ROOT/bin:$RBENV_ROOT/shims:$PATH"
                                 eval "$(rbenv init -)"
 
-                                rbenv install 3.4.1
+                                rbenv install 3.4.1 || {
+                                        echo "=== ruby-build logs ==="
+                                        cat /tmp/ruby-build*
+                                        exit 1
+                                }
                                 rbenv global 3.4.1
 
                                 $SUDO_CMD ln -sf "$RBENV_ROOT/versions/3.4.1/bin/ruby" /usr/local/bin/ruby
