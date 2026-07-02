@@ -66,6 +66,12 @@ struct atomic_set_insert_type
 	int result;
 };
 
+struct atomic_set_remove_type
+{
+	union atomic_set_key_type set_key;
+	void *result;
+};
+
 /* -- Private Methods -- */
 
 static atomic_set_storage atomic_set_storage_create(size_t capacity)
@@ -112,42 +118,53 @@ static void atomic_set_storage_destroy(atomic_set_storage storage)
 	}
 }
 
-static const struct atomic_set_element_type *atomic_set_read(atomic_set s, atomic_set_storage *storage)
+static atomic_set_storage atomic_set_acquire(atomic_set s)
 {
 	atomic_set_storage current;
 
 	for (;;)
 	{
-		/* Get current storage */
 		current = atomic_load_explicit(&s->storage, memory_order_acquire);
 
 		if (current == NULL)
 		{
-			*storage = NULL;
 			return NULL;
 		}
 
-		/* Optimistically increment reference counter */
+		/* Acquire a reference */
 		atomic_fetch_add_explicit(&current->ref_count, 1, memory_order_relaxed);
 
-		/* If no write was done in between, return it */
-		if (current == atomic_load_explicit(&s->storage, memory_order_relaxed))
+		/* Verify the storage wasn't replaced while acquiring it */
+		if (current == atomic_load_explicit(&s->storage, memory_order_acquire))
 		{
-			*storage = current;
-			return current->data;
+			return current;
 		}
 
-		/* Some write was done in between, undo the operation */
+		/* Lost the race, release the reference and retry */
 		atomic_fetch_sub_explicit(&current->ref_count, 1, memory_order_relaxed);
 	}
 }
 
+static const struct atomic_set_element_type *atomic_set_read(atomic_set s, atomic_set_storage *storage)
+{
+	atomic_set_storage current = atomic_set_acquire(s);
+
+	*storage = current;
+
+	if (current == NULL)
+	{
+		return NULL;
+	}
+
+	return current->data;
+}
+
 static void atomic_set_write(atomic_set s, void (*mutate)(atomic_set_storage, void *), void *context)
 {
-	atomic_set_storage current = atomic_load_explicit(&s->storage, memory_order_acquire);
+	atomic_set_storage current = atomic_set_acquire(s);
 	atomic_set_storage updated = NULL;
 
-	do
+	for (;;)
 	{
 		/* Clean up from a previously failed CAS iteration */
 		if (updated)
@@ -162,7 +179,22 @@ static void atomic_set_write(atomic_set s, void (*mutate)(atomic_set_storage, vo
 		mutate(updated, context);
 
 		/* Attempt to atomically swing the root pointer to the updated block */
-	} while (!atomic_compare_exchange_strong_explicit(&s->storage, &current, updated, memory_order_release, memory_order_acquire));
+		if (atomic_compare_exchange_strong_explicit(
+				&s->storage,
+				&current,
+				updated,
+				memory_order_release,
+				memory_order_acquire))
+		{
+			break;
+		}
+
+		/* Release the old reference */
+		atomic_set_storage_destroy(current);
+
+		/* Acquire a reference to the new current storage */
+		current = atomic_set_acquire(s);
+	}
 
 	/* The swap succeeded, release the writer's ownership stake of the old block */
 	atomic_set_storage_destroy(current);
@@ -182,6 +214,32 @@ static void atomic_set_insert_impl(atomic_set_storage storage, void *context)
 	storage->data[storage->size].value = insert_ctx->value;
 
 	++storage->size;
+}
+
+static void atomic_set_remove_impl(atomic_set_storage storage, void *context)
+{
+	struct atomic_set_remove_type *remove_ctx = (struct atomic_set_remove_type *)context;
+	size_t iterator = 0;
+
+	if (storage->size == 0)
+	{
+		remove_ctx->result = NULL;
+		return;
+	}
+
+	for (iterator = 0; iterator < storage->size; ++iterator)
+	{
+		if (remove_ctx->set_key.integer == storage->data[iterator].key.integer)
+		{
+			remove_ctx->result = storage->data[iterator].value;
+
+			memmove(&storage->data[iterator], &storage->data[iterator + 1], (storage->size - iterator - 1) * sizeof(struct atomic_set_element_type));
+
+			--storage->size;
+
+			return;
+		}
+	}
 }
 
 /* -- Methods -- */
@@ -321,8 +379,54 @@ void *atomic_set_get(atomic_set s, const char *key)
 	return value;
 }
 
+void *atomic_set_remove(atomic_set s, const char *key)
+{
+	struct atomic_set_remove_type context = { { { 0 } }, NULL };
+
+	if (s == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid atomic set remove parameters");
+		return NULL;
+	}
+
+	strncpy(context.set_key.string, key, ATOMIC_SET_KEY_SIZE);
+
+	atomic_set_write(s, &atomic_set_remove_impl, &context);
+
+	return context.result;
+}
+
+static void atomic_set_clear_impl(atomic_set_storage storage, void *context)
+{
+	(void)context;
+	memset(&storage->data[0], 0, sizeof(struct atomic_set_element_type) * storage->size);
+	storage->size = 0;
+}
+
+int atomic_set_clear(atomic_set s)
+{
+	if (s == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid atomic set clear parameters");
+		return 1;
+	}
+
+	atomic_set_write(s, &atomic_set_clear_impl, NULL);
+
+	return 0;
+}
+
 void atomic_set_destroy(atomic_set s)
 {
-	atomic_set_storage storage = atomic_load_explicit(&s->storage, memory_order_relaxed);
+	atomic_set_storage storage;
+
+	if (s == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid atomic set destroy parameter");
+		return;
+	}
+
+	storage = atomic_load_explicit(&s->storage, memory_order_relaxed);
 	atomic_set_storage_destroy(storage);
+	free(s);
 }
