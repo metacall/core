@@ -17,20 +17,15 @@ else:
 	assert isinstance(result, float) and result == 369.04999999999995
 
 # C#
+assert metacall_load_from_file('cs', ['./Sum.cs'])
 
-# the cs_loader crashes on init in the metacall/core:cli image
-# (std::terminate / exit 134) because its install config points the loader
-# assembly path at the stripped build dir.
+result = metacall('sum_cs', 3, 4)
+print(result)
+assert result == 7, f"Expected 7, but got {result}"
 
-# assert metacall_load_from_file('cs', ['./sum.cs'])
-
-# result = metacall('sum_cs', 3, 4)
-# print(result)
-# assert result == 7, f"Expected 7, but got {result}"
-
-# greeting = metacall('greet_cs', 'MetaCall')
-# print(greeting)
-# assert greeting == 'Hello MetaCall from C#!', f"Unexpected greeting: {greeting}"
+greeting = metacall('greet_cs', 'MetaCall')
+print(greeting)
+assert greeting == 'Hello MetaCall from C#!', f"Unexpected greeting: {greeting}"
 
 # Java
 # greeting = metacall_load_from_file_export('java', ['./GreetingService.java'])
