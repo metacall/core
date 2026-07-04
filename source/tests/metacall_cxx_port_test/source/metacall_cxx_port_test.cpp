@@ -204,15 +204,15 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 
 	{
 		static const char json_map[] =
-		"{\n"
-		"	\"urls\": [\n"
-		"		\"http://localhost:8000/\",\n"
-		"		\"http://localhost:8001/\",\n"
-		"		\"http://localhost:8002/\"\n"
-		"	],\n"
-		"	\"timeout\": 1000,\n"
-		"	\"retry\": 60\n"
-		"}\n";
+			"{\n"
+			"	\"urls\": [\n"
+			"		\"http://localhost:8000/\",\n"
+			"		\"http://localhost:8001/\",\n"
+			"		\"http://localhost:8002/\"\n"
+			"	],\n"
+			"	\"timeout\": 1000,\n"
+			"	\"retry\": 60\n"
+			"}\n";
 
 		metacall::metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 

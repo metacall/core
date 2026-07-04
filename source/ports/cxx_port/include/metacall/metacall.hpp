@@ -104,8 +104,7 @@ public:
 				std::string("Failed to create MetaCall value. Type mismatch: expected ") +
 				metacall_value_id_name(expected_id) +
 				" but got " +
-				metacall_value_id_name(actual_id)
-			);
+				metacall_value_id_name(actual_id));
 		}
 	}
 
@@ -890,27 +889,43 @@ value_typed<Ret> metacall(std::string name, Args &&...args)
 class value : public value_base
 {
 public:
-	value(char c) : value_base(metacall_value_create_char(c)) { }
-	value(short s) : value_base(metacall_value_create_short(s)) { }
-	value(int i) : value_base(metacall_value_create_int(i)) { }
-	value(long l) : value_base(metacall_value_create_long(l)) { }
-	value(float f) : value_base(metacall_value_create_float(f)) { }
-	value(double d) : value_base(metacall_value_create_double(d)) { }
-	value(const std::string &str) : value_base(metacall_value_create_string(str.c_str(), str.size())) { }
-	value(const char *str) : value_base(metacall_value_create_string(str, std::strlen(str))) { }
-	value(const std::vector<char> &buffer) : value_base(metacall_value_create_buffer(buffer.data(), buffer.size())) { }
-	value(const std::vector<unsigned char> &buffer) : value_base(metacall_value_create_buffer(buffer.data(), buffer.size())) { }
-	value(void *ptr) : value_base(metacall_value_create_ptr(ptr)) { }
-	value(std::nullptr_t) : value_base(metacall_value_create_null()) { }
+	value(char c) :
+		value_base(metacall_value_create_char(c)) {}
+	value(short s) :
+		value_base(metacall_value_create_short(s)) {}
+	value(int i) :
+		value_base(metacall_value_create_int(i)) {}
+	value(long l) :
+		value_base(metacall_value_create_long(l)) {}
+	value(float f) :
+		value_base(metacall_value_create_float(f)) {}
+	value(double d) :
+		value_base(metacall_value_create_double(d)) {}
+	value(const std::string &str) :
+		value_base(metacall_value_create_string(str.c_str(), str.size())) {}
+	value(const char *str) :
+		value_base(metacall_value_create_string(str, std::strlen(str))) {}
+	value(const std::vector<char> &buffer) :
+		value_base(metacall_value_create_buffer(buffer.data(), buffer.size())) {}
+	value(const std::vector<unsigned char> &buffer) :
+		value_base(metacall_value_create_buffer(buffer.data(), buffer.size())) {}
+	value(void *ptr) :
+		value_base(metacall_value_create_ptr(ptr)) {}
+	value(std::nullptr_t) :
+		value_base(metacall_value_create_null()) {}
 
-	value(array &a) : value_base(a.release()) { }
-	value(const array &arr) : value_base(metacall_value_copy(arr.to_raw())) { }
+	value(array &a) :
+		value_base(a.release()) {}
+	value(const array &arr) :
+		value_base(metacall_value_copy(arr.to_raw())) {}
 
 	template <class K, class V>
-	value(map_typed<K, V> &m) : value_base(m.release()) { }
+	value(map_typed<K, V> &m) :
+		value_base(m.release()) {}
 
 	template <class K, class V>
-	value(const map_typed<K, V> &m) : value_base(metacall_value_copy(m.to_raw())) { }
+	value(const map_typed<K, V> &m) :
+		value_base(metacall_value_copy(m.to_raw())) {}
 
 	// TODO: Implement more types
 
@@ -929,15 +944,15 @@ protected:
 	friend class value_typed<value>;
 
 	explicit value(void *value_ptr, void (*destructor)(void *)) :
-		value_base(value_ptr, destructor) { }
+		value_base(value_ptr, destructor) {}
 };
 
 template <>
 class value_typed<value> : public value_base
 {
 public:
-	explicit value_typed(void *ptr, void (*destructor)(void *) = &value_base::noop_destructor)
-		: value_base(ptr, destructor)
+	explicit value_typed(void *ptr, void (*destructor)(void *) = &value_base::noop_destructor) :
+		value_base(ptr, destructor)
 	{
 		if (metacall_value_id(ptr) == METACALL_INVALID)
 		{
