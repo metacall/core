@@ -27,7 +27,7 @@
 #include <limits.h>
 #include <string.h>
 
-netcore_linux::netcore_linux(char* dotnet_root, char* dotnet_loader_assembly_path) :
+netcore_linux::netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_path) :
 	netcore(dotnet_root, dotnet_loader_assembly_path), domainId(0)
 {
 	if (dotnet_root == NULL)
@@ -77,11 +77,9 @@ netcore_linux::~netcore_linux()
 
 bool netcore_linux::ConfigAssemblyName()
 {
-	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
-
 	if (this->dotnet_loader_assembly_path == NULL)
 	{
-		// dotnet_root is required and must come from cs_loader.json.
+		// dotnet_root is required and must come from cs_loader.json
 		log_write("metacall", LOG_LEVEL_ERROR,
 			"cs_loader: 'dotnet_loader_assembly_path' is not defined in cs_loader.json; refusing to load");
 		return false;
@@ -127,11 +125,6 @@ bool netcore_linux::ConfigAssemblyName()
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "NetCore application absolute path: %s", this->appPath);
 
-	/* TODO: Solve uninitialized strings */
-	/*
-	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteRuntime: %s", this->runtimePath);
-	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteLoaderDll: %s", this->managedAssemblyFullName);
-	*/
 	return true;
 }
 
