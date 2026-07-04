@@ -366,7 +366,7 @@ public:
 		// Try to initialize from options first
 		if (data != NULL)
 		{
-			metacall::map<std::string, metacall::array> options(data);
+			metacall::map_typed<std::string, metacall::array> options(data);
 
 			auto libs = options("libs");
 

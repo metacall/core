@@ -96,7 +96,7 @@ std::nullptr_t cxx_map_array_test(metacall::map_typed<std::string, metacall::arr
 
 // TODO:
 /*
-std::nullptr_t cxx_recursive_map_test(metacall::map<std::string, metacall::map<std::string, float>> &m)
+std::nullptr_t cxx_recursive_map_test(metacall::map_typed<std::string, metacall::map_typed<std::string, float>> &m)
 {
 	EXPECT_EQ((float)m["hello"]["world"], (float)4.0f);
 
@@ -192,7 +192,7 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 	// TODO:
 	/*
 	{
-		metacall::map<std::string, metacall::map<std::string, float>> m = {
+		metacall::map_typed<std::string, metacall::map_typed<std::string, float>> m = {
 			{ "hello", { "world", 4.0f } }
 		};
 
