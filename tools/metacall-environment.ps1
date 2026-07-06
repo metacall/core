@@ -214,7 +214,7 @@ function Set-Curl {
 	Set-Location $ROOT_DIR
 	$RuntimeDir = "$env:ProgramFiles\curl"
 	$DepsDir = "$ROOT_DIR\dependencies"
-	$Version = "8.3.0_2"
+	$Version = "8.19.0_7"
 
 	if (!(Test-Path -Path "$DepsDir\curl.zip")) {
 		# Download installer

@@ -21,12 +21,42 @@ message(STATUS "Port ${target}")
 
 if(NOT OPTION_BUILD_GUIX)
 	if(Python3_VERSION_MAJOR EQUAL 3 AND Python3_VERSION_MINOR GREATER_EQUAL 11)
-		set(PIP_BREAK_SYSTEM_PACKAGES "--break-system-packages")
+		set(PIP_BREAK_SYSTEM_PACKAGES --break-system-packages)
 	else()
-		set(PIP_BACKWARD_COMPATIBILITY "${CMAKE_COMMAND} -E env SETUPTOOLS_USE_DISTUTILS=stdlib")
+		set(PIP_BACKWARD_COMPATIBILITY ${CMAKE_COMMAND} -E env SETUPTOOLS_USE_DISTUTILS=stdlib)
 	endif()
 
-	install(CODE "execute_process(COMMAND ${PIP_BACKWARD_COMPATIBILITY} ${Python3_EXECUTABLE} -m pip install ${PIP_BREAK_SYSTEM_PACKAGES} ${CMAKE_CURRENT_SOURCE_DIR})")
+	# Retrieve the default system install path
+	execute_process(
+		COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_paths()['purelib'])"
+		OUTPUT_VARIABLE Python3_SITE_PACKAGES
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	# Normalise to forward slashes so install(DESTINATION ...) doesn't bake
+	# backslash sequences (e.g. "\Program Files") into cmake_install.cmake,
+	# which CMake then misparses as invalid escape characters on Windows.
+	file(TO_CMAKE_PATH "${Python3_SITE_PACKAGES}" Python3_SITE_PACKAGES)
+
+	# Install into a temporary folder so we can track the installed files in the install_manifest.txt
+	set(PY_PORT_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install")
+
+	add_custom_target(py_port_install ALL
+		COMMAND
+			${PIP_BACKWARD_COMPATIBILITY}
+			${Python3_EXECUTABLE} -m pip install
+			--ignore-installed
+			--no-deps
+			${PIP_BREAK_SYSTEM_PACKAGES}
+			--target=${PY_PORT_INSTALL_DIR}
+			${CMAKE_CURRENT_SOURCE_DIR}
+	)
+
+	# Install into the default system install path
+	install(
+		DIRECTORY "${PY_PORT_INSTALL_DIR}/"
+		DESTINATION "${Python3_SITE_PACKAGES}"
+	)
 endif()
 
 # Check if loaders are enabled
@@ -82,6 +112,12 @@ if(OPTION_BUILD_ADDRESS_SANITIZER)
 		# Skip this test because it gives false positives if Python is not compiled with ASan
 		return()
 	endif()
+endif()
+
+# Check if we can use preloaded sanitizers
+if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	AND NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
+	return()
 endif()
 
 message(STATUS "Test ${py_port_test_exec}")

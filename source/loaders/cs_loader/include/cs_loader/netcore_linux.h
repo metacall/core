@@ -16,18 +16,32 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef _NETCORELINUX_H_
 #define _NETCORELINUX_H_
 
 #include <cs_loader/netcore.h>
+#include <log/log.h>
 
 #include <dynlink/dynlink.h>
 
-#include <experimental/filesystem>
+#if defined __has_include
+	#if __has_include(<filesystem>)
+		#include <filesystem>
+namespace fs = std::filesystem;
+	#elif __has_include(<experimental/filesystem>)
+		#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+	#else
+		#error "Missing the <filesystem> header."
+	#endif
+#else
+	#error "C++ standard too old for compiling this file."
+#endif
 
 #include <functional>
+#include <string>
 
 #include <unistd.h>
 
@@ -95,17 +109,31 @@ private:
 
 	bool LoadMain();
 
-	void AddFilesFromDirectoryToTpaList(std::string directory, std::string &tpaList)
+	bool AddFilesFromDirectoryToTpaList(std::string directory, std::string &tpaList)
 	{
-		for (auto &dirent : std::experimental::filesystem::directory_iterator(directory))
+		// Use the error_code overload so it can't throw an uncaught filesystem_error
+		std::error_code ec;
+		fs::directory_iterator it(directory, ec);
+		if (ec)
+		{
+			// Bad config directory, skip gracefully instead of std::terminate
+			log_write("metacall", LOG_LEVEL_ERROR, "cs_loader: skipping unreadable TPA directory '%s' (%s)",
+				directory.c_str(), ec.message().c_str());
+			return false;
+		}
+
+		for (const auto &dirent : it)
 		{
 			std::string path = dirent.path();
 
-			if (!path.compare(path.length() - 4, 4, ".dll"))
+			// Length guard avoids size_t underflow for names shorter than 4 chars
+			if (path.length() >= 4 && path.compare(path.length() - 4, 4, ".dll") == 0)
 			{
 				tpaList.append(path + ":");
 			}
 		}
+
+		return true;
 	}
 
 public:

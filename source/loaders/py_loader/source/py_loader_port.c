@@ -348,6 +348,117 @@ static PyObject *py_loader_port_load_from_package_export(PyObject *self, PyObjec
 	return py_loader_port_load_from_package_impl(self, args, &handle);
 }
 
+static PyObject *py_loader_port_load_from_package_ex(PyObject *self, PyObject *args)
+{
+	static const char format[] = "OOO:metacall_load_from_package_ex";
+	PyObject *tag, *path, *options, *result = NULL;
+	char *tag_str, *path_str;
+	Py_ssize_t tag_length = 0;
+	Py_ssize_t path_length = 0;
+
+	(void)self;
+
+	/* Parse arguments */
+	if (!PyArg_ParseTuple(args, (char *)format, &tag, &path, &options))
+	{
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid number of arguments, use it like: metacall_load_from_package_ex('c', 'lib', { ... });");
+		return Py_ReturnNone();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	if (!PyString_Check(tag))
+#elif PY_MAJOR_VERSION == 3
+	if (!PyUnicode_Check(tag))
+#endif
+	{
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: 'node', 'rb', 'ts', 'cs', 'js', 'cob'...)");
+		return Py_ReturnNone();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	if (!PyString_Check(path))
+#elif PY_MAJOR_VERSION == 3
+	if (!PyUnicode_Check(path))
+#endif
+	{
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid parameter type in second argument (a string indicating the path must be used)");
+		return Py_ReturnNone();
+	}
+
+	/* Convert tag from unicode into a string */
+#if PY_MAJOR_VERSION == 2
+	{
+		if (PyString_AsStringAndSize(tag, &tag_str, &tag_length) == -1)
+		{
+			tag_str = NULL;
+		}
+	}
+#elif PY_MAJOR_VERSION == 3
+	{
+		tag_str = (char *)PyUnicode_AsUTF8AndSize(tag, &tag_length);
+	}
+#endif
+
+	if (tag_str == NULL)
+	{
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid tag string conversion");
+		return Py_ReturnNone();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	{
+		if (PyString_AsStringAndSize(path, &path_str, &path_length) == -1)
+		{
+			path_str = NULL;
+		}
+	}
+#elif PY_MAJOR_VERSION == 3
+	{
+		path_str = (char *)PyUnicode_AsUTF8AndSize(path, &path_length);
+	}
+#endif
+
+	if (path_str == NULL)
+	{
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid path string conversion");
+		return Py_ReturnNone();
+	}
+
+	/* Convert the options PyObject (dict/map) into a metacall value */
+	loader_impl impl = loader_get_impl(py_loader_tag);
+	void *data = py_loader_impl_capi_to_value(impl, options, py_loader_impl_capi_to_value_type(impl, options));
+
+	void *handle = NULL;
+
+	py_loader_thread_release();
+
+	/* Execute the extended load from package call */
+	int ret = metacall_load_from_package_ex(tag_str, path_str, &handle, data);
+
+	py_loader_thread_acquire();
+
+	metacall_value_destroy(data);
+
+	if (ret != 0)
+	{
+		return Py_ReturnNone();
+	}
+
+	void *exports = metacall_handle_export(handle);
+
+	result = py_loader_impl_value_to_capi(impl, value_type_id(exports), exports);
+
+	PyObject *wrapper = py_loader_impl_finalizer_wrap_dict(result, exports);
+
+	if (wrapper == NULL)
+	{
+		Py_DecRef(result);
+		return Py_ReturnNone();
+	}
+
+	return wrapper;
+}
+
 static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 {
 	static const char format[] = "OO:metacall_load_from_memory";
@@ -919,6 +1030,8 @@ static PyMethodDef metacall_methods[] = {
 		"Loads a script from a package." },
 	{ "metacall_load_from_package_export", py_loader_port_load_from_package_export, METH_VARARGS,
 		"Loads a script from package (returns a local handle instead of loading it in the global namespace)." },
+	{ "metacall_load_from_package_ex", py_loader_port_load_from_package_ex, METH_VARARGS,
+		"Loads a package with extended options (include paths, headers, libs)." },
 	{ "metacall_load_from_memory", py_loader_port_load_from_memory, METH_VARARGS,
 		"Loads a script from a string." },
 	{ "metacall_inspect", py_loader_port_inspect, METH_NOARGS,

@@ -26,6 +26,9 @@
 # Rust_RUSTC_VERSION - Rust compiler vesion string
 # Rust_RUSTC_SYSROOT - Rust compiler root location (includes binaries and libraries)
 # Rust_RUSTC_LIBRARIES - Rust compiler runtime library list
+# Rust_RUSTC_STD_LIBRARIES - Rust compiler runtime std library list
+# Rust_RUSTC_LIBRARY_DIRS - Directories where libraries are located
+# Rust_RUSTC_SOURCE_DIR - Rust compiler source
 # Rust_RUSTDOC_EXECUTABLE - Rust doc executable plath
 # Rust_RUSTUP_EXECUTABLE - Rustup executable path
 # Rust_GDB_EXECUTABLE - Rust GDB debugger executable path
@@ -174,17 +177,41 @@ if(Rust_RUSTC_EXECUTABLE)
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
+	if(NOT Rust_TOOLCHAIN_TRIPLET OR Rust_TOOLCHAIN_TRIPLET STREQUAL "" OR NOT Rust_TOOLCHAIN_TRIPLET MATCHES "-")
+		execute_process(
+			COMMAND ${Rust_RUSTC_EXECUTABLE} --version --verbose
+			OUTPUT_VARIABLE Rust_RUSTC_VERBOSE
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+		string(REGEX MATCH "host: ([^\n]+)" _ "${Rust_RUSTC_VERBOSE}")
+		if(CMAKE_MATCH_1)
+			set(Rust_TOOLCHAIN_TRIPLET "${CMAKE_MATCH_1}")
+		endif()
+	endif()
+
 	file(
 		GLOB Rust_RUSTC_LIBRARIES
 		${Rust_RUSTC_SYSROOT}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}
 	)
+
+	file(
+		GLOB Rust_RUSTC_STD_LIBRARIES
+		${Rust_RUSTC_SYSROOT}/lib/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib/*
+	)
+
+	set(Rust_RUSTC_LIBRARY_DIRS
+		${Rust_RUSTC_SYSROOT}/lib
+		${Rust_RUSTC_SYSROOT}/lib/rustlib/${Rust_TOOLCHAIN_TRIPLET}/lib
+	)
+
+	set(Rust_RUSTC_SOURCE_DIR ${Rust_RUSTC_SYSROOT}/lib/rustlib/src/rust)
 endif()
 
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(Rust
 	FOUND_VAR Rust_FOUND
-	REQUIRED_VARS Rust_CARGO_EXECUTABLE Rust_RUSTC_EXECUTABLE Rust_RUSTC_LIBRARIES
+	REQUIRED_VARS Rust_CARGO_EXECUTABLE Rust_RUSTC_EXECUTABLE Rust_RUSTC_LIBRARIES Rust_RUSTC_STD_LIBRARIES Rust_RUSTC_LIBRARY_DIRS Rust_RUSTC_SOURCE_DIR
 	VERSION_VAR Rust_RUSTC_VERSION
 )
 
@@ -194,6 +221,9 @@ mark_as_advanced(
 	Rust_RUSTC_EXECUTABLE
 	Rust_RUSTC_SYSROOT
 	Rust_RUSTC_LIBRARIES
+	Rust_RUSTC_STD_LIBRARIES
+	Rust_RUSTC_LIBRARY_DIRS
+	Rust_RUSTC_SOURCE_DIR
 	Rust_RUSTUP_EXECUTABLE
 	Rust_RUSTDOC_EXECUTABLE
 	Rust_GDB_EXECUTABLE
@@ -205,6 +235,9 @@ if(Rust_CMAKE_DEBUG)
 	message(STATUS "Rust_RUSTC_EXECUTABLE: ${Rust_RUSTC_EXECUTABLE}")
 	message(STATUS "Rust_RUSTC_SYSROOT: ${Rust_RUSTC_SYSROOT}")
 	message(STATUS "Rust_RUSTC_LIBRARIES: ${Rust_RUSTC_LIBRARIES}")
+	message(STATUS "Rust_RUSTC_STD_LIBRARIES: ${Rust_RUSTC_STD_LIBRARIES}")
+	message(STATUS "Rust_RUSTC_LIBRARY_DIRS: ${Rust_RUSTC_LIBRARY_DIRS}")
+	message(STATUS "Rust_RUSTC_SOURCE_DIR: ${Rust_RUSTC_SOURCE_DIR}")
 	message(STATUS "Rust_RUSTUP_EXECUTABLE: ${Rust_RUSTUP_EXECUTABLE}")
 	message(STATUS "Rust_GDB_EXECUTABLE: ${Rust_GDB_EXECUTABLE}")
 	message(STATUS "Rust_LLDB_EXECUTABLE: ${Rust_LLDB_EXECUTABLE}")

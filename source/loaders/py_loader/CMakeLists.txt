@@ -302,4 +302,9 @@ loader_configuartion_end_development()
 # Install
 loader_configuration_begin(py_loader)
 loader_configuration_deps(python "${Python3_LIBRARY_INSTALL}")
+# TODO: The python variables are not defined
+# loader_configuration_env(
+# 	"PYTHONHOME=${Python3_ROOT_DIR}"
+# 	"PYTHONPATH=${Python3_SITELIB}${CMAKE_HOST_PATH_SEPARATOR}${Python3_SITEARCH}"
+# )
 loader_configuartion_end_install()

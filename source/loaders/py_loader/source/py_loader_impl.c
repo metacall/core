@@ -39,6 +39,8 @@
 
 #include <log/log.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <threading/threading_thread_id.h>
 
 #include <metacall/metacall.h>
@@ -1393,6 +1395,32 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		return obj_impl->obj;
 	}
+	else if (id == TYPE_EXCEPTION)
+	{
+		/* Build a Python Exception instance from the metacall exception, so
+		 * the caller receives a usable Python object instead of NULL.
+		 * Mirrors node_loader_impl.cpp */
+		exception ex = value_to_exception(v);
+		const char *message = exception_message(ex);
+
+		PyObject *args = PyTuple_New(1);
+		PyObject *msg = PyUnicode_FromString(message != NULL ? message : "");
+		PyTuple_SetItem(args, 0, msg);
+
+		PyObject *exc_instance = PyObject_CallObject(PyExc_ExceptionPtr(), args);
+		Py_DecRef(args);
+
+		return exc_instance;
+	}
+	else if (id == TYPE_THROWABLE)
+	{
+		/* Unwrap the throwable and convert the inner value, mirroring the
+		 * node_loader behaviour at node_loader_impl.cpp */
+		throwable th = value_to_throwable(v);
+		value inner = throwable_value(th);
+
+		return py_loader_impl_value_to_capi(impl, value_type_id(inner), inner);
+	}
 	else
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type: %d", id);
@@ -2289,7 +2317,10 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 
 	static const loader_name name = "py_loader_impl_thread_background";
 
-	py_impl->thread_background_module = py_loader_impl_load_from_memory_compile(py_impl, name, thread_background_module_str);
+	/* Skip OBJ_txt2obj use-of-uninitialized-value from heap allocation of CRYPTO_malloc in uninstrumented libcrypto */
+	memory_sanitizer_uninstrumented({
+		py_impl->thread_background_module = py_loader_impl_load_from_memory_compile(py_impl, name, thread_background_module_str);
+	});
 
 	if (py_impl->thread_background_module == NULL)
 	{
@@ -2436,16 +2467,15 @@ error_set_item:
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	const int host = loader_impl_get_option_host(impl);
-
-	(void)impl;
-	(void)config;
-
 	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
 	int traceback_initialized = 1;
 #if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	int gc_initialized = 1;
 #endif
 	int gil_release;
+
+	(void)impl;
+	(void)config;
 
 	if (py_impl == NULL)
 	{
@@ -2767,7 +2797,7 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 	}
 	else
 	{
-		loader_name name;
+		loader_name name = { 0 };
 		size_t size = portability_path_get_fullname(path, strnlen(path, LOADER_PATH_SIZE) + 1, name, LOADER_NAME_SIZE);
 
 		*exception = NULL;
@@ -2902,7 +2932,7 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 		PyObject *elem = PyList_GetItem(system_paths, index);
 		Py_ssize_t length = 0;
 		const char *system_path_str = PyUnicode_AsUTF8AndSize(elem, &length);
-		loader_path join_path, canonical_path;
+		loader_path join_path = { 0 }, canonical_path = { 0 };
 		size_t join_path_size = portability_path_join(system_path_str, length + 1, path, strnlen(path, LOADER_PATH_SIZE) + 1, join_path, LOADER_PATH_SIZE);
 		portability_path_canonical(join_path, join_path_size, canonical_path, LOADER_PATH_SIZE);
 
@@ -3750,7 +3780,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 	// This should never fail since `module` is a valid module object
 	PyObject *module_dict = PyModule_GetDict(module);
 	Py_ssize_t position = 0;
-	PyObject *module_dict_key, *module_dict_val;
+	PyObject *module_dict_key = NULL, *module_dict_val = NULL;
 	loader_impl_py py_impl = loader_impl_get(impl);
 
 	while (PyDict_Next(module_dict, &position, &module_dict_key, &module_dict_val))
@@ -3870,21 +3900,15 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 	static const char error_format_str[] = "Python %s: %s\n%s";
 	static const char separator_str[] = "";
 	static const char traceback_not_found[] = "Traceback not available";
-
-	PyObject *type, *value, *traceback;
-
-	PyObject *type_str_obj, *value_str_obj, *traceback_str_obj;
-
-	PyObject *traceback_list, *separator;
-
-	const char *type_str, *value_str, *traceback_str;
+	PyObject *type = NULL, *value = NULL, *traceback = NULL;
+	PyObject *type_str_obj = NULL, *value_str_obj = NULL, *traceback_str_obj = NULL;
+	PyObject *traceback_list = NULL, *separator = NULL;
+	const char *type_str = NULL, *value_str = NULL, *traceback_str = NULL;
 
 	PyErr_Fetch(&type, &value, &traceback);
 
 	type_str_obj = PyObject_Str(type);
-
 	value_str_obj = PyObject_Str(value);
-
 	traceback_list = PyObject_CallFunctionObjArgs(py_impl->traceback_format_exception, type, value, traceback, NULL);
 
 #if PY_MAJOR_VERSION == 2
@@ -3916,7 +3940,7 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 value py_loader_impl_error_value(loader_impl_py py_impl)
 {
-	PyObject *type_obj, *value_obj, *traceback_obj;
+	PyObject *type_obj = NULL, *value_obj = NULL, *traceback_obj = NULL;
 
 	PyErr_Fetch(&type_obj, &value_obj, &traceback_obj);
 

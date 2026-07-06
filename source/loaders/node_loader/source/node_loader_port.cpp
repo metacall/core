@@ -52,11 +52,11 @@ napi_value node_loader_port_metacall(napi_env env, napi_callback_info info)
 
 	napi_value *argv = new napi_value[argc];
 	void **args = new void *[argc - 1];
-	napi_value recv;
+	napi_value recv = nullptr;
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, nullptr);
 
-	size_t name_length;
+	size_t name_length = 0;
 	napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &name_length);
 
 	char *name = new char[name_length + 1];
@@ -127,11 +127,11 @@ napi_value node_loader_port_metacallfms(napi_env env, napi_callback_info info)
 	}
 
 	napi_value *argv = new napi_value[argc];
-	napi_value recv;
+	napi_value recv = nullptr;
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, nullptr);
 
-	size_t name_length;
+	size_t name_length = 0;
 	napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &name_length);
 
 	char *name = new char[name_length + 1];
@@ -227,11 +227,11 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 
 	napi_value *argv = new napi_value[argc];
 	void **args = new void *[argc - 1];
-	napi_value recv;
+	napi_value recv = nullptr;
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, nullptr);
 
-	size_t name_length;
+	size_t name_length = 0;
 
 	napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &name_length);
 
@@ -297,8 +297,8 @@ napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info
 napi_value node_loader_port_metacall_execution_path(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
-	size_t argc = args_size, tag_length, path_length;
-	napi_value argv[args_size];
+	size_t argc = args_size, tag_length = 0, path_length = 0;
+	napi_value argv[args_size] = {};
 
 	/* Get arguments */
 	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -375,7 +375,7 @@ napi_value node_loader_port_metacall_load_from_file(napi_env env, napi_callback_
 
 	const size_t args_size = 2;
 	size_t argc = args_size, tag_length;
-	napi_value argv[args_size];
+	napi_value argv[args_size] = {};
 	uint32_t paths_size, path_index = 0;
 
 	napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -400,8 +400,8 @@ napi_value node_loader_port_metacall_load_from_file(napi_env env, napi_callback_
 
 	for (uint32_t i = 0; i < paths_size; ++i)
 	{
-		napi_value path;
-		size_t path_length;
+		napi_value path = nullptr;
+		size_t path_length = 0;
 
 		napi_get_element(env, argv[1], i, &path);
 
@@ -458,9 +458,9 @@ napi_value node_loader_port_metacall_load_from_file_export(napi_env env, napi_ca
 	/* TODO: Detect if input argument types are valid */
 
 	const size_t args_size = 2;
-	size_t argc = args_size, tag_length;
-	napi_value argv[args_size];
-	uint32_t paths_size, path_index = 0;
+	size_t argc = args_size, tag_length = 0;
+	napi_value argv[args_size] = {};
+	uint32_t paths_size = 0, path_index = 0;
 
 	napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
 
@@ -484,8 +484,8 @@ napi_value node_loader_port_metacall_load_from_file_export(napi_env env, napi_ca
 
 	for (uint32_t i = 0; i < paths_size; ++i)
 	{
-		napi_value path;
-		size_t path_length;
+		napi_value path = nullptr;
+		size_t path_length = 0;
 
 		napi_get_element(env, argv[1], i, &path);
 
@@ -562,8 +562,8 @@ napi_value node_loader_port_metacall_load_from_file_export(napi_env env, napi_ca
 napi_value node_loader_port_metacall_load_from_memory(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
-	size_t argc = args_size, tag_length, script_length;
-	napi_value argv[args_size];
+	size_t argc = args_size, tag_length = 0, script_length = 0;
+	napi_value argv[args_size] = {};
 
 	// Get arguments
 	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -637,8 +637,8 @@ napi_value node_loader_port_metacall_load_from_memory(napi_env env, napi_callbac
 napi_value node_loader_port_metacall_load_from_memory_export(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
-	size_t argc = args_size, tag_length, script_length;
-	napi_value argv[args_size];
+	size_t argc = args_size, tag_length = 0, script_length = 0;
+	napi_value argv[args_size] = {};
 
 	// Get arguments
 	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -732,8 +732,8 @@ napi_value node_loader_port_metacall_load_from_memory_export(napi_env env, napi_
 napi_value node_loader_port_metacall_load_from_package(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
-	size_t argc = args_size, tag_length, package_length;
-	napi_value argv[args_size];
+	size_t argc = args_size, tag_length = 0, package_length = 0;
+	napi_value argv[args_size] = {};
 
 	/* Get arguments */
 	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -807,8 +807,8 @@ napi_value node_loader_port_metacall_load_from_package(napi_env env, napi_callba
 napi_value node_loader_port_metacall_load_from_package_export(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
-	size_t argc = args_size, tag_length, package_length;
-	napi_value argv[args_size];
+	size_t argc = args_size, tag_length = 0, package_length = 0;
+	napi_value argv[args_size] = {};
 
 	/* Get arguments */
 	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -886,6 +886,95 @@ napi_value node_loader_port_metacall_load_from_package_export(napi_env env, napi
 	return v_exports;
 }
 
+napi_value node_loader_port_metacall_load_from_package_ex(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 3;
+	size_t argc = args_size, tag_length = 0, package_length = 0;
+	napi_value argv[args_size] = {};
+	napi_value recv = nullptr;
+
+	/* Get arguments */
+	napi_status status = napi_get_cb_info(env, info, &argc, argv, &recv, nullptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get tag length */
+	status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &tag_length);
+
+	node_loader_impl_exception(env, status);
+
+	/* Allocate tag */
+	char *tag = new char[tag_length + 1];
+
+	if (tag == nullptr)
+	{
+		napi_throw_error(env, nullptr, "MetaCall could not load from package (ex), tag allocation failed");
+		return nullptr;
+	}
+
+	/* Get tag */
+	status = napi_get_value_string_utf8(env, argv[0], tag, tag_length + 1, &tag_length);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get package length */
+	status = napi_get_value_string_utf8(env, argv[1], nullptr, 0, &package_length);
+
+	node_loader_impl_exception(env, status);
+
+	size_t package_size = package_length + 1;
+
+	/* Allocate package */
+	char *package = new char[package_size];
+
+	if (package == nullptr)
+	{
+		napi_throw_error(env, nullptr, "MetaCall could not load from package (ex), package allocation failed");
+		delete[] tag;
+		return nullptr;
+	}
+
+	/* Get package */
+	status = napi_get_value_string_utf8(env, argv[1], package, package_size, &package_length);
+
+	node_loader_impl_exception(env, status);
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl(node_loader_tag);
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	/* Convert JS options object to metacall value */
+	void *data = node_loader_impl_napi_to_value(node_impl, env, recv, argv[2]);
+
+	void *handle = NULL;
+
+	/* Load the package with options */
+	if (metacall_load_from_package_ex(tag, package, &handle, data) != 0)
+	{
+		napi_throw_error(env, nullptr, "MetaCall could not load from package (ex)");
+		metacall_value_destroy(data);
+		delete[] tag;
+		delete[] package;
+		return nullptr;
+	}
+
+	metacall_value_destroy(data);
+
+	delete[] tag;
+	delete[] package;
+
+	void *exports = metacall_handle_export(handle);
+
+	napi_value v_exports = node_loader_impl_value_to_napi(node_impl, env, exports);
+
+	node_loader_impl_finalizer(env, v_exports, exports);
+
+	return v_exports;
+}
+
 /**
 *  @brief
 *    Loads a script from configuration path
@@ -899,8 +988,8 @@ napi_value node_loader_port_metacall_load_from_package_export(napi_env env, napi
 napi_value node_loader_port_metacall_load_from_configuration(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 1;
-	size_t argc = args_size, path_length;
-	napi_value argv[args_size];
+	size_t argc = args_size, path_length = 0;
+	napi_value argv[args_size] = {};
 
 	// Get arguments
 	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -957,8 +1046,8 @@ napi_value node_loader_port_metacall_load_from_configuration(napi_env env, napi_
 napi_value node_loader_port_metacall_load_from_configuration_export(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 1;
-	size_t argc = args_size, path_length;
-	napi_value argv[args_size];
+	size_t argc = args_size, path_length = 0;
+	napi_value argv[args_size] = {};
 
 	// Get arguments
 	napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -1032,7 +1121,7 @@ napi_value node_loader_port_metacall_inspect(napi_env env, napi_callback_info)
 		napi_throw_error(env, nullptr, "Invalid MetaCall inspect string");
 	}
 
-	napi_value result;
+	napi_value result = nullptr;
 	napi_status status = napi_create_string_utf8(env, inspect_str, size - 1, &result);
 
 	node_loader_impl_exception(env, status);
@@ -1078,7 +1167,7 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 	do \
 	{ \
 		const char PREPROCESSOR_CONCAT(function_str_, name)[] = PREPROCESSOR_STRINGIFY(name); \
-		napi_value PREPROCESSOR_CONCAT(function_, name); \
+		napi_value PREPROCESSOR_CONCAT(function_, name) = nullptr; \
 		napi_create_function(env, PREPROCESSOR_CONCAT(function_str_, name), sizeof(PREPROCESSOR_CONCAT(function_str_, name)) - 1, PREPROCESSOR_CONCAT(node_loader_port_, name), nullptr, &PREPROCESSOR_CONCAT(function_, name)); \
 		napi_set_named_property(env, exports, PREPROCESSOR_CONCAT(function_str_, name), PREPROCESSOR_CONCAT(function_, name)); \
 	} while (0)
@@ -1094,6 +1183,7 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 	x(metacall_load_from_memory_export); \
 	x(metacall_load_from_package); \
 	x(metacall_load_from_package_export); \
+	x(metacall_load_from_package_ex); \
 	x(metacall_load_from_configuration); \
 	x(metacall_load_from_configuration_export); \
 	x(metacall_inspect); \

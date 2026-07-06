@@ -80,7 +80,7 @@ if(OPTION_TEST_MEMORYCHECK)
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-reachable=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-origins=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=100")
-	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all-non-file") # for JITs
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all") # for JITs
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-dl.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-python.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-node.supp")
@@ -119,7 +119,7 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 		"__THREAD_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(SANITIZER_LIBRARIES -fsanitize=memory)
+	set(SANITIZER_LIBRARIES -lmsan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer"
 	)
@@ -132,14 +132,14 @@ elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR 
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
 		# Specify handle_segv=0 and detect_leaks=0 for the JVM (https://blog.gypsyengineer.com/en/security/running-java-with-addresssanitizer.html)
-		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=0"
+		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200"
 
 		# TODO: We should document each flag why is it used, because now we do not know what runtime has each requirement and why.
 		# Another option should be to separate by runtimes and only set up them on the ASAN tests that require them,
 		# because we do not need to disable all features on all tests, this may hide bugs in the core library for example.
 
 		# Specify use_sigaltstack=0 as CoreCLR uses own alternate stack for signal handlers (https://github.com/swgillespie/coreclr/commit/bec020aa466d08e49e007d0011b0e79f8f7c7a62)
-		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=0"
+		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__ADDRESS_SANITIZER__=1"
@@ -150,54 +150,108 @@ else()
 	set(SANITIZER_COMPILE_DEFINITIONS)
 endif()
 
-function(find_sanitizer NAME LINK_OPTION)
+function(find_sanitizer NAME)
 	string(TOUPPER "${NAME}" NAME_UPPER)
-	set(SANITIZER_PROGRAM_CODE "int main() {return 0;}")
-	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate.cpp" "${SANITIZER_PROGRAM_CODE}")
 
-	try_compile(
-		STATUS
-			${PROJECT_OUTPUT_DIR}
-			${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate.cpp
-		OUTPUT_VARIABLE SANITIZER_COMPILER_OUTPUT
-		LINK_OPTIONS ${LINK_OPTION}
-		COPY_FILE ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate
-	)
+	if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+		execute_process(
+			COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=lib${NAME}.so
+			OUTPUT_VARIABLE LIB_PATH
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+	elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		execute_process(
+			COMMAND ${CMAKE_CXX_COMPILER} --print-runtime-dir
+			OUTPUT_VARIABLE CLANG_RUNTIME_DIR
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
 
-	if(NOT STATUS)
-		message(FATAL_ERROR "Could not find location for lib${NAME}: ${SANITIZER_COMPILER_OUTPUT}")
-		return()
+		file(GLOB CLANG_RUNTIME_CANDIDATES
+			"${CLANG_RUNTIME_DIR}/*${NAME}*.so"
+			"${CLANG_RUNTIME_DIR}/*${NAME}*.dylib"
+		)
+
+		list(LENGTH CLANG_RUNTIME_CANDIDATES CLANG_RUNTIME_CANDIDATES_SIZE)
+
+		if(CLANG_RUNTIME_CANDIDATES_SIZE GREATER 0)
+			list(GET CLANG_RUNTIME_CANDIDATES 0 CLANG_LIB_PATH)
+		endif()
 	endif()
 
-	file(GET_RUNTIME_DEPENDENCIES
-		EXECUTABLES ${CMAKE_CURRENT_BINARY_DIR}/sanitizer_locate
-		RESOLVED_DEPENDENCIES_VAR SANITIZER_PROGRAM_LIBRARIES
-	)
-
-	foreach(DEPENDENCY IN LISTS SANITIZER_PROGRAM_LIBRARIES)
-		string(FIND "${DEPENDENCY}" "${NAME}" POSITION)
-		if(POSITION GREATER -1)
-			set(LIB${NAME_UPPER}_PATH "${DEPENDENCY}" PARENT_SCOPE)
-			return()
-		endif()
-	endforeach()
+	if(CLANG_LIB_PATH)
+		set(LIB${NAME_UPPER}_PATH "${CLANG_LIB_PATH}" PARENT_SCOPE)
+	endif()
 endfunction()
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 	if(OPTION_BUILD_THREAD_SANITIZER)
-		find_sanitizer(tsan -fsanitize=thread)
-		set(SANITIZER_LIBRARIES_PATH
-			"${LIBTSAN_PATH}"
-		)
-	elseif(OPTION_BUILD_MEMORY_SANITIZER)
-		set(SANITIZER_LIBRARIES_PATH)
+		if(PROJECT_OS_FAMILY MATCHES "macos" AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			# Here there is the list of all libraries for different MacOS platforms:
+			#
+			# libclang_rt.tsan_iossim_dynamic.dylib
+			# libclang_rt.tsan_osx_dynamic.dylib
+			# libclang_rt.tsan_tvossim_dynamic.dylib
+			# libclang_rt.tsan_watchossim_dynamic.dylib
+			# libclang_rt.tsan_xros_dynamic.dylib
+			# libclang_rt.tsan_xrossim_dynamic.dylib
+			#
+			# We are supporting OSX only for now.
+			find_sanitizer(tsan_osx_dynamic)
+			if(LIBTSAN_OSX_DYNAMIC_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBTSAN_OSX_DYNAMIC_PATH}"
+				)
+			endif()
+		else()
+			find_sanitizer(tsan)
+			if(LIBTSAN_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBTSAN_PATH}"
+				)
+			endif()
+		endif()
+	elseif(OPTION_BUILD_MEMORY_SANITIZER AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+		find_sanitizer(msan)
+		find_sanitizer(ubsan)
+		if(LIBMSAN_PATH AND LIBUBSAN_PATH)
+			set(SANITIZER_LIBRARIES_PATH
+				"${LIBMSAN_PATH}"
+				"${LIBUBSAN_PATH}"
+			)
+		endif()
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER)
-		find_sanitizer(asan -fsanitize=address)
-		find_sanitizer(ubsan -fsanitize=undefined)
-		set(SANITIZER_LIBRARIES_PATH
-			"${LIBASAN_PATH}"
-			"${LIBUBSAN_PATH}"
-		)
+		if(PROJECT_OS_FAMILY MATCHES "macos" AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			# Here there is the list of all libraries for different MacOS platforms:
+			#
+			# libclang_rt.asan_iossim_dynamic.dylib
+			# libclang_rt.asan_ios_dynamic.dylib
+			# libclang_rt.asan_osx_dynamic.dylib
+			# libclang_rt.asan_tvossim_dynamic.dylib
+			# libclang_rt.asan_tvos_dynamic.dylib
+			# libclang_rt.asan_watchossim_dynamic.dylib
+			# libclang_rt.asan_watchos_dynamic.dylib
+			# libclang_rt.asan_xrossim_dynamic.dylib
+			# libclang_rt.asan_xros_dynamic.dylib
+			#
+			# We are supporting OSX only for now.
+			find_sanitizer(asan_osx_dynamic)
+			find_sanitizer(ubsan_osx_dynamic)
+			if(LIBASAN_OSX_DYNAMIC_PATH AND LIBUBSAN_OSX_DYNAMIC_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_OSX_DYNAMIC_PATH}"
+					"${LIBUBSAN_OSX_DYNAMIC_PATH}"
+				)
+			endif()
+		else()
+			find_sanitizer(asan)
+			find_sanitizer(ubsan)
+			if(LIBASAN_PATH AND LIBUBSAN_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_PATH}"
+					"${LIBUBSAN_PATH}"
+				)
+			endif()
+		endif()
 	endif()
 endif()
 
@@ -351,7 +405,7 @@ if(WIN32 AND MSVC)
 
 endif()
 
-if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
+if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "beos")
 
 	if(PROJECT_OS_FAMILY MATCHES "macos")
 		# We cannot enable "stack-protector-strong" On OS X due to a bug in clang compiler (current version 7.0.2)
@@ -392,9 +446,9 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 			if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 				add_compile_options(-fsanitize=pointer-compare)
 				add_compile_options(-fsanitize=pointer-subtract)
-				add_compile_options(-fuse-ld=gold)
+			elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+				add_compile_options(-fsanitize-address-poison-custom-array-cookie)
 			endif()
-			add_compile_options(-fsanitize=leak)
 		endif()
 		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
 			add_link_options(-fsanitize=undefined)
@@ -402,27 +456,38 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 			add_link_options(-fsanitize-address-use-after-scope)
 		endif()
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 		add_compile_options(-fno-omit-frame-pointer)
 		add_compile_options(-fno-optimize-sibling-calls)
 		add_compile_options(-fsanitize=undefined)
 		add_compile_options(-fsanitize=memory)
-		add_compile_options(-fsanitize-memory-track-origins)
+		add_compile_options(-fsanitize-memory-track-origins=2)
 		add_compile_options(-fsanitize-memory-use-after-dtor)
+		add_compile_options(-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
+		add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 		add_link_options(-fsanitize=undefined)
 		add_link_options(-fsanitize=memory)
-		add_link_options(-fsanitize-memory-track-origins)
+		add_link_options(-fsanitize-memory-track-origins=2)
 		add_link_options(-fsanitize-memory-use-after-dtor)
 	endif()
 
 	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		add_compile_options(-g)
+		if(OPTION_TEST_MEMORYCHECK AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			add_compile_options(-ggdb3)
+		else()
+			add_compile_options(-g)
+		endif()
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
 	endif()
 
 	# Optimizations
 	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		add_compile_options(-O3)
+	elseif(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+		add_compile_options(-O1)
+	elseif(OPTION_TEST_MEMORYCHECK)
+		add_compile_options(-O0)
 	endif()
 endif()
 

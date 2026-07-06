@@ -38,12 +38,9 @@ TEST_F(metacall_node_port_c_lib_test, DefaultConstructor)
 	static const char buffer[] =
 		/* NodeJS */
 		"const assert = require('assert');\n"
-		"const { metacall_execution_path, metacall_load_from_package_export } = require('" METACALL_NODE_PORT_PATH "');\n"
-		/* C Lib Paths */
-		"metacall_execution_path('c', '" LIBGIT2_INCLUDE_DIR "');\n"
-		"metacall_execution_path('c', '" LIBGIT2_LIBRARY_DIR "');\n"
-		/* C Lib Require */
-		"const git2 = metacall_load_from_package_export('c', 'git2');\n"
+		"const { metacall_load_from_package_ex } = require('" METACALL_NODE_PORT_PATH "');\n"
+		/* C Lib Require with options */
+		"const git2 = metacall_load_from_package_ex('c', 'git2', { include_search_paths: ['" LIBGIT2_INCLUDE_DIR "'], headers: ['" LIBGIT2_HEADER "'], libs: ['" LIBGIT2_LIBRARY "'] });\n"
 		"const { git_libgit2_init, git_libgit2_shutdown } = git2;\n"
 		"console.log(git2);\n"
 		/* C Lib Assert */

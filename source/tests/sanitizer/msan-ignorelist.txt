@@ -1,0 +1,15 @@
+# The rules in this file are only applied at compile time. If you can modify the
+# source in question, consider function attributes to disable instrumentation.
+#
+# Please think twice before you add or remove these rules.
+
+[memory]
+
+# GoogleTest and GoogleBench are ignored because they are built with MSan support
+# but their internal implementation triggers false positives. The googletest
+# and googlebench libraries are instrumented separately with the correct MSan
+# flags and ignorelist via InstallGTest.cmake and InsatllGBench.cmake, so
+# we suppress the googletest and googlebenchmark sources here to avoid
+# noise from the testing and benchmarking frameworks themselves.
+src:*/googletest/*
+src:*/googlebenchmark-src/*

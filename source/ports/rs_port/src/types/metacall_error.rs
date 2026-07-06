@@ -87,6 +87,8 @@ pub enum MetaCallLoaderError {
     FromFileFailure,
     /// Failed to load from memory.
     FromMemoryFailure,
+    /// Failed to set execution path.
+    ExecutionPathFailure,
     /// Not a file or permission denied.
     NotAFileOrPermissionDenied(PathBuf),
     /// Null character detected.

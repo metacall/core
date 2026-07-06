@@ -12,7 +12,7 @@ pub struct MemoryRegistration {
 }
 impl MemoryRegistration {
     pub fn new(name: String, code: String) -> Result<MemoryRegistration, RegistrationError> {
-        let state = match compile(Source::new(Source::Memory {
+        let state = match compile(Source::build(Source::Memory {
             name: name.clone(),
             code,
         })) {
@@ -48,7 +48,7 @@ impl MemoryRegistration {
 
 impl Drop for MemoryRegistration {
     fn drop(&mut self) {
-        drop(std::mem::replace(&mut self.dynlink, None));
+        self.dynlink.take();
 
         let mut path = std::mem::take(&mut self.state.output);
         if path.pop() {

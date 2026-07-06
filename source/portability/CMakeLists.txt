@@ -120,6 +120,9 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
 
+	# Haiku dependencies
+	$<$<BOOL:${PROJECT_OS_HAIKU}>:bsd>
+
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 

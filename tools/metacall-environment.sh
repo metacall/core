@@ -55,10 +55,15 @@ INSTALL_RUST=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
+INSTALL_ADDRESS_SANITIZER=0
+INSTALL_THREAD_SANITIZER=0
+INSTALL_MEMORY_SANITIZER=0
 INSTALL_CLANG=0
-INSTALL_CLANGFORMAT=0
+INSTALL_CLANG_MSAN=0
+INSTALL_CLANG_FORMAT=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
+INSTALL_ANDROID=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -68,14 +73,35 @@ case "$(uname -s)" in
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
+	Haiku*)		OPERATIVE_SYSTEM=Haiku;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
 # Architecture detection
 case "$(uname -m)" in
-	x86_64)	ARCHITECTURE="amd64";;
-	arm64)	ARCHITECTURE="arm64";;
-	*)		ARCHITECTURE="Unknown";;
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			# TODO: ARMv6 detection not working properly
+			ARCHITECTURE="armv6"
+		fi
+		;;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
 esac
 
 # Check out for sudo
@@ -97,6 +123,11 @@ else
 	LINUX_VERSION_ID=unknown
 fi
 
+# Disable warnings from apt
+if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+	export DEBIAN_FRONTEND="noninteractive"
+fi
+
 # Base packages
 sub_base(){
 	echo "configure base packages"
@@ -104,6 +135,25 @@ sub_base(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# Enable deb-src for both formats
+				for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+					[ -e "$f" ] || continue
+
+					# Old-style .list files
+					if grep -qE '^#?deb ' "$f"; then
+						$SUDO_CMD sed -i 's/^# *deb-src/deb-src/' "$f" 2>/dev/null || true
+						$SUDO_CMD sed -i 's/^# *deb /deb/' "$f" 2>/dev/null || true
+					fi
+
+					# New-style .sources files (Debian 12+, Ubuntu 22.04+)
+					if grep -q '^Types:' "$f"; then
+						$SUDO_CMD sed -i 's/^Types: deb$/Types: deb deb-src/' "$f"
+						$SUDO_CMD sed -i 's/^Types: deb /Types: deb deb-src /' "$f"
+					fi
+				done
+			fi
+
 			$SUDO_CMD apt-get update
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -112,6 +162,10 @@ sub_base(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
+	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
+		pkgman install -y cmake git make wget getconf gcc_syslibs_devel
 	fi
 }
 
@@ -122,25 +176,80 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			if [ "${BUILD_TYPE}" = "Debug" ]; then
-				PYTHON3_PKG=python3-dbg
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# Download Python source
+				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
+				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
+				mkdir python && cd python
+				apt-get source "${PYTHON_PKG}"
+				SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
+				cd "$SRC_DIR"
+
+				# Build Python with instrumentation
+				if [ $INSTALL_MEMCHECK = 1 ]; then
+					printf "leak:*libpython*" &> ./asan.supp
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
+					BUILD_FLAGS="--with-valgrind"
+					BUILD_LDFLAGS=""
+				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
+					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+					BUILD_FLAGS="--with-thread-sanitizer"
+					BUILD_LDFLAGS="-fsanitize=thread"
+				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-memory-sanitizer"
+					BUILD_LDFLAGS="-fsanitize=memory"
+					export CC="/usr/bin/clang"
+					export CXX="/usr/bin/clang++"
+				fi
+				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
+				./configure --prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				make -j$(nproc)
+				$SUDO_CMD make altinstall
+
+				# Define python as the default one
+				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_PKG}d" /usr/bin/python3
+
+				# Install Pip
+				wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
+
+				# Bootstrap pip and install python test dependencies
+				$SUDO_CMD python3 -m pip install --upgrade \
+					requests \
+					setuptools \
+					wheel \
+					rsa \
+					scipy \
+					numpy \
+					scikit-learn \
+					joblib
+				cd ../..
+				rm -rf ./python
 			else
-				PYTHON3_PKG=python3
+				if [ "${BUILD_TYPE}" = "Debug" ]; then
+					PYTHON3_PKG=python3-dbg
+				else
+					PYTHON3_PKG=python3
+				fi
+
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends $PYTHON3_PKG python3-dev python3-pip
+
+				# Python test dependencies
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+					python3-requests \
+					python3-setuptools \
+					python3-wheel \
+					python3-rsa \
+					python3-scipy \
+					python3-numpy \
+					python3-sklearn \
+					python3-joblib
 			fi
-
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends $PYTHON3_PKG python3-dev python3-pip
-
-			# Python test dependencies
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-				python3-requests \
-				python3-setuptools \
-				python3-wheel \
-				python3-rsa \
-				python3-scipy \
-				python3-numpy \
-				python3-sklearn \
-				python3-joblib
-
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			# Fix to a lower Python version (3.9) in order avoid conflicts with Python dependency of Clang from C Loader
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main python3=3.9.16-r0 python3-dev=3.9.16-r0
@@ -190,6 +299,8 @@ sub_python(){
 		pip3 install numpy
 		pip3 install joblib
 		pip3 install scikit-learn
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y python3
 	fi
 }
 
@@ -200,12 +311,63 @@ sub_ruby(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
+			# TODO:
+			# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+			# 	# Download Ruby source
+			# 	RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
+			# 	$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
+			# 	mkdir ruby && cd ruby
+			# 	apt-get source "${RUBY_PKG}"
+			# 	SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
+			# 	cd "$SRC_DIR"
 
-			# TODO: Review conflict with NodeJS (currently rails test is disabled)
-			#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
-			#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
-			#$SUDO_CMD gem install rails
+			# 	# Build Ruby with instrumentation
+			# 	if [ $INSTALL_MEMCHECK = 1 ]; then
+			# 		# TODO: Apparently valgrind does not need instrumentation?
+			# 		BUILD_CFLAGS=""
+			# 		BUILD_LDFLAGS=""
+			# 	elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+			# 		export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+			# 		export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+			# 		BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
+			# 		BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+			# 	elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+			# 		export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+			# 		BUILD_CFLAGS="-fsanitize=thread"
+			# 		BUILD_LDFLAGS="-fsanitize=thread"
+			# 	elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+			# 		export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+			# 		BUILD_CFLAGS="-fsanitize=memory"
+			# 		BUILD_LDFLAGS="-fsanitize=memory"
+			# 		export CC="/usr/bin/clang"
+			# 		export CXX="/usr/bin/clang++"
+			# 	fi
+
+			# 	./autogen.sh
+			# 	mkdir build && cd build
+			# 	../configure \
+			# 		--enable-shared \
+			# 		--enable-debug-env \
+			# 		cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer" \
+			# 		ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+			# 		cppflags="-DUSE_RUBY_DEBUG_LOG=1" \
+			# 		optflags="-O0" \
+			# 		debugflags="-ggdb3" \
+			# 		--prefix=/usr/local
+
+			# 	make -j$(nproc)
+			# 	$SUDO_CMD make install
+
+			# 	cd ../../..
+			# 	rm -rf ./ruby
+			# else
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
+
+				# TODO: Review conflict with NodeJS (currently rails test is disabled)
+				#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
+				#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
+				#$SUDO_CMD gem install rails
+			# fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache ruby ruby-dev
 		fi
@@ -220,6 +382,8 @@ sub_ruby(){
 		echo "-DRuby_LIBRARY=$RUBY_PREFIX/lib/libruby.3.2.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y ruby
 	fi
 }
 
@@ -373,6 +537,10 @@ sub_netcore8(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
+			echo "netcore8 has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -554,6 +722,23 @@ sub_nodejs(){
 			brew install libgit2@1.8
 			brew link libgit2@1.8 --force --overwrite
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y node22 npm-node22 python3 gmake
+		NODE_VERSION=$(node --version | sed 's/v//')
+		fetch -o /tmp/node-v${NODE_VERSION}.tar.gz https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz
+		tar xzf /tmp/node-v${NODE_VERSION}.tar.gz -C /tmp
+		# TODO: Dirty fix, review or delete this
+		sed -i '' '/ASSERT_TRIVIALLY_COPYABLE(T);/d' /tmp/node-v${NODE_VERSION}/deps/v8/src/base/small-vector.h
+		cd /tmp/node-v${NODE_VERSION}
+		CC=cc CXX=c++ ./configure --shared
+		gmake -j$(sysctl -n hw.ncpu)
+		$SUDO_CMD cp out/Release/obj.target/libnode.so.* /usr/local/lib/
+		$SUDO_CMD ln -sf libnode.so.127 /usr/local/lib/libnode.so
+		cd $ROOT_DIR
+		rm -rf /tmp/node-v${NODE_VERSION} /tmp/node-v${NODE_VERSION}.tar.gz
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DNodeJS_EXECUTABLE=/usr/local/bin/node" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -591,6 +776,8 @@ sub_rpc(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install curl
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y curl
 	fi
 }
 
@@ -599,11 +786,17 @@ sub_wasm(){
 	echo "configure webassembly"
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
+			echo "wasmtime has no support for ${ARCHITECTURE}"
+			return
+		fi
 		if [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing wasmtime libwasmtime
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install wasmtime
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y libwasmtime
 	fi
 }
 
@@ -627,6 +820,14 @@ sub_java(){
 		echo "-DJAVA_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_INCLUDE_PATH2=$JAVA_PREFIX/include/darwin" >> $CMAKE_CONFIG_PATH
 		echo "-DJAVA_AWT_INCLUDE_PATH=$JAVA_PREFIX/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y openjdk17
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DJAVA_HOME=/usr/local/openjdk17" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_INCLUDE_PATH2=/usr/local/openjdk17/include/freebsd" >> $CMAKE_CONFIG_PATH
+		echo "-DJAVA_AWT_INCLUDE_PATH=/usr/local/openjdk17/include" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -634,46 +835,10 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
-
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# Ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
-		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-dev
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
@@ -689,6 +854,13 @@ sub_c(){
 		echo "-DLibClang_INCLUDE_DIR=${LIBCLANG_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_LIBRARY=${LIBCLANG_PREFIX}/lib/libclang.dylib" >> $CMAKE_CONFIG_PATH
 		echo "-DLibClang_CMAKE_DEBUG=ON" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		LLVM_VERSION_STRING=19
+		$SUDO_CMD pkg install -y libffi llvm${LLVM_VERSION_STRING} gcc
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DLibClang_INCLUDE_DIR=/usr/local/llvm${LLVM_VERSION_STRING}/include" >> $CMAKE_CONFIG_PATH
+		echo "-DLibClang_LIBRARY=/usr/local/llvm${LLVM_VERSION_STRING}/lib/libclang.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -698,13 +870,7 @@ sub_cobol(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
-
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
-
-			# Remove unstable from sources.list
-			$SUDO_CMD head -n -2 /etc/apt/sources.list
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends gnucobol4
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
@@ -734,6 +900,13 @@ sub_cobol(){
 		echo "-DCOBOL_EXECUTABLE=${COBOL_PREFIX}/bin/cobc" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_INCLUDE_DIR=${COBOL_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DCOBOL_LIBRARY=${COBOL_PREFIX}/lib/libcob.dylib" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y gnucobol
+		mkdir -p "$ROOT_DIR/build"
+		CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+		echo "-DCOBOL_EXECUTABLE=/usr/local/bin/cobc" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_INCLUDE_DIR=/usr/local/include" >> $CMAKE_CONFIG_PATH
+		echo "-DCOBOL_LIBRARY=/usr/local/lib/libcob.so" >> $CMAKE_CONFIG_PATH
 	fi
 }
 
@@ -750,6 +923,8 @@ sub_go(){
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install go
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y go
 	fi
 }
 
@@ -760,14 +935,40 @@ sub_rust(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
+			if [ "${ARCHITECTURE}" != "amd64" ]; then
+				# TODO: Implement more architectures
+				echo "rust has no support for ${ARCHITECTURE}"
+				return
+			fi
+
+			# TODO: Review this
+			# if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl autoconf automake
+			# elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			# 	$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
+			# fi
+
+			. /etc/os-release
+
+			RUST_DISTRO="${VERSION_CODENAME}"
+			DEV_PACKAGE="rust-toolchain-dev-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.3"
+
+			wget -qO- "${RUST_RELEASE_URL}/${DEV_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
+
+			rustc -Vv
+			cargo -V
+			cargo clippy --version
+			rustfmt --version
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			$SUDO_CMD apk add --no-cache curl musl-dev linux-headers libgcc
+			# TODO:
+			echo "alpine not implemented"
+			return
 		fi
-		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
-		brew install patchelf
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 	fi
 }
 
@@ -817,14 +1018,71 @@ sub_memcheck(){
 
 sub_clang(){
 	echo "configure clang"
-	if [ "$(uname)" = 'Linux' ]; then
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
 		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
 	fi
 }
 
+sub_clang_msan(){
+	echo "configure clang msan"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+			clang lld libclang-rt-dev llvm-dev \
+			build-essential cmake ninja-build git ca-certificates \
+			python3 python3-dev
+
+		# Compile clang with memory sanitizer
+		mkdir -p /tmp/msan
+
+		# Detect installed clang major.minor.patch version from apt package
+		CLANG_VERSION="$(clang --version | sed -n 's/.*clang version \([0-9.]*\).*/\1/p' | head -n1)"
+
+		# Download matching LLVM source tree
+		git clone --depth=1 -b "llvmorg-${CLANG_VERSION}" https://github.com/llvm/llvm-project /tmp/msan/llvm-project
+
+		# Stage 1: rebuild clang matching distro version
+		# Install into /usr to override existing system clang
+		cmake \
+			-G Ninja \
+			-B /tmp/msan/clang_build/ \
+			-S /tmp/msan/llvm-project/llvm \
+			-DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DLLVM_TARGETS_TO_BUILD=Native \
+			-DCMAKE_INSTALL_PREFIX=/usr
+
+		ninja -C /tmp/msan/clang_build/ -j$(nproc)
+		$SUDO_CMD ninja -C /tmp/msan/clang_build/ install
+
+		# Stage 2: build libc++ with MSan using rebuilt clang
+		cmake \
+			-G Ninja \
+			-B /tmp/msan/cxx_build/ \
+			-S /tmp/msan/llvm-project/runtimes \
+			-DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DLLVM_USE_SANITIZER=MemoryWithOrigins \
+			-DCMAKE_C_COMPILER=/usr/bin/clang \
+			-DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+			-DLLVM_TARGETS_TO_BUILD=Native \
+			-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF \
+			-DLIBCXXABI_USE_LLVM_UNWINDER=OFF \
+			-DCMAKE_INSTALL_PREFIX=/usr
+
+		ninja -C /tmp/msan/cxx_build/ -j$(nproc)
+		$SUDO_CMD ninja -C /tmp/msan/cxx_build/ install
+
+		rm -rf /tmp/msan
+	fi
+}
+
 # Clang format
-sub_clangformat(){
-	echo "configure clangformat"
+sub_clang_format(){
+	echo "configure clang format"
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
@@ -892,6 +1150,9 @@ sub_backtrace(){
 		echo "-DLIBDWARF_INCLUDE_DIR=${LIBDWARD_PREFIX}/include" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_LIBRARY=${LIBELF_PREFIX}/lib/libelf.a" >> $CMAKE_CONFIG_PATH
 		echo "-DLIBELF_INCLUDE_DIR=${LIBELF_PREFIX}/include" >> $CMAKE_CONFIG_PATH
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# TODO: Apparently backward-cpp does not support FreeBSD
+		$SUDO_CMD pkg install -y libdwarf libelf libunwind
 	fi
 }
 
@@ -909,6 +1170,19 @@ sub_sandbox(){
 	fi
 }
 
+# Android (dependencies for cross-compiling for Android)
+sub_android(){
+	echo "configure android"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			# TODO: We should install Android NDK and Java but it's done through GitHub Actions
+			$SUDO_CMD apt-get install -y --no-install-recommends ninja-build
+		fi
+	fi
+}
+
 # Install
 sub_install(){
 	if [ $APT_CACHE = 1 ]; then
@@ -916,9 +1190,25 @@ sub_install(){
 			APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
 		fi
 	fi
+
+	# Install build dependencies first
 	if [ $INSTALL_BASE = 1 ]; then
 		sub_base
 	fi
+	if [ $INSTALL_CLANG = 1 ]; then
+		sub_clang
+	fi
+	if [ $INSTALL_CLANG_MSAN = 1 ]; then
+		sub_clang_msan
+	fi
+	if [ $INSTALL_MEMCHECK = 1 ]; then
+		sub_memcheck
+	fi
+	if [ $INSTALL_ANDROID = 1 ]; then
+		sub_android
+	fi
+
+	# Install runtime dependencies
 	if [ $INSTALL_PYTHON = 1 ]; then
 		sub_python
 	fi
@@ -985,14 +1275,8 @@ sub_install(){
 	if [ $INSTALL_COVERAGE = 1 ]; then
 		sub_coverage
 	fi
-	if [ $INSTALL_MEMCHECK = 1 ]; then
-		sub_memcheck
-	fi
-	if [ $INSTALL_CLANG = 1 ]; then
-		sub_clang
-	fi
-	if [ $INSTALL_CLANGFORMAT = 1 ]; then
-		sub_clangformat
+	if [ $INSTALL_CLANG_FORMAT = 1 ]; then
+		sub_clang_format
 	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
@@ -1134,13 +1418,29 @@ sub_options(){
 			echo "memcheck selected"
 			INSTALL_MEMCHECK=1
 		fi
+		if [ "$option" = 'address-sanitizer' ]; then
+			echo "address sanitizer selected"
+			INSTALL_ADDRESS_SANITIZER=1
+		fi
+		if [ "$option" = 'thread-sanitizer' ]; then
+			echo "thread sanitizer selected"
+			INSTALL_THREAD_SANITIZER=1
+		fi
+		if [ "$option" = 'memory-sanitizer' ]; then
+			echo "memory sanitizer selected"
+			INSTALL_MEMORY_SANITIZER=1
+		fi
 		if [ "$option" = 'clang' ]; then
 			echo "clang selected"
 			INSTALL_CLANG=1
 		fi
+		if [ "$option" = 'clang-msan' ]; then
+			echo "clang memory sanitizer selected"
+			INSTALL_CLANG_MSAN=1
+		fi
 		if [ "$option" = 'clangformat' ]; then
 			echo "clangformat selected"
-			INSTALL_CLANGFORMAT=1
+			INSTALL_CLANG_FORMAT=1
 		fi
 		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
@@ -1149,6 +1449,10 @@ sub_options(){
 		if [ "$option" = 'sandbox' ]; then
 			echo "sandbox selected"
 			INSTALL_SANDBOX=1
+		fi
+		if [ "$option" = 'android' ]; then
+			echo "android selected"
+			INSTALL_ANDROID=1
 		fi
 	done
 }
@@ -1185,10 +1489,15 @@ sub_help() {
 	echo "	pack"
 	echo "	coverage"
 	echo "	memcheck"
+	echo "	address-sanitizer"
+	echo "	thread-sanitizer"
+	echo "	memory-sanitizer"
 	echo "	clang"
+	echo "	clang-msan"
 	echo "	clangformat"
 	echo "	backtrace"
 	echo "	sandbox"
+	echo "	android"
 	echo ""
 }
 

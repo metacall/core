@@ -101,7 +101,9 @@ jobs:
           METACALL_PLATFORM: ${{ matrix.platform }}
           DOCKER_BUILDKIT: 1
         run: |
+          set -exuo pipefail
           ./docker-compose.sh platform
+          docker build --build-arg METACALL_BASE_IMAGE=metacall/core:cli --progress=plain --platform ${{ matrix.platform }} -f tools/docker/tests/Dockerfile -t metacall/core:test tools/docker/tests
 
       - name: Build MetaCall Docker Images (registry)
         if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
@@ -109,27 +111,12 @@ jobs:
           METACALL_PLATFORM: ${{ matrix.platform }}
           DOCKER_BUILDKIT: 1
         run: |
-          ./docker-compose.sh bake
-
-      - name: Run Tests
-        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
-        env:
-          DOCKER_BUILDKIT: 1
-        run: |
           set -exuo pipefail
+          ./docker-compose.sh bake
           image=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}@sha256:$(basename .bake/digests/cli/*)
           docker pull --platform ${{ matrix.platform }} ${image}
           docker image inspect ${image} --format='{{.Os}}/{{.Architecture}}'
-          cat <<EOF > Dockerfile.test
-          FROM ${image}
-          RUN apt-get update && apt-get install -y file
-          RUN file /usr/local/bin/metacallcli && ldd /usr/local/bin/metacallcli
-          RUN echo "console.log('0123456789abcdef')" > script.js
-          RUN metacallcli script.js | tee output.txt
-          RUN grep 0123456789abcdef output.txt
-          EOF
-
-          docker buildx build --progress=plain --platform ${{ matrix.platform }} -f Dockerfile.test -t metacall/core:test .
+          docker buildx build --build-arg METACALL_BASE_IMAGE=${image} --progress=plain --platform ${{ matrix.platform }} -f tools/docker/tests/Dockerfile -t metacall/core:test tools/docker/tests
 
       - name: Sanitize platform name
         if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'

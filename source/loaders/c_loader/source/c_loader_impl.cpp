@@ -35,6 +35,8 @@
 
 #include <log/log.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <metacall/metacall.hpp>
 
 #include <map>
@@ -364,7 +366,7 @@ public:
 		// Try to initialize from options first
 		if (data != NULL)
 		{
-			metacall::map<std::string, metacall::array> options(data);
+			metacall::map_typed<std::string, metacall::array> options(data);
 
 			auto libs = options("libs");
 
@@ -406,9 +408,9 @@ public:
 		}
 
 		size_t path_size = strnlen(path, LOADER_PATH_SIZE);
-		char library_directory[PORTABILITY_PATH_SIZE];
+		char library_directory[PORTABILITY_PATH_SIZE] = {};
 		size_t library_directory_size = portability_path_get_directory(path, path_size, library_directory, PORTABILITY_PATH_SIZE);
-		char library_name[PORTABILITY_PATH_SIZE];
+		char library_name[PORTABILITY_PATH_SIZE] = {};
 		size_t library_name_size = portability_path_get_fullname(path, path_size, library_name, PORTABILITY_PATH_SIZE);
 
 		if (portability_path_is_absolute(path, path_size) == 0)
@@ -985,8 +987,8 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		type_id id = type_index(t);
 		type_id value_id = value_type_id((value)args[args_count]);
 
-		/* We can accept pointers if we pass to an array, it is unsafe but it improves efficiency */
-		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY))
+		/* We can accept pointers if we pass to an array and null to a pointer or array, it is unsafe but it improves efficiency */
+		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY) && !(value_id == TYPE_NULL && id == TYPE_PTR) && !(value_id == TYPE_NULL && id == TYPE_ARRAY))
 		{
 			return metacall::metacall_error_throw("C Loader Error", 0, "",
 				"Type mismatch in when calling %s in argument number %" PRIuS
@@ -1038,6 +1040,11 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 			/* Primitive types already have the pointer indirection */
 			c_function->values[args_count] = value_data((value)args[args_count]);
 		}
+		else if (value_id == TYPE_NULL)
+		{
+			static void *null_ptr = NULL;
+			c_function->values[args_count] = &null_ptr;
+		}
 		else
 		{
 			return metacall::metacall_error_throw("C Loader Error", 0, "",
@@ -1049,62 +1056,31 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	}
 
 	type_id ret_id = type_index(signature_get_return(s));
-	size_t ret_size = value_type_id_size(ret_id);
+	size_t ret_size = c_function->cif.rtype->size;
 	void *ret = NULL;
 
-	if (ret_size <= sizeof(ffi_arg) && (type_id_integer(ret_id) == 0 || type_id_decimal(ret_id) == 0))
+	if (ret_id == TYPE_NULL)
 	{
-		ffi_arg result;
-
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, c_function->values);
-
-		ret = value_type_create(&result, ret_size, ret_id);
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), NULL, c_function->values);
+		ret = value_create_null();
 	}
 	else
 	{
-		void *result = NULL;
-		void *result_ptr = &result;
+		/* Always allocate ABI-sized buffer */
+		void *storage = alloca(ret_size);
 
-		if (ret_id == TYPE_NULL)
-		{
-			ret = value_create_null();
-			result_ptr = NULL;
-		}
-		else if (ret_id != TYPE_STRING && ret_id != TYPE_BUFFER && ret_id != TYPE_ARRAY && ret_id != TYPE_PTR)
-		{
-			/* TODO: This is not tested and we do not know how to handle it */
-			/* TODO: result = ret = value_type_create(NULL, ret_size, ret_id); */
-
-			return metacall::metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), result_ptr, c_function->values);
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), storage, c_function->values);
 
 		if (ret_id == TYPE_STRING)
 		{
-			char *str = (char *)result;
+			/* Convert string pointer into string.
+			* TODO: is this unsafe? It is assuming nullchar strings. */
+			char *str = *(char **)storage;
 			ret = value_create_string(str, strlen(str));
 		}
-		else if (ret_id == TYPE_BUFFER)
+		else
 		{
-			return metacall::metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported, buffer is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-		else if (ret_id == TYPE_ARRAY)
-		{
-			return metacall::metacall_error_throw("C Loader Error", 0, "",
-				"Return type %s in of function %s is not supported, array is unsafe to be returned because there is no way to reconstruct it without overflowing as there is no null character nor size information.",
-				type_id_name(ret_id),
-				function_name(func));
-		}
-		else if (ret_id == TYPE_PTR)
-		{
-			ret = value_create_ptr(result);
+			ret = value_type_create(storage, ret_size, ret_id);
 		}
 	}
 
@@ -1618,10 +1594,15 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle_bas
 
 static int c_loader_impl_tcc_relocate(TCCState *state)
 {
+	/* Skip tcc_relocate use-of-uninitialized-value from heap allocation of tcc_basename in libtcc */
 #ifdef TCC_RELOCATE_AUTO
-	return tcc_relocate(state, TCC_RELOCATE_AUTO);
+	memory_sanitizer_uninstrumented({
+		return tcc_relocate(state, TCC_RELOCATE_AUTO);
+	});
 #else
-	return tcc_relocate(state);
+	memory_sanitizer_uninstrumented({
+		return tcc_relocate(state);
+	});
 #endif
 }
 
@@ -1655,6 +1636,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 		else
 		{
 			bool found = false;
+			std::vector<std::string> failed_paths;
 
 			/* Otherwise, check the execution paths */
 			for (auto exec_path : c_impl->execution_paths)
@@ -1664,18 +1646,41 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path p
 
 				if (portability_path_file_exists(path) == 0)
 				{
-					if (tcc_add_file(c_handle->state, path) != -1)
+					int add_file_result;
+
+					/* Skip tcc_compile use-of-uninitialized-value from heap allocation of cstr_cat in libtcc */
+					memory_sanitizer_uninstrumented({
+						add_file_result = tcc_add_file(c_handle->state, path);
+					});
+
+					if (add_file_result != -1)
 					{
 						c_handle->add(path, path_size);
 						found = true;
 						break;
 					}
 				}
+				else
+				{
+					failed_paths.push_back(path);
+				}
 			}
 
 			if (found == false)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
+				std::string error_message = "    ";
+
+				for (size_t i = 0; i < failed_paths.size(); ++i)
+				{
+					error_message += failed_paths[i];
+
+					if (i < failed_paths.size() - 1)
+					{
+						error_message += "\n    ";
+					}
+				}
+
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: '%s'. Tried to load the following paths:\n%s", paths[iterator], error_message.c_str());
 				goto error;
 			}
 		}

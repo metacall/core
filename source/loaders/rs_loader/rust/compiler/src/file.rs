@@ -12,7 +12,7 @@ pub struct FileRegistration {
 }
 impl FileRegistration {
     pub fn new(path_to_file: PathBuf) -> Result<FileRegistration, RegistrationError> {
-        let state = match compile(Source::new(Source::File {
+        let state = match compile(Source::build(Source::File {
             path: path_to_file.clone(),
         })) {
             Ok(state) => state,
