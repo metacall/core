@@ -234,6 +234,8 @@ add_subdirectory(metacall_rust_class_test)
 add_subdirectory(metacall_c_test)
 add_subdirectory(metacall_c_lib_test)
 add_subdirectory(metacall_c_metacall_test)
+# TODO:
+# add_subdirectory(metacall_c_conversion_test)
 add_subdirectory(metacall_version_test)
 add_subdirectory(metacall_loader_types_test)
 add_subdirectory(metacall_dynlink_path_test)
