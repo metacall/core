@@ -166,6 +166,10 @@ sub_base(){
 		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
 		pkgman install -y cmake git make wget getconf gcc_syslibs_devel
+
+		# Enable debug crash reports
+		mkdir -p ~/config/settings/system/debug_server
+		printf 'default_action report\n' > ~/config/settings/system/debug_server/settings
 	fi
 }
 
