@@ -82,20 +82,9 @@ sub_build() {
 	if [ $BUILD_MEMCHECK = 1 ]; then
 		cmake --build . -j$(getconf _NPROCESSORS_ONLN) --target memcheck
 	else
+		# Tests (coverage needs to run the tests)
 		if [ $BUILD_TESTS = 1 ] || [ $BUILD_BENCHMARKS = 1 ] || [ $BUILD_COVERAGE = 1 ]; then
-			if [ "$(uname -s)" = "Haiku" ]; then
-				mkdir -p ~/config/settings/system/debug_server
-				printf 'default_action report\n' > ~/config/settings/system/debug_server/settings
-			fi
-
-			ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE || tests_exit=$?
-
-			if [ "$(uname -s)" = "Haiku" ] && [ "${tests_exit:-0}" != "0" ]; then
-				echo "===== HAIKU CRASH REPORTS ====="
-				cat ~/Desktop/*report* 2>/dev/null || true
-				echo "===== HAIKU SYSLOG TAIL ====="
-				tail -n 200 /boot/system/var/log/syslog 2>/dev/null || true
-			fi
+			ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
 		fi
 
 		# Coverage
@@ -114,8 +103,6 @@ sub_build() {
 			$SUDO_CMD HOME="$HOME" cmake --build . --target install
 		fi
 	fi
-
-	return ${tests_exit:-0}
 }
 
 sub_help() {
