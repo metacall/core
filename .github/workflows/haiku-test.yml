@@ -44,4 +44,4 @@ jobs:
 
             sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
 
-            sh ../tools/metacall-build.sh ${{ matrix.build }} tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }} tests || sh ../tools/metacall-haiku-crash-report.sh
