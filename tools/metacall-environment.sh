@@ -202,7 +202,7 @@ sub_python(){
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-thread-sanitizer"
+					BUILD_FLAGS="--with-thread-sanitizer --disable-gil"
 					BUILD_LDFLAGS="-fsanitize=thread"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
@@ -212,12 +212,12 @@ sub_python(){
 					export CXX="/usr/bin/clang++"
 				fi
 				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
-				./configure --prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				./configure --prefix=/usr/local --enable-shared --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
 				# Define python as the default one
-				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_PKG}d" /usr/bin/python3
+				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_PKG}t" /usr/bin/python3
 
 				# Install Pip
 				wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
@@ -234,6 +234,13 @@ sub_python(){
 					joblib
 				cd ../..
 				rm -rf ./python
+
+				# Unset environment variables
+				unset ASAN_OPTIONS
+				unset UBSAN_OPTIONS
+				unset TSAN_OPTIONS
+				unset MSAN_OPTIONS
+				unset LDFLAGS
 			else
 				if [ "${BUILD_TYPE}" = "Debug" ]; then
 					PYTHON3_PKG=python3-dbg
@@ -1514,3 +1521,4 @@ case "$#" in
 		sub_install
 		;;
 esac
+ 

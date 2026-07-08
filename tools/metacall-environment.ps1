@@ -28,7 +28,7 @@ function Set-Python {
 	Write-Output "Install Python"
 	Set-Location $ROOT_DIR
 
-	$PythonVersion = '3.9.7'
+	$PythonVersion = '3.10.20'
 	$RuntimeDir = "$env:ProgramFiles\Python3"
 	$DepsDir = "$ROOT_DIR\dependencies"
 

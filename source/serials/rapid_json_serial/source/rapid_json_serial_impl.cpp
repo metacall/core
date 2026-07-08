@@ -46,7 +46,7 @@ typedef struct rapid_json_document_type
 	rapidjson::Document impl;
 	memory_allocator allocator;
 
-} *rapid_json_document;
+} * rapid_json_document;
 
 /* -- Private Methods -- */
 
