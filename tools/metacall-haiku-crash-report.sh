@@ -19,11 +19,11 @@
 #	limitations under the License.
 #
 
-echo
-echo "===== HAIKU CRASH REPORTs ====="
+echo "===== HAIKU CRASH REPORTS ====="
 echo
 cat ~/Desktop/*report* 2>/dev/null
 echo
 echo "===== HAIKU SYSLOG TAIL ====="
 echo
 tail -n 200 /boot/system/var/log/syslog 2>/dev/null
+exit 1
