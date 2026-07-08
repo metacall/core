@@ -33,6 +33,11 @@ if(NOT OPTION_BUILD_GUIX)
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
+	# Normalise to forward slashes so install(DESTINATION ...) doesn't bake
+	# backslash sequences (e.g. "\Program Files") into cmake_install.cmake,
+	# which CMake then misparses as invalid escape characters on Windows.
+	file(TO_CMAKE_PATH "${Python3_SITE_PACKAGES}" Python3_SITE_PACKAGES)
+
 	# Install into a temporary folder so we can track the installed files in the install_manifest.txt
 	set(PY_PORT_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install")
 

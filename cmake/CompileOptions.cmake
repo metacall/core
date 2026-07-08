@@ -220,13 +220,37 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL 
 			)
 		endif()
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER)
-		find_sanitizer(asan)
-		find_sanitizer(ubsan)
-		if(LIBASAN_PATH AND LIBUBSAN_PATH)
-			set(SANITIZER_LIBRARIES_PATH
-				"${LIBASAN_PATH}"
-				"${LIBUBSAN_PATH}"
-			)
+		if(PROJECT_OS_FAMILY MATCHES "macos" AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			# Here there is the list of all libraries for different MacOS platforms:
+			#
+			# libclang_rt.asan_iossim_dynamic.dylib
+			# libclang_rt.asan_ios_dynamic.dylib
+			# libclang_rt.asan_osx_dynamic.dylib
+			# libclang_rt.asan_tvossim_dynamic.dylib
+			# libclang_rt.asan_tvos_dynamic.dylib
+			# libclang_rt.asan_watchossim_dynamic.dylib
+			# libclang_rt.asan_watchos_dynamic.dylib
+			# libclang_rt.asan_xrossim_dynamic.dylib
+			# libclang_rt.asan_xros_dynamic.dylib
+			#
+			# We are supporting OSX only for now.
+			find_sanitizer(asan_osx_dynamic)
+			find_sanitizer(ubsan_osx_dynamic)
+			if(LIBASAN_OSX_DYNAMIC_PATH AND LIBUBSAN_OSX_DYNAMIC_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_OSX_DYNAMIC_PATH}"
+					"${LIBUBSAN_OSX_DYNAMIC_PATH}"
+				)
+			endif()
+		else()
+			find_sanitizer(asan)
+			find_sanitizer(ubsan)
+			if(LIBASAN_PATH AND LIBUBSAN_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_PATH}"
+					"${LIBUBSAN_PATH}"
+				)
+			endif()
 		endif()
 	endif()
 endif()

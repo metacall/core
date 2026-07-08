@@ -251,7 +251,7 @@ loader_configuartion_end_development()
 
 # Install
 loader_configuration_begin(cs_loader "${CS_LOADER_CONFIG_TEMPLATE}")
-set(DOTNET_CORE_LOADER_ASSEMBLY_PATH ${PROJECT_OUTPUT_DIR}/CSLoader.dll)
+set(DOTNET_CORE_LOADER_ASSEMBLY_PATH ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/CSLoader.dll)
 loader_configuartion_end_install()
 
 #
