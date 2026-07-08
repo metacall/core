@@ -44,7 +44,6 @@ elseif(PROJECT_OS_HAIKU)
 	set(DYNLINK_IMPL_INTERFACE_NAME unix)
 else()
 	set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
-
 endif()
 
 set(headers
