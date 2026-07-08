@@ -123,8 +123,6 @@ public:
 
 TEST_F(reflect_scope_test, DefaultConstructor)
 {
-	volatile int *it = 0; 
-	*it = 1;
 	EXPECT_EQ((int)0, (int)log_configure("metacall",
 						  log_policy_format_text(),
 						  log_policy_schedule_sync(),
