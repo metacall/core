@@ -259,5 +259,5 @@ void set_small_iterator_next(set_small_iterator it)
 
 int set_small_iterator_end(set_small_iterator it)
 {
-	return !(it->index < it->s->size);
+	return it->index < it->s->size;
 }
