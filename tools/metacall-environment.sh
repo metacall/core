@@ -227,7 +227,6 @@ sub_python(){
 
 				# Define python as the default one
 				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
-				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" "/usr/local/bin/${PYTHON_PKG}"
 
 				# Install Pip
 				wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
