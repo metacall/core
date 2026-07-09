@@ -188,6 +188,7 @@ sub_python(){
 				apt-get source "${PYTHON_PKG}"
 				SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
 				cd "$SRC_DIR"
+				PYTHON_EXE="${PYTHON_PKG}d"
 
 				# Build Python with instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
@@ -198,15 +199,16 @@ sub_python(){
 					printf "leak:*libpython*" &> ./asan.supp
 					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
 					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
+					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-thread-sanitizer --disable-gil"
 					BUILD_LDFLAGS="-fsanitize=thread"
+					PYTHON_EXE="${PYTHON_PKG}t"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-memory-sanitizer"
+					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=memory"
 					export CC="/usr/bin/clang"
 					export CXX="/usr/bin/clang++"
@@ -216,8 +218,15 @@ sub_python(){
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
+				# Unset environment variables
+				unset ASAN_OPTIONS
+				unset UBSAN_OPTIONS
+				unset TSAN_OPTIONS
+				unset MSAN_OPTIONS
+				unset LDFLAGS
+
 				# Define python as the default one
-				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_PKG}t" /usr/bin/python3
+				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
 
 				# Install Pip
 				wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
@@ -227,20 +236,9 @@ sub_python(){
 					requests \
 					setuptools \
 					wheel \
-					rsa \
-					scipy \
-					numpy \
-					scikit-learn \
-					joblib
+					rsa
 				cd ../..
 				rm -rf ./python
-
-				# Unset environment variables
-				unset ASAN_OPTIONS
-				unset UBSAN_OPTIONS
-				unset TSAN_OPTIONS
-				unset MSAN_OPTIONS
-				unset LDFLAGS
 			else
 				if [ "${BUILD_TYPE}" = "Debug" ]; then
 					PYTHON3_PKG=python3-dbg
@@ -1521,4 +1519,3 @@ case "$#" in
 		sub_install
 		;;
 esac
- 
