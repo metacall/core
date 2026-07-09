@@ -64,7 +64,7 @@ extern "C" {
 	#define THREADING_ATOMIC 0
 #endif
 
-#if !defined(THREADING_ATOMIC) || (defined(THREADING_ATOMIC) && THREADING_ATOMIC == 0)
+#if !defined(__cplusplus) && (!defined(THREADING_ATOMIC) || (defined(THREADING_ATOMIC) && THREADING_ATOMIC == 0))
 	#error "Thread atomic support not implemented."
 #endif
 
