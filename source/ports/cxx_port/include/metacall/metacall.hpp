@@ -36,6 +36,29 @@ namespace metacall
 {
 #include <metacall/metacall.h>
 
+namespace detail
+{
+// clang-format off
+#include <version/version.h>
+#include <preprocessor/preprocessor.h>
+#include <environment/environment.h>
+#include <format/format.h>
+#include <threading/threading.h>
+#include <log/log.h>
+#include <memory/memory.h>
+#include <portability/portability.h>
+#include <adt/adt.h>
+#include <filesystem/filesystem.h>
+#include <dynlink/dynlink.h>
+#include <plugin/plugin.h>
+#include <detour/detour.h>
+#include <reflect/reflect.h>
+#include <serial/serial.h>
+#include <configuration/configuration.h>
+#include <loader/loader.h>
+// clang-format on
+} /* namespace detail */
+
 class value_base
 {
 public:
@@ -444,6 +467,112 @@ public:
 		return METACALL_ARRAY;
 	}
 
+	class iterator
+	{
+	public:
+		using iterator_category = std::random_access_iterator_tag;
+		using value_type = value_cast;
+		using difference_type = std::ptrdiff_t;
+		using reference = value_cast;
+		using pointer = void;
+
+		explicit iterator(void **ptr)
+			: ptr(ptr)
+		{
+		}
+
+		reference operator*() const
+		{
+			return value_cast(*ptr);
+		}
+
+		iterator &operator++()
+		{
+			++ptr;
+			return *this;
+		}
+
+		iterator operator++(int)
+		{
+			iterator tmp(*this);
+			++(*this);
+			return tmp;
+		}
+
+		iterator &operator--()
+		{
+			--ptr;
+			return *this;
+		}
+
+		iterator operator--(int)
+		{
+			iterator tmp(*this);
+			--(*this);
+			return tmp;
+		}
+
+		iterator &operator+=(difference_type n)
+		{
+			ptr += n;
+			return *this;
+		}
+
+		iterator &operator-=(difference_type n)
+		{
+			ptr -= n;
+			return *this;
+		}
+
+		iterator operator+(difference_type n) const
+		{
+			return iterator(ptr + n);
+		}
+
+		iterator operator-(difference_type n) const
+		{
+			return iterator(ptr - n);
+		}
+
+		difference_type operator-(const iterator &other) const
+		{
+			return ptr - other.ptr;
+		}
+
+		bool operator==(const iterator &other) const
+		{
+			return ptr == other.ptr;
+		}
+
+		bool operator!=(const iterator &other) const
+		{
+			return !(*this == other);
+		}
+
+		bool operator<(const iterator &other) const
+		{
+			return ptr < other.ptr;
+		}
+
+	private:
+		void **ptr;
+	};
+
+	iterator begin() const
+	{
+		return iterator(to_array());
+	}
+
+	iterator end() const
+	{
+		return iterator(to_array() + size());
+	}
+
+	std::size_t size() const
+	{
+		return metacall_value_count(to_raw());
+	}
+
 private:
 	void **to_array() const
 	{
@@ -592,6 +721,64 @@ public:
 		return METACALL_MAP;
 	}
 
+	class iterator
+	{
+	public:
+		using map_iterator =
+			typename std::unordered_map<K, pair_value_type>::const_iterator;
+
+		using iterator_category = std::forward_iterator_tag;
+		using difference_type = std::ptrdiff_t;
+		using value_type = std::pair<K, V>;
+		using reference = value_type;
+
+		explicit iterator(map_iterator it) : it(it) { }
+
+		reference operator*() const
+		{
+			return {
+				it->first,
+				it->second.second.to_value()
+			};
+		}
+
+		iterator &operator++()
+		{
+			++it;
+			return *this;
+		}
+
+		iterator operator++(int)
+		{
+			iterator tmp(*this);
+			++(*this);
+			return tmp;
+		}
+
+		bool operator==(const iterator &other) const
+		{
+			return it == other.it;
+		}
+
+		bool operator!=(const iterator &other) const
+		{
+			return !(*this == other);
+		}
+
+	private:
+		map_iterator it;
+	};
+
+	iterator begin() const
+	{
+		return iterator(m.cbegin());
+	}
+
+	iterator end() const
+	{
+		return iterator(m.cend());
+	}
+
 protected:
 	void rehash()
 	{
@@ -624,7 +811,7 @@ class value_typed<map_typed<K, V>> : public value_base
 public:
 	using map_type = map_typed<K, V>;
 
-	explicit value_typed(void *ptr, void (*destructor)(void *) = &metacall_value_destroy) :
+	explicit value_typed(void *ptr, void (*destructor)(void *) = &value_base::noop_destructor) :
 		value_base(ptr, destructor) {}
 
 	static void *create(map_type &v)
