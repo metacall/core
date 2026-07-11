@@ -1181,12 +1181,12 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, loader
 	/* If there's no handle input/output pointer passed as input parameter, then propagate the handle symbols to the loader context */
 	if (handle_ptr == NULL)
 	{
-		struct set_iterator_type it;
+		struct set_small_iterator_type it;
 
 		/* This case handles the global scope (shared scope between all loaders, there is no out reference to a handle) */
-		for (set_iterator_begin(&it, manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(&it))
+		for (set_small_iterator_begin(&it, manager->plugins); set_small_iterator_end(&it) != 0; set_small_iterator_next(&it))
 		{
-			plugin p = set_iterator_value(&it);
+			plugin p = set_small_iterator_value(&it);
 			loader_impl other_impl = plugin_impl_type(p, loader_impl);
 			char *duplicated_key = NULL;
 

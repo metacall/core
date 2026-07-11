@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target adt-atomic-set-test)
+set(target adt-set-small-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,7 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/adt_atomic_set_test.cpp
+	${source_path}/adt_set_small_test.cpp
 )
 
 # Group source files

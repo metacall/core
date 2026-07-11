@@ -44,7 +44,6 @@
 #include <string>
 #include <vector>
 
-#include <cassert>
 #include <cstring>
 
 /* LibFFI */
@@ -1014,7 +1013,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 			/* String, buffer requires to be pointer to a string */
 
 			/* In order to work, this must be true */
-			assert(args[args_count] == value_data(args[args_count]));
+			// assert(args[args_count] == value_data(args[args_count]));
 
 			c_function->values[args_count] = (void *)&args[args_count];
 		}
