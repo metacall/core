@@ -476,8 +476,8 @@ public:
 		using reference = value_cast;
 		using pointer = void;
 
-		explicit iterator(void **ptr)
-			: ptr(ptr)
+		explicit iterator(void **ptr) :
+			ptr(ptr)
 		{
 		}
 
@@ -732,7 +732,8 @@ public:
 		using value_type = std::pair<K, V>;
 		using reference = value_type;
 
-		explicit iterator(map_iterator it) : it(it) { }
+		explicit iterator(map_iterator it) :
+			it(it) {}
 
 		reference operator*() const
 		{

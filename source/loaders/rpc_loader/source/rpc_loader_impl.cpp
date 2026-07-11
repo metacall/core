@@ -30,12 +30,12 @@
 #include <cstring>
 
 #include <atomic>
+#include <fstream>
 #include <map>
 #include <set>
 #include <string>
 #include <thread>
 #include <vector>
-#include <fstream>
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define CURL_VERBOSE 1L
@@ -69,8 +69,8 @@ typedef struct loader_impl_rpc_handle_type
 
 typedef struct loader_impl_rpc_function_type
 {
-	loader_impl_rpc_function_type(loader_impl_rpc rpc_impl, const std::string &url, bool is_async, const std::string &func_name)
-		: rpc_impl(rpc_impl), url(url + (is_async ? "await/" : "call/") + func_name) { }
+	loader_impl_rpc_function_type(loader_impl_rpc rpc_impl, const std::string &url, bool is_async, const std::string &func_name) :
+		rpc_impl(rpc_impl), url(url + (is_async ? "await/" : "call/") + func_name) {}
 
 	loader_impl_rpc rpc_impl;
 	std::string url;
