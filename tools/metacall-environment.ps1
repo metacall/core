@@ -245,6 +245,56 @@ function Set-Curl {
 	Write-Output "-DCURL_LIBRARY_NAME=""$CURL_LIB_NAME""" >> $EnvOpts
 }
 
+function Set-C {
+	Write-Output "Install C Loader Dependencies (libffi)"
+
+	Set-Location $ROOT_DIR
+
+	$LibFFIVersion = "3.5.2"
+	$DepsDir = "$ROOT_DIR\dependencies"
+	$RuntimeDir = "$DepsDir\libffi"
+	$DistDir = "$RuntimeDir\dist"
+
+	mkdir -Force $DepsDir
+	mkdir -Force $RuntimeDir
+	mkdir -Force $DistDir
+
+	Set-Location $DepsDir
+
+	# Download official libffi source tarball
+	if (!(Test-Path -Path "$DepsDir\libffi.tar.gz")) {
+		Write-Output "libffi not found, downloading..."
+		(New-Object Net.WebClient).DownloadFile(
+			"https://github.com/libffi/libffi/releases/download/v$LibFFIVersion/libffi-$LibFFIVersion.tar.gz",
+			"$DepsDir\libffi.tar.gz"
+		)
+	}
+
+	# Extract
+	cmake -E tar xzf "$DepsDir\libffi.tar.gz"
+
+	$SrcDir = "$DepsDir\libffi-$LibFFIVersion"
+	$BuildDir = "$RuntimeDir\build"
+	mkdir -Force $BuildDir
+
+	# Git Bash is available on all Windows GitHub Actions runners
+	$GitBash = "C:\Program Files\Git\bin\bash.exe"
+	$MsvccSh = "$SrcDir/msvcc.sh"
+	$DistDirUnix = $DistDir.Replace('\', '/')
+	$BuildDirUnix = $BuildDir.Replace('\', '/')
+	$SrcDirUnix = $SrcDir.Replace('\', '/')
+
+	# Build libffi using msvcc.sh — official upstream documented approach
+	& $GitBash -c "cd '$BuildDirUnix' && '$SrcDirUnix/configure' CC='$MsvccSh -m64' CXX='$MsvccSh -m64' LD=link CPP='cl -nologo -EP' CXXCPP='cl -nologo -EP' CPPFLAGS='-DFFI_BUILDING_DLL' --prefix='$DistDirUnix' --build=x86_64-pc-mingw64 && make && make install"
+
+	# Write CMake flags
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$LibFFIDir = $DistDir.Replace('\', '/')
+
+	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFIDir/include""" >> $EnvOpts
+	Write-Output "-DLIBFFI_LIBRARY=""$LibFFIDir/lib/libffi.lib""" >> $EnvOpts
+}
+
 function Add-to-Path {
 	$GivenPath = $args[0]
 
@@ -351,6 +401,7 @@ function Configure {
 		}
 		if ("$var" -eq 'c') {
 			Write-Output "c selected"
+			Set-C
 		}
 		if ("$var" -eq 'cobol') {
 			Write-Output "cobol selected"
