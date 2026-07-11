@@ -8,7 +8,12 @@ endif()
 #
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(Python3_FIND_ABI "ON" "ANY" "ANY")
+	set(Python3_FIND_ABI
+		ANY	# pydebug
+		ANY	# pymalloc
+		ANY	# unicode
+		ON	# free-threaded (gil disabled)
+	)
 	find_package(Python3 COMPONENTS Interpreter Development)
 
 	# Fallback to release if not found
@@ -36,8 +41,8 @@ if(NOT Python3_LIBRARY AND Python3_LIBRARIES)
 
 			# Match the right keyword
 			if((CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "debug") OR
-			   (NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "optimized") OR
-			   (keyword STREQUAL "general"))  # general applies to all configs
+				(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "optimized") OR
+				(keyword STREQUAL "general"))  # general applies to all configs
 				set(Python3_LIBRARY ${lib_path})
 			endif()
 

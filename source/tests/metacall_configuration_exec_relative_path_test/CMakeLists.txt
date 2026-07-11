@@ -209,7 +209,12 @@ test_environment_variables(${target}
 #
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(Python3_FIND_ABI "ON" "ANY" "ANY")
+	set(Python3_FIND_ABI
+		ANY	# pydebug
+		ANY	# pymalloc
+		ANY	# unicode
+		ON	# free-threaded (gil disabled)
+	)
 	find_package(Python3 COMPONENTS Development)
 
 	# Fallback to release if not found
