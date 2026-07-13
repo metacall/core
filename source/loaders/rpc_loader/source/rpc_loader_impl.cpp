@@ -30,12 +30,13 @@
 #include <cstring>
 
 #include <atomic>
+#include <chrono>
+#include <fstream>
 #include <map>
 #include <set>
 #include <string>
 #include <thread>
 #include <vector>
-#include <fstream>
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define CURL_VERBOSE 1L
@@ -58,6 +59,9 @@ typedef struct loader_impl_rpc_type
 	struct curl_slist *headers;
 	std::map<type_id, type> types;
 	std::set<std::string> execution_paths;
+	long timeout_ms;
+	int retry_count;
+	long retry_delay_ms;
 
 } * loader_impl_rpc;
 
@@ -69,11 +73,12 @@ typedef struct loader_impl_rpc_handle_type
 
 typedef struct loader_impl_rpc_function_type
 {
-	loader_impl_rpc_function_type(loader_impl_rpc rpc_impl, const std::string &url, bool is_async, const std::string &func_name)
-		: rpc_impl(rpc_impl), url(url + (is_async ? "await/" : "call/") + func_name) { }
+	loader_impl_rpc_function_type(loader_impl_rpc rpc_impl, const std::string &url, bool is_async, const std::string &func_name) :
+		rpc_impl(rpc_impl), url(url + (is_async ? "await/" : "call/") + func_name), timeout_ms(rpc_impl->timeout_ms) {}
 
 	loader_impl_rpc rpc_impl;
 	std::string url;
+	long timeout_ms;
 
 } * loader_impl_rpc_function;
 
@@ -203,6 +208,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	curl_easy_setopt(easy, CURLOPT_POSTFIELDS, buffer);
 	curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE, body_request_size - 1);
 	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+	curl_easy_setopt(easy, CURLOPT_TIMEOUT_MS, rpc_function->timeout_ms);
 
 	CURLcode res;
 
@@ -423,6 +429,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
 	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&async_ctx->write_data));
 	curl_easy_setopt(easy, CURLOPT_PRIVATE, async_ctx);
+	curl_easy_setopt(easy, CURLOPT_TIMEOUT_MS, rpc_function->timeout_ms);
 
 	/* COPYPOSTFIELDS copies data internally, safe to free buffer after */
 	curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE, (long)(body_request_size - 1));
@@ -519,6 +526,18 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	{
 		return NULL;
 	}
+
+	const char *env_timeout = std::getenv("METACALL_RPC_TIMEOUT_MS");
+	rpc_impl->timeout_ms = env_timeout ? std::atol(env_timeout) : 30000L;
+
+	const char *env_retry = std::getenv("METACALL_RPC_RETRY_COUNT");
+	rpc_impl->retry_count = env_retry ? std::atoi(env_retry) : 15;
+
+	const char *env_delay = std::getenv("METACALL_RPC_RETRY_DELAY_MS");
+	rpc_impl->retry_delay_ms = env_delay ? std::atol(env_delay) : 2000L;
+
+	log_write("metacall", metacall::detail::LOG_LEVEL_DEBUG, "RPC loader initialized with timeout=%ldms, retry=%d, delay=%ldms",
+		rpc_impl->timeout_ms, rpc_impl->retry_count, rpc_impl->retry_delay_ms);
 
 	struct metacall::metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
@@ -670,7 +689,7 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_path
 
 		if (portability_path_is_absolute(path_str.c_str(), path_str_size) == 0)
 		{
-			if (!rpc_loader_impl_load_from_file_read(paths[iterator], buffer))
+			if (rpc_loader_impl_load_from_file_read(paths[iterator], buffer) != 0)
 			{
 				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Failed to load RPC configuration from %s", paths[iterator]);
 				return NULL;
@@ -811,47 +830,66 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 	for (const auto &config : rpc_handle->configs)
 	{
 		auto urls = config["urls"].as<metacall::array>();
-		// TODO:
-		// auto timeout = config["timeout"].as<int>();
-		// auto retry = config["retry"].as<int>();
 
 		for (const auto &url : urls)
 		{
-			loader_impl_rpc_write_data_type write_data;
 			const auto &url_str = url.as<std::string>();
 			std::string base_url = url_str.back() != '/' ? url_str + '/' : url_str;
 			std::string inspect_url = base_url + "inspect";
-			CURLcode res;
 
-			curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
-			curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+			CURLcode res = CURLE_OK;
+			bool discovered = false;
 
-			/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
-			memory_sanitizer_uninstrumented({
-				res = curl_easy_perform(rpc_impl->discover_curl);
-			});
-
-			if (res != CURLE_OK)
+			for (int attempt = 0; attempt < rpc_impl->retry_count; ++attempt)
 			{
-				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not access the API endpoint %s [%s]", url_str.c_str(), curl_easy_strerror(res));
-				return 1;
+				loader_impl_rpc_write_data_type write_data;
+
+				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
+				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_TIMEOUT_MS, rpc_impl->timeout_ms);
+
+				/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
+				memory_sanitizer_uninstrumented({
+					res = curl_easy_perform(rpc_impl->discover_curl);
+				});
+
+				if (res == CURLE_OK)
+				{
+					/* Deserialize the inspect data */
+					const size_t size = write_data.buffer.length() + 1;
+
+					void *inspect_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), size, (metacall::detail::memory_allocator)rpc_impl->allocator);
+
+					if (inspect_value == NULL)
+					{
+						log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not deserialize the inspect data from API endpoint %s", url_str.c_str());
+						return 1;
+					}
+
+					/* Discover the functions from the inspect value */
+					if (rpc_loader_impl_discover_value(rpc_impl, base_url, inspect_value, ctx) != 0)
+					{
+						log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Invalid inspect value discover from API endpoint %s", url_str.c_str());
+						return 1;
+					}
+
+					discovered = true;
+					break;
+				}
+
+				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Discover attempt %d/%d failed for %s [%s]",
+					attempt + 1, rpc_impl->retry_count, url_str.c_str(), curl_easy_strerror(res));
+
+				if (attempt + 1 < rpc_impl->retry_count)
+				{
+					std::this_thread::sleep_for(std::chrono::milliseconds(rpc_impl->retry_delay_ms));
+				}
 			}
 
-			/* Deserialize the inspect data */
-			const size_t size = write_data.buffer.length() + 1;
-
-			void *inspect_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), size, (metacall::detail::memory_allocator)rpc_impl->allocator);
-
-			if (inspect_value == NULL)
+			if (!discovered)
 			{
-				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not deserialize the inspect data from API endpoint %s", url_str.c_str());
-				return 1;
-			}
-
-			/* Discover the functions from the inspect value */
-			if (rpc_loader_impl_discover_value(rpc_impl, base_url, inspect_value, ctx) != 0)
-			{
-				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Invalid inspect value discover from API endpoint %s", url_str.c_str());
+				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Gave up discovering endpoint %s after %d attempts",
+					url_str.c_str(), rpc_impl->retry_count);
 				return 1;
 			}
 		}
