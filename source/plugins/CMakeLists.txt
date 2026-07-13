@@ -7,6 +7,10 @@ endif()
 option(OPTION_BUILD_PLUGINS_BACKTRACE "Build cross-platform backtrace plugin." ON)
 option(OPTION_BUILD_PLUGINS_SANDBOX "Build cross-platform Linux sandbox plugin." OFF)
 
+if(MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set(OPTION_BUILD_PLUGINS_BACKTRACE OFF)
+endif()
+
 # Plugin sub-projects
 add_subdirectory(backtrace_plugin)
 add_subdirectory(sandbox_plugin)
