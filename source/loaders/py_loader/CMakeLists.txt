@@ -12,7 +12,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		ANY	# pydebug
 		ANY	# pymalloc
 		ANY	# unicode
-		ON	# free-threaded (gil disabled)
+		ANY	# free-threaded (gil disabled)
 	)
 	find_package(Python3 COMPONENTS Interpreter Development)
 
