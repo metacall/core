@@ -89,7 +89,6 @@ option(OPTION_BUILD_PIC			"Build with position independent code."						ON)
 option(OPTION_BUILD_SECURITY	"Build with stack-smashing protection and source fortify."	ON)
 option(OPTION_BUILD_GUIX		"Disable all build system unreproductible operations."		OFF)
 option(OPTION_GIT_HOOKS			"Disable git hooks when running in CI/CD."					ON)
-option(OPTION_FORK_SAFE			"Enable fork safety."										ON)
 option(OPTION_THREAD_SAFE		"Enable thread safety."										OFF)
 option(OPTION_COVERAGE			"Enable coverage."											OFF)
 option(OPTION_MEMORY_TRACKER	"Enable memory tracking for reflect data."					ON)
@@ -117,6 +116,14 @@ set(IDE_FOLDER "")
 
 # Declare project
 project(${META_PROJECT_NAME} C CXX)
+
+# Fork safety is not supported on Windows yet (detour requires the delayed load mechanism)
+if(WIN32)
+	set(FORK_SAFE_DEFAULT OFF)
+else()
+	set(FORK_SAFE_DEFAULT ON)
+endif()
+option(OPTION_FORK_SAFE "Enable fork safety." ${FORK_SAFE_DEFAULT})
 
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
