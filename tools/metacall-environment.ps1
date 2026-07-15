@@ -246,11 +246,12 @@ function Set-Curl {
 }
 
 function Set-C {
-	Write-Output "Install C Loader Dependencies (libffi + LLVM)"
+	Write-Output "Install C Loader Dependencies (libffi + libclang)"
 
 	Set-Location $ROOT_DIR
 
 	$LibFFIVersion = "3.5.2"
+	$LLVMVersion = "19.1.0"
 	$DepsDir = "$ROOT_DIR\dependencies"
 	$RuntimeDir = "$DepsDir\libffi"
 	$DistDir = "$RuntimeDir\dist"
@@ -270,41 +271,47 @@ function Set-C {
 		)
 	}
 
-	# Extract
 	cmake -E tar xzf "$DepsDir\libffi.tar.gz"
 
 	$SrcDir = "$DepsDir\libffi-$LibFFIVersion"
 	$BuildDir = "$RuntimeDir\build"
 	mkdir -Force $BuildDir
 
-	# Git Bash is available on all Windows GitHub Actions runners
 	$GitBash = "C:\Program Files\Git\bin\bash.exe"
-	$MsvccSh = "$SrcDir/msvcc.sh"
 	$DistDirUnix = $DistDir.Replace('\', '/')
 	$BuildDirUnix = $BuildDir.Replace('\', '/')
 	$SrcDirUnix = $SrcDir.Replace('\', '/')
+	$MsvccSh = "$SrcDirUnix/msvcc.sh"
 
-	# Build libffi using msvcc.sh — official upstream documented approach
 	& $GitBash -c "cd '$BuildDirUnix' && '$SrcDirUnix/configure' CC='$MsvccSh -m64' CXX='$MsvccSh -m64' LD=link CPP='cl -nologo -EP' CXXCPP='cl -nologo -EP' CPPFLAGS='-DFFI_BUILDING_DLL' --prefix='$DistDirUnix' --build=x86_64-pc-mingw64 && make && make install"
 
-	# Write libffi CMake flags
 	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$LibFFIDir = $DistDir.Replace('\', '/')
 
 	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFIDir/include""" >> $EnvOpts
 	Write-Output "-DLIBFFI_LIBRARY=""$LibFFIDir/lib/libffi.lib""" >> $EnvOpts
 
-	# Install LLVM via choco (includes libclang)
-	Write-Output "Installing LLVM..."
-	choco install llvm --confirm
+	# Download official LLVM prebuilt archive (includes libclang.lib + headers)
+	# Using clang+llvm archive which contains libraries needed for development
+	$LLVMArchive = "clang+llvm-$LLVMVersion-x86_64-pc-windows-msvc.tar.xz"
+	$LLVMDir = "$DepsDir\llvm"
 
-	$LLVMDir = "C:/Program Files/LLVM"
+	if (!(Test-Path -Path "$DepsDir\$LLVMArchive")) {
+		Write-Output "LLVM not found, downloading..."
+		(New-Object Net.WebClient).DownloadFile(
+			"https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVMVersion/$LLVMArchive",
+			"$DepsDir\$LLVMArchive"
+		)
+	}
 
-	Add-to-Path "$LLVMDir\bin"
+	mkdir -Force $LLVMDir
+	cmake -E tar xf "$DepsDir\$LLVMArchive"
+	Robocopy.exe /move /e "$DepsDir\clang+llvm-$LLVMVersion-x86_64-pc-windows-msvc" $LLVMDir /NFL /NDL /NJH /NJS /NC /NS /NP
 
-	# Write LibClang CMake flags — same pattern as Darwin/FreeBSD in metacall-environment.sh
-	Write-Output "-DLibClang_INCLUDE_DIR=""$LLVMDir/include""" >> $EnvOpts
-	Write-Output "-DLibClang_LIBRARY=""$LLVMDir/lib/libclang.lib""" >> $EnvOpts
+	$LLVMDirUnix = $LLVMDir.Replace('\', '/')
+
+	Write-Output "-DLibClang_INCLUDE_DIR=""$LLVMDirUnix/include""" >> $EnvOpts
+	Write-Output "-DLibClang_LIBRARY=""$LLVMDirUnix/lib/libclang.lib""" >> $EnvOpts
 }
 
 function Add-to-Path {

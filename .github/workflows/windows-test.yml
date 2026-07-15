@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
     branches:
       - master
       - develop
@@ -24,15 +24,16 @@ jobs:
       matrix:
         os: [2022, 2025]
         options: [
-            { build: debug, sanitizer: without-sanitizer },
-            { build: debug, sanitizer: address-sanitizer },
-            # TODO: Not supported yet by MSVC
-            # {build: debug, sanitizer: thread-sanitizer},
-            # {build: debug, sanitizer: memory-sanitizer},
+          {build: debug, sanitizer: without-sanitizer},
+          {build: debug, sanitizer: address-sanitizer},
 
-            # TODO: https://github.com/metacall/core/issues/461
-            # {build: release, sanitizer: without-sanitizer}
-          ]
+          # TODO: Not supported yet by MSVC
+          # {build: debug, sanitizer: thread-sanitizer},
+          # {build: debug, sanitizer: memory-sanitizer},
+
+          # TODO: https://github.com/metacall/core/issues/461
+          # {build: release, sanitizer: without-sanitizer}
+        ]
 
     steps:
       - name: Check out the repository
@@ -48,7 +49,7 @@ jobs:
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
-          METACALL_INSTALL_OPTIONS: python nodejs java ruby typescript wasm rpc file c # netcore5 java c cobol rust rapidjson pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS: python nodejs java ruby typescript wasm rpc file c # netcore5 java cobol rust rapidjson pack # clangformat v8rep51 coverage
 
       - name: Configure
         run: |
@@ -57,7 +58,7 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs java ruby typescript wasm rpc file c # netcore5 java c cobol rust examples install pack benchmarks # v8 coverage
+          METACALL_BUILD_OPTIONS: ${{ matrix.options.build }} ${{ matrix.options.sanitizer }} scripts ports tests python nodejs java ruby typescript wasm rpc file c # netcore5 java cobol rust examples install pack benchmarks # v8 coverage
 
       - name: Build
         working-directory: ./build
@@ -81,4 +82,3 @@ jobs:
           wait_workflow: true
           client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
           ref: master
-
