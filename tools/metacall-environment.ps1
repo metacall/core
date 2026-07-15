@@ -246,7 +246,7 @@ function Set-Curl {
 }
 
 function Set-C {
-	Write-Output "Install C Loader Dependencies (libffi)"
+	Write-Output "Install C Loader Dependencies (libffi + LLVM)"
 
 	Set-Location $ROOT_DIR
 
@@ -287,12 +287,24 @@ function Set-C {
 	# Build libffi using msvcc.sh — official upstream documented approach
 	& $GitBash -c "cd '$BuildDirUnix' && '$SrcDirUnix/configure' CC='$MsvccSh -m64' CXX='$MsvccSh -m64' LD=link CPP='cl -nologo -EP' CXXCPP='cl -nologo -EP' CPPFLAGS='-DFFI_BUILDING_DLL' --prefix='$DistDirUnix' --build=x86_64-pc-mingw64 && make && make install"
 
-	# Write CMake flags
+	# Write libffi CMake flags
 	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
 	$LibFFIDir = $DistDir.Replace('\', '/')
 
 	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFIDir/include""" >> $EnvOpts
 	Write-Output "-DLIBFFI_LIBRARY=""$LibFFIDir/lib/libffi.lib""" >> $EnvOpts
+
+	# Install LLVM via choco (includes libclang)
+	Write-Output "Installing LLVM..."
+	choco install llvm --confirm
+
+	$LLVMDir = "C:/Program Files/LLVM"
+
+	Add-to-Path "$LLVMDir\bin"
+
+	# Write LibClang CMake flags — same pattern as Darwin/FreeBSD in metacall-environment.sh
+	Write-Output "-DLibClang_INCLUDE_DIR=""$LLVMDir/include""" >> $EnvOpts
+	Write-Output "-DLibClang_LIBRARY=""$LLVMDir/lib/libclang.lib""" >> $EnvOpts
 }
 
 function Add-to-Path {
