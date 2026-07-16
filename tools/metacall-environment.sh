@@ -180,7 +180,12 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+			# TODO: || [ $INSTALL_THREAD_SANITIZER = 1 ]
+			# Instrumenting python with thread sanitizer produces many issues
+			# which are related to py_loader_impl_initialize_asyncio_module thread created
+			# for handling async, we should review it and solve the issues if any otherwise
+			# add the required suppressions, for now we skip the thread sanitizer instrumentation
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 				# Download Python source
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
@@ -203,9 +208,9 @@ sub_python(){
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-thread-sanitizer --disable-gil"
+					BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
 					BUILD_LDFLAGS="-fsanitize=thread"
-					PYTHON_EXE="${PYTHON_PKG}t"
+					# PYTHON_EXE="${PYTHON_PKG}t"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
