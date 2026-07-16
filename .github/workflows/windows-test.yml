@@ -50,6 +50,10 @@ jobs:
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
           METACALL_INSTALL_OPTIONS: python nodejs java ruby typescript wasm rpc file c # netcore5 java cobol rust rapidjson pack # clangformat v8rep51 coverage
+        # Debug libffi output to help diagnose issues with libffi on Windows
+      - name: Debug libffi output
+        run: |
+          Get-ChildItem -Recurse "D:\a\metacall-core\metacall-core\dependencies\libffi\dist" | Select-Object FullName
 
       - name: Configure
         run: |
