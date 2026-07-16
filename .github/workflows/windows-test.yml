@@ -53,7 +53,14 @@ jobs:
         # Debug libffi output to help diagnose issues with libffi on Windows
       - name: Debug libffi output
         run: |
-          Get-ChildItem -Recurse "D:\a\metacall-core\metacall-core\dependencies\libffi\dist" | Select-Object FullName
+          Write-Output "=== Checking libffi dist ==="
+          if (Test-Path "D:\a\metacall-core\metacall-core\dependencies\libffi\dist") {
+            Get-ChildItem -Recurse "D:\a\metacall-core\metacall-core\dependencies\libffi\dist" | Select-Object FullName
+          } else {
+            Write-Output "libffi dist directory does not exist"
+          }
+          Write-Output "=== Checking CMakeConfig.txt ==="
+          Get-Content "D:\a\metacall-core\metacall-core\build\CMakeConfig.txt"
 
       - name: Configure
         run: |
