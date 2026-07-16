@@ -54,5 +54,4 @@ jobs:
 
           sh ../tools/metacall-configure.sh debug tests
 
-          sh ../tools/metacall-build.sh debug
-          ctest -j1 --timeout 60 --output-on-failure -C debug
+          sh ../tools/metacall-build.sh debug tests
