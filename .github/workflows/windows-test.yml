@@ -50,17 +50,6 @@ jobs:
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
           METACALL_INSTALL_OPTIONS: python nodejs java ruby typescript wasm rpc file c # netcore5 java cobol rust rapidjson pack # clangformat v8rep51 coverage
-        # Debug libffi output to help diagnose issues with libffi on Windows
-      - name: Debug libffi output
-        run: |
-          Write-Output "=== Checking libffi dist ==="
-          if (Test-Path "D:\a\metacall-core\metacall-core\dependencies\libffi\dist") {
-            Get-ChildItem -Recurse "D:\a\metacall-core\metacall-core\dependencies\libffi\dist" | Select-Object FullName
-          } else {
-            Write-Output "libffi dist directory does not exist"
-          }
-          Write-Output "=== Checking CMakeConfig.txt ==="
-          Get-Content "D:\a\metacall-core\metacall-core\build\CMakeConfig.txt"
 
       - name: Configure
         run: |
