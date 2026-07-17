@@ -186,16 +186,15 @@ sub_python(){
 			# for handling async, we should review it and solve the issues if any otherwise
 			# add the required suppressions, for now we skip the thread sanitizer instrumentation
 			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-				# Download Python source
+				# Download Python build dependencies and source
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
-				mkdir python && cd python
-				apt-get source "${PYTHON_PKG}"
-				SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
-				cd "$SRC_DIR"
+				PYTHON_VERSION="${PYTHON_PKG#python}"
+				git clone --depth=1 --single-branch --branch "${PYTHON_VERSION}" https://github.com/python/cpython.git python
+				cd python
 				PYTHON_EXE="${PYTHON_PKG}d"
 
-				# Build Python with instrumentation
+				# Define Python instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
@@ -218,8 +217,22 @@ sub_python(){
 					export CC="/usr/bin/clang"
 					export CXX="/usr/bin/clang++"
 				fi
+
+				# Configure
+				export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE"
 				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
-				./configure --prefix=/usr/local --enable-shared --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				./configure \
+					--prefix=/usr/local \
+					--enable-shared \
+					--without-pymalloc \
+					--without-static-libpython \
+					--without-ensurepip \
+					--with-system-expat \
+					--with-system-ffi \
+					--with-dbmliborder=bdb:gdbm \
+					${BUILD_FLAGS}
+
+				# Build and install
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
@@ -228,6 +241,7 @@ sub_python(){
 				unset UBSAN_OPTIONS
 				unset TSAN_OPTIONS
 				unset MSAN_OPTIONS
+				unset CFLAGS
 				unset LDFLAGS
 
 				# Define python as the default one
@@ -242,7 +256,7 @@ sub_python(){
 					setuptools \
 					wheel \
 					rsa
-				cd ../..
+				cd ..
 				rm -rf ./python
 			else
 				if [ "${BUILD_TYPE}" = "Debug" ]; then
