@@ -245,6 +245,75 @@ function Set-Curl {
 	Write-Output "-DCURL_LIBRARY_NAME=""$CURL_LIB_NAME""" >> $EnvOpts
 }
 
+function Set-C {
+	Write-Output "Install C Loader Dependencies (libffi + libclang)"
+
+	Set-Location $ROOT_DIR
+
+	$LibFFIVersion = "3.5.2"
+	$LLVMVersion = "19.1.0"
+	$DepsDir = "$ROOT_DIR\dependencies"
+	$RuntimeDir = "$DepsDir\libffi"
+	$DistDir = "$RuntimeDir\dist"
+
+	mkdir -Force $DepsDir
+	mkdir -Force $RuntimeDir
+	mkdir -Force $DistDir
+
+	Set-Location $DepsDir
+
+	# Download official libffi source tarball
+	if (!(Test-Path -Path "$DepsDir\libffi.tar.gz")) {
+		Write-Output "libffi not found, downloading..."
+		(New-Object Net.WebClient).DownloadFile(
+			"https://github.com/libffi/libffi/releases/download/v$LibFFIVersion/libffi-$LibFFIVersion.tar.gz",
+			"$DepsDir\libffi.tar.gz"
+		)
+	}
+
+	cmake -E tar xzf "$DepsDir\libffi.tar.gz"
+
+	$SrcDir = "$DepsDir\libffi-$LibFFIVersion"
+	$BuildDir = "$RuntimeDir\build"
+	mkdir -Force $BuildDir
+
+	$GitBash = "C:\Program Files\Git\bin\bash.exe"
+	$DistDirUnix = $DistDir.Replace('\', '/')
+	$BuildDirUnix = $BuildDir.Replace('\', '/')
+	$SrcDirUnix = $SrcDir.Replace('\', '/')
+	$MsvccSh = "$SrcDirUnix/msvcc.sh"
+
+	& $GitBash -c "cd '$BuildDirUnix' && '$SrcDirUnix/configure' CC='$MsvccSh -m64' CXX='$MsvccSh -m64' LD=link CPP='cl -nologo -EP' CXXCPP='cl -nologo -EP' CPPFLAGS='-DFFI_BUILDING_DLL' --prefix='$DistDirUnix' --build=x86_64-pc-mingw64 && make && make install"
+
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$LibFFIDir = $DistDir.Replace('\', '/')
+
+	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFIDir/include""" >> $EnvOpts
+	Write-Output "-DLIBFFI_LIBRARY=""$LibFFIDir/lib/libffi.lib""" >> $EnvOpts
+
+	# Download official LLVM prebuilt archive (includes libclang.lib + headers)
+	# Using clang+llvm archive which contains libraries needed for development
+	$LLVMArchive = "clang+llvm-$LLVMVersion-x86_64-pc-windows-msvc.tar.xz"
+	$LLVMDir = "$DepsDir\llvm"
+
+	if (!(Test-Path -Path "$DepsDir\$LLVMArchive")) {
+		Write-Output "LLVM not found, downloading..."
+		(New-Object Net.WebClient).DownloadFile(
+			"https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVMVersion/$LLVMArchive",
+			"$DepsDir\$LLVMArchive"
+		)
+	}
+
+	mkdir -Force $LLVMDir
+	cmake -E tar xf "$DepsDir\$LLVMArchive"
+	Robocopy.exe /move /e "$DepsDir\clang+llvm-$LLVMVersion-x86_64-pc-windows-msvc" $LLVMDir /NFL /NDL /NJH /NJS /NC /NS /NP
+
+	$LLVMDirUnix = $LLVMDir.Replace('\', '/')
+
+	Write-Output "-DLibClang_INCLUDE_DIR=""$LLVMDirUnix/include""" >> $EnvOpts
+	Write-Output "-DLibClang_LIBRARY=""$LLVMDirUnix/lib/libclang.lib""" >> $EnvOpts
+}
+
 function Add-to-Path {
 	$GivenPath = $args[0]
 
@@ -351,6 +420,7 @@ function Configure {
 		}
 		if ("$var" -eq 'c') {
 			Write-Output "c selected"
+			Set-C
 		}
 		if ("$var" -eq 'cobol') {
 			Write-Output "cobol selected"
