@@ -20,40 +20,22 @@
 
 #include <rpc_loader/rpc_loader_impl.h>
 
-#include <loader/loader.h>
-#include <loader/loader_impl.h>
+#include <concurrentqueue.h>
 
-#include <portability/portability_path.h>
-
-#include <reflect/reflect_context.h>
-#include <reflect/reflect_function.h>
-#include <reflect/reflect_scope.h>
-#include <reflect/reflect_type.h>
-
-#include <serial/serial.h>
-
-#include <log/log.h>
-
-#include <memory/memory_sanitizer.h>
-
-#include <metacall/metacall.h>
+#include <metacall/metacall.hpp>
 
 #include <curl/curl.h>
 
 #include <cstdlib>
 #include <cstring>
 
-#include <algorithm>
 #include <atomic>
 #include <fstream>
 #include <map>
 #include <set>
-#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
-
-#include <concurrentqueue.h>
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define CURL_VERBOSE 1L
@@ -72,7 +54,7 @@ typedef struct loader_impl_rpc_type
 	std::atomic<bool> exit_flag;
 	moodycamel::ConcurrentQueue<rpc_async_context *> async_queue;
 	void *allocator;
-	serial cached_serial;
+	metacall::detail::serial cached_serial;
 	struct curl_slist *headers;
 	std::map<type_id, type> types;
 	std::set<std::string> execution_paths;
@@ -81,12 +63,15 @@ typedef struct loader_impl_rpc_type
 
 typedef struct loader_impl_rpc_handle_type
 {
-	std::vector<std::string> urls;
+	std::vector<metacall::map_typed<std::string, metacall::value>> configs;
 
 } * loader_impl_rpc_handle;
 
 typedef struct loader_impl_rpc_function_type
 {
+	loader_impl_rpc_function_type(loader_impl_rpc rpc_impl, const std::string &url, bool is_async, const std::string &func_name) :
+		rpc_impl(rpc_impl), url(url + (is_async ? "await/" : "call/") + func_name) {}
+
 	loader_impl_rpc rpc_impl;
 	std::string url;
 
@@ -110,7 +95,7 @@ struct rpc_async_context
 };
 
 static size_t rpc_loader_impl_write_data(void *buffer, size_t size, size_t nmemb, void *userp);
-static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string &url, value v, context ctx);
+static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, const std::string &url, value v, context ctx);
 static int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rpc_impl);
 
 size_t rpc_loader_impl_write_data(void *buffer, size_t size, size_t nmemb, void *userp)
@@ -170,14 +155,14 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 {
 	loader_impl_rpc_function rpc_function = static_cast<loader_impl_rpc_function>(impl);
 	loader_impl_rpc rpc_impl = rpc_function->rpc_impl;
-	value v = metacall_value_create_array(NULL, size);
+	value v = metacall::metacall_value_create_array(NULL, size);
 	size_t body_request_size = 0;
 
 	(void)func;
 
 	if (size > 0)
 	{
-		void **v_array = metacall_value_to_array(v);
+		void **v_array = metacall::metacall_value_to_array(v);
 
 		for (size_t arg = 0; arg < size; ++arg)
 		{
@@ -185,14 +170,14 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 		}
 	}
 
-	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (memory_allocator)rpc_impl->allocator);
+	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (metacall::detail::memory_allocator)rpc_impl->allocator);
 
 	/* Destroy the value without destroying the contents of the array */
 	value_destroy(v);
 
 	if (body_request_size == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
 		return NULL;
 	}
 
@@ -201,8 +186,8 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 
 	if (easy == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL handle for sync call to %s", rpc_function->url.c_str());
-		metacall_allocator_free(rpc_impl->allocator, buffer);
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not create CURL handle for sync call to %s", rpc_function->url.c_str());
+		metacall::metacall_allocator_free(rpc_impl->allocator, buffer);
 		return NULL;
 	}
 
@@ -228,22 +213,22 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	});
 
 	/* Clear the request buffer */
-	metacall_allocator_free(rpc_function->rpc_impl->allocator, buffer);
+	metacall::metacall_allocator_free(rpc_function->rpc_impl->allocator, buffer);
 
 	if (res != CURLE_OK)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not call to the API endpoint %s [%s]", rpc_function->url.c_str(), curl_easy_strerror(res));
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not call to the API endpoint %s [%s]", rpc_function->url.c_str(), curl_easy_strerror(res));
 		return NULL;
 	}
 
 	/* Deserialize the call result data */
 	const size_t write_data_size = write_data.buffer.length() + 1;
 
-	void *result_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), write_data_size, (memory_allocator)rpc_impl->allocator);
+	void *result_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), write_data_size, (metacall::detail::memory_allocator)rpc_impl->allocator);
 
 	if (result_value == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize the call result from API endpoint %s", rpc_function->url.c_str());
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not deserialize the call result from API endpoint %s", rpc_function->url.c_str());
 	}
 
 	return result_value;
@@ -305,14 +290,14 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 				if (result != CURLE_OK)
 				{
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-					log_write("metacall", LOG_LEVEL_ERROR, "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
+					log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
 #endif
 
 					if (done_ctx->reject_callback != NULL)
 					{
-						value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
+						value error = metacall::metacall_error_throw("RPCLoader", 0, "", "Async HTTP request failed [%s]: %s", done_ctx->url.c_str(), curl_easy_strerror(result));
 						done_ctx->reject_callback(error, done_ctx->context);
-						metacall_value_destroy(error);
+						metacall::metacall_value_destroy(error);
 					}
 
 					delete done_ctx;
@@ -322,24 +307,24 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 				/* Deserialize the response */
 				const size_t write_data_size = done_ctx->write_data.buffer.length() + 1;
 
-				struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-				void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+				struct metacall::metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+				void *allocator = metacall_allocator_create(metacall::METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-				void *result_value = serial_deserialize(rpc_impl->cached_serial, done_ctx->write_data.buffer.c_str(), write_data_size, (memory_allocator)allocator);
+				void *result_value = serial_deserialize(rpc_impl->cached_serial, done_ctx->write_data.buffer.c_str(), write_data_size, (metacall::detail::memory_allocator)allocator);
 
-				metacall_allocator_destroy(allocator);
+				metacall::metacall_allocator_destroy(allocator);
 
 				if (result_value == NULL)
 				{
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-					log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize async call result from API endpoint %s", done_ctx->url.c_str());
+					log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not deserialize async call result from API endpoint %s", done_ctx->url.c_str());
 #endif
 
 					if (done_ctx->reject_callback != NULL)
 					{
-						value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP deserialization failed [%s]", done_ctx->url.c_str());
+						value error = metacall::metacall_error_throw("RPCLoader", 0, "", "Async HTTP deserialization failed [%s]", done_ctx->url.c_str());
 						done_ctx->reject_callback(error, done_ctx->context);
-						metacall_value_destroy(error);
+						metacall::metacall_value_destroy(error);
 					}
 
 					delete done_ctx;
@@ -353,7 +338,7 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 				}
 				else
 				{
-					metacall_value_destroy(result_value);
+					metacall::metacall_value_destroy(result_value);
 				}
 
 				delete done_ctx;
@@ -376,12 +361,12 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	(void)func;
 
 	/* Serialize arguments */
-	value v = metacall_value_create_array(NULL, size);
+	value v = metacall::metacall_value_create_array(NULL, size);
 	size_t body_request_size = 0;
 
 	if (size > 0)
 	{
-		void **v_array = metacall_value_to_array(v);
+		void **v_array = metacall::metacall_value_to_array(v);
 
 		for (size_t arg = 0; arg < size; ++arg)
 		{
@@ -389,7 +374,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 		}
 	}
 
-	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (memory_allocator)rpc_impl->allocator);
+	char *buffer = serial_serialize(rpc_impl->cached_serial, (value)v, &body_request_size, (metacall::detail::memory_allocator)rpc_impl->allocator);
 
 	/* Destroy the value without destroying the contents of the array */
 	value_destroy(v);
@@ -397,15 +382,15 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	if (body_request_size == 0)
 	{
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
 #endif
 
 		// TODO: Is the reject correct here? Should not we return the exception instead? The function has not been invoked yet
 		if (reject_callback != NULL)
 		{
-			value error = metacall_error_throw("RPCLoader", 0, "", "Async HTTP serialization failed [%s]", rpc_function->url.c_str());
+			value error = metacall::metacall_error_throw("RPCLoader", 0, "", "Async HTTP serialization failed [%s]", rpc_function->url.c_str());
 			reject_callback(error, context);
-			metacall_value_destroy(error);
+			metacall::metacall_value_destroy(error);
 		}
 
 		return NULL; // TODO: Return here the thrown exception?
@@ -423,8 +408,8 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 
 	if (easy == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL handle for async call to %s", rpc_function->url.c_str());
-		metacall_allocator_free(rpc_impl->allocator, buffer);
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not create CURL handle for async call to %s", rpc_function->url.c_str());
+		metacall::metacall_allocator_free(rpc_impl->allocator, buffer);
 		delete async_ctx;
 		return NULL;
 	}
@@ -446,7 +431,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	async_ctx->easy = easy;
 
 	/* Free serialization buffer */
-	metacall_allocator_free(rpc_impl->allocator, buffer);
+	metacall::metacall_allocator_free(rpc_impl->allocator, buffer);
 
 	/* Enqueue for poll thread (lock-free, wait-free) */
 	rpc_impl->async_queue.enqueue(async_ctx);
@@ -510,7 +495,7 @@ int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rpc_impl)
 
 		if (t != NULL)
 		{
-			if (loader_impl_type_define(impl, type_name(t), t) != 0)
+			if (metacall::detail::loader_impl_type_define(impl, type_name(t), t) != 0)
 			{
 				type_destroy(t);
 				return 1;
@@ -535,15 +520,15 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+	struct metacall::metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-	rpc_impl->allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+	rpc_impl->allocator = metacall_allocator_create(metacall::METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	rpc_impl->cached_serial = serial_create(metacall_serial());
+	rpc_impl->cached_serial = metacall::detail::serial_create(metacall::metacall_serial());
 
 	if (rpc_impl->allocator == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create allocator for serialization");
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not create allocator for serialization");
 
 		delete rpc_impl;
 
@@ -560,9 +545,9 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 	if (rpc_impl->discover_curl == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL inspect object");
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not create CURL inspect object");
 
-		metacall_allocator_destroy(rpc_impl->allocator);
+		metacall::metacall_allocator_destroy(rpc_impl->allocator);
 
 		delete rpc_impl;
 
@@ -583,10 +568,10 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 	if (rpc_impl->async_multi == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL multi handle for async");
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not create CURL multi handle for async");
 
 		curl_easy_cleanup(rpc_impl->discover_curl);
-		metacall_allocator_destroy(rpc_impl->allocator);
+		metacall::metacall_allocator_destroy(rpc_impl->allocator);
 		delete rpc_impl;
 
 		return NULL;
@@ -598,7 +583,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 	if (rpc_loader_impl_initialize_types(impl, rpc_impl) != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL object");
+		log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not create CURL object");
 
 		rpc_impl->exit_flag.store(true);
 		curl_multi_wakeup(rpc_impl->async_multi);
@@ -606,164 +591,133 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 		curl_multi_cleanup(rpc_impl->async_multi);
 		curl_easy_cleanup(rpc_impl->discover_curl);
-		metacall_allocator_destroy(rpc_impl->allocator);
+		metacall::metacall_allocator_destroy(rpc_impl->allocator);
 		delete rpc_impl;
 
 		return NULL;
 	}
 
 	/* Register initialization */
-	loader_initialization_register(impl);
+	metacall::detail::loader_initialization_register(impl);
 
 	return rpc_impl;
 }
 
 int rpc_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
-	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
+	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(metacall::detail::loader_impl_get(impl));
 
 	auto pair = rpc_impl->execution_paths.insert(path);
 
 	return pair.second == true ? 0 : 1;
 }
 
-int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, std::istream &stream)
+loader_impl_rpc_handle rpc_loader_impl_handle_create(std::vector<std::string> buffers)
 {
-	std::string url;
+	loader_impl_rpc_handle handle = new loader_impl_rpc_handle_type();
 
-	while (std::getline(stream, url))
+	if (handle == nullptr)
 	{
-		/* Remove white spaces */
-		url.erase(std::remove_if(url.begin(), url.end(), [](char &c) {
-			return std::isspace(c);
-		}),
-			url.end());
-
-		/* Skip empty lines */
-		if (url.length() == 0)
-		{
-			continue;
-		}
-
-		/* URL must come without URL encoded parameters */
-		if (url[url.length() - 1] != '/')
-		{
-			url.append("/");
-		}
-
-		rpc_handle->urls.push_back(url);
+		return nullptr;
 	}
 
-	return 0;
+	metacall::metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+	void *allocator = metacall_allocator_create(metacall::METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	for (const auto &buffer : buffers)
+	{
+		void *json_value = metacall::metacall_deserialize(metacall::metacall_serial(), buffer.c_str(), buffer.length() + 1, allocator);
+		handle->configs.emplace_back(json_value);
+	}
+
+	return handle;
 }
 
-int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, const loader_path path)
+int rpc_loader_impl_load_from_file_read(const loader_path path, std::string &buffer)
 {
 	std::fstream file;
 
-	file.open(path, std::ios::in);
+	file.open(path, std::ios::in | std::ios::binary);
 
 	if (!file.is_open())
 	{
 		return 1;
 	}
 
-	int result = rpc_loader_impl_load_from_stream_handle(rpc_handle, file);
+	file.seekg(0, std::ios::end);
+	buffer.resize(static_cast<std::size_t>(file.tellg()));
+	file.seekg(0, std::ios::beg);
+
+	file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
 
 	file.close();
 
-	return result;
-}
-
-int rpc_loader_impl_load_from_file_execution_paths(loader_impl_rpc rpc_impl, loader_impl_rpc_handle rpc_handle, const loader_path path)
-{
-	if (rpc_loader_impl_load_from_file_handle(rpc_handle, path) == 0)
-	{
-		return 0;
-	}
-
-	if (rpc_impl->execution_paths.size() > 0)
-	{
-		for (auto it : rpc_impl->execution_paths)
-		{
-			loader_path absolute_path = {};
-
-			(void)portability_path_join(it.c_str(), it.size(), path, strnlen(path, LOADER_PATH_SIZE) + 1, absolute_path, LOADER_PATH_SIZE);
-
-			if (rpc_loader_impl_load_from_file_handle(rpc_handle, absolute_path) == 0)
-			{
-				return 0;
-			}
-		}
-	}
-
-	return 1;
-}
-
-int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, const char *buffer, size_t size)
-{
-	if (size == 0)
-	{
-		return 1;
-	}
-
-	std::string str(buffer, size - 1);
-	std::stringstream stream(str);
-
-	return rpc_loader_impl_load_from_stream_handle(rpc_handle, stream);
+	return file.fail() ? 1 : 0;
 }
 
 loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
-	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
+	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(metacall::detail::loader_impl_get(impl));
+	std::vector<std::string> buffers;
 
 	(void)data;
 
-	if (rpc_handle == nullptr)
-	{
-		return NULL;
-	}
-
-	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
-
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		if (rpc_loader_impl_load_from_file_execution_paths(rpc_impl, rpc_handle, paths[iterator]) != 0)
+		const std::string path_str(paths[iterator]);
+		size_t path_str_size = path_str.length() + 1;
+		std::string buffer;
+
+		if (portability_path_is_absolute(path_str.c_str(), path_str_size) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", paths[iterator]);
-
-			delete rpc_handle;
-
-			return NULL;
+			if (!rpc_loader_impl_load_from_file_read(paths[iterator], buffer))
+			{
+				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Failed to load RPC configuration from %s", paths[iterator]);
+				return NULL;
+			}
 		}
+		else
+		{
+			bool found = false;
+
+			for (const auto &execution_path : rpc_impl->execution_paths)
+			{
+				loader_path absolute_path = {};
+
+				(void)portability_path_join(execution_path.c_str(), execution_path.length() + 1, path_str.c_str(), path_str_size, absolute_path, LOADER_PATH_SIZE);
+
+				if (rpc_loader_impl_load_from_file_read(absolute_path, buffer) == 0)
+				{
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+			{
+				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Failed to load RPC configuration from %s", paths[iterator]);
+				return NULL;
+			}
+		}
+
+		buffers.push_back(buffer);
 	}
 
-	return static_cast<loader_handle>(rpc_handle);
+	return static_cast<loader_handle>(rpc_loader_impl_handle_create(buffers));
 }
 
 loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size, void *data)
 {
-	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
+	std::string buffer_str(buffer, size - 1);
+	std::vector<std::string> buffers;
 
 	(void)impl;
 	(void)name;
 	(void)data;
 
-	if (rpc_handle == nullptr)
-	{
-		return NULL;
-	}
+	buffers.push_back(buffer_str);
 
-	if (rpc_loader_impl_load_from_memory_handle(rpc_handle, buffer, size) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", buffer);
-
-		delete rpc_handle;
-
-		return NULL;
-	}
-
-	return static_cast<loader_handle>(rpc_handle);
+	return static_cast<loader_handle>(rpc_loader_impl_handle_create(buffers));
 }
 
 loader_handle rpc_loader_impl_load_from_package(loader_impl impl, const loader_path path, void *data)
@@ -783,144 +737,123 @@ int rpc_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	(void)impl;
 
-	rpc_handle->urls.clear();
+	rpc_handle->configs.clear();
 
 	delete rpc_handle;
 
 	return 0;
 }
 
-/* TODO: Replace this by the C++ Port */
-static std::map<std::string, void *> rpc_loader_impl_value_to_map(void *v)
+int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, const std::string &url, void *v, context ctx)
 {
-	void **v_map = metacall_value_to_map(v);
-	std::map<std::string, void *> m;
+	metacall::map_typed<std::string, metacall::array> inspect(v);
 
-	for (size_t iterator = 0; iterator < metacall_value_count(v); ++iterator)
+	for (const auto &[tag, handles] : inspect)
 	{
-		void **map_pair = metacall_value_to_array(v_map[iterator]);
-		const char *key = metacall_value_to_string(map_pair[0]);
-		m[key] = map_pair[1];
-	}
-
-	return m;
-}
-
-int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string &url, void *v, context ctx)
-{
-	void **lang_map = metacall_value_to_map(v);
-
-	for (size_t lang = 0; lang < metacall_value_count(v); ++lang)
-	{
-		void **lang_pair = metacall_value_to_array(lang_map[lang]);
-		void **script_array = metacall_value_to_array(lang_pair[1]);
-
-		for (size_t script = 0; script < metacall_value_count(lang_pair[1]); ++script)
+		for (const auto &handle : handles)
 		{
-			std::map<std::string, void *> script_map = rpc_loader_impl_value_to_map(script_array[script]);
-			std::map<std::string, void *> scope_map = rpc_loader_impl_value_to_map(script_map["scope"]);
-			void *funcs = scope_map["funcs"];
-			void **funcs_array = metacall_value_to_array(funcs);
+			const auto &handle_map = handle.as<metacall::map_typed<std::string, metacall::value>>();
+			const auto &scope_map = handle_map["scope"].as<metacall::map_typed<std::string, metacall::value>>();
 
-			for (size_t func = 0; func < metacall_value_count(funcs); ++func)
+			for (const auto &func : scope_map["funcs"].as<metacall::array>())
 			{
-				std::map<std::string, void *> func_map = rpc_loader_impl_value_to_map(funcs_array[func]);
-				const char *func_name = metacall_value_to_string(func_map["name"]);
-				bool is_async = metacall_value_to_bool(func_map["async"]) == 0L ? false : true;
-				std::map<std::string, void *> signature_map = rpc_loader_impl_value_to_map(func_map["signature"]);
-				void *args = signature_map["args"];
-				void **args_array = metacall_value_to_array(args);
-				const size_t args_count = metacall_value_count(args);
-				loader_impl_rpc_function rpc_func = new loader_impl_rpc_function_type();
+				const auto &func_map = func.as<metacall::map_typed<std::string, metacall::value>>();
+				const auto &func_name = func_map["name"].as<std::string>();
+				const auto &is_async = func_map["async"].as<bool>();
+				const auto &signature_map = func_map["signature"].as<metacall::map_typed<std::string, metacall::value>>();
+				const auto &args = signature_map["args"].as<metacall::array>();
 
-				rpc_func->url = url + (is_async ? "await/" : "call/") + func_name;
-				rpc_func->rpc_impl = rpc_impl;
+				loader_impl_rpc_function rpc_func = new loader_impl_rpc_function_type(rpc_impl, url, is_async, func_name);
 
-				function f = function_create(func_name, args_count, rpc_func, &function_rpc_singleton);
-
+				function f = function_create(func_name.c_str(), args.size(), rpc_func, &function_rpc_singleton);
 				signature s = function_signature(f);
 
-				function_async(f, is_async == true ? ASYNCHRONOUS : SYNCHRONOUS);
+				function_async(f, is_async ? ASYNCHRONOUS : SYNCHRONOUS);
 
-				for (size_t arg = 0; arg < args_count; ++arg)
+				size_t arg = 0;
+
+				for (const auto &arg_value : args)
 				{
-					std::map<std::string, void *> arg_map = rpc_loader_impl_value_to_map(args_array[arg]);
-					std::map<std::string, void *> type_map = rpc_loader_impl_value_to_map(arg_map["type"]);
-					void *id_v = metacall_value_copy(type_map["id"]);
-					type_id id = metacall_value_cast_int(&id_v);
+					const auto &arg_map = arg_value.as<metacall::map_typed<std::string, metacall::value>>();
+					const auto &type_map = arg_map["type"].as<metacall::map_typed<std::string, metacall::value>>();
+					const type_id id = static_cast<type_id>(type_map["id"].as<int>());
 
-					metacall_value_destroy(id_v);
-
-					signature_set(s, arg, metacall_value_to_string(arg_map["name"]), rpc_impl->types[id]);
+					signature_set(s, arg++, arg_map["name"].as<std::string>().c_str(), rpc_impl->types[id]);
 				}
 
-				std::map<std::string, void *> ret_map = rpc_loader_impl_value_to_map(signature_map["ret"]);
-				std::map<std::string, void *> type_map = rpc_loader_impl_value_to_map(ret_map["type"]);
-				void *id_v = metacall_value_copy(type_map["id"]);
-				type_id id = metacall_value_cast_int(&id_v);
+				const auto &ret_map = signature_map["ret"].as<metacall::map_typed<std::string, metacall::value>>();
+				const auto &type_map = ret_map["type"].as<metacall::map_typed<std::string, metacall::value>>();
 
-				metacall_value_destroy(id_v);
+				const type_id id = static_cast<type_id>(type_map["id"].as<int>());
 
 				signature_set_return(s, rpc_impl->types[id]);
 
 				scope sp = context_scope(ctx);
-				value v = value_create_function(f);
+				value fn_value = value_create_function(f);
 
-				if (scope_define(sp, function_name(f), v) != 0)
+				if (scope_define(sp, function_name(f), fn_value) != 0)
 				{
-					metacall_value_destroy(v);
+					metacall::metacall_value_destroy(fn_value);
 					return 1;
 				}
 			}
 		}
 	}
 
-	metacall_value_destroy(v);
-
 	return 0;
 }
 
 int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
-	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
+	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(metacall::detail::loader_impl_get(impl));
 	loader_impl_rpc_handle rpc_handle = static_cast<loader_impl_rpc_handle>(handle);
 
-	for (size_t iterator = 0; iterator < rpc_handle->urls.size(); ++iterator)
+	for (const auto &config : rpc_handle->configs)
 	{
-		loader_impl_rpc_write_data_type write_data;
-		std::string inspect_url = rpc_handle->urls[iterator] + "inspect";
-		CURLcode res;
+		auto urls = config["urls"].as<metacall::array>();
+		// TODO:
+		// auto timeout = config["timeout"].as<int>();
+		// auto retry = config["retry"].as<int>();
 
-		curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
-		curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
-
-		/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
-		memory_sanitizer_uninstrumented({
-			res = curl_easy_perform(rpc_impl->discover_curl);
-		});
-
-		if (res != CURLE_OK)
+		for (const auto &url : urls)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Could not access the API endpoint %s [%s]", rpc_handle->urls[iterator].c_str(), curl_easy_strerror(res));
-			return 1;
-		}
+			loader_impl_rpc_write_data_type write_data;
+			const auto &url_str = url.as<std::string>();
+			std::string base_url = url_str.back() != '/' ? url_str + '/' : url_str;
+			std::string inspect_url = base_url + "inspect";
+			CURLcode res;
 
-		/* Deserialize the inspect data */
-		const size_t size = write_data.buffer.length() + 1;
+			curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
+			curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
 
-		void *inspect_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), size, (memory_allocator)rpc_impl->allocator);
+			/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
+			memory_sanitizer_uninstrumented({
+				res = curl_easy_perform(rpc_impl->discover_curl);
+			});
 
-		if (inspect_value == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize the inspect data from API endpoint %s", rpc_handle->urls[iterator].c_str());
-			return 1;
-		}
+			if (res != CURLE_OK)
+			{
+				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not access the API endpoint %s [%s]", url_str.c_str(), curl_easy_strerror(res));
+				return 1;
+			}
 
-		/* Discover the functions from the inspect value */
-		if (rpc_loader_impl_discover_value(rpc_impl, rpc_handle->urls[iterator], inspect_value, ctx) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid inspect value discover from API endpoint %s", rpc_handle->urls[iterator].c_str());
-			return 1;
+			/* Deserialize the inspect data */
+			const size_t size = write_data.buffer.length() + 1;
+
+			void *inspect_value = serial_deserialize(rpc_impl->cached_serial, write_data.buffer.c_str(), size, (metacall::detail::memory_allocator)rpc_impl->allocator);
+
+			if (inspect_value == NULL)
+			{
+				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Could not deserialize the inspect data from API endpoint %s", url_str.c_str());
+				return 1;
+			}
+
+			/* Discover the functions from the inspect value */
+			if (rpc_loader_impl_discover_value(rpc_impl, base_url, inspect_value, ctx) != 0)
+			{
+				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Invalid inspect value discover from API endpoint %s", url_str.c_str());
+				return 1;
+			}
 		}
 	}
 
@@ -929,10 +862,10 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 int rpc_loader_impl_destroy(loader_impl impl)
 {
-	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
+	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(metacall::detail::loader_impl_get(impl));
 
 	/* Destroy children loaders */
-	loader_unload_children(impl);
+	metacall::detail::loader_unload_children(impl);
 
 	/* Stop the poll thread, set exit flag, wake it, wait for drain */
 	rpc_impl->exit_flag.store(true);
@@ -951,7 +884,7 @@ int rpc_loader_impl_destroy(loader_impl impl)
 
 	curl_slist_free_all(rpc_impl->headers);
 
-	metacall_allocator_destroy(rpc_impl->allocator);
+	metacall::metacall_allocator_destroy(rpc_impl->allocator);
 
 	curl_global_cleanup();
 

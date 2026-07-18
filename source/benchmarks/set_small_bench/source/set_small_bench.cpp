@@ -20,7 +20,7 @@
 
 #include <benchmark/benchmark.h>
 
-#include <adt/adt_set.h>
+#include <adt/adt_set_small.h>
 
 #include <string>
 #include <vector>
@@ -28,12 +28,12 @@
 #define SET_SIZE   100000
 #define ITERATIONS 1000
 
-class set_bench : public benchmark::Fixture
+class set_small_bench : public benchmark::Fixture
 {
 public:
 	void SetUp(benchmark::State &)
 	{
-		s = set_create(&hash_callback_ptr, &comparable_callback_ptr);
+		s = set_small_create(SET_SIZE);
 
 		keys.reserve(SET_SIZE);
 		values.reserve(SET_SIZE);
@@ -42,64 +42,32 @@ public:
 		{
 			keys.push_back(std::to_string(i));
 			values.push_back(i);
-			set_insert(s, (set_key)keys[i].c_str(), &values[i]);
+			set_small_insert(s, keys[i].c_str(), &values[i]);
 		}
 	}
 
 	void TearDown(benchmark::State &)
 	{
-		set_destroy(s);
+		set_small_destroy(s);
 	}
 
-	set s;
+	set_small s;
 	std::vector<std::string> keys;
 	std::vector<int> values;
 };
 
-int set_cb_iterate_sum(set s, set_key key, set_value value, set_cb_iterate_args args)
-{
-	int *i = (int *)value;
-	uint64_t *sum = (uint64_t *)args;
-
-	(void)s;
-	(void)key;
-
-	*sum = ((*sum) + (uint64_t)(*i));
-
-	return 0;
-}
-
-BENCHMARK_DEFINE_F(set_bench, set_iterate)
+BENCHMARK_DEFINE_F(set_small_bench, set_iterators)
 (benchmark::State &state)
 {
 	uint64_t sum = 0;
 
 	for (auto _ : state)
 	{
-		set_iterate(s, &set_cb_iterate_sum, &sum);
-	}
+		set_small_iterator_type it;
 
-	state.SetLabel("Set Benchmark - Iterate Callback");
-	state.SetItemsProcessed(SET_SIZE);
-}
-
-BENCHMARK_REGISTER_F(set_bench, set_iterate)
-	->Unit(benchmark::kMillisecond)
-	->Iterations(ITERATIONS)
-	->Repetitions(3);
-
-BENCHMARK_DEFINE_F(set_bench, set_iterators)
-(benchmark::State &state)
-{
-	uint64_t sum = 0;
-
-	for (auto _ : state)
-	{
-		set_iterator_type it;
-
-		for (set_iterator_begin(&it, s); set_iterator_end(&it) > 0; set_iterator_next(&it))
+		for (set_small_iterator_begin(&it, s); set_small_iterator_end(&it) > 0; set_small_iterator_next(&it))
 		{
-			int *i = (int *)set_iterator_value(&it);
+			int *i = (int *)set_small_iterator_value(&it);
 
 			sum += ((uint64_t)(*i));
 		}
@@ -111,7 +79,7 @@ BENCHMARK_DEFINE_F(set_bench, set_iterators)
 	state.SetItemsProcessed(SET_SIZE);
 }
 
-BENCHMARK_REGISTER_F(set_bench, set_iterators)
+BENCHMARK_REGISTER_F(set_small_bench, set_iterators)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(ITERATIONS)
 	->Repetitions(3);

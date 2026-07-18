@@ -789,14 +789,14 @@ where
     T: Clone + FromMeta,
 {
     unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
-        let count = value_type_count(val) as usize;
+        let count = unsafe { value_type_count(val) } as usize;
         if count == 0 {
             return Ok(Vec::new());
         }
-        let arr = metacall_value_to_array(val);
-        let vec = std::slice::from_raw_parts(arr, count)
+        let arr = unsafe { metacall_value_to_array(val) };
+        let vec = unsafe { std::slice::from_raw_parts(arr, count) }
             .iter()
-            .map(|p| FromMeta::from_meta(*p).unwrap())
+            .map(|p| unsafe { FromMeta::from_meta(*p).unwrap() })
             .collect();
         Ok(vec)
     }
@@ -856,7 +856,7 @@ impl FromMetaList for () {
 impl<TupleElement0: FromMeta> FromMetaList for (TupleElement0,) {
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
-        Ok((TupleElement0::from_meta(*iter.next().unwrap())?,))
+        Ok((unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },))
     }
 }
 #[allow(unused)]
@@ -866,8 +866,8 @@ impl<TupleElement0: FromMeta, TupleElement1: FromMeta> FromMetaList
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -878,9 +878,9 @@ impl<TupleElement0: FromMeta, TupleElement1: FromMeta, TupleElement2: FromMeta> 
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -895,10 +895,10 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -921,11 +921,11 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -950,12 +950,12 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -982,13 +982,13 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1017,14 +1017,14 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1055,15 +1055,15 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1096,16 +1096,16 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
-            TupleElement9::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement9::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1140,17 +1140,17 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
-            TupleElement9::from_meta(*iter.next().unwrap())?,
-            TupleElement10::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement9::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement10::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1187,18 +1187,18 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
-            TupleElement9::from_meta(*iter.next().unwrap())?,
-            TupleElement10::from_meta(*iter.next().unwrap())?,
-            TupleElement11::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement9::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement10::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement11::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1237,19 +1237,19 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
-            TupleElement9::from_meta(*iter.next().unwrap())?,
-            TupleElement10::from_meta(*iter.next().unwrap())?,
-            TupleElement11::from_meta(*iter.next().unwrap())?,
-            TupleElement12::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement9::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement10::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement11::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement12::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1290,20 +1290,20 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
-            TupleElement9::from_meta(*iter.next().unwrap())?,
-            TupleElement10::from_meta(*iter.next().unwrap())?,
-            TupleElement11::from_meta(*iter.next().unwrap())?,
-            TupleElement12::from_meta(*iter.next().unwrap())?,
-            TupleElement13::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement9::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement10::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement11::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement12::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement13::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1346,21 +1346,21 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
-            TupleElement9::from_meta(*iter.next().unwrap())?,
-            TupleElement10::from_meta(*iter.next().unwrap())?,
-            TupleElement11::from_meta(*iter.next().unwrap())?,
-            TupleElement12::from_meta(*iter.next().unwrap())?,
-            TupleElement13::from_meta(*iter.next().unwrap())?,
-            TupleElement14::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement9::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement10::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement11::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement12::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement13::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement14::from_meta(*iter.next().unwrap())? },
         ))
     }
 }
@@ -1405,22 +1405,22 @@ impl<
     unsafe fn from_meta_list(values: &[MetacallValue]) -> Result<Self> {
         let mut iter = values.iter();
         Ok((
-            TupleElement0::from_meta(*iter.next().unwrap())?,
-            TupleElement1::from_meta(*iter.next().unwrap())?,
-            TupleElement2::from_meta(*iter.next().unwrap())?,
-            TupleElement3::from_meta(*iter.next().unwrap())?,
-            TupleElement4::from_meta(*iter.next().unwrap())?,
-            TupleElement5::from_meta(*iter.next().unwrap())?,
-            TupleElement6::from_meta(*iter.next().unwrap())?,
-            TupleElement7::from_meta(*iter.next().unwrap())?,
-            TupleElement8::from_meta(*iter.next().unwrap())?,
-            TupleElement9::from_meta(*iter.next().unwrap())?,
-            TupleElement10::from_meta(*iter.next().unwrap())?,
-            TupleElement11::from_meta(*iter.next().unwrap())?,
-            TupleElement12::from_meta(*iter.next().unwrap())?,
-            TupleElement13::from_meta(*iter.next().unwrap())?,
-            TupleElement14::from_meta(*iter.next().unwrap())?,
-            TupleElement15::from_meta(*iter.next().unwrap())?,
+            unsafe { TupleElement0::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement1::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement2::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement3::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement4::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement5::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement6::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement7::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement8::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement9::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement10::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement11::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement12::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement13::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement14::from_meta(*iter.next().unwrap())? },
+            unsafe { TupleElement15::from_meta(*iter.next().unwrap())? },
         ))
     }
 }

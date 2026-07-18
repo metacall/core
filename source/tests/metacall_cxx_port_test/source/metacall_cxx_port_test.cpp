@@ -43,7 +43,7 @@ int cxx_register_by_name(void)
 	return 78;
 }
 
-std::nullptr_t cxx_map_test(metacall::map<std::string, float> &m)
+std::nullptr_t cxx_map_test(metacall::map_typed<std::string, float> &m)
 {
 	EXPECT_EQ((float)m["hello"], (float)3.0f);
 	EXPECT_EQ((float)m["world"], (float)4.0f);
@@ -77,7 +77,7 @@ metacall::array cxx_array_ret_test()
 	return a;
 }
 
-std::nullptr_t cxx_map_array_test(metacall::map<std::string, metacall::array> &m)
+std::nullptr_t cxx_map_array_test(metacall::map_typed<std::string, metacall::array> &m)
 {
 	EXPECT_STREQ(m["includes"][0].as<std::string>().c_str(), "/a/path");
 	EXPECT_STREQ(m["includes"][1].as<std::string>().c_str(), "/another/path");
@@ -96,7 +96,7 @@ std::nullptr_t cxx_map_array_test(metacall::map<std::string, metacall::array> &m
 
 // TODO:
 /*
-std::nullptr_t cxx_recursive_map_test(metacall::map<std::string, metacall::map<std::string, float>> &m)
+std::nullptr_t cxx_recursive_map_test(metacall::map_typed<std::string, metacall::map_typed<std::string, float>> &m)
 {
 	EXPECT_EQ((float)m["hello"]["world"], (float)4.0f);
 
@@ -139,7 +139,7 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 	}
 
 	{
-		metacall::map<std::string, float> m = {
+		metacall::map_typed<std::string, float> m = {
 			{ "hello", 3.0f },
 			{ "world", 4.0f }
 		};
@@ -179,7 +179,7 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		// TODO: This snippet is copying metacall::array, it would be possible
 		// to safely achieve this without copy?
 		// Review this: inline void *value<array>::create(metacall::array const &v)
-		metacall::map<std::string, metacall::array> m = {
+		metacall::map_typed<std::string, metacall::array> m = {
 			{ "includes", metacall::array("/a/path", "/another/path") },
 			{ "libraries", metacall::array("/a/path", "/another/path") }
 		};
@@ -192,7 +192,7 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 	// TODO:
 	/*
 	{
-		metacall::map<std::string, metacall::map<std::string, float>> m = {
+		metacall::map_typed<std::string, metacall::map_typed<std::string, float>> m = {
 			{ "hello", { "world", 4.0f } }
 		};
 
@@ -201,6 +201,50 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		EXPECT_EQ(nullptr, fn(m));
 	}
 	*/
+
+	{
+		static const char json_map[] =
+			"{\n"
+			"	\"urls\": [\n"
+			"		\"http://localhost:8000/\",\n"
+			"		\"http://localhost:8001/\",\n"
+			"		\"http://localhost:8002/\"\n"
+			"	],\n"
+			"	\"timeout\": 1000,\n"
+			"	\"retry\": 60\n"
+			"}\n";
+
+		metacall::metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void *allocator = metacall_allocator_create(metacall::METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+		void *json_value = metacall::metacall_deserialize(metacall::metacall_serial(), json_map, sizeof(json_map), allocator);
+
+		metacall::map_typed<std::string, metacall::value> config(json_value);
+
+		auto urls = config["urls"].as<metacall::array>();
+
+		EXPECT_STREQ(urls[0].as<std::string>().c_str(), "http://localhost:8000/");
+		EXPECT_STREQ(urls[1].as<std::string>().c_str(), "http://localhost:8001/");
+		EXPECT_STREQ(urls[2].as<std::string>().c_str(), "http://localhost:8002/");
+
+		for (auto url : urls)
+		{
+			std::cout << url.as<std::string>() << std::endl;
+		}
+
+		auto timeout = config["timeout"].as<int>();
+
+		EXPECT_EQ(timeout, 1000L);
+
+		auto retry = config["retry"].as<int>();
+
+		EXPECT_EQ(retry, 60L);
+
+		metacall::metacall_value_destroy(json_value);
+
+		metacall::metacall_allocator_destroy(allocator);
+	}
 
 	{
 		auto fn = metacall::register_function(cxx_float_int_int_test);

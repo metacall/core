@@ -34,6 +34,10 @@
 	#include <winbase.h> /* SetDllDirectoryA */
 #endif
 
+/* -- Definitions -- */
+
+#define PLUGIN_MANAGER_CAPACITY 32
+
 /* -- Private Methods -- */
 
 static int plugin_manager_unregister(plugin_manager manager, plugin p);
@@ -79,7 +83,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	/* Allocate the set which maps the plugins by their name */
 	if (manager->plugins == NULL)
 	{
-		manager->plugins = set_create(&hash_callback_str, &comparable_callback_str);
+		manager->plugins = set_small_create(PLUGIN_MANAGER_CAPACITY);
 
 		if (manager->plugins == NULL)
 		{
@@ -173,21 +177,21 @@ void *plugin_manager_impl(plugin_manager manager)
 
 size_t plugin_manager_size(plugin_manager manager)
 {
-	return set_size(manager->plugins);
+	return set_small_size(manager->plugins);
 }
 
 int plugin_manager_register(plugin_manager manager, plugin p)
 {
 	const char *name = plugin_name(p);
 
-	if (set_get(manager->plugins, (set_key)name) != NULL)
+	if (set_small_get(manager->plugins, name) != NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Failed to register plugin %s into manager %s, it already exists", name, manager->name);
 
 		return 1;
 	}
 
-	return set_insert(manager->plugins, (set_key)name, p);
+	return set_small_insert(manager->plugins, name, p);
 }
 
 plugin plugin_manager_create(plugin_manager manager, const char *name, void *impl, void (*dtor)(plugin))
@@ -220,19 +224,19 @@ plugin plugin_manager_create(plugin_manager manager, const char *name, void *imp
 
 plugin plugin_manager_get(plugin_manager manager, const char *name)
 {
-	return set_get(manager->plugins, (set_key)name);
+	return set_small_get(manager->plugins, name);
 }
 
 int plugin_manager_unregister(plugin_manager manager, plugin p)
 {
 	const char *name = plugin_name(p);
 
-	if (set_get(manager->plugins, (set_key)name) == NULL)
+	if (set_small_get(manager->plugins, name) == NULL)
 	{
 		return 0;
 	}
 
-	if (set_remove(manager->plugins, (const set_key)name) == NULL)
+	if (set_small_remove(manager->plugins, name) == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Failed to unregister plugin %s from manager %s", name, manager->name);
 
@@ -270,11 +274,11 @@ void plugin_manager_destroy(plugin_manager manager)
 	* plugin set and this will do nothing if the set has been emptied before with plugin_manager_clear */
 	if (manager->plugins != NULL)
 	{
-		struct set_iterator_type it;
+		struct set_small_iterator_type it;
 
-		for (set_iterator_begin(&it, manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(&it))
+		for (set_small_iterator_begin(&it, manager->plugins); set_small_iterator_end(&it) != 0; set_small_iterator_next(&it))
 		{
-			plugin p = set_iterator_value(&it);
+			plugin p = set_small_iterator_value(&it);
 
 			if (manager->iface != NULL && manager->iface->clear != NULL)
 			{
@@ -297,7 +301,7 @@ void plugin_manager_destroy(plugin_manager manager)
 	/* Destroy the plugin set */
 	if (manager->plugins != NULL)
 	{
-		set_destroy(manager->plugins);
+		set_small_destroy(manager->plugins);
 		manager->plugins = NULL;
 	}
 
