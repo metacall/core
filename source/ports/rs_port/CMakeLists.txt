@@ -77,6 +77,11 @@ else()
 	set(BUILD_STD_FLAGS)
 endif()
 
+# Disable nightly flags if rustup is not available
+if(NOT Rust_RUSTUP_EXECUTABLE)
+	set(NIGHTLY_FLAGS)
+endif()
+
 add_custom_target(${target}_clippy ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${CMAKE_COMMAND} -E env CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR} PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR} ${SANITIZER_FLAGS}
@@ -102,7 +107,7 @@ add_dependencies(${target}
 	${target}_fmt
 )
 
-if(RUSTUP_NIGTHLY_INSTALL_SRC)
+if(Rust_RUSTUP_EXECUTABLE AND RUSTUP_NIGTHLY_INSTALL_SRC)
 	add_custom_target(${target}_rustup_nightly ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMAND ${Rust_RUSTUP_EXECUTABLE} install --profile complete nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
