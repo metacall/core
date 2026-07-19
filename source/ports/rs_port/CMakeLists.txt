@@ -102,7 +102,7 @@ add_dependencies(${target}
 	${target}_fmt
 )
 
-if(RUSTUP_NIGTHLY_INSTALL_SRC)
+if(Rust_RUSTUP_EXECUTABLE AND RUSTUP_NIGTHLY_INSTALL_SRC)
 	add_custom_target(${target}_rustup_nightly ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMAND ${Rust_RUSTUP_EXECUTABLE} install --profile complete nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
