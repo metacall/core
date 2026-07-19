@@ -77,7 +77,10 @@ else()
 	set(BUILD_STD_FLAGS)
 endif()
 
-message(STATUS "DEBUG CARGO TEST ${Rust_CARGO_EXECUTABLE}")
+# Disable nightly flags if rustup is not available
+if(NOT Rust_RUSTUP_EXECUTABLE)
+	set(NIGHTLY_FLAGS)
+endif()
 
 add_custom_target(${target}_clippy ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
