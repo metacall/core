@@ -185,8 +185,8 @@ sub_python(){
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
 				PYTHON_VERSION="${PYTHON_PKG#python}"
-				git clone --depth=1 --single-branch --branch "${PYTHON_VERSION}" https://github.com/python/cpython.git python
-				cd python
+				git clone --depth=1 --single-branch --branch "${PYTHON_VERSION}" https://github.com/python/cpython.git
+				cd cpython
 				PYTHON_EXE="${PYTHON_PKG}d"
 
 				# Define Python instrumentation
@@ -210,8 +210,6 @@ sub_python(){
 					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=memory"
-					export CC="/usr/bin/clang"
-					export CXX="/usr/bin/clang++"
 				fi
 
 				# Configure
@@ -253,7 +251,7 @@ sub_python(){
 					wheel \
 					rsa
 				cd ..
-				rm -rf ./python
+				rm -rf ./cpython
 			else
 				if [ "${BUILD_TYPE}" = "Debug" ]; then
 					PYTHON3_PKG=python3-dbg
@@ -363,8 +361,6 @@ sub_ruby(){
 			# 		export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 			# 		BUILD_CFLAGS="-fsanitize=memory"
 			# 		BUILD_LDFLAGS="-fsanitize=memory"
-			# 		export CC="/usr/bin/clang"
-			# 		export CXX="/usr/bin/clang++"
 			# 	fi
 
 			# 	./autogen.sh
@@ -1045,7 +1041,15 @@ sub_clang(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+
+			# Set Clang as default compiler
+			export CC="/usr/bin/clang"
+			export CXX="/usr/bin/clang++"
+			$SUDO_CMD update-alternatives --install /usr/bin/cc cc $CC 100
+			$SUDO_CMD update-alternatives --install /usr/bin/c++ c++ $CXX 100
+		fi
 	fi
 }
 
@@ -1054,10 +1058,12 @@ sub_clang_msan(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-			clang lld libclang-rt-dev llvm-dev \
-			build-essential cmake ninja-build git ca-certificates \
-			python3 python3-dev
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+				clang lld libclang-rt-dev llvm-dev \
+				build-essential cmake ninja-build git ca-certificates \
+				python3 python3-dev
+		fi
 
 		# Compile clang with memory sanitizer
 		mkdir -p /tmp/msan
@@ -1101,6 +1107,15 @@ sub_clang_msan(){
 		$SUDO_CMD ninja -C /tmp/msan/cxx_build/ install
 
 		rm -rf /tmp/msan
+
+		# Set Clang as default compiler
+		export CC="/usr/bin/clang"
+		export CXX="/usr/bin/clang++"
+
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD update-alternatives --install /usr/bin/cc cc $CC 100
+			$SUDO_CMD update-alternatives --install /usr/bin/c++ c++ $CXX 100
+		fi
 	fi
 }
 
