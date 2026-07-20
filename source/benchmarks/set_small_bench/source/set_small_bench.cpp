@@ -35,6 +35,9 @@ public:
 	{
 		s = set_small_create(SET_SIZE);
 
+		keys.clear();
+		values.clear();
+
 		keys.reserve(SET_SIZE);
 		values.reserve(SET_SIZE);
 
