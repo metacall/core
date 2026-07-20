@@ -208,7 +208,7 @@ sub_python(){
 					# PYTHON_EXE="${PYTHON_PKG}t"
 					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:poison_in_dtor=0"
 					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=memory"
 				fi

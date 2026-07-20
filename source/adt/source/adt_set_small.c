@@ -126,6 +126,7 @@ int set_small_insert(set_small s, const char *key, void *value)
 {
 	union set_small_key_type set_key = { 0 };
 	set_small_element element = NULL;
+	size_t key_size = 0;
 
 	if (s == NULL || key == NULL || value == NULL)
 	{
@@ -134,7 +135,8 @@ int set_small_insert(set_small s, const char *key, void *value)
 	}
 
 	/* Copy string into key with last bytes set to 0 */
-	strncpy(set_key.string, key, SET_SMALL_KEY_SIZE);
+	key_size = strnlen(key, SET_SMALL_KEY_SIZE);
+	memcpy(set_key.string, key, key_size);
 
 	/* Find if the element already exists */
 	element = set_small_find(s, set_key);
@@ -157,6 +159,7 @@ void *set_small_get(set_small s, const char *key)
 {
 	union set_small_key_type set_key = { 0 };
 	set_small_element element = NULL;
+	size_t key_size = 0;
 
 	if (s == NULL || key == NULL)
 	{
@@ -165,7 +168,8 @@ void *set_small_get(set_small s, const char *key)
 	}
 
 	/* Copy string into key with last bytes set to 0 */
-	strncpy(set_key.string, key, SET_SMALL_KEY_SIZE);
+	key_size = strnlen(key, SET_SMALL_KEY_SIZE);
+	memcpy(set_key.string, key, key_size);
 
 	/* Find if the element already exists */
 	element = set_small_find(s, set_key);
@@ -182,6 +186,7 @@ void *set_small_remove(set_small s, const char *key)
 {
 	union set_small_key_type set_key = { 0 };
 	size_t iterator = 0;
+	size_t key_size = 0;
 
 	if (s == NULL || key == NULL)
 	{
@@ -190,7 +195,8 @@ void *set_small_remove(set_small s, const char *key)
 	}
 
 	/* Copy string into key with last bytes set to 0 */
-	strncpy(set_key.string, key, SET_SMALL_KEY_SIZE);
+	key_size = strnlen(key, SET_SMALL_KEY_SIZE);
+	memcpy(set_key.string, key, key_size);
 
 	/* Find the element and remove it */
 	for (iterator = 0; iterator < s->size; ++iterator)
