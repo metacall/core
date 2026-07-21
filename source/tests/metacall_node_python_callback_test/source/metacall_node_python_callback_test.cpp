@@ -24,12 +24,12 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-class metacall_node_callback_test : public testing::Test
+class metacall_node_python_callback_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_node_callback_test, DefaultConstructor)
+TEST_F(metacall_node_python_callback_test, DefaultConstructor)
 {
 	metacall_print_info();
 
