@@ -39,6 +39,7 @@ if(NOT GBENCH_FOUND OR USE_BUNDLED_GBENCH)
 	# Benchmark options
 	set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON CACHE BOOL "" FORCE)
 	set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+	set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
 
 	if(MSVC)
 		# Build statically on Windows for avoiding DLL location issues (avoid populating the variable to the cache)
