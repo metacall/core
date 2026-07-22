@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Haiku VM
-        uses: cross-platform-actions/action@v1.2.0
+        uses: cross-platform-actions/action@v1.3.0
         with:
           operating_system: haiku
           version: r1beta5
@@ -39,9 +39,6 @@ jobs:
           shell: sh
           run: |
             sh ./tools/metacall-environment.sh base
-
             mkdir -p build && cd build
-
             sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
-
             sh ../tools/metacall-build.sh ${{ matrix.build }} tests || sh ../tools/metacall-haiku-crash-report.sh
