@@ -3,6 +3,13 @@ if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS)
 	return()
 endif()
 
+# Thread Sanitizer compiled statically is incompatible with fork safety
+# because fork symbol is overriden by the interceptor and becomes a weak symbol
+# https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors
+if(OPTION_BUILD_THREAD_SANITIZER AND NOT SANITIZER_LIBRARIES_PATH)
+	return()
+endif()
+
 #
 # Executable name and options
 #
