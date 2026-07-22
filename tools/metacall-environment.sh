@@ -167,7 +167,7 @@ sub_base(){
 
 		# Disable memory limits and enable debug memory mappings
 		$SUDO_CMD ulimit -v unlimited
-		$SUDO_CMD sysctl security.bsd.proc_debug=1
+		$SUDO_CMD sysctl security.bsd.unprivileged_proc_debug=1
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
 		pkgman install -y cmake git make wget getconf gcc_syslibs_devel
 
