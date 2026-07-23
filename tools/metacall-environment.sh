@@ -166,8 +166,10 @@ sub_base(){
 		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
 
 		# Install libc debug symbols
-		VERSION=$(freebsd-version -u | cut -d- -f1)
-		wget -qO- "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${ARCHITECTURE}/${VERSION}-RELEASE/base-dbg.txz" | $SUDO_CMD tar -zxvf - -C /
+		if [ "${BUILD_TYPE}" = "Debug" ]; then
+			VERSION=$(freebsd-version -u | cut -d- -f1)
+			wget -qO- "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${ARCHITECTURE}/${VERSION}-RELEASE/base-dbg.txz" | $SUDO_CMD tar -zxvf - -C /
+		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
 		pkgman install -y cmake git make wget getconf gcc_syslibs_devel
 

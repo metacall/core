@@ -114,7 +114,7 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 	set(SANITIZER_LIBRARIES -ltsan)
 	if(PROJECT_OS_BSD)
 		set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-			"TSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
+			"TSAN_OPTIONS=external_symbolizer_path=/usr/bin/llvm-symbolizer:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
 		)
 	else()
 		set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
