@@ -164,6 +164,9 @@ sub_base(){
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
+
+		# Install libc debug symbols
+		wget -qO- "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${ARCHITECTURE}/${VERSION}-RELEASE/base-dbg.txz" | $SUDO tar -zxvf - -C /
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
 		pkgman install -y cmake git make wget getconf gcc_syslibs_devel
 
