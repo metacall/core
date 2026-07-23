@@ -118,14 +118,6 @@ set(IDE_FOLDER "")
 # Declare project
 project(${META_PROJECT_NAME} C CXX)
 
-# Fork safety is not supported on Windows yet (detour requires the delayed load mechanism)
-if(WIN32)
-	set(FORK_SAFE_DEFAULT OFF)
-else()
-	set(FORK_SAFE_DEFAULT ON)
-endif()
-option(OPTION_FORK_SAFE "Enable fork safety." ${FORK_SAFE_DEFAULT})
-
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
