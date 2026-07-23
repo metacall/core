@@ -49,9 +49,6 @@ jobs:
         shell: msys2 {0}
         run: |
           sh ./tools/metacall-environment.sh base
-
           mkdir -p build && cd build
-
           sh ../tools/metacall-configure.sh debug tests
-
           sh ../tools/metacall-build.sh debug tests
