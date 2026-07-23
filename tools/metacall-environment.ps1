@@ -283,13 +283,33 @@ function Set-C {
 	$SrcDirUnix = $SrcDir.Replace('\', '/')
 	$MsvccSh = "$SrcDirUnix/msvcc.sh"
 
-	& $GitBash -c "cd '$BuildDirUnix' && '$SrcDirUnix/configure' CC='$MsvccSh -m64' CXX='$MsvccSh -m64' LD=link CPP='cl -nologo -EP' CXXCPP='cl -nologo -EP' CPPFLAGS='-DFFI_BUILDING_DLL' --prefix='$DistDirUnix' --build=x86_64-pc-mingw64 && make && make install"
+	if (!(Test-Path -Path $GitBash)) {
+		throw "Git Bash is required to build libffi but was not found at '$GitBash'."
+	}
+
+	if (!(Test-Path -Path "$SrcDir\configure") -or !(Test-Path -Path "$SrcDir\msvcc.sh")) {
+		throw "The libffi source archive did not extract the required configure and msvcc.sh files."
+	}
+
+	& $GitBash -c "cd '$BuildDirUnix' && '$SrcDirUnix/configure' CC='$MsvccSh -m64' CXX='$MsvccSh -m64' LD=link CPP='cl -nologo -EP' CXXCPP='cl -nologo -EP' CPPFLAGS='-DFFI_BUILDING_DLL' --prefix='$DistDirUnix' && make && make install"
+
+	if ($LASTEXITCODE -ne 0) {
+		throw "Failed to configure, build, or install libffi (exit code $LASTEXITCODE)."
+	}
+
+	$LibFFIHeader = Get-ChildItem -Path $DistDir -Filter "ffi.h" -File -Recurse | Select-Object -First 1
+	$LibFFILibrary = Get-ChildItem -Path $DistDir -Filter "*.lib" -File -Recurse | Where-Object { $_.Name -match '^libffi' } | Select-Object -First 1
+
+	if (($null -eq $LibFFIHeader) -or ($null -eq $LibFFILibrary)) {
+		throw "libffi installation is incomplete: expected ffi.h and an MSVC libffi .lib file under '$DistDir'."
+	}
 
 	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
-	$LibFFIDir = $DistDir.Replace('\', '/')
+	$LibFFIIncludeDir = $LibFFIHeader.Directory.FullName.Replace('\', '/')
+	$LibFFILibraryPath = $LibFFILibrary.FullName.Replace('\', '/')
 
-	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFIDir/include""" >> $EnvOpts
-	Write-Output "-DLIBFFI_LIBRARY=""$LibFFIDir/lib/libffi.lib""" >> $EnvOpts
+	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFIIncludeDir""" >> $EnvOpts
+	Write-Output "-DLIBFFI_LIBRARY=""$LibFFILibraryPath""" >> $EnvOpts
 
 	# Download official LLVM prebuilt archive (includes libclang.lib + headers)
 	# Using clang+llvm archive which contains libraries needed for development
