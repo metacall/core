@@ -1,21 +1,16 @@
-# Check if detours are enabled
-if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS)
-	return()
-endif()
-
-# Thread Sanitizer compiled statically is incompatible with fork safety
-# because fork symbol is overriden by the interceptor and becomes a weak symbol
-# https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors
-if(OPTION_BUILD_THREAD_SANITIZER AND NOT SANITIZER_LIBRARIES_PATH)
-	return()
-endif()
-
 #
 # Executable name and options
 #
 
+# Check if loaders, scripts and ports are enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE
+	OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_NODE
+	OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
+	return()
+endif()
+
 # Target name
-set(target metacall-fork-test)
+set(target metacall-node-python-callback-test)
 message(STATUS "Test ${target}")
 
 #
@@ -39,7 +34,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_fork_test.cpp
+	${source_path}/metacall_node_python_callback_test.cpp
 )
 
 # Group source files
@@ -144,7 +139,8 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	plthook_detour
+	py_loader
+	node_loader
 )
 
 #
@@ -160,4 +156,5 @@ include(TestEnvironmentVariables)
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
+	PY_PORT_LIBRARY_PATH=${CMAKE_SOURCE_DIR}/source/ports/py_port
 )

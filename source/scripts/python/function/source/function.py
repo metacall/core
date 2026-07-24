@@ -44,8 +44,31 @@ def function_myclass_method(klass):
 def function_myclass_cb(cb):
 	return cb(MyClass())
 
+# def function_sum(value, f):
+# 	return 0 if value <= 0 else value + f(value - 1, function_sum)
+
 def function_sum(value, f):
-	return 0 if value <= 0 else value + f(value - 1, function_sum)
+	try:
+		if value <= 0:
+			return 0
+
+		result = f(value - 1, function_sum)
+
+		if isinstance(result, Exception):
+			print(result)
+			raise result
+
+		total = value + result
+
+		if isinstance(total, Exception):
+			print(total)
+			raise total
+
+		return total
+
+	except Exception as e:
+		print(e)
+		raise
 
 def function_chain_impl(x, n):
 	print('------------------ py chain', n)

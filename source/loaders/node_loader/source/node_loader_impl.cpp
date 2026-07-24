@@ -4063,6 +4063,11 @@ void node_loader_impl_thread(void *data)
 	/* Skip node::ResetSignalHandlers use-of-uninitialized-value from node::Start of uninstrumented libnode */
 	memory_sanitizer_disable();
 
+	/* Grow stack size to avoid "Error: Maximum call stack size exceeded" on complex callback tests */
+#if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	v8::V8::SetFlagsFromString("--stack-size=8192");
+#endif
+
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
 

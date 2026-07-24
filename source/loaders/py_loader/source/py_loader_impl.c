@@ -2578,6 +2578,18 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_import;
 	}
 
+	/* Initialize custom dict type */
+	if (py_loader_impl_dict_type_init() < 0)
+	{
+		goto error_after_import;
+	}
+
+	/* Initialize custom function type */
+	if (py_loader_impl_func_type_init() < 0)
+	{
+		goto error_after_import;
+	}
+
 	/* Initialize thread module for supporting threaded async */
 	if (py_loader_impl_initialize_thread_background_module(py_impl) != 0)
 	{
@@ -2596,18 +2608,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		}
 	}
 
-	/* Initialize custom dict type */
-	if (py_loader_impl_dict_type_init() < 0)
-	{
-		goto error_after_asyncio_module;
-	}
-
-	/* Initialize custom function type */
-	if (py_loader_impl_func_type_init() < 0)
-	{
-		goto error_after_asyncio_module;
-	}
-
 	if (gil_release)
 	{
 		py_loader_thread_release();
@@ -2620,11 +2620,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	return py_impl;
 
-error_after_asyncio_module:
-	Py_DecRef(py_impl->asyncio_iscoroutinefunction);
-	Py_DecRef(py_impl->asyncio_loop);
-	Py_DecRef(py_impl->asyncio_module);
-	Py_DecRef(py_impl->py_task_callback_handler);
 error_after_thread_background_module:
 	Py_DecRef(py_impl->thread_background_module);
 	Py_DecRef(py_impl->thread_background_start);

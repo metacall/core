@@ -39,12 +39,12 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
 		const char *rpc_scripts[] = {
-			"remote.url"
+			"remote.json"
 		};
 
 		void *handle = NULL;
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, sizeof(rpc_scripts) / sizeof(rpc_scripts[0]), &handle));
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, sizeof(rpc_scripts) / sizeof(rpc_scripts[0]), &handle));
 
 		/* Print inspect information */
 		{
@@ -81,9 +81,19 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_clear(handle));
 
-		static const char buffer[] = "http://localhost:6094/viferga/example/v1";
+		static const char buffer[] =
+			"{\n"
+			"	\"urls\": [\n"
+			"		\"http://localhost:6094/viferga/example/v1\"\n"
+			"	],\n"
+			"	\"timeout\": 1000,\n"
+			"	\"retry\": 10\n"
+			"}\n";
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rpc", buffer, sizeof(buffer), NULL));
+		void *memory_handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("rpc", buffer, sizeof(buffer), &memory_handle));
+		ASSERT_NE(memory_handle, nullptr);
 	}
 #endif /* OPTION_BUILD_LOADERS_RPC */
 
@@ -199,8 +209,9 @@ TEST_F(metacall_rpc_test, AsyncSingleCall)
 
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
-		const char *rpc_scripts[] = { "remote.url" };
-		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+		void *handle = NULL;
+		const char *rpc_scripts[] = { "remote.json" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
 
 		g_resolved.store(0);
 		g_rejected.store(0);
@@ -211,7 +222,9 @@ TEST_F(metacall_rpc_test, AsyncSingleCall)
 			metacall_value_create_float(10.0f)
 		};
 
-		metacall_await_s("async_divide", args, 2, on_resolve, on_reject, NULL);
+		auto async_divide = metacall_handle_function(handle, "async_divide");
+
+		metacallfv_await_s(async_divide, args, 2, on_resolve, on_reject, NULL);
 
 		metacall_value_destroy(args[0]);
 		metacall_value_destroy(args[1]);
@@ -236,8 +249,10 @@ TEST_F(metacall_rpc_test, AsyncRapidFire)
 
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
-		const char *rpc_scripts[] = { "remote.url" };
-		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+		void *handle = NULL;
+		const char *rpc_scripts[] = { "remote.json" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
+		auto async_divide = metacall_handle_function(handle, "async_divide");
 
 		g_resolved.store(0);
 		g_rejected.store(0);
@@ -258,7 +273,7 @@ TEST_F(metacall_rpc_test, AsyncRapidFire)
 				metacall_value_create_float(b)
 			};
 
-			metacall_await_s("async_divide", args, 2,
+			metacallfv_await_s(async_divide, args, 2,
 				on_resolve_verified, on_reject, &contexts[i]);
 
 			metacall_value_destroy(args[0]);
@@ -292,9 +307,8 @@ TEST_F(metacall_rpc_test, SyncConcurrentProducers)
 
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
-		const char *rpc_scripts[] = { "remote.url" };
 		void *handle = NULL;
-
+		const char *rpc_scripts[] = { "remote.json" };
 		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
 
 		ASSERT_NE((void *)NULL, (void *)handle);
@@ -372,8 +386,10 @@ TEST_F(metacall_rpc_test, AsyncConcurrentProducers)
 
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
-		const char *rpc_scripts[] = { "remote.url" };
-		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+		void *handle = NULL;
+		const char *rpc_scripts[] = { "remote.json" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
+		auto async_divide = metacall_handle_function(handle, "async_divide");
 
 		g_resolved.store(0);
 		g_rejected.store(0);
@@ -384,7 +400,7 @@ TEST_F(metacall_rpc_test, AsyncConcurrentProducers)
 
 		for (int t = 0; t < NUM_THREADS; t++)
 		{
-			threads.emplace_back([t, &all_contexts]() {
+			threads.emplace_back([t, &all_contexts, &async_divide]() {
 				for (int i = 0; i < CALLS_PER_THREAD; i++)
 				{
 					int idx = t * CALLS_PER_THREAD + i;
@@ -399,7 +415,7 @@ TEST_F(metacall_rpc_test, AsyncConcurrentProducers)
 						metacall_value_create_float(b)
 					};
 
-					metacall_await_s("async_divide", args, 2,
+					metacallfv_await_s(async_divide, args, 2,
 						on_resolve_verified, on_reject, &all_contexts[idx]);
 
 					metacall_value_destroy(args[0]);
@@ -438,8 +454,10 @@ TEST_F(metacall_rpc_test, AsyncMixedSyncAsync)
 
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
-		const char *rpc_scripts[] = { "remote.url" };
-		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+		void *handle = NULL;
+		const char *rpc_scripts[] = { "remote.json" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
+		auto async_divide = metacall_handle_function(handle, "async_divide");
 
 		g_resolved.store(0);
 		g_rejected.store(0);
@@ -450,13 +468,13 @@ TEST_F(metacall_rpc_test, AsyncMixedSyncAsync)
 			metacall_value_create_float(4.0f)
 		};
 
-		metacall_await_s("async_divide", async_args, 2, on_resolve, on_reject, NULL);
+		metacallfv_await_s(async_divide, async_args, 2, on_resolve, on_reject, NULL);
 
 		metacall_value_destroy(async_args[0]);
 		metacall_value_destroy(async_args[1]);
 
 		const enum metacall_value_id divide_ids[] = { METACALL_DOUBLE, METACALL_DOUBLE };
-		void *sync_ret = metacallt_s("divide", divide_ids, 2, 50.0, 10.0);
+		void *sync_ret = metacallht_s(handle, "divide", divide_ids, 2, 50.0, 10.0);
 
 		EXPECT_NE((void *)NULL, (void *)sync_ret);
 		EXPECT_NEAR(extract_numeric(sync_ret), 5.0, 0.01) << "Sync divide(50, 10) == 5";
@@ -478,8 +496,10 @@ TEST_F(metacall_rpc_test, ShutdownMidTransfer)
 
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
-		const char *rpc_scripts[] = { "remote.url" };
-		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+		void *handle = NULL;
+		const char *rpc_scripts[] = { "remote.json" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
+		auto async_divide = metacall_handle_function(handle, "async_divide");
 
 		/* Fire several async calls, don't wait for any of them */
 		for (int i = 0; i < 10; i++)
@@ -489,7 +509,7 @@ TEST_F(metacall_rpc_test, ShutdownMidTransfer)
 				metacall_value_create_float(1.0f)
 			};
 
-			metacall_await_s("async_divide", args, 2, on_resolve, on_reject, NULL);
+			metacallfv_await_s(async_divide, args, 2, on_resolve, on_reject, NULL);
 
 			metacall_value_destroy(args[0]);
 			metacall_value_destroy(args[1]);
@@ -507,13 +527,64 @@ TEST_F(metacall_rpc_test, EmptyShutdown)
 
 #if defined(OPTION_BUILD_LOADERS_RPC)
 	{
-		const char *rpc_scripts[] = { "remote.url" };
-		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, NULL));
+		void *handle = NULL;
+		const char *rpc_scripts[] = { "remote.json" };
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("rpc", rpc_scripts, 1, &handle));
 
 		/* Do nothing, no calls, no awaits */
 	}
 #endif
 
 	/* Should return cleanly with no crash or hang */
+	metacall_destroy();
+}
+
+TEST_F(metacall_rpc_test, TimeoutFail)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		static const char buffer[] =
+			"{\n"
+			"	\"urls\": [\n"
+			"		\"http://localhost:6094/timeoutfail/example/v1\"\n"
+			"	],\n"
+			"	\"timeout\": 500,\n"
+			"	\"retry\": 5\n"
+			"}\n";
+
+		void *memory_handle = NULL;
+
+		ASSERT_NE((int)0, (int)metacall_load_from_memory("rpc", buffer, sizeof(buffer), &memory_handle));
+		ASSERT_EQ(memory_handle, nullptr);
+	}
+#endif
+
+	metacall_destroy();
+}
+
+TEST_F(metacall_rpc_test, TimeoutFailSome)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		static const char buffer[] =
+			"{\n"
+			"	\"urls\": [\n"
+			"		\"http://localhost:6094/timeoutfailsome/example/v1\"\n"
+			"	],\n"
+			"	\"timeout\": 2000,\n"
+			"	\"retry\": 10\n"
+			"}\n";
+
+		void *memory_handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("rpc", buffer, sizeof(buffer), &memory_handle));
+		ASSERT_NE(memory_handle, nullptr);
+	}
+#endif
+
 	metacall_destroy();
 }

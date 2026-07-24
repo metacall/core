@@ -1,12 +1,5 @@
-# Check if detours are enabled
-if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS)
-	return()
-endif()
-
-# Thread Sanitizer compiled statically is incompatible with fork safety
-# because fork symbol is overriden by the interceptor and becomes a weak symbol
-# https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors
-if(OPTION_BUILD_THREAD_SANITIZER AND NOT SANITIZER_LIBRARIES_PATH)
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_C)
 	return()
 endif()
 
@@ -15,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-fork-test)
+set(target metacall-c-conversion-test)
 message(STATUS "Test ${target}")
 
 #
@@ -39,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_fork_test.cpp
+	${source_path}/metacall_c_conversion_test.cpp
 )
 
 # Group source files
@@ -144,7 +137,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	plthook_detour
+	c_loader
 )
 
 #

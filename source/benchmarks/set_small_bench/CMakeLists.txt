@@ -3,8 +3,8 @@
 #
 
 # Target name
-set(target adt-atomic-set-test)
-message(STATUS "Test ${target}")
+set(target set-small-bench)
+message(STATUS "Benchmark ${target}")
 
 #
 # Compiler warnings
@@ -26,8 +26,7 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
-	${source_path}/main.cpp
-	${source_path}/adt_atomic_set_test.cpp
+	${source_path}/set_small_bench.cpp
 )
 
 # Group source files
@@ -78,7 +77,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	GTest
+	GBench
 
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
@@ -86,7 +85,6 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::threading
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::adt
-
 )
 
 #
@@ -108,15 +106,6 @@ target_compile_options(${target}
 )
 
 #
-# Compile features
-#
-
-target_compile_features(${target}
-	PRIVATE
-	cxx_std_17
-)
-
-#
 # Linker options
 #
 
@@ -131,12 +120,28 @@ target_link_options(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+		--benchmark_out=${CMAKE_BINARY_DIR}/benchmarks/${target}.json
 )
 
 #
-# Define test labels
+# Define dependencies
+#
+
+add_dependencies(${target}
+	adt
+)
+
+#
+# Define test properties
 #
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
 )

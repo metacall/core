@@ -164,8 +164,18 @@ sub_base(){
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
+
+		# Install libc debug symbols
+		if [ "${BUILD_TYPE}" = "Debug" ]; then
+			VERSION=$(freebsd-version -u | cut -d- -f1)
+			wget -qO- "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${ARCHITECTURE}/${VERSION}-RELEASE/base-dbg.txz" | $SUDO_CMD tar -zxvf - -C /
+		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
 		pkgman install -y cmake git make wget getconf gcc_syslibs_devel
+
+		# Enable debug crash reports
+		mkdir -p ~/config/settings/system/debug_server
+		printf 'default_action report\n' > ~/config/settings/system/debug_server/settings
 	fi
 }
 
@@ -177,43 +187,66 @@ sub_python(){
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-				# Download Python source
+				# Download Python build dependencies and source
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
-				mkdir python && cd python
-				apt-get source "${PYTHON_PKG}"
-				SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
-				cd "$SRC_DIR"
+				PYTHON_VERSION="${PYTHON_PKG#python}"
+				git clone --depth=1 --single-branch --branch "${PYTHON_VERSION}" https://github.com/python/cpython.git
+				cd cpython
+				PYTHON_EXE="${PYTHON_PKG}d"
 
-				# Build Python with instrumentation
+				# Define Python instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
-					printf "leak:*libpython*" &> ./asan.supp
-					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
-					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
 					BUILD_LDFLAGS=""
+					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
-					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
+					printf "leak:*libpython*" &> ./asan.supp
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
-					BUILD_FLAGS="--with-thread-sanitizer"
+					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
 					BUILD_LDFLAGS="-fsanitize=thread"
+					# PYTHON_EXE="${PYTHON_PKG}t"
+					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-memory-sanitizer"
+					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:poison_in_dtor=0"
+					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=memory"
-					export CC="/usr/bin/clang"
-					export CXX="/usr/bin/clang++"
 				fi
+
+				# Configure
+				export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE"
 				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
-				./configure --prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				./configure \
+					--prefix=/usr/local \
+					--enable-shared \
+					--without-pymalloc \
+					--without-static-libpython \
+					--without-ensurepip \
+					--with-system-expat \
+					--with-system-ffi \
+					--with-dbmliborder=bdb:gdbm \
+					${BUILD_FLAGS}
+
+				# Build and install
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
+				# Unset environment variables
+				unset ASAN_OPTIONS
+				unset UBSAN_OPTIONS
+				unset TSAN_OPTIONS
+				unset MSAN_OPTIONS
+				unset CFLAGS
+				unset LDFLAGS
+
 				# Define python as the default one
-				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_PKG}d" /usr/bin/python3
+				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
 
 				# Install Pip
 				wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
@@ -223,13 +256,9 @@ sub_python(){
 					requests \
 					setuptools \
 					wheel \
-					rsa \
-					scipy \
-					numpy \
-					scikit-learn \
-					joblib
-				cd ../..
-				rm -rf ./python
+					rsa
+				cd ..
+				rm -rf ./cpython
 			else
 				if [ "${BUILD_TYPE}" = "Debug" ]; then
 					PYTHON3_PKG=python3-dbg
@@ -1005,7 +1034,15 @@ sub_clang(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+
+			# Set Clang as default compiler
+			export CC="/usr/bin/clang"
+			export CXX="/usr/bin/clang++"
+			$SUDO_CMD update-alternatives --install /usr/bin/cc cc $CC 100
+			$SUDO_CMD update-alternatives --install /usr/bin/c++ c++ $CXX 100
+		fi
 	fi
 }
 
@@ -1014,10 +1051,12 @@ sub_clang_msan(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-			clang lld libclang-rt-dev llvm-dev \
-			build-essential cmake ninja-build git ca-certificates \
-			python3 python3-dev
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+				clang lld libclang-rt-dev llvm-dev \
+				build-essential cmake ninja-build git ca-certificates \
+				python3 python3-dev
+		fi
 
 		# Compile clang with memory sanitizer
 		mkdir -p /tmp/msan
@@ -1061,6 +1100,15 @@ sub_clang_msan(){
 		$SUDO_CMD ninja -C /tmp/msan/cxx_build/ install
 
 		rm -rf /tmp/msan
+
+		# Set Clang as default compiler
+		export CC="/usr/bin/clang"
+		export CXX="/usr/bin/clang++"
+
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD update-alternatives --install /usr/bin/cc cc $CC 100
+			$SUDO_CMD update-alternatives --install /usr/bin/c++ c++ $CXX 100
+		fi
 	fi
 }
 

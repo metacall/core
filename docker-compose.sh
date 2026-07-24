@@ -397,11 +397,11 @@ sub_help() {
 	echo "	test-address-sanitizer"
 	echo "	test-thread-sanitizer"
 	echo "	test-memory-sanitizer"
-	echo "	test-clang-address-sanitizer"
-	echo "	test-clang-thread-sanitizer"
 	echo "	coverage"
 	echo "	test-memcheck"
 	echo "	test-clang"
+	echo "	test-clang-address-sanitizer"
+	echo "	test-clang-thread-sanitizer"
 	echo "	cache"
 	echo "	platform"
 	echo "	push"
@@ -430,16 +430,6 @@ case "$1" in
 		export METACALL_BUILD_SANITIZER="thread-sanitizer"
 		sub_test_sanitizer
 		;;
-	test-clang-address-sanitizer)
-		export METACALL_BUILD_CLANG="clang"
-		export METACALL_BUILD_SANITIZER="address-sanitizer"
-		sub_test_sanitizer
-		;;
-	test-clang-thread-sanitizer)
-		export METACALL_BUILD_CLANG="clang"
-		export METACALL_BUILD_SANITIZER="thread-sanitizer"
-		sub_test_sanitizer
-		;;
 	test-memory-sanitizer)
 		sub_test_memory_sanitizer
 		;;
@@ -451,6 +441,16 @@ case "$1" in
 		;;
 	test-clang)
 		sub_test_clang
+		;;
+	test-clang-address-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
+		export METACALL_BUILD_SANITIZER="address-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-clang-thread-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
+		export METACALL_BUILD_SANITIZER="thread-sanitizer"
+		sub_test_sanitizer
 		;;
 	cache)
 		sub_cache

@@ -32,7 +32,17 @@ netcore_linux::netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_pat
 {
 	if (dotnet_root == NULL)
 	{
-		this->runtimePath.append(getenv("CORE_ROOT"));
+		const char *core_root = getenv("CORE_ROOT");
+
+		if (core_root != NULL)
+		{
+			this->runtimePath.append(core_root);
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR,
+				"cs_loader: 'dotnet_root' is not defined in cs_loader.json and CORE_ROOT is not set");
+		}
 	}
 	else
 	{
@@ -67,43 +77,40 @@ netcore_linux::~netcore_linux()
 
 bool netcore_linux::ConfigAssemblyName()
 {
+	if (this->dotnet_loader_assembly_path == NULL)
+	{
+		// dotnet_root is required and must come from cs_loader.json
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"cs_loader: 'dotnet_loader_assembly_path' is not defined in cs_loader.json; refusing to load");
+		return false;
+	}
+
 	std::string::size_type pos = std::string(this->dotnet_loader_assembly_path).find_last_of("\\/");
 
 	std::string dotnet_loader_assembly_directory = std::string(this->dotnet_loader_assembly_path).substr(0, pos);
 
-	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
-
-	if (this->dotnet_loader_assembly_path == NULL)
+	if (this->dotnet_loader_assembly_path[0] == '/')
 	{
-		this->managedAssemblyFullName.append(this->appPath);
-		this->managedAssemblyFullName.append("/");
-		this->managedAssemblyFullName.append(this->loader_dll);
+		this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
+		if (AddFilesFromDirectoryToTpaList(dotnet_loader_assembly_directory, tpaList) == false)
+		{
+			return false;
+		}
 	}
 	else
 	{
-		if (this->dotnet_loader_assembly_path[0] == '/')
+		this->managedAssemblyFullName.append(this->appPath);
+		this->managedAssemblyFullName.append("/");
+
+		if (this->dotnet_loader_assembly_path[0] == '.')
 		{
-			this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
-			if (AddFilesFromDirectoryToTpaList(dotnet_loader_assembly_directory, tpaList) == false)
-			{
-				return false;
-			}
+			string simpleName;
+			simpleName.append(this->dotnet_loader_assembly_path + 2);
+			this->managedAssemblyFullName.append(simpleName);
 		}
 		else
 		{
-			this->managedAssemblyFullName.append(this->appPath);
-			this->managedAssemblyFullName.append("/");
-
-			if (this->dotnet_loader_assembly_path[0] == '.')
-			{
-				string simpleName;
-				simpleName.append(this->dotnet_loader_assembly_path + 2);
-				this->managedAssemblyFullName.append(simpleName);
-			}
-			else
-			{
-				this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
-			}
+			this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
 		}
 	}
 
@@ -117,12 +124,6 @@ bool netcore_linux::ConfigAssemblyName()
 	}
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "NetCore application absolute path: %s", this->appPath);
-
-	/* TODO: Solve uninitialized strings */
-	/*
-	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteRuntime: %s", this->runtimePath);
-	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteLoaderDll: %s", this->managedAssemblyFullName);
-	*/
 
 	return true;
 }

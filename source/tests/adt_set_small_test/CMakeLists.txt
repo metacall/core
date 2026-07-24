@@ -2,15 +2,8 @@
 # Executable name and options
 #
 
-# Check if loaders, scripts and ports are enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE
-	OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_NODE
-	OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
-	return()
-endif()
-
 # Target name
-set(target metacall-node-callback-test)
+set(target adt-set-small-test)
 message(STATUS "Test ${target}")
 
 #
@@ -34,7 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_node_callback_test.cpp
+	${source_path}/adt_set_small_test.cpp
 )
 
 # Group source files
@@ -87,7 +80,13 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::metacall
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::threading
+	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::adt
+
 )
 
 #
@@ -135,26 +134,9 @@ add_test(NAME ${target}
 )
 
 #
-# Define dependencies
-#
-
-add_dependencies(${target}
-	py_loader
-	node_loader
-)
-
-#
-# Define test properties
+# Define test labels
 #
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
-)
-
-include(TestEnvironmentVariables)
-
-test_environment_variables(${target}
-	""
-	${TESTS_ENVIRONMENT_VARIABLES}
-	PY_PORT_LIBRARY_PATH=${CMAKE_SOURCE_DIR}/source/ports/py_port
 )
