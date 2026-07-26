@@ -4,9 +4,7 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_
 endif()
 
 if(MINGW)
-	# TODO: Review this https://github.com/bombela/backward-cpp/blob/0bfd0a07a61551413ccd2ab9a9099af3bad40681/BackwardConfig.cmake#L206
-	message(WARNING "TODO: MingW not implemented")
-	return()
+	add_compile_definitions(__MSVCRT_VERSION__=0x900)
 endif()
 
 #
