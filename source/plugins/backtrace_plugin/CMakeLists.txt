@@ -7,6 +7,7 @@ if(MINGW)
     include(CheckCXXSourceCompiles)
 
     check_cxx_source_compiles("
+#include <stdlib.h>
 #ifdef _UCRT
 #error
 #endif
