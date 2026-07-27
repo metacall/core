@@ -3,9 +3,6 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_
 	return()
 endif()
 
-if(MINGW)
-	add_compile_definitions(__MSVCRT_VERSION__=0x900)
-endif()
 
 #
 # External dependencies
@@ -197,6 +194,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	$<$<BOOL:${MINGW}>:__MSVCRT_VERSION__=0x900>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
