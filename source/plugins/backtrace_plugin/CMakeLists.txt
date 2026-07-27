@@ -177,6 +177,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
+	$<$<BOOL:${MINGW}>:msvcr90>
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
 
 	# Backward-cpp library
