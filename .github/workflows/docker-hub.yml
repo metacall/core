@@ -97,7 +97,7 @@ jobs:
 
       - name: Build MetaCall Docker Images (local)
         # Test in develop or pull requests
-        if: github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/fix/dockerbuildkit' || github.event_name == 'pull_request'
         env:
           METACALL_PLATFORM: ${{ matrix.platform }}
           DOCKER_BUILDKIT: 1
