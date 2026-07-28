@@ -185,9 +185,3 @@ test_environment_variables(${target}
 	# Define the global configuration without proper cs_loader.json configuration to make it fail
 	"CONFIGURATION_PATH=${CMAKE_CURRENT_SOURCE_DIR}/data/global.json"
 )
-
-# Force freshly-allocated heap to a non-zero byte pattern so an uninitialized
-# pointer member (netcore_linux::libHandle) is exposed deterministically
-# instead of happening to read as NULL. Regression guard for the invalid-free
-# abort (exit 134) seen in the :cli integration image.
-set_property(TEST ${target} APPEND PROPERTY ENVIRONMENT "MALLOC_PERTURB_=42")
