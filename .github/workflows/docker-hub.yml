@@ -70,27 +70,27 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Docker Metadata
         id: meta
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
 
       - name: Set up Docker BuildX
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
         with:
           version: v${{ env.BUILDKIT_VERSION }}
 
       - name: Login to Docker Hub
-        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
-        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/fix/dockerbuildkit' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
+        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c # v4.5.2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
@@ -107,7 +107,7 @@ jobs:
           docker build --build-arg METACALL_BASE_IMAGE=metacall/core:cli --progress=plain --platform ${{ matrix.platform }} -f tools/docker/tests/Dockerfile -t metacall/core:test tools/docker/tests
 
       - name: Build MetaCall Docker Images (registry)
-        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/fix/dockerbuildkit' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
         env:
           METACALL_PLATFORM: ${{ matrix.platform }}
           DOCKER_BUILDKIT: 1
@@ -120,7 +120,7 @@ jobs:
           docker buildx build --build-arg METACALL_BASE_IMAGE=${image} --progress=plain --platform ${{ matrix.platform }} -f tools/docker/tests/Dockerfile -t metacall/core:test tools/docker/tests
 
       - name: Sanitize platform name
-        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/fix/dockerbuildkit' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
         shell: bash
         # Replaces all '/' with '-' using bash parameter expansion
         run: |
@@ -128,8 +128,8 @@ jobs:
           echo "PLATFORM_SAFE=${PLATFORM_SAFE//\//-}" >> $GITHUB_ENV
 
       - name: Upload digest
-        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/fix/dockerbuildkit' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: digests-${{ env.PLATFORM_SAFE }}
           path: .bake/digests/*
@@ -139,35 +139,35 @@ jobs:
   merge:
     name: Merge digests for the manifest
     # Only run when master or when tagging a version
-    if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
+    if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/fix/dockerbuildkit' || startsWith(github.ref, 'refs/tags/')) && github.event_name != 'pull_request'
     needs: [matrix, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Download digests
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: .bake/digests/
           pattern: digests-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
         with:
           version: v${{ env.BUILDKIT_VERSION }}
 
       - name: Docker Metadata
         id: meta
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Login to Docker Hub
-        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c
+        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c # v4.5.2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
