@@ -979,7 +979,7 @@ sub_rust(){
 
 			RUST_DISTRO="${VERSION_CODENAME}"
 			DEV_PACKAGE="rust-toolchain-dev-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
-			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.3"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.4"
 
 			wget -qO- "${RUST_RELEASE_URL}/${DEV_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
 
