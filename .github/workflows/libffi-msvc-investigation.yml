@@ -109,6 +109,7 @@
             src="$(cygpath -u "$LIBFFI_SRC")"
             build="$(cygpath -u "$LIBFFI_BUILD")"
             install="$(cygpath -u "$LIBFFI_INSTALL")"
+            src_native="$(cygpath -m "$LIBFFI_SRC")"
 
             # The release archive already contains generated Autotools files.
             # Avoid timestamp rounding on Windows triggering their regeneration.
@@ -155,6 +156,11 @@
                 -e 's|^\(Makefile\):.*|\1:|' \
                 -e 's|^\([^:#]*stamp-h1\):.*|\1:|' \
                 {} +
+
+            # Configure requires MSYS paths, while the native MinGW Make
+            # executable performs dependency checks using Windows paths.
+            find "$build" -name Makefile -exec \
+              sed -i "s|$src|$src_native|g" {} +
 
             # Verify that the top-level generated-file rules have no
             # prerequisites and therefore cannot start a remake/recheck loop.
