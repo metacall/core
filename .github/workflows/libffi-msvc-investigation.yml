@@ -143,16 +143,18 @@
                 -e 's|^\($(ACLOCAL_M4)\):.*|\1:|' \
                 -e 's|^\($(top_srcdir)/fficonfig\.h\.in\):.*|\1:|' \
                 -e 's|^\(config\.status\):.*|\1:|' \
+                -e 's|^\($(top_builddir)/config\.status\):.*|\1:|' \
                 -e 's|^\(Makefile\):.*|\1:|' \
                 -e 's|^\(stamp-h1\):.*|\1:|' \
+                -e 's|^\($(top_builddir)/stamp-h1\):.*|\1:|' \
                 {} +
 
             # Verify that the top-level generated-file rules have no
             # prerequisites and therefore cannot start a remake/recheck loop.
             grep -F '$(srcdir)/Makefile.in:' Makefile
-            grep '^config.status:$' Makefile
+            grep -E '^(\$\(top_builddir\)/)?config\.status:$' Makefile
             grep '^Makefile:$' Makefile
-            grep '^stamp-h1:$' Makefile
+            grep -E '^(\$\(top_builddir\)/)?stamp-h1:$' Makefile
 
             make V=1 \
               SHELL=/bin/sh \
