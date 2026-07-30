@@ -127,8 +127,7 @@
             grep '^SHELL = /bin/sh$' Makefile
 
             # GNU Make on Windows expands $(SHELL) to Git's installation path,
-            # which contains spaces. Keep nested Make invocations from trying
-            # to regenerate the verified release files.
+            # which contains spaces.
             find "$build" -name Makefile -exec \
               sed -i \
                 -e 's|$(SHELL)|/bin/sh|g' \
@@ -138,9 +137,15 @@
                 -e 's|^AUTOHEADER =.*|AUTOHEADER = true|' \
                 {} +
 
-            # Apply the no-regeneration policy to this Make process and every
-            # recursive Make process it starts.
-            export MAKEFLAGS="--old-file=Makefile --old-file=config.status --old-file=fficonfig.h --old-file=stamp-h1"
+            # Configure detects two-second timestamp resolution on this runner.
+            # Establish an unambiguous order so Make does not regenerate the
+            # release archive's Autotools files or the configured build files.
+            sleep 3
+            find "$src" -name Makefile.in -exec touch {} +
+            touch "$src/fficonfig.h.in"
+            sleep 3
+            find "$build" -name Makefile -exec touch {} +
+            touch config.status fficonfig.h stamp-h1
 
             make V=1 \
               AUTOMAKE=true \
