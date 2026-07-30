@@ -264,6 +264,11 @@ public:
 		/* JIT the code into memory */
 		tcc_set_output_type(this->state, TCC_OUTPUT_MEMORY);
 
+		if (tcc_add_symbol(this->state, "ffi_call", reinterpret_cast<const void *>(ffi_call)) != 0)
+		{
+			return false;
+		}
+
 		/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
 		if (!c_impl->libtcc_runtime_path.empty())
 		{
@@ -284,6 +289,7 @@ public:
 		#endif
 		*/
 
+		// metacall-ai-generated
 		/* Error handling */
 		tcc_set_error_func(this->state, nullptr, [](void *, const char *msg) {
 			log_write("metacall", LOG_LEVEL_ERROR, "TCC Error: %s", msg);
