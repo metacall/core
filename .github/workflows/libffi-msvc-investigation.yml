@@ -114,7 +114,7 @@
 
             cd "$build"
 
-            "$src/configure" \
+            CONFIG_SHELL=/bin/sh "$src/configure" \
               CC="$src/msvcc.sh -m64" \
               CXX="$src/msvcc.sh -m64" \
               LD=link \
@@ -123,6 +123,11 @@
               CPPFLAGS="-DFFI_BUILDING_DLL" \
               --disable-docs \
               --prefix="$install"
+
+            # Keep Make from re-running config.status due to equal/coarse
+            # timestamps on the Windows filesystem.
+            touch "$build/config.status"
+            find "$build" -name Makefile -exec touch {} +
 
             make V=1 \
               SHELL=/bin/sh \
