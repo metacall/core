@@ -289,7 +289,6 @@ public:
 		#endif
 		*/
 
-		// metacall-ai-generated
 		/* Error handling */
 		tcc_set_error_func(this->state, nullptr, [](void *, const char *msg) {
 			log_write("metacall", LOG_LEVEL_ERROR, "TCC Error: %s", msg);
