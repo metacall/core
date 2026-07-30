@@ -125,6 +125,7 @@
               LD=link \
               CPP="cl -nologo -EP" \
               CXXCPP="cl -nologo -EP" \
+              CPPFLAGS="-DFFI_STATIC_BUILD" \
               --disable-docs \
               --disable-shared \
               --enable-static \
