@@ -140,28 +140,22 @@
                 -e 's|^AUTOHEADER =.*|AUTOHEADER = true|' \
                 {} +
 
-            # Make names source-tree regeneration targets with absolute paths.
-            # Suppress each exact generated target; these options are inherited
-            # by recursive Make invocations through MAKEFLAGS.
-            make_old_files=(
-              "--old-file=$src/configure"
-              "--old-file=$src/aclocal.m4"
-              "--old-file=$src/fficonfig.h.in"
-              "--old-file=$build/config.status"
-              "--old-file=$build/fficonfig.h"
-              "--old-file=$build/stamp-h1"
-              "--old-file=Makefile"
-              "--old-file=config.status"
-              "--old-file=fficonfig.h"
-              "--old-file=stamp-h1"
-            )
+            # Place Autotools inputs in the future and generated outputs one
+            # hour beyond them. This exceeds the filesystem's two-second
+            # resolution and prevents Makefile/config.status regeneration.
+            source_guard="$(date -u -d '+1 hour' '+%Y-%m-%d %H:%M:%S UTC')"
+            build_guard="$(date -u -d '+2 hours' '+%Y-%m-%d %H:%M:%S UTC')"
+            find "$src" \
+              \( -name Makefile.am -o -name Makefile.in \
+                 -o -name configure -o -name configure.ac \
+                 -o -name '*.m4' -o -name fficonfig.h.in \) \
+              -exec touch -d "$source_guard" {} +
+            find "$build" \
+              \( -name Makefile -o -name config.status \
+                 -o -name fficonfig.h -o -name stamp-h1 \) \
+              -exec touch -d "$build_guard" {} +
 
-            while IFS= read -r generated_file; do
-              make_old_files+=("--old-file=$generated_file")
-            done < <(find "$src" "$build" \
-              \( -name Makefile.in -o -name Makefile \) -print)
-
-            make "${make_old_files[@]}" V=1 \
+            make V=1 \
               SHELL=/bin/sh \
               CONFIG_SHELL=/bin/sh \
               AUTOMAKE=true \
@@ -169,7 +163,7 @@
               AUTOCONF=true \
               AUTOHEADER=true
 
-            make "${make_old_files[@]}" install \
+            make install \
               SHELL=/bin/sh \
               CONFIG_SHELL=/bin/sh \
               AUTOMAKE=true \
