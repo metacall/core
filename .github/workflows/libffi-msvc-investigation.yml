@@ -138,22 +138,21 @@
                 -e 's|^ACLOCAL =.*|ACLOCAL = true|' \
                 -e 's|^AUTOCONF =.*|AUTOCONF = true|' \
                 -e 's|^AUTOHEADER =.*|AUTOHEADER = true|' \
+                -e 's|^\($(srcdir)/Makefile\.in\):.*|\1:|' \
+                -e 's|^\($(top_srcdir)/configure\):.*|\1:|' \
+                -e 's|^\($(ACLOCAL_M4)\):.*|\1:|' \
+                -e 's|^\($(top_srcdir)/fficonfig\.h\.in\):.*|\1:|' \
+                -e 's|^\(config\.status\):.*|\1:|' \
+                -e 's|^\(Makefile\):.*|\1:|' \
+                -e 's|^\(stamp-h1\):.*|\1:|' \
                 {} +
 
-            # Place Autotools inputs in the future and generated outputs one
-            # hour beyond them. This exceeds the filesystem's two-second
-            # resolution and prevents Makefile/config.status regeneration.
-            source_guard="$(date -u -d '+1 hour' '+%Y-%m-%d %H:%M:%S UTC')"
-            build_guard="$(date -u -d '+2 hours' '+%Y-%m-%d %H:%M:%S UTC')"
-            find "$src" \
-              \( -name Makefile.am -o -name Makefile.in \
-                 -o -name configure -o -name configure.ac \
-                 -o -name '*.m4' -o -name fficonfig.h.in \) \
-              -exec touch -d "$source_guard" {} +
-            find "$build" \
-              \( -name Makefile -o -name config.status \
-                 -o -name fficonfig.h -o -name stamp-h1 \) \
-              -exec touch -d "$build_guard" {} +
+            # Verify that the top-level generated-file rules have no
+            # prerequisites and therefore cannot start a remake/recheck loop.
+            grep -F '$(srcdir)/Makefile.in:' Makefile
+            grep '^config.status:$' Makefile
+            grep '^Makefile:$' Makefile
+            grep '^stamp-h1:$' Makefile
 
             make V=1 \
               SHELL=/bin/sh \
