@@ -127,9 +127,16 @@
             grep '^SHELL = /bin/sh$' Makefile
 
             # GNU Make on Windows expands $(SHELL) to Git's installation path,
-            # which contains spaces and is not quoted by generated recipes.
+            # which contains spaces. Keep nested Make invocations from trying
+            # to regenerate the verified release files.
             find "$build" -name Makefile -exec \
-              sed -i 's|$(SHELL) ./config.status|/bin/sh ./config.status|g' {} +
+              sed -i \
+                -e 's|$(SHELL)|/bin/sh|g' \
+                -e 's|^AUTOMAKE =.*|AUTOMAKE = true|' \
+                -e 's|^ACLOCAL =.*|ACLOCAL = true|' \
+                -e 's|^AUTOCONF =.*|AUTOCONF = true|' \
+                -e 's|^AUTOHEADER =.*|AUTOHEADER = true|' \
+                {} +
 
             # Do not remake the configure-generated Makefile. The Windows
             # filesystem can report its prerequisites as newer after extraction.
