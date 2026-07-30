@@ -137,23 +137,34 @@
                 -e 's|^AUTOHEADER =.*|AUTOHEADER = true|' \
                 {} +
 
-            # Configure detects two-second timestamp resolution on this runner.
-            # Establish an unambiguous order so Make does not regenerate the
-            # release archive's Autotools files or the configured build files.
-            sleep 3
-            find "$src" -name Makefile.in -exec touch {} +
-            touch "$src/fficonfig.h.in"
-            sleep 3
-            find "$build" -name Makefile -exec touch {} +
-            touch config.status fficonfig.h stamp-h1
+            # Make names source-tree regeneration targets with absolute paths.
+            # Suppress each exact generated target; these options are inherited
+            # by recursive Make invocations through MAKEFLAGS.
+            make_old_files=(
+              "--old-file=$src/configure"
+              "--old-file=$src/aclocal.m4"
+              "--old-file=$src/fficonfig.h.in"
+              "--old-file=$build/config.status"
+              "--old-file=$build/fficonfig.h"
+              "--old-file=$build/stamp-h1"
+              "--old-file=Makefile"
+              "--old-file=config.status"
+              "--old-file=fficonfig.h"
+              "--old-file=stamp-h1"
+            )
 
-            make V=1 \
+            while IFS= read -r generated_file; do
+              make_old_files+=("--old-file=$generated_file")
+            done < <(find "$src" "$build" \
+              \( -name Makefile.in -o -name Makefile \) -print)
+
+            make "${make_old_files[@]}" V=1 \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
               AUTOHEADER=true
 
-            make install \
+            make "${make_old_files[@]}" install \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
