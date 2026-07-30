@@ -442,7 +442,11 @@ function Set-C {
 		find "$install" -maxdepth 4 -type f -print
 '@
 
-	& $GitBash -lc $LibFFIBuildScript
+	# Passing the program through bash -c causes PowerShell to reinterpret the
+	# nested quotes in the script. Execute an ASCII script file instead.
+	$LibFFIBuildScriptPath = "$BuildDir\\build-libffi.sh"
+	[System.IO.File]::WriteAllText($LibFFIBuildScriptPath, $LibFFIBuildScript, [System.Text.Encoding]::ASCII)
+	& $GitBash $LibFFIBuildScriptPath
 
 	if ($LASTEXITCODE -ne 0) {
 		throw "Failed to configure, build, or install libffi (exit code $LASTEXITCODE)."
