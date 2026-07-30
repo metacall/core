@@ -251,57 +251,176 @@ function Set-C {
 	Set-Location $ROOT_DIR
 
 	$LibFFIVersion = "3.5.2"
+	$LibFFISha256 = "f3a3082a23b37c293a4fcd1053147b371f2ff91fa7ea1b2a52e335676bac82dc"
 	$LLVMVersion = "19.1.0"
 	$DepsDir = "$ROOT_DIR\dependencies"
 	$RuntimeDir = "$DepsDir\libffi"
+	$Archive = "$DepsDir\libffi.tar.gz"
+	$SrcDir = "$DepsDir\libffi-$LibFFIVersion"
+	$BuildDir = "$RuntimeDir\build"
 	$DistDir = "$RuntimeDir\dist"
 
 	mkdir -Force $DepsDir
 	mkdir -Force $RuntimeDir
-	mkdir -Force $DistDir
 
 	Set-Location $DepsDir
 
 	# Download official libffi source tarball
-	if (!(Test-Path -Path "$DepsDir\libffi.tar.gz")) {
+	if (!(Test-Path -Path $Archive)) {
 		Write-Output "libffi not found, downloading..."
 		(New-Object Net.WebClient).DownloadFile(
 			"https://github.com/libffi/libffi/releases/download/v$LibFFIVersion/libffi-$LibFFIVersion.tar.gz",
-			"$DepsDir\libffi.tar.gz"
+			$Archive
 		)
 	}
 
-	cmake -E tar xzf "$DepsDir\libffi.tar.gz"
+	$LibFFIArchiveHash = (Get-FileHash -Path $Archive -Algorithm SHA256).Hash.ToLower()
+	if ($LibFFIArchiveHash -ne $LibFFISha256) {
+		throw "libffi archive checksum mismatch: expected $LibFFISha256, got $LibFFIArchiveHash."
+	}
 
-	$SrcDir = "$DepsDir\libffi-$LibFFIVersion"
-	$BuildDir = "$RuntimeDir\build"
+	# Always configure from clean generated directories. This prevents a
+	# previous shared or failed build from contaminating the static build.
+	foreach ($GeneratedDir in @($SrcDir, $BuildDir, $DistDir)) {
+		if (Test-Path -Path $GeneratedDir) {
+			Remove-Item -Path $GeneratedDir -Recurse -Force
+		}
+	}
+
+	cmake -E tar xzf $Archive
+	if ($LASTEXITCODE -ne 0) {
+		throw "Failed to extract libffi (exit code $LASTEXITCODE)."
+	}
+
 	mkdir -Force $BuildDir
+	mkdir -Force $DistDir
 
 	$GitBash = "C:\Program Files\Git\bin\bash.exe"
-	$DistDirUnix = $DistDir.Replace('\', '/')
-	$BuildDirUnix = $BuildDir.Replace('\', '/')
-	$SrcDirUnix = $SrcDir.Replace('\', '/')
-	$MsvccSh = "$SrcDirUnix/msvcc.sh"
 
 	if (!(Test-Path -Path $GitBash)) {
 		throw "Git Bash is required to build libffi but was not found at '$GitBash'."
 	}
 
-	if (!(Test-Path -Path "$SrcDir\configure") -or !(Test-Path -Path "$SrcDir\msvcc.sh")) {
-		throw "The libffi source archive did not extract the required configure and msvcc.sh files."
+	$LibFFIRequiredFiles = @(
+		"configure",
+		"msvcc.sh",
+		"ltmain.sh",
+		"compile",
+		"missing",
+		"install-sh",
+		"config.guess",
+		"config.sub",
+		"include\ffi.h.in"
+	)
+
+	foreach ($RequiredFile in $LibFFIRequiredFiles) {
+		if (!(Test-Path -Path "$SrcDir\$RequiredFile")) {
+			throw "The libffi source archive is missing '$RequiredFile'."
+		}
 	}
 
-	& $GitBash -c "cd '$BuildDirUnix' && '$SrcDirUnix/configure' CC='$MsvccSh -m64' CXX='$MsvccSh -m64' LD=link CPP='cl -nologo -EP' CXXCPP='cl -nologo -EP' CPPFLAGS='-DFFI_BUILDING_DLL' --prefix='$DistDirUnix' && make && make install"
+	foreach ($RequiredCommand in @("cl.exe", "link.exe", "lib.exe", "ml64.exe", "make.exe")) {
+		if ($null -eq (Get-Command $RequiredCommand -ErrorAction SilentlyContinue)) {
+			throw "The required libffi build tool '$RequiredCommand' is not available in PATH."
+		}
+	}
+
+	$env:LIBFFI_SRC = $SrcDir
+	$env:LIBFFI_BUILD = $BuildDir
+	$env:LIBFFI_INSTALL = $DistDir
+
+	$LibFFIBuildScript = @'
+		set -euxo pipefail
+
+		src="$(cygpath -u "$LIBFFI_SRC")"
+		build="$(cygpath -u "$LIBFFI_BUILD")"
+		install="$(cygpath -u "$LIBFFI_INSTALL")"
+		src_native="$(cygpath -m "$LIBFFI_SRC")"
+
+		# The release archive already contains generated Autotools files. Avoid
+		# timestamp rounding on Windows triggering their regeneration.
+		find "$src" -name Makefile.in -exec touch {} +
+		touch "$src/fficonfig.h.in"
+		sleep 3
+
+		cd "$build"
+
+		SHELL=/bin/sh CONFIG_SHELL=/bin/sh "$src/configure" \
+			CC="$src/msvcc.sh -m64" \
+			CXX="$src/msvcc.sh -m64" \
+			LD=link \
+			CPP="cl -nologo -EP" \
+			CXXCPP="cl -nologo -EP" \
+			CPPFLAGS="-DFFI_STATIC_BUILD" \
+			--disable-docs \
+			--disable-shared \
+			--enable-static \
+			--prefix="$install"
+
+		test -f "$src/include/ffi.h.in"
+		grep '^SHELL = /bin/sh$' Makefile
+
+		# GNU Make on Windows expands $(SHELL) to Git's installation path, which
+		# contains spaces. The source archive's generated rules must also remain
+		# inert so Make cannot launch an Autotools regeneration/recheck loop.
+		find "$src" "$build" \
+			\( -name Makefile.in -o -name Makefile \) -exec \
+			sed -i \
+				-e 's|$(SHELL)|/bin/sh|g' \
+				-e 's|^AUTOMAKE =.*|AUTOMAKE = true|' \
+				-e 's|^ACLOCAL =.*|ACLOCAL = true|' \
+				-e 's|^AUTOCONF =.*|AUTOCONF = true|' \
+				-e 's|^AUTOHEADER =.*|AUTOHEADER = true|' \
+				-e 's|^\($(srcdir)/Makefile\.in\):.*|\1:|' \
+				-e 's|^\($(top_srcdir)/configure\):.*|\1:|' \
+				-e 's|^\($(ACLOCAL_M4)\):.*|\1:|' \
+				-e 's|^\($(top_srcdir)/fficonfig\.h\.in\):.*|\1:|' \
+				-e 's|^\([^:#]*config\.status\):.*|\1:|' \
+				-e 's|^\(Makefile\):.*|\1:|' \
+				-e 's|^\([^:#]*stamp-h1\):.*|\1:|' \
+				{} +
+
+		# Configure requires MSYS paths, while the native MinGW Make executable
+		# performs dependency checks using Windows paths.
+		find "$build" -name Makefile -exec \
+			sed -i "s|$src|$src_native|g" {} +
+
+		grep -F '$(srcdir)/Makefile.in:' Makefile
+		grep -E 'config\.status:$' Makefile
+		grep '^Makefile:$' Makefile
+		grep -E 'stamp-h1:$' Makefile
+
+		make V=1 \
+			SHELL=/bin/sh \
+			CONFIG_SHELL=/bin/sh \
+			AUTOMAKE=true \
+			ACLOCAL=true \
+			AUTOCONF=true \
+			AUTOHEADER=true
+
+		make V=1 install \
+			SHELL=/bin/sh \
+			CONFIG_SHELL=/bin/sh \
+			AUTOMAKE=true \
+			ACLOCAL=true \
+			AUTOCONF=true \
+			AUTOHEADER=true
+
+		find "$install" -maxdepth 4 -type f -print
+'@
+
+	& $GitBash -lc $LibFFIBuildScript
 
 	if ($LASTEXITCODE -ne 0) {
 		throw "Failed to configure, build, or install libffi (exit code $LASTEXITCODE)."
 	}
 
 	$LibFFIHeader = Get-ChildItem -Path $DistDir -Filter "ffi.h" -File -Recurse | Select-Object -First 1
+	$LibFFITargetHeader = Get-ChildItem -Path $DistDir -Filter "ffitarget.h" -File -Recurse | Select-Object -First 1
 	$LibFFILibrary = Get-ChildItem -Path $DistDir -Filter "*.lib" -File -Recurse | Where-Object { $_.Name -match '^libffi' } | Select-Object -First 1
 
-	if (($null -eq $LibFFIHeader) -or ($null -eq $LibFFILibrary)) {
-		throw "libffi installation is incomplete: expected ffi.h and an MSVC libffi .lib file under '$DistDir'."
+	if (($null -eq $LibFFIHeader) -or ($null -eq $LibFFITargetHeader) -or ($null -eq $LibFFILibrary)) {
+		throw "libffi installation is incomplete: expected ffi.h, ffitarget.h, and an MSVC libffi .lib file under '$DistDir'."
 	}
 
 	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
@@ -310,6 +429,7 @@ function Set-C {
 
 	Write-Output "-DLIBFFI_INCLUDE_DIR=""$LibFFIIncludeDir""" >> $EnvOpts
 	Write-Output "-DLIBFFI_LIBRARY=""$LibFFILibraryPath""" >> $EnvOpts
+	Write-Output "-DLIBFFI_STATIC_BUILD=On" >> $EnvOpts
 
 	# Download official LLVM prebuilt archive (includes libclang.lib + headers)
 	# Using clang+llvm archive which contains libraries needed for development

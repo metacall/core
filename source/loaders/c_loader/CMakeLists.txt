@@ -171,6 +171,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	$<$<BOOL:${LIBFFI_STATIC_BUILD}>:FFI_STATIC_BUILD>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
