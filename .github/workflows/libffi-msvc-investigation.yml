@@ -130,7 +130,8 @@
 
             # GNU Make on Windows expands $(SHELL) to Git's installation path,
             # which contains spaces.
-            find "$build" -name Makefile -exec \
+            find "$src" "$build" \
+              \( -name Makefile.in -o -name Makefile \) -exec \
               sed -i \
                 -e 's|$(SHELL)|/bin/sh|g' \
                 -e 's|^AUTOMAKE =.*|AUTOMAKE = true|' \
