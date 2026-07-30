@@ -115,7 +115,6 @@
             # Avoid timestamp rounding on Windows triggering their regeneration.
             find "$src" -name Makefile.in -exec touch {} +
             touch "$src/fficonfig.h.in"
-            cp "$src/include/ffi.h.in" "$build/ffi.h.in.dist"
             sleep 3
 
             cd "$build"
@@ -126,14 +125,11 @@
               LD=link \
               CPP="cl -nologo -EP" \
               CXXCPP="cl -nologo -EP" \
-              CPPFLAGS="-DFFI_BUILDING_DLL" \
               --disable-docs \
+              --disable-shared \
+              --enable-static \
               --prefix="$install"
 
-            # Preserve the distributed public-header template. Some Windows
-            # configure combinations lose it while setting up the build tree.
-            cp "$build/ffi.h.in.dist" "$src/include/ffi.h.in"
-            touch "$build/include/ffi.h"
             test -f "$src/include/ffi.h.in"
 
             grep '^SHELL = /bin/sh$' Makefile
