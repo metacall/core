@@ -138,15 +138,17 @@
                 -e 's|^AUTOHEADER =.*|AUTOHEADER = true|' \
                 {} +
 
-            # Do not remake the configure-generated Makefile. The Windows
-            # filesystem can report its prerequisites as newer after extraction.
-            make --old-file=Makefile V=1 \
+            # Apply the no-regeneration policy to this Make process and every
+            # recursive Make process it starts.
+            export MAKEFLAGS="--old-file=Makefile --old-file=config.status --old-file=fficonfig.h --old-file=stamp-h1"
+
+            make V=1 \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
               AUTOHEADER=true
 
-            make --old-file=Makefile install \
+            make install \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
