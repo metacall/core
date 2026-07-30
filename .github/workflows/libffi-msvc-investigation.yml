@@ -124,19 +124,16 @@
               --disable-docs \
               --prefix="$install"
 
-            # Keep Make from re-running config.status due to equal/coarse
-            # timestamps on the Windows filesystem.
-            touch "$build/config.status"
-            find "$build" -name Makefile -exec touch {} +
-
-            make V=1 \
+            # Do not remake the configure-generated Makefile. The Windows
+            # filesystem can report its prerequisites as newer after extraction.
+            make --old-file=Makefile V=1 \
               SHELL=/bin/sh \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
               AUTOHEADER=true
 
-            make install \
+            make --old-file=Makefile install \
               SHELL=/bin/sh \
               AUTOMAKE=true \
               ACLOCAL=true \
