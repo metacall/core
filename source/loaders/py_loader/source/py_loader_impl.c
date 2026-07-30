@@ -1193,7 +1193,10 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb ? tb : Py_NonePtr());
 
-		Py_DecRef(tb);
+		if (tb != NULL)
+		{
+			Py_DecRef(tb);
+		}
 	}
 	else
 	{
