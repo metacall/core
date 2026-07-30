@@ -6,6 +6,7 @@
   jobs:
     build-libffi:
       runs-on: windows-2022
+      timeout-minutes: 30
 
       steps:
         - name: Activate MSVC
@@ -142,19 +143,17 @@
                 -e 's|^\($(top_srcdir)/configure\):.*|\1:|' \
                 -e 's|^\($(ACLOCAL_M4)\):.*|\1:|' \
                 -e 's|^\($(top_srcdir)/fficonfig\.h\.in\):.*|\1:|' \
-                -e 's|^\(config\.status\):.*|\1:|' \
-                -e 's|^\($(top_builddir)/config\.status\):.*|\1:|' \
+                -e 's|^\([^:#]*config\.status\):.*|\1:|' \
                 -e 's|^\(Makefile\):.*|\1:|' \
-                -e 's|^\(stamp-h1\):.*|\1:|' \
-                -e 's|^\($(top_builddir)/stamp-h1\):.*|\1:|' \
+                -e 's|^\([^:#]*stamp-h1\):.*|\1:|' \
                 {} +
 
             # Verify that the top-level generated-file rules have no
             # prerequisites and therefore cannot start a remake/recheck loop.
             grep -F '$(srcdir)/Makefile.in:' Makefile
-            grep -E '^(\$\(top_builddir\)/)?config\.status:$' Makefile
+            grep -E 'config\.status:$' Makefile
             grep '^Makefile:$' Makefile
-            grep -E '^(\$\(top_builddir\)/)?stamp-h1:$' Makefile
+            grep -E 'stamp-h1:$' Makefile
 
             make V=1 \
               SHELL=/bin/sh \
@@ -164,7 +163,7 @@
               AUTOCONF=true \
               AUTOHEADER=true
 
-            make install \
+            make V=1 install \
               SHELL=/bin/sh \
               CONFIG_SHELL=/bin/sh \
               AUTOMAKE=true \
@@ -212,4 +211,8 @@
             name: libffi-msvc-investigation
             path: |
               ${{ runner.temp }}/libffi-build/config.log
+              ${{ runner.temp }}/libffi-build/config.status
+              ${{ runner.temp }}/libffi-build/Makefile
+              ${{ runner.temp }}/libffi-build/fficonfig.h
+              ${{ runner.temp }}/libffi-build/libtool
               ${{ runner.temp }}/libffi-install
