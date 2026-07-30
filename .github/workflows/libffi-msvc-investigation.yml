@@ -114,7 +114,7 @@
 
             cd "$build"
 
-            CONFIG_SHELL=/bin/sh "$src/configure" \
+            SHELL=/bin/sh CONFIG_SHELL=/bin/sh "$src/configure" \
               CC="$src/msvcc.sh -m64" \
               CXX="$src/msvcc.sh -m64" \
               LD=link \
@@ -124,17 +124,17 @@
               --disable-docs \
               --prefix="$install"
 
+            grep '^SHELL = /bin/sh$' Makefile
+
             # Do not remake the configure-generated Makefile. The Windows
             # filesystem can report its prerequisites as newer after extraction.
             make --old-file=Makefile V=1 \
-              SHELL=/bin/sh \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
               AUTOHEADER=true
 
             make --old-file=Makefile install \
-              SHELL=/bin/sh \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
