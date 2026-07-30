@@ -1374,7 +1374,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		if (obj_impl == NULL)
 		{
-			const char *message = "Cannot retrieve loader_impl_py_class when converting value to python capi";
+			const char *message = "Converting class from metacall value to python capi not implemented";
 			PyObject *args = PyTuple_New(1);
 			PyObject *msg = PyUnicode_FromString(message);
 			log_write("metacall", LOG_LEVEL_WARNING, "%s", message);
@@ -1398,7 +1398,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		if (obj_impl == NULL)
 		{
-			const char *message = "Cannot retrieve loader_impl_py_object when converting value to python capi";
+			const char *message = "Converting object from metacall value to python capi not implemented";
 			PyObject *args = PyTuple_New(1);
 			PyObject *msg = PyUnicode_FromString(message);
 			log_write("metacall", LOG_LEVEL_WARNING, "%s", message);
