@@ -102,11 +102,15 @@
           shell: pwsh
           run: |
             & "C:\Program Files\Git\bin\bash.exe" -lc @'
-            set -eux
+            set -euxo pipefail
 
             src="$(cygpath -u "$LIBFFI_SRC")"
             build="$(cygpath -u "$LIBFFI_BUILD")"
             install="$(cygpath -u "$LIBFFI_INSTALL")"
+
+            # The release archive already contains generated Autotools files.
+            # Avoid timestamp rounding on Windows triggering their regeneration.
+            find "$src" -name Makefile.in -exec touch {} +
 
             cd "$build"
 
@@ -120,9 +124,26 @@
               --disable-docs \
               --prefix="$install"
 
-            make V=1
-            make install
+            make V=1 \
+              SHELL=/bin/sh \
+              AUTOMAKE=true \
+              ACLOCAL=true \
+              AUTOCONF=true \
+              AUTOHEADER=true
+
+            make install \
+              SHELL=/bin/sh \
+              AUTOMAKE=true \
+              ACLOCAL=true \
+              AUTOCONF=true \
+              AUTOHEADER=true
+
+            find "$install" -maxdepth 4 -type f -print
             '@
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "libffi build/install failed with exit code $LASTEXITCODE"
+            }
 
         - name: Verify installation
           shell: pwsh
