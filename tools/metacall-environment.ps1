@@ -134,17 +134,32 @@ function Set-Nodejs {
 		if (!(Test-Path -Path "$DepsDir\libgit2")) {
 			# Clone libgit2
 			git clone --depth 1 --branch v1.8.4 https://github.com/libgit2/libgit2
+			if ($LASTEXITCODE -ne 0) {
+				throw "Failed to clone libgit2 (exit code $LASTEXITCODE)."
+			}
 		}
 
 		$InstallDir = "$DepsDir\libgit2\build\dist"
+		$LibGit2Config = "Debug"
 
 		mkdir "$DepsDir\libgit2\build"
 		mkdir "$InstallDir"
 		Set-Location "$DepsDir\libgit2\build"
 
-		cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_CLI=OFF ..
-		cmake --build . "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)"
-		cmake --install . --prefix "$InstallDir"
+		cmake "-DCMAKE_BUILD_TYPE=$LibGit2Config" -DBUILD_TESTS=OFF -DBUILD_CLI=OFF ..
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to configure libgit2 (exit code $LASTEXITCODE)."
+		}
+
+		cmake --build . --config $LibGit2Config --parallel $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to build libgit2 (exit code $LASTEXITCODE)."
+		}
+
+		cmake --install . --config $LibGit2Config --prefix "$InstallDir"
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to install libgit2 (exit code $LASTEXITCODE)."
+		}
 
 		Write-Output "-DLibGit2_LIBRARY=""$InstallDir\lib\git2.lib""" >> $EnvOpts
 		Write-Output "-DLibGit2_INCLUDE_DIR=""$InstallDir\include""" >> $EnvOpts
@@ -168,7 +183,11 @@ function Set-Java {
 	Expand-Archive -Path "openjdk.zip" -DestinationPath "$RuntimeDir"
 	robocopy /move /e "$RuntimeDir\jdk-$JAVA_VERSION+8" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
 
-	Add-to-Path "JAVA_HOME=$RuntimeDir"
+	$Env:JAVA_HOME = $RuntimeDir
+	if ($Null -ne $Env:GITHUB_ENV) {
+		Write-Output "JAVA_HOME=$RuntimeDir" >> $Env:GITHUB_ENV
+	}
+
 	Add-to-Path "$RuntimeDir\bin"
 	Add-to-Path "$RuntimeDir\bin\server"
 }
@@ -274,7 +293,21 @@ function Set-C {
 		)
 	}
 
-	$LibFFIArchiveHash = (Get-FileHash -Path $Archive -Algorithm SHA256).Hash.ToLower()
+	$LibFFIHashAlgorithm = [System.Security.Cryptography.SHA256]::Create()
+	try {
+		$LibFFIArchiveStream = [System.IO.File]::OpenRead($Archive)
+		try {
+			$LibFFIHashBytes = $LibFFIHashAlgorithm.ComputeHash($LibFFIArchiveStream)
+			$LibFFIArchiveHash = ([System.BitConverter]::ToString($LibFFIHashBytes)).Replace("-", "").ToLowerInvariant()
+		}
+		finally {
+			$LibFFIArchiveStream.Dispose()
+		}
+	}
+	finally {
+		$LibFFIHashAlgorithm.Dispose()
+	}
+
 	if ($LibFFIArchiveHash -ne $LibFFISha256) {
 		throw "libffi archive checksum mismatch: expected $LibFFISha256, got $LibFFIArchiveHash."
 	}
@@ -458,15 +491,18 @@ function Add-to-Path {
 	$GivenPath = $args[0]
 
 	$NewPath = "$GivenPath;$Env:PATH"
-	setx /M PATH $NewPath
 	$Env:PATH = $NewPath
-	$GivenPath >> $env:GITHUB_PATH
+
+	if ($Null -ne $Env:GITHUB_PATH) {
+		$GivenPath >> $Env:GITHUB_PATH
+	}
+	else {
+		[Environment]::SetEnvironmentVariable("PATH", $NewPath, [EnvironmentVariableTarget]::Machine)
+	}
 
 	if ($Null -ne $Env:GITHUB_ENV) {
 		Write-Output "PATH=$Env:PATH" >> $Env:GITHUB_ENV
 	}
-
-	refreshenv
 
 	Write-Output "PATH:: " $Env:PATH
 }
