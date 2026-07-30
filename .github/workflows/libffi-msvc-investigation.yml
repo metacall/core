@@ -111,6 +111,8 @@
             # The release archive already contains generated Autotools files.
             # Avoid timestamp rounding on Windows triggering their regeneration.
             find "$src" -name Makefile.in -exec touch {} +
+            touch "$src/fficonfig.h.in"
+            sleep 3
 
             cd "$build"
 
@@ -159,12 +161,16 @@
               \( -name Makefile.in -o -name Makefile \) -print)
 
             make "${make_old_files[@]}" V=1 \
+              SHELL=/bin/sh \
+              CONFIG_SHELL=/bin/sh \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
               AUTOHEADER=true
 
             make "${make_old_files[@]}" install \
+              SHELL=/bin/sh \
+              CONFIG_SHELL=/bin/sh \
               AUTOMAKE=true \
               ACLOCAL=true \
               AUTOCONF=true \
