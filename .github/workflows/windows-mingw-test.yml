@@ -49,13 +49,20 @@ jobs:
       - name: Build and Test
         shell: msys2 {0}
         run: |
-          sh ./tools/metacall-environment.sh base
-          mkdir -p build && cd build
-          sh ../tools/metacall-configure.sh debug tests
-          sh ../tools/metacall-build.sh debug
-          ctest -R '^metacall-load-configuration-test$' --timeout 300 &
-          CTPID=$!
-          sleep 90
-          WPID=$(ps -W | grep 'metacall-load-configuration-test' | awk '{print $4}' | head -1)
-          gdb -p "$WPID" --batch -ex "info threads" -ex "thread apply all bt full" -ex "detach" -ex "quit" || true
-          kill -9 $CTPID || true
+            sh ./tools/metacall-environment.sh base
+            export CFLAGS="-Og -g -fno-omit-frame-pointer"
+            export CXXFLAGS="-Og -g -fno-omit-frame-pointer"
+            mkdir -p build && cd build
+            sh ../tools/metacall-configure.sh debug tests
+            sh ../tools/metacall-build.sh debug
+            ctest -R '^metacall-load-configuration-test$' --timeout 300 &
+            CTPID=$!
+            sleep 90
+            WPID=$(ps -W | grep 'metacall-load-configuration-test' | awk '{print $4}' | head -1)
+            gdb -p "$WPID" --batch \
+              -ex "set pagination off" \
+              -ex "set backtrace past-main on" \
+              -ex "info threads" \
+              -ex "thread apply all bt full" \
+              -ex "detach" -ex "quit" || true
+            kill -9 $CTPID || true
