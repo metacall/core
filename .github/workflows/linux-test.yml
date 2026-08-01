@@ -96,6 +96,10 @@ jobs:
       fail-fast: false
       matrix:
         image: ["debian:trixie-slim", "ubuntu:noble"]
+        clang: [clang, clang-address-sanitizer, clang-thread-sanitizer]
+
+    env:
+      SANITIZER_SKIP_SUMMARY: 1
 
     steps:
       - name: Check out the repository
@@ -104,7 +108,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install, build and run Clang tests
-        run: ./docker-compose.sh test-clang
+        run: ./docker-compose.sh test-${{ matrix.clang }}
         env:
           METACALL_BUILD_TYPE: debug
           METACALL_BASE_IMAGE: ${{ matrix.image }}

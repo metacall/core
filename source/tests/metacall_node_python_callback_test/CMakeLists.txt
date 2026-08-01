@@ -10,7 +10,7 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_L
 endif()
 
 # Target name
-set(target metacall-node-callback-test)
+set(target metacall-node-python-callback-test)
 message(STATUS "Test ${target}")
 
 #
@@ -34,7 +34,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_node_callback_test.cpp
+	${source_path}/metacall_node_python_callback_test.cpp
 )
 
 # Group source files

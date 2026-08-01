@@ -69,11 +69,12 @@ typedef struct loader_impl_rpc_handle_type
 
 typedef struct loader_impl_rpc_function_type
 {
-	loader_impl_rpc_function_type(loader_impl_rpc rpc_impl, const std::string &url, bool is_async, const std::string &func_name) :
-		rpc_impl(rpc_impl), url(url + (is_async ? "await/" : "call/") + func_name) {}
+	loader_impl_rpc_function_type(loader_impl_rpc rpc_impl, const std::string &url, bool is_async, const std::string &func_name, const int &timeout) :
+		rpc_impl(rpc_impl), url(url + (is_async ? "await/" : "call/") + func_name), timeout(timeout) {}
 
 	loader_impl_rpc rpc_impl;
 	std::string url;
+	int timeout;
 
 } * loader_impl_rpc_function;
 
@@ -95,7 +96,7 @@ struct rpc_async_context
 };
 
 static size_t rpc_loader_impl_write_data(void *buffer, size_t size, size_t nmemb, void *userp);
-static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, const std::string &url, value v, context ctx);
+static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, const std::string &url, value v, context ctx, const int &timeout);
 static int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rpc_impl);
 
 size_t rpc_loader_impl_write_data(void *buffer, size_t size, size_t nmemb, void *userp)
@@ -203,6 +204,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	curl_easy_setopt(easy, CURLOPT_POSTFIELDS, buffer);
 	curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE, body_request_size - 1);
 	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+	curl_easy_setopt(easy, CURLOPT_TIMEOUT_MS, rpc_function->timeout);
 
 	CURLcode res;
 
@@ -423,6 +425,7 @@ function_return function_rpc_interface_await(function func, function_impl impl, 
 	curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
 	curl_easy_setopt(easy, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&async_ctx->write_data));
 	curl_easy_setopt(easy, CURLOPT_PRIVATE, async_ctx);
+	curl_easy_setopt(easy, CURLOPT_TIMEOUT_MS, rpc_function->timeout);
 
 	/* COPYPOSTFIELDS copies data internally, safe to free buffer after */
 	curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE, (long)(body_request_size - 1));
@@ -744,7 +747,7 @@ int rpc_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 0;
 }
 
-int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, const std::string &url, void *v, context ctx)
+int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, const std::string &url, void *v, context ctx, const int &timeout)
 {
 	metacall::map_typed<std::string, metacall::array> inspect(v);
 
@@ -763,7 +766,7 @@ int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, const std::string &
 				const auto &signature_map = func_map["signature"].as<metacall::map_typed<std::string, metacall::value>>();
 				const auto &args = signature_map["args"].as<metacall::array>();
 
-				loader_impl_rpc_function rpc_func = new loader_impl_rpc_function_type(rpc_impl, url, is_async, func_name);
+				loader_impl_rpc_function rpc_func = new loader_impl_rpc_function_type(rpc_impl, url, is_async, func_name, timeout);
 
 				function f = function_create(func_name.c_str(), args.size(), rpc_func, &function_rpc_singleton);
 				signature s = function_signature(f);
@@ -810,10 +813,9 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 	for (const auto &config : rpc_handle->configs)
 	{
-		auto urls = config["urls"].as<metacall::array>();
-		// TODO:
-		// auto timeout = config["timeout"].as<int>();
-		// auto retry = config["retry"].as<int>();
+		const auto urls = config["urls"].as<metacall::array>();
+		const auto timeout = config["timeout"].as<int>();
+		const auto retry = config["retry"].as<int>();
 
 		for (const auto &url : urls)
 		{
@@ -821,15 +823,23 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 			const auto &url_str = url.as<std::string>();
 			std::string base_url = url_str.back() != '/' ? url_str + '/' : url_str;
 			std::string inspect_url = base_url + "inspect";
+			int retry_count = 0;
 			CURLcode res;
 
-			curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
-			curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+			do
+			{
+				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
+				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_TIMEOUT_MS, timeout);
 
-			/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
-			memory_sanitizer_uninstrumented({
-				res = curl_easy_perform(rpc_impl->discover_curl);
-			});
+				log_write("metacall", metacall::detail::LOG_LEVEL_DEBUG, "Trying to connect to %s retry %d/%d with timeout %d", inspect_url.c_str(), retry_count + 1, retry, timeout);
+
+				/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
+				memory_sanitizer_uninstrumented({
+					res = curl_easy_perform(rpc_impl->discover_curl);
+				});
+
+			} while (retry_count++ < retry && res != CURLE_OK);
 
 			if (res != CURLE_OK)
 			{
@@ -849,7 +859,7 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 			}
 
 			/* Discover the functions from the inspect value */
-			if (rpc_loader_impl_discover_value(rpc_impl, base_url, inspect_value, ctx) != 0)
+			if (rpc_loader_impl_discover_value(rpc_impl, base_url, inspect_value, ctx, timeout) != 0)
 			{
 				log_write("metacall", metacall::detail::LOG_LEVEL_ERROR, "Invalid inspect value discover from API endpoint %s", url_str.c_str());
 				return 1;

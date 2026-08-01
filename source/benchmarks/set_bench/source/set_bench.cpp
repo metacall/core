@@ -35,6 +35,9 @@ public:
 	{
 		s = set_create(&hash_callback_ptr, &comparable_callback_ptr);
 
+		keys.clear();
+		values.clear();
+
 		keys.reserve(SET_SIZE);
 		values.reserve(SET_SIZE);
 

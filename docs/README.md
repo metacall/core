@@ -1180,7 +1180,7 @@ Full stack trace for a specific error:
 grep -B5 -A 30 "use-of-uninitialized-value\|WARNING: MemorySanitizer" log.txt
 ```
 
-> **Note:** The `msan-ignorelist.txt` file is compile-time only. After editing it, always run `cmake ..` followed by a rebuild  otherwise changes are silently ignored since `make` reuses cached object files compiled under the old rules.
+> **Note:** The `msan.ignorelist` file is compile-time only. After editing it, always run `cmake ..` followed by a rebuild  otherwise changes are silently ignored since `make` reuses cached object files compiled under the old rules.
 
 ## 9. Benchmarks
 

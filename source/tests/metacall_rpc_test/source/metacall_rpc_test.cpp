@@ -538,3 +538,53 @@ TEST_F(metacall_rpc_test, EmptyShutdown)
 	/* Should return cleanly with no crash or hang */
 	metacall_destroy();
 }
+
+TEST_F(metacall_rpc_test, TimeoutFail)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		static const char buffer[] =
+			"{\n"
+			"	\"urls\": [\n"
+			"		\"http://localhost:6094/timeoutfail/example/v1\"\n"
+			"	],\n"
+			"	\"timeout\": 500,\n"
+			"	\"retry\": 5\n"
+			"}\n";
+
+		void *memory_handle = NULL;
+
+		ASSERT_NE((int)0, (int)metacall_load_from_memory("rpc", buffer, sizeof(buffer), &memory_handle));
+		ASSERT_EQ(memory_handle, nullptr);
+	}
+#endif
+
+	metacall_destroy();
+}
+
+TEST_F(metacall_rpc_test, TimeoutFailSome)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+#if defined(OPTION_BUILD_LOADERS_RPC)
+	{
+		static const char buffer[] =
+			"{\n"
+			"	\"urls\": [\n"
+			"		\"http://localhost:6094/timeoutfailsome/example/v1\"\n"
+			"	],\n"
+			"	\"timeout\": 2000,\n"
+			"	\"retry\": 10\n"
+			"}\n";
+
+		void *memory_handle = NULL;
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("rpc", buffer, sizeof(buffer), &memory_handle));
+		ASSERT_NE(memory_handle, nullptr);
+	}
+#endif
+
+	metacall_destroy();
+}
