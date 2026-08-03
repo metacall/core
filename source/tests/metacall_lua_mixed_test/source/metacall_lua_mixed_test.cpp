@@ -508,7 +508,7 @@ TEST_F(metacall_lua_mixed_test, convert_deeply_nested_structure)
 	{
 		static const char tag[] = "lua";
 
-		/* Test deep nesting within recursion limit (10) */
+		/* Test deep nesting within recursion limit (1000) */
 		static const char buffer[] =
 			"function lua_test_deep_nest()\n"
 			"	return {a = {b = {c = {d = {e = {f = {g = {h = {i = {j = 10}}}}}}}}}}\n"
@@ -535,10 +535,14 @@ TEST_F(metacall_lua_mixed_test, convert_exceeds_recursion_limit)
 	{
 		static const char tag[] = "lua";
 
-		/* Test nesting beyond recursion limit (15 levels > 10 limit) */
+		/* Test nesting beyond recursion limit (1500 levels > 1000 limit) */
 		static const char buffer[] =
 			"function lua_test_exceed_recursion()\n"
-			"	return {a={b={c={d={e={f={g={h={i={j={k={l={m={n={o=15}}}}}}}}}}}}}}}\n"
+			"	local t = 1500\n"
+			"	for i = 1, 1500 do\n"
+			"		t = {t}\n"
+			"	end\n"
+			"	return t\n"
 			"end\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));

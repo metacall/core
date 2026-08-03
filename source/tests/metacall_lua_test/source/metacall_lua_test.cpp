@@ -231,6 +231,16 @@ TEST_F(metacall_lua_test, DefaultConstructor)
 			EXPECT_NE((int)0, (int)metacall_load_from_file(tag, non_existent_scripts, sizeof(non_existent_scripts) / sizeof(non_existent_scripts[0]), NULL));
 		}
 
+		/* Test error handling - first file loads, second file missing */
+		{
+			const char *partial_scripts[] = {
+				"test.lua",
+				"this_file_does_not_exist_67890.lua"
+			};
+
+			EXPECT_NE((int)0, (int)metacall_load_from_file(tag, partial_scripts, sizeof(partial_scripts) / sizeof(partial_scripts[0]), NULL));
+		}
+
 		/* Test error handling - invalid syntax in memory */
 		{
 			static const char invalid_buffer[] =

@@ -49,19 +49,19 @@ typedef struct loader_impl_lua_type
 	lua_State *vm;
 	int error_handler_ref;
 	vector execution_paths;
-} *loader_impl_lua;
+} * loader_impl_lua;
 
 typedef struct loader_impl_lua_handle_type
 {
 	char *name;
 	int env_ref;
-} *loader_impl_lua_handle;
+} * loader_impl_lua_handle;
 
 typedef struct loader_impl_lua_function_type
 {
 	int func_ref;
 	loader_impl impl;
-} *loader_impl_lua_function;
+} * loader_impl_lua_function;
 
 static int lua_loader_error_handler(lua_State *L)
 {
@@ -267,6 +267,18 @@ static int lua_loader_impl_try_load_file(lua_State *L, const char *path, int env
 	return 0;
 }
 
+static void lua_loader_impl_error_capture(lua_State *L, char *error_message, size_t error_message_size)
+{
+	size_t len = 0;
+	const char *error_text = lua_tolstring(L, -1, &len);
+
+	/* Copy the error before popping it from the Lua VM stack */
+	snprintf(error_message, error_message_size, "%.*s", (int)len,
+		error_text != NULL ? error_text : "unknown error");
+
+	lua_pop(L, 1); /* Pop error message */
+}
+
 loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
 {
 	loader_impl_lua lua_impl = (loader_impl_lua)loader_impl_get(impl);
@@ -303,6 +315,9 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 		loader_path join_path;
 		int loaded = 0;
 
+		/* Reset the error message for each file iteration */
+		error_message[0] = '\0';
+
 		/* Try to load directly first (absolute or relative to CWD) */
 		if (lua_loader_impl_try_load_file(lua_impl->vm, path, handle->env_ref) == 0)
 		{
@@ -310,16 +325,7 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 		}
 		else
 		{
-			const char *error_text = lua_tostring(lua_impl->vm, -1);
-			if (error_text != NULL)
-			{
-				snprintf(error_message, sizeof(error_message), "%s", error_text);
-			}
-			else
-			{
-				error_message[0] = '\0';
-			}
-			lua_pop(lua_impl->vm, 1); /* Pop error message */
+			lua_loader_impl_error_capture(lua_impl->vm, error_message, sizeof(error_message));
 
 			/* Try execution paths for relative paths */
 			size_t path_count = vector_size(lua_impl->execution_paths);
@@ -339,16 +345,7 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 					}
 					else
 					{
-						const char *error_text = lua_tostring(lua_impl->vm, -1);
-						if (error_text != NULL)
-						{
-							snprintf(error_message, sizeof(error_message), "%s", error_text);
-						}
-						else
-						{
-							error_message[0] = '\0';
-						}
-						lua_pop(lua_impl->vm, 1); /* Pop error message */
+						lua_loader_impl_error_capture(lua_impl->vm, error_message, sizeof(error_message));
 					}
 				}
 			}
@@ -359,6 +356,10 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 			log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to load file %s: %s",
 				paths[iterator], error_message[0] != '\0' ? error_message : "unknown error");
 			luaL_unref(lua_impl->vm, LUA_REGISTRYINDEX, handle->env_ref);
+			if (handle->name != NULL)
+			{
+				free(handle->name);
+			}
 			free(handle);
 			return NULL;
 		}
@@ -517,8 +518,8 @@ static function_return function_lua_interface_invoke(function func, function_imp
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Lua function %s error: %s",
 			function_name(func), lua_tostring(L, -1));
-		lua_pop(L, 1);
-		lua_remove(L, errfunc_idx);
+		lua_pop(L, 1);				/* Pop error message */
+		lua_remove(L, errfunc_idx); /* Remove error handler */
 		return NULL;
 	}
 

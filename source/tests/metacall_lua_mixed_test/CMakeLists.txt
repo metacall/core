@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_LUA OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_TESTS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_LUA OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_LUA)
 	return()
 endif()
 
@@ -52,12 +52,6 @@ add_executable(${target}
 	${sources}
 )
 
-configure_file(
-	${source_path}/mixed_test.lua
-	${LOADER_SCRIPT_PATH}/mixed_test.lua
-	COPYONLY
-)
-
 # Create namespaced alias
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
@@ -101,7 +95,6 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
-	LUA_LOADER_MIXED_TEST_SCRIPT_PATH="${LOADER_SCRIPT_PATH}/mixed_test.lua"
 )
 
 #
@@ -145,6 +138,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	lua_loader
+	lua-mixed_test
 )
 
 #
