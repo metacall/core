@@ -8,7 +8,12 @@ endif()
 #
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(Python3_FIND_ABI "ON" "ANY" "ANY")
+	set(Python3_FIND_ABI
+		ANY	# pydebug
+		ANY	# pymalloc
+		ANY	# unicode
+		ANY	# free-threaded (gil disabled)
+	)
 	find_package(Python3 COMPONENTS Interpreter Development)
 
 	# Fallback to release if not found
@@ -36,8 +41,8 @@ if(NOT Python3_LIBRARY AND Python3_LIBRARIES)
 
 			# Match the right keyword
 			if((CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "debug") OR
-			   (NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "optimized") OR
-			   (keyword STREQUAL "general"))  # general applies to all configs
+				(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "optimized") OR
+				(keyword STREQUAL "general"))  # general applies to all configs
 				set(Python3_LIBRARY ${lib_path})
 			endif()
 
@@ -302,4 +307,9 @@ loader_configuartion_end_development()
 # Install
 loader_configuration_begin(py_loader)
 loader_configuration_deps(python "${Python3_LIBRARY_INSTALL}")
+# TODO: The python variables are not defined
+# loader_configuration_env(
+# 	"PYTHONHOME=${Python3_ROOT_DIR}"
+# 	"PYTHONPATH=${Python3_SITELIB}${CMAKE_HOST_PATH_SEPARATOR}${Python3_SITEARCH}"
+# )
 loader_configuartion_end_install()

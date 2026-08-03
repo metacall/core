@@ -66,6 +66,12 @@ endif()
 # Define test (Ruby)
 #
 
+# Check if we can use preloaded sanitizers
+if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	AND NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
+	return()
+endif()
+
 set(rb_port_test_executable "${rb_port_test}_executable")
 
 message(STATUS "Test ${rb_port_test_executable}")

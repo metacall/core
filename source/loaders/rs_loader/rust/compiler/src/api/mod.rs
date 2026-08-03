@@ -120,25 +120,31 @@ extern "C" {
     fn loader_is_destroyed(loader_impl: OpaqueType) -> i32;
 }
 
-pub fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecycleState {
+/// # Safety
+/// `loader_impl` must be a valid initialized loader implementation pointer.
+pub unsafe fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecycleState {
     (unsafe { loader_impl_get(loader_impl) }) as *mut LoaderLifecycleState
 }
 
 static mut RS_LOADER_PTR: *mut c_void = std::ptr::null_mut();
 
-pub fn loader_lifecycle_register(loader_impl: OpaqueType) {
-    const TAG: *const c_char = "rs\0".as_ptr() as *const c_char;
+/// # Safety
+/// `loader_impl` must be valid and remain alive during registration.
+pub unsafe fn loader_lifecycle_register(loader_impl: OpaqueType) {
+    let tag = c"rs";
     unsafe {
         loader_initialization_register(loader_impl);
 
         // Get rust loader pointer
         if RS_LOADER_PTR.is_null() {
-            RS_LOADER_PTR = metacall_loader(TAG);
+            RS_LOADER_PTR = metacall_loader(tag.as_ptr());
         }
     }
 }
 
-pub fn loader_lifecycle_unload_children(loader_impl: OpaqueType) {
+/// # Safety
+/// `loader_impl` must be valid and own the children being unloaded.
+pub unsafe fn loader_lifecycle_unload_children(loader_impl: OpaqueType) {
     unsafe {
         loader_unload_children(loader_impl);
     }
@@ -163,7 +169,10 @@ pub enum PrimitiveMetacallProtocolTypes {
     Class = 15,
     Object = 16,
 }
-pub fn define_type(
+
+/// # Safety
+/// All pointer arguments must be valid for the duration of type registration.
+pub unsafe fn define_type(
     loader_impl: OpaqueType,
     name: &str,
     type_id: PrimitiveMetacallProtocolTypes,

@@ -39,6 +39,7 @@ INSTALL_WASM=0
 INSTALL_JAVA=0
 INSTALL_C=0
 INSTALL_COBOL=0
+INSTALL_RUST=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
 INSTALL_PORTS=0
@@ -52,7 +53,35 @@ case "$(uname -s)" in
 	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
+	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
+	Haiku*)		OPERATIVE_SYSTEM=Haiku;;
 	*)			OPERATIVE_SYSTEM="Unknown"
+esac
+
+# Architecture detection
+case "$(uname -m)" in
+	x86_64)
+		if [ "$(getconf LONG_BIT)" = "32" ]; then
+			ARCHITECTURE="386"
+		else
+			ARCHITECTURE="amd64"
+		fi
+		;;
+	armv6*) ARCHITECTURE="armv6";;
+	armv7*|armhf|armel)
+		if grep -q "vfpv3" /proc/cpuinfo; then
+			ARCHITECTURE="armhf"
+		else
+			# TODO: ARMv6 detection not working properly
+			ARCHITECTURE="armv6"
+		fi
+		;;
+	aarch64|arm64)	ARCHITECTURE="arm64";;
+	riscv64)		ARCHITECTURE="riscv64";;
+	i386|i686)		ARCHITECTURE="386";;
+	s390x)			ARCHITECTURE="s390x";;
+	ppc64le)		ARCHITECTURE="ppc64le";;
+	*)				ARCHITECTURE="Unknown";;
 esac
 
 # Check out for sudo
@@ -72,6 +101,11 @@ else
 	# TODO: Implement more distros or better detection
 	LINUX_DISTRO=unknown
 	LINUX_VERSION_ID=unknown
+fi
+
+# Disable warnings from apt
+if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+	export DEBIAN_FRONTEND="noninteractive"
 fi
 
 # Install and mark packages to avoid autoremove
@@ -175,6 +209,11 @@ sub_netcore8(){
 	echo "configure netcore 8"
 	cd $ROOT_DIR
 
+	if [ "${ARCHITECTURE}" = "riscv64" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "armhf" ]; then
+		echo "netcore8 has no support for ${ARCHITECTURE}"
+		return
+	fi
+
 	# Install NET Core Runtime 8.x
 	wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin --runtime dotnet
 }
@@ -248,6 +287,11 @@ sub_rpc(){
 sub_wasm(){
 	echo "configure wasm"
 
+	if [ "${ARCHITECTURE}" = "armhf" ] || [ "${ARCHITECTURE}" = "386" ] || [ "${ARCHITECTURE}" = "ppc64le" ] || [ "${ARCHITECTURE}" = "riscv64" ]; then
+		echo "wasmtime has no support for ${ARCHITECTURE}"
+		return
+	fi
+
 	# TODO
 }
 
@@ -262,46 +306,12 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 	cd $ROOT_DIR
-	LLVM_VERSION_STRING=14
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
-
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
-
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
-						CODENAME="${VERSION_CODENAME}"
-						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
-
-			wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
+			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
@@ -325,17 +335,57 @@ sub_c(){
 sub_cobol(){
 	echo "configure cobol"
 
-	if [ "${LINUX_DISTRO}" == "debian" ]; then
-		echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
+	if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+		# Obtain VERSION_CODENAME
+		. /etc/os-release
 
-		$SUDO_CMD apt-get update
-		sub_apt_install_hold libcob4
+		if [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "jammy" ]; then
+			sub_apt_install_hold libcob4
+		else
+			sub_apt_install_hold libcob4t64
+		fi
+	fi
+}
 
-		# Remove unstable from sources.list
-		$SUDO_CMD head -n -2 /etc/apt/sources.list
-		$SUDO_CMD apt-get update
-	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
-		sub_apt_install_hold libcob4
+# Rust
+sub_rust(){
+	echo "configure rust"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			if [ "${ARCHITECTURE}" != "amd64" ]; then
+				# TODO: Implement more architectures
+				echo "rust has no support for ${ARCHITECTURE}"
+				return
+			fi
+
+			# TODO: Remove this when rust-lld is implemented (gcc is only required for linking)
+			sub_apt_install_hold gcc libc6-dev
+
+			. /etc/os-release
+
+			RUST_DISTRO="${VERSION_CODENAME}"
+			RUNTIME_PACKAGE="rust-toolchain-runtime-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.3"
+
+			wget -qO- "${RUST_RELEASE_URL}/${RUNTIME_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
+
+			rustc -Vv
+			cargo -V
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			# TODO:
+			echo "alpine not implemented"
+			return
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		# TODO:
+		echo "darwin not implemented"
+		return
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# TODO:
+		echo "freebsd not implemented"
+		return
 	fi
 }
 
@@ -449,6 +499,9 @@ sub_install(){
 	if [ $INSTALL_COBOL = 1 ]; then
 		sub_cobol
 	fi
+	if [ $INSTALL_RUST = 1 ]; then
+		sub_rust
+	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
 	fi
@@ -545,6 +598,10 @@ sub_options(){
 			echo "cobol selected"
 			INSTALL_COBOL=1
 		fi
+		if [ "$option" = 'rust' ]; then
+			echo "rust selected"
+			INSTALL_RUST=1
+		fi
 		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
@@ -583,6 +640,7 @@ sub_help() {
 	echo "	java"
 	echo "	c"
 	echo "	cobol"
+	echo "	rust"
 	echo "	backtrace"
 	echo "	sandbox"
 	echo "	ports"

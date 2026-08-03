@@ -89,35 +89,6 @@ size_t set_size(set s)
 	return 0;
 }
 
-/*
-
-static int set_bucket_realloc_iterator(set s, set_key key, set_value value, set_cb_iterate_args args)
-{
-	set new_set = (set)args;
-
-	if (new_set != s && key != NULL && args != NULL)
-	{
-		set_hash h = new_set->hash_cb(key);
-
-		size_t index = h % new_set->capacity;
-
-		bucket b = &new_set->buckets[index];
-
-		if (bucket_insert(b, key, value) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket realloc insertion");
-			return 1;
-		}
-
-		++new_set->count;
-
-		return 0;
-	}
-
-	return 1;
-}
-*/
-
 static int set_bucket_rehash(set s, set new_set)
 {
 	size_t bucket_iterator, pair_iterator;
@@ -154,7 +125,7 @@ static int set_bucket_rehash(set s, set new_set)
 
 static int set_bucket_realloc(set s)
 {
-	struct set_type new_set;
+	struct set_type new_set = { 0 };
 	size_t prime = s->prime;
 	float ratio = (float)((float)s->count / (float)s->capacity);
 

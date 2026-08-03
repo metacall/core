@@ -39,6 +39,8 @@
 
 #include <portability/portability_library_path.h>
 
+#include <environment/environment_variable.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -107,6 +109,8 @@ struct loader_handle_impl_type
 static loader_impl loader_impl_allocate(const loader_tag tag);
 
 static void loader_impl_configuration_execution_paths(loader_impl_interface iface, loader_impl impl);
+
+static void loader_impl_configuration_environment(loader_impl impl);
 
 static int loader_impl_dependencies_self_list(const char *library, void *data);
 
@@ -291,7 +295,7 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 		{
 			if (value_type_id(execution_paths_array[iterator]) == TYPE_STRING)
 			{
-				loader_path execution_path;
+				loader_path execution_path = { 0 };
 
 				configuration_object_child_path(impl->config, execution_paths_array[iterator], execution_path);
 
@@ -299,6 +303,94 @@ void loader_impl_configuration_execution_paths(loader_impl_interface iface, load
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load execution path %s in configuration %s", execution_path, configuration_object_name(impl->config));
 				}
+			}
+		}
+	}
+}
+
+void loader_impl_configuration_environment(loader_impl impl)
+{
+	/* Apply env from config, only when the loader is NOT host and the
+	 * variable is not already defined in the process. Format:
+	 * "env": [
+	 *     { "name": "PYTHONHOME", "value": "C:/Python311" },
+	 *     ...
+	 * ]
+	 * Reference: https://github.com/metacall/core/issues/760
+	*/
+
+	value env_array_value;
+	size_t entry_count;
+	value *entries;
+
+	if (impl->config == NULL || loader_impl_get_option_host(impl) == 1)
+	{
+		return;
+	}
+
+	env_array_value = configuration_value_type(impl->config, "environment", TYPE_ARRAY);
+
+	if (env_array_value == NULL)
+	{
+		return;
+	}
+
+	entry_count = value_type_count(env_array_value);
+	entries = value_to_array(env_array_value);
+
+	for (size_t i = 0; i < entry_count; ++i)
+	{
+		size_t pair_count;
+		value *env_map;
+		const char *env_name = NULL;
+		const char *env_value = NULL;
+
+		if (value_type_id(entries[i]) != TYPE_MAP)
+		{
+			continue;
+		}
+
+		pair_count = value_type_count(entries[i]);
+		env_map = value_to_map(entries[i]);
+
+		for (size_t j = 0; j < pair_count; ++j)
+		{
+			value *kv;
+
+			if (value_type_id(env_map[j]) != TYPE_ARRAY)
+			{
+				continue;
+			}
+
+			kv = value_to_array(env_map[j]);
+
+			if (value_type_id(kv[0]) == TYPE_STRING && value_type_id(kv[1]) == TYPE_STRING)
+			{
+				const char *key = value_to_string(kv[0]);
+				const char *val = value_to_string(kv[1]);
+
+				if (strcmp(key, "name") == 0)
+				{
+					env_name = val;
+				}
+				else if (strcmp(key, "value") == 0)
+				{
+					env_value = val;
+				}
+			}
+		}
+
+		if (env_name == NULL || env_value == NULL)
+		{
+			continue;
+		}
+
+		/* Only set if not already defined */
+		if (environment_variable_get(env_name, NULL) == NULL)
+		{
+			if (environment_variable_set(env_name, env_value) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to set the environment variable '%s': '%s'", env_name, env_value);
 			}
 		}
 	}
@@ -361,19 +453,22 @@ int loader_impl_dependencies_load(loader_impl impl, const char *key_str, value *
 	{
 		if (value_type_id(paths_array[iterator]) == TYPE_STRING)
 		{
-			const char *library_path = value_to_string(paths_array[iterator]);
+			/* Resolve the path against the loader config file's directory so
+			 * relative paths like "../lib/python39.dll" resolve correctly.
+			 * Reference: https://github.com/metacall/core/issues/760
+			 */
+			char library_path[PORTABILITY_PATH_SIZE] = { 0 };
 
-			if (library_path != NULL)
+			configuration_object_child_path(impl->config, paths_array[iterator], library_path);
+
+			dynlink handle = dynlink_load_absolute(library_path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+
+			if (handle != NULL && set_insert(impl->library_map, (const set_key)key_str, (set_value)handle) == 0)
 			{
-				dynlink handle = dynlink_load_absolute(library_path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
-
-				if (handle != NULL && set_insert(impl->library_map, (const set_key)key_str, (set_value)handle) == 0)
-				{
-					return 0;
-				}
-
-				dynlink_unload(handle);
+				return 0;
 			}
+
+			dynlink_unload(handle);
 		}
 	}
 
@@ -387,7 +482,10 @@ void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag ta
 	{
 		"search_paths": ["C:\Program Files\ruby\bin\ruby_builtin_dlls"]
 	}
-	*/
+	Relative paths are resolved against the loader configuration file's directory
+	(via configuration_object_child_path) before being registered with the OS,
+	so SetDllDirectoryA always receives an absolute path independent of CWD.
+	Reference: https://github.com/metacall/core/issues/760 */
 	value search_paths_value = configuration_value_type(impl->config, "search_paths", TYPE_ARRAY);
 
 	/* Check if the loader has search paths and initialize them */
@@ -401,11 +499,13 @@ void loader_impl_dependencies_search_paths(loader_impl impl, const loader_tag ta
 		{
 			if (value_type_id(search_paths_array[iterator]) == TYPE_STRING)
 			{
-				const char *key_str = value_to_string(search_paths_array[iterator]);
+				char resolved_path[PORTABILITY_PATH_SIZE];
 
-				if (SetDllDirectoryA(key_str) == FALSE)
+				configuration_object_child_path(impl->config, search_paths_array[iterator], resolved_path);
+
+				if (SetDllDirectoryA(resolved_path) == FALSE)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register the DLL directory %s in loader '%s'; dependencies with other dependant DLLs may fail to load", key_str, tag);
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register the DLL directory %s in loader '%s'; dependencies with other dependant DLLs may fail to load", resolved_path, tag);
 				}
 			}
 		}
@@ -704,10 +804,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		configuration_define(impl->config, loader_library_path, loader_library_path_value);
 	}
 
-	/* TODO: Check here about search_paths and load them */
-	/* TODO: Check here about environment and load them */
-	/* TODO: Implement the search_paths and environment_variables generation in CMake */
-	/* Reference: https://github.com/metacall/core/issues/760 */
+	/* Check here about environment and load them only if they are not already defined */
+	loader_impl_configuration_environment(impl);
 
 	/* Call to the loader initialize method */
 	impl->data = loader_iface(p)->initialize(impl, impl->config);
@@ -869,6 +967,11 @@ int loader_impl_type_define(loader_impl impl, const char *name, type t)
 	}
 
 	return 1;
+}
+
+set loader_impl_types(loader_impl impl)
+{
+	return impl->type_info_map;
 }
 
 loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const char *path, size_t size)
@@ -1078,12 +1181,12 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, loader
 	/* If there's no handle input/output pointer passed as input parameter, then propagate the handle symbols to the loader context */
 	if (handle_ptr == NULL)
 	{
-		struct set_iterator_type it;
+		struct set_small_iterator_type it;
 
 		/* This case handles the global scope (shared scope between all loaders, there is no out reference to a handle) */
-		for (set_iterator_begin(&it, manager->plugins); set_iterator_end(&it) != 0; set_iterator_next(&it))
+		for (set_small_iterator_begin(&it, manager->plugins); set_small_iterator_end(&it) != 0; set_small_iterator_next(&it))
 		{
-			plugin p = set_iterator_value(&it);
+			plugin p = set_small_iterator_value(&it);
 			loader_impl other_impl = plugin_impl_type(p, loader_impl);
 			char *duplicated_key = NULL;
 
@@ -1273,8 +1376,8 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 		if (iface != NULL)
 		{
 			loader_handle handle;
-			loader_path path;
-			size_t init_order;
+			loader_path path = { 0 };
+			size_t init_order = 0;
 			int init_order_not_initialized;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
@@ -1303,7 +1406,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 	return 1;
 }
 
-int loader_impl_load_from_memory_name(loader_impl impl, loader_name name, const char *buffer, size_t size)
+int loader_impl_load_from_memory_name(loader_impl impl, loader_name *name, const char *buffer, size_t size)
 {
 	/* TODO: Improve name with time or uuid */
 	static const char format[] = "%p-%p-%" PRIuS "-%u";
@@ -1314,7 +1417,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_name name, const 
 
 	if (length > 0 && length < LOADER_NAME_SIZE)
 	{
-		size_t written = snprintf(name, length + 1, format, (const void *)impl, (const void *)buffer, size, (unsigned int)h);
+		size_t written = snprintf(*name, length + 1, format, (const void *)impl, (const void *)buffer, size, (unsigned int)h);
 
 		if (written == length)
 		{
@@ -1336,9 +1439,9 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 		if (iface != NULL)
 		{
-			loader_name name;
+			loader_name name = { 0 };
 			loader_handle handle = NULL;
-			size_t init_order;
+			size_t init_order = 0;
 			int init_order_not_initialized;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
@@ -1346,7 +1449,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 				return 1;
 			}
 
-			if (loader_impl_load_from_memory_name(impl, name, buffer, size) != 0)
+			if (loader_impl_load_from_memory_name(impl, &name, buffer, size) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Load from memory handle failed, name could not be generated correctly");
 
@@ -1379,8 +1482,8 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 	if (impl != NULL)
 	{
 		loader_impl_interface iface = loader_iface(p);
-		loader_path subpath;
-		size_t init_order;
+		loader_path subpath = { 0 };
+		size_t init_order = 0;
 		int init_order_not_initialized;
 
 		if (iface != NULL && loader_impl_handle_name(manager, path, subpath) > 1)
@@ -1478,8 +1581,8 @@ int loader_impl_get_option_host(loader_impl impl)
 
 int loader_impl_handle_initialize(plugin_manager manager, plugin p, loader_impl impl, const loader_path name, void **handle_ptr)
 {
-	loader_path path;
-	size_t init_order;
+	loader_path path = { 0 };
+	size_t init_order = 0;
 	int init_order_not_initialized;
 
 	if (impl == NULL)

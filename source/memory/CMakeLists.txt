@@ -41,6 +41,7 @@ set(headers
 	${include_path}/memory_allocator_std_impl.h
 	${include_path}/memory_allocator_nginx.h
 	${include_path}/memory_allocator_nginx_impl.h
+	${include_path}/memory_sanitizer.h
 )
 
 set(sources

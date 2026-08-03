@@ -9,6 +9,8 @@
 #include <node_loader/node_loader_impl.h>
 #include <node_loader/node_loader_trampoline.h>
 
+#include <memory/memory_sanitizer.h>
+
 #include <cinttypes>
 #include <cstdio> /* TODO: Improve this trick */
 
@@ -16,23 +18,6 @@
 	{ \
 		name, 0, func, 0, 0, 0, napi_default, 0 \
 	}
-
-typedef void *(*future_resolve_callback)(void *, void *);
-typedef void *(*future_reject_callback)(void *, void *);
-
-typedef napi_value (*future_resolve_trampoline)(void *, napi_env, future_resolve_callback, napi_value, napi_value, void *);
-typedef napi_value (*future_reject_trampoline)(void *, napi_env, future_reject_callback, napi_value, napi_value, void *);
-
-typedef struct loader_impl_async_future_await_trampoline_type
-{
-	loader_impl_node node_impl;
-	future_resolve_trampoline resolve_trampoline;
-	future_reject_trampoline reject_trampoline;
-	future_resolve_callback resolve_callback;
-	future_reject_callback reject_callback;
-	void *context;
-
-} * loader_impl_async_future_await_trampoline;
 
 template <typename T>
 union loader_impl_trampoline_cast
@@ -62,12 +47,10 @@ static void node_loader_trampoline_parse_pointer(napi_env env, napi_value v, voi
 napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info)
 {
 	napi_status status;
-
 	const size_t args_size = 4;
 	size_t argc = args_size;
-
-	napi_value args[args_size];
-	napi_valuetype valuetype[args_size];
+	napi_value args[args_size] = {};
+	napi_valuetype valuetype[args_size] = {};
 
 	/* Parse arguments */
 	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
@@ -115,7 +98,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	node_loader_trampoline_parse_pointer(env, args[1], &register_ptr_cast.ptr);
 
 	/* Get function table object */
-	napi_value function_table_object;
+	napi_value function_table_object = nullptr;
 
 	status = napi_coerce_to_object(env, args[2], &function_table_object);
 
@@ -127,7 +110,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	/* Store the node impl reference into a pointer so we can use it later on in the destroy mechanism */
 	if (valuetype[3] != napi_undefined)
 	{
-		napi_value return_external;
+		napi_value return_external = nullptr;
 
 		status = napi_create_external(env, node_impl_cast.data, nullptr, nullptr, &return_external);
 
@@ -137,7 +120,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	}
 	else
 	{
-		napi_value undefined_value;
+		napi_value undefined_value = nullptr;
 
 		status = napi_get_undefined(env, &undefined_value);
 
@@ -145,18 +128,19 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 
 		return undefined_value;
 	}
+
+	/* End of skip node::ResetSignalHandlers use-of-uninitialized-value from node::Start of uninstrumented libnode */
+	memory_sanitizer_disable();
 }
 
 napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 {
 	napi_status status;
-
 	const size_t args_size = 2;
 	size_t argc = args_size;
-	napi_value recv;
-
-	napi_value args[args_size];
-	napi_valuetype valuetype[args_size];
+	napi_value recv = nullptr;
+	napi_value args[args_size] = {};
+	napi_valuetype valuetype[args_size] = {};
 
 	/* Parse arguments */
 	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
@@ -199,7 +183,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	}
 
 	/* Execute the callback */
-	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(result);
 
 	return trampoline->resolve_trampoline(trampoline->node_impl, env, trampoline->resolve_callback, recv, args[1], trampoline->context);
 }
@@ -207,13 +191,11 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 {
 	napi_status status;
-
 	const size_t args_size = 2;
 	size_t argc = args_size;
-	napi_value recv;
-
-	napi_value args[args_size];
-	napi_valuetype valuetype[args_size];
+	napi_value recv = nullptr;
+	napi_value args[args_size] = {};
+	napi_valuetype valuetype[args_size] = {};
 
 	/* Parse arguments */
 	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
@@ -256,7 +238,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	}
 
 	/* Execute the callback */
-	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(result);
 
 	return trampoline->reject_trampoline(trampoline->node_impl, env, trampoline->reject_callback, recv, args[1], trampoline->context);
 }
@@ -266,9 +248,9 @@ napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 	napi_status status;
 	const size_t args_size = 1;
 	size_t argc = args_size;
-	napi_value recv;
-	napi_value args[args_size];
-	napi_valuetype valuetype[args_size];
+	napi_value recv = nullptr;
+	napi_value args[args_size] = {};
+	napi_valuetype valuetype[args_size] = {};
 
 	/* Parse arguments */
 	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
@@ -316,12 +298,11 @@ napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 napi_value node_loader_trampoline_print(napi_env env, napi_callback_info info)
 {
 	napi_status status;
-
 	const size_t args_size = 1;
 	size_t argc = args_size;
-	napi_value recv;
-	napi_value args[args_size];
-	napi_valuetype valuetype[args_size];
+	napi_value recv = nullptr;
+	napi_value args[args_size] = {};
+	napi_valuetype valuetype[args_size] = {};
 
 	/* Parse arguments */
 	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
@@ -369,12 +350,11 @@ napi_value node_loader_trampoline_print(napi_env env, napi_callback_info info)
 napi_value node_loader_trampoline_active_handles(napi_env env, napi_callback_info info)
 {
 	napi_status status;
-
 	const size_t args_size = 1;
 	size_t argc = args_size;
-	napi_value recv;
-	napi_value args[args_size];
-	napi_valuetype valuetype[args_size];
+	napi_value recv = nullptr;
+	napi_value args[args_size] = {};
+	napi_valuetype valuetype[args_size] = {};
 
 	/* Parse arguments */
 	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
@@ -417,7 +397,7 @@ napi_value node_loader_trampoline_active_handles(napi_env env, napi_callback_inf
 	uint64_t active_handles = node_loader_impl_user_async_handles_count(node_impl_cast.data);
 
 	/* Create the integer return value */
-	napi_value result;
+	napi_value result = nullptr;
 
 	if (active_handles > (uint64_t)INT64_MAX)
 	{
@@ -464,7 +444,7 @@ napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)
 
 napi_value node_loader_trampoline_initialize_object(napi_env env)
 {
-	napi_value obj;
+	napi_value obj = nullptr;
 	napi_status status;
 
 	status = napi_create_object(env, &obj);

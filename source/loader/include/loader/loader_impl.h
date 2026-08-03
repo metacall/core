@@ -31,6 +31,8 @@
 
 #include <detour/detour.h>
 
+#include <adt/adt_set.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -66,6 +68,8 @@ LOADER_API context loader_impl_context(loader_impl impl);
 LOADER_API type loader_impl_type(loader_impl impl, const char *name);
 
 LOADER_API int loader_impl_type_define(loader_impl impl, const char *name, type t);
+
+LOADER_API set loader_impl_types(loader_impl impl);
 
 LOADER_API int loader_impl_execution_path(plugin p, loader_impl impl, const loader_path path);
 

@@ -140,14 +140,6 @@ target_link_options(${target}
 )
 
 #
-# Define test
-#
-
-add_test(NAME ${target}
-	COMMAND $<TARGET_FILE:${target}>
-)
-
-#
 # Define dependencies
 #
 
@@ -156,11 +148,32 @@ add_dependencies(${target}
 )
 
 #
+# Define test
+#
+
+if(OPTION_BUILD_THREAD_SANITIZER)
+	check_tsan_executable("${DOTNET_CORE_LIBRARY}" DotNET_TSAN)
+	if(NOT DotNET_TSAN)
+		# This test fails when run with thread sanitizer due to C# when CoreCLR is not compiled with TSAN:
+		# coreclr_initialize status (0x8007ff0b)
+		# For solving this, we should enable C# support for sanitizers and debug it properly
+		return()
+	endif()
+endif()
+
+add_test(NAME ${target}
+	COMMAND $<TARGET_FILE:${target}>
+)
+
+#
 # Define test properties
 #
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+
+	# TODO: Valgrind also fails with C#
+	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)

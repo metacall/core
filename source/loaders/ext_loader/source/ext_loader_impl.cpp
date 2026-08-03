@@ -213,9 +213,7 @@ int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_
 	if (lib == NULL)
 	{
 		ext_loader_impl_destroy_handle(ext_handle);
-
 		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", path);
-
 		return 1;
 	}
 
@@ -225,9 +223,7 @@ int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_
 	if (dynlink_symbol(lib, symbol_name.c_str(), &symbol_address) != 0)
 	{
 		ext_loader_impl_destroy_handle(ext_handle);
-
-		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load symbol from extension: %s", path);
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load symbol '%s' from extension: %s", symbol_name.c_str(), path);
 		return 1;
 	}
 

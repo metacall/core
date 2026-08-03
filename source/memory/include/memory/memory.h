@@ -28,6 +28,7 @@
 #include <memory/memory_allocator.h>
 #include <memory/memory_allocator_nginx.h>
 #include <memory/memory_allocator_std.h>
+#include <memory/memory_sanitizer.h>
 
 #ifdef __cplusplus
 extern "C" {

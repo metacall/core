@@ -1,0 +1,44 @@
+name: Haiku Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
+    tags:
+      - v*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Haiku Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [debug, relwithdebinfo, release]
+        arch: [x86-64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Haiku VM
+        uses: cross-platform-actions/action@v1.3.0
+        with:
+          operating_system: haiku
+          version: r1beta5
+          architecture: ${{ matrix.arch }}
+          shell: sh
+          run: |
+            sh ./tools/metacall-environment.sh base
+            mkdir -p build && cd build
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} scripts tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }} tests || sh ../tools/metacall-haiku-crash-report.sh

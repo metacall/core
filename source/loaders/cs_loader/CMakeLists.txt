@@ -174,6 +174,9 @@ target_link_libraries(${target}
 
 	# C++ FileSystem
 	$<$<NOT:$<BOOL:${MSVC}>>:stdc++fs>
+	
+	# GCC < 9 requires explicit filesystem linkage
+	$<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9>>:stdc++fs>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -214,7 +217,10 @@ target_compile_options(${target}
 
 target_compile_features(${target}
 	PRIVATE
-	cxx_std_11
+	# C++11 in Windows
+	$<$<PLATFORM_ID:Windows>:cxx_std_11>
+	# C++17 otherwise
+	$<$<NOT:$<PLATFORM_ID:Windows>>:cxx_std_17>
 )
 
 #
@@ -245,7 +251,7 @@ loader_configuartion_end_development()
 
 # Install
 loader_configuration_begin(cs_loader "${CS_LOADER_CONFIG_TEMPLATE}")
-set(DOTNET_CORE_LOADER_ASSEMBLY_PATH ${PROJECT_OUTPUT_DIR}/CSLoader.dll)
+set(DOTNET_CORE_LOADER_ASSEMBLY_PATH ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/CSLoader.dll)
 loader_configuartion_end_install()
 
 #

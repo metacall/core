@@ -9,33 +9,32 @@
 # We disable them until we debug those cases (if any) in depth.
 #
 #
-# Python
+# Python (Crypto)
 #
-leak:_PyObject_Malloc
-leak:_PyObject_Realloc
-leak:_PyObject_GC_Resize
-leak:_PyMem_RawRealloc
-leak:_PyMem_RawMalloc
-leak:PyThread_allocate_lock
-leak:libpython*
-#
-# NodeJS
+leak:CRYPTO_malloc
 #
 # Suppress small (intentional) leaks in glibc
+#
 leak:libc.so
-# Supress node library (for now)
+#
+# NodeJS (TODO: Remove once NodeJS is instrumented)
+#
 leak:libnode*
 #
-# Ruby
+# Ruby (TODO: Remove once Ruby is instrumented)
 #
 leak:libruby*
 #
-# DotNet Core
+# Java (TODO: Remove once Java is instrumented)
+#
+leak:libjvm*
+#
+# DotNet Core (TODO: Remove once NetCore is instrumented)
 #
 leak:libcoreclr*
 leak:libicuuc*
 leak:SystemNative_LowLevelMonitor_Create
 #
-# Rust
+# Rust (TODO: Remove once Rust is instrumented)
 #
 leak:libLLVM*

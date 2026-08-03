@@ -61,7 +61,7 @@ dynlink dynlink_load(const char *path, const char *name, dynlink_flags flags)
 
 		if (handle != NULL)
 		{
-			dynlink_path name_impl;
+			dynlink_path name_impl = { 0 };
 
 			strncpy(handle->name, name, PORTABILITY_PATH_SIZE - 1);
 
@@ -69,7 +69,7 @@ dynlink dynlink_load(const char *path, const char *name, dynlink_flags flags)
 
 			if (path != NULL)
 			{
-				dynlink_path join_path;
+				dynlink_path join_path = { 0 };
 
 				size_t join_path_size = portability_path_join(path, strnlen(path, PORTABILITY_PATH_SIZE) + 1, name_impl, strnlen(name_impl, PORTABILITY_PATH_SIZE) + 1, join_path, PORTABILITY_PATH_SIZE);
 

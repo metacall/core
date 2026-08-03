@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#define SET_SIZE   1000
+#define SET_SIZE   100000
 #define ITERATIONS 1000
 
 class set_bench : public benchmark::Fixture
@@ -34,6 +34,9 @@ public:
 	void SetUp(benchmark::State &)
 	{
 		s = set_create(&hash_callback_ptr, &comparable_callback_ptr);
+
+		keys.clear();
+		values.clear();
 
 		keys.reserve(SET_SIZE);
 		values.reserve(SET_SIZE);
@@ -88,35 +91,7 @@ BENCHMARK_REGISTER_F(set_bench, set_iterate)
 	->Iterations(ITERATIONS)
 	->Repetitions(3);
 
-/*
 BENCHMARK_DEFINE_F(set_bench, set_iterators)
-(benchmark::State &state)
-{
-	uint64_t sum = 0;
-
-	for (auto _ : state)
-	{
-		for (set_iterator it = set_iterator_begin(s); set_iterator_end(&it) > 0; set_iterator_next(it))
-		{
-			int *i = (int *)set_iterator_value(it);
-
-			sum += ((uint64_t)(*i));
-		}
-	}
-
-	(void)sum;
-
-	state.SetLabel("Set Benchmark - Iterators");
-	state.SetItemsProcessed(SET_SIZE);
-}
-
-BENCHMARK_REGISTER_F(set_bench, set_iterators)
-	->Unit(benchmark::kMillisecond)
-	->Iterations(ITERATIONS)
-	->Repetitions(3);
-*/
-
-BENCHMARK_DEFINE_F(set_bench, set_iterators_2)
 (benchmark::State &state)
 {
 	uint64_t sum = 0;
@@ -135,11 +110,11 @@ BENCHMARK_DEFINE_F(set_bench, set_iterators_2)
 
 	(void)sum;
 
-	state.SetLabel("Set Benchmark - Iterators 2");
+	state.SetLabel("Set Benchmark - Iterators");
 	state.SetItemsProcessed(SET_SIZE);
 }
 
-BENCHMARK_REGISTER_F(set_bench, set_iterators_2)
+BENCHMARK_REGISTER_F(set_bench, set_iterators)
 	->Unit(benchmark::kMillisecond)
 	->Iterations(ITERATIONS)
 	->Repetitions(3);

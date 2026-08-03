@@ -1,0 +1,4 @@
+{
+	"dotnet_root": "/invalid/path/Microsoft.NETCore.App/7.0.2",
+	"dotnet_loader_assembly_path": "/another/invalid/path/build/CSLoader.dll"
+}

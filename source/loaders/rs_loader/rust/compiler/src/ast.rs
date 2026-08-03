@@ -27,6 +27,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                 "f32" => result.ty = FunctionType::f32,
                 "f64" => result.ty = FunctionType::f64,
                 "bool" => result.ty = FunctionType::bool,
+                "i8" => result.ty = FunctionType::char,
                 "str" => result.ty = FunctionType::String,
                 "Vec" => {
                     result.ty = FunctionType::Array;
@@ -40,6 +41,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                                 }
                             }
                             GenericArgs::Parenthesized(_) => {}
+                            GenericArgs::ParenthesizedElided(_) => {}
                         }
                     }
                 }
@@ -55,6 +57,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
                                 }
                             }
                             GenericArgs::Parenthesized(_) => {}
+                            GenericArgs::ParenthesizedElided(_) => {}
                         }
                     }
                 }
@@ -63,12 +66,12 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
             }
             result.name = symbol_string;
         }
-        TyKind::Rptr(_, MutTy { ty, mutbl }) => {
+        TyKind::Ref(_, MutTy { ty, mutbl }) => {
             let mut inner_ty = handle_ty(ty);
             inner_ty.reference = Reference::Yes;
             match mutbl {
-                rustc_hir::Mutability::Mut => inner_ty.mutability = Mutability::Yes,
-                rustc_hir::Mutability::Not => inner_ty.mutability = Mutability::No,
+                rustc_ast::Mutability::Mut => inner_ty.mutability = Mutability::Yes,
+                rustc_ast::Mutability::Not => inner_ty.mutability = Mutability::No,
             }
             return inner_ty;
         }

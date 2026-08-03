@@ -28,7 +28,9 @@ function Set-Python {
 	Write-Output "Install Python"
 	Set-Location $ROOT_DIR
 
-	$PythonVersion = '3.9.7'
+	$PythonVersion = '3.10.2'
+	$Version = [version]$PythonVersion
+	$MajorMinor = "$($Version.Major)$($Version.Minor)"
 	$RuntimeDir = "$env:ProgramFiles\Python3"
 	$DepsDir = "$ROOT_DIR\dependencies"
 
@@ -60,7 +62,7 @@ function Set-Python {
 	Write-Output "-DPython3_ROOT_DIR=""$PythonRuntimeDir""" >> $EnvOpts
 	Write-Output "-DPython3_EXECUTABLE=""$PythonRuntimeDir/python.exe""" >> $EnvOpts
 	Write-Output "-DPython3_INCLUDE_DIRS=""$PythonRuntimeDir/include""" >> $EnvOpts
-	Write-Output "-DPython3_LIBRARIES=""$PythonRuntimeDir/libs/python39_d.lib;$PythonRuntimeDir/libs/python39.lib""" >> $EnvOpts
+	Write-Output "-DPython3_LIBRARIES=""$PythonRuntimeDir/libs/python${MajorMinor}_d.lib;$PythonRuntimeDir/libs/python${MajorMinor}.lib""" >> $EnvOpts
 	Write-Output "-DPython3_Development_FOUND=1" >> $EnvOpts
 	Write-Output "-DPython3_FIND_REGISTRY=NEVER" >> $EnvOpts
 

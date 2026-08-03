@@ -68,6 +68,8 @@ option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugi
 #
 # You can do any combination of those for defining the configuration of your loaders.
 #
+# For environment variables:
+#
 
 # Define loader template configuration
 set(LOADER_CONFIGURATION_DEFAULT_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/loader.json.in")
@@ -75,6 +77,7 @@ set(LOADER_CONFIGURATION_DEFAULT_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/loader.js
 # Define loader configuration for a specific loader
 macro(loader_configuration_begin TARGET)
 	set(LOADER_DEPENDENCIES "")
+	set(LOADER_ENVIRONMENT "")
 	set(OPTIONAL_TEMPLATE "${ARGV1}")
 
 	# Optional argument for template
@@ -106,12 +109,16 @@ endmacro()
 # Generate configuration with dependencies for a loader
 #
 #	node_loader:
+#	"dependencies": {
 #		"node": [ "/path/to/libnode.so", "/alternative/path/to/libnode.so" ],
+#	}
 #
 #	c_loader:
+#	"dependencies": {
 #		"libffi": [ ... ],
 #		"libclang": [ ... ],
 #		"libtcc": [ ... ]
+#	}
 macro(loader_configuration_deps LIBRARY)
 	# Add new line from previous dependency
 	if(NOT "${LOADER_DEPENDENCIES}" STREQUAL "")
@@ -138,6 +145,44 @@ macro(loader_configuration_deps LIBRARY)
 	string(APPEND LOADER_DEPENDENCIES "]")
 endmacro()
 
+# Generate configuration with environment variables for a loader
+#
+#	"environment": [
+#		{ "name": "PYTHONHOME", "value": "C:/Python311" },
+#		{ "name": "PYTHONPATH", "value": "C:/Python311/Lib" }
+#	]
+#
+#	loader_configuration_env(
+#		"PYTHONPATH=C:/Python311"
+#		"PYTHONHOME=C:/Python311/Lib"
+#	)
+#
+# Loaded at init time only when the loader is NOT host and the variable is not
+# already defined in the process environment.
+macro(loader_configuration_env)
+	if(NOT "${LOADER_ENVIRONMENT}" STREQUAL "")
+		string(APPEND LOADER_ENVIRONMENT ",\n\t\t")
+	endif()
+
+	set(FIRST_ARGUMENT 0)
+
+	foreach(ENV_PAIR IN ITEMS ${ARGN})
+		# ENV_PAIR format:
+		#   VAR=value
+		string(REPLACE "=" ";" ENV_SPLIT "${ENV_PAIR}")
+
+		list(GET ENV_SPLIT 0 ENV_KEY)
+		list(GET ENV_SPLIT 1 ENV_VALUE)
+
+		if(${FIRST_ARGUMENT} EQUAL 0)
+			string(APPEND LOADER_ENVIRONMENT "{ \"name\": \"${ENV_KEY}\", \"value\": \"${ENV_VALUE}\" }")
+			set(FIRST_ARGUMENT 1)
+		else()
+			string(APPEND LOADER_ENVIRONMENT ",\n\t\t\{ \"name\": \"${ENV_KEY}\", \"value\": \"${ENV_VALUE}\" }")
+		endif()
+	endforeach()
+endmacro()
+
 # Commit development version
 macro(loader_configuartion_end_development)
 	if(NOT DEFINED LOADER_CONFIGURATION_TEMPLATE OR NOT DEFINED LOADER_CONFIGURATION_TARGET)
@@ -149,6 +194,7 @@ macro(loader_configuartion_end_development)
 	unset(LOADER_DEPENDENCIES)
 	unset(LOADER_CONFIGURATION_TEMPLATE)
 	unset(LOADER_CONFIGURATION_TARGET)
+	unset(LOADER_ENVIRONMENT)
 endmacro()
 
 # Commit install version
@@ -162,6 +208,7 @@ macro(loader_configuartion_end_install)
 	unset(LOADER_DEPENDENCIES)
 	unset(LOADER_CONFIGURATION_TEMPLATE)
 	unset(LOADER_CONFIGURATION_TARGET)
+	unset(LOADER_ENVIRONMENT)
 endmacro()
 
 # Commit both versions
@@ -176,6 +223,7 @@ macro(loader_configuartion_end)
 	unset(LOADER_DEPENDENCIES)
 	unset(LOADER_CONFIGURATION_TEMPLATE)
 	unset(LOADER_CONFIGURATION_TARGET)
+	unset(LOADER_ENVIRONMENT)
 endmacro()
 
 # Plugin packages
@@ -213,10 +261,7 @@ macro(add_loader_dependencies TARGET)
 
 		# Check if the loader is enabled
 		if(${OPTION_BUILD_LOADERS_${LOADER_TAG}})
-			set(LOADERS_LIST
-				${LOADERS_LIST}
-				${loader}
-			)
+			list(APPEND LOADERS_LIST ${LOADER})
 		endif()
 	endforeach()
 

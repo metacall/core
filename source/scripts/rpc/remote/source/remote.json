@@ -1,0 +1,7 @@
+{
+	"urls": [
+		"http://localhost:6094/viferga/example/v1"
+	],
+	"timeout": 1000,
+	"retry": 10
+}
