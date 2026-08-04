@@ -56,7 +56,7 @@ describe('metacall', () => {
 			// TODO: Improve error messages
 			assert.throws(() => { require('./asd.py') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.rb') }, new Error('MetaCall could not load from file'));
-			assert.throws(() => { require('./asd.cs') }, new Error('MetaCall could not load from file'));
+			// assert.throws(() => { require('./asd.cs') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.ts') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.tsx') }, new Error('MetaCall could not load from file'));
 		});

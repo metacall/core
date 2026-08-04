@@ -462,10 +462,15 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		check_tsan_executable("${DOTNET_CORE_LIBRARY}" DotNET_TSAN)
 	endif()
 
-	if(NOT (OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS AND NOT DotNET_TSAN))
+	if(OPTION_BUILD_LOADERS_CS
 		# This test fails when run with thread sanitizer due to C# when CoreCLR is not compiled with TSAN:
 		# coreclr_initialize status (0x8007ff0b)
 		# For solving this, we should enable C# support for sanitizers and debug it properly
+		AND NOT (OPTION_BUILD_THREAD_SANITIZER AND NOT DotNET_TSAN)
+		# C# NetCore instrumentation for Valgrind is not supported right now on MetaCall
+		# and we do not have a way to check if is instrumented or not checking the library
+		# so we skip directly the test to avoid false positives
+	    AND NOT OPTION_TEST_MEMORYCHECK)
 		add_test(NAME ${target}-tsx-loop-fail
 			COMMAND $<TARGET_FILE:${target}> loopfail.tsx
 			WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/loopfail

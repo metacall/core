@@ -93,17 +93,6 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD
 	return()
 endif()
 
-if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
-	find_package(DotNET)
-	check_tsan_executable("${DOTNET_CORE_LIBRARY}" DotNET_TSAN)
-	if(NOT DotNET_TSAN)
-		# This test fails when run with thread sanitizer due to C# when CoreCLR is not compiled with TSAN:
-		# coreclr_initialize status (0x8007ff0b)
-		# For solving this, we should enable C# support for sanitizers and debug it properly
-		return()
-	endif()
-endif()
-
 #
 # Define environment variables
 #
