@@ -118,7 +118,7 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 		)
 	else()
 		set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-			"TSAN_OPTIONS=verbosity=1:halt_on_error=1:history_size=7:report_signal_unsafe=1:report_thread_leaks=1:second_deadlock_stack=1:symbolize=1:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
+			"TSAN_OPTIONS=verbosity=1:halt_on_error=1:history_size=7:report_signal_unsafe=1:report_thread_leaks=1:second_deadlock_stack=1:force_seq_cst_atomics=1:symbolize=1:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
 		)
 	endif()
 	set(SANITIZER_COMPILE_DEFINITIONS

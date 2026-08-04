@@ -186,7 +186,9 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+			# TODO: || [ $INSTALL_THREAD_SANITIZER = 1 ]
+			# Enable thread sanitizer instrumentation when we find the bug: https://github.com/metacall/core/issues/848
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 				# Download Python build dependencies and source
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
@@ -979,7 +981,7 @@ sub_rust(){
 
 			RUST_DISTRO="${VERSION_CODENAME}"
 			DEV_PACKAGE="rust-toolchain-dev-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
-			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.4"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.5"
 
 			wget -qO- "${RUST_RELEASE_URL}/${DEV_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
 
