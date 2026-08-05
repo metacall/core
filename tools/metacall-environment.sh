@@ -344,7 +344,7 @@ sub_ruby(){
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			# TODO: Enable when Ruby supports other sanitizers
 			# if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; }; then
-			if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] }; then
+			if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ]; }; then
 				# Download Ruby dependencies and source
 				RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
