@@ -274,7 +274,7 @@ sub_rpc(){
 					;;
 			esac
 
-			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
+			if [ "${CODENAME}" = "forky" ] || [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
 				sub_apt_install_hold libcurl4t64
 			else
 				sub_apt_install_hold libcurl4
