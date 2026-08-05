@@ -342,61 +342,67 @@ sub_ruby(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# TODO:
-			# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-			# 	# Download Ruby source
-			# 	RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
-			# 	$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
-			# 	mkdir ruby && cd ruby
-			# 	apt-get source "${RUBY_PKG}"
-			# 	SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
-			# 	cd "$SRC_DIR"
+			if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; }; then
+				# Download Ruby dependencies and source
+				RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
+				$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby
 
-			# 	# Build Ruby with instrumentation
-			# 	if [ $INSTALL_MEMCHECK = 1 ]; then
-			# 		# TODO: Apparently valgrind does not need instrumentation?
-			# 		BUILD_CFLAGS=""
-			# 		BUILD_LDFLAGS=""
-			# 	elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
-			# 		export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
-			# 		export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
-			# 		BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
-			# 	elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
-			# 		export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=thread"
-			# 		BUILD_LDFLAGS="-fsanitize=thread"
-			# 	elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-			# 		export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=memory"
-			# 		BUILD_LDFLAGS="-fsanitize=memory"
-			# 	fi
+				# https://docs.ruby-lang.org/en/3.4/contributing/building_ruby_md.html#label-Building+with+Address+Sanitizer
+				# ASAN will not work properly on any currently released version of Ruby;
+				# the necessary support is currently only present on Ruby’s master branch
+				# (and the whole test suite passes only as of commit Revision 9d0a5148).
+				git clone --depth=1 --single-branch --branch master https://github.com/ruby/ruby.git
+				cd ruby
+				git fetch --depth=1 origin 9d0a5148ae062a0481a4a18fbeb9cfd01dc10428
+				git checkout 9d0a5148ae062a0481a4a18fbeb9cfd01dc10428
 
-			# 	./autogen.sh
-			# 	mkdir build && cd build
-			# 	../configure \
-			# 		--enable-shared \
-			# 		--enable-debug-env \
-			# 		cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer" \
-			# 		ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
-			# 		cppflags="-DUSE_RUBY_DEBUG_LOG=1" \
-			# 		optflags="-O0" \
-			# 		debugflags="-ggdb3" \
-			# 		--prefix=/usr/local
+				# Build Ruby with instrumentation
+				if [ $INSTALL_MEMCHECK = 1 ]; then
+					# TODO: Apparently valgrind does not need instrumentation?
+					BUILD_CFLAGS=""
+					BUILD_LDFLAGS=""
+				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
+					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_CFLAGS="-fsanitize=thread"
+					BUILD_LDFLAGS="-fsanitize=thread"
+				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_CFLAGS="-fsanitize=memory"
+					BUILD_LDFLAGS="-fsanitize=memory"
+				fi
 
-			# 	make -j$(nproc)
-			# 	$SUDO_CMD make install
+				./autogen.sh
+				mkdir build && cd build
+				../configure \
+					--enable-shared \
+					--enable-debug-env \
+					--disable-yjit \
+					cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer -DUSE_MN_THREADS=0 -DUSE_RUBY_DEBUG_LOG=1" \
+					ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+					optflags="-O0" \
+					debugflags="-ggdb3" \
+					--prefix=/usr/local
 
-			# 	cd ../../..
-			# 	rm -rf ./ruby
-			# else
+				export MAKEFLAGS="--jobs $(nproc)"
+				make -j$(nproc)
+				$SUDO_CMD make -j$(nproc) install
+
+				cd ../../..
+				rm -rf ./ruby
+			else
 				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
 
 				# TODO: Review conflict with NodeJS (currently rails test is disabled)
 				#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
 				#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
 				#$SUDO_CMD gem install rails
-			# fi
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache ruby ruby-dev
 		fi
