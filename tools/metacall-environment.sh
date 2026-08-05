@@ -344,7 +344,7 @@ sub_ruby(){
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			# TODO: Enable when Ruby supports other sanitizers
 			# if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; }; then
-			if [ $INSTALL_CLANG = 1 ] && [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+			if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] }; then
 				# Download Ruby dependencies and source
 				RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
@@ -361,20 +361,23 @@ sub_ruby(){
 
 				# Build Ruby with instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
-					# TODO: Apparently valgrind does not need instrumentation?
+					BUILD_FLAGS="--with-valgrind"
 					BUILD_CFLAGS=""
 					BUILD_LDFLAGS=""
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
 					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS=""
 					BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS=""
 					BUILD_CFLAGS="-fsanitize=thread"
 					BUILD_LDFLAGS="-fsanitize=thread"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS=""
 					BUILD_CFLAGS="-fsanitize=memory"
 					BUILD_LDFLAGS="-fsanitize=memory"
 				fi
@@ -382,6 +385,7 @@ sub_ruby(){
 				./autogen.sh
 				mkdir build && cd build
 				../configure \
+					${BUILD_FLAGS} \
 					--enable-shared \
 					--enable-debug-env \
 					--disable-yjit \
