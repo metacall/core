@@ -15,5 +15,5 @@ include(LuaProject)
 
 add_subdirectory(example)
 add_subdirectory(max)
-add_subdirectory(mixed_test)
+add_subdirectory(mixed-test)
 add_subdirectory(test)
