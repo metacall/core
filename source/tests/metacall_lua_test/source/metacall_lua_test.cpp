@@ -26,7 +26,7 @@
 
 class metacall_lua_test : public testing::Test
 {
-protected:
+public:
 };
 
 TEST_F(metacall_lua_test, DefaultConstructor)

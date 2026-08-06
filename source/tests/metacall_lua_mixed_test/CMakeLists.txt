@@ -138,7 +138,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	lua_loader
-	lua-mixed_test
+	lua-mixed-test
 )
 
 #
