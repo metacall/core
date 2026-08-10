@@ -267,29 +267,35 @@ static int lua_loader_impl_try_load_file(lua_State *L, const char *path, int env
 	return 0;
 }
 
-static void lua_loader_impl_error_capture(lua_State *L, char **error_message)
+static int lua_loader_impl_error_capture(lua_State *L, char **error, size_t *size)
 {
-	size_t len = 0;
-	const char *error_text = lua_tolstring(L, -1, &len);
-	char *copy;
+	size_t error_size = 0;
+	const char *error_text = lua_tolstring(L, -1, &error_length);
+	char *copy = NULL;
+	int result = 1;
 
-	/* Free the previous error message, if any */
-	free(*error_message);
-	*error_message = NULL;
-
-	/* Copy the error before popping it from the Lua VM stack */
-	if (error_text != NULL)
+	if (error_text == NULL)
 	{
-		copy = (char *)malloc(len + 1);
-		if (copy != NULL)
-		{
-			strncpy(copy, error_text, len);
-			copy[len] = '\0';
-			*error_message = copy;
-		}
+		goto pop_error_message;
 	}
 
-	lua_pop(L, 1); /* Pop error message */
+	/* Copy the error before popping it from the Lua VM stack */
+	++error_size;
+	copy = (char *)malloc(error_size);
+
+	if (copy == NULL)
+	{
+		goto pop_error_message;
+	}
+
+	strncpy(copy, error_text, error_size);
+	result = 0;
+
+pop_error_message:
+	lua_pop(L, 1);
+	*error = copy;
+	*size = error_size;
+	return result;
 }
 
 loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void *data)
