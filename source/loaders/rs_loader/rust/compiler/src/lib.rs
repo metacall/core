@@ -54,6 +54,7 @@ pub mod memory;
 mod middle;
 pub mod package;
 pub(crate) mod registrator;
+pub mod template;
 pub mod wrapper;
 use wrapper::generate_wrapper;
 pub mod api;
@@ -379,6 +380,16 @@ impl Function {
             return false;
         }
         matches!(self.args[0].ty, FunctionType::This)
+    }
+
+    pub fn instantiate(&self, types: Vec<String>) -> Function {
+        let mut function = self.clone();
+
+        function.generics.clear();
+
+        function.name = format!("{}::<{}>", self.name, types.join(", "));
+
+        function
     }
 }
 

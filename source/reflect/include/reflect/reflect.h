@@ -38,6 +38,7 @@
 #include <reflect/reflect_value_type_demotion.h>
 #include <reflect/reflect_value_type_id_size.h>
 #include <reflect/reflect_value_type_promotion.h>
+#include <reflect/reflect_template.h>
 
 #ifndef __cplusplus
 	#include <reflect/reflect_memory_tracker.h>
