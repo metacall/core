@@ -30,6 +30,7 @@
 #include <reflect/reflect_object.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_signature.h>
+#include <reflect/reflect_template.h>
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_value.h>
@@ -38,7 +39,6 @@
 #include <reflect/reflect_value_type_demotion.h>
 #include <reflect/reflect_value_type_id_size.h>
 #include <reflect/reflect_value_type_promotion.h>
-#include <reflect/reflect_template.h>
 
 #ifndef __cplusplus
 	#include <reflect/reflect_memory_tracker.h>

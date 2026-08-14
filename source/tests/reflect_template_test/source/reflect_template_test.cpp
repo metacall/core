@@ -44,10 +44,8 @@ TEST_F(reflect_template_test, DefaultConstructor)
 	ASSERT_NE((type)NULL, int_type);
 
 	template_argument args[] = {
-		{
-			"T",
-			int_type
-		}
+		{ "T",
+			int_type }
 	};
 
 	function f = template_instantiate_function(
