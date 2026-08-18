@@ -1,3 +1,7 @@
+// AI-WATERMARK: metacall-agent:v1
+// model: claude-sonnet
+// prompt-id: issue-855-test-coverage
+// human-review: pending
 /*
 *	Loader Library by Parra Studios
 *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
@@ -779,3 +783,398 @@ TEST_F(portability_path_test, portability_path_test_fullname)
 
 	EXPECT_STREQ(exe_name, "qemu-riscv64");
 }
+
+/// Tests for portability_path_get_name_canonical
+TEST_F(portability_path_test, portability_path_test_get_name_canonical_single_extension)
+{
+	static const char base[] = "/a/b/c/asd.txt";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name_canonical(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_name_canonical_multiple_extensions)
+{
+	static const char base[] = "/a/b/c/asd.baz.qux";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name_canonical(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_name_canonical_no_extension)
+{
+	static const char base[] = "/a/b/c/asd";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name_canonical(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_name_canonical_null)
+{
+	static const char result[] = "";
+
+	string_name name;
+
+	size_t size = portability_path_get_name_canonical(NULL, 0, name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_name_canonical_hidden_file)
+{
+	static const char base[] = "/a/b/c/.asd";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name_canonical(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+/// Tests for portability_path_get_extension
+TEST_F(portability_path_test, portability_path_test_get_extension)
+{
+	static const char base[] = "/a/b/c/asd.txt";
+	static const char result[] = "txt";
+
+	string_name extension;
+
+	size_t size = portability_path_get_extension(base, sizeof(base), extension, NAME_SIZE);
+
+	EXPECT_STREQ(extension, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_extension_no_extension)
+{
+	static const char base[] = "/a/b/c/asd";
+	static const char result[] = "asd";
+
+	string_name extension;
+
+	size_t size = portability_path_get_extension(base, sizeof(base), extension, NAME_SIZE);
+
+	EXPECT_STREQ(extension, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_extension_multiple_dots)
+{
+	static const char base[] = "/a/b/c/asd.baz.qux";
+	static const char result[] = "qux";
+
+	string_name extension;
+
+	size_t size = portability_path_get_extension(base, sizeof(base), extension, NAME_SIZE);
+
+	EXPECT_STREQ(extension, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+/// Tests for portability_path_get_directory_inplace
+TEST_F(portability_path_test, portability_path_test_get_directory_inplace)
+{
+	char path[] = "/a/b/c/asd.txt";
+	static const char result[] = "/a/b/c/";
+
+	size_t size = portability_path_get_directory_inplace(path, sizeof(path));
+
+	EXPECT_STREQ(path, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_directory_inplace_trailing_slash)
+{
+	char path[] = "/a/b/c/";
+	static const char result[] = "/a/b/c/";
+
+	size_t size = portability_path_get_directory_inplace(path, sizeof(path));
+
+	EXPECT_STREQ(path, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_directory_inplace_null)
+{
+	size_t size = portability_path_get_directory_inplace(NULL, 0);
+
+	EXPECT_EQ((size_t)size, (size_t)0);
+}
+
+/// Tests for portability_path_is_absolute
+TEST_F(portability_path_test, portability_path_test_is_absolute_posix)
+{
+	static const char path[] = "/a/b/c";
+
+	EXPECT_EQ((int)0, (int)portability_path_is_absolute(path, sizeof(path)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_absolute_relative)
+{
+	static const char path[] = "a/b/c";
+
+	EXPECT_EQ((int)1, (int)portability_path_is_absolute(path, sizeof(path)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_absolute_null)
+{
+	EXPECT_EQ((int)1, (int)portability_path_is_absolute(NULL, 0));
+}
+
+#if defined(WIN32) || defined(_WIN32)
+TEST_F(portability_path_test, portability_path_test_is_absolute_windows)
+{
+	static const char path[] = "C:\\a\\b\\c";
+
+	EXPECT_EQ((int)0, (int)portability_path_is_absolute(path, sizeof(path)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_absolute_windows_short)
+{
+	static const char path[] = "C:";
+
+	EXPECT_EQ((int)1, (int)portability_path_is_absolute(path, sizeof(path)));
+}
+#endif
+
+/// Tests for portability_path_is_subpath
+TEST_F(portability_path_test, portability_path_test_is_subpath_true)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/b/c";
+
+	EXPECT_EQ((int)0, (int)portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_false)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/c";
+
+	EXPECT_EQ((int)1, (int)portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_parent_longer)
+{
+	static const char parent[] = "/a/b/c/d";
+	static const char child[] = "/a/b";
+
+	EXPECT_EQ((int)1, (int)portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_null)
+{
+	EXPECT_EQ((int)1, (int)portability_path_is_subpath(NULL, 0, NULL, 0));
+}
+
+/// Tests for portability_path_separator_normalize_inplace
+TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_posix)
+{
+	char path[] = "/a/b/c";
+	static const char result[] = "/a/b/c";
+
+	EXPECT_EQ((int)0, (int)portability_path_separator_normalize_inplace(path, sizeof(path)));
+	EXPECT_STREQ(path, result);
+}
+
+TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_mixed)
+{
+	char path[] = "/a\\b/c";
+	static const char result[] = "/a/b/c";
+
+	EXPECT_EQ((int)0, (int)portability_path_separator_normalize_inplace(path, sizeof(path)));
+	EXPECT_STREQ(path, result);
+}
+
+TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_null)
+{
+	EXPECT_EQ((int)1, (int)portability_path_separator_normalize_inplace(NULL, 0));
+}
+
+/// Tests for portability_path_is_pattern
+TEST_F(portability_path_test, portability_path_test_is_pattern_true)
+{
+	static const char path[] = "/a/b/*.txt";
+
+	EXPECT_EQ((int)0, (int)portability_path_is_pattern(path, sizeof(path)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_pattern_false)
+{
+	static const char path[] = "/a/b/c.txt";
+
+	EXPECT_EQ((int)1, (int)portability_path_is_pattern(path, sizeof(path)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_pattern_null)
+{
+	EXPECT_EQ((int)1, (int)portability_path_is_pattern(NULL, 0));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_pattern_empty)
+{
+	static const char path[] = "";
+
+	EXPECT_EQ((int)1, (int)portability_path_is_pattern(path, sizeof(path)));
+}
+
+/// Tests for NULL output buffer / size=0 query behavior
+TEST_F(portability_path_test, portability_path_test_get_name_null_buffer)
+{
+	static const char base[] = "/a/b/c/asd.txt";
+	static const char result[] = "asd";
+
+	size_t size = portability_path_get_name(base, sizeof(base), NULL, 0);
+
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+}
+
+TEST_F(portability_path_test, portability_path_test_get_name_canonical_null_buffer)
+{
+	static const char base[] = "/a/b/c/asd.baz.qux";
+	static const char result[] = "asd";
+
+	size_t size = portability_path_get_name_canonical(base, sizeof(base), NULL, 0);
+
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+}
+
+TEST_F(portability_path_test, portability_path_test_get_directory_null_buffer)
+{
+	static const char base[] = "/a/b/c/asd.txt";
+	static const char result[] = "/a/b/c/";
+
+	size_t size = portability_path_get_directory(base, sizeof(base), NULL, 0);
+
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+}
+
+TEST_F(portability_path_test, portability_path_test_get_fullname_null_buffer)
+{
+	static const char base[] = "/a/b/c/asd.txt";
+	static const char result[] = "asd.txt";
+
+	size_t size = portability_path_get_fullname(base, sizeof(base), NULL, 0);
+
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+}
+
+/// Tests for undersized-buffer behavior
+TEST_F(portability_path_test, portability_path_test_get_name_undersized_buffer)
+{
+	static const char base[] = "/a/b/c/asd.txt";
+	char name[2];
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, sizeof(name));
+
+	EXPECT_GT((size_t)size, (size_t)sizeof(name));
+}
+
+TEST_F(portability_path_test, portability_path_test_get_directory_undersized_buffer)
+{
+	static const char base[] = "/a/b/c/asd.txt";
+	char directory[2];
+
+	size_t size = portability_path_get_directory(base, sizeof(base), directory, sizeof(directory));
+
+	EXPECT_GT((size_t)size, (size_t)sizeof(directory));
+}
+
+TEST_F(portability_path_test, portability_path_test_join_undersized_buffer)
+{
+	static const char left[] = "/a/b/c";
+	static const char right[] = "d/e/f";
+	char join[5];
+
+	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, sizeof(join));
+
+	EXPECT_GT((size_t)size, (size_t)sizeof(join));
+}
+
+/// Tests for Windows/POSIX separator coverage
+TEST_F(portability_path_test, portability_path_test_get_name_windows_separator)
+{
+	static const char base[] = "C:\\a\\b\\c\\asd.txt";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_name_mixed_separators)
+{
+	static const char base[] = "/a\\b/c/asd.txt";
+	static const char result[] = "asd";
+
+	string_name name;
+
+	size_t size = portability_path_get_name(base, sizeof(base), name, NAME_SIZE);
+
+	EXPECT_STREQ(name, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_directory_windows_separator)
+{
+	static const char base[] = "C:\\a\\b\\c\\asd.txt";
+	static const char result[] = "C:\\a\\b\\c\\";
+
+	string_path directory;
+
+	size_t size = portability_path_get_directory(base, sizeof(base), directory, PATH_SIZE);
+
+	EXPECT_STREQ(directory, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+TEST_F(portability_path_test, portability_path_test_join_windows_separators)
+{
+	static const char left[] = "C:\\a\\b";
+	static const char right[] = "c\\d";
+	static const char result[] = "C:\\a\\b/c\\d";
+
+	string_path join;
+
+	size_t size = portability_path_join(left, sizeof(left), right, sizeof(right), join, PATH_SIZE);
+
+	EXPECT_STREQ(join, result);
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
+}
+
+/// metacall-ai-generated
