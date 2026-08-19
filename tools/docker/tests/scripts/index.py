@@ -18,7 +18,7 @@ else:
 
 # C#
 architecture = platform.machine()
-if architecture in ("riscv64", "i386", "i686", "armv7l", "armv6l"):
+if architecture in ("riscv64", "i386", "i686", "armv7l", "armv6l") or (architecture == "x86_64" and platform.architecture()[0] == "32bit"):
 	print(f"netcore8 has no support for {architecture}")
 else:
 	assert metacall_load_from_file('cs', ['./Sum.cs'])
