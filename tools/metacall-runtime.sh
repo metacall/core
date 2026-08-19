@@ -309,7 +309,33 @@ sub_c(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			sub_apt_install_hold libffi8 libclang1
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
+
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
+
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ]; then
+						CODENAME="unstable"
+					else
+						CODENAME="${VERSION_CODENAME}"
+					fi
+					;;
+				*)
+					# Ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+					fi
+					;;
+			esac
+
+			if [ "${CODENAME}" = "forky" ] || [ "${CODENAME}" = "resolute" ] || [ "${CODENAME}" = "unstable" ]; then
+				sub_apt_install_hold libffi8 libclang1-21
+			else
+				sub_apt_install_hold libffi8 libclang1
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
