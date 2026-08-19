@@ -274,7 +274,7 @@ sub_rpc(){
 					;;
 			esac
 
-			if [ "${CODENAME}" = "forky" ] || [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
+			if [ "${CODENAME}" = "forky" ] || [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "resolute" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
 				sub_apt_install_hold libcurl4t64
 			else
 				sub_apt_install_hold libcurl4
@@ -308,9 +308,7 @@ sub_c(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			sub_apt_install_hold libffi8 libclang1
-		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			sub_apt_install_hold libffi8 libclang1
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
