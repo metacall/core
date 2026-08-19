@@ -391,7 +391,7 @@ sub_rust(){
 
 			RUST_DISTRO="${VERSION_CODENAME}"
 			RUNTIME_PACKAGE="rust-toolchain-runtime-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
-			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.3"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.5"
 
 			wget -qO- "${RUST_RELEASE_URL}/${RUNTIME_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
 
