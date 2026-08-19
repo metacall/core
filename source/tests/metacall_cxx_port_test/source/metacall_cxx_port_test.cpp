@@ -228,6 +228,11 @@ TEST_F(metacall_cxx_port_test, DefaultConstructor)
 		EXPECT_STREQ(urls[1].as<std::string>().c_str(), "http://localhost:8001/");
 		EXPECT_STREQ(urls[2].as<std::string>().c_str(), "http://localhost:8002/");
 
+		for (auto url : urls)
+		{
+			std::cout << url.as<std::string>() << std::endl;
+		}
+
 		auto timeout = config["timeout"].as<int>();
 
 		EXPECT_EQ(timeout, 1000L);

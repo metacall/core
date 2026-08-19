@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run FreeBSD VM
-        uses: cross-platform-actions/action@v1.1.0
+        uses: cross-platform-actions/action@v1.3.0
         with:
           operating_system: freebsd
           version: 14.2

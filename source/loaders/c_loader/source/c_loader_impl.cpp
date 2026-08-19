@@ -44,7 +44,6 @@
 #include <string>
 #include <vector>
 
-#include <cassert>
 #include <cstring>
 
 /* LibFFI */
@@ -990,15 +989,38 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		/* We can accept pointers if we pass to an array and null to a pointer or array, it is unsafe but it improves efficiency */
 		if (id != value_id && !(value_id == TYPE_PTR && id == TYPE_ARRAY) && !(value_id == TYPE_NULL && id == TYPE_PTR) && !(value_id == TYPE_NULL && id == TYPE_ARRAY))
 		{
-			return metacall::metacall_error_throw("C Loader Error", 0, "",
-				"Type mismatch in when calling %s in argument number %" PRIuS
-				" (expected %s of type %s and received %s)."
-				" Canceling call in order to avoid a segfault.",
-				function_name(func),
-				args_count,
-				type_name(t),
-				type_id_name(id),
-				type_id_name(value_id));
+			/* We can do type casting on integers and floats for scripting languages or solving multi-platform issues */
+			if ((type_id_integer(value_id) == 0 && type_id_integer(id) == 0) || (type_id_integer(value_id) == 0 && type_id_decimal(id) == 0) || (type_id_decimal(value_id) == 0 && type_id_integer(id) == 0) || (type_id_decimal(value_id) == 0 && type_id_decimal(id) == 0))
+			{
+				value cast_result = value_type_cast(args[args_count], id);
+
+				if (cast_result == NULL)
+				{
+					return metacall::metacall_error_throw("C Loader Error", 0, "",
+						"Invalid type casting when calling %s in argument number %" PRIuS
+						" (expected %s of type %s and received %s)."
+						" Canceling call in order to avoid a segfault.",
+						function_name(func),
+						args_count,
+						type_name(t),
+						type_id_name(id),
+						type_id_name(value_id));
+				}
+
+				args[args_count] = cast_result;
+			}
+			else
+			{
+				return metacall::metacall_error_throw("C Loader Error", 0, "",
+					"Type mismatch in when calling %s in argument number %" PRIuS
+					" (expected %s of type %s and received %s)."
+					" Canceling call in order to avoid a segfault.",
+					function_name(func),
+					args_count,
+					type_name(t),
+					type_id_name(id),
+					type_id_name(value_id));
+			}
 		}
 
 		if (value_id == TYPE_FUNCTION)
@@ -1014,7 +1036,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 			/* String, buffer requires to be pointer to a string */
 
 			/* In order to work, this must be true */
-			assert(args[args_count] == value_data(args[args_count]));
+			// assert(args[args_count] == value_data(args[args_count]));
 
 			c_function->values[args_count] = (void *)&args[args_count];
 		}

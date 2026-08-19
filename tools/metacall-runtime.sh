@@ -275,7 +275,7 @@ sub_rpc(){
 					;;
 			esac
 
-			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
+			if [ "${CODENAME}" = "forky" ] || [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "resolute" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
 				sub_apt_install_hold libcurl4t64
 			else
 				sub_apt_install_hold libcurl4
@@ -309,10 +309,34 @@ sub_c(){
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		if [ "${LINUX_DISTRO}" = "debian" ]; then
-			sub_apt_install_hold libffi8 libclang1
-		elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			sub_apt_install_hold libffi8 libclang1
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			UBUNTU_CODENAME=""
+			CODENAME_FROM_ARGUMENTS=""
+
+			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+			. /etc/os-release
+
+			case ${LINUX_DISTRO} in
+				debian)
+					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ]; then
+						CODENAME="unstable"
+					else
+						CODENAME="${VERSION_CODENAME}"
+					fi
+					;;
+				*)
+					# Ubuntu and its derivatives
+					if [ -n "${UBUNTU_CODENAME}" ]; then
+						CODENAME="${UBUNTU_CODENAME}"
+					fi
+					;;
+			esac
+
+			if [ "${CODENAME}" = "forky" ] || [ "${CODENAME}" = "resolute" ] || [ "${CODENAME}" = "unstable" ]; then
+				sub_apt_install_hold libffi8 libclang1-21
+			else
+				sub_apt_install_hold libffi8 libclang1
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache libffi-dev
 			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/main clang-libs=13.0.1-r1 clang-dev=13.0.1-r1
@@ -368,7 +392,7 @@ sub_rust(){
 
 			RUST_DISTRO="${VERSION_CODENAME}"
 			RUNTIME_PACKAGE="rust-toolchain-runtime-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
-			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.3"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.5"
 
 			wget -qO- "${RUST_RELEASE_URL}/${RUNTIME_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
 
@@ -418,7 +442,7 @@ sub_backtrace(){
 					;;
 			esac
 
-			if [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
+			if [ "${CODENAME}" = "forky" ] || [ "${CODENAME}" = "trixie" ] || [ "${CODENAME}" = "resolute" ] || [ "${CODENAME}" = "noble" ] || [ "${CODENAME}" = "unstable" ]; then
 				sub_apt_install_hold libdw1t64 libelf1t64
 			else
 				sub_apt_install_hold libdw1
