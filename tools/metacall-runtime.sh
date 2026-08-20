@@ -30,6 +30,7 @@ INSTALL_RUBY=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_NETCORE5=0
+INSTALL_NETCORE8=0
 INSTALL_V8=0
 INSTALL_NODEJS=0
 INSTALL_TYPESCRIPT=0
@@ -215,7 +216,7 @@ sub_netcore8(){
 	fi
 
 	# Install NET Core Runtime 8.x
-	wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.408 --install-dir /usr/local/bin --runtime dotnet
+	wget -O - https://dot.net/v1/dotnet-install.sh | $SUDO_CMD bash -s -- --version 8.0.15 --install-dir /usr/local/bin --runtime dotnet
 }
 
 # V8
@@ -496,6 +497,9 @@ sub_install(){
 	if [ $INSTALL_NETCORE5 = 1 ]; then
 		sub_netcore5
 	fi
+	if [ $INSTALL_NETCORE8 = 1 ]; then
+		sub_netcore8
+	fi
 	if [ $INSTALL_V8 = 1 ]; then
 		sub_v8
 	fi
@@ -586,6 +590,10 @@ sub_options(){
 			echo "netcore 5 selected"
 			INSTALL_NETCORE5=1
 		fi
+		if [ "$option" = 'netcore8' ]; then
+			echo "netcore 8 selected"
+			INSTALL_NETCORE8=1
+		fi
 		if [ "$option" = 'v8' ]; then
 			echo "v8 selected"
 			INSTALL_V8=1
@@ -655,6 +663,8 @@ sub_help() {
 	echo "	ruby"
 	echo "	netcore"
 	echo "	netcore2"
+	echo "	netcore5"
+	echo "	netcore8"
 	echo "	v8"
 	echo "	nodejs"
 	echo "	typescript"
