@@ -825,15 +825,13 @@ TEST_F(portability_path_test, portability_path_test_get_name_canonical_no_ext)
 TEST_F(portability_path_test, portability_path_test_get_name_canonical_dotfile)
 {
 	static const char base[] = "/a/b/c/.hidden";
-	static const char result[] = ".hidden";
+	static const char result[] = "";
 
 	string_name name;
 
 	size_t size = portability_path_get_name_canonical(base, sizeof(base), name, NAME_SIZE);
 
 	EXPECT_STREQ(name, result);
-	// EXPECT_EQ is set to the intended behavior (exact size). The buggy code
-	// currently returns sizeof(result) + 1 for dotfiles.
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)name[size - 1]);
 }
@@ -916,9 +914,7 @@ TEST_F(portability_path_test, portability_path_test_get_extension_no_ext)
 	EXPECT_EQ((char)'\0', (char)extension[size - 1]);
 }
 
-// This test is disabled pending maintainer discussion on whether dotfiles 
-// should have an extension or not, as it currently diverges from get_name_canonical.
-TEST_F(portability_path_test, DISABLED_portability_path_test_get_extension_dotfile)
+TEST_F(portability_path_test, portability_path_test_get_extension_dotfile)
 {
 	static const char base[] = "/a/b/c/.hidden";
 	static const char result[] = "hidden";
@@ -927,9 +923,6 @@ TEST_F(portability_path_test, DISABLED_portability_path_test_get_extension_dotfi
 
 	size_t size = portability_path_get_extension(base, sizeof(base), extension, NAME_SIZE);
 
-	// Note: This is current, confirmed-by-test behavior and diverges from how
-	// get_name_canonical treats the same input. Flagged as an open question,
-	// leaving untouched for now.
 	EXPECT_STREQ(extension, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)extension[size - 1]);
