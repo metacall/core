@@ -30,6 +30,7 @@
 #include <reflect/reflect_object.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_signature.h>
+#include <reflect/reflect_template.h>
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_value.h>

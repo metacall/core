@@ -54,6 +54,7 @@ pub mod memory;
 mod middle;
 pub mod package;
 pub(crate) mod registrator;
+pub mod template;
 pub mod wrapper;
 use wrapper::generate_wrapper;
 pub mod api;
@@ -369,6 +370,8 @@ pub struct Function {
     name: String,
     ret: Option<FunctionParameter>,
     args: Vec<FunctionParameter>,
+    #[allow(dead_code)]
+    generics: Vec<String>,
 }
 
 impl Function {
@@ -377,6 +380,16 @@ impl Function {
             return false;
         }
         matches!(self.args[0].ty, FunctionType::This)
+    }
+
+    pub fn instantiate(&self, types: Vec<String>) -> Function {
+        let mut function = self.clone();
+
+        function.generics.clear();
+
+        function.name = format!("{}::<{}>", self.name, types.join(", "));
+
+        function
     }
 }
 
@@ -717,7 +730,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                     if let Some(ident) = field.ident {
                         let attr = Attribute {
                             name: ident.to_string(),
-                            ty: ast::handle_ty(&field.ty),
+                            ty: ast::handle_ty(&field.ty, &vec![]),
                         };
                         class.attributes.push(attr);
                     }
@@ -728,6 +741,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                     items,
                     self_ty,
                     of_trait,
+                    generics,
                     ..
                 } = impl_kind;
                 let impl_kind = match of_trait {
@@ -756,10 +770,10 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                         if sig.decl.has_self() {
                             match impl_kind {
                                 ImplKind::Drop => {
-                                    class.destructor = Some(ast::handle_fn(name, sig));
+                                    class.destructor = Some(ast::handle_fn(name, sig, generics));
                                 }
                                 _ => {
-                                    class.methods.push(ast::handle_fn(name, sig));
+                                    class.methods.push(ast::handle_fn(name, sig, generics));
                                 }
                             }
                         } else {
@@ -771,20 +785,25 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                                         rustc_ast::TyKind::Path(_, p) => {
                                             let ret_name = p.segments[0].ident.to_string();
                                             if ret_name == "Self" || ret_name == class_name_str {
-                                                class.constructor = Some(ast::handle_fn(name, sig));
+                                                class.constructor =
+                                                    Some(ast::handle_fn(name, sig, generics));
                                             } else {
                                                 class
                                                     .static_methods
-                                                    .push(ast::handle_fn(name, sig));
+                                                    .push(ast::handle_fn(name, sig, generics));
                                             }
                                         }
                                         _ => {
-                                            class.static_methods.push(ast::handle_fn(name, sig));
+                                            class
+                                                .static_methods
+                                                .push(ast::handle_fn(name, sig, generics));
                                         }
                                     }
                                 }
                                 rustc_ast::FnRetTy::Default(_) => {
-                                    class.static_methods.push(ast::handle_fn(name, sig));
+                                    class
+                                        .static_methods
+                                        .push(ast::handle_fn(name, sig, generics));
                                 }
                             }
                         }
@@ -794,7 +813,8 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
 
             ItemKind::Fn(box fn_item) => {
                 let item = fn_item.ident.to_string();
-                self.functions.push(ast::handle_fn(item, &fn_item.sig));
+                self.functions
+                    .push(ast::handle_fn(item, &fn_item.sig, &fn_item.generics));
             }
             _ => {}
         }
