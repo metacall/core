@@ -10,7 +10,9 @@
 
 #include <portability/portability_path.h>
 
+#include <array>
 #include <cstring>
+#include <string>
 
 #define NAME_SIZE ((size_t)PORTABILITY_PATH_SIZE / 2)
 #define PATH_SIZE ((size_t)PORTABILITY_PATH_SIZE)
@@ -856,7 +858,7 @@ TEST_F(portability_path_test, portability_path_test_get_name_canonical_null_path
 
 	string_name name;
 
-	size_t size = portability_path_get_name_canonical(NULL, 0, name, NAME_SIZE);
+	size_t size = portability_path_get_name_canonical(nullptr, 0, name, NAME_SIZE);
 
 	EXPECT_STREQ(name, result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
@@ -867,7 +869,7 @@ TEST_F(portability_path_test, portability_path_test_get_name_canonical_null_buff
 {
 	static const char base[] = "/a/b/c/foo.txt";
 
-	size_t size = portability_path_get_name_canonical(base, sizeof(base), NULL, NAME_SIZE);
+	size_t size = portability_path_get_name_canonical(base, sizeof(base), nullptr, NAME_SIZE);
 
 	EXPECT_EQ((size_t)size, (size_t)4);
 }
@@ -948,7 +950,7 @@ TEST_F(portability_path_test, portability_path_test_get_extension_null)
 {
 	static const char base[] = "/a/b/c/file.txt";
 
-	size_t size = portability_path_get_extension(base, sizeof(base), NULL, NAME_SIZE);
+	size_t size = portability_path_get_extension(base, sizeof(base), nullptr, NAME_SIZE);
 
 	// Note: The previous behavior (0) was an inconsistency with sibling functions
 	// (e.g. get_name_canonical). This has been fixed to correctly return the
@@ -985,64 +987,64 @@ TEST_F(portability_path_test, portability_path_test_get_extension_truncated)
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_basic)
 {
-	char path[] = "/a/b/c/foo.txt";
+	std::string path = "/a/b/c/foo.txt";
 	static const char result[] = "/a/b/c/";
 
-	size_t size = portability_path_get_directory_inplace(path, sizeof(path));
+	size_t size = portability_path_get_directory_inplace(path.data(), path.length() + 1);
 
-	EXPECT_STREQ(path, result);
+	EXPECT_STREQ(path.data(), result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
-	EXPECT_EQ((char)'\0', (char)path[size - 1]);
+	EXPECT_EQ((char)'\0', (char)path.data()[size - 1]);
 }
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_trailing_slash)
 {
-	char path[] = "/a/b/c/";
+	std::string path = "/a/b/c/";
 	static const char result[] = "/a/b/c/";
 
-	size_t size = portability_path_get_directory_inplace(path, sizeof(path));
+	size_t size = portability_path_get_directory_inplace(path.data(), path.length() + 1);
 
-	EXPECT_STREQ(path, result);
+	EXPECT_STREQ(path.data(), result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
-	EXPECT_EQ((char)'\0', (char)path[size - 1]);
+	EXPECT_EQ((char)'\0', (char)path.data()[size - 1]);
 }
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_no_slash)
 {
-	char path[] = "foo.txt";
+	std::string path = "foo.txt";
 	static const char result[] = "";
 
-	size_t size = portability_path_get_directory_inplace(path, sizeof(path));
+	size_t size = portability_path_get_directory_inplace(path.data(), path.length() + 1);
 
-	EXPECT_STREQ(path, result);
+	EXPECT_STREQ(path.data(), result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
-	EXPECT_EQ((char)'\0', (char)path[size - 1]);
+	EXPECT_EQ((char)'\0', (char)path.data()[size - 1]);
 }
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_root)
 {
-	char path[] = "/";
+	std::string path = "/";
 	static const char result[] = "/";
 
-	size_t size = portability_path_get_directory_inplace(path, sizeof(path));
+	size_t size = portability_path_get_directory_inplace(path.data(), path.length() + 1);
 
-	EXPECT_STREQ(path, result);
+	EXPECT_STREQ(path.data(), result);
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
-	EXPECT_EQ((char)'\0', (char)path[size - 1]);
+	EXPECT_EQ((char)'\0', (char)path.data()[size - 1]);
 }
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_null)
 {
-	size_t size = portability_path_get_directory_inplace(NULL, NAME_SIZE);
+	size_t size = portability_path_get_directory_inplace(nullptr, NAME_SIZE);
 
 	EXPECT_EQ((size_t)size, (size_t)0);
 }
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_zero_size)
 {
-	char path[1] = { 'a' }; // Valid only if size > 0, but we pass size = 0
+	std::array<char, 1> path = { 'a' }; // Valid only if size > 0, but we pass size = 0
 
-	size_t size = portability_path_get_directory_inplace(path, 0);
+	size_t size = portability_path_get_directory_inplace(path.data(), 0);
 
 	// The function should return 0 when size is 0 and leave buffer completely untouched.
 	EXPECT_EQ((size_t)size, (size_t)0);
@@ -1051,9 +1053,9 @@ TEST_F(portability_path_test, portability_path_test_get_directory_inplace_zero_s
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_undersized)
 {
-	char path[3] = { '/', 'a', '/' }; // Not null-terminated, exactly size 3
+	std::array<char, 3> path = { '/', 'a', '/' }; // Not null-terminated, exactly size 3
 
-	size_t size = portability_path_get_directory_inplace(path, 3);
+	size_t size = portability_path_get_directory_inplace(path.data(), 3);
 
 	// For an undersized buffer, the implementation must safely cap the null terminator
 	// at the end of the buffer (path[size-1]) to prevent out-of-bounds writes.
@@ -1106,7 +1108,7 @@ TEST_F(portability_path_test, portability_path_test_is_absolute_empty)
 
 TEST_F(portability_path_test, portability_path_test_is_absolute_null)
 {
-	EXPECT_EQ(1, portability_path_is_absolute(NULL, 10));
+	EXPECT_EQ(1, portability_path_is_absolute(nullptr, 10));
 }
 
 TEST_F(portability_path_test, portability_path_test_is_subpath_exact)
@@ -1136,8 +1138,8 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_parent_longer)
 TEST_F(portability_path_test, portability_path_test_is_subpath_out_of_bounds_read)
 {
 	static const char parent[] = "/a/b/c";
-	char child[4] = { '/', 'a', '/', 'b' }; // Not null terminated, exactly size 4
-	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent) - 1, child, 4));
+	std::array<char, 4> child = { '/', 'a', '/', 'b' }; // Not null terminated, exactly size 4
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent) - 1, child.data(), 4));
 }
 
 TEST_F(portability_path_test, portability_path_test_is_subpath_different)
@@ -1150,8 +1152,8 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_different)
 TEST_F(portability_path_test, portability_path_test_is_subpath_null)
 {
 	// Verify that passing NULL arguments safely returns 1 (false) without crashing.
-	EXPECT_EQ(1, portability_path_is_subpath(NULL, 0, NULL, 0));
-	EXPECT_EQ(1, portability_path_is_subpath("/a/b", 4, NULL, 0));
+	EXPECT_EQ(1, portability_path_is_subpath(nullptr, 0, nullptr, 0));
+	EXPECT_EQ(1, portability_path_is_subpath("/a/b", 4, nullptr, 0));
 }
 
 TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name)
@@ -1163,26 +1165,26 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name)
 
 TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_basic)
 {
-	char path[] = "C:\\a\\b";
+	std::string path = "C:\\a\\b";
 	static const char expected[] = "C:/a/b";
 
 	// Verify that the very first separator in a path is correctly normalized.
-	EXPECT_EQ(0, portability_path_separator_normalize_inplace(path, sizeof(path)));
-	EXPECT_STREQ(expected, path);
+	EXPECT_EQ(0, portability_path_separator_normalize_inplace(path.data(), path.length() + 1));
+	EXPECT_STREQ(expected, path.data());
 }
 
 TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_mixed)
 {
-	char path[] = "\\a/b\\c/";
+	std::string path = "\\a/b\\c/";
 	static const char expected[] = "/a/b/c/";
 
-	EXPECT_EQ(0, portability_path_separator_normalize_inplace(path, sizeof(path)));
-	EXPECT_STREQ(expected, path);
+	EXPECT_EQ(0, portability_path_separator_normalize_inplace(path.data(), path.length() + 1));
+	EXPECT_STREQ(expected, path.data());
 }
 
 TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_null)
 {
-	EXPECT_EQ(1, portability_path_separator_normalize_inplace(NULL, 10));
+	EXPECT_EQ(1, portability_path_separator_normalize_inplace(nullptr, 10));
 }
 
 TEST_F(portability_path_test, portability_path_test_is_pattern_star)
@@ -1198,14 +1200,14 @@ TEST_F(portability_path_test, portability_path_test_is_pattern_question)
 
 TEST_F(portability_path_test, portability_path_test_exists_null)
 {
-	EXPECT_EQ(1, portability_path_exists(NULL));
+	EXPECT_EQ(1, portability_path_exists(nullptr));
 }
 
 TEST_F(portability_path_test, portability_path_test_resolve_null)
 {
-	char resolved[PORTABILITY_PATH_SIZE];
-	memset(resolved, 'X', sizeof(resolved)); // Sentinel to detect unwanted writes
-	EXPECT_EQ((char *)NULL, portability_path_resolve(NULL, resolved));
+	std::array<char, PORTABILITY_PATH_SIZE> resolved;
+	resolved.fill('X'); // Sentinel to detect unwanted writes
+	EXPECT_EQ((char *)nullptr, portability_path_resolve(nullptr, resolved.data()));
 
 	// Check sentinel wasn't overwritten
 	EXPECT_EQ('X', resolved[0]);
@@ -1213,5 +1215,5 @@ TEST_F(portability_path_test, portability_path_test_resolve_null)
 
 TEST_F(portability_path_test, portability_path_test_file_exists_null)
 {
-	EXPECT_EQ(1, portability_path_file_exists(NULL));
+	EXPECT_EQ(1, portability_path_file_exists(nullptr));
 }
