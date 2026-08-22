@@ -297,7 +297,7 @@ size_t portability_path_get_directory_inplace(char *path, size_t size)
 
 	size_t i, last;
 
-	for (i = 0, last = 0; path[i] != '\0' && i < size; ++i)
+	for (i = 0, last = 0; i < size && path[i] != '\0'; ++i)
 	{
 		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
@@ -626,7 +626,7 @@ int portability_path_is_pattern(const char *path, size_t size)
 
 	size_t i;
 
-	for (i = 0; path[i] != '\0' && i < size; ++i)
+	for (i = 0; i < size && path[i] != '\0'; ++i)
 	{
 		if (path[i] == '*')
 		{
