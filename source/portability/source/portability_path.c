@@ -129,14 +129,20 @@ size_t portability_path_get_name_canonical(const char *const path, const size_t 
 		--leftmost_dot;
 	}
 
-	/* Name starts with dot, use the following dot instead */
+	/* Name starts with dot, use the following dot instead (if it exists) */
 	if (leftmost_dot == name_start)
 	{
-		do
-		{
-			++leftmost_dot;
+		size_t next_dot = leftmost_dot + 1;
 
-		} while (leftmost_dot < path_size && path[leftmost_dot] != '.');
+		while (next_dot < path_size && path[next_dot] != '.')
+		{
+			++next_dot;
+		}
+
+		if (next_dot < path_size)
+		{
+			leftmost_dot = next_dot;
+		}
 	}
 
 	length = leftmost_dot - name_start;
@@ -190,26 +196,26 @@ size_t portability_path_get_extension(const char *path, size_t path_size, char *
 	}
 
 	size_t i;
-	const char *ext_start = NULL;
+	size_t start = (size_t)-1;
 
 	for (i = 0; path[i] != '\0' && i < path_size; ++i)
 	{
 		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
-			ext_start = NULL;
+			start = (size_t)-1;
 		}
 		else if (path[i] == '.')
 		{
-			ext_start = &path[i + 1];
+			start = i + 1;
 		}
 	}
 
-	if (ext_start == NULL)
+	if (start == (size_t)-1)
 	{
-		ext_start = path + i;
+		start = i;
 	}
 
-	size_t ext_length = (size_t)((path + i) - ext_start);
+	size_t ext_length = i - start;
 	size_t required_size = ext_length + 1;
 
 	if (extension == NULL || extension_size == 0)
@@ -224,7 +230,7 @@ size_t portability_path_get_extension(const char *path, size_t path_size, char *
 
 	for (i = 0; i < ext_length; ++i)
 	{
-		extension[i] = ext_start[i];
+		extension[i] = path[start + i];
 	}
 
 	extension[ext_length] = '\0';
@@ -283,7 +289,7 @@ size_t portability_path_get_directory(const char *path, size_t path_size, char *
 
 size_t portability_path_get_directory_inplace(char *path, size_t size)
 {
-	if (path == NULL)
+	if (path == NULL || size == 0)
 	{
 		return 0;
 	}
@@ -296,6 +302,11 @@ size_t portability_path_get_directory_inplace(char *path, size_t size)
 		{
 			last = i + 1;
 		}
+	}
+
+	if (last >= size)
+	{
+		last = size - 1;
 	}
 
 	path[last] = '\0';
