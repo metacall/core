@@ -963,9 +963,8 @@ TEST_F(portability_path_test, portability_path_test_get_extension_undersized_buf
 
 	size_t size = portability_path_get_extension(base, sizeof(base), extension, 2);
 
-	// When the buffer is too small, the function should return the required
-	// size without touching the buffer. The buggy code performs a partial
-	// write instead, corrupting the buffer contents.
+	// When the buffer is too small, the function must return the required
+	// size without touching the buffer contents.
 	EXPECT_EQ((size_t)size, (size_t)4);
 	EXPECT_STREQ(extension, "garbage");
 }
@@ -1056,10 +1055,8 @@ TEST_F(portability_path_test, portability_path_test_get_directory_inplace_unders
 
 	size_t size = portability_path_get_directory_inplace(path, 3);
 
-	// Buffer is undersized. Original code incorrectly sets last=3 and writes
-	// path[3] = '\0' which is out of bounds for a size-3 buffer.
-	// A correct implementation should cap the null terminator at path[size-1].
-	// Return value reflects capped position (size-1) + 1 = size = 3.
+	// For an undersized buffer, the implementation must safely cap the null terminator
+	// at the end of the buffer (path[size-1]) to prevent out-of-bounds writes.
 	EXPECT_EQ((size_t)size, (size_t)3);
 	EXPECT_EQ((char)'\0', path[2]);
 }
@@ -1081,8 +1078,7 @@ TEST_F(portability_path_test, portability_path_test_is_absolute_false)
 TEST_F(portability_path_test, portability_path_test_is_absolute_windows_lowercase)
 {
 	static const char path[] = "c:\\a\\b"; // Lowercase drive letter
-	// Should return 0 (absolute path). Buggy code will return 1 (false)
-	// because it only checks uppercase A-Z.
+	// Verify that lowercase drive letters are correctly identified as absolute paths on Windows.
 	EXPECT_EQ(0, portability_path_is_absolute(path, sizeof(path)));
 }
 
@@ -1120,33 +1116,24 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_exact)
 	EXPECT_EQ(0, portability_path_is_subpath(parent, 4, child, 4));
 }
 
-#if 0
 TEST_F(portability_path_test, portability_path_test_is_subpath_child_longer)
 {
 	static const char parent[] = "/a/b";
 	static const char child[] = "/a/b/c";
-	// BUG: Original implementation returns 1 (false) because parent_size < child_size.
-	// We expect 0 (true) because child is indeed a subpath of parent.
+	// Verify that a valid child path is correctly identified as a subpath of the parent.
 	EXPECT_EQ(0, portability_path_is_subpath(parent, sizeof(parent) - 1, child, sizeof(child) - 1));
 }
-#endif
 
 TEST_F(portability_path_test, portability_path_test_is_subpath_parent_longer)
 {
 	static const char parent[] = "/a/b/c";
 	static const char child[] = "/a/b";
-	// BUG: Original implementation theoretically reads out of bounds (reads past child_size)
-	// because it uses strncmp(parent, child, parent_size).
-	// NOTE: Kept active because child is a static const char[] literal, so the underlying
-	// strncmp safely stops at the null terminator without actually accessing unmapped memory.
-	// The next test specifically checks the unsafe un-terminated case.
+	// Ensure that a parent path is not incorrectly identified as a subpath of a shorter child.
 	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent) - 1, child, sizeof(child) - 1));
 }
 
-// WARNING: This test exercises an OOB read in the buggy code. It is disabled
-// because it relies on Undefined Behavior and may crash the CTest runner entirely
-// instead of just failing gracefully, especially under ASAN.
-TEST_F(portability_path_test, DISABLED_portability_path_test_is_subpath_out_of_bounds_read)
+// Test that subpath checking handles non-null-terminated buffers safely without reading out of bounds.
+TEST_F(portability_path_test, portability_path_test_is_subpath_out_of_bounds_read)
 {
 	static const char parent[] = "/a/b/c";
 	char child[4] = { '/', 'a', '/', 'b' }; // Not null terminated, exactly size 4
@@ -1160,14 +1147,12 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_different)
 	EXPECT_EQ(1, portability_path_is_subpath(parent, 4, child, 4));
 }
 
-#if 0
 TEST_F(portability_path_test, portability_path_test_is_subpath_null)
 {
-	// BUG: Original implementation returns 0 (true) when given NULL.
+	// Verify that passing NULL arguments safely returns 1 (false) without crashing.
 	EXPECT_EQ(1, portability_path_is_subpath(NULL, 0, NULL, 0));
 	EXPECT_EQ(1, portability_path_is_subpath("/a/b", 4, NULL, 0));
 }
-#endif
 
 TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name)
 {
@@ -1176,20 +1161,16 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name)
 	EXPECT_EQ(1, portability_path_is_subpath(parent, 5, child, 4));
 }
 
-#if 0
 TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_basic)
 {
 	char path[] = "C:\\a\\b";
 	static const char expected[] = "C:/a/b";
 
-	// Original buggy code misses the very first separator: it sets the
-	// internal separator variable but never writes it back to path[iterator].
+	// Verify that the very first separator in a path is correctly normalized.
 	EXPECT_EQ(0, portability_path_separator_normalize_inplace(path, sizeof(path)));
 	EXPECT_STREQ(expected, path);
 }
-#endif
 
-#if 0
 TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_mixed)
 {
 	char path[] = "\\a/b\\c/";
@@ -1198,7 +1179,6 @@ TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_
 	EXPECT_EQ(0, portability_path_separator_normalize_inplace(path, sizeof(path)));
 	EXPECT_STREQ(expected, path);
 }
-#endif
 
 TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_null)
 {
@@ -1210,25 +1190,18 @@ TEST_F(portability_path_test, portability_path_test_is_pattern_star)
 	EXPECT_EQ(0, portability_path_is_pattern("a*b", 3));
 }
 
-#if 0
 TEST_F(portability_path_test, portability_path_test_is_pattern_question)
 {
-	// ENHANCEMENT: The current implementation only supports '*' as a pattern
-	// character. This test proposes adding '?' support, which is standard in
-	// most glob/pattern matching systems. Needs maintainer approval.
+	// Verify that the '?' character is correctly identified as a pattern wildcard.
 	EXPECT_EQ(0, portability_path_is_pattern("a?b", 3));
 }
-#endif
 
-// Note: These tests pass on Linux (glibc handles NULL gracefully) but crash
-// on Windows where GetFileAttributesA(NULL) segfaults. Disabled to prevent
-// breaking the Windows CI pipeline.
-TEST_F(portability_path_test, DISABLED_portability_path_test_exists_null)
+TEST_F(portability_path_test, portability_path_test_exists_null)
 {
 	EXPECT_EQ(1, portability_path_exists(NULL));
 }
 
-TEST_F(portability_path_test, DISABLED_portability_path_test_resolve_null)
+TEST_F(portability_path_test, portability_path_test_resolve_null)
 {
 	char resolved[PORTABILITY_PATH_SIZE];
 	memset(resolved, 'X', sizeof(resolved)); // Sentinel to detect unwanted writes
@@ -1238,7 +1211,7 @@ TEST_F(portability_path_test, DISABLED_portability_path_test_resolve_null)
 	EXPECT_EQ('X', resolved[0]);
 }
 
-TEST_F(portability_path_test, DISABLED_portability_path_test_file_exists_null)
+TEST_F(portability_path_test, portability_path_test_file_exists_null)
 {
 	EXPECT_EQ(1, portability_path_file_exists(NULL));
 }

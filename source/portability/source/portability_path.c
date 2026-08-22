@@ -146,6 +146,11 @@ size_t portability_path_get_name_canonical(const char *const path, const size_t 
 		}
 	}
 
+	if (leftmost_dot < name_start || leftmost_dot > path_size)
+	{
+		leftmost_dot = name_start;
+	}
+
 	length = leftmost_dot - name_start;
 	size = length + 1;
 
@@ -346,15 +351,25 @@ int portability_path_is_subpath(const char *parent, size_t parent_size, const ch
 {
 	if (parent == NULL || child == NULL)
 	{
-		return 0;
+		return 1;
 	}
 
-	if (parent_size < child_size)
+	if (parent_size > child_size)
 	{
 		return 1;
 	}
 
-	return !(strncmp(parent, child, parent_size) == 0);
+	if (strncmp(parent, child, parent_size) != 0)
+	{
+		return 1;
+	}
+
+	if (child_size == parent_size || PORTABILITY_PATH_SEPARATOR(child[parent_size]))
+	{
+		return 0;
+	}
+
+	return 1;
 }
 
 int portability_path_is_absolute(const char *path, size_t size)
@@ -558,15 +573,15 @@ size_t portability_path_canonical(const char *path, size_t path_size, char *cano
 
 int portability_path_separator_normalize_inplace(char *path, size_t size)
 {
+	size_t iterator;
+	char separator = 0;
+
 	if (path == NULL)
 	{
 		return 1;
 	}
 
-	size_t iterator;
-	char separator = 0;
-
-	for (iterator = 0; iterator < size; ++iterator)
+	for (iterator = 0; iterator < size && path[iterator] != '\0'; ++iterator)
 	{
 		if (PORTABILITY_PATH_SEPARATOR_ALL(path[iterator]))
 		{
@@ -574,10 +589,8 @@ int portability_path_separator_normalize_inplace(char *path, size_t size)
 			{
 				separator = PORTABILITY_PATH_SEPARATOR_C; /* Use current platform style as default */
 			}
-			else
-			{
-				path[iterator] = separator;
-			}
+
+			path[iterator] = separator;
 		}
 	}
 
@@ -628,7 +641,7 @@ int portability_path_is_pattern(const char *path, size_t size)
 
 	for (i = 0; i < size && path[i] != '\0'; ++i)
 	{
-		if (path[i] == '*')
+		if (path[i] == '*' || path[i] == '?')
 		{
 			return 0;
 		}
@@ -639,6 +652,11 @@ int portability_path_is_pattern(const char *path, size_t size)
 
 int portability_path_exists(const char *path)
 {
+	if (path == NULL)
+	{
+		return 1;
+	}
+
 #if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
@@ -663,6 +681,11 @@ int portability_path_exists(const char *path)
 
 char *portability_path_resolve(const char *path, char *resolved)
 {
+	if (path == NULL)
+	{
+		return NULL;
+	}
+
 #if defined(_WIN32)
 	return _fullpath(resolved, path, MAX_PATH);
 #else
@@ -673,6 +696,11 @@ char *portability_path_resolve(const char *path, char *resolved)
 int portability_path_file_exists(const char *path)
 {
 	char resolved_path[PORTABILITY_PATH_SIZE];
+
+	if (path == NULL)
+	{
+		return 1;
+	}
 
 	if (portability_path_resolve(path, resolved_path) == NULL)
 	{
