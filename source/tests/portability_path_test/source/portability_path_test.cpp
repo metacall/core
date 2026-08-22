@@ -903,7 +903,9 @@ TEST_F(portability_path_test, portability_path_test_get_extension_double)
 TEST_F(portability_path_test, portability_path_test_get_extension_no_ext)
 {
 	static const char base[] = "/a/b/c/file";
-	static const char result[] = "file";
+	// Rationale: Separator boundaries reset the extension search, consistent with 
+	// per-basename-component semantics. A file with no dot has no extension.
+	static const char result[] = "";
 
 	string_name extension;
 
@@ -966,6 +968,20 @@ TEST_F(portability_path_test, portability_path_test_get_extension_undersized_buf
 	// write instead, corrupting the buffer contents.
 	EXPECT_EQ((size_t)size, (size_t)4);
 	EXPECT_STREQ(extension, "garbage");
+}
+
+TEST_F(portability_path_test, portability_path_test_get_extension_truncated)
+{
+	static const char base[] = "/a/b/c/.hidden";
+	string_name extension;
+
+	// Pass path_size = 7, which truncates the string exactly at the last separator: "/a/b/c/"
+	// This exercises the edge case where the loop terminates exactly on a separator boundary,
+	// checking that ext_start == NULL falls back safely to path + i without underflowing.
+	size_t size = portability_path_get_extension(base, 7, extension, NAME_SIZE);
+
+	EXPECT_EQ((size_t)size, (size_t)1);
+	EXPECT_STREQ(extension, "");
 }
 
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_basic)

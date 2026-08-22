@@ -184,26 +184,52 @@ size_t portability_path_get_fullname(const char *path, size_t path_size, char *n
 
 size_t portability_path_get_extension(const char *path, size_t path_size, char *extension, size_t extension_size)
 {
-	if (path == NULL || extension == NULL)
+	if (path == NULL)
 	{
 		return 0;
 	}
 
-	size_t i, count;
+	size_t i;
+	const char *ext_start = NULL;
 
-	for (i = 0, count = 0; path[i] != '\0' && i < path_size; ++i)
+	for (i = 0; path[i] != '\0' && i < path_size; ++i)
 	{
-		extension[count++] = path[i];
-
-		if (PORTABILITY_PATH_SEPARATOR(path[i]) || path[i] == '.' || count == extension_size)
+		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
-			count = 0;
+			ext_start = NULL;
+		}
+		else if (path[i] == '.')
+		{
+			ext_start = &path[i + 1];
 		}
 	}
 
-	extension[count] = '\0';
+	if (ext_start == NULL)
+	{
+		ext_start = path + i;
+	}
 
-	return count + 1;
+	size_t ext_length = (size_t)((path + i) - ext_start);
+	size_t required_size = ext_length + 1;
+
+	if (extension == NULL || extension_size == 0)
+	{
+		return required_size;
+	}
+
+	if (extension_size < required_size)
+	{
+		return required_size;
+	}
+
+	for (i = 0; i < ext_length; ++i)
+	{
+		extension[i] = ext_start[i];
+	}
+
+	extension[ext_length] = '\0';
+
+	return required_size;
 }
 
 size_t portability_path_get_module_name(const char *path, size_t path_size, const char *extension, size_t extension_size, char *name, size_t name_size)
