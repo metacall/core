@@ -21,6 +21,7 @@
 #include <portability/portability_path.h>
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 /* Define separator checking for any platform */
@@ -196,13 +197,13 @@ size_t portability_path_get_extension(const char *path, size_t path_size, char *
 	}
 
 	size_t i;
-	size_t start = (size_t)-1;
+	size_t start = SIZE_MAX;
 
 	for (i = 0; path[i] != '\0' && i < path_size; ++i)
 	{
 		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
-			start = (size_t)-1;
+			start = SIZE_MAX;
 		}
 		else if (path[i] == '.')
 		{
@@ -210,7 +211,7 @@ size_t portability_path_get_extension(const char *path, size_t path_size, char *
 		}
 	}
 
-	if (start == (size_t)-1)
+	if (start == SIZE_MAX)
 	{
 		start = i;
 	}
