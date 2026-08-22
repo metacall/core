@@ -1,10 +1,10 @@
 /*
-*	Loader Library by Parra Studios
-*	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
-*
-*	A library for loading executable code at run-time into a process.
-*
-*/
+ *	Loader Library by Parra Studios
+ *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for loading executable code at run-time into a process.
+ *
+ */
 
 #include <gtest/gtest.h>
 
@@ -903,7 +903,7 @@ TEST_F(portability_path_test, portability_path_test_get_extension_double)
 TEST_F(portability_path_test, portability_path_test_get_extension_no_ext)
 {
 	static const char base[] = "/a/b/c/file";
-	// Rationale: Separator boundaries reset the extension search, consistent with 
+	// Rationale: Separator boundaries reset the extension search, consistent with
 	// per-basename-component semantics. A file with no dot has no extension.
 	static const char result[] = "";
 
@@ -1137,14 +1137,14 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_parent_longer)
 	static const char child[] = "/a/b";
 	// BUG: Original implementation theoretically reads out of bounds (reads past child_size)
 	// because it uses strncmp(parent, child, parent_size).
-	// NOTE: Kept active because child is a static const char[] literal, so the underlying 
+	// NOTE: Kept active because child is a static const char[] literal, so the underlying
 	// strncmp safely stops at the null terminator without actually accessing unmapped memory.
 	// The next test specifically checks the unsafe un-terminated case.
 	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent) - 1, child, sizeof(child) - 1));
 }
 
 // WARNING: This test exercises an OOB read in the buggy code. It is disabled
-// because it relies on Undefined Behavior and may crash the CTest runner entirely 
+// because it relies on Undefined Behavior and may crash the CTest runner entirely
 // instead of just failing gracefully, especially under ASAN.
 TEST_F(portability_path_test, DISABLED_portability_path_test_is_subpath_out_of_bounds_read)
 {
@@ -1232,8 +1232,8 @@ TEST_F(portability_path_test, DISABLED_portability_path_test_resolve_null)
 {
 	char resolved[PORTABILITY_PATH_SIZE];
 	memset(resolved, 'X', sizeof(resolved)); // Sentinel to detect unwanted writes
-	EXPECT_EQ((char*)NULL, portability_path_resolve(NULL, resolved));
-	
+	EXPECT_EQ((char *)NULL, portability_path_resolve(NULL, resolved));
+
 	// Check sentinel wasn't overwritten
 	EXPECT_EQ('X', resolved[0]);
 }

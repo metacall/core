@@ -20,8 +20,8 @@
 
 #include <portability/portability_path.h>
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Define separator checking for any platform */
@@ -370,7 +370,7 @@ int portability_path_is_absolute(const char *path, size_t size)
 		return 1;
 	}
 
-	return !((path[0] != '\0' && (path[0] >= 'A' && path[0] <= 'Z')) &&
+	return !((path[0] != '\0' && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z'))) &&
 			 (path[1] != '\0' && path[1] == ':') &&
 			 (path[2] != '\0' && PORTABILITY_PATH_SEPARATOR(path[2])));
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
