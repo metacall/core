@@ -41,62 +41,62 @@ TEST_F(metacall_csharp_class_test, DefaultConstructor)
 	/* C# Netcore */
 #if defined(OPTION_BUILD_LOADERS_CS)
 	{
-		const char* cs_scripts[] = {
+		const char *cs_scripts[] = {
 			"class.cs"
 		};
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
 
 		/* Get the class handle */
-		void* myclass = metacall_class("Counter");
-		ASSERT_NE((void*)NULL, (void*)myclass);
+		void *myclass = metacall_class("Counter");
+		ASSERT_NE((void *)NULL, (void *)myclass);
 
 		/* Construct: new Counter(5) */
-		void* constructor_params[] = {
+		void *constructor_params[] = {
 			metacall_value_create_int(5)
 		};
 
-		void* new_object_v = metacall_class_new(myclass, "Counter", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
-		ASSERT_NE((void*)NULL, (void*)new_object_v);
+		void *new_object_v = metacall_class_new(myclass, "Counter", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
+		ASSERT_NE((void *)NULL, (void *)new_object_v);
 
-		void* new_object = metacall_value_to_object(new_object_v);
+		void *new_object = metacall_value_to_object(new_object_v);
 
 		/* Read the instance attribute: count == 5 */
 		{
-			void* count = metacall_object_get(new_object, "count");
+			void *count = metacall_object_get(new_object, "count");
 			EXPECT_EQ((int)5, (int)metacall_value_to_int(count));
 			metacall_value_destroy(count);
 		}
 
 		/* Invoke the instance method: Add(7) == 12 */
 		{
-			void* args[] = {
+			void *args[] = {
 				metacall_value_create_int(7)
 			};
 
-			void* ret = metacallt_object(new_object, "Add", METACALL_INT, args, sizeof(args) / sizeof(args[0]));
+			void *ret = metacallt_object(new_object, "Add", METACALL_INT, args, sizeof(args) / sizeof(args[0]));
 			EXPECT_EQ((int)12, (int)metacall_value_to_int(ret));
 			metacall_value_destroy(ret);
 		}
 
 		/* Invoke the static method: Counter.Twice(21) == 42 */
 		{
-			void* args[] = {
+			void *args[] = {
 				metacall_value_create_int(21)
 			};
 
-			void* ret = metacallt_class(myclass, "Twice", METACALL_INT, args, sizeof(args) / sizeof(args[0]));
+			void *ret = metacallt_class(myclass, "Twice", METACALL_INT, args, sizeof(args) / sizeof(args[0]));
 			EXPECT_EQ((int)42, (int)metacall_value_to_int(ret));
 			metacall_value_destroy(ret);
 		}
 
 		/* Static attribute: Counter.total set/get == 99 */
 		{
-			void* val = metacall_value_create_int(99);
+			void *val = metacall_value_create_int(99);
 			ASSERT_EQ((int)0, (int)metacall_class_static_set(myclass, "total", val));
 			metacall_value_destroy(val);
 
-			void* ret = metacall_class_static_get(myclass, "total");
+			void *ret = metacall_class_static_get(myclass, "total");
 			EXPECT_EQ((int)99, (int)metacall_value_to_int(ret));
 			metacall_value_destroy(ret);
 		}
@@ -111,11 +111,11 @@ TEST_F(metacall_csharp_class_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void* allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void*)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char* inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char*)NULL, (char*)inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
 		EXPECT_GT((size_t)size, (size_t)0);
 
