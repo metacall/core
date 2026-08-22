@@ -1,6 +1,7 @@
 public class Counter
 {
 	public int count; // attribute
+	public static int total; // static attribute
 
 	public Counter(int start) // constructor
 	{

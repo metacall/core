@@ -90,6 +90,17 @@ TEST_F(metacall_csharp_class_test, DefaultConstructor)
 			metacall_value_destroy(ret);
 		}
 
+		/* Static attribute: Counter.total set/get == 99 */
+		{
+			void* val = metacall_value_create_int(99);
+			ASSERT_EQ((int)0, (int)metacall_class_static_set(myclass, "total", val));
+			metacall_value_destroy(val);
+
+			void* ret = metacall_class_static_get(myclass, "total");
+			EXPECT_EQ((int)99, (int)metacall_value_to_int(ret));
+			metacall_value_destroy(ret);
+		}
+
 		metacall_value_destroy(new_object_v);
 	}
 #endif /* OPTION_BUILD_LOADERS_CS */
