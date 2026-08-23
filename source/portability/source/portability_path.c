@@ -204,7 +204,7 @@ size_t portability_path_get_extension(const char *path, size_t path_size, char *
 	size_t i;
 	size_t start = SIZE_MAX;
 
-	for (i = 0; i < path_size && path[i] != '\0'; ++i)
+	for (i = 0; path[i] != '\0' && i < path_size; ++i)
 	{
 		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
@@ -337,7 +337,7 @@ size_t portability_path_get_relative(const char *base, size_t base_size, const c
 		++i;
 	}
 
-	for (; i < relative_size && path[i] != '\0'; ++i)
+	for (; path[i] != '\0' && i < relative_size; ++i)
 	{
 		relative[length++] = path[i];
 	}
@@ -354,29 +354,17 @@ int portability_path_is_subpath(const char *parent, size_t parent_size, const ch
 		return 1;
 	}
 
-	size_t p_len = 0;
-	while (p_len < parent_size && parent[p_len] != '\0')
-	{
-		p_len++;
-	}
-
-	size_t c_len = 0;
-	while (c_len < child_size && child[c_len] != '\0')
-	{
-		c_len++;
-	}
-
-	if (p_len > c_len)
+	if (parent_size > child_size)
 	{
 		return 1;
 	}
 
-	if (strncmp(parent, child, p_len) != 0)
+	if (strncmp(parent, child, parent_size) != 0)
 	{
 		return 1;
 	}
 
-	if (c_len == p_len || PORTABILITY_PATH_SEPARATOR(child[p_len]))
+	if (child_size == parent_size || PORTABILITY_PATH_SEPARATOR(child[parent_size]))
 	{
 		return 0;
 	}
@@ -585,6 +573,7 @@ size_t portability_path_canonical(const char *path, size_t path_size, char *cano
 
 int portability_path_separator_normalize_inplace(char *path, size_t size)
 {
+	size_t iterator;
 	char separator = 0;
 
 	if (path == NULL)
@@ -592,7 +581,7 @@ int portability_path_separator_normalize_inplace(char *path, size_t size)
 		return 1;
 	}
 
-	for (size_t iterator = 0; iterator < size && path[iterator] != '\0'; ++iterator)
+	for (iterator = 0; iterator < size && path[iterator] != '\0'; ++iterator)
 	{
 		if (PORTABILITY_PATH_SEPARATOR_ALL(path[iterator]))
 		{
@@ -648,7 +637,9 @@ int portability_path_is_pattern(const char *path, size_t size)
 		return 1;
 	}
 
-	for (size_t i = 0; i < size && path[i] != '\0'; ++i)
+	size_t i;
+
+	for (i = 0; i < size && path[i] != '\0'; ++i)
 	{
 		if (path[i] == '*' || path[i] == '?')
 		{
