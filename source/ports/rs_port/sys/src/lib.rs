@@ -365,6 +365,14 @@ pub fn build() {
                     define_library_search_path(ENV_VAR, SEPARATOR, &lib_path.search)
                 );
 
+                #[cfg(target_os = "windows")]
+                {
+                    println!(
+                        "cargo:rustc-env=METACALL_PYTHONHOME={}",
+                        lib_path.search.display()
+                    );
+                }
+
                 println!(
                     "cargo:warning=Library {} found in: {} with runtime search path: {}",
                     lib_path.library,
