@@ -3,6 +3,19 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_
 	return()
 endif()
 
+if(MINGW)
+    include(CheckCXXSourceCompiles)
+
+    check_cxx_source_compiles("
+#include <stdlib.h>
+#ifdef _UCRT
+#error
+#endif
+int main(){return 0;}"
+    MINGW_MSVCRT)
+endif()
+
+
 #
 # External dependencies
 #
@@ -176,6 +189,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	# On macOS, we use dynamic lookup to avoid loading libmetacall twice
+	$<$<BOOL:${MINGW_MSVCRT}>:msvcr90>
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
 
 	# Backward-cpp library
@@ -193,6 +207,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	$<$<BOOL:${MINGW_MSVCRT}>:__MSVCRT_VERSION__=0x900>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
