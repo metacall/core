@@ -77,6 +77,21 @@ pub(crate) use macros::private_macros::*;
 /// ```
 pub mod load;
 
+/// Contains MetaCall serialization/deserialization wrappers.
+/// Provides safe Rust APIs for `metacall_serialize`, `metacall_deserialize`,
+/// and `metacall_allocator_*` functions. Usage example: ...
+/// ```
+/// // Create Allocator
+/// let allocator = metacall::serial::MetaCallAllocator::new().unwrap();
+///
+/// // Serialize (None = use default serial format)
+/// // let json = metacall::serial::serialize_to_string(raw_value, &allocator, None).unwrap();
+///
+/// // Deserialize
+/// let value = metacall::serial::deserialize_from_string(r#"{"key": 42}"#, None).unwrap();
+/// ```
+pub mod serial;
+
 mod types;
 
 #[doc(hidden)]
