@@ -1,10 +1,10 @@
 /*
-*	Configuration Library by Parra Studios
-*	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
-*
-*	A cross-platform library for managing multiple configuration formats.
-*
-*/
+ *	Configuration Library by Parra Studios
+ *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A cross-platform library for managing multiple configuration formats.
+ *
+ */
 
 /* -- Headers -- */
 
@@ -71,11 +71,11 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 	}
 
 	/* The order of precedence is:
-	* 1) Environment variable
-	* 2) Default relative path to metacall library
-	* 3) Locate it relative to metacall library install path
-	* 4) Default installation path (if any)
-	*/
+	 * 1) Environment variable
+	 * 2) Default relative path to metacall library
+	 * 3) Locate it relative to metacall library install path
+	 * 4) Default installation path (if any)
+	 */
 	if (path == NULL)
 	{
 		static const char configuration_path[] = CONFIGURATION_PATH;
@@ -198,20 +198,20 @@ configuration_error:
 	return 1;
 }
 
-configuration configuration_create(const char *scope, const char *path, const char *parent, void *allocator)
+configuration configuration_create(const char *scope_name, const char *path, const char *parent, void *allocator)
 {
-	configuration config = configuration_singleton_get(scope);
+	configuration config = configuration_singleton_get(scope_name);
 
 	if (config != NULL)
 	{
 		return config;
 	}
 
-	config = configuration_object_initialize(scope, path, configuration_scope(parent));
+	config = configuration_object_initialize(scope_name, path, configuration_scope(parent));
 
 	if (config == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration (%s) scope map creation [%s]", scope, path);
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration (%s) scope map creation [%s]", scope_name, path);
 
 		return NULL;
 	}

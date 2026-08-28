@@ -3077,7 +3077,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 					node_loader_impl_exception(env, status);
 
 					/* TODO: Implement return type with impl (may need an important refactor) */
-					signature_set_return(s, /*loader_impl_type(discover_function_safe->impl, return_type_str)*/ NULL);
+					signature_set_return(s, /*loader_impl_get_type(discover_function_safe->impl, return_type_str)*/ NULL);
 
 					delete[] return_type_str;
 				}
@@ -3138,7 +3138,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 					node_loader_impl_exception(env, status);
 
 					/* TODO: Implement parameter type with impl (may need an important refactor) */
-					signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, /*loader_impl_type(discover_function_safe->impl, parameter_type_str)*/ NULL);
+					signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, /*loader_impl_get_type(discover_function_safe->impl, parameter_type_str)*/ NULL);
 
 					if (parameter_type_str != nullptr)
 					{
@@ -3442,7 +3442,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 							node_loader_impl_exception(env, status);
 
-							signature_set_return(s, loader_impl_type(discover_safe->node_impl->impl, return_type_str));
+							signature_set_return(s, loader_impl_get_type(discover_safe->node_impl->impl, return_type_str));
 
 							delete[] return_type_str;
 						}
@@ -3502,7 +3502,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 							node_loader_impl_exception(env, status);
 
-							signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, loader_impl_type(discover_safe->node_impl->impl, parameter_type_str));
+							signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, loader_impl_get_type(discover_safe->node_impl->impl, parameter_type_str));
 
 							if (parameter_type_str != nullptr)
 							{
