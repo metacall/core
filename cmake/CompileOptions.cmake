@@ -118,7 +118,7 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 		)
 	else()
 		set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-			"TSAN_OPTIONS=verbosity=1:halt_on_error=1:history_size=7:report_signal_unsafe=1:report_thread_leaks=1:second_deadlock_stack=1:symbolize=1:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
+			"TSAN_OPTIONS=verbosity=1:halt_on_error=1:history_size=7:report_signal_unsafe=1:report_thread_leaks=1:second_deadlock_stack=1:force_seq_cst_atomics=1:symbolize=1:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
 		)
 	endif()
 	set(SANITIZER_COMPILE_DEFINITIONS
@@ -135,7 +135,7 @@ elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Cla
 elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -lasan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
+		"LSAN_OPTIONS=verbosity=1:log_threads=1:report_objects=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
 		# Specify handle_segv=0 and detect_leaks=0 for the JVM (https://blog.gypsyengineer.com/en/security/running-java-with-addresssanitizer.html)
 		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200"
@@ -174,6 +174,10 @@ function(find_sanitizer NAME)
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 
+		if(PROJECT_OS_NAME MATCHES "Linux")
+			set(NAME "${NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+		endif()
+
 		file(GLOB CLANG_RUNTIME_CANDIDATES
 			"${CLANG_RUNTIME_DIR}/*${NAME}*.so"
 			"${CLANG_RUNTIME_DIR}/*${NAME}*.dylib"
@@ -182,12 +186,14 @@ function(find_sanitizer NAME)
 		list(LENGTH CLANG_RUNTIME_CANDIDATES CLANG_RUNTIME_CANDIDATES_SIZE)
 
 		if(CLANG_RUNTIME_CANDIDATES_SIZE GREATER 0)
-			list(GET CLANG_RUNTIME_CANDIDATES 0 CLANG_LIB_PATH)
+			list(GET CLANG_RUNTIME_CANDIDATES 0 LIB_PATH)
 		endif()
 	endif()
 
-	if(CLANG_LIB_PATH)
-		set(LIB${NAME_UPPER}_PATH "${CLANG_LIB_PATH}" PARENT_SCOPE)
+	message(STATUS "Sanitizer ${NAME}: ${LIB_PATH}")
+
+	if(LIB_PATH)
+		set(LIB${NAME_UPPER}_PATH "${LIB_PATH}" PARENT_SCOPE)
 	endif()
 endfunction()
 
@@ -248,6 +254,15 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL 
 				set(SANITIZER_LIBRARIES_PATH
 					"${LIBASAN_OSX_DYNAMIC_PATH}"
 					"${LIBUBSAN_OSX_DYNAMIC_PATH}"
+				)
+			endif()
+		elseif(PROJECT_OS_NAME MATCHES "Linux" AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+			find_sanitizer(asan)
+			find_sanitizer(ubsan_standalone)
+			if(LIBASAN_PATH AND LIBUBSAN_STANDALONE_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_PATH}"
+					"${LIBUBSAN_STANDALONE_PATH}"
 				)
 			endif()
 		else()
