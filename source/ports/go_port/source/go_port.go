@@ -469,7 +469,7 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 	if v.Kind() == reflect.Map {
 		length := v.Len()
 		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
-
+		defer C.free(unsafe.Pointer(cArgs))
 		for index, m := 0, v.MapRange(); m.Next(); index++ {
 			pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
 
@@ -635,4 +635,8 @@ func Destroy() {
 
 	// Wait for all work to complete
 	wg.Wait()
+}
+
+func valueDestroy(v unsafe.Pointer) {
+	C.metacall_value_destroy(v)
 }
