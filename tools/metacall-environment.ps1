@@ -276,11 +276,26 @@ function Set-Lua {
 	mkdir $RuntimeDir -Force | Out-Null
 	mkdir "$RuntimeDir\lua" -Force | Out-Null
 	mkdir "$RuntimeDir\lua\jit" -Force | Out-Null
+	mkdir "$RuntimeDir\include" -Force | Out-Null
 
 	# Install LuaJIT runtime
 	Copy-Item ".\luajit.exe" "$RuntimeDir\luajit.exe" -Force
 	Copy-Item ".\lua51.dll" "$RuntimeDir\lua51.dll" -Force
 	Copy-Item ".\jit\*" "$RuntimeDir\lua\jit\" -Recurse -Force
+
+	# Install LuaJIT C API headers
+	$LuaHeaders = @(
+		"lua.h"
+		"lualib.h"
+		"lauxlib.h"
+		"luaconf.h"
+		"lua.hpp"
+		"luajit.h"
+	)
+
+	foreach ($Header in $LuaHeaders) {
+		Copy-Item ".\$Header" "$RuntimeDir\include\$Header" -Force
+	}
 
 	# Add LuaJIT to PATH
 	Add-to-Path $RuntimeDir
