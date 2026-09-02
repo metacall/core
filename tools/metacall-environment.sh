@@ -1030,7 +1030,7 @@ sub_lua(){
 			$SUDO_CMD apk add --no-cache luajit-dev
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		brew luajit
+		brew install luajit
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install luajit
 	fi
