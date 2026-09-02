@@ -332,9 +332,9 @@ int portability_path_is_absolute(const char *path, size_t size)
 		return 1;
 	}
 
-	return !((path[0] != '\0' && (path[0] >= 'A' && path[0] <= 'Z')) &&
-			 (path[1] != '\0' && path[1] == ':') &&
-			 (path[2] != '\0' && PORTABILITY_PATH_SEPARATOR(path[2])));
+	return !(((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) &&
+			 (path[1] == ':') &&
+			 (PORTABILITY_PATH_SEPARATOR(path[2])));
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
@@ -346,7 +346,40 @@ int portability_path_is_absolute(const char *path, size_t size)
 		return 1;
 	}
 
-	return !(path[0] != '\0' && PORTABILITY_PATH_SEPARATOR(path[0]));
+	return !(PORTABILITY_PATH_SEPARATOR(path[0]));
+#else
+	#error "Unknown loader path separator"
+#endif
+}
+
+int portability_path_is_relative(const char *path, size_t size)
+{
+	if (path == NULL)
+	{
+		return 1;
+	}
+
+#if defined(WIN32) || defined(_WIN32)
+	if (size < 3)
+	{
+		return 0;
+	}
+
+	return (((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) &&
+			(path[1] == ':') &&
+			(PORTABILITY_PATH_SEPARATOR(path[2])));
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
+	defined(__HAIKU__) || defined(__BEOS__)
+
+	if (size < 1)
+	{
+		return 1;
+	}
+
+	return PORTABILITY_PATH_SEPARATOR(path[0]);
 #else
 	#error "Unknown loader path separator"
 #endif

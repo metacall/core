@@ -414,6 +414,24 @@ sub_rust(){
 	fi
 }
 
+# Lua
+sub_lua(){
+	echo "configure lua"
+	cd "$ROOT_DIR"
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			sub_apt_install_hold libluajit-5.1-2
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache luajit
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install luajit
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install luajit
+	fi
+}
+
 # Backtrace (this only improves stack traces verbosity but backtracing is enabled by default)
 sub_backtrace(){
 	echo "configure backtrace"

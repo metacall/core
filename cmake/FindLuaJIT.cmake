@@ -51,13 +51,27 @@ set(LUAJIT_LIBRARY_NAMES
 
 find_library(LUAJIT_LIBRARY
 	NAMES ${LUAJIT_LIBRARY_NAMES}
-	PATHS /usr /usr/lib /usr/local /opt/luajit /opt/local
+	PATHS
+	/usr /usr/local /opt/luajit
+	~/Library/Frameworks
+	/Library/Frameworks
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
 	PATH_SUFFIXES lib lib64 ${LUAJIT_SUFFIXES}
 )
 
 find_path(LUAJIT_INCLUDE_DIR luajit.h
-	PATHS /usr /usr/include /usr/local /opt/luajit /opt/local
-	PATH_SUFFIXES luajit-2.0 luajit-2.1 ${LUAJIT_SUFFIXES}
+	PATHS
+	/usr /usr/local /opt/luajit
+	~/Library/Frameworks
+	/Library/Frameworks
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
+	PATH_SUFFIXES include/luajit-2.1 include/luajit-2.0 include/luajit-5_1-2.1 include/luajit-5_1-2.0 include luajit
 )
 
 # Define LuaJIT cmake module
