@@ -280,6 +280,7 @@ function Set-Lua {
 
 	# Install LuaJIT runtime
 	Copy-Item ".\luajit.exe" "$RuntimeDir\luajit.exe" -Force
+	Copy-Item ".\lua51.lib" "$RuntimeDir\lua51.lib" -Force
 	Copy-Item ".\lua51.dll" "$RuntimeDir\lua51.dll" -Force
 	Copy-Item ".\jit\*" "$RuntimeDir\lua\jit\" -Recurse -Force
 
@@ -306,7 +307,7 @@ function Set-Lua {
 
 	Write-Output "-DLuaJIT_EXECUTABLE=""$LuaDir/luajit.exe""" >> $EnvOpts
 	Write-Output "-DLuaJIT_INCLUDE_DIR=""$LuaDir/include""" >> $EnvOpts
-	Write-Output "-DLuaJIT_LIBRARY=""$LuaDir/lua51.dll""" >> $EnvOpts
+	Write-Output "-DLuaJIT_LIBRARY=""$LuaDir/lua51.lib""" >> $EnvOpts
 	Write-Output "-DLuaJIT_LIBRARY_NAME=""$LuaDir/lua51.dll""" >> $EnvOpts
 	Write-Output "-DLuaJIT_LIBRARY_SEARCH_PATHS=""$LuaDir""" >> $EnvOpts
 }
