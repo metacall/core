@@ -1032,7 +1032,7 @@ sub_lua(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install luajit
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install luajit
+		$SUDO_CMD pkg install -y luajit
 	fi
 }
 
