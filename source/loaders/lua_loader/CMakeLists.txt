@@ -107,7 +107,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${LUAJIT_INCLUDE_DIR} # LuaJIT includes (lua.h)
+	${LuaJIT_INCLUDE_DIR} # LuaJIT includes (lua.h)
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -128,7 +128,7 @@ target_link_libraries(${target}
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
 
 	# LuaJIT library
-	${LUAJIT_LIBRARY}
+	${LuaJIT_LIBRARY}
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

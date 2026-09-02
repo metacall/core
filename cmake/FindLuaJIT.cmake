@@ -19,18 +19,18 @@
 
 # Find LuaJIT library and include paths
 #
-# LUAJIT_FOUND - True if LuaJIT library was found
-# LUAJIT_INCLUDE_DIR - LuaJIT headers path
-# LUAJIT_LIBRARY - List of LuaJIT libraries
+# LuaJIT_FOUND - True if LuaJIT library was found
+# LuaJIT_INCLUDE_DIR - LuaJIT headers path
+# LuaJIT_LIBRARY - List of LuaJIT libraries
 
 # Prevent verbosity if already included
-if(LUAJIT_FOUND)
-	set(LUAJIT_FIND_QUIETLY TRUE)
+if(LuaJIT_FOUND)
+	set(LuaJIT_FIND_QUIETLY TRUE)
 endif()
 
 include(FindPackageHandleStandardArgs)
 
-set(LUAJIT_SUFFIXES
+set(LuaJIT_SUFFIXES
 	x86_64-linux-gnu
 	aarch64-linux-gnu
 	arm-linux-gnueabi
@@ -43,14 +43,14 @@ set(LUAJIT_SUFFIXES
 )
 
 # LuaJIT library names vary by platform
-set(LUAJIT_LIBRARY_NAMES
+set(LuaJIT_LIBRARY_NAMES
 	luajit-5.1
 	${CMAKE_SHARED_LIBRARY_PREFIX}luajit-5.1${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${CMAKE_STATIC_LIBRARY_PREFIX}luajit-5.1${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 
-find_library(LUAJIT_LIBRARY
-	NAMES ${LUAJIT_LIBRARY_NAMES}
+find_library(LuaJIT_LIBRARY
+	NAMES ${LuaJIT_LIBRARY_NAMES}
 	PATHS
 	/usr /usr/local /opt/luajit
 	~/Library/Frameworks
@@ -59,10 +59,10 @@ find_library(LUAJIT_LIBRARY
 	/opt/local # DarwinPorts
 	/opt/csw # Blastwave
 	/opt
-	PATH_SUFFIXES lib lib64 ${LUAJIT_SUFFIXES}
+	PATH_SUFFIXES lib lib64 ${LuaJIT_SUFFIXES}
 )
 
-find_path(LUAJIT_INCLUDE_DIR luajit.h
+find_path(LuaJIT_INCLUDE_DIR luajit.h
 	PATHS
 	/usr /usr/local /opt/luajit
 	~/Library/Frameworks
@@ -75,7 +75,7 @@ find_path(LUAJIT_INCLUDE_DIR luajit.h
 )
 
 # Define LuaJIT cmake module
-find_package_handle_standard_args(LuaJIT DEFAULT_MSG LUAJIT_LIBRARY LUAJIT_INCLUDE_DIR)
+find_package_handle_standard_args(LuaJIT DEFAULT_MSG LuaJIT_LIBRARY LuaJIT_INCLUDE_DIR)
 
 # Mark cmake module as advanced
-mark_as_advanced(LUAJIT_INCLUDE_DIR LUAJIT_LIBRARY)
+mark_as_advanced(LuaJIT_INCLUDE_DIR LuaJIT_LIBRARY)
