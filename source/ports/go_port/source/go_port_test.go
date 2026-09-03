@@ -203,6 +203,8 @@ func TestValues(t *testing.T) {
 		if v := valueToGo(ptr); !reflect.DeepEqual(v, tt.want) {
 			t.Errorf("name: %s, input: %T,%v, want: %T,%v, got: %T,%v", tt.name, tt.input, tt.input, tt.want, tt.want, v, v)
 		}
+
+		valueDestroy(ptr)
 	}
 }
 
@@ -243,4 +245,27 @@ func BenchmarkNodeJSParallel(b *testing.B) {
 			benchmarkNodeJS(b, 5)
 		}
 	})
+}
+
+func TestMapNonStringKeys(t *testing.T) {
+	input := map[int]string{
+		1: "one",
+		2: "two",
+	}
+
+	var ptr unsafe.Pointer
+	goToValue(input, &ptr)
+	if ptr == nil {
+		t.Fatal("failed to convert map with int keys to MetaCall value")
+	}
+	defer valueDestroy(ptr)
+
+	v := valueToGo(ptr)
+	want := map[int]interface{}{
+		1: "one",
+		2: "two",
+	}
+	if !reflect.DeepEqual(v, want) {
+		t.Errorf("valueToGo() = %v (type %T), want %v (type %T)", v, v, want, want)
+	}
 }
