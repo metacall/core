@@ -579,15 +579,69 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			tuples := C.metacall_value_to_map(value)
 			size := C.metacall_value_count(value)
 
-			m := make(map[string]interface{}, size)
-			for i := C.size_t(0); i < size; i++ {
-				pair := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(tuples)) + uintptr(i*PtrSizeInBytes)))
-				p := reflect.ValueOf(valueToGo(*pair))
-
-				key := p.Index(0).Interface().(string)
-				m[key] = p.Index(1).Interface()
+			if size == 0 {
+				return make(map[string]interface{})
 			}
 
+			// First pass: retrieve all keys and values, detect key types
+			type KeyValuePair struct {
+				Key   interface{}
+				Value interface{}
+			}
+			pairs := make([]KeyValuePair, size)
+
+			var uniformType reflect.Type
+			isUniform := true
+
+			tuplesSlice := unsafe.Slice((*unsafe.Pointer)(unsafe.Pointer(tuples)), size)
+
+			for i := C.size_t(0); i < size; i++ {
+				p := reflect.ValueOf(valueToGo(tuplesSlice[i]))
+
+				key := p.Index(0).Interface()
+				val := p.Index(1).Interface()
+
+				pairs[i] = KeyValuePair{Key: key, Value: val}
+
+				keyType := reflect.TypeOf(key)
+				if i == 0 {
+					uniformType = keyType
+					if uniformType == nil || !uniformType.Comparable() {
+						isUniform = false
+					}
+				} else if isUniform && keyType != uniformType {
+					isUniform = false
+				}
+			}
+
+			// Second pass: construct the map
+			if isUniform && uniformType != nil && uniformType.Kind() == reflect.String {
+				// Fast path: map[string]interface{}
+				// Note: this is the only path that supports JSON serialization natively.
+				// A complete typed Generics-based (Call[T]) approach will be introduced in a future PR.
+				m := make(map[string]interface{}, size)
+				for _, pair := range pairs {
+					m[pair.Key.(string)] = pair.Value
+				}
+				return m
+			} else if isUniform {
+				// Reflect uniform path: map[T]interface{}
+				// Note: map[T]interface{} where T != string is NOT natively supported by encoding/json.
+				// Downstream consumers may experience panics if they attempt to json.Marshal this without conversion.
+				// WARNING: If T is float64, NaN keys are legal to construct but silent lookup failures will occur.
+				mapType := reflect.MapOf(uniformType, reflect.TypeOf((*interface{})(nil)).Elem())
+				m := reflect.MakeMapWithSize(mapType, int(size))
+				for _, pair := range pairs {
+					m.SetMapIndex(reflect.ValueOf(pair.Key), reflect.ValueOf(pair.Value))
+				}
+				return m.Interface()
+			}
+
+			// Fallback path: map[interface{}]interface{}
+			m := make(map[interface{}]interface{}, size)
+			for _, pair := range pairs {
+				m[pair.Key] = pair.Value
+			}
 			return m
 		}
 

@@ -258,13 +258,14 @@ func TestMapNonStringKeys(t *testing.T) {
 	if ptr == nil {
 		t.Fatal("failed to convert map with int keys to MetaCall value")
 	}
+	defer valueDestroy(ptr)
 
-	/* valueToGo tries to do: key := p.Index(0).Interface().(string)
-	 * For map[int]..., this triggers a panic:
-	 * interface conversion: interface {} is int, not string
-	 */
 	v := valueToGo(ptr)
-	if v == nil {
-		t.Fatal("failed to convert MetaCall value back to Go map")
+	want := map[int]interface{}{
+		1: "one",
+		2: "two",
+	}
+	if !reflect.DeepEqual(v, want) {
+		t.Errorf("valueToGo() = %v (type %T), want %v (type %T)", v, v, want, want)
 	}
 }
