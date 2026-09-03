@@ -779,3 +779,85 @@ TEST_F(portability_path_test, portability_path_test_fullname)
 
 	EXPECT_STREQ(exe_name, "qemu-riscv64");
 }
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_exact)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/b";
+	EXPECT_EQ(0, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_child_longer)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/b/c";
+
+	// Verify that a valid child path is correctly identified as a subpath of the parent
+	EXPECT_EQ(0, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_parent_longer)
+{
+	static const char parent[] = "/a/b/c";
+	static const char child[] = "/a/b";
+
+	// Ensure that a parent path is not incorrectly identified as a subpath of a shorter child
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_out_of_bounds_read)
+{
+	static const char parent[] = "/a/b/c";
+	char child[4] = { '/', 'a', '/', 'b' };
+
+	// Test that subpath checking handles non-null-terminated buffers safely without reading out of bounds
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_different)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/x/y";
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_null)
+{
+	static const char path[] = "/a/b";
+
+	EXPECT_EQ(1, portability_path_is_subpath(NULL, 0, NULL, 0));
+	EXPECT_EQ(1, portability_path_is_subpath(path, sizeof(path), NULL, 0));
+	EXPECT_EQ(1, portability_path_is_subpath(NULL, 0, path, sizeof(path)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name)
+{
+	static const char parent[] = "/a/bc";
+	static const char child[] = "/a/b";
+
+	EXPECT_EQ(1, portability_path_is_subpath(parent, 5, child, 4));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_strncmp_fires)
+{
+	static const char parent[] = "/a/a";
+	static const char child[] = "/a/b";
+
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_separator_boundary)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/b/c";
+
+	EXPECT_EQ(0, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
+TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name_fallthrough)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/bc";
+
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
