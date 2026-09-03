@@ -50,7 +50,7 @@ jobs:
           architecture: ${{ matrix.arch }}
           shell: sh
           run: |
-            sh ./tools/metacall-environment.sh base python ${{ matrix.extra-loaders }} ruby go java cobol file rpc backtrace
+            sh ./tools/metacall-environment.sh base python ${{ matrix.extra-loaders }} ruby go lua java cobol file rpc backtrace
             mkdir -p build && cd build
-            sh ../tools/metacall-configure.sh ${{ matrix.build }} ${{ matrix.sanitizer }} scripts python ${{ matrix.extra-loaders }} ruby go java cobol file rpc tests
-            sh ../tools/metacall-build.sh ${{ matrix.build }} ${{ matrix.sanitizer }} ${{ matrix.extra-loaders }} ruby go java cobol file rpc tests
+            sh ../tools/metacall-configure.sh ${{ matrix.build }} ${{ matrix.sanitizer }} scripts python ${{ matrix.extra-loaders }} ruby go lua java cobol file rpc tests
+            sh ../tools/metacall-build.sh ${{ matrix.build }} ${{ matrix.sanitizer }} ${{ matrix.extra-loaders }} ruby go lua java cobol file rpc tests

@@ -1161,6 +1161,38 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name)
 	EXPECT_EQ(1, portability_path_is_subpath(parent, 5, child, 4));
 }
 
+// Path 1: strncmp fires — same size, different content → not a subpath
+TEST_F(portability_path_test, portability_path_test_is_subpath_strncmp_fires)
+{
+	static const char parent[] = "/a/a";
+	static const char child[] = "/a/b";
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent) - 1, child, sizeof(child) - 1));
+}
+
+// Path 2: child_size == parent_size — exact same path → is a subpath
+TEST_F(portability_path_test, portability_path_test_is_subpath_exact_match)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/b";
+	EXPECT_EQ(0, portability_path_is_subpath(parent, sizeof(parent) - 1, child, sizeof(child) - 1));
+}
+
+// Path 3: separator branch — child extends parent at a separator → is a subpath
+TEST_F(portability_path_test, portability_path_test_is_subpath_separator_boundary)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/b/c";
+	EXPECT_EQ(0, portability_path_is_subpath(parent, sizeof(parent) - 1, child, sizeof(child) - 1));
+}
+
+// Path 4: falls through — prefix matches but no separator boundary → not a subpath
+TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name_fallthrough)
+{
+	static const char parent[] = "/a/b";
+	static const char child[] = "/a/bc";
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent) - 1, child, sizeof(child) - 1));
+}
+
 TEST_F(portability_path_test, portability_path_test_separator_normalize_inplace_basic)
 {
 	char path[] = "C:\\a\\b";

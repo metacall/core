@@ -52,6 +52,7 @@ INSTALL_C=0
 INSTALL_COBOL=0
 INSTALL_GO=0
 INSTALL_RUST=0
+INSTALL_LUA=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
@@ -1007,9 +1008,31 @@ sub_rust(){
 			return
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		# TODO:
+		echo "darwin not implemented"
+		return
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		# TODO:
+		echo "freebsd not implemented"
+		return
+	fi
+}
+
+# Lua
+sub_lua(){
+	echo "configure lua"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libluajit-5.1-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache luajit-dev
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install luajit
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y luajit
 	fi
 }
 
@@ -1057,6 +1080,7 @@ sub_memcheck(){
 	fi
 }
 
+# Clang Compiler
 sub_clang(){
 	echo "configure clang"
 	cd $ROOT_DIR
@@ -1074,6 +1098,7 @@ sub_clang(){
 	fi
 }
 
+# Clang Compiler with Memory Sanitizer
 sub_clang_msan(){
 	echo "configure clang msan"
 	cd $ROOT_DIR
@@ -1329,6 +1354,9 @@ sub_install(){
 	if [ $INSTALL_RUST = 1 ]; then
 		sub_rust
 	fi
+	if [ $INSTALL_LUA = 1 ]; then
+		sub_lua
+	fi
 	if [ $INSTALL_PACK = 1 ]; then
 		sub_pack
 	fi
@@ -1466,6 +1494,10 @@ sub_options(){
 			echo "rust selected"
 			INSTALL_RUST=1
 		fi
+		if [ "$option" = 'lua' ]; then
+			echo "lua selected"
+			INSTALL_LUA=1
+		fi
 		if [ "$option" = 'pack' ]; then
 			echo "pack selected"
 			INSTALL_PACK=1
@@ -1546,6 +1578,8 @@ sub_help() {
 	echo "	c"
 	echo "	cobol"
 	echo "	go"
+	echo "	rust"
+	echo "	lua"
 	echo "	pack"
 	echo "	coverage"
 	echo "	memcheck"
