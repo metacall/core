@@ -862,6 +862,14 @@ TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name_fall
 	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
 }
 
+TEST_F(portability_path_test, portability_path_test_is_subpath_partial_name_parent_fallthrough)
+{
+	static const char parent[] = "/a/bc";
+	static const char child[] = "/a/b";
+
+	EXPECT_EQ(1, portability_path_is_subpath(parent, sizeof(parent), child, sizeof(child)));
+}
+
 TEST_F(portability_path_test, portability_path_test_get_directory_inplace_null)
 {
 	size_t size = portability_path_get_directory_inplace(NULL, NAME_SIZE);
