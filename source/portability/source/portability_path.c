@@ -20,6 +20,7 @@
 
 #include <portability/portability_path.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -129,14 +130,25 @@ size_t portability_path_get_name_canonical(const char *const path, const size_t 
 		--leftmost_dot;
 	}
 
-	/* Name starts with dot, use the following dot instead */
+	/* Name starts with dot, use the following dot instead (if it exists) */
 	if (leftmost_dot == name_start)
 	{
-		do
-		{
-			++leftmost_dot;
+		size_t next_dot = leftmost_dot + 1;
 
-		} while (leftmost_dot < path_size && path[leftmost_dot] != '.');
+		while (next_dot < path_size && path[next_dot] != '.')
+		{
+			++next_dot;
+		}
+
+		if (next_dot < path_size)
+		{
+			leftmost_dot = next_dot;
+		}
+	}
+
+	if (leftmost_dot < name_start || leftmost_dot > path_size)
+	{
+		leftmost_dot = name_start;
 	}
 
 	length = leftmost_dot - name_start;
@@ -184,26 +196,52 @@ size_t portability_path_get_fullname(const char *path, size_t path_size, char *n
 
 size_t portability_path_get_extension(const char *path, size_t path_size, char *extension, size_t extension_size)
 {
-	if (path == NULL || extension == NULL)
+	if (path == NULL)
 	{
 		return 0;
 	}
 
-	size_t i, count;
+	size_t i;
+	size_t start = SIZE_MAX;
 
-	for (i = 0, count = 0; path[i] != '\0' && i < path_size; ++i)
+	for (i = 0; path[i] != '\0' && i < path_size; ++i)
 	{
-		extension[count++] = path[i];
-
-		if (PORTABILITY_PATH_SEPARATOR(path[i]) || path[i] == '.' || count == extension_size)
+		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
-			count = 0;
+			start = SIZE_MAX;
+		}
+		else if (path[i] == '.')
+		{
+			start = i + 1;
 		}
 	}
 
-	extension[count] = '\0';
+	if (start == SIZE_MAX)
+	{
+		start = i;
+	}
 
-	return count + 1;
+	size_t ext_length = i - start;
+	size_t required_size = ext_length + 1;
+
+	if (extension == NULL || extension_size == 0)
+	{
+		return required_size;
+	}
+
+	if (extension_size < required_size)
+	{
+		return required_size;
+	}
+
+	for (i = 0; i < ext_length; ++i)
+	{
+		extension[i] = path[start + i];
+	}
+
+	extension[ext_length] = '\0';
+
+	return required_size;
 }
 
 size_t portability_path_get_module_name(const char *path, size_t path_size, const char *extension, size_t extension_size, char *name, size_t name_size)
@@ -257,19 +295,24 @@ size_t portability_path_get_directory(const char *path, size_t path_size, char *
 
 size_t portability_path_get_directory_inplace(char *path, size_t size)
 {
-	if (path == NULL)
+	if (path == NULL || size == 0)
 	{
 		return 0;
 	}
 
 	size_t i, last;
 
-	for (i = 0, last = 0; path[i] != '\0' && i < size; ++i)
+	for (i = 0, last = 0; i < size && path[i] != '\0'; ++i)
 	{
 		if (PORTABILITY_PATH_SEPARATOR(path[i]))
 		{
 			last = i + 1;
 		}
+	}
+
+	if (last >= size)
+	{
+		last = size - 1;
 	}
 
 	path[last] = '\0';
@@ -567,15 +610,15 @@ size_t portability_path_canonical(const char *path, size_t path_size, char *cano
 
 int portability_path_separator_normalize_inplace(char *path, size_t size)
 {
+	size_t iterator;
+	char separator = 0;
+
 	if (path == NULL)
 	{
 		return 1;
 	}
 
-	size_t iterator;
-	char separator = 0;
-
-	for (iterator = 0; iterator < size; ++iterator)
+	for (iterator = 0; iterator < size && path[iterator] != '\0'; ++iterator)
 	{
 		if (PORTABILITY_PATH_SEPARATOR_ALL(path[iterator]))
 		{
@@ -583,10 +626,8 @@ int portability_path_separator_normalize_inplace(char *path, size_t size)
 			{
 				separator = PORTABILITY_PATH_SEPARATOR_C; /* Use current platform style as default */
 			}
-			else
-			{
-				path[iterator] = separator;
-			}
+
+			path[iterator] = separator;
 		}
 	}
 
@@ -635,9 +676,9 @@ int portability_path_is_pattern(const char *path, size_t size)
 
 	size_t i;
 
-	for (i = 0; path[i] != '\0' && i < size; ++i)
+	for (i = 0; i < size && path[i] != '\0'; ++i)
 	{
-		if (path[i] == '*')
+		if (path[i] == '*' || path[i] == '?')
 		{
 			return 0;
 		}
@@ -648,6 +689,11 @@ int portability_path_is_pattern(const char *path, size_t size)
 
 int portability_path_exists(const char *path)
 {
+	if (path == NULL)
+	{
+		return 1;
+	}
+
 #if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
@@ -672,6 +718,11 @@ int portability_path_exists(const char *path)
 
 char *portability_path_resolve(const char *path, char *resolved)
 {
+	if (path == NULL)
+	{
+		return NULL;
+	}
+
 #if defined(_WIN32)
 	return _fullpath(resolved, path, MAX_PATH);
 #else
@@ -682,6 +733,11 @@ char *portability_path_resolve(const char *path, char *resolved)
 int portability_path_file_exists(const char *path)
 {
 	char resolved_path[PORTABILITY_PATH_SIZE];
+
+	if (path == NULL)
+	{
+		return 1;
+	}
 
 	if (portability_path_resolve(path, resolved_path) == NULL)
 	{
