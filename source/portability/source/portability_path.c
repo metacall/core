@@ -349,7 +349,9 @@ size_t portability_path_get_relative(const char *base, size_t base_size, const c
 
 int portability_path_is_subpath(const char *parent, size_t parent_size, const char *child, size_t child_size)
 {
-	if (parent == NULL || child == NULL)
+	size_t parent_length;
+
+	if (parent == NULL || child == NULL || parent_size == 0 || child_size == 0)
 	{
 		return 1;
 	}
@@ -359,12 +361,14 @@ int portability_path_is_subpath(const char *parent, size_t parent_size, const ch
 		return 1;
 	}
 
-	if (strncmp(parent, child, parent_size) != 0)
+	parent_length = parent_size - 1;
+
+	if (strncmp(parent, child, parent_length) != 0)
 	{
 		return 1;
 	}
 
-	if (child_size == parent_size || PORTABILITY_PATH_SEPARATOR(child[parent_size]))
+	if (child_size == parent_size || PORTABILITY_PATH_SEPARATOR(child[parent_length]))
 	{
 		return 0;
 	}
