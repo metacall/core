@@ -1193,7 +1193,10 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb ? tb : Py_NonePtr());
 
-		Py_DecRef(tb);
+		if (tb != NULL)
+		{
+			Py_DecRef(tb);
+		}
 	}
 	else
 	{
@@ -1371,8 +1374,15 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		if (obj_impl == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_class when converting value to python capi");
-			return NULL;
+			const char *message = "Converting class from metacall value to python capi not implemented";
+			PyObject *args = PyTuple_New(1);
+			PyObject *msg = PyUnicode_FromString(message);
+			log_write("metacall", LOG_LEVEL_WARNING, "%s", message);
+			PyTuple_SetItem(args, 0, msg);
+			PyObject *exc_instance = PyObject_CallObject(PyExc_ExceptionPtr(), args);
+			Py_DecRef(args);
+
+			return exc_instance;
 		}
 
 		return obj_impl->cls;
@@ -1385,13 +1395,21 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 		/* TODO: The return value of object_impl_get may not be a loader_impl_py_object, it can be a loader_impl_node_node too */
 		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the object dynamically */
 		loader_impl_py_object obj_impl = object_impl_get(obj);
-		Py_IncRef(obj_impl->obj);
 
 		if (obj_impl == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_object when converting value to python capi");
-			return NULL;
+			const char *message = "Converting object from metacall value to python capi not implemented";
+			PyObject *args = PyTuple_New(1);
+			PyObject *msg = PyUnicode_FromString(message);
+			log_write("metacall", LOG_LEVEL_WARNING, "%s", message);
+			PyTuple_SetItem(args, 0, msg);
+			PyObject *exc_instance = PyObject_CallObject(PyExc_ExceptionPtr(), args);
+			Py_DecRef(args);
+
+			return exc_instance;
 		}
+
+		Py_IncRef(obj_impl->obj);
 
 		return obj_impl->obj;
 	}
