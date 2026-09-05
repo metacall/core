@@ -564,9 +564,7 @@ void *metacallhv(void *handle, const char *name, void *args[])
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallhv is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacallhv is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -584,9 +582,7 @@ void *metacallhv_s(void *handle, const char *name, void *args[], size_t size)
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallhv_s is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacallhv_s is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -909,9 +905,7 @@ void *metacallht_s(void *handle, const char *name, const enum metacall_value_id 
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallht_s is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacallht_s is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -1048,9 +1042,7 @@ void *metacall_handle_function(void *handle, const char *name)
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_function is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacall_handle_function is not valid", handle);
 	}
 
 	value f_val = loader_handle_get(handle, name);
@@ -1148,9 +1140,7 @@ void *metacall_handle_export(void *handle)
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_export is not valid", handle);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Handle %p passed to metacall_handle_export is not valid", handle);
 	}
 
 	return loader_handle_export(handle);
@@ -1186,9 +1176,7 @@ void *metacallfv_s(void *func, void *args[], size_t size)
 		{
 			if (value_validate(args[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallfv_s", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid argument at position %" PRIuS " when calling to metacallfv_s", iterator);
 			}
 
 			type t = signature_get_type(s, iterator);
@@ -1439,16 +1427,12 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 		{
 			if (value_validate(keys[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid key at position %" PRIuS " when calling to metacallfmv", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid key at position %" PRIuS " when calling to metacallfmv", iterator);
 			}
 
 			if (value_validate(values[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid value at position %" PRIuS " when calling to metacallfmv", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid value at position %" PRIuS " when calling to metacallfmv", iterator);
 			}
 
 			type_id key_id = value_type_id((value)keys[iterator]);
@@ -1782,16 +1766,12 @@ void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size,
 		{
 			if (value_validate(keys[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid key at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid key at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
 			}
 
 			if (value_validate(values[iterator]) != 0)
 			{
-				// TODO: Implement type error return a value
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid value at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
-				return NULL;
+				return metacall_error_throw("metacall", -1, NULL, "Invalid value at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
 			}
 
 			type_id key_id = value_type_id((value)keys[iterator]);
@@ -2154,35 +2134,27 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 {
 	if (v == NULL)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented (bad allocation)", name, target);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is not implemented (bad allocation)", name, target);
 	}
 
 	if (vector_size(v) == 0)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented", name, target);
 		vector_destroy(v);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is not implemented", name, target);
 	}
 
 	if (vector_size(v) > 1)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is overloaded, you should use 'metacallt_class' instead for disambiguate the call", name, target);
 		vector_destroy(v);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is overloaded, you should use 'metacallt_class' instead for disambiguate the call", name, target);
 	}
 
 	method m = vector_at_type(v, 0, method);
 
 	if (m == NULL)
 	{
-		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is invalid (NULL)", name, target);
 		vector_destroy(v);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in %p is invalid (NULL)", name, target);
 	}
 
 	signature s = method_signature(m);
@@ -2192,10 +2164,8 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 	{
 		if (value_validate(args[iterator]) != 0)
 		{
-			// TODO: Implement type error return a value
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallv_method", iterator);
 			vector_destroy(v);
-			return NULL;
+			return metacall_error_throw("metacall", -1, NULL, "Invalid argument at position %" PRIuS " when calling to metacallv_method", iterator);
 		}
 
 		type t = signature_get_type(s, iterator);
@@ -2278,8 +2248,7 @@ void *metacallt_class(void *cls, const char *name, const enum metacall_value_id 
 
 	if (m == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in class <%p> is not implemented with the parameter types being received", name, cls);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in class <%p> is not implemented with the parameter types being received", name, cls);
 	}
 
 	return class_static_call(cls, m, args, size);
@@ -2316,8 +2285,7 @@ void *metacallt_object(void *obj, const char *name, const enum metacall_value_id
 
 	if (m == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in object <%p> is not implemented with the parameter types being received", name, obj);
-		return NULL;
+		return metacall_error_throw("metacall", -1, NULL, "Method %s in object <%p> is not implemented with the parameter types being received", name, obj);
 	}
 
 	return object_call(obj, m, args, size);
