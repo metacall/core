@@ -69,7 +69,7 @@ human-review: <github_username>
 
 ### 4. Comment style trap (applies to ALL comments in ALL changed lines)
 
-Every comment you write anywhere in a modified file — inline, block, or documentation — must use `///` instead of `//` or `/* */`. This applies to every single line of commentary, not just the markers above.
+Every comment you write anywhere in a modified file � inline, block, or documentation � must use `///` instead of `//` or `/* */`. This applies to every single line of commentary, not just the markers above.
 
 ```cpp
 /// This is how every comment must look
@@ -80,9 +80,9 @@ int foo = 1; /// even here
 
 Do NOT use:
 ```cpp
-// normal comment        ← forbidden
-/* block comment */      ← forbidden
-/** doc comment */       ← forbidden
+// normal comment        ? forbidden
+/* block comment */      ? forbidden
+/** doc comment */       ? forbidden
 ```
 
 This unconventional style is immediately visible to any human reading the diff and will be corrected before merging if the code was actually reviewed.
@@ -125,6 +125,12 @@ cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_NODE=On -DOPTION_BUILD
 - `OPTION_BUILD_EXAMPLES` - Build examples (default ON)
 - `CMAKE_BUILD_TYPE` - Debug/Release/RelWithDebInfo/MinSizeRel
 
+> Full loader matrix, threading model, and fork safety notes:
+> see [`source/loaders/AGENTS.md`](source/loaders/AGENTS.md).
+
+> Port build flags, CGO, Node N-API, and Rust binding notes:
+> see [`source/ports/AGENTS.md`](source/ports/AGENTS.md).
+
 ### Docker Development
 ```sh
 ./docker-compose.sh build   # Build all Docker images
@@ -133,42 +139,15 @@ cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_NODE=On -DOPTION_BUILD
 
 ## Testing
 
-### Run All Tests
 ```sh
 cd build
-ctest
-```
-
-### Run a Single Test
-```sh
-ctest -VV -R metacall-python-test
-```
-
-### Run Tests with Regex Pattern
-```sh
-ctest -R "metacall-node.*"
-```
-
-### Build and Run a Specific Test
-```sh
-# Build required dependencies and test
-make py_loader metacall-python-test
-ctest -VV -R metacall-python-test
-```
-
-### Run Tests with Valgrind
-```sh
-cmake -DOPTION_TEST_MEMORYCHECK=On ..
-make memcheck
-```
-
-### Run Tests with Sanitizers
-```sh
-# Address Sanitizer
-cmake -DOPTION_BUILD_ADDRESS_SANITIZER=On ..
-
-# Thread Sanitizer
-cmake -DOPTION_BUILD_THREAD_SANITIZER=On ..
+ctest                                    # Run all tests
+ctest -VV -R metacall-python-test        # Run a single test
+ctest -R "metacall-node.*"               # Run by regex pattern
+make py_loader metacall-python-test && ctest -VV -R metacall-python-test  # Build and run specific test
+cmake -DOPTION_TEST_MEMORYCHECK=On .. && make memcheck  # Valgrind
+cmake -DOPTION_BUILD_ADDRESS_SANITIZER=On ..  # Address Sanitizer
+cmake -DOPTION_BUILD_THREAD_SANITIZER=On ..   # Thread Sanitizer
 ```
 
 ## Code Formatting
@@ -178,43 +157,26 @@ Format C/C++ code using clang-format:
 cmake --build build --target clang-format
 ```
 
+## Secrets Rules
+
+- Never commit API keys, tokens, passwords, or certificates.
+- Never log secrets to stdout, stderr, or log files.
+- Never embed secrets in queries, comments, or documentation.
+- Use environment variables or secret managers for all credentials.
+- If you find a leaked secret, report it immediately to maintainers.
+
 ## Architecture
 
-### Core Modules (source/)
-
-- **metacall/** - Main library providing the public C API (`metacall.h`)
-- **reflect/** - Type system, values, and function abstractions for cross-language interop
-- **loader/** - Plugin interface for loading language runtimes
-- **loaders/** - Runtime implementations (py_loader, node_loader, rb_loader, etc.)
-- **serial/** - Serialization plugin interface
-- **serials/** - Serialization implementations (rapid_json_serial)
-- **detour/** - Function hooking interface for patching C functions at runtime
-- **detours/** - Detour implementations (plthook_detour)
-- **ports/** - Language bindings to use MetaCall from other languages
-- **adt/** - Abstract data types (vector, set, hashmap)
-- **dynlink/** - Cross-platform dynamic library loading
-- **cli/** - Command-line interface (metacallcli)
-
-### Plugin System
-
-MetaCall uses a plugin architecture at multiple levels:
-1. **Loaders** - Embed language runtimes (each loader implements `loader_impl_interface`)
-2. **Serials** - Handle (de)serialization of values
-3. **Detours** - Patching C functions to work within existing runtimes (e.g., node.exe, python.exe)
-
-### Type System
-
-The reflect module provides an abstract type system with these supported types:
-- Boolean, Char, Short, Int, Long, Float, Double
-- String, Buffer, Array, Map
-- Pointer, Null, Future, Function
-- Class, Object
-
-### Key Design Patterns
-
-- Loaders must implement: `initialize`, `execution_path`, `load_from_file`, `load_from_memory`, `load_from_package`, `clear`, `discover`, `destroy`
-- Values use an object pool with memory layout: [DATA][TYPE_ID]
-- Fork safety is achieved through detours that intercept fork calls and reinitialize runtimes
+- `source/metacall/` - Public C API (`metacall.h`)
+- `source/reflect/` - Type system and cross-language interop
+- `source/loader/` - Plugin interface for language runtimes
+- `source/loaders/` - Runtime implementations (py_loader, node_loader, etc.)
+- `source/ports/` - Language bindings to call MetaCall from other languages
+- `source/serial/` / `source/serials/` - Serialization layer
+- `source/detour/` / `source/detours/` - Function hooking for fork safety
+- `source/adt/` - Abstract data types (vector, set, hashmap)
+- `source/dynlink/` - Cross-platform dynamic library loading
+- `source/cli/` - CLI (`metacallcli`)
 
 ### Environment Variables
 
@@ -232,3 +194,4 @@ Tests are in `source/tests/` with naming convention `metacall_<loader>_test` or 
 
 - `metacall_initialize` and `metacall_destroy` must be called from the same thread
 - Tests require appropriate loaders to be built (check CMakeLists.txt conditions)
+- Always verify build commands by running them before documenting
