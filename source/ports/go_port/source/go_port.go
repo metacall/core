@@ -345,8 +345,11 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
 		return valueToGo(ret), nil
+	} else {
+		// delete and free ptr if metacallfv_await_struct_s failed with nil
+		pointerDelete(goCallbacksPtr)
 	}
-
+	
 	return nil, nil
 }
 
@@ -469,6 +472,7 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 	if v.Kind() == reflect.Map {
 		length := v.Len()
 		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
+		defer C.free(unsafe.Pointer(cArgs))
 
 		for index, m := 0, v.MapRange(); m.Next(); index++ {
 			pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
