@@ -48,6 +48,7 @@ import "C"
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -56,10 +57,29 @@ import (
 	"unsafe"
 )
 
+const QUEUEBUFFSIZE = 1
+
+// interface for all works with execute and cancel functions
+type safeWork interface {
+	execute()
+	cancel(err error)
+}
+type callReturnSafeWork struct {
+	value interface{}
+	err   error
+}
 type loadFromFileSafeWork struct {
 	tag     string
 	scripts []string
 	err     chan error
+}
+
+func (w *loadFromFileSafeWork) execute() {
+	err := LoadFromFileUnsafe(w.tag, w.scripts)
+	w.err <- err
+}
+func (w *loadFromFileSafeWork) cancel(err error) {
+	w.err <- err
 }
 
 type loadFromMemorySafeWork struct {
@@ -68,15 +88,26 @@ type loadFromMemorySafeWork struct {
 	err    chan error
 }
 
-type callReturnSafeWork struct {
-	value interface{}
-	err   error
+func (w *loadFromMemorySafeWork) execute() {
+	err := LoadFromMemoryUnsafe(w.tag, w.buffer)
+	w.err <- err
+}
+func (w *loadFromMemorySafeWork) cancel(err error) {
+	w.err <- err
 }
 
 type callSafeWork struct {
 	function string
 	args     []interface{}
 	ret      chan callReturnSafeWork
+}
+
+func (w *callSafeWork) execute() {
+	value, err := CallUnsafe(w.function, w.args...)
+	w.ret <- callReturnSafeWork{value, err}
+}
+func (w *callSafeWork) cancel(err error) {
+	w.ret <- callReturnSafeWork{nil, err}
 }
 
 type awaitCallback func(interface{}, interface{}) interface{}
@@ -90,6 +121,14 @@ type awaitSafeWork struct {
 	ctx      interface{}
 }
 
+func (w *awaitSafeWork) execute() {
+	value, err := AwaitUnsafe(w.function, w.resolve, w.reject, w.ctx, w.args...)
+	w.ret <- callReturnSafeWork{value, err}
+}
+func (w *awaitSafeWork) cancel(err error) {
+	w.ret <- callReturnSafeWork{nil, err}
+}
+
 type awaitCallbacks struct {
 	resolve awaitCallback
 	reject  awaitCallback
@@ -99,10 +138,12 @@ type awaitCallbacks struct {
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
 var (
-	queue  = make(chan interface{}, 1) // Queue for dispatching the work
-	toggle chan struct{}               // Channel for stopping the queue
-	lock   sync.Mutex                  // Lock for the queue
-	wg     sync.WaitGroup              // Wait group for the queue (needed to obtain return values)
+	queue       = make(chan safeWork, QUEUEBUFFSIZE) // Queue for dispatching the work
+	toggle      chan struct{}                        // Channel for stopping the queue
+	lock        sync.Mutex                           // Lock for the queue
+	rootCtx     context.Context                      // root context to manage cancelation
+	rootCancel  context.CancelFunc                   // cancel function to drain and destroy jobs in queue
+	errShutdown = errors.New("runtime shutdown")     // err to be sent to cancel() when shutting down
 )
 
 func InitializeUnsafe() error {
@@ -122,17 +163,20 @@ func Initialize() error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	if toggle != nil {
+	if rootCtx != nil {
 		// Already running
 		return nil
 	}
 
+	rootCtx, rootCancel = context.WithCancel(context.Background())
 	toggle = make(chan struct{}, 1)
 	initErr := make(chan error, 1)
 
-	go func(initErr chan error, toggle <-chan struct{}) {
+	go func(ctx context.Context, initErr chan error) {
+		defer close(toggle)
 		// Bind this goroutine to its thread
 		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
 
 		// Initialize MetaCall
 		if err := InitializeUnsafe(); err != nil {
@@ -144,37 +188,25 @@ func Initialize() error {
 
 		for {
 			select {
-			case <-toggle:
+			case <-ctx.Done():
 				// Shutdown
-				DestroyUnsafe()
-				return
-			case w := <-queue:
-				switch v := w.(type) {
-				case loadFromFileSafeWork:
-					{
-						err := LoadFromFileUnsafe(v.tag, v.scripts)
-						v.err <- err
-					}
-				case loadFromMemorySafeWork:
-					{
-						err := LoadFromMemoryUnsafe(v.tag, v.buffer)
-						v.err <- err
-					}
-				case callSafeWork:
-					{
-						value, err := CallUnsafe(v.function, v.args...)
-						v.ret <- callReturnSafeWork{value, err}
-					}
-				case awaitSafeWork:
-					{
-						value, err := AwaitUnsafe(v.function, v.resolve, v.reject, v.ctx, v.args...)
-						v.ret <- callReturnSafeWork{value, err}
+				for {
+					select {
+					//drain queue
+					case w := <-queue:
+						w.cancel(errShutdown)
+					// call destroy for metacall after queue is empty
+					default:
+						DestroyUnsafe()
+						return
 					}
 				}
-				wg.Done()
+			// execute work in queue
+			case w := <-queue:
+				w.execute()
 			}
 		}
-	}(initErr, toggle)
+	}(rootCtx, initErr)
 
 	return <-initErr
 }
@@ -261,20 +293,31 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 
 // Call sends work and blocks until it's processed
 func Call(function string, args ...interface{}) (interface{}, error) {
-	ret := make(chan callReturnSafeWork, 1)
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return nil, errShutdown
+	}
 
-	w := callSafeWork{
+	ret := make(chan callReturnSafeWork, 1)
+	w := &callSafeWork{
 		function: function,
 		args:     args,
 		ret:      ret,
 	}
-
-	wg.Add(1)
-	queue <- w
-
-	result := <-ret
-
-	return result.value, result.err
+	// if ctx canceled return, otherwise send work to queue
+	select {
+	case <-ctx.Done():
+		return nil, errShutdown
+	case queue <- w:
+	}
+	// if ctx canceled return, otherwise return finished work from ret chan
+	// seperated frow above switch cause of returning values
+	select {
+	case <-ctx.Done():
+		return nil, errShutdown
+	case result := <-ret:
+		return result.value, result.err
+	}
 }
 
 //export goResolve
@@ -349,15 +392,20 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 		// delete and free ptr if metacallfv_await_struct_s failed with nil
 		pointerDelete(goCallbacksPtr)
 	}
-	
+
 	return nil, nil
 }
 
 // Await sends asynchronous work and blocks until it's processed
 func Await(function string, resolve, reject awaitCallback, ctx interface{}, args ...interface{}) (interface{}, error) {
+	rCtx := checkRootCtx()
+	if rCtx == nil {
+		return nil, errShutdown
+	}
+
 	ret := make(chan callReturnSafeWork, 1)
 
-	w := awaitSafeWork{
+	w := &awaitSafeWork{
 		function: function,
 		args:     args,
 		ret:      ret,
@@ -366,12 +414,18 @@ func Await(function string, resolve, reject awaitCallback, ctx interface{}, args
 		ctx:      ctx,
 	}
 
-	wg.Add(1)
-	queue <- w
+	select {
+	case <-rCtx.Done():
+		return nil, errShutdown
+	case queue <- w:
+	}
 
-	result := <-ret
-
-	return result.value, result.err
+	select {
+	case <-rCtx.Done():
+		return nil, errShutdown
+	case result := <-ret:
+		return result.value, result.err
+	}
 }
 
 func getFunction(function string) (unsafe.Pointer, error) {
@@ -601,31 +655,70 @@ func valueToGo(value unsafe.Pointer) interface{} {
 }
 
 func LoadFromFile(tag string, scripts []string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
 	result := make(chan error, 1)
-	w := loadFromFileSafeWork{
+	w := &loadFromFileSafeWork{
 		tag,
 		scripts,
 		result,
 	}
-	wg.Add(1)
-	queue <- w
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
 
-	return <-result
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
 }
 
 func LoadFromMemory(tag string, buffer string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
 	result := make(chan error, 1)
-	w := loadFromMemorySafeWork{
+	w := &loadFromMemorySafeWork{
 		tag,
 		buffer,
 		result,
 	}
-	wg.Add(1)
-	queue <- w
 
-	return <-result
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
 }
 
+func checkRootCtx() context.Context {
+	// lock to prevent race condition when accessing global variable rootCtx
+	lock.Lock()
+	// reject call when Initialize() was never called or Destroy() ran or in progress
+	if rootCtx == nil || rootCtx.Err() != nil {
+		lock.Unlock()
+		return nil
+	}
+	ctx := rootCtx
+	lock.Unlock()
+	return ctx
+}
 func DestroyUnsafe() {
 	C.metacall_destroy()
 }
@@ -633,10 +726,17 @@ func DestroyUnsafe() {
 // Shutdown disables the metacall adapter waiting for all calls to complete
 func Destroy() {
 	lock.Lock()
-	close(toggle)
-	toggle = nil
+	if rootCancel != nil {
+		// cancel root ctx and assign it to nil when shutting down
+		rootCancel()
+		rootCancel = nil
+		rootCtx = nil
+	}
+	tog := toggle
 	lock.Unlock()
 
-	// Wait for all work to complete
-	wg.Wait()
+	if tog != nil {
+		// wait for DestroyUnsafe() to finish
+		<-tog
+	}
 }
