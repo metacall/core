@@ -87,7 +87,7 @@ Before submitting performance-critical or low-level changes:
 
 ## Project Resources & Policies
 
-- **Security Policy:** Refer to [SECURITY.md](SECURITY.md) to report vulnerabilities privately.
-- **Code of Conduct:** Review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards and reporting guidelines.
-- **Roadmap:** View the [MetaCall Roadmap](ROADMAP.md) for upcoming milestones and plans.
-- **Support Channels:** Check [SUPPORT.md](SUPPORT.md) or join our [Discord Server](https://discord.com/invite/upwP4mwJWa) for community help.
+- **Security Policy:** Refer to [SECURITY.md](../SECURITY.md) to report vulnerabilities privately.
+- **Code of Conduct:** Review our [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) for community standards and reporting guidelines.
+- **Roadmap:** View the [MetaCall Roadmap](../ROADMAP.md) for upcoming milestones and plans.
+- **Support Channels:** Check [SUPPORT.md](../SUPPORT.md) or join our [Discord Server](https://discord.com/invite/upwP4mwJWa) for community help.
