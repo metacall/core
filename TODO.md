@@ -1,81 +1,78 @@
-# MetaCall Roadmap
+> **NOTE:** This document is superseded by [ROADMAP.md](ROADMAP.md). Please refer to the roadmap for the current project direction and planned milestones.
 
-> High-level architectural roadmap, feature milestones, and backlog triage for the MetaCall polyglot runtime.
+TODO List
+=========
 
----
+## CORE
 
-## Horizon Overview
+  * Merge serial, detour and loader systems into a generic plugin system.
+  * Improve versioning of loader plugins and it's [interface](https://accu.org/index.php/journals/1718).
+  * Extend loading process to accept scripts as string, uri or memory block.
+  * Add a cross-platform library for managing path tree and allow scripts to be loaded by path.
+  * Add watchers and reload policies in order to provide on-the-fly changes and make it fault tolerant against corrupted scripts.
+  * Add error management.
+  * Add new type management and its implementation in each loader (ptr, array, callback, object).
+  * Improve scope management for encapsulation and add tie-breaker to avoid conflicts between functions with same name.
+  * **MetaCall++** front-end compatible with SWIG (avoid common exceptions and unimplemented templates).
+  * Possibly convert the whole project to C++ and export critical parts like **MetaCall** front-end and loaders plugin interface as [C API](http://www.drbobbs.com/cpp/building-your-own-plugin-framework-part/204202899?pgno=4).
+  * Implement a meta-object protocol in order to support a complete AST abstraction representing class and object tree.
+  * Implement an event protocol for supporting reactive architectures based on callbacks.
+  * Make an automated architecture and test generation for implement all tests with a workflow (TDD) and similar semantics, and implement them.
+  * Add custom benchmarks and small utility library for supporting benchmarks, and integrate it in build process of CMake.
+  * Improve security of loaders and scripts loaded with signatures, and avoid memory injection with a driver.
+  * Implement thread safety.
 
-| Status Icon | Meaning |
-| :---: | :--- |
-| :white_check_mark: | **Done** (Implemented / Shipped) |
-| :hammer_and_wrench: | **In Progress** (Active implementation) |
-| :calendar: | **Planned** (Scoped for implementation) |
-| :pause_button: | **Deferred** (Postponed / Awaiting prerequisites) |
-| :x: | **Dropped** (Deprecated / Retired) |
+## LOADERS
 
----
+  * Loader C/C++:
+    - [Clang](http://clang.llvm.org/docs/ExternalClangExamples.html) as a parser for reflect generation for .h and .hpp files.
+    - [Libffi](http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Using-libffi.html) as a foreign function interface caller.
+    - [LLVM](http://llvm.org/docs/) as a JIT compiler for .c and .cpp files.
+    - [Dynlink](source/dynlink) library as a cross-platform library loader.
+    - Alternatively use [EmbedCh](https://www.softintegration.com/products/sdk/embedch/).
 
-## Now (0 - 3 Months)
+  * Loader C#:
+    - [NET Core](https://msdn.microsoft.com/en-us/library/ms404385.aspx) hosting.
+    - [Mono](http://www.mono-project.com/docs/advanced/embedding/).
 
-### Core & Reflect
-* :hammer_and_wrench: **Thread Safety:** Enforce comprehensive thread safety across core boundaries and plugin invocations ([#863](https://github.com/metacall/core/issues/863)).
-* :hammer_and_wrench: **Unified Error Management:** Implement unified error propagation across runtimes.
-* :white_check_mark: **Community Health & Standards:** Standardize contributing guidelines, issue workflows, and code style rules (Project Rosetta-4).
-* :calendar: **Scope & Lifetimes:** Improve scope encapsulation and resolve function name collision tie-breaking (no issue yet).
-* :calendar: **Sanitizers & Tooling:** Integrate ASan, TSan, and strict compiler flags (`-Wall -Wextra -Werror`) across CMake builds.
+  * Loader Java:
+    - [JVM and JNI](http://docs.oracle.com/javase/1.5.0/docs/guide/jni/spec/invocation.html).
 
-### Documentation (Project Rosetta-1)
-* :hammer_and_wrench: **Automated Docs Publishing:** Modernize docs infrastructure and set up automated static documentation generation (Rosetta-1).
-* :white_check_mark: **Governance & Security Baseline:** Publish root `SECURITY.md` and `ROADMAP.md` (Rosetta-5, Rosetta-6).
+  * Loader PHP:
+    - [PHP C API](http://us.php.net/manual/en/internals2.php).
 
----
+  * Loader LUA:
+    - [LUA C API](https://www.lua.org/pil/contents.html#P4).
 
-## Next (3 - 12 Months)
+## DOCUMENTATION
 
-### Loaders & Ports (Project Rosetta-3)
-* :calendar: **Loader Stability Tiers:** Establish and promote loaders across defined stability tiers (Rosetta-3).
-* :calendar: **Loader Improvements & Backlog:**
-  - **C/C++ Loader:** Dynamic linking and JIT integration via Clang/LLVM and libffi.
-  - **C# Loader:** Upgraded hosting support for modern .NET Core runtimes.
-  - **Java / JVM:** JNI runtime integration and lifecycle management.
-  - **Scripting Loaders:** Modernize and harden PHP and Lua C API embed integrations.
-* :calendar: **SWIG Ports Overhaul:** Modernize automated language port generation and eliminate legacy binding layers.
+  * Write a complete documentation of the core source and libraries.
+  * Write a separated text with a complete manual of each example.
+  * Integrate automated generation of documentation with CMake build:
+    - [Doxygen](https://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) for extracting code documentation.
+    - [Markdown](https://www.stack.nl/~dimitri/doxygen/manual/markdown.html) for general purpose repoistory based documentation.
+    - [Latex](https://cmake.org/Wiki/CMakeUserUseLATEX) for custom examples and manuals. -- [Already integrated](docs/manual/cmake-init.tex).
+    - [Quickbook](http://www.boost.org/doc/libs/1_61_0/html/quickbook.html) for integrating a complete set of automating tools.
 
-### Core Architecture
-* :calendar: **Generic Plugin System:** Merge serial, detour, and loader architectures into a unified, versioned plugin system.
-* :calendar: **Extended Script Loading:** Support script loading directly from strings, URIs, and raw memory blocks.
-* :calendar: **Dynamic Watchers:** Implement file watchers and live reloading with fault tolerance against corrupted scripts.
-* :calendar: **Type Management Extensions:** Expand core type management and loader mapping for pointers, arrays, callbacks, and composite objects.
-* :calendar: **Automated Test Architecture:** Standardize TDD testing workflows and unified test harness across loaders.
-* :calendar: **Cross-Platform Path Management:** Add cross-platform path tree management for script discovery.
+## EXAMPLES
 
-### Build, CI & Deployment
-* :calendar: **Automated Packaging:** CI/CD pipelines for automated release of native `.deb` and `.rpm` packages.
-* :calendar: **Cross-Compilation:** CMake-integrated cross-compiling toolchains for target architectures.
+  * Simple example of a front-end web-page (Js with Angular or React) with a logic based on (C/C++).
+  * Extension of first example providing a custom service as mark-water implemented natively and a custom database layer implementing a persistent cache.
+  * Custom threading, high performance example based on script host language (Python, Ruby, Js) and a guest native language (C/C++), to implement a matrix based solver (Sudoku or some Math problem).
+  * Implement an example of software migration from an old software language to a newer one (possibly Visual Basic 6 to some script).
+  * Implement a CLI for **MetaCall++** and extend current CLI for **MetaCall** (possibly with a common front-end and different adaptors for the back-end).
 
----
+## DEPLOY
 
-## Later (12+ Months)
+  * Integrate project with SWIG and provide automated port generation for **MetaCall** and **MetaCall++**.
+  * Add continuous integration for multiple architectures and operative systems:
+    - Docker for deploying.
+    - Vagrant for generating workstations for developers.
+    - Set up scripts (sh, bat) for multiple architectures for each CI container.
+    - CI/CD release of .deb and .rpm packages
+  * Add cross-compiling toolkit for multiple architectures integrated with [CMake](https://cmake.org/cmake/help/v3.0/manual/cmake-toolchains.7.html)
 
-### MetaCall++ & Advanced Core
-* :calendar: **MetaCall++ Front-End:** Native modern C++ front-end with SWIG compatibility.
-* :calendar: **Meta-Object Protocol:** Implement complete AST abstraction representing classes and object hierarchies across guest runtimes.
-* :calendar: **Reactive Event Protocol:** Event-driven architecture supporting cross-runtime reactive callbacks.
-* :calendar: **Full C++ Core Migration:** Evaluate migrating internal core implementation to modern C++ while exporting clean C APIs.
-* :pause_button: **Driver-Level Sandboxing:** Advanced memory isolation and signature verification driver for loaded scripts.
+## MISC
 
-### CLI & Examples
-* :calendar: **Unified CLI:** Common front-end CLI supporting both MetaCall and MetaCall++ runtime interactions.
-* :calendar: **Polyglot Production Examples:** Implement advanced polyglot templates (e.g., reactive web front-ends with native C/C++ back-ends, matrix/math solvers bridging Python/NodeJS and C).
-
-### Dropped / Retired
-* :x: **Vagrant Workstations:** Dropped in favor of standardized, lightweight Docker and containerized CI environments.
-* :x: **Latex & Quickbook Documentation:** Dropped legacy format targets in favor of unified Markdown and modern static site generation.
-
----
-
-## Tracking & References
-
-* **Superseded Backlog:** Historical items triaged from [TODO.md](TODO.md).
-* **Active Milestones:** Track ongoing issues and project tasks on [MetaCall Core Issues](https://github.com/metacall/core/issues) and [EPIC #863](https://github.com/metacall/core/issues/863).
+  * Standarize code style guidelines and tabulation (editorconfig and editorconfig tools).
+  * Implement a linter step in build process for style guidelines, static analysis, etc... for C/C++ code (possibly [Boost](https://svn.boost.org/trac/boost/wiki/BestPracticeHandbook) style).
