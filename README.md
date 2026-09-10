@@ -56,3 +56,10 @@ For more information about other install methodologies and platforms or Docker, 
 ## Examples
 
 You can find a complete [list of examples in the documentation](https://github.com/metacall/core/blob/develop/docs/README.md#43-examples). If you are interested in submitting new examples, please [contact us in our chats](#badges).
+
+## Documentation & Community Policies
+
+* **Contributing Guidelines:** Learn how to build, test, and contribute in [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+* **Security Policy:** Review our vulnerability disclosure process and supported versions in [SECURITY.md](SECURITY.md).
+* **Project Roadmap:** Check upcoming milestones and long-term architectural plans in [ROADMAP.md](ROADMAP.md).
+* **Code of Conduct:** Review community standards in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
