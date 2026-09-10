@@ -16,6 +16,15 @@ Fixes #(issue_no)
 - [ ] This change requires a documentation update
 - [ ] Documentation update
 
+## AI-Assisted Development
+
+<!-- Please declare if any Generative AI tools were used to write code, tests, or documentation. -->
+
+- [ ] Generative AI tools were used during the creation of this PR.
+- [ ] No AI tools were used for this PR.
+
+> If AI was used, briefly describe what it generated:
+
 # Checklist:
 
 - [ ] I have performed a self-review of my own code.
@@ -30,4 +39,4 @@ Fixes #(issue_no)
 - [ ] I have tested with `Helgrind` in case my code works with threading.
 - [ ] I have run `make clang-format` in order to format my code and my code follows the style guidelines.
 
-If you are unclear about any of the above checks, have a look at our documentation [here](https://github.com/metacall/core/blob/develop/docs/README.md#63-debugging).
+If you are unclear about any of the above checks, have a look at our documentation [here](https://github.com/metacall/core/tree/develop/docs).
