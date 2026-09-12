@@ -53,6 +53,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/http/pprof"
 	"reflect"
@@ -479,7 +480,12 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 
 	// Create int
 	if i, ok := arg.(int); ok {
-		*ptr = C.metacall_value_create_int((C.int)(i))
+		// check if it is 32 or 64 bit
+		if i >= math.MinInt32 && i <= math.MaxInt32 {
+			*ptr = C.metacall_value_create_int((C.int)(i))
+		} else {
+			*ptr = C.metacall_value_create_long((C.long)(i))
+		}
 		return
 	}
 
