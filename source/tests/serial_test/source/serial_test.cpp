@@ -477,6 +477,30 @@ TEST_F(serial_test, DefaultConstructor)
 		}
 	}
 
+	// Regression: deserializing an oversized "long" literal (digits + trailing 'L')
+    // must not corrupt the stack. metacall_serial_impl_deserialize_long() copies
+    // `length - 1` bytes into a fixed 24-byte stack buffer with no bounds check
+	// before the memcpy. A payload with more than 24 digit characters overflows it.
+    {
+		serial s = serial_create(metacall_name());
+		static const char long_overflow[] = 
+		"9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999L";
+
+		value v_overflow = serial_deserialize(s, long_overflow, sizeof(long_overflow) - 1, allocator);
+		// Expected once fixed: the oversized "long" candidate is safely rejected
+		// by deserialize_long and the type-probe loop falls through to the string
+		// deserializer instead (every byte here, digits and 'L', is alphanumeric),
+		// so the result should come back as a valid TYPE_STRING, not a crash.
+		EXPECT_NE((value)NULL, (value)v_overflow);
+		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(v_overflow));
+
+		if (v_overflow != NULL)
+		{
+			value_type_destroy(v_overflow);
+		}
+		
+	}
+
 	// Clear RapidJSON serial
 	EXPECT_EQ((int)0, (int)serial_clear(serial_create(rapid_json_name())));
 
