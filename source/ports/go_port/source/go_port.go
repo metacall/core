@@ -26,10 +26,12 @@ package metacall
 
 #include <metacall/metacall.h>
 
-// TODO: Sanitizer
-// #if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
-// void __lsan_do_leak_check(void);
-// #endif
+// Since go already have its own sanitizers we don't need to use c sanitizers in go port
+// as it will conflict with c sanitizers runtime and cause segfault. also c sanitizers can't
+// identify goroutines leak, deadlocks and can false positive memory created by c and passed
+// to go as a leak so it's better to use go sanitizers.
+// to use go sanitizers use the following flags with go commands (build, test, ...):
+// -race -> flag for thread sanitizer | -asan -> for address sanitizer | -msan -> for memeort sanitizer
 
 // Since main.go has //export directives we can't place function definitions in
 // it - we'll get multiple definition errors from the linker (see
@@ -51,10 +53,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/pprof"
 	"reflect"
 	"runtime"
 	"sync"
 	"unsafe"
+
+	// library to provide a symbolic backtrace of cgo functions	to help debugging and monitoring of c functions
+	// this library works with pprof of go
+	_ "github.com/ianlancetaylor/cgosymbolizer"
 )
 
 const QUEUEBUFFSIZE = 1
@@ -147,9 +155,6 @@ var (
 )
 
 func InitializeUnsafe() error {
-	// TODO: Sanitizer
-	// C.__lsan_do_leak_check()
-
 	// TODO: Remove this once go loader is implemented
 	if result := int(C.metacall_initialize()); result != 0 {
 		return fmt.Errorf("initializing MetaCall (error code %d)", result)
@@ -160,6 +165,7 @@ func InitializeUnsafe() error {
 
 // Start starts the metacall adapter
 func Initialize() error {
+	startProfilesServer()
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -739,4 +745,27 @@ func Destroy() {
 		// wait for DestroyUnsafe() to finish
 		<-tog
 	}
+}
+
+// start localhost server for profiles for monitoring and debugging
+// profiles can be accessed using command "go tool pprof http://localhost:6060/debug/pprof/name?debug=n"
+// name is to be replaced with the wanted profile name and put n=0 for binary format, n>0 for plain text,
+// n=2 for the full stack trace of all running goroutines in a format identical to an unrecovered panic.
+// see https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/ for profiles names and more info about them
+func startProfilesServer() {
+	monitMux := http.NewServeMux()
+
+	// register profiles
+	monitMux.HandleFunc("/debug/pprof/", pprof.Index)          // heap and goroutine
+	monitMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline) // go command arguments
+	monitMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)   // translation helper for memory addresses
+	monitMux.HandleFunc("/debug/pprof/trace", pprof.Trace)     // trace
+
+	// start goroutine for localhost to display the profiles
+	go func() {
+		err := http.ListenAndServe("localhost:6060", monitMux)
+		if err != nil {
+			return
+		}
+	}()
 }

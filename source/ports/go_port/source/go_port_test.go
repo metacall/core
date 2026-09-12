@@ -2,7 +2,9 @@ package metacall
 
 import (
 	"bytes"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"reflect"
 	"sync"
@@ -202,6 +204,50 @@ func TestValues(t *testing.T) {
 
 		if v := valueToGo(ptr); !reflect.DeepEqual(v, tt.want) {
 			t.Errorf("name: %s, input: %T,%v, want: %T,%v, got: %T,%v", tt.name, tt.input, tt.input, tt.want, tt.want, v, v)
+		}
+	}
+}
+
+func TestProfilesServer(t *testing.T) {
+	// use http instead of curl for cross-platform support
+	c := &http.Client{}
+	reqs := [3][2]string{
+		{"goroutine", "http://localhost:6060/debug/pprof/goroutine?debug=0"},
+		{"memory", "http://localhost:6060/debug/pprof/heap?debug=0"},
+		{"trace", "http://localhost:6060/debug/pprof/trace?debug=0"},
+	}
+
+	for _, req := range reqs {
+		profileReq, err := http.NewRequest("GET", req[1], nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		profileReq.Header.Set("Accept", "application/json")
+		profileRes, err := c.Do(profileReq)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer profileRes.Body.Close()
+
+		if profileRes.StatusCode != http.StatusOK {
+			t.Fatalf("profile server test response failed with status code %v", profileRes.StatusCode)
+		}
+		data, err := io.ReadAll(profileRes.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// create .pprof file for go tool pprof
+		profFile, err := os.Create(req[0] + ".pprof")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer profFile.Close()
+
+		_, err = profFile.Write(data)
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
