@@ -5,8 +5,10 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"runtime/pprof"
 	"sync"
 	"testing"
+	"time"
 	"unsafe"
 )
 
@@ -25,7 +27,6 @@ func TestMain(m *testing.M) {
 	// }
 
 	code := m.Run()
-	Destroy()
 	os.Exit(code)
 }
 
@@ -203,6 +204,67 @@ func TestValues(t *testing.T) {
 		if v := valueToGo(ptr); !reflect.DeepEqual(v, tt.want) {
 			t.Errorf("name: %s, input: %T,%v, want: %T,%v, got: %T,%v", tt.name, tt.input, tt.input, tt.want, tt.want, v, v)
 		}
+	}
+}
+
+func TestGoRoutineLeaks(t *testing.T) {
+	// this test is for race condition when shutdown occur with non-empty queue which triggers a deadlock and a goroutine leak
+	// start the port and fill the queue
+	buffer := "module.exports = { leak_test: (x) => x }"
+	if err := LoadFromMemory("node", buffer); err != nil {
+		t.Fatal(err)
+	}
+
+	const ws = 100
+	stop := make(chan interface{})
+	shutdown := make(chan interface{})
+	var wg sync.WaitGroup
+	// start concurrent callers
+	for i := 0; i < ws; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					Call("leak_test", "warmup")
+				}
+			}
+		}()
+	}
+
+	// call Destroy() to start shutdown concurrently with worker register in queue
+	time.Sleep(2 * time.Millisecond)
+	go func() {
+		Destroy()
+		close(stop)
+		wg.Wait()
+		close(shutdown)
+	}()
+
+	var timedOut bool
+	select {
+	case <-shutdown:
+		timedOut = false
+	case <-time.After(5 * time.Second):
+		timedOut = true
+	}
+	// getting the goroutine leaks and deadlocks profile and store it
+	prof := pprof.Lookup("goroutine")
+	if prof != nil {
+		// create file to store the report
+		fileName := "Goroutine_leaks_report.pprof"
+		file, err := os.Create(fileName)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+		prof.WriteTo(file, 0)
+	}
+	if timedOut {
+		t.Error("Shutdown deadlock: goroutine leaks detected")
 	}
 }
 
