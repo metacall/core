@@ -57,6 +57,7 @@ import (
 	"net/http/pprof"
 	"reflect"
 	"runtime"
+	"runtime/cgo"
 	"sync"
 	"unsafe"
 
@@ -329,8 +330,9 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 //export goResolve
 func goResolve(v unsafe.Pointer, ctx unsafe.Pointer) unsafe.Pointer {
 	var ptr unsafe.Pointer
-	goCb := pointerGet(ctx).(*awaitCallbacks)
-	defer pointerDelete(ctx)
+	handle := cgo.Handle(uintptr(ctx))
+	goCb := handle.Value().(*awaitCallbacks)
+	defer handle.Delete()
 	goToValue(goCb.resolve(valueToGo(v), goCb.ctx), &ptr)
 
 	return ptr
@@ -339,8 +341,9 @@ func goResolve(v unsafe.Pointer, ctx unsafe.Pointer) unsafe.Pointer {
 //export goReject
 func goReject(v unsafe.Pointer, ctx unsafe.Pointer) unsafe.Pointer {
 	var ptr unsafe.Pointer
-	goCb := pointerGet(ctx).(*awaitCallbacks)
-	defer pointerDelete(ctx)
+	handle := cgo.Handle(uintptr(ctx))
+	goCb := handle.Value().(*awaitCallbacks)
+	defer handle.Delete()
 	goToValue(goCb.reject(valueToGo(v), goCb.ctx), &ptr)
 
 	return ptr
@@ -386,8 +389,8 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 		reject:  reject,
 		ctx:     ctx,
 	}
-
-	goCallbacksPtr := pointerSave(&goCallbacks)
+	handle := cgo.NewHandle(&goCallbacks)
+	goCallbacksPtr := unsafe.Pointer(uintptr(handle))
 
 	ret := C.metacallfv_await_struct_s(cFunc, (*unsafe.Pointer)(cArgs), length, cCallbacks, goCallbacksPtr)
 
@@ -396,7 +399,7 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 		return valueToGo(ret), nil
 	} else {
 		// delete and free ptr if metacallfv_await_struct_s failed with nil
-		pointerDelete(goCallbacksPtr)
+		handle.Delete()
 	}
 
 	return nil, nil
