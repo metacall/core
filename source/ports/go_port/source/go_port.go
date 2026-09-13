@@ -42,6 +42,10 @@ package metacall
 
 // Based on: https://eli.thegreenplace.net/2019/passing-callbacks-and-pointers-to-cgo/
 
+static inline void *metacall_error_throw_msg(const char *label, const char *message) {
+	return metacall_error_throw(label, 0, "", "%s", message);
+}
+
 extern void *resolveCgo(void *, void *);
 extern void *rejectCgo(void *, void *);
 
@@ -293,7 +297,11 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
-		return valueToGo(ret), nil
+		v := valueToGo(ret)
+		if err, ok := v.(error); ok {
+			return nil, err
+		}
+		return v, nil
 	}
 
 	return nil, nil
@@ -397,7 +405,11 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
-		return valueToGo(ret), nil
+		v := valueToGo(ret)
+		if err, ok := v.(error); ok {
+			return nil, err
+		}
+		return v, nil
 	} else {
 		// delete and free ptr if metacallfv_await_struct_s failed with nil
 		handle.Delete()
@@ -510,6 +522,19 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 
 		*ptr = C.metacall_value_create_buffer(p, (C.size_t)(len(str)))
 
+	// Create pointer
+	case unsafe.Pointer:
+		*ptr = C.metacall_value_create_ptr(i)
+
+	// Create exception
+	case error:
+		cMsg := C.CString(i.Error())
+		cLabel := C.CString("Error")
+
+		defer C.free(unsafe.Pointer(cMsg))
+		defer C.free(unsafe.Pointer(cLabel))
+
+		*ptr = C.metacall_error_throw_msg(cLabel, cMsg)
 	default:
 		v := reflect.ValueOf(arg)
 
@@ -591,6 +616,10 @@ func valueToGo(value unsafe.Pointer) interface{} {
 
 			return b
 		}
+	case C.METACALL_PTR:
+		{
+			return C.metacall_value_to_ptr(value)
+		}
 	case C.METACALL_ARRAY:
 		{
 			arrayValue := C.metacall_value_to_array(value)
@@ -620,7 +649,25 @@ func valueToGo(value unsafe.Pointer) interface{} {
 
 			return m
 		}
+	case C.METACALL_EXCEPTION:
+		var exception C.struct_metacall_exception_type
 
+		if C.metacall_error_from_value(value, &exception) == 0 {
+			return errors.New(C.GoString(exception.label) + " : " + C.GoString(exception.message))
+		}
+		return errors.New("Metacall Exception: UNKNOWN")
+
+	case C.METACALL_THROWABLE:
+		throw := C.metacall_value_to_throwable(unsafe.Pointer(value))
+		val := C.metacall_throwable_value(throw)
+		v := valueToGo(val)
+
+		if err, ok := v.(error); ok {
+			return err
+		}
+		// for languages that do not throw an error like JS
+		e := fmt.Errorf("%v", v)
+		return e
 		// TODO: Add more types
 	}
 	return nil

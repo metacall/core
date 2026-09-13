@@ -2,6 +2,7 @@ package metacall
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -136,6 +137,12 @@ func TestValues(t *testing.T) {
 	const MIN_LONG = int64(-1 << (BitsPerWord - 1))
 	const MAX_LONG = int64(1<<(BitsPerWord-1) - 1)
 
+	// Create pointer values
+	var nullPtr *int = nil
+	var bytePtr *byte = new(byte('H'))
+	var intPtr *int = new(1)
+	var floatPtr *float64 = new(1.5)
+
 	tests := []struct {
 		name  string
 		input interface{}
@@ -171,6 +178,11 @@ func TestValues(t *testing.T) {
 		{"buffer_nil", *bytes.NewBuffer(nil), *bytes.NewBuffer([]byte{})}, // TODO: how to handle nil buffer?
 		{"buffer_ascii", *bytes.NewBuffer([]byte{'A', 'B', 'C'}), *bytes.NewBuffer([]byte{'A', 'B', 'C'})},
 		{"buffer_unicode", *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9")), *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9"))},
+		{"null_pointer", unsafe.Pointer(nullPtr), unsafe.Pointer(nullPtr)},
+		{"byte_pointer", unsafe.Pointer(bytePtr), unsafe.Pointer(bytePtr)},
+		{"int_pointer", unsafe.Pointer(intPtr), unsafe.Pointer(intPtr)},
+		{"float_pointer", unsafe.Pointer(floatPtr), unsafe.Pointer(floatPtr)},
+		{"exception", errors.New("test"), errors.New("Error : test")},
 		{"array", [3]interface{}{1, 2, 3}, []interface{}{1, 2, 3}},
 		{"array_bool", [3]bool{true, false, true}, []interface{}{true, false, true}},
 		{"array_char", [3]byte{'1', '2', '3'}, []interface{}{byte('1'), byte('2'), byte('3')}},
