@@ -449,146 +449,97 @@ func getFunction(function string) (unsafe.Pointer, error) {
 }
 
 func goToValue(arg interface{}, ptr *unsafe.Pointer) {
+	// type-switch is performance wise from multiple if statements
+	switch i := arg.(type) {
 	// Create null
-	if arg == nil {
+	case nil:
 		*ptr = C.metacall_value_create_null()
-		return
-	}
 
 	// Create bool
-	if i, ok := arg.(bool); ok {
+	case bool:
 		if i {
 			*ptr = C.metacall_value_create_bool(C.uchar(1))
-			return
 		} else {
 			*ptr = C.metacall_value_create_bool(C.uchar(0))
-			return
 		}
-	}
 
 	// Create char
-	if i, ok := arg.(byte); ok {
+	case byte:
 		*ptr = C.metacall_value_create_char((C.char)(i))
-		return
-	}
 
 	// Create short
-	if i, ok := arg.(int16); ok {
+	case int16:
 		*ptr = C.metacall_value_create_short((C.short)(i))
-		return
-	}
+
+	// create int from int32
+	case int32:
+		*ptr = C.metacall_value_create_int((C.int)(i))
 
 	// Create int
-	if i, ok := arg.(int); ok {
+	case int:
 		// check if it is 32 or 64 bit
 		if i >= math.MinInt32 && i <= math.MaxInt32 {
 			*ptr = C.metacall_value_create_int((C.int)(i))
 		} else {
 			*ptr = C.metacall_value_create_long((C.long)(i))
 		}
-		return
-	}
-
-	// create int from int32
-	if i, ok := arg.(int32); ok {
-		*ptr = C.metacall_value_create_int((C.int)(i))
-		return
-	}
 
 	// Create long
-	if i, ok := arg.(int64); ok {
+	case int64:
 		*ptr = C.metacall_value_create_long((C.long)(i))
-		return
-	}
 
 	// Create float32
-	if i, ok := arg.(float32); ok {
+	case float32:
 		*ptr = C.metacall_value_create_float((C.float)(i))
-		return
-	}
 
 	// Create float64
-	if i, ok := arg.(float64); ok {
+	case float64:
 		*ptr = C.metacall_value_create_double((C.double)(i))
-		return
-	}
 
 	// Create string
-	if str, ok := arg.(string); ok {
-		cStr := C.CString(str)
+	case string:
+		cStr := C.CString(i)
 		defer C.free(unsafe.Pointer(cStr))
-		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
-		return
-	}
+		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(i)))
 
-	if buf, ok := arg.(bytes.Buffer); ok {
-		str := buf.String()
+	// Create buffer
+	case bytes.Buffer:
+		str := i.String()
 		p := unsafe.Pointer(C.CString(str))
 		defer C.free(p)
 
 		*ptr = C.metacall_value_create_buffer(p, (C.size_t)(len(str)))
 
-		return
-	}
+	default:
+		v := reflect.ValueOf(arg)
 
-	// Create array
-	v := reflect.ValueOf(arg)
-	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
-		length := v.Len()
-		*ptr = C.metacall_value_create_array(nil, (C.size_t)(length))
-		cArgs := C.metacall_value_to_array(*ptr)
-		for index := 0; index < length; index++ {
-			goToValue(v.Index(index).Interface(), (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
-		}
-		return
-	}
-
-	// Create map
-	if v.Kind() == reflect.Map {
-		length := v.Len()
-		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
-		defer C.free(unsafe.Pointer(cArgs))
-
-		for index, m := 0, v.MapRange(); m.Next(); index++ {
-			pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
-
-			goToValue(pair, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
-		}
-		*ptr = C.metacall_value_create_map((*unsafe.Pointer)(cArgs), (C.size_t)(length))
-		return
-	}
-
-	/*
+		switch v.Kind() {
+		// Create array
+		case reflect.Slice, reflect.Array:
+			length := v.Len()
+			*ptr = C.metacall_value_create_array(nil, (C.size_t)(length))
+			cArgs := C.metacall_value_to_array(*ptr)
+			for index := 0; index < length; index++ {
+				goToValue(v.Index(index).Interface(), (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
+			}
 
 		// Create map
-		if v.Kind() == reflect.Map {
+		case reflect.Map:
 			length := v.Len()
-			*ptr = C.metacall_value_create_map(nil, (C.size_t)(length))
-			cArgs := C.metacall_value_to_map(*ptr)
+			cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
+			defer C.free(unsafe.Pointer(cArgs))
 
 			for index, m := 0, v.MapRange(); m.Next(); index++ {
-				// Access to current element of the map
-				mapIndex := unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)
+				pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
 
-				// Get the map pair
-				array := C.metacall_value_to_array(mapIndex)
-
-				// Transform the key
-				key := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(0)*PtrSizeInBytes))
-				goToValue(m.Key(), key)
-
-				// Transform the value
-				val := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(1)*PtrSizeInBytes))
-				goToValue(m.Value(), val)
+				goToValue(pair, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
 			}
-			return
+			*ptr = C.metacall_value_create_map((*unsafe.Pointer)(cArgs), (C.size_t)(length))
+
+		default:
+			*ptr = nil
 		}
-
-	*/
-
-	// TODO: Add more types
-
-	*ptr = nil
+	}
 }
 
 func valueToGo(value unsafe.Pointer) interface{} {
