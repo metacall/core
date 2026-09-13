@@ -151,6 +151,8 @@ func TestValues(t *testing.T) {
 		{"short_min", int16(-32768), int16(-32768)},
 		{"short_max", int16(32767), int16(32767)},
 		{"int", int(1), int(1)},
+		{"int32_min", int32(-2147483648), int(-2147483648)},
+		{"int32_max", int32(2147483647), int(2147483647)},
 		{"int_32sys_min", int(-2147483648), int(-2147483648)},
 		{"int_32sys_max", int(2147483647), int(2147483647)},
 		{"int_64sys_min", int(MIN_LONG), int64(MIN_LONG)},

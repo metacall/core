@@ -489,6 +489,12 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 		return
 	}
 
+	// create int from int32
+	if i, ok := arg.(int32); ok {
+		*ptr = C.metacall_value_create_int((C.int)(i))
+		return
+	}
+
 	// Create long
 	if i, ok := arg.(int64); ok {
 		*ptr = C.metacall_value_create_long((C.long)(i))
