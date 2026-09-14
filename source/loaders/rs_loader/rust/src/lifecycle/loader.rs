@@ -85,7 +85,7 @@ where
         if path_is_vector {
             path = loadable_path.wrapping_add(i) as *const c_char
         } else {
-            path = loadable_path as *const i8;
+            path = loadable_path as *const c_char;
         }
 
         let path_slice = unsafe { CStr::from_ptr(path) }

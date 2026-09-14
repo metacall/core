@@ -9,8 +9,20 @@ fn generate_function_wrapper(functions: &[Function]) -> String {
             "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
             func.name
         ));
-        ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
-        ret.push_str("\tBox::into_raw(Box::new(f))\n}\n");
+        if func.generics.is_empty() {
+            ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
+
+            ret.push_str("\tBox::into_raw(Box::new(f))\n");
+        } else {
+            println!(
+                "Rust Loader: function {} is a template {:?}",
+                func.name, func.generics
+            );
+            ret.push_str("\tstd::ptr::null_mut()\n");
+        }
+        //ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
+        //ret.push_str("\tBox::into_raw(Box::new(f))\n}\n");
+        ret.push_str("}\n");
     }
     ret
 }

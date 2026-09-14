@@ -83,6 +83,7 @@ pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident])
         name,
         ret: None,
         args: vec![],
+        generics: vec![],
     };
     // parse input and output
     let inputs = sig.inputs().skip_binder();
