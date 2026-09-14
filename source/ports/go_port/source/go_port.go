@@ -112,6 +112,62 @@ func (w *loadFromMemorySafeWork) cancel(err error) {
 	w.err <- err
 }
 
+type loadFromPackageSafeWork struct {
+	tag  string
+	pack string
+	err  chan error
+}
+
+func (w *loadFromPackageSafeWork) execute() {
+	err := LoadFromPackageUnsafe(w.tag, w.pack)
+	w.err <- err
+}
+func (w *loadFromPackageSafeWork) cancel(err error) {
+	w.err <- err
+}
+
+type loadFromPackageExSafeWork struct {
+	tag     string
+	pack    string
+	options interface{}
+	err     chan error
+}
+
+func (w *loadFromPackageExSafeWork) execute() {
+	err := LoadFromPackageExUnsafe(w.tag, w.pack, w.options)
+	w.err <- err
+}
+func (w *loadFromPackageExSafeWork) cancel(err error) {
+	w.err <- err
+}
+
+type loadFromConfigSafeWork struct {
+	config string
+	err    chan error
+}
+
+func (w *loadFromConfigSafeWork) execute() {
+	err := LoadFromConfigUnsafe(w.config)
+	w.err <- err
+}
+func (w *loadFromConfigSafeWork) cancel(err error) {
+	w.err <- err
+}
+
+type executionPathSafeWork struct {
+	tag  string
+	path string
+	err  chan error
+}
+
+func (w *executionPathSafeWork) execute() {
+	err := ExecutionPathUnsafe(w.tag, w.path)
+	w.err <- err
+}
+func (w *executionPathSafeWork) cancel(err error) {
+	w.err <- err
+}
+
 type callSafeWork struct {
 	function string
 	args     []interface{}
@@ -277,6 +333,76 @@ func LoadFromMemoryUnsafe(tag string, buffer string) error {
 
 	if int(C.metacall_load_from_memory(cTag, cBuffer, (C.size_t)(size), nil)) != 0 {
 		return fmt.Errorf("%s loader failed to load a script from the buffer: %s", tag, buffer)
+	}
+
+	return nil
+}
+
+func LoadFromPackageUnsafe(tag string, pack string) error {
+	cTag := C.CString(tag)
+	defer C.free(unsafe.Pointer(cTag))
+
+	cPack := C.CString(pack)
+	defer C.free(unsafe.Pointer(cPack))
+
+	if int(C.metacall_load_from_package(cTag, cPack, nil)) != 0 {
+		return fmt.Errorf("%s loader failed to load from package: %s", tag, pack)
+	}
+
+	return nil
+}
+
+func LoadFromPackageExUnsafe(tag string, pack string, options interface{}) error {
+	cTag := C.CString(tag)
+	defer C.free(unsafe.Pointer(cTag))
+
+	cPack := C.CString(pack)
+	defer C.free(unsafe.Pointer(cPack))
+
+	// Convert options to metacall value (need goToValue for map/array)
+	var optVal unsafe.Pointer
+	if options != nil {
+		goToValue(options, &optVal)
+		defer C.metacall_value_destroy(optVal)
+	}
+
+	if int(C.metacall_load_from_package_ex(cTag, cPack, nil, optVal)) != 0 {
+		return fmt.Errorf("%s loader failed to load from package: %s", tag, pack)
+	}
+	return nil
+}
+
+func LoadFromConfigUnsafe(config string) error {
+	cConfig := C.CString(config)
+	defer C.free(unsafe.Pointer(cConfig))
+
+	if int(C.metacall_load_from_configuration(cConfig, nil, nil)) != 0 {
+		return fmt.Errorf("failed to load config: %s", config)
+	}
+
+	return nil
+}
+
+func LoadFromConfigExUnsafe(config string) error {
+	cConfig := C.CString(config)
+	defer C.free(unsafe.Pointer(cConfig))
+
+	// if int(C.metacall_load_from_configuration_export(cConfig, nil, nil)) != 0 {
+	// 	return fmt.Errorf("failed to load config: %s", config)
+	// }
+
+	return nil
+}
+
+func ExecutionPathUnsafe(tag string, path string) error {
+	cTag := C.CString(tag)
+	defer C.free(unsafe.Pointer(cTag))
+
+	cPath := C.CString(path)
+	defer C.free(unsafe.Pointer(cPath))
+
+	if int(C.metacall_execution_path(cTag, cPath)) != 0 {
+		return fmt.Errorf("%s failed to load from execution path: %s", tag, path)
 	}
 
 	return nil
@@ -766,6 +892,114 @@ func LoadFromMemory(tag string, buffer string) error {
 		tag,
 		buffer,
 		result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func LoadFromPackage(tag string, pack string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &loadFromPackageSafeWork{
+		tag:  tag,
+		pack: pack,
+		err:  result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func LoadFromPackageEx(tag string, pack string, options interface{}) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &loadFromPackageExSafeWork{
+		tag:     tag,
+		pack:    pack,
+		options: options,
+		err:     result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func LoadFromConfig(config string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &loadFromConfigSafeWork{
+		config: config,
+		err:    result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func ExecutionPath(tag string, path string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &executionPathSafeWork{
+		tag:  tag,
+		path: path,
+		err:  result,
 	}
 
 	select {

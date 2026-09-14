@@ -3,6 +3,7 @@ package metacall
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -131,6 +132,115 @@ func TestNodeJSAwait(t *testing.T) {
 	wg.Wait()
 }
 
+func TestCPackage(t *testing.T) {
+	options := map[string]interface{}{
+		"libs":                 []string{"/mnt/Work/Projects/MetaCall/core/build/libmetacall.so"},
+		"headers":              []string{"/mnt/Work/Projects/MetaCall/core/source/metacall/include/metacall/metacall.h"},
+		"include_search_paths": []string{"/mnt/Work/Projects/MetaCall/core/source/metacall/include"},
+	}
+	if err := LoadFromPackageEx("c", "metacall", options); err != nil {
+		t.Fatal(err)
+	}
+
+	val, err := Call("metacall_print_info")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	str, ok := val.(string)
+	if !ok {
+		t.Fatalf("failed to convert to string. got: %v", val)
+	}
+	t.Logf("test c package load success. got: %s", str)
+}
+
+func TestJSONConfig(t *testing.T) {
+	configName := "test.json"
+	scriptName := "example.py"
+
+	jsonFile, err := os.Create(configName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer jsonFile.Close()
+	defer os.Remove(configName)
+
+	pyFile, err := os.Create(scriptName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer pyFile.Close()
+	defer os.Remove(scriptName)
+
+	scriptPath := "/mnt/Work/Projects/MetaCall/core/source/ports/go_port/source"
+
+	config := fmt.Sprintf(`{
+	"language_id": "py",
+	"path": "%s",
+	"scripts": [ "%s" ]
+}
+`, scriptPath, scriptName)
+
+	// Create a temp example.py with functions to test
+	scriptContent := `
+def appName():
+    return "metacall"
+`
+	if _, err := pyFile.WriteString(scriptContent); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err = jsonFile.WriteString(config); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := LoadFromConfig(configName); err != nil {
+		t.Fatal(err)
+	}
+
+	val, err := Call("appName")
+	if err != nil {
+		t.Fatal(err)
+	}
+	strVal, ok := val.(string)
+	if !ok {
+		t.Fatalf("failed to convert value %v to string. value is not a string", val)
+	}
+
+	if strVal != "metacall" {
+		t.Fatalf("wrong config value. want: metacall ,got: %s", strVal)
+	}
+}
+
+func TestExecutionPath(t *testing.T) {
+	if err := ExecutionPath("c", "/mnt/Work/Projects/MetaCall/core/source/metacall/include"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ExecutionPath("c", "/mnt/Work/Projects/MetaCall/core/source/metacall/include/metacall"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ExecutionPath("c", "/mnt/Work/Projects/MetaCall/core/build"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := LoadFromPackage("c", "metacall"); err != nil {
+		t.Fatal(err)
+	}
+
+	val, err := Call("metacall_print_info")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	str, ok := val.(string)
+	if !ok {
+		t.Fatalf("failed to convert to string. got: %v", val)
+	}
+	t.Logf("test execution path success. got: %s", str)
+}
+
 func TestValues(t *testing.T) {
 	// BitsPerWord is 32 or 64
 	const BitsPerWord = 32 << (^uint(0) >> 63)
@@ -226,7 +336,7 @@ func TestValues(t *testing.T) {
 	}
 }
 
-func TestClassAndObject(t *testing.T) {
+func TestPythonClassAndObject(t *testing.T) {
 	script := `class Rectangle:
     color = "blue"
     width = 0
@@ -302,7 +412,7 @@ def getClass():
 	}
 }
 
-func TestFuture(t *testing.T) {
+func TestNodeJSFuture(t *testing.T) {
 	script := `                                                                                                                  
         module.exports = {                                                                                                           
             asyncAdd: async (a, b) => {                                                                                                  
