@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 	"unsafe"
+
+	"github.com/joho/godotenv"
 )
 
 func TestMain(m *testing.M) {
@@ -360,6 +362,13 @@ func TestFuture(t *testing.T) {
 }
 
 func TestProfilesServer(t *testing.T) {
+	err := godotenv.Load()
+	if err == nil {
+		mode := os.Getenv("MODE")
+		if mode != "debug" {
+			return
+		}
+	}
 	// use http instead of curl for cross-platform support
 	c := &http.Client{}
 	reqs := [3][2]string{

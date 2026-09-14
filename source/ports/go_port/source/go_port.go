@@ -60,6 +60,7 @@ import (
 	"math"
 	"net/http"
 	"net/http/pprof"
+	"os"
 	"reflect"
 	"runtime"
 	"runtime/cgo"
@@ -69,6 +70,7 @@ import (
 	// library to provide a symbolic backtrace of cgo functions	to help debugging and monitoring of c functions
 	// this library works with pprof of go
 	_ "github.com/ianlancetaylor/cgosymbolizer"
+	"github.com/joho/godotenv"
 )
 
 const QUEUEBUFFSIZE = 1
@@ -171,7 +173,15 @@ func InitializeUnsafe() error {
 
 // Start starts the metacall adapter
 func Initialize() error {
-	startProfilesServer()
+	// load .env file and start profile server only in debug mode
+	err := godotenv.Load()
+	if err == nil {
+		mode := os.Getenv("MODE")
+		if mode == "debug" {
+			startProfilesServer()
+		}
+	}
+
 	lock.Lock()
 	defer lock.Unlock()
 
