@@ -20,23 +20,33 @@ unsafe impl Send for MetaCallPointer {}
 unsafe impl Sync for MetaCallPointer {}
 impl Clone for MetaCallPointer {
     fn clone(&self) -> Self {
+        let rust_value = if self.rust_value.is_null() {
+            std::ptr::null_mut()
+        } else {
+            let cloned_value = unsafe { (&*self.rust_value).clone() };
+            Box::into_raw(Box::new(cloned_value))
+        };
+
         Self {
             leak: true,
-            rust_value: self.rust_value,
-            rust_value_leak: true,
+            rust_value,
+            rust_value_leak: false,
             value: self.value,
         }
     }
 }
 impl Debug for MetaCallPointer {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let boxed_value = unsafe { Box::from_raw(self.rust_value) };
-        let value = if (*boxed_value).is::<MetaCallNull>() {
+        let value = if self.rust_value.is_null() {
             None
         } else {
-            Some(format!("{:#?}", boxed_value))
+            let value_ref = unsafe { &*self.rust_value };
+            if value_ref.is::<MetaCallNull>() {
+                None
+            } else {
+                Some(format!("{:#?}", value_ref))
+            }
         };
-        Box::leak(boxed_value);
 
         f.debug_struct("MetaCallPointer")
             .field("value", &value)
@@ -84,6 +94,11 @@ impl MetaCallPointer {
     /// Consumes the MetaCall pointer and returns ownership of the value without type
     /// casting([MetaCallValue](MetaCallValue)).
     pub fn get_value_untyped(mut self) -> Box<dyn MetaCallValue> {
+        if self.rust_value.is_null() {
+            self.rust_value_leak = true;
+            return Box::new(MetaCallNull());
+        }
+
         self.rust_value_leak = true;
 
         unsafe { *Box::from_raw(self.rust_value) }
@@ -107,12 +122,29 @@ impl MetaCallPointer {
 
 impl Drop for MetaCallPointer {
     fn drop(&mut self) {
-        if !self.leak {
+        if !self.leak && !self.value.is_null() {
             unsafe { metacall_value_destroy(self.value) }
         }
 
-        if !self.rust_value_leak {
+        if !self.rust_value_leak && !self.rust_value.is_null() {
             unsafe { drop(Box::from_raw(self.rust_value)) }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MetaCallPointer;
+
+    #[test]
+    fn clone_and_consume_value_does_not_share_owned_box() {
+        let original = MetaCallPointer::new(String::from("hi"));
+        let cloned = original.clone();
+
+        let value1 = cloned.get_value::<String>().unwrap();
+        let value2 = original.get_value::<String>().unwrap();
+
+        assert_eq!(value1, "hi");
+        assert_eq!(value2, "hi");
     }
 }
