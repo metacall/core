@@ -48,7 +48,7 @@ static threading_mutex_type link_mutex = THREADING_MUTEX_INITIALIZE;
 
 	#include <windows.h>
 
-typedef FARPROC (*metacall_link_trampoline_type)(HMODULE, LPCSTR);
+typedef FARPROC(WINAPI *metacall_link_trampoline_type)(HMODULE, LPCSTR);
 
 static const char metacall_link_func_name[] = "GetProcAddress";
 static metacall_link_trampoline_type metacall_link_trampoline = NULL;

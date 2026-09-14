@@ -150,6 +150,7 @@ target_link_libraries(${target}
 	$<$<NOT:$<PLATFORM_ID:Darwin>>:${META_PROJECT_NAME}::metacall>
 	# FreeBSD and OpenBSD required libraries for PLTHook
 	$<$<PLATFORM_ID:FreeBSD,NetBSD>:util>
+	$<$<BOOL:${MINGW}>:dbghelp>
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

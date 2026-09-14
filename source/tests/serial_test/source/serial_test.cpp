@@ -350,6 +350,16 @@ TEST_F(serial_test, DefaultConstructor)
 	#else
 			"0x000A7EF2",
 	#endif
+#elif defined(__MINGW32__)
+	#if defined(_WIN64)
+		#if defined(_UCRT)
+			"00000000000A7EF2",
+		#else
+			"00000000000a7ef2",
+		#endif
+	#else
+			"000a7ef2",
+	#endif
 #elif defined(__linux) || defined(__linux__) || \
 	defined(__APPLE__) || \
 	defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || \
