@@ -296,7 +296,12 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 	ret := C.metacallfv_s(cFunc, (*unsafe.Pointer)(cArgs), length)
 
 	if ret != nil {
-		defer C.metacall_value_destroy(ret)
+		id := C.metacall_value_id(ret)
+		// calling value destroy on these types make the ptr in them a dangling pointer which causes a segfault when dereferencing
+		if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+			defer C.metacall_value_destroy(ret)
+		}
+
 		v := valueToGo(ret)
 		if err, ok := v.(error); ok {
 			return nil, err
@@ -404,7 +409,11 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 	ret := C.metacallfv_await_struct_s(cFunc, (*unsafe.Pointer)(cArgs), length, cCallbacks, goCallbacksPtr)
 
 	if ret != nil {
-		defer C.metacall_value_destroy(ret)
+		id := C.metacall_value_id(ret)
+		// calling value destroy on these types make the ptr in them a dangling pointer which causes a segfault when dereferencing
+		if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+			defer C.metacall_value_destroy(ret)
+		}
 		v := valueToGo(ret)
 		if err, ok := v.(error); ok {
 			return nil, err
@@ -535,6 +544,29 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 		defer C.free(unsafe.Pointer(cLabel))
 
 		*ptr = C.metacall_error_throw_msg(cLabel, cMsg)
+
+	// create class
+	case *Class:
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_class(i.ptr)
+		}
+
+	// create object
+	case *Object:
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_object(i.ptr)
+		}
+
+	// create future
+	case *Future:
+		*ptr = C.metacall_value_create_future(i.ptr)
+
 	default:
 		v := reflect.ValueOf(arg)
 
@@ -649,26 +681,40 @@ func valueToGo(value unsafe.Pointer) interface{} {
 
 			return m
 		}
+	case C.METACALL_CLASS:
+		{
+			return newClass(value)
+		}
+	case C.METACALL_OBJECT:
+		{
+			return newObject(value, nil)
+		}
+	case C.METACALL_FUTURE:
+		{
+			return newFuture(value)
+		}
 	case C.METACALL_EXCEPTION:
-		var exception C.struct_metacall_exception_type
+		{
+			var exception C.struct_metacall_exception_type
 
-		if C.metacall_error_from_value(value, &exception) == 0 {
-			return errors.New(C.GoString(exception.label) + " : " + C.GoString(exception.message))
+			if C.metacall_error_from_value(value, &exception) == 0 {
+				return errors.New(C.GoString(exception.label) + " : " + C.GoString(exception.message))
+			}
+			return errors.New("Metacall Exception: UNKNOWN")
 		}
-		return errors.New("Metacall Exception: UNKNOWN")
-
 	case C.METACALL_THROWABLE:
-		throw := C.metacall_value_to_throwable(unsafe.Pointer(value))
-		val := C.metacall_throwable_value(throw)
-		v := valueToGo(val)
+		{
+			throw := C.metacall_value_to_throwable(unsafe.Pointer(value))
+			val := C.metacall_throwable_value(throw)
+			v := valueToGo(val)
 
-		if err, ok := v.(error); ok {
-			return err
+			if err, ok := v.(error); ok {
+				return err
+			}
+			// for languages that do not throw an error like JS
+			e := fmt.Errorf("%v", v)
+			return e
 		}
-		// for languages that do not throw an error like JS
-		e := fmt.Errorf("%v", v)
-		return e
-		// TODO: Add more types
 	}
 	return nil
 }

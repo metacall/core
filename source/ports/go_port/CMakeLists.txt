@@ -17,7 +17,7 @@ message(STATUS "Port ${target}")
 
 set(sources
 	source/await.go
-	source/pointer.go
+	source/advanced_types.go
 	source/go_port.go
 )
 

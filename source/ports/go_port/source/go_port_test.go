@@ -224,6 +224,141 @@ func TestValues(t *testing.T) {
 	}
 }
 
+func TestClassAndObject(t *testing.T) {
+	script := `class Rectangle:
+    color = "blue"
+    width = 0
+    height = 0
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    def area(self):
+        return self.width * self.height
+
+def getClass():
+    return Rectangle
+`
+
+	if err := LoadFromMemory("py", script); err != nil {
+		t.Fatalf("failed to load script: %v", err)
+	}
+
+	val, err := Call("getClass")
+	if err != nil {
+		t.Fatalf("failed to get class: %v", err)
+	}
+
+	class, ok := val.(*Class)
+	if !ok || class == nil {
+		t.Fatalf("expected *Class, got %T", val)
+	}
+
+	color, err := class.StaticGet("color")
+	if err != nil || color != "blue" {
+		t.Fatalf("expected static color 'blue', got %v (err: %v)", color, err)
+	}
+
+	if err := class.StaticSet("color", "red"); err != nil {
+		t.Fatalf("failed to set static attribute: %v", err)
+	}
+
+	newColor, err := class.StaticGet("color")
+	if err != nil || newColor != "red" {
+		t.Fatalf("expected updated color 'red', got %v (err: %v)", newColor, err)
+	}
+
+	obj, err := class.New("rectInstance", 10, 20)
+	if err != nil || obj == nil {
+		t.Fatalf("failed to create object instance: %v", err)
+	}
+
+	area, err := obj.Call("area")
+	if err != nil {
+		t.Fatalf("failed to call object method 'area': %v", err)
+	}
+	if area != 200 && area != int64(200) {
+		t.Fatalf("expected area 200, got %v", area)
+	}
+
+	width, err := obj.Get("width")
+	if err != nil || (width != 10 && width != int64(10)) {
+		t.Fatalf("expected width 10, got %v (err: %v)", width, err)
+	}
+
+	if err := obj.Set("width", 15); err != nil {
+		t.Fatalf("failed to set width: %v", err)
+	}
+
+	newArea, err := obj.Call("area")
+	if err != nil {
+		t.Fatalf("failed to call 'area' after update: %v", err)
+	}
+	if newArea != 300 && newArea != int64(300) {
+		t.Fatalf("expected updated area 300, got %v", newArea)
+	}
+}
+
+func TestFuture(t *testing.T) {
+	script := `                                                                                                                  
+        module.exports = {                                                                                                           
+            asyncAdd: async (a, b) => {                                                                                                  
+                return a + b;                                                                                                                
+            },                                                                                                                           
+            asyncFail: async (msg) => {                                                                                                  
+                throw new Error(msg);                                                                                                        
+            },                                                                                                                           
+        };                                                                                                                           
+        `
+
+	if err := LoadFromMemory("node", script); err != nil {
+		t.Fatalf("failed to load script: %v", err)
+	}
+
+	val, err := Call("asyncAdd", 20, 30)
+	if err != nil {
+		t.Fatalf("call to asyncAdd failed: %v", err)
+	}
+
+	fut, ok := val.(*Future)
+	if !ok || fut == nil {
+		t.Fatalf("expected *Future, got %T", val)
+	}
+
+	res, err := fut.Await()
+	if err != nil {
+		t.Fatalf("await returned unexpected error: %v", err)
+	}
+	if res != 50 && res != float64(50) {
+		t.Fatalf("expected 50, got %v", res)
+	}
+
+	failVal, err := Await("asyncFail",
+		func(interface{}, interface{}) interface{} {
+			log.Println("from go resolve")
+			return nil
+		},
+		func(interface{}, interface{}) interface{} {
+			log.Println("from go reject")
+			return nil
+		},
+		"database error")
+	if err != nil {
+		t.Fatalf("call to asyncFail failed: %v", err)
+	}
+
+	failFut, ok := failVal.(*Future)
+	if !ok || failFut == nil {
+		t.Fatalf("expected *Future, got %T", failVal)
+	}
+
+	_, awaitErr := failFut.Await()
+	if awaitErr == nil {
+		t.Fatal("expected error from rejected future, got nil")
+	}
+}
+
 func TestProfilesServer(t *testing.T) {
 	// use http instead of curl for cross-platform support
 	c := &http.Client{}
