@@ -1,0 +1,32 @@
+    # 1. Default all text files to LF
+    * text=auto eol=lf
+
+    # 2. Force LF for Linux/Unix scripts
+    *.sh text eol=lf
+    *.bash text eol=lf
+    configure text eol=lf
+    Makefile text eol=lf
+
+    # 3. Force CRLF for Windows-specific files
+    *.bat text eol=crlf
+    *.cmd text eol=crlf
+    *.ps1 text eol=crlf
+    *.sln text eol=crlf
+    *.vcxproj text eol=crlf
+    *.vcxproj.filters text eol=crlf
+
+    # 4. Mark binary files explicitly so Git doesn't modify their bytes
+    *.png binary
+    *.jpg binary
+    *.jpeg binary
+    *.gif binary
+    *.ico binary
+    *.pdf binary
+    *.wasm binary
+    *.so binary
+    *.dll binary
+    *.exe binary
+    *.pyc binary
+    *.gz binary
+    *.zip binary
+    *.tar binary
