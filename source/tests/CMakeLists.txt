@@ -182,6 +182,7 @@ add_subdirectory(metacall_python_builtins_test)
 add_subdirectory(metacall_python_async_test)
 # TODO: add_subdirectory(metacall_python_await_test) # TODO: Implement metacall_await in Python Port
 add_subdirectory(metacall_python_exception_test)
+add_subdirectory(metacall_python_conversion_test)
 # TODO: add_subdirectory(metacall_python_node_await_test) # TODO: Implement metacall_await in Python Port
 add_subdirectory(metacall_python_without_env_vars_test)
 add_subdirectory(metacall_map_test)
