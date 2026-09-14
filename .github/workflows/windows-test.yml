@@ -82,3 +82,45 @@ jobs:
           wait_workflow: true
           client_payload: '{"ref": "${{ github.head_ref || github.ref_name }}"}'
           ref: master
+  mingw-test:
+    name: MSYS2 / ${{ matrix.sys }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sys: mingw64
+            env: x86_64
+          - sys: ucrt64
+            env: ucrt-x86_64
+          - sys: clang64
+            env: clang-x86_64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.sys }}
+          update: true
+          install: >
+            mingw-w64-${{ matrix.env }}-cmake
+            mingw-w64-${{ matrix.env }}-gcc
+            mingw-w64-${{ matrix.env }}-ninja
+            mingw-w64-${{ matrix.env }}-pkg-config
+            mingw-w64-${{ matrix.env }}-gtest
+            make
+            git
+
+      - name: Build MetaCall (MSYS2)
+        shell: msys2 {0}
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPTION_BUILD_PLUGINS_BACKTRACE=OFF \
+            -DCMAKE_VERBOSE_MAKEFILE=ON
+          cmake --build . --parallel $(nproc)
