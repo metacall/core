@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 	"unsafe"
+
+	"github.com/joho/godotenv"
 )
 
 func TestMain(m *testing.M) {
@@ -256,7 +258,15 @@ func TestGoRoutineLeaks(t *testing.T) {
 	if prof != nil {
 		// create file to store the report
 		fileName := "Goroutine_leaks_report.pprof"
-		file, err := os.Create(fileName)
+		if err := godotenv.Load(); err != nil {
+			return
+		}
+		var filePath string
+		if filePath = os.Getenv("PPROFDIR"); filePath == "" {
+			filePath, _ = os.Getwd()
+		}
+
+		file, err := os.Create(filePath + "/" + fileName)
 		if err != nil {
 			return
 		}
