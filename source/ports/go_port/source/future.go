@@ -31,7 +31,7 @@ func newFuture(value unsafe.Pointer) *Future {
 	p := C.metacall_value_to_future(value)
 	fut := &Future{val: value, ptr: p}
 	runtime.SetFinalizer(fut, func(f *Future) {
-		if f != nil {
+		if f.val != nil {
 			C.metacall_value_destroy(f.val)
 			f.ptr = nil
 			f.val = nil
@@ -44,6 +44,9 @@ func (f *Future) Await() (interface{}, error) {
 	if f.ptr == nil {
 		return nil, errors.New("can't call async on nil future")
 	}
+
+	// Keep f alive until Await finishes to prevent early finalizer destruction
+	defer runtime.KeepAlive(f)
 
 	// destroy the handle when future complete
 	defer func() {
@@ -81,7 +84,6 @@ func (f *Future) Await() (interface{}, error) {
 	// block until a value returned
 	ret := <-retValCh
 	if ret.value == nil && ret.err == nil {
-		pointerDelete(ctxPtr)
 		return nil, errors.New("failed to get value from future")
 	}
 

@@ -40,6 +40,9 @@ func (c *Class) New(name string, args ...interface{}) (*Object, error) {
 	if c.ptr == nil {
 		return nil, errors.New("can't use nil ptr for class creation")
 	}
+
+	defer runtime.KeepAlive(c)
+
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 
@@ -81,6 +84,8 @@ func (c *Class) StaticGet(key string) (interface{}, error) {
 		return nil, errors.New("can't get attribute of nil class")
 	}
 
+	defer runtime.KeepAlive(c)
+
 	cKey := C.CString(key)
 	defer C.free(unsafe.Pointer(cKey))
 
@@ -88,6 +93,11 @@ func (c *Class) StaticGet(key string) (interface{}, error) {
 
 	if ret == nil {
 		return nil, errors.New("no attribute with this name: " + key)
+	}
+
+	id := C.metacall_value_id(ret)
+	if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+		defer C.metacall_value_destroy(ret)
 	}
 
 	val := valueToGo(ret)

@@ -697,7 +697,12 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 
 	// create future
 	case *Future:
-		*ptr = C.metacall_value_create_future(i.ptr)
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_future(i.ptr)
+		}
 
 	default:
 		v := reflect.ValueOf(arg)
@@ -1030,6 +1035,12 @@ func DestroyUnsafe() {
 
 // Shutdown disables the metacall adapter waiting for all calls to complete
 func Destroy() {
+	// Run GC and wait for pending finalizers before shutting down MetaCall
+	// call garbage collector twice to give enough finalizers time to execute
+	runtime.GC()
+	runtime.Gosched()
+	runtime.GC()
+
 	lock.Lock()
 	if rootCancel != nil {
 		// cancel root ctx and assign it to nil when shutting down

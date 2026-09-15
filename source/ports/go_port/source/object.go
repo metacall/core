@@ -43,12 +43,19 @@ func (o *Object) Get(key string) (interface{}, error) {
 		return nil, errors.New("can't get attribute of nil object")
 	}
 
+	defer runtime.KeepAlive(o)
+
 	cKey := C.CString(key)
 	defer C.free(unsafe.Pointer(cKey))
 
 	ret := C.metacall_object_get(o.ptr, cKey)
 	if ret == nil {
 		return nil, errors.New("no attribute with this name: " + key)
+	}
+
+	id := C.metacall_value_id(ret)
+	if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+		defer C.metacall_value_destroy(ret)
 	}
 
 	val := valueToGo(ret)
@@ -60,6 +67,9 @@ func (o *Object) Set(key string, val interface{}) error {
 	if o.ptr == nil {
 		return errors.New("can't set attribute of nil object")
 	}
+
+	defer runtime.KeepAlive(o)
+
 	cKey := C.CString(key)
 	defer C.free(unsafe.Pointer(cKey))
 
@@ -81,6 +91,9 @@ func (o *Object) Call(method string, args ...interface{}) (interface{}, error) {
 	if o.ptr == nil {
 		return nil, errors.New("can't call method of nil object")
 	}
+
+	defer runtime.KeepAlive(o)
+
 	cMethod := C.CString(method)
 	defer C.free(unsafe.Pointer(cMethod))
 
@@ -109,6 +122,11 @@ func (o *Object) Call(method string, args ...interface{}) (interface{}, error) {
 	ret := C.metacallv_object(o.ptr, cMethod, (*unsafe.Pointer)(cArgs), argNum)
 	if ret == nil {
 		return nil, errors.New("failed to call method: " + method)
+	}
+
+	id := C.metacall_value_id(ret)
+	if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+		defer C.metacall_value_destroy(ret)
 	}
 
 	val := valueToGo(ret)
