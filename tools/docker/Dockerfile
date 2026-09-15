@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 #
 #	MetaCall Library by Parra Studios
 #	Docker image infrastructure for MetaCall.
@@ -54,6 +56,12 @@ FROM deps AS dev
 
 # Arguments
 ARG METACALL_PATH
+ARG METACALL_CACHE_DIR=/ccache
+ARG METACALL_CACHE_PROFILE=default
+
+# The compiler cache lives in a cache mount, not in the image
+ENV SCCACHE_DIR=$METACALL_CACHE_DIR \
+	SCCACHE_CACHE_SIZE=2G
 
 # Environment variables
 ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
@@ -77,11 +85,13 @@ RUN chmod 500 $METACALL_PATH/tools/metacall-configure.sh \
 ARG METACALL_BUILD_TYPE
 ARG METACALL_BUILD_OPTIONS
 
-RUN cd $METACALL_PATH/build \
+RUN --mount=type=cache,id=sccache-${METACALL_CACHE_PROFILE},target=${METACALL_CACHE_DIR},sharing=locked \
+	cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-configure.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 
 # Build test and install MetaCall libraries
-RUN cd $METACALL_PATH/build \
+RUN --mount=type=cache,id=sccache-${METACALL_CACHE_PROFILE},target=${METACALL_CACHE_DIR},sharing=locked \
+	cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 
 # MetaCall Builder image
