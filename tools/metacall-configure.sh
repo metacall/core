@@ -56,43 +56,44 @@ BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
 BUILD_ANDROID=0
+BUILD_COMPILER_CACHE=0
 
 # Operative System detection
 case "$(uname -s)" in
-	Linux*)		OPERATIVE_SYSTEM=Linux;;
-	Darwin*)	OPERATIVE_SYSTEM=Darwin;;
-	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
-	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
-	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
-	Haiku*)		OPERATIVE_SYSTEM=Haiku;;
-	*)			OPERATIVE_SYSTEM="Unknown"
+Linux*) OPERATIVE_SYSTEM=Linux ;;
+Darwin*) OPERATIVE_SYSTEM=Darwin ;;
+CYGWIN*) OPERATIVE_SYSTEM=Cygwin ;;
+MINGW*) OPERATIVE_SYSTEM=MinGW ;;
+FreeBSD*) OPERATIVE_SYSTEM=FreeBSD ;;
+Haiku*) OPERATIVE_SYSTEM=Haiku ;;
+*) OPERATIVE_SYSTEM="Unknown" ;;
 esac
 
 # Architecture detection
 case "$(uname -m)" in
-	x86_64)
-		if [ "$(getconf LONG_BIT)" = "32" ]; then
-			ARCHITECTURE="386"
-		else
-			ARCHITECTURE="amd64"
-		fi
-		;;
-	amd64) ARCHITECTURE="amd64";;
-	armv6*) ARCHITECTURE="armv6";;
-	armv7*|armhf|armel)
-		if grep -q "vfpv3" /proc/cpuinfo; then
-			ARCHITECTURE="armhf"
-		else
-			# TODO: ARMv6 detection not working properly
-			ARCHITECTURE="armv6"
-		fi
-		;;
-	aarch64|arm64)	ARCHITECTURE="arm64";;
-	riscv64)		ARCHITECTURE="riscv64";;
-	i386|i686)		ARCHITECTURE="386";;
-	s390x)			ARCHITECTURE="s390x";;
-	ppc64le)		ARCHITECTURE="ppc64le";;
-	*)				ARCHITECTURE="Unknown";;
+x86_64)
+	if [ "$(getconf LONG_BIT)" = "32" ]; then
+		ARCHITECTURE="386"
+	else
+		ARCHITECTURE="amd64"
+	fi
+	;;
+amd64) ARCHITECTURE="amd64" ;;
+armv6*) ARCHITECTURE="armv6" ;;
+armv7* | armhf | armel)
+	if grep -q "vfpv3" /proc/cpuinfo; then
+		ARCHITECTURE="armhf"
+	else
+		# TODO: ARMv6 detection not working properly
+		ARCHITECTURE="armv6"
+	fi
+	;;
+aarch64 | arm64) ARCHITECTURE="arm64" ;;
+riscv64) ARCHITECTURE="riscv64" ;;
+i386 | i686) ARCHITECTURE="386" ;;
+s390x) ARCHITECTURE="s390x" ;;
+ppc64le) ARCHITECTURE="ppc64le" ;;
+*) ARCHITECTURE="Unknown" ;;
 esac
 
 # Linux Distro detection
@@ -108,8 +109,7 @@ else
 fi
 
 sub_options() {
-	for option in "$@"
-	do
+	for option in "$@"; do
 		if [ "$option" = 'debug' ]; then
 			echo "Build all scripts in debug mode"
 			BUILD_TYPE=Debug
@@ -238,6 +238,10 @@ sub_options() {
 			echo "Build with clang compiler"
 			BUILD_CLANG=1
 		fi
+		if [ "$option" = 'sccache' ] || [ "$option" = 'compiler-cache' ]; then
+			echo "Build with compiler cache"
+			BUILD_COMPILER_CACHE=1
+		fi
 		if [ "$option" = 'address-sanitizer' ]; then
 			echo "Build with address sanitizer"
 			BUILD_ADDRESS_SANITIZER=1
@@ -258,8 +262,8 @@ sub_options() {
 }
 
 sub_find_dotnet_runtime() {
-	NETCORE_BASE_PATH=`dotnet --list-runtimes | grep -m 1 "Microsoft.NETCore.App $1"`
-	echo "`echo \"$NETCORE_BASE_PATH\" | awk '{ print $3 }' | tail -c +2 | head -c -2`/`echo \"$NETCORE_BASE_PATH\" | awk '{ print $2 }'`/"
+	NETCORE_BASE_PATH=$(dotnet --list-runtimes | grep -m 1 "Microsoft.NETCore.App $1")
+	echo "$(echo "$NETCORE_BASE_PATH" | awk '{ print $3 }' | tail -c +2 | head -c -2)/$(echo "$NETCORE_BASE_PATH" | awk '{ print $2 }')/"
 }
 
 sub_configure() {
@@ -315,7 +319,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 1`"
+			-DDOTNET_CORE_PATH=$(sub_find_dotnet_runtime 1)"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -330,7 +334,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE2 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 2`"
+			-DDOTNET_CORE_PATH=$(sub_find_dotnet_runtime 2)"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -345,7 +349,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE5 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 5`"
+			-DDOTNET_CORE_PATH=$(sub_find_dotnet_runtime 5)"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -360,7 +364,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE7 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 7`"
+			-DDOTNET_CORE_PATH=$(sub_find_dotnet_runtime 7)"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -378,7 +382,7 @@ sub_configure() {
 		else
 			BUILD_STRING="$BUILD_STRING \
 				-DOPTION_BUILD_LOADERS_CS=On \
-				-DDOTNET_CORE_PATH=`sub_find_dotnet_runtime 8`"
+				-DDOTNET_CORE_PATH=$(sub_find_dotnet_runtime 8)"
 
 			if [ $BUILD_SCRIPTS = 1 ]; then
 				BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -642,6 +646,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
 
+	# Compiler cache
+	if [ $BUILD_COMPILER_CACHE = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_CACHE=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_CACHE=Off"
+	fi
+
 	# Android
 	if [ $BUILD_ANDROID = 1 ]; then
 		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-30}"
@@ -666,15 +677,14 @@ sub_configure() {
 	# Split cmake config file line by line and add each line to the build string
 	CMAKE_CONFIG_FILE="$ROOT_DIR/CMakeConfig.txt"
 	if [ -f $CMAKE_CONFIG_FILE ]; then
-		while IFS= read -r line
-		do
+		while IFS= read -r line; do
 			BUILD_STRING="$BUILD_STRING $line"
-		done < "$CMAKE_CONFIG_FILE"
+		done <"$CMAKE_CONFIG_FILE"
 	fi
 
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
-	
+
 	# Execute CMake
 	if [ $BUILD_CLANG = 1 ]; then
 		export CC=/usr/bin/clang
@@ -684,7 +694,7 @@ sub_configure() {
 }
 
 sub_help() {
-	echo "Usage: `basename "$0"` list of options"
+	echo "Usage: $(basename "$0") list of options"
 	echo "Options:"
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	python: build with python support"
@@ -718,6 +728,7 @@ sub_help() {
 	echo "	coverage: build all coverage reports"
 	echo "	memcheck: build with memcheck"
 	echo "	clang: build with clang compiler"
+	echo "	sccache: build with compiler cache"
 	echo "	clang-msan: build with clang compiler with memory sanitizer"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
@@ -727,11 +738,11 @@ sub_help() {
 }
 
 case "$#" in
-	0)
-		sub_help
-		;;
-	*)
-		sub_options $@
-		sub_configure
-		;;
+0)
+	sub_help
+	;;
+*)
+	sub_options "$@"
+	sub_configure
+	;;
 esac

@@ -62,6 +62,7 @@ INSTALL_MEMORY_SANITIZER=0
 INSTALL_CLANG=0
 INSTALL_CLANG_MSAN=0
 INSTALL_CLANG_FORMAT=0
+INSTALL_SCCACHE=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
 INSTALL_ANDROID=0
@@ -351,7 +352,7 @@ sub_python(){
 
 			git clone --depth=1 --single-branch --branch "v${PYTHON_VERSION}" https://github.com/python/cpython.git
 			cd cpython
-	
+
 			# Define Python instrumentation
 			if [ $INSTALL_MEMCHECK = 1 ]; then
 				sed -i '' 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
@@ -373,7 +374,7 @@ sub_python(){
 				BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
 				BUILD_LDFLAGS="-fsanitize=memory"
 			fi
-	
+
 			# Configure
 			export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE $(pkg-config --cflags expat)"
 			export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS} $(pkg-config --libs-only-L expat)"
@@ -388,11 +389,11 @@ sub_python(){
 				--with-system-ffi \
 				--with-dbmliborder=bdb:gdbm \
 				${BUILD_FLAGS}
-	
+
 			# Build and install
 			gmake -j$(sysctl -n hw.ncpu)
 			$SUDO_CMD gmake altinstall
-	
+
 			# Unset environment variables
 			unset ASAN_OPTIONS
 			unset UBSAN_OPTIONS
@@ -400,15 +401,15 @@ sub_python(){
 			unset MSAN_OPTIONS
 			unset CFLAGS
 			unset LDFLAGS
-	
+
 			# Define python as the default one
 			$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
-	
+
 			# Install Pip
 			# fetch https://bootstrap.pypa.io/get-pip.py
 			# python3 get-pip.py --user --break-system-packages
 			# export PATH="$(python3 -m site --user-base)/bin:$PATH"
-	
+
 			# Bootstrap pip and install python test dependencies
 			# $SUDO_CMD python3 -m pip install --upgrade \
 			#	requests \
@@ -1419,8 +1420,8 @@ sub_android(){
 # Install
 sub_install(){
 	if [ $APT_CACHE = 1 ]; then
-		if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-			APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
+		if [ "${OPERATIVE_SYSTEM}" = "Linux" ] && [ -n "${APT_CACHE_DIR:-}" ]; then
+			APT_CACHE_CMD="-o dir::cache::archives=${APT_CACHE_DIR}"
 		fi
 	fi
 
@@ -1514,6 +1515,9 @@ sub_install(){
 	if [ $INSTALL_CLANG_FORMAT = 1 ]; then
 		sub_clang_format
 	fi
+	if [ $INSTALL_SCCACHE = 1 ]; then
+		sub_sccache
+	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
 	fi
@@ -1521,6 +1525,65 @@ sub_install(){
 		sub_sandbox
 	fi
 	echo "install finished in workspace $ROOT_DIR"
+}
+
+# Compiler cache
+sub_sccache(){
+	echo "configure compiler cache"
+	cd $ROOT_DIR
+
+	SCCACHE_VERSION_STRING="${SCCACHE_VERSION:-0.18.0}"
+	SCCACHE_PREFIX="${SCCACHE_PREFIX:-/usr/local/bin}"
+
+	case "${OPERATIVE_SYSTEM}-${ARCHITECTURE}" in
+		Linux-amd64) SCCACHE_TARGET="x86_64-unknown-linux-musl" ;;
+		Linux-arm64) SCCACHE_TARGET="aarch64-unknown-linux-musl" ;;
+		Linux-386) SCCACHE_TARGET="i686-unknown-linux-musl" ;;
+		Linux-armhf) SCCACHE_TARGET="armv7-unknown-linux-musleabi" ;;
+		Linux-riscv64) SCCACHE_TARGET="riscv64gc-unknown-linux-musl" ;;
+		Darwin-amd64) SCCACHE_TARGET="x86_64-apple-darwin" ;;
+		Darwin-arm64) SCCACHE_TARGET="aarch64-apple-darwin" ;;
+		*)
+			echo "sccache ${SCCACHE_VERSION_STRING} has no binary for ${OPERATIVE_SYSTEM} ${ARCHITECTURE}, install it with cargo or the package manager"
+			return 1
+			;;
+	esac
+
+	if command -v sccache >/dev/null 2>&1 && [ "$(sccache --version | awk '{print $2}')" = "${SCCACHE_VERSION_STRING}" ]; then
+		echo "sccache ${SCCACHE_VERSION_STRING} already installed"
+		return 0
+	fi
+
+	if command -v sha256sum >/dev/null 2>&1; then
+		SCCACHE_CHECKSUM_CMD="sha256sum -c"
+	else
+		SCCACHE_CHECKSUM_CMD="shasum -a 256 -c"
+	fi
+
+	SCCACHE_ARCHIVE="sccache-v${SCCACHE_VERSION_STRING}-${SCCACHE_TARGET}.tar.gz"
+	SCCACHE_BASE_URL="https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION_STRING}"
+	SCCACHE_TMP=$(mktemp -d)
+
+	wget -q -O "${SCCACHE_TMP}/${SCCACHE_ARCHIVE}" "${SCCACHE_BASE_URL}/${SCCACHE_ARCHIVE}"
+	# The sidecar checksum detects a corrupted transfer, release authenticity isn't checked
+	wget -q -O "${SCCACHE_TMP}/${SCCACHE_ARCHIVE}.sha256" "${SCCACHE_BASE_URL}/${SCCACHE_ARCHIVE}.sha256"
+
+	# The sidecar is a bare hash, sha256sum -c needs a hash and filename line
+	SCCACHE_HASH="$(awk 'NR==1{print $1}' "${SCCACHE_TMP}/${SCCACHE_ARCHIVE}.sha256")"
+	if [ "${#SCCACHE_HASH}" -ne 64 ] || [ -n "$(printf '%s' "${SCCACHE_HASH}" | tr -d '0-9a-fA-F')" ]; then
+		echo "sccache checksum sidecar for ${SCCACHE_ARCHIVE} is not a sha256 hash"
+		return 1
+	fi
+	printf '%s  %s\n' "${SCCACHE_HASH}" "${SCCACHE_ARCHIVE}" > "${SCCACHE_TMP}/sccache.sha256"
+	(cd "${SCCACHE_TMP}" && ${SCCACHE_CHECKSUM_CMD} sccache.sha256)
+
+	tar -xzf "${SCCACHE_TMP}/${SCCACHE_ARCHIVE}" -C "${SCCACHE_TMP}" --strip-components=1 "sccache-v${SCCACHE_VERSION_STRING}-${SCCACHE_TARGET}/sccache"
+
+	$SUDO_CMD mkdir -p "${SCCACHE_PREFIX}"
+	$SUDO_CMD install -m 755 "${SCCACHE_TMP}/sccache" "${SCCACHE_PREFIX}/sccache"
+	rm -rf "${SCCACHE_TMP}"
+
+	sccache --version
 }
 
 # Configuration
@@ -1682,6 +1745,10 @@ sub_options(){
 			echo "clangformat selected"
 			INSTALL_CLANG_FORMAT=1
 		fi
+		if [ "$option" = 'sccache' ] || [ "$option" = 'compiler-cache' ]; then
+			echo "sccache selected"
+			INSTALL_SCCACHE=1
+		fi
 		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
@@ -1737,6 +1804,7 @@ sub_help() {
 	echo "	clang"
 	echo "	clang-msan"
 	echo "	clangformat"
+	echo "	sccache"
 	echo "	backtrace"
 	echo "	sandbox"
 	echo "	android"
@@ -1748,7 +1816,7 @@ case "$#" in
 		sub_help
 		;;
 	*)
-		sub_options $@
+		sub_options "$@"
 		sub_install
 		;;
 esac

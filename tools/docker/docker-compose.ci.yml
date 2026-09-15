@@ -1,0 +1,19 @@
+#
+#	MetaCall Library by Parra Studios
+#	Layer cache transport, registry backend only; gha would thrash the 10 GB Actions cache.
+#
+
+services:
+  deps:
+    build:
+      cache_from:
+        - type=${METACALL_CACHE_BACKEND},scope=${METACALL_CACHE_SCOPE}
+      cache_to:
+        - type=${METACALL_CACHE_BACKEND},mode=max,scope=${METACALL_CACHE_SCOPE},ignore-error=true
+
+  dev:
+    build:
+      cache_from:
+        - type=${METACALL_CACHE_BACKEND},scope=${METACALL_CACHE_SCOPE}
+      cache_to:
+        - type=${METACALL_CACHE_BACKEND},mode=max,scope=${METACALL_CACHE_SCOPE},ignore-error=true
