@@ -15,7 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"runtime/cgo"
 	"unsafe"
 )
 
@@ -75,14 +74,14 @@ func (f *Future) Await() (interface{}, error) {
 
 	// use handle to prevent breaking cgo pointer-passing rules
 	// await.go calls goResolve or goReject convert ctxPtr back and reads its content
-	handle := cgo.NewHandle(callbacks)
-	ctxPtr := unsafe.Pointer(uintptr(handle))
+	ctxPtr := pointerSave(callbacks)
 
 	C.metacall_await_future(f.ptr, C.metacall_await_callback(C.resolveCgo), C.metacall_await_callback(C.rejectCgo), ctxPtr)
 
 	// block until a value returned
 	ret := <-retValCh
 	if ret.value == nil && ret.err == nil {
+		pointerDelete(ctxPtr)
 		return nil, errors.New("failed to get value from future")
 	}
 
