@@ -352,7 +352,7 @@ sub_python(){
 
 			git clone --depth=1 --single-branch --branch "v${PYTHON_VERSION}" https://github.com/python/cpython.git
 			cd cpython
-
+	
 			# Define Python instrumentation
 			if [ $INSTALL_MEMCHECK = 1 ]; then
 				sed -i '' 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
@@ -374,7 +374,7 @@ sub_python(){
 				BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
 				BUILD_LDFLAGS="-fsanitize=memory"
 			fi
-
+	
 			# Configure
 			export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE $(pkg-config --cflags expat)"
 			export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS} $(pkg-config --libs-only-L expat)"
@@ -389,11 +389,11 @@ sub_python(){
 				--with-system-ffi \
 				--with-dbmliborder=bdb:gdbm \
 				${BUILD_FLAGS}
-
+	
 			# Build and install
 			gmake -j$(sysctl -n hw.ncpu)
 			$SUDO_CMD gmake altinstall
-
+	
 			# Unset environment variables
 			unset ASAN_OPTIONS
 			unset UBSAN_OPTIONS
@@ -401,15 +401,15 @@ sub_python(){
 			unset MSAN_OPTIONS
 			unset CFLAGS
 			unset LDFLAGS
-
+	
 			# Define python as the default one
 			$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
-
+	
 			# Install Pip
 			# fetch https://bootstrap.pypa.io/get-pip.py
 			# python3 get-pip.py --user --break-system-packages
 			# export PATH="$(python3 -m site --user-base)/bin:$PATH"
-
+	
 			# Bootstrap pip and install python test dependencies
 			# $SUDO_CMD python3 -m pip install --upgrade \
 			#	requests \

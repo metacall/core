@@ -256,7 +256,7 @@ sub_platform() {
 	fi
 
 	# Generate the docker compose file with all .env variables substituted (bake seems not to support this)
-	sub_compose config &>docker-compose.bake.yml
+	sub_compose config > docker-compose.bake.yml
 
 	# Build with Bake, so the image can be loaded into local docker context
 	for tag in "${METACALL_TAGS[@]}"; do
@@ -444,7 +444,7 @@ sub_pack() {
 
 # Help
 sub_help() {
-	echo "Usage: $(basename "$0") option"
+	echo "Usage: `basename "$0"` option"
 	echo "Options:"
 	echo "	pull"
 	echo "	build"
@@ -467,76 +467,76 @@ sub_help() {
 }
 
 case "$1" in
-cache-identity)
-	shift
-	export METACALL_CACHE_IDENTITY=1
-	export SANITIZER_SKIP_SUMMARY=1
-	exec "$0" "$@"
-	;;
-pull)
-	sub_pull
-	;;
-build)
-	sub_build
-	;;
-rebuild)
-	sub_rebuild
-	;;
-test)
-	sub_test
-	;;
-test-address-sanitizer)
-	export METACALL_BUILD_SANITIZER="address-sanitizer"
-	sub_test_sanitizer
-	;;
-test-thread-sanitizer)
-	export METACALL_BUILD_SANITIZER="thread-sanitizer"
-	sub_test_sanitizer
-	;;
-test-memory-sanitizer)
-	sub_test_memory_sanitizer
-	;;
-coverage)
-	sub_coverage
-	;;
-test-memcheck)
-	sub_test_memcheck
-	;;
-test-clang)
-	sub_test_clang
-	;;
-test-clang-address-sanitizer)
-	export METACALL_BUILD_CLANG="clang"
-	export METACALL_BUILD_SANITIZER="address-sanitizer"
-	sub_test_sanitizer
-	;;
-test-clang-thread-sanitizer)
-	export METACALL_BUILD_CLANG="clang"
-	export METACALL_BUILD_SANITIZER="thread-sanitizer"
-	sub_test_sanitizer
-	;;
-cache)
-	sub_cache
-	;;
-platform)
-	sub_platform
-	;;
-bake)
-	sub_bake
-	;;
-manifest)
-	sub_manifest
-	;;
-push)
-	sub_push
-	;;
-version)
-	sub_version
-	;;
-pack)
-	sub_pack
-	;;
-*)
-	sub_help
-	;;
+	cache-identity)
+		shift
+		export METACALL_CACHE_IDENTITY=1
+		export SANITIZER_SKIP_SUMMARY=1
+		exec "$0" "$@"
+		;;
+	pull)
+		sub_pull
+		;;
+	build)
+		sub_build
+		;;
+	rebuild)
+		sub_rebuild
+		;;
+	test)
+		sub_test
+		;;
+	test-address-sanitizer)
+		export METACALL_BUILD_SANITIZER="address-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-thread-sanitizer)
+		export METACALL_BUILD_SANITIZER="thread-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-memory-sanitizer)
+		sub_test_memory_sanitizer
+		;;
+	coverage)
+		sub_coverage
+		;;
+	test-memcheck)
+		sub_test_memcheck
+		;;
+	test-clang)
+		sub_test_clang
+		;;
+	test-clang-address-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
+		export METACALL_BUILD_SANITIZER="address-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-clang-thread-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
+		export METACALL_BUILD_SANITIZER="thread-sanitizer"
+		sub_test_sanitizer
+		;;
+	cache)
+		sub_cache
+		;;
+	platform)
+		sub_platform
+		;;
+	bake)
+		sub_bake
+		;;
+	manifest)
+		sub_manifest
+		;;
+	push)
+		sub_push
+		;;
+	version)
+		sub_version
+		;;
+	pack)
+		sub_pack
+		;;
+	*)
+		sub_help
+		;;
 esac
