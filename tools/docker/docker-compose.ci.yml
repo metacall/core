@@ -1,19 +1,33 @@
 #
 #	MetaCall Library by Parra Studios
-#	Layer cache transport, registry backend only; gha would thrash the 10 GB Actions cache.
+#	Layer cache transport for the registry backend, one ref per instrumentation scope.
 #
 
 services:
   deps:
     build:
       cache_from:
-        - type=${METACALL_CACHE_BACKEND},scope=${METACALL_CACHE_SCOPE}
+        - type=registry,ref=${METACALL_CACHE_REF}
       cache_to:
-        - type=${METACALL_CACHE_BACKEND},mode=max,scope=${METACALL_CACHE_SCOPE},ignore-error=true
+        - type=registry,ref=${METACALL_CACHE_REF},mode=max,ignore-error=true
 
   dev:
     build:
       cache_from:
-        - type=${METACALL_CACHE_BACKEND},scope=${METACALL_CACHE_SCOPE}
+        - type=registry,ref=${METACALL_CACHE_REF}
       cache_to:
-        - type=${METACALL_CACHE_BACKEND},mode=max,scope=${METACALL_CACHE_SCOPE},ignore-error=true
+        - type=registry,ref=${METACALL_CACHE_REF},mode=max,ignore-error=true
+
+  runtime:
+    build:
+      cache_from:
+        - type=registry,ref=${METACALL_CACHE_REF}
+      cache_to:
+        - type=registry,ref=${METACALL_CACHE_REF},mode=max,ignore-error=true
+
+  cli:
+    build:
+      cache_from:
+        - type=registry,ref=${METACALL_CACHE_REF}
+      cache_to:
+        - type=registry,ref=${METACALL_CACHE_REF},mode=max,ignore-error=true

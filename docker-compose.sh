@@ -74,7 +74,18 @@ sub_cache_env() {
 
 	# gha would thrash the 10 GB Actions cache with layers, only registry uses the overlay
 	case "${METACALL_CACHE_BACKEND:-}" in
-	registry) DOCKER_COMPOSE_FILES="$DOCKER_COMPOSE_FILES -f tools/docker/docker-compose.ci.yml" ;;
+	registry)
+		if [ -z "${METACALL_CACHE_REPOSITORY:-}" ]; then
+			echo "Error: METACALL_CACHE_REPOSITORY variable not defined"
+			exit 1
+		fi
+
+		# Registry refs must be lowercase
+		METACALL_CACHE_REPOSITORY="$(printf '%s' "${METACALL_CACHE_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+		METACALL_CACHE_REF="${METACALL_CACHE_REPOSITORY}:${METACALL_CACHE_SCOPE}"
+		export METACALL_CACHE_REPOSITORY METACALL_CACHE_REF
+		DOCKER_COMPOSE_FILES="$DOCKER_COMPOSE_FILES -f tools/docker/docker-compose.ci.yml"
+		;;
 	esac
 }
 

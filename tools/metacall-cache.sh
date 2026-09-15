@@ -14,9 +14,10 @@ CACHE_SIZE="${METACALL_CACHE_SIZE:-2G}"
 sub_backend() {
 	case "${METACALL_CACHE_BACKEND:-}" in
 	gha) printf 'gha\n' ;;
+	registry) printf 'registry\n' ;;
 	local | "") printf 'local\n' ;;
 	*)
-		echo "unsupported METACALL_CACHE_BACKEND '${METACALL_CACHE_BACKEND}', use gha or local" >&2
+		echo "unsupported METACALL_CACHE_BACKEND '${METACALL_CACHE_BACKEND}', use gha, registry or local" >&2
 		exit 1
 		;;
 	esac
@@ -153,7 +154,7 @@ sub_help() {
 	echo "	restart: stop the sccache server and print the environment"
 	echo "	version: print the pinned sccache version"
 	echo "	self-test: verify the identity function"
-	echo "	backends: local disk when METACALL_CACHE_BACKEND is local or empty, gha for the Actions cache"
+	echo "	backends: local disk when METACALL_CACHE_BACKEND is local or empty, gha for the Actions cache, registry for a cache image repository"
 	echo "	help: print this help"
 	echo ""
 }
