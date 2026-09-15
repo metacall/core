@@ -192,7 +192,7 @@ GO port uses GO profiles (goroutine, heap, trace, cmdline, symbol) and symbolize
 
 ## Prerequisites
 
-- GO: 1.26 or higher
+- GO: 1.17 or higher
 - Python: 3.12 or higher (for testing with go test)
 - C compiler for CGO: Clang (preferred) or GCC
 - MetaCall Core

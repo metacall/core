@@ -251,9 +251,12 @@ func TestValues(t *testing.T) {
 
 	// Create pointer values
 	var nullPtr *int = nil
-	var bytePtr *byte = new(byte('H'))
-	var intPtr *int = new(1)
-	var floatPtr *float64 = new(1.5)
+	b := byte('H')
+	var bytePtr *byte = &b
+	i := 1
+	var intPtr *int = &i
+	f := 1.5
+	var floatPtr *float64 = &f
 
 	tests := []struct {
 		name  string
