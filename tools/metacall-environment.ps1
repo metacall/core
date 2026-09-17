@@ -245,6 +245,73 @@ function Set-Curl {
 	Write-Output "-DCURL_LIBRARY_NAME=""$CURL_LIB_NAME""" >> $EnvOpts
 }
 
+function Set-Lua {
+	Write-Output "Install Lua"
+
+	Set-Location $ROOT_DIR
+
+	$RuntimeDir = "$env:ProgramFiles\luajit"
+	$DepsDir = "$ROOT_DIR\dependencies"
+	$LuaSourceDir = "$DepsDir\luajit"
+
+	# Download source
+	if (!(Test-Path -Path $LuaSourceDir)) {
+		git clone https://luajit.org/git/luajit.git $LuaSourceDir
+
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to clone LuaJIT repository."
+		}
+	}
+
+	# Build with MSVC
+	Set-Location "$LuaSourceDir\src"
+
+	& .\msvcbuild.bat
+
+	if ($LASTEXITCODE -ne 0) {
+		throw "LuaJIT MSVC build failed."
+	}
+
+	# Create runtime directory
+	mkdir $RuntimeDir -Force | Out-Null
+	mkdir "$RuntimeDir\lua" -Force | Out-Null
+	mkdir "$RuntimeDir\lua\jit" -Force | Out-Null
+	mkdir "$RuntimeDir\include" -Force | Out-Null
+
+	# Install LuaJIT runtime
+	Copy-Item ".\luajit.exe" "$RuntimeDir\luajit.exe" -Force
+	Copy-Item ".\lua51.lib" "$RuntimeDir\lua51.lib" -Force
+	Copy-Item ".\lua51.dll" "$RuntimeDir\lua51.dll" -Force
+	Copy-Item ".\jit\*" "$RuntimeDir\lua\jit\" -Recurse -Force
+
+	# Install LuaJIT C API headers
+	$LuaHeaders = @(
+		"lua.h"
+		"lualib.h"
+		"lauxlib.h"
+		"luaconf.h"
+		"lua.hpp"
+		"luajit.h"
+	)
+
+	foreach ($Header in $LuaHeaders) {
+		Copy-Item ".\$Header" "$RuntimeDir\include\$Header" -Force
+	}
+
+	# Add LuaJIT to PATH
+	Add-to-Path $RuntimeDir
+
+	# Configure CMake
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$LuaDir = $RuntimeDir.Replace('\', '/')
+
+	Write-Output "-DLuaJIT_EXECUTABLE=""$LuaDir/luajit.exe""" >> $EnvOpts
+	Write-Output "-DLuaJIT_INCLUDE_DIR=""$LuaDir/include""" >> $EnvOpts
+	Write-Output "-DLuaJIT_LIBRARY=""$LuaDir/lua51.lib""" >> $EnvOpts
+	Write-Output "-DLuaJIT_LIBRARY_NAME=""$LuaDir/lua51.dll""" >> $EnvOpts
+	Write-Output "-DLuaJIT_LIBRARY_SEARCH_PATHS=""$LuaDir""" >> $EnvOpts
+}
+
 function Add-to-Path {
 	$GivenPath = $args[0]
 
@@ -302,30 +369,39 @@ function Configure {
 		}
 		if ("$var" -eq 'netcore') {
 			Write-Output "netcore selected"
+			# TODO
 		}
 		if ("$var" -eq 'netcore2') {
 			Write-Output "netcore 2 selected"
+			# TODO
 		}
 		if ("$var" -eq 'netcore5') {
 			Write-Output "netcore 5 selected"
+			# TODO
 		}
 		if ("$var" -eq 'rapidjson') {
 			Write-Output "rapidjson selected"
+			# TODO
 		}
 		if (("$var" -eq 'v8') -or ("$var" -eq 'v8rep54')) {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep57') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep58') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep52') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep51') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'nodejs') {
 			Write-Output "nodejs selected"
@@ -337,6 +413,7 @@ function Configure {
 		}
 		if ("$var" -eq 'file') {
 			Write-Output "file selected"
+			# TODO
 		}
 		if ("$var" -eq 'rpc') {
 			Write-Output "rpc selected"
@@ -344,6 +421,7 @@ function Configure {
 		}
 		if ("$var" -eq 'wasm') {
 			Write-Output "wasm selected"
+			# TODO
 		}
 		if ("$var" -eq 'java') {
 			Write-Output "java selected"
@@ -351,15 +429,23 @@ function Configure {
 		}
 		if ("$var" -eq 'c') {
 			Write-Output "c selected"
+			# TODO
 		}
 		if ("$var" -eq 'cobol') {
 			Write-Output "cobol selected"
+			# TODO
 		}
 		if ("$var" -eq 'go') {
 			Write-Output "go selected"
+			# TODO
 		}
 		if ("$var" -eq 'rust') {
 			Write-Output "rust selected"
+			# TODO
+		}
+		if ("$var" -eq 'lua') {
+			Write-Output "lua selected"
+			Set-Lua
 		}
 		if ("$var" -eq 'metacall') {
 			Write-Output "metacall selected"
@@ -397,6 +483,8 @@ function Help {
 	Write-Output "	c"
 	Write-Output "	cobol"
 	Write-Output "	go"
+	Write-Output "	rust"
+	Write-Output "	lua"
 	Write-Output "	metacall"
 	Write-Output "	pack"
 	Write-Output "	clangformat"

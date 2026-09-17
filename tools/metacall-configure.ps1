@@ -29,6 +29,7 @@ $Global:BUILD_V8 =                0
 $Global:BUILD_NODEJS =            0
 $Global:BUILD_TYPESCRIPT =        0
 $Global:BUILD_RUST =              0
+$Global:BUILD_LUA =               0
 $Global:BUILD_ZIG =               0
 $Global:BUILD_FILE =              0
 $Global:BUILD_RPC =               0
@@ -98,6 +99,10 @@ function sub-options {
 		if ("$option" -eq 'rust') {
 			echo "Build with rust support"
 			$Global:BUILD_RUST = 1
+		}
+		if ("$option" -eq 'lua') {
+			echo "Build with lua support"
+			$Global:BUILD_LUA = 1
 		}
 		if ("$option" -eq 'zig') {
 			echo "Build with zig support"
@@ -297,6 +302,20 @@ function sub-configure {
 		}
 	}
 
+	# Lua
+	if ($BUILD_LUA -eq 1) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_LUA=On"
+
+		if ($BUILD_SCRIPTS -eq 1) {
+			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_LUA=On"
+		}
+
+		# TODO
+		# if ($BUILD_PORTS -eq 1) {
+		# 	$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS_LUA=On"
+		# }
+	}
+
 	# Zig
 	if ($BUILD_ZIG -eq 1) {
  		# TODO
@@ -445,6 +464,7 @@ function sub-help {
 	echo "	nodejs: build with nodejs support"
 	echo "	typescript: build with typescript support"
 	echo "	rust: build with rust support"
+	echo "	lua: build with lua support"
 	echo "	zig: build with zig support"
 	echo "	file: build with file support"
 	echo "	rpc: build with rpc support"

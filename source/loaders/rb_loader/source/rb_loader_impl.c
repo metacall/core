@@ -1027,8 +1027,9 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 				*/
 				if (rb_loader_impl_interactive_terminal() && (argv == NULL || argc <= 1))
 				{
-					static char *proxy_argv[] = { "ruby", "-e", "\"\"" };
-					ruby_options(3, proxy_argv);
+					static char *proxy_argv[] = { "ruby", "-e", "0", NULL };
+					static int proxy_argc = (int)(sizeof(proxy_argv) / sizeof(proxy_argv[0])) - 1;
+					ruby_options(proxy_argc, proxy_argv);
 				}
 				else
 				{

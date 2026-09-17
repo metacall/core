@@ -2,4 +2,4 @@
 # Configure lua project
 #
 
-lua_project(max 0.1.0)
+lua_project(example 0.1.0)

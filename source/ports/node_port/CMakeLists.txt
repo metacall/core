@@ -225,6 +225,12 @@ if(PROJECT_OS_LINUX AND OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_
 	set(TESTS_ENVIRONMENT_VARIABLES_RS)
 endif()
 
+# TODO: MacOS arm64 with Clang and Address & Thread Sanitizer fails to hook napi_register_module_v1
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"
+	AND (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER))
+    return()
+endif()
+
 message(STATUS "Test ${node_port_test_exec}")
 
 add_test(NAME ${node_port_test_exec}

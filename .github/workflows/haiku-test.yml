@@ -31,10 +31,10 @@ jobs:
           fetch-depth: 0
 
       - name: Run Haiku VM
-        uses: cross-platform-actions/action@v1.3.0
+        uses: cross-platform-actions/action@v1.5.0
         with:
           operating_system: haiku
-          version: r1beta5
+          version: r1beta6
           architecture: ${{ matrix.arch }}
           shell: sh
           run: |

@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-lua-test)
+set(target metacall-lua-mixed-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,15 +32,15 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_lua_test.cpp
+	${source_path}/metacall_lua_mixed_test.cpp
 )
 
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
-source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
+source_group_by_path(${include_path} "\\.h$|\\.hpp$"
 	${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
+source_group_by_path(${source_path}  "\\.cpp$|\\.c$|\\.h$|\\.hpp$"
 	${source_group} ${sources})
 
 #
@@ -138,8 +138,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	lua_loader
-	lua-test
-	lua-max
+	lua-mixed-test
 )
 
 #
