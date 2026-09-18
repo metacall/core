@@ -93,6 +93,7 @@ option(OPTION_FORK_SAFE			"Enable fork safety."										ON)
 option(OPTION_THREAD_SAFE		"Enable thread safety."										OFF)
 option(OPTION_COVERAGE			"Enable coverage."											OFF)
 option(OPTION_MEMORY_TRACKER	"Enable memory tracking for reflect data."					ON)
+option(OPTION_BUILD_CACHE		"Cache compiler output with sccache."						OFF)
 
 # Build type
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -187,6 +188,9 @@ if(OPTION_COVERAGE)
 		include(Coverage)
 	endif()
 endif()
+
+# After the options are final, before any target exists
+include(Cache)
 
 #
 # Deployment/installation setup

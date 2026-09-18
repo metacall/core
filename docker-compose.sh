@@ -32,6 +32,7 @@ export METACALL_BUILD_SANITIZER=
 export METACALL_BUILD_CLANG=
 export METACALL_BUILD_COVERAGE=
 export METACALL_BUILD_MEMCHECK=
+export METACALL_BUILD_COMPILER_CACHE="${METACALL_BUILD_COMPILER_CACHE:-}"
 
 # Check if docker compose command is available
 if [ -x "$(command -v docker-compose)" ]; then
@@ -45,6 +46,61 @@ fi
 
 # List of tags
 METACALL_TAGS=("deps" "dev" "runtime" "cli")
+
+# Compose files
+DOCKER_COMPOSE_FILES="-f docker-compose.yml"
+
+# The cache identity comes from the same options that decide the compiler flags
+sub_cache_env() {
+	if [ -z "${METACALL_BUILD_COMPILER_CACHE:-}" ]; then
+		return 0
+	fi
+
+	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+	# Match the compose resolution order, shell first then .env
+	if [ -z "${METACALL_BUILD_TYPE:-}" ] && [ -f "${BASE_DIR}/.env" ]; then
+		METACALL_BUILD_TYPE="$(sed -n 's/^METACALL_BUILD_TYPE=//p' "${BASE_DIR}/.env" | tail -n 1)"
+		export METACALL_BUILD_TYPE
+	fi
+
+	CACHE_OPTIONS="${METACALL_BUILD_SANITIZER:-} ${METACALL_BUILD_MEMCHECK:-} ${METACALL_BUILD_COVERAGE:-} ${METACALL_BUILD_CLANG:-} ${METACALL_BUILD_TYPE:-debug}"
+
+	# The container never sees the host compiler
+	METACALL_CACHE_PROFILE="$(env -u CC -u CXX "$BASE_DIR"/tools/metacall-cache.sh profile $CACHE_OPTIONS)"
+	METACALL_CACHE_SCOPE="$(env -u CC -u CXX "$BASE_DIR"/tools/metacall-cache.sh id $CACHE_OPTIONS)"
+
+	export METACALL_CACHE_PROFILE METACALL_CACHE_SCOPE
+
+	# gha would thrash the 10 GB Actions cache with layers, only registry uses the overlay
+	case "${METACALL_CACHE_BACKEND:-}" in
+	registry)
+		if [ -z "${METACALL_CACHE_REPOSITORY:-}" ]; then
+			echo "Error: METACALL_CACHE_REPOSITORY variable not defined"
+			exit 1
+		fi
+
+		# Registry refs must be lowercase
+		METACALL_CACHE_REPOSITORY="$(printf '%s' "${METACALL_CACHE_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+		METACALL_CACHE_REF="${METACALL_CACHE_REPOSITORY}:${METACALL_CACHE_SCOPE}"
+		export METACALL_CACHE_REPOSITORY METACALL_CACHE_REF
+		DOCKER_COMPOSE_FILES="$DOCKER_COMPOSE_FILES -f tools/docker/docker-compose.ci.yml"
+		;;
+	esac
+}
+
+sub_compose() {
+	sub_cache_env
+
+	# cache-identity mode, the CI resolves the identity before the build
+	if [ "${METACALL_CACHE_IDENTITY:-}" = "1" ]; then
+		echo "METACALL_CACHE_PROFILE=${METACALL_CACHE_PROFILE:-}"
+		echo "METACALL_CACHE_SCOPE=${METACALL_CACHE_SCOPE:-}"
+		return 0
+	fi
+
+	$DOCKER_COMPOSE $DOCKER_COMPOSE_FILES "$@"
+}
 
 # Pull MetaCall Docker Compose
 sub_pull() {
@@ -60,12 +116,12 @@ sub_pull() {
 
 # Build MetaCall Docker Compose
 sub_build() {
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm cli
+	sub_compose build --force-rm cli
 }
 
 # Build MetaCall Docker Compose without cache
 sub_rebuild() {
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm --no-cache cli
+	sub_compose build --force-rm --no-cache cli
 }
 
 # Build MetaCall Docker Compose for testing
@@ -73,7 +129,7 @@ sub_test() {
 	# Define build type
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
+	sub_compose build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Sanitizer for testing
@@ -85,9 +141,9 @@ sub_test_sanitizer() {
 	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
 	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
-		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
+		sub_compose build --force-rm dev
 	else
-		$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev | tee /tmp/metacall-test-output
+		sub_compose build --force-rm dev | tee /tmp/metacall-test-output
 
 		# Retrieve all the summaries
 		SUMMARY=$(grep "SUMMARY:" /tmp/metacall-test-output)
@@ -127,7 +183,7 @@ sub_coverage() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
+	sub_compose build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Valgrind for testing
@@ -138,7 +194,7 @@ sub_test_memcheck() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
+	sub_compose build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Clang for testing
@@ -149,7 +205,7 @@ sub_test_clang() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
+	sub_compose build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with Memory Sanitizer for testing
@@ -163,7 +219,7 @@ sub_test_memory_sanitizer() {
 	# Define build type
 	export METACALL_BUILD_TYPE=debug
 
-	$DOCKER_COMPOSE -f docker-compose.yml build --force-rm dev
+	sub_compose build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with caching
@@ -173,7 +229,7 @@ sub_cache() {
 		exit 1
 	fi
 
-	$DOCKER_COMPOSE -f docker-compose.yml -f tools/docker/docker-compose.cache.yml build cli
+	sub_compose -f tools/docker/docker-compose.cache.yml build cli
 }
 
 # Build MetaCall Docker Compose with multi-platform specifier
@@ -200,7 +256,7 @@ sub_platform() {
 	fi
 
 	# Generate the docker compose file with all .env variables substituted (bake seems not to support this)
-	$DOCKER_COMPOSE -f docker-compose.yml config &> docker-compose.bake.yml
+	sub_compose config > docker-compose.bake.yml
 
 	# Build with Bake, so the image can be loaded into local docker context
 	for tag in "${METACALL_TAGS[@]}"; do
@@ -402,6 +458,7 @@ sub_help() {
 	echo "	test-clang"
 	echo "	test-clang-address-sanitizer"
 	echo "	test-clang-thread-sanitizer"
+	echo "	cache-identity <option>"
 	echo "	cache"
 	echo "	platform"
 	echo "	push"
@@ -410,6 +467,12 @@ sub_help() {
 }
 
 case "$1" in
+	cache-identity)
+		shift
+		export METACALL_CACHE_IDENTITY=1
+		export SANITIZER_SKIP_SUMMARY=1
+		exec "$0" "$@"
+		;;
 	pull)
 		sub_pull
 		;;
