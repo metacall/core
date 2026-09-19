@@ -157,6 +157,13 @@ if(OPTION_BUILD_THREAD_SANITIZER)
 	endif()
 endif()
 
+if(OPTION_TEST_MEMORYCHECK)
+	# C# NetCore instrumentation for Valgrind is not supported right now on MetaCall
+	# and we do not have a way to check if is instrumented or not checking the library
+	# so we skip directly the test to avoid false positives
+	return()
+endif()
+
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )

@@ -41,6 +41,7 @@ BUILD_C=0
 BUILD_COBOL=0
 BUILD_GO=0
 BUILD_RUST=0
+BUILD_LUA=0
 BUILD_ZIG=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
@@ -76,6 +77,7 @@ case "$(uname -m)" in
 			ARCHITECTURE="amd64"
 		fi
 		;;
+	amd64) ARCHITECTURE="amd64";;
 	armv6*) ARCHITECTURE="armv6";;
 	armv7*|armhf|armel)
 		if grep -q "vfpv3" /proc/cpuinfo; then
@@ -191,6 +193,10 @@ sub_options() {
 		if [ "$option" = 'rust' ]; then
 			echo "Build with rust support"
 			BUILD_RUST=1
+		fi
+		if [ "$option" = 'lua' ]; then
+			echo "Build with lua support"
+			BUILD_LUA=1
 		fi
 		if [ "$option" = 'zig' ]; then
 			echo "Build with zig support"
@@ -538,6 +544,20 @@ sub_configure() {
 		fi
 	fi
 
+	# Lua
+	if [ $BUILD_LUA = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_LUA=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_LUA=On"
+		fi
+
+		# TODO
+		# if [ $BUILD_PORTS = 1 ]; then
+		# 	BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_LUA=On"
+		# fi
+	fi
+
 	# Zig
 	if [ $BUILD_ZIG = 1 ]; then
 		# TODO
@@ -685,6 +705,7 @@ sub_help() {
 	echo "	cobol: build with cobol support"
 	echo "	go: build with go support"
 	echo "	rust: build with rust support"
+	echo "	lua: build with lua support"
 	echo "	zig: build with zig support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"

@@ -241,7 +241,9 @@ target_link_options(${target}
 # Standard options
 #
 
-if(NodeJS_VERSION VERSION_GREATER_EQUAL "16.0.0")
+if(NodeJS_VERSION VERSION_GREATER_EQUAL "20.0.0")
+	set_property(TARGET ${target} PROPERTY CXX_STANDARD 20)
+elseif(NodeJS_VERSION VERSION_GREATER_EQUAL "16.0.0")
 	set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
 endif()
 

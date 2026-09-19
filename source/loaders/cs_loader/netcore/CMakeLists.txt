@@ -93,10 +93,23 @@ else()
 endif()
 
 #
+# Project options
+#
+
+set_target_properties(${target}
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
+)
+
+#
 # Tests
 #
 
-if(OPTION_BUILD_TESTS)
+# C# NetCore instrumentation for Valgrind is not supported right now on MetaCall
+# and we do not have a way to check if is instrumented or not checking the library
+# so we skip directly the test to avoid false positives
+if(OPTION_BUILD_TESTS AND NOT OPTION_TEST_MEMORYCHECK)
 	set(DOTNET_TEST_PROJECT ${CMAKE_CURRENT_SOURCE_DIR}/source/Test/CSLoader.Tests.csproj)
 
 	add_test(NAME cs_loader_test
@@ -112,23 +125,13 @@ if(OPTION_BUILD_TESTS)
 
 	include(TestEnvironmentVariables)
 
-	# Lets the net7.0 testhost run on a newer runtime if 7.0 isn't installed
+	# Lets the net7.0 test host run on a newer runtime if 7.0 isn't installed
 	test_environment_variables(cs_loader_test
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 		"DOTNET_ROLL_FORWARD=Major"
 	)
 endif()
-
-#
-# Project options
-#
-
-set_target_properties(${target}
-	PROPERTIES
-	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}"
-)
 
 #
 # Deployment

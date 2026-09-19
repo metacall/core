@@ -17,6 +17,11 @@ if(NOT (OPTION_BUILD_GUIX OR BackwardCpp_SOURCE))
 
 	FetchContent_MakeAvailable(BackwardCpp)
 
+	# Backward is linked into shared libraries, so compile it as PIC
+	set_target_properties(backward PROPERTIES
+		POSITION_INDEPENDENT_CODE ON
+	)
+
 	FetchContent_GetProperties(BackwardCpp
 		SOURCE_DIR BackwardCpp_SOURCE
 		POPULATED BackwardCpp_POPULATED

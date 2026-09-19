@@ -35,47 +35,52 @@ endif()
 # Fix version for using LLVM 16 with instrumentation
 set(RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION 2023-05-24)
 
-if(OPTION_BUILD_ADDRESS_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-	if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-fuchsia" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-linux-gnu" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-apple-darwin" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-fuchsia" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
-		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
-		set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
-		set(SANITIZER_FLAGS "RUSTFLAGS=-Zsanitizer=address")
-		set(NIGHTLY_FLAGS
-			+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
-		)
-		set(BUILD_STD_FLAGS
-			-Zbuild-std
-			--target ${Rust_TOOLCHAIN_TRIPLET}
-		)
-	endif()
-elseif(OPTION_BUILD_THREAD_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-	if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-linux-gnu" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-apple-darwin" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
-		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
-		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
-		set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
-		set(SANITIZER_FLAGS "RUSTFLAGS=-Zsanitizer=thread")
-		set(NIGHTLY_FLAGS
-			+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
-		)
-		set(BUILD_STD_FLAGS
-			-Zbuild-std
-			--target ${Rust_TOOLCHAIN_TRIPLET}
-		)
-	endif()
-else()
+# TODO: Instrumentation does not work properly, Rust is a pain and it's not a good
+# systems programming language, I have wasted so many hours trying to implement this
+# For allowing this we need: https://github.com/metacall/rust-toolchain/blob/9d9f88c3bd52b064058d9fdcfb5d6ab72a91d85f/scripts/build.sh#L38
+# Version v0.0.4 contains sanitizers if you want to waste time on this too
+
+# if(OPTION_BUILD_ADDRESS_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+# 	if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-fuchsia" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-linux-gnu" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-apple-darwin" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-fuchsia" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
+# 		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
+# 		set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
+# 		set(SANITIZER_FLAGS "RUSTFLAGS=-Zsanitizer=address")
+# 		set(NIGHTLY_FLAGS
+# 			+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
+# 		)
+# 		set(BUILD_STD_FLAGS
+# 			-Zbuild-std
+# 			--target ${Rust_TOOLCHAIN_TRIPLET}
+# 		)
+# 	endif()
+# elseif(OPTION_BUILD_THREAD_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+# 	if ("${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-apple-darwin" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "aarch64-unknown-linux-gnu" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-apple-darwin" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-freebsd" OR
+# 		"${Rust_TOOLCHAIN_TRIPLET}" STREQUAL "x86_64-unknown-linux-gnu")
+# 		set(RS_PORT_RUN_INSTRUMENTED_TEST ON)
+# 		set(RUSTUP_NIGTHLY_INSTALL_SRC ON)
+# 		set(SANITIZER_FLAGS "RUSTFLAGS=-Zsanitizer=thread")
+# 		set(NIGHTLY_FLAGS
+# 			+nightly-${RS_PORT_INSTRUMENTATION_NIGHTLY_VERSION}
+# 		)
+# 		set(BUILD_STD_FLAGS
+# 			-Zbuild-std
+# 			--target ${Rust_TOOLCHAIN_TRIPLET}
+# 		)
+# 	endif()
+# else()
 	set(RS_PORT_RUN_INSTRUMENTED_TEST OFF)
 	set(SANITIZER_FLAGS)
 	set(BUILD_STD_FLAGS)
-endif()
+# endif()
 
 # Disable nightly flags if rustup is not available
 if(NOT Rust_RUSTUP_EXECUTABLE)

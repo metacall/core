@@ -1343,7 +1343,7 @@ size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, l
 			size_t script_path_size = strnlen(script_path, LOADER_PATH_SIZE) + 1;
 			size_t path_size = strnlen(path, LOADER_PATH_SIZE) + 1;
 
-			if (portability_path_is_subpath(script_path, script_path_size, path, path_size))
+			if (portability_path_is_subpath(script_path, script_path_size, path, path_size) == 0)
 			{
 				return portability_path_get_relative(script_path, script_path_size, path, path_size, result, LOADER_PATH_SIZE) - 1;
 			}

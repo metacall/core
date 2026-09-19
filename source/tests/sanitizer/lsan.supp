@@ -20,6 +20,7 @@ leak:libc.so
 # NodeJS (TODO: Remove once NodeJS is instrumented)
 #
 leak:libnode*
+leak:libcrypto*
 #
 # Ruby (TODO: Remove once Ruby is instrumented)
 #
