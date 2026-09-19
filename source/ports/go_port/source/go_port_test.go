@@ -2,12 +2,21 @@ package metacall
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"reflect"
+	"runtime/pprof"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 	"unsafe"
+
+	"github.com/joho/godotenv"
 )
 
 func TestMain(m *testing.M) {
@@ -126,6 +135,114 @@ func TestNodeJSAwait(t *testing.T) {
 	wg.Wait()
 }
 
+func TestCPackage(t *testing.T) {
+	options := map[string]interface{}{
+		"libs":                 []string{"/mnt/Work/Projects/MetaCall/core/build/libmetacall.so"},
+		"headers":              []string{"/mnt/Work/Projects/MetaCall/core/source/metacall/include/metacall/metacall.h"},
+		"include_search_paths": []string{"/mnt/Work/Projects/MetaCall/core/source/metacall/include"},
+	}
+	if err := LoadFromPackageEx("c", "metacall", options); err != nil && !strings.Contains(err.Error(), "already loaded") {
+		t.Fatal(err)
+	}
+
+	val, err := Call("metacall_print_info")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	str, ok := val.(string)
+	if !ok {
+		t.Fatalf("failed to convert to string. got: %v", val)
+	}
+	t.Logf("test c package load success. got: %s", str)
+}
+
+func TestJSONConfig(t *testing.T) {
+	configName := "test.json"
+	scriptName := "example.py"
+
+	jsonFile, err := os.Create(configName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer jsonFile.Close()
+	defer os.Remove(configName)
+
+	pyFile, err := os.Create(scriptName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer pyFile.Close()
+	defer os.Remove(scriptName)
+
+	scriptPath := "/mnt/Work/Projects/MetaCall/core/source/ports/go_port/source"
+
+	config := fmt.Sprintf(`{
+	"language_id": "py",
+	"path": "%s",
+	"scripts": [ "%s" ]
+}
+`, scriptPath, scriptName)
+
+	// Create a temp example.py with functions to test
+	scriptContent := `
+def appName():
+    return "metacall"
+`
+	if _, err := pyFile.WriteString(scriptContent); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err = jsonFile.WriteString(config); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := LoadFromConfig(configName); err != nil {
+		t.Fatal(err)
+	}
+
+	val, err := Call("appName")
+	if err != nil {
+		t.Fatal(err)
+	}
+	strVal, ok := val.(string)
+	if !ok {
+		t.Fatalf("failed to convert value %v to string. value is not a string", val)
+	}
+
+	if strVal != "metacall" {
+		t.Fatalf("wrong config value. want: metacall ,got: %s", strVal)
+	}
+}
+
+func TestExecutionPath(t *testing.T) {
+	if err := ExecutionPath("c", "/mnt/Work/Projects/MetaCall/core/source/metacall/include"); err != nil && !strings.Contains(err.Error(), "already loaded") {
+		t.Fatal(err)
+	}
+	if err := ExecutionPath("c", "/mnt/Work/Projects/MetaCall/core/source/metacall/include/metacall"); err != nil && !strings.Contains(err.Error(), "already loaded") {
+		t.Fatal(err)
+	}
+	if err := ExecutionPath("c", "/mnt/Work/Projects/MetaCall/core/build"); err != nil && !strings.Contains(err.Error(), "already loaded") {
+		t.Fatal(err)
+	}
+
+	if err := LoadFromPackage("c", "metacall"); err != nil && !strings.Contains(err.Error(), "failed to load from package") && !strings.Contains(err.Error(), "already loaded") {
+		t.Fatal(err)
+	}
+
+	val, err := Call("metacall_print_info")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, ok := val.(string)
+	if !ok {
+		t.Fatalf("failed to convert to string. got: %v", val)
+	}
+}
+
 func TestValues(t *testing.T) {
 	// BitsPerWord is 32 or 64
 	const BitsPerWord = 32 << (^uint(0) >> 63)
@@ -133,6 +250,15 @@ func TestValues(t *testing.T) {
 	// Calculate MIN and MAX based on BitsPerWord
 	const MIN_LONG = int64(-1 << (BitsPerWord - 1))
 	const MAX_LONG = int64(1<<(BitsPerWord-1) - 1)
+
+	// Create pointer values
+	var nullPtr *int = nil
+	b := byte('H')
+	var bytePtr *byte = &b
+	i := 1
+	var intPtr *int = &i
+	f := 1.5
+	var floatPtr *float64 = &f
 
 	tests := []struct {
 		name  string
@@ -149,8 +275,12 @@ func TestValues(t *testing.T) {
 		{"short_min", int16(-32768), int16(-32768)},
 		{"short_max", int16(32767), int16(32767)},
 		{"int", int(1), int(1)},
-		{"int_min", int(-2147483648), int(-2147483648)},
-		{"int_max", int(2147483647), int(2147483647)},
+		{"int32_min", int32(-2147483648), int(-2147483648)},
+		{"int32_max", int32(2147483647), int(2147483647)},
+		{"int_32sys_min", int(-2147483648), int(-2147483648)},
+		{"int_32sys_max", int(2147483647), int(2147483647)},
+		{"int_64sys_min", int(MIN_LONG), int64(MIN_LONG)},
+		{"int_64sys_max", int(MAX_LONG), int64(MAX_LONG)},
 		{"long", int64(3), int64(3)},
 		{"long_min", MIN_LONG, MIN_LONG},
 		{"long_max", MAX_LONG, MAX_LONG},
@@ -165,6 +295,11 @@ func TestValues(t *testing.T) {
 		{"buffer_nil", *bytes.NewBuffer(nil), *bytes.NewBuffer([]byte{})}, // TODO: how to handle nil buffer?
 		{"buffer_ascii", *bytes.NewBuffer([]byte{'A', 'B', 'C'}), *bytes.NewBuffer([]byte{'A', 'B', 'C'})},
 		{"buffer_unicode", *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9")), *bytes.NewBuffer([]byte("\u00A9\u00A9\u00A9"))},
+		{"null_pointer", unsafe.Pointer(nullPtr), unsafe.Pointer(nullPtr)},
+		{"byte_pointer", unsafe.Pointer(bytePtr), unsafe.Pointer(bytePtr)},
+		{"int_pointer", unsafe.Pointer(intPtr), unsafe.Pointer(intPtr)},
+		{"float_pointer", unsafe.Pointer(floatPtr), unsafe.Pointer(floatPtr)},
+		{"exception", errors.New("test"), errors.New("Error : test")},
 		{"array", [3]interface{}{1, 2, 3}, []interface{}{1, 2, 3}},
 		{"array_bool", [3]bool{true, false, true}, []interface{}{true, false, true}},
 		{"array_char", [3]byte{'1', '2', '3'}, []interface{}{byte('1'), byte('2'), byte('3')}},
@@ -202,6 +337,260 @@ func TestValues(t *testing.T) {
 
 		if v := valueToGo(ptr); !reflect.DeepEqual(v, tt.want) {
 			t.Errorf("name: %s, input: %T,%v, want: %T,%v, got: %T,%v", tt.name, tt.input, tt.input, tt.want, tt.want, v, v)
+		}
+	}
+}
+
+func TestPythonClassAndObject(t *testing.T) {
+	script := `class Rectangle:
+    color = "blue"
+    width = 0
+    height = 0
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    def area(self):
+        return self.width * self.height
+
+def getClass():
+    return Rectangle
+`
+
+	if err := LoadFromMemory("py", script); err != nil {
+		t.Fatalf("failed to load script: %v", err)
+	}
+
+	val, err := Call("getClass")
+	if err != nil {
+		t.Fatalf("failed to get class: %v", err)
+	}
+
+	class, ok := val.(*Class)
+	if !ok || class == nil {
+		t.Fatalf("expected *Class, got %T", val)
+	}
+
+	color, err := class.StaticGet("color")
+	if err != nil || color != "blue" {
+		t.Fatalf("expected static color 'blue', got %v (err: %v)", color, err)
+	}
+
+	if err := class.StaticSet("color", "red"); err != nil {
+		t.Fatalf("failed to set static attribute: %v", err)
+	}
+
+	newColor, err := class.StaticGet("color")
+	if err != nil || newColor != "red" {
+		t.Fatalf("expected updated color 'red', got %v (err: %v)", newColor, err)
+	}
+
+	obj, err := class.New("rectInstance", 10, 20)
+	if err != nil || obj == nil {
+		t.Fatalf("failed to create object instance: %v", err)
+	}
+
+	area, err := obj.Call("area")
+	if err != nil {
+		t.Fatalf("failed to call object method 'area': %v", err)
+	}
+	if area != 200 && area != int64(200) {
+		t.Fatalf("expected area 200, got %v", area)
+	}
+
+	width, err := obj.Get("width")
+	if err != nil || (width != 10 && width != int64(10)) {
+		t.Fatalf("expected width 10, got %v (err: %v)", width, err)
+	}
+
+	if err := obj.Set("width", 15); err != nil {
+		t.Fatalf("failed to set width: %v", err)
+	}
+
+	newArea, err := obj.Call("area")
+	if err != nil {
+		t.Fatalf("failed to call 'area' after update: %v", err)
+	}
+	if newArea != 300 && newArea != int64(300) {
+		t.Fatalf("expected updated area 300, got %v", newArea)
+	}
+}
+
+func TestNodeJSFuture(t *testing.T) {
+	script := `                                                                                                                  
+        module.exports = {                                                                                                           
+            asyncAdd: async (a, b) => {                                                                                                  
+                return a + b;                                                                                                                
+            },                                                                                                                           
+            asyncFail: async (msg) => {                                                                                                  
+                throw new Error(msg);                                                                                                        
+            },                                                                                                                           
+        };                                                                                                                           
+        `
+
+	if err := LoadFromMemory("node", script); err != nil {
+		t.Fatalf("failed to load script: %v", err)
+	}
+
+	val, err := Call("asyncAdd", 20, 30)
+	if err != nil {
+		t.Fatalf("call to asyncAdd failed: %v", err)
+	}
+
+	fut, ok := val.(*Future)
+	if !ok || fut == nil {
+		t.Fatalf("expected *Future, got %T", val)
+	}
+
+	res, err := fut.Await()
+	if err != nil {
+		t.Fatalf("await returned unexpected error: %v", err)
+	}
+	if res != 50 && res != float64(50) {
+		t.Fatalf("expected 50, got %v", res)
+	}
+
+	failVal, err := Await("asyncFail",
+		func(interface{}, interface{}) interface{} {
+			log.Println("from go resolve")
+			return nil
+		},
+		func(interface{}, interface{}) interface{} {
+			log.Println("from go reject")
+			return nil
+		},
+		"database error")
+	if err != nil {
+		t.Fatalf("call to asyncFail failed: %v", err)
+	}
+
+	failFut, ok := failVal.(*Future)
+	if !ok || failFut == nil {
+		t.Fatalf("expected *Future, got %T", failVal)
+	}
+
+	_, awaitErr := failFut.Await()
+	if awaitErr == nil {
+		t.Fatal("expected error from rejected future, got nil")
+	}
+}
+
+func TestGoRoutineLeaks(t *testing.T) {
+	// this test is for race condition when shutdown occur with non-empty queue which triggers a deadlock and a goroutine leak
+	// start the port and fill the queue
+	buffer := "module.exports = { leak_test: (x) => x }"
+	if err := LoadFromMemory("node", buffer); err != nil {
+		t.Fatal(err)
+	}
+
+	const ws = 100
+	stop := make(chan interface{})
+	shutdown := make(chan interface{})
+	var wg sync.WaitGroup
+	// start concurrent callers
+	for i := 0; i < ws; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					Call("leak_test", "warmup")
+				}
+			}
+		}()
+	}
+
+	// call Destroy() to start shutdown concurrently with worker register in queue
+	time.Sleep(2 * time.Millisecond)
+	go func() {
+		Destroy()
+		close(stop)
+		wg.Wait()
+		close(shutdown)
+	}()
+
+	var timedOut bool
+	select {
+	case <-shutdown:
+		timedOut = false
+	case <-time.After(5 * time.Second):
+		timedOut = true
+	}
+	// getting the goroutine leaks and deadlocks profile and store it
+	prof := pprof.Lookup("goroutine")
+	if prof != nil {
+		// create file to store the report
+		fileName := "Goroutine_leaks_report.pprof"
+		if err := godotenv.Load(); err != nil {
+			return
+		}
+		var filePath string
+		if filePath = os.Getenv("PPROFDIR"); filePath == "" {
+			filePath, _ = os.Getwd()
+		}
+		file, err := os.Create(filePath + "/" + fileName)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+		prof.WriteTo(file, 0)
+	}
+	if timedOut {
+		t.Error("Shutdown deadlock: goroutine leaks detected")
+	}
+}
+
+func TestProfilesServer(t *testing.T) {
+	err := godotenv.Load()
+	if err == nil {
+		mode := os.Getenv("MODE")
+		if mode != "debug" {
+			return
+		}
+	}
+	// use http instead of curl for cross-platform support
+	c := &http.Client{}
+	reqs := [3][2]string{
+		{"goroutine", "http://localhost:6060/debug/pprof/goroutine?debug=0"},
+		{"memory", "http://localhost:6060/debug/pprof/heap?debug=0"},
+		{"trace", "http://localhost:6060/debug/pprof/trace?debug=0"},
+	}
+
+	for _, req := range reqs {
+		profileReq, err := http.NewRequest("GET", req[1], nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		profileReq.Header.Set("Accept", "application/json")
+		profileRes, err := c.Do(profileReq)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer profileRes.Body.Close()
+
+		if profileRes.StatusCode != http.StatusOK {
+			t.Fatalf("profile server test response failed with status code %v", profileRes.StatusCode)
+		}
+		data, err := io.ReadAll(profileRes.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// create .pprof file for go tool pprof
+		profFile, err := os.Create(req[0] + ".pprof")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer profFile.Close()
+
+		_, err = profFile.Write(data)
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
