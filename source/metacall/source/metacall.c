@@ -499,7 +499,14 @@ int metacall_load_from_file_ex(const char *tag, const char *paths[], size_t size
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
+		if (paths[iterator] == NULL || strnlen(paths[iterator], LOADER_PATH_SIZE) >= LOADER_PATH_SIZE)
+		{
+			free(path_impl);
+			return 1;
+		}
+
 		strncpy(path_impl[iterator], paths[iterator], LOADER_PATH_SIZE);
+		path_impl[iterator][LOADER_PATH_SIZE - 1] = '\0';
 	}
 
 	int result = loader_load_from_file(tag, (const loader_path *)path_impl, size, handle, data);

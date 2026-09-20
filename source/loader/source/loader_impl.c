@@ -1351,6 +1351,10 @@ size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, l
 	}
 
 	size_t length = strnlen(path, LOADER_PATH_SIZE);
+	if (length >= LOADER_PATH_SIZE)
+	{
+		length = LOADER_PATH_SIZE - 1;
+	}
 
 	memcpy(result, path, length + 1);
 
