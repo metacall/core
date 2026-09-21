@@ -52,3 +52,36 @@ TEST_F(adt_vector_test, DefaultConstructor)
 
 	vector_destroy(v);
 }
+
+TEST_F(adt_vector_test, InsertEmptyShiftsElementsRight)
+{
+	static const size_t count = 5;
+
+	// Front and middle positions must open a gap and keep the other elements in order
+	for (size_t position = 0; position < count; ++position)
+	{
+		vector v = vector_create_type(size_t);
+
+		for (size_t i = 0; i < count; ++i)
+		{
+			vector_push_back_var(v, i);
+		}
+
+		vector_insert_empty(v, position);
+
+		ASSERT_EQ((size_t)vector_size(v), (size_t)(count + 1));
+
+		size_t marker = 100;
+
+		memcpy(vector_at(v, position), &marker, sizeof(size_t));
+
+		for (size_t i = 0; i < count + 1; ++i)
+		{
+			size_t expected = (i < position) ? i : ((i == position) ? marker : i - 1);
+
+			ASSERT_EQ((size_t)vector_at_type(v, i, size_t), (size_t)expected);
+		}
+
+		vector_destroy(v);
+	}
+}
