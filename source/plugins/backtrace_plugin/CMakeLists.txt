@@ -11,8 +11,8 @@ if(NOT (OPTION_BUILD_GUIX OR BackwardCpp_SOURCE))
 	include(FetchContent)
 
 	FetchContent_Declare(BackwardCpp
-		GIT_REPOSITORY https://github.com/mmaher32/backward-cpp
-		GIT_TAG FreeBSD-Support
+		GIT_REPOSITORY https://github.com/metacall/backward-cpp
+		GIT_TAG bad297843bf79918d4893cb196219b46b25d575b
 	)
 
 	FetchContent_MakeAvailable(BackwardCpp)
