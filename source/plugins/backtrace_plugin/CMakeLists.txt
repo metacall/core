@@ -12,7 +12,7 @@ if(NOT (OPTION_BUILD_GUIX OR BackwardCpp_SOURCE))
 
 	FetchContent_Declare(BackwardCpp
 		GIT_REPOSITORY https://github.com/metacall/backward-cpp
-		GIT_TAG 0bfd0a07a61551413ccd2ab9a9099af3bad40681
+		GIT_TAG bad297843bf79918d4893cb196219b46b25d575b
 	)
 
 	FetchContent_MakeAvailable(BackwardCpp)
