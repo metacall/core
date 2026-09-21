@@ -75,12 +75,15 @@ TEST_F(adt_vector_test, InsertEmptyShiftsElementsRight)
 
 		memcpy(vector_at(v, position), &marker, sizeof(size_t));
 
-		for (size_t i = 0; i < count + 1; ++i)
+		for (size_t i = 0; i < count; ++i)
 		{
 			size_t expected = (i < position) ? i : ((i == position) ? marker : i - 1);
 
 			ASSERT_EQ((size_t)vector_at_type(v, i, size_t), (size_t)expected);
 		}
+
+		// The last element is the previous last one, shifted right by the gap
+		ASSERT_EQ((size_t)vector_at_type(v, count, size_t), (size_t)(count - 1));
 
 		vector_destroy(v);
 	}
