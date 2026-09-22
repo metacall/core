@@ -5,13 +5,42 @@ endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/GoLang.cmake)
 
-execute_process(
-    COMMAND clang -print-resource-dir
-    OUTPUT_VARIABLE CLANG_RESOURCE_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+if(CMAKE_HOST_WIN32)
+	set(PATH_SEP ";")
+else()
+	set(PATH_SEP ":")
+endif()
 
-set(CGO_EXTRA_CFLAGS "-I${CLANG_RESOURCE_DIR}/include")
+# Check C compilers
+# cgo supports only GCC, Clang, AppleClang
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
+	execute_process(
+		COMMAND ${CMAKE_C_COMPILER} -print-resource-dir
+		OUTPUT_VARIABLE C_RESOURCE_DIR
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if(CMAKE_HOST_LINUX OR CMAKE_HOST_UNIX)
+		set(C_INCLUDE_PATH_VAL "C_INCLUDE_PATH=/usr/include${PATH_SEP}${C_RESOURCE_DIR}/include")
+	elseif(CMAKE_HOST_WIN32)
+		set(C_INCLUDE_PATH_VAL "C_INCLUDE_PATH=${C_RESOURCE_DIR}/include")
+	elseif(CMAKE_HOST_APPLE)
+		set(C_INCLUDE_PATH_VAL "C_INCLUDE_PATH=${CMAKE_OSX_SYSROOT}/usr/include${PATH_SEP}${C_RESOURCE_DIR}/include")
+	endif()
+elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+	execute_process(
+		COMMAND ${CMAKE_C_COMPILER} -print-file-name=include
+		OUTPUT_VARIABLE C_RESOURCE_DIR
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if(CMAKE_HOST_LINUX OR CMAKE_HOST_UNIX)
+		set(C_INCLUDE_PATH_VAL "C_INCLUDE_PATH=/usr/include${PATH_SEP}${C_RESOURCE_DIR}")
+	elseif(CMAKE_HOST_WIN32)
+		set(C_INCLUDE_PATH_VAL "C_INCLUDE_PATH=${C_RESOURCE_DIR}")
+	endif()
+else()
+	message(WARNING "Unsupported C compiler family: ${CMAKE_C_COMPILER_ID}. cgo supports only GCC, Clang, AppleClang.")
+	set(C_INCLUDE_PATH_VAL "")
+endif()
 
 #
 # Port name and options
@@ -32,14 +61,19 @@ set(sources
 # Flags
 set(GO_FLAGS "-race")
 
+# set to debug so that the pprof server starts and records the data
+set(GO_MODE "MODE=debug")
+
+
 include(Portability)
 
 add_custom_target(${target}
 	COMMAND ${CMAKE_COMMAND}
 		-DGOPATH="${GOPATH}"
 		-DGO_FLAGS="${GO_FLAGS}"
+		-DCC="${CMAKE_C_COMPILER}"
 		-DCMAKE_Go_COMPILER="${CMAKE_Go_COMPILER}"
-		-DCGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include -Wall"
+		-DCGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include ${CGO_EXTRA_CFLAGS} -Wall"
 		-DCGO_LDFLAGS="-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>"
 		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
 		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
@@ -63,8 +97,9 @@ add_test(NAME ${target}
 	COMMAND ${CMAKE_COMMAND}
 		-DGOPATH="${GOPATH}"
 		-DGO_FLAGS="${GO_FLAGS}"
+		-DCC="${CMAKE_C_COMPILER}"
 		-DCMAKE_Go_COMPILER="${CMAKE_Go_COMPILER}"
-		-DCGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include -Wall"
+		-DCGO_CFLAGS="-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include ${CGO_EXTRA_CFLAGS} -Wall"
 		-DCGO_LDFLAGS="-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>"
 		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
 		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
@@ -77,8 +112,6 @@ add_test(NAME ${target}
 set(GO_PPROF_GOROUTINE "${CMAKE_CURRENT_BINARY_DIR}/goroutine.pprof")
 set(MAX_GOROUTINES 20)
 set(PPROF_ENV_VAR "PPROFDIR=${CMAKE_CURRENT_BINARY_DIR}")
-# set to debug so that the pprof server starts and records the data
-set(GO_MODE "MODE=debug")
 
 add_test(NAME GO_pprof
     COMMAND ${CMAKE_COMMAND}
@@ -109,7 +142,7 @@ test_environment_variables(${target}
 	${TESTS_ENVIRONMENT_VARIABLES}
 	${PPROF_ENV_VAR}
 	${GO_MODE}
-	"C_INCLUDE_PATH=/usr/include:${CLANG_RESOURCE_DIR}/include"
+	${C_INCLUDE_PATH_VAL}
 )
 
 #

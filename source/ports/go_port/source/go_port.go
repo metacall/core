@@ -229,12 +229,10 @@ func InitializeUnsafe() error {
 // Start starts the metacall adapter
 func Initialize() error {
 	// load .env file and start profile server only in debug mode
-	err := godotenv.Load()
-	if err == nil {
-		mode := os.Getenv("MODE")
-		if mode == "debug" {
-			startProfilesServer()
-		}
+	_ = godotenv.Load()
+	mode := os.Getenv("MODE")
+	if mode == "debug" {
+		startProfilesServer()
 	}
 
 	lock.Lock()

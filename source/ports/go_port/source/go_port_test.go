@@ -23,6 +23,7 @@ func TestMain(m *testing.M) {
 	if err := Initialize(); err != nil {
 		log.Fatal(err)
 	}
+	_ = godotenv.Load()
 
 	// if benchmark {
 	buffer := "module.exports = { benchmark: async x => x }"
@@ -525,9 +526,6 @@ func TestGoRoutineLeaks(t *testing.T) {
 	if prof != nil {
 		// create file to store the report
 		fileName := "Goroutine_leaks_report.pprof"
-		if err := godotenv.Load(); err != nil {
-			return
-		}
 		var filePath string
 		if filePath = os.Getenv("PPROFDIR"); filePath == "" {
 			filePath, _ = os.Getwd()
@@ -545,12 +543,9 @@ func TestGoRoutineLeaks(t *testing.T) {
 }
 
 func TestProfilesServer(t *testing.T) {
-	err := godotenv.Load()
-	if err == nil {
-		mode := os.Getenv("MODE")
-		if mode != "debug" {
-			return
-		}
+	mode := os.Getenv("MODE")
+	if mode != "debug" {
+		return
 	}
 	// use http instead of curl for cross-platform support
 	c := &http.Client{}
@@ -582,9 +577,6 @@ func TestProfilesServer(t *testing.T) {
 			t.Fatal(err)
 		}
 		// create .pprof file for go tool pprof
-		if err := godotenv.Load(); err != nil {
-			return
-		}
 		var filePath string
 		if filePath = os.Getenv("PPROFDIR"); filePath == "" {
 			filePath, _ = os.Getwd()
