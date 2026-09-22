@@ -21,7 +21,6 @@
 value value_type_cast(value v, type_id id)
 {
 	type_id src_id = value_type_id(v);
-
 	size_t src_size, dest_size;
 
 	/* Invalid source value type */
@@ -119,10 +118,18 @@ value value_type_cast(value v, type_id id)
 	/* Convert single value to array */
 	if (type_id_array(id) == 0 && src_id < TYPE_BUFFER)
 	{
-		value dest = value_type_create(&v, sizeof(value), TYPE_ARRAY);
+		value dest, element = value_type_copy(v);
+
+		if (element == NULL)
+		{
+			return NULL;
+		}
+
+		dest = value_type_create(&element, sizeof(value), TYPE_ARRAY);
 
 		if (dest == NULL)
 		{
+			value_type_destroy(element);
 			return NULL;
 		}
 
@@ -137,8 +144,7 @@ value value_type_cast(value v, type_id id)
 	if (type_id_array(src_id) == 0 && id < TYPE_BUFFER && value_type_size(v) == sizeof(value))
 	{
 		value *values = value_data(v);
-
-		value dest = values[0];
+		value dest = value_type_copy(values[0]);
 
 		if (dest == NULL)
 		{
@@ -165,7 +171,6 @@ value value_type_cast(value v, type_id id)
 	/* TODO: Map */
 
 	src_size = value_type_id_size(src_id);
-
 	dest_size = value_type_id_size(id);
 
 	/* Promote value type */
@@ -184,7 +189,6 @@ value value_type_cast(value v, type_id id)
 		if (type_id_integer(src_id) == 0 && type_id_decimal(id) == 0)
 		{
 			value dest = NULL;
-
 			int64_t data = 0L;
 
 			value_to(v, &data, src_size);
@@ -192,7 +196,6 @@ value value_type_cast(value v, type_id id)
 			if (src_size == dest_size)
 			{
 				value_from((value)(((uintptr_t)v) + src_size), &id, sizeof(type_id));
-
 				dest = v;
 			}
 			else
@@ -245,7 +248,6 @@ value value_type_cast(value v, type_id id)
 		if (type_id_decimal(src_id) == 0 && type_id_integer(id) == 0)
 		{
 			value dest = NULL;
-
 			int64_t data = 0L;
 
 			if (src_id == TYPE_FLOAT)
@@ -264,7 +266,6 @@ value value_type_cast(value v, type_id id)
 			if (src_size == dest_size)
 			{
 				value_from((value)(((uintptr_t)v) + src_size), &id, sizeof(type_id));
-
 				dest = v;
 			}
 			else
