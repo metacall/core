@@ -119,10 +119,18 @@ value value_type_cast(value v, type_id id)
 	/* Convert single value to array */
 	if (type_id_array(id) == 0 && src_id < TYPE_BUFFER)
 	{
-		value dest = value_type_create(&v, sizeof(value), TYPE_ARRAY);
+		value v_copy = value_type_copy(v);
+
+		if (v_copy == NULL)
+		{
+			return NULL;
+		}
+
+		value dest = value_type_create(&v_copy, sizeof(value), TYPE_ARRAY);
 
 		if (dest == NULL)
 		{
+			value_type_destroy(v_copy);
 			return NULL;
 		}
 
@@ -138,7 +146,7 @@ value value_type_cast(value v, type_id id)
 	{
 		value *values = value_data(v);
 
-		value dest = values[0];
+		value dest = value_type_copy(values[0]);
 
 		if (dest == NULL)
 		{
