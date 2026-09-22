@@ -74,20 +74,32 @@ add_test(NAME ${target}
 )
 
 # Define pprof GO test
-set(GO_PPROF_FILE "${CMAKE_CURRENT_BINARY_DIR}/Goroutine_leaks_report.pprof")
+set(GO_PPROF_GOROUTINE "${CMAKE_CURRENT_BINARY_DIR}/goroutine.pprof")
 set(MAX_GOROUTINES 20)
 set(PPROF_ENV_VAR "PPROFDIR=${CMAKE_CURRENT_BINARY_DIR}")
+# set to debug so that the pprof server starts and records the data
+set(GO_MODE "MODE=debug")
 
 add_test(NAME GO_pprof
-    COMMAND sh -c 
-        "if [ ! -f \"${GO_PPROF_FILE}\" ]; then echo \"Error: File ${GO_PPROF_FILE} missing\"; exit 1; fi; COUNT=\$(\"${CMAKE_Go_COMPILER}\" tool pprof -text \"${GO_PPROF_FILE}\" 2>/dev/null | awk '/^Showing nodes accounting for/ {print \$5}' | tr -d ','); COUNT=\${COUNT:-0}; echo \"Goroutine count: \$COUNT (Limit: ${MAX_GOROUTINES})\"; [ \"\$COUNT\" -le ${MAX_GOROUTINES} ]"
+    COMMAND ${CMAKE_COMMAND}
+	-DGOPATH="${GOPATH}"
+	-DCMAKE_Go_COMPILER="${CMAKE_Go_COMPILER}"
+	-DGO_PPROF_TASK="tool"
+	-DGO_PPROF_GOROUTINE="${GO_PPROF_GOROUTINE}"
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/source/go_pprof.cmake
 )
+
 #
-# Define test labels
+# Define go port test labels
 #
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+)
+
+set_tests_properties(${target}
+	PROPERTIES
+	FAIL_REGULAR_EXPRESSION "WARNING: DATA RACE"
 )
 
 include(TestEnvironmentVariables)
@@ -96,5 +108,22 @@ test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 	${PPROF_ENV_VAR}
+	${GO_MODE}
 	"C_INCLUDE_PATH=/usr/include:${CLANG_RESOURCE_DIR}/include"
+)
+
+#
+# Define pprof test labels
+#
+
+# Fail on any number of leaks above 20
+set_tests_properties(GO_pprof
+	PROPERTIES
+	FAIL_REGULAR_EXPRESSION "[2-9][0-9]+ total"
+)
+
+test_environment_variables(GO_pprof
+	""
+	${PPROF_ENV_VAR}
+	${GO_MODE}
 )

@@ -582,7 +582,14 @@ func TestProfilesServer(t *testing.T) {
 			t.Fatal(err)
 		}
 		// create .pprof file for go tool pprof
-		profFile, err := os.Create(req[0] + ".pprof")
+		if err := godotenv.Load(); err != nil {
+			return
+		}
+		var filePath string
+		if filePath = os.Getenv("PPROFDIR"); filePath == "" {
+			filePath, _ = os.Getwd()
+		}
+		profFile, err := os.Create(filePath + "/" + req[0] + ".pprof")
 		if err != nil {
 			t.Fatal(err)
 		}
