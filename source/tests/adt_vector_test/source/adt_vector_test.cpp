@@ -52,3 +52,65 @@ TEST_F(adt_vector_test, DefaultConstructor)
 
 	vector_destroy(v);
 }
+
+static vector insert_empty_create_sequence()
+{
+	vector v = vector_create_type(size_t);
+
+	for (size_t i = 0; i < 4; ++i)
+	{
+		vector_push_back_var(v, i);
+	}
+
+	return v;
+}
+
+TEST_F(adt_vector_test, InsertEmptyAtFront)
+{
+	// 0 1 2 3 -> insert at 0 -> 0 0 1 2 3
+	vector v = insert_empty_create_sequence();
+
+	vector_insert_empty(v, 0);
+
+	ASSERT_EQ((size_t)vector_size(v), (size_t)5);
+	ASSERT_EQ((size_t)vector_at_type(v, 0, size_t), (size_t)0);
+	ASSERT_EQ((size_t)vector_at_type(v, 1, size_t), (size_t)0);
+	ASSERT_EQ((size_t)vector_at_type(v, 2, size_t), (size_t)1);
+	ASSERT_EQ((size_t)vector_at_type(v, 3, size_t), (size_t)2);
+	ASSERT_EQ((size_t)vector_at_type(v, 4, size_t), (size_t)3);
+
+	vector_destroy(v);
+}
+
+TEST_F(adt_vector_test, InsertEmptyAtMiddle)
+{
+	// 0 1 2 3 -> insert at 1 -> 0 1 1 2 3
+	vector v = insert_empty_create_sequence();
+
+	vector_insert_empty(v, 1);
+
+	ASSERT_EQ((size_t)vector_size(v), (size_t)5);
+	ASSERT_EQ((size_t)vector_at_type(v, 0, size_t), (size_t)0);
+	ASSERT_EQ((size_t)vector_at_type(v, 1, size_t), (size_t)1);
+	ASSERT_EQ((size_t)vector_at_type(v, 2, size_t), (size_t)1);
+	ASSERT_EQ((size_t)vector_at_type(v, 3, size_t), (size_t)2);
+	ASSERT_EQ((size_t)vector_at_type(v, 4, size_t), (size_t)3);
+
+	vector_destroy(v);
+}
+
+TEST_F(adt_vector_test, InsertEmptyAtEnd)
+{
+	// 0 1 2 3 -> insert at 4 -> 0 1 2 3 X (nothing to move, last slot uninitialized)
+	vector v = insert_empty_create_sequence();
+
+	vector_insert_empty(v, 4);
+
+	ASSERT_EQ((size_t)vector_size(v), (size_t)5);
+	ASSERT_EQ((size_t)vector_at_type(v, 0, size_t), (size_t)0);
+	ASSERT_EQ((size_t)vector_at_type(v, 1, size_t), (size_t)1);
+	ASSERT_EQ((size_t)vector_at_type(v, 2, size_t), (size_t)2);
+	ASSERT_EQ((size_t)vector_at_type(v, 3, size_t), (size_t)3);
+
+	vector_destroy(v);
+}
