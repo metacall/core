@@ -35,6 +35,7 @@ set(sources
 	${source_path}/reflect_value_cast_float_test.cpp
 	${source_path}/reflect_value_cast_double_test.cpp
 	${source_path}/reflect_value_cast_array_test.cpp
+	${source_path}/reflect_value_cast_sign_extension_test.cpp
 )
 
 # Group source files
