@@ -508,7 +508,7 @@ int metacall_load_from_file_ex(const char *tag, const char *paths[], size_t size
 		}
 
 		length = strnlen(paths[iterator], LOADER_PATH_SIZE);
-		
+
 		if (length >= LOADER_PATH_SIZE)
 		{
 			goto malloc_error;
