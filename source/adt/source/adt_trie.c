@@ -514,14 +514,12 @@ void trie_node_iterate(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_
 
 		while (vector_size(node_stack) > 0)
 		{
-			trie_node *back_ptr = vector_back(node_stack);
+			trie_node back = vector_back_type(node_stack, trie_node);
 
 			vector_pop_back(node_stack);
 
-			if (back_ptr != NULL && *back_ptr != NULL)
+			if (back != NULL)
 			{
-				trie_node back = *back_ptr;
-
 				if (back->childs != NULL)
 				{
 					struct set_iterator_type it = { 0 };
@@ -598,14 +596,12 @@ int trie_node_clear(trie t, trie_node n)
 
 		while (vector_size(node_stack) > 0)
 		{
-			trie_node *back_ptr = vector_back(node_stack);
+			trie_node back = vector_back_type(node_stack, trie_node);
 
 			vector_pop_back(node_stack);
 
-			if (back_ptr != NULL && *back_ptr != NULL)
+			if (back != NULL)
 			{
-				trie_node back = *back_ptr;
-
 				trie_node_free free_node;
 
 				if (back->childs != NULL)
@@ -675,13 +671,12 @@ trie_node trie_node_find(trie t, trie_key key)
 
 		while (vector_size(node_stack) > 0)
 		{
-			trie_node *back_ptr = vector_back(node_stack);
+			trie_node back = vector_back_type(node_stack, trie_node);
 
 			vector_pop_back(node_stack);
 
-			if (back_ptr != NULL && *back_ptr != NULL)
+			if (back != NULL)
 			{
-				trie_node back = *back_ptr;
 				struct set_iterator_type it = { 0 };
 
 				if (back->childs != NULL)
