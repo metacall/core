@@ -28,7 +28,7 @@
 
 value value_type_promotion_integer(value v, type_id id)
 {
-	char buffer[8] = { 0 };
+	int64_t data = 0;
 
 	value promotion = NULL;
 
@@ -44,9 +44,28 @@ value value_type_promotion_integer(value v, type_id id)
 		return v;
 	}
 
-	value_to(v, (void *)&buffer[0], value_type_id_size(v_id));
+	if (v_id == TYPE_BOOL)
+	{
+		data = (int64_t)value_to_bool(v);
+	}
+	else if (v_id == TYPE_CHAR)
+	{
+		data = (int64_t)value_to_char(v);
+	}
+	else if (v_id == TYPE_SHORT)
+	{
+		data = (int64_t)value_to_short(v);
+	}
+	else if (v_id == TYPE_INT)
+	{
+		data = (int64_t)value_to_int(v);
+	}
+	else
+	{
+		return NULL;
+	}
 
-	promotion = value_type_create((void *)&buffer[0], value_type_id_size(id), id);
+	promotion = value_type_create((void *)&data, value_type_id_size(id), id);
 
 	if (promotion == NULL)
 	{

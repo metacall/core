@@ -191,7 +191,26 @@ value value_type_cast(value v, type_id id)
 			value dest = NULL;
 			int64_t data = 0L;
 
-			value_to(v, &data, src_size);
+			if (src_id == TYPE_BOOL)
+			{
+				data = (int64_t)value_to_bool(v);
+			}
+			else if (src_id == TYPE_CHAR)
+			{
+				data = (int64_t)value_to_char(v);
+			}
+			else if (src_id == TYPE_SHORT)
+			{
+				data = (int64_t)value_to_short(v);
+			}
+			else if (src_id == TYPE_INT)
+			{
+				data = (int64_t)value_to_int(v);
+			}
+			else if (src_id == TYPE_LONG)
+			{
+				data = (int64_t)value_to_long(v);
+			}
 
 			if (src_size == dest_size)
 			{
