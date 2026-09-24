@@ -114,3 +114,65 @@ TEST_F(adt_vector_test, InsertEmptyAtEnd)
 
 	vector_destroy(v);
 }
+
+TEST_F(adt_vector_test, RemoveKeepsCapacity)
+{
+	// 0 .. 15 fills the minimum capacity, removing must not grow it
+	vector v = vector_create_type(size_t);
+
+	for (size_t i = 0; i < 16; ++i)
+	{
+		vector_push_back_var(v, i);
+	}
+
+	ASSERT_EQ((size_t)vector_capacity(v), (size_t)16);
+
+	vector_pop_back(v);
+
+	ASSERT_EQ((size_t)vector_size(v), (size_t)15);
+	ASSERT_EQ((size_t)vector_capacity(v), (size_t)16);
+
+	vector_pop_front(v);
+
+	ASSERT_EQ((size_t)vector_size(v), (size_t)14);
+	ASSERT_EQ((size_t)vector_capacity(v), (size_t)16);
+
+	vector_erase(v, 0);
+
+	ASSERT_EQ((size_t)vector_size(v), (size_t)13);
+	ASSERT_EQ((size_t)vector_capacity(v), (size_t)16);
+	ASSERT_EQ((size_t)vector_at_type(v, 0, size_t), (size_t)2);
+	ASSERT_EQ((size_t)vector_back_type(v, size_t), (size_t)14);
+
+	vector_destroy(v);
+}
+
+TEST_F(adt_vector_test, RemoveShrinksCapacity)
+{
+	// 0 .. 63, capacity only shrinks once size drops below capacity / 8
+	vector v = vector_create_reserve_type(size_t, 64);
+
+	for (size_t i = 0; i < 64; ++i)
+	{
+		vector_push_back_var(v, i);
+	}
+
+	while (vector_size(v) > 8)
+	{
+		vector_pop_back(v);
+	}
+
+	ASSERT_EQ((size_t)vector_capacity(v), (size_t)64);
+
+	vector_pop_back(v);
+
+	ASSERT_EQ((size_t)vector_size(v), (size_t)7);
+	ASSERT_EQ((size_t)vector_capacity(v), (size_t)16);
+
+	for (size_t i = 0; i < 7; ++i)
+	{
+		ASSERT_EQ((size_t)vector_at_type(v, i, size_t), (size_t)i);
+	}
+
+	vector_destroy(v);
+}
