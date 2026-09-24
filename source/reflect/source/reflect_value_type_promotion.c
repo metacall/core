@@ -50,7 +50,7 @@ value value_type_promotion_integer(value v, type_id id)
 	}
 	else if (v_id == TYPE_CHAR)
 	{
-		data = (int64_t)value_to_char(v);
+		data = (int64_t)(signed char)value_to_char(v);
 	}
 	else if (v_id == TYPE_SHORT)
 	{

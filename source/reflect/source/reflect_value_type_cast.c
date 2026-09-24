@@ -197,7 +197,7 @@ value value_type_cast(value v, type_id id)
 			}
 			else if (src_id == TYPE_CHAR)
 			{
-				data = (int64_t)value_to_char(v);
+				data = (int64_t)(signed char)value_to_char(v);
 			}
 			else if (src_id == TYPE_SHORT)
 			{
