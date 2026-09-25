@@ -47,3 +47,20 @@ TEST_F(metacall_path_overflow_test, DefaultConstructor)
 
 	metacall_destroy();
 }
+
+TEST_F(metacall_path_overflow_test, ExecutionPathOverflow)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+	/* metacall_execution_path() copies into a LOADER_PATH_SIZE stack buffer
+	 * via strncpy(path_impl, path, LOADER_PATH_SIZE - 1) with no check that
+	 * `path` actually terminates within that many bytes first -- the same
+	 * pattern already fixed above for metacall_load_from_file_ex(). A
+	 * legitimate (properly null-terminated) path this long is silently
+	 * truncated with no terminator instead of being rejected.
+	 */
+	std::string too_long_path(5000, 'A');
+	EXPECT_NE((int)0, (int)metacall_execution_path("mock", too_long_path.c_str()));
+
+	metacall_destroy();
+}
