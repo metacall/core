@@ -1,3 +1,4 @@
+#include <loader/loader.h>
 /*
  *	MetaCall Library by Parra Studios
  *	A library for providing a foreign function interface calls.
@@ -52,15 +53,14 @@ TEST_F(metacall_path_overflow_test, ExecutionPathOverflow)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* metacall_execution_path() copies into a LOADER_PATH_SIZE stack buffer
-	 * via strncpy(path_impl, path, LOADER_PATH_SIZE - 1) with no check that
-	 * `path` actually terminates within that many bytes first -- the same
-	 * pattern already fixed above for metacall_load_from_file_ex(). A
-	 * legitimate (properly null-terminated) path this long is silently
-	 * truncated with no terminator instead of being rejected.
-	 */
-	std::string too_long_path(5000, 'A');
-	EXPECT_NE((int)0, (int)metacall_execution_path("mock", too_long_path.c_str()));
+	std::string path_fit(LOADER_PATH_SIZE - 1, 'a');
+	EXPECT_EQ(metacall_execution_path("mock", path_fit.c_str()), 0);
+
+	std::string path_exact(LOADER_PATH_SIZE, 'b');
+	EXPECT_NE(metacall_execution_path("mock", path_exact.c_str()), 0);
+
+	std::string path_overflow(LOADER_PATH_SIZE + 1, 'c');
+	EXPECT_NE(metacall_execution_path("mock", path_overflow.c_str()), 0);
 
 	metacall_destroy();
 }
