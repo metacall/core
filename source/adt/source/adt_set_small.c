@@ -147,6 +147,12 @@ int set_small_insert(set_small s, const char *key, void *value)
 		return 0;
 	}
 
+	if (s->size == s->capacity)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set small insert, the set is full");
+		return 1;
+	}
+
 	/* Element not found in the array, insert it */
 	element = &s->data[s->size++];
 	element->key.integer = set_key.integer;

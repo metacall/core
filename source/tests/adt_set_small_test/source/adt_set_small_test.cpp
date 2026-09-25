@@ -146,3 +146,24 @@ TEST_F(adt_set_small_test, DefaultConstructor)
 		set_small_destroy(s);
 	}
 }
+
+TEST_F(adt_set_small_test, InsertWhenFull)
+{
+	int a = 1, b = 2, c = 3;
+
+	set_small s = set_small_create(2);
+
+	EXPECT_EQ((int)0, (int)set_small_insert(s, "a", &a));
+	EXPECT_EQ((int)0, (int)set_small_insert(s, "b", &b));
+
+	/* New key does not fit */
+	EXPECT_EQ((int)1, (int)set_small_insert(s, "c", &c));
+	EXPECT_EQ((size_t)2, (size_t)set_small_size(s));
+	EXPECT_EQ((int *)NULL, (int *)set_small_get(s, "c"));
+
+	/* Overwriting an existing key still works */
+	EXPECT_EQ((int)0, (int)set_small_insert(s, "a", &c));
+	EXPECT_EQ((int *)&c, (int *)set_small_get(s, "a"));
+
+	set_small_destroy(s);
+}
