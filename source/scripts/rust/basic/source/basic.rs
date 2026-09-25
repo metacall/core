@@ -7,6 +7,10 @@ pub fn add(num_1: i32, num_2: i32) -> i32 {
     num_1 + num_2
 }
 
+pub fn identity<T>(value: T) -> T {
+    value
+}
+
 pub fn add2(num_1: i32, num_2: i32) -> i32 {
     num_1 + num_2
 }

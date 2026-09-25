@@ -27,6 +27,43 @@ fn generate_function_wrapper(functions: &[Function]) -> String {
     ret
 }
 
+fn generate_instantiated_function_wrapper(template: &Function, types: &[String]) -> String {
+    let wrapper_name = template.instantiate_name(types.to_vec());
+
+    let args = template
+        .args
+        .iter()
+        .map(|arg| format!("{}: {}", arg.name, types[0]))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let return_type = types[0].clone();
+
+    let call_args = template
+        .args
+        .iter()
+        .map(|arg| arg.name.clone())
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    format!(
+        "pub fn {wrapper_name}({args}) -> {return_type} {{\n\
+            {name}::<{types}>({call_args})\n\
+        }}\n\
+        #[unsafe(no_mangle)]\n\
+        pub unsafe extern \"C\" fn rs_loader_impl_register_fn_{wrapper_name}() -> *mut Function {{\n\
+            let f = Function::new({wrapper_name});\n\
+            Box::into_raw(Box::new(f))\n\
+        }}\n",
+        wrapper_name = wrapper_name,
+        args = args,
+        return_type = return_type,
+        name = template.name,
+        types = types.join(", "),
+        call_args = call_args,
+    )
+}
+
 fn generate_class_wrapper(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
@@ -195,6 +232,14 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper(&callbacks.functions);
             content.push_str(&function_wrapper);
+
+            for template in &callbacks.templates {
+                if template.name == "identity" {
+                    let instantiated_wrapper =
+                        generate_instantiated_function_wrapper(template, &["i32".to_string()]);
+                    content.push_str(&instantiated_wrapper);
+                }
+            }
             let class_wrapper =
                 generate_class_wrapper(&callbacks.classes.iter().collect::<Vec<_>>());
             content.push_str(&class_wrapper);

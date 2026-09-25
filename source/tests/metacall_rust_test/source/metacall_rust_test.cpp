@@ -79,6 +79,12 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 	}
 
 	{
+		void *ret = metacall("identity", 10);
+		EXPECT_EQ((int)10, (int)metacall_value_to_int(ret));
+		metacall_value_destroy(ret);
+	}
+
+	{
 		void *ret = metacall("run");
 		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
 		metacall_value_destroy(ret);

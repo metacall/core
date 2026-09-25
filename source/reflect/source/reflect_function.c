@@ -25,6 +25,8 @@
 
 #include <reflect/reflect_memory_tracker.h>
 
+#include <reflect/reflect_template.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
@@ -39,6 +41,7 @@ struct function_type
 	threading_atomic_ref_count_type ref;
 	enum async_id async;
 	void *data;
+	reflect_template tpl;
 };
 
 reflect_memory_tracker(function_stats);
@@ -79,6 +82,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 	func->impl = impl;
 	func->async = SYNCHRONOUS;
 	func->data = NULL;
+	func->tpl = NULL;
 
 	func->s = signature_create(args_count);
 
@@ -177,6 +181,23 @@ void *function_closure(function func)
 	}
 
 	return NULL;
+}
+
+int function_set_template(function func, reflect_template tpl)
+{
+	if (func == NULL)
+	{
+		return 1;
+	}
+
+	func->tpl = tpl;
+
+	return 0;
+}
+
+reflect_template function_template(function func)
+{
+	return func != NULL ? func->tpl : NULL;
 }
 
 const char *function_name(function func)

@@ -8,6 +8,17 @@ pub type OpaqueTypeList = *mut OpaqueType;
 mod class;
 mod function;
 mod object;
+
+#[repr(C)]
+pub struct TemplateArgument {
+    pub name: *const c_char,
+    pub kind: c_int,
+    pub value: OpaqueType,
+}
+
+pub const TEMPLATE_ARGUMENT_TYPE: c_int = 0;
+pub const TEMPLATE_ARGUMENT_TEMPLATE: c_int = 1;
+
 pub use function::{
     function_singleton, register_function, FunctionCreate, FunctionInputSignature,
     FunctionRegistration,
@@ -62,6 +73,10 @@ extern "C" {
 
     fn function_name(function: OpaqueType) -> *mut c_char;
 
+    fn value_create_int(i: c_int) -> OpaqueType;
+
+    fn function_call(func: OpaqueType, args: OpaqueTypeList, size: usize) -> OpaqueType;
+
     fn function_signature(function: OpaqueType) -> OpaqueType;
 
     fn value_create_function(function: OpaqueType) -> OpaqueType;
@@ -115,9 +130,139 @@ extern "C" {
         singleton: OpaqueType,
         class: OpaqueType,
     ) -> OpaqueType;
+    fn value_to_int(v: OpaqueType) -> i32;
 
     fn metacall_loader(tag: *const c_char) -> OpaqueType;
     fn loader_is_destroyed(loader_impl: OpaqueType) -> i32;
+
+    fn template_create(name: *const c_char, template_type: c_int) -> OpaqueType;
+
+    fn template_add_parameter(tpl: OpaqueType, parameter: *const c_char) -> c_int;
+
+    fn template_name(tpl: OpaqueType) -> *const c_char;
+
+    fn template_type(tpl: OpaqueType) -> c_int;
+
+    fn template_parameter_count(tpl: OpaqueType) -> usize;
+
+    fn template_parameter(tpl: OpaqueType, index: usize) -> *const c_char;
+
+    fn template_destroy(tpl: OpaqueType) -> ();
+
+    fn template_instantiate_function(tpl: OpaqueType, args: OpaqueType, size: usize) -> OpaqueType;
+}
+
+pub const TEMPLATE_TYPE_FUNCTION: c_int = 0;
+pub const TEMPLATE_TYPE_CLASS: c_int = 1;
+
+/// Creates a MetaCall function from an implementation and interface.
+///
+/// # Safety
+/// `function_impl` and `singleton` must be valid MetaCall pointers.
+pub unsafe fn create_function(
+    name: &str,
+    args_count: usize,
+    function_impl: OpaqueType,
+    singleton: OpaqueType,
+) -> OpaqueType {
+    let name = CString::new(name).expect("function name contains NUL");
+
+    unsafe { function_create(name.as_ptr(), args_count, function_impl, singleton) }
+}
+
+/// # Safety
+/// `name` must be a valid MetaCall template name.
+pub unsafe fn create_template(name: &str, template_type: c_int) -> OpaqueType {
+    let name = CString::new(name).expect("template name contains NUL");
+
+    unsafe { template_create(name.as_ptr(), template_type) }
+}
+
+/// # Safety
+/// `tpl` must be a valid reflect_template.
+pub unsafe fn add_template_parameter(tpl: OpaqueType, parameter: &str) -> c_int {
+    let parameter = CString::new(parameter).expect("template parameter contains NUL");
+
+    unsafe { template_add_parameter(tpl, parameter.as_ptr()) }
+}
+
+/// # Safety
+/// `tpl` must be a valid `reflect_template`.
+pub unsafe fn get_template_name(tpl: OpaqueType) -> *const c_char {
+    unsafe { template_name(tpl) }
+}
+
+/// # Safety
+/// `tpl` must be a valid `reflect_template`.
+pub unsafe fn get_template_type(tpl: OpaqueType) -> c_int {
+    unsafe { template_type(tpl) }
+}
+
+/// # Safety
+/// `tpl` must be a valid `reflect_template`.
+pub unsafe fn get_template_parameter_count(tpl: OpaqueType) -> usize {
+    unsafe { template_parameter_count(tpl) }
+}
+
+/// # Safety
+/// `tpl` must be a valid `reflect_template` and `index` must be within
+/// the template's parameter range.
+pub unsafe fn get_template_parameter(tpl: OpaqueType, index: usize) -> *const c_char {
+    unsafe { template_parameter(tpl, index) }
+}
+
+/// # Safety
+/// `tpl` must be a valid `reflect_template` that is no longer in use.
+pub unsafe fn destroy_template(tpl: OpaqueType) {
+    unsafe {
+        template_destroy(tpl);
+    }
+}
+
+/// # Safety
+/// `tpl` must be a valid function template and `args` must point to a valid
+/// array of template arguments with `size` elements.
+pub unsafe fn instantiate_template_function(
+    tpl: OpaqueType,
+    args: &mut [TemplateArgument],
+) -> OpaqueType {
+    unsafe { template_instantiate_function(tpl, args.as_mut_ptr() as OpaqueType, args.len()) }
+}
+
+/// # Safety
+/// `loader_impl` must be a valid loader implementation and `name` must
+/// identify a valid MetaCall type.
+pub unsafe fn get_loader_type(loader_impl: OpaqueType, name: &str) -> OpaqueType {
+    let name = CString::new(name).expect("type name contains NUL");
+
+    unsafe { loader_impl_type(loader_impl, name.as_ptr()) }
+}
+
+/// Creates a MetaCall integer value.
+///
+/// # Safety
+/// The returned opaque pointer is owned by the caller and must be used
+/// according to the MetaCall value API.
+pub unsafe fn create_int_value(value: i32) -> OpaqueType {
+    unsafe { value_create_int(value as c_int) }
+}
+
+/// Calls a MetaCall function with the provided arguments.
+///
+/// # Safety
+/// `function` must be a valid MetaCall function pointer, and every element
+/// of `args` must be a valid MetaCall value pointer compatible with the
+/// function signature.
+pub unsafe fn call_function(function: OpaqueType, args: &mut [OpaqueType]) -> OpaqueType {
+    unsafe { function_call(function, args.as_mut_ptr(), args.len()) }
+}
+
+/// Converts a MetaCall value containing an Int into an `i32`.
+///
+/// # Safety
+/// `v` must be a valid MetaCall value containing an integer.
+pub unsafe fn int_from_value(v: OpaqueType) -> i32 {
+    unsafe { value_to_int(v) }
 }
 
 /// # Safety

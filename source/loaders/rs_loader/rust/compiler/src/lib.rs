@@ -370,7 +370,6 @@ pub struct Function {
     name: String,
     ret: Option<FunctionParameter>,
     args: Vec<FunctionParameter>,
-    #[allow(dead_code)]
     generics: Vec<String>,
 }
 
@@ -390,6 +389,18 @@ impl Function {
         function.name = format!("{}::<{}>", self.name, types.join(", "));
 
         function
+    }
+
+    pub fn instantiate_name(&self, types: Vec<String>) -> String {
+        format!(
+            "{}_{}",
+            self.name,
+            types
+                .iter()
+                .map(|t| t.replace("::", "_"))
+                .collect::<Vec<_>>()
+                .join("_")
+        )
     }
 }
 
@@ -413,6 +424,7 @@ pub struct Class {
 pub struct CompilerState {
     output: PathBuf,
     functions: Vec<Function>,
+    templates: Vec<Function>,
     classes: Vec<Class>,
 }
 
@@ -428,6 +440,7 @@ pub struct CompilerCallbacks {
     is_parsing: bool,
     destination: PathBuf,
     functions: Vec<Function>,
+    templates: Vec<Function>,
     classes: Vec<Class>,
 }
 
@@ -436,7 +449,14 @@ impl CompilerCallbacks {
         let mut item_visitor = ItemVisitor::new();
         rustc_ast::visit::walk_crate(&mut item_visitor, krate);
         self.classes = item_visitor.classes.into_values().collect();
-        self.functions = item_visitor.functions;
+
+        for function in item_visitor.functions {
+            self.functions.push(function);
+        }
+
+        for template in item_visitor.templates {
+            self.templates.push(template);
+        }
     }
 
     fn analyze_metadata<'tcx>(&mut self, tcx: TyCtxt<'tcx>) {
@@ -518,17 +538,36 @@ impl CompilerCallbacks {
                                     .enumerate()
                                     .map(|(i, _)| rustc_span::Ident::from_str(&format!("arg{}", i)))
                                     .collect();
+
+                                let generics = tcx
+                                    .generics_of(fn_def_id)
+                                    .own_params
+                                    .iter()
+                                    .map(|param| param.name.to_string())
+                                    .collect::<Vec<String>>();
+
                                 let function = middle::handle_fn(
                                     assoc.ident(tcx).to_string(),
                                     &fn_sig,
                                     &names,
+                                    generics,
                                 );
-                                if function.name == "new" {
-                                    class.constructor = Some(function);
-                                } else if function.has_self() {
-                                    class.methods.push(function);
+
+                                let is_generic = !function.generics.is_empty();
+
+                                if is_generic {
+                                    self.templates.push(function.clone());
                                 } else {
-                                    class.static_methods.push(function);
+                                    self.functions.push(function.clone());
+                                }
+                                if function.generics.is_empty() {
+                                    if function.name == "new" {
+                                        class.constructor = Some(function);
+                                    } else if function.has_self() {
+                                        class.methods.push(function);
+                                    } else {
+                                        class.static_methods.push(function);
+                                    }
                                 }
                             }
                         }
@@ -546,8 +585,20 @@ impl CompilerCallbacks {
                         .enumerate()
                         .map(|(i, _)| rustc_span::Ident::from_str(&format!("arg{}", i)))
                         .collect();
-                    self.functions
-                        .push(middle::handle_fn(ident.to_string(), &fn_sig, &names));
+
+                    let generics = tcx
+                        .generics_of(def_id)
+                        .own_params
+                        .iter()
+                        .map(|param| param.name.to_string())
+                        .collect::<Vec<String>>();
+                    let function = middle::handle_fn(ident.to_string(), &fn_sig, &names, generics);
+
+                    if function.generics.is_empty() {
+                        self.functions.push(function);
+                    } else {
+                        self.templates.push(function);
+                    }
                 }
 
                 _ => {}
@@ -706,6 +757,7 @@ enum ImplKind {
 struct ItemVisitor {
     functions: Vec<Function>,
     classes: HashMap<String, Class>,
+    templates: Vec<Function>,
 }
 
 impl ItemVisitor {
@@ -713,6 +765,7 @@ impl ItemVisitor {
         Self {
             functions: vec![],
             classes: HashMap::new(),
+            templates: vec![],
         }
     }
 }
@@ -813,8 +866,14 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
 
             ItemKind::Fn(box fn_item) => {
                 let item = fn_item.ident.to_string();
-                self.functions
-                    .push(ast::handle_fn(item, &fn_item.sig, &fn_item.generics));
+
+                let function = ast::handle_fn(item, &fn_item.sig, &fn_item.generics);
+
+                if function.generics.is_empty() {
+                    self.functions.push(function);
+                } else {
+                    self.templates.push(function);
+                }
             }
             _ => {}
         }
@@ -1000,6 +1059,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         is_parsing: true,
         destination,
         functions: Default::default(),
+        templates: Default::default(),
         classes: Default::default(),
     };
 
@@ -1043,6 +1103,16 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     // Parse fails, stop
     parsing_result?;
 
+    println!("Functions:");
+    for f in &callbacks.functions {
+        println!("  {}", f.name);
+    }
+
+    println!("Templates:");
+    for t in &callbacks.templates {
+        println!("  {} {:?}", t.name, t.generics);
+    }
+
     let mut patched_callback = generate_wrapper(callbacks).expect("Unable to generate wrapper");
 
     // Generate binary
@@ -1052,6 +1122,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
             functions: patched_callback.functions,
+            templates: patched_callback.templates,
             classes: patched_callback.classes,
         }),
         Err(err) => {
@@ -1124,6 +1195,42 @@ mod tests {
             })) {
                 Err(comp_err) => assert!(false, "compilation failed: {}", comp_err.errors),
                 Ok(comp_state) => assert!(comp_state.output.exists()),
+            }
+        })
+    }
+
+    #[test]
+    fn test_compile_generics() {
+        run_test(|| {
+            let result = compile(Source::build(Source::Memory {
+                name: String::from("generic_test.rs"),
+                code: String::from(
+                    r#"
+                pub fn add<T>(a: T, b: T) -> T {
+                    a
+                }
+
+                pub fn normal(a: i32) -> i32 {
+                    a
+                }
+                "#,
+                ),
+            }));
+
+            match result {
+                Err(comp_err) => {
+                    assert!(false, "compilation failed: {}", comp_err.errors)
+                }
+
+                Ok(comp_state) => {
+                    assert!(comp_state.functions.iter().any(|f| f.name == "normal"));
+
+                    assert!(comp_state.templates.iter().any(|f| f.name == "add"));
+
+                    assert!(!comp_state.functions.iter().any(|f| f.name == "add"));
+
+                    assert!(!comp_state.templates.iter().any(|f| f.name == "normal"));
+                }
             }
         })
     }

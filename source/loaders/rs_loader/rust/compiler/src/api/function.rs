@@ -92,6 +92,7 @@ pub struct FunctionRegistration {
     pub function_create: FunctionCreate,
     pub ret: Option<String>,
     pub input: Vec<FunctionInputSignature>,
+    pub template: Option<OpaqueType>,
 }
 
 pub fn register_function(function_registration: FunctionRegistration) {
