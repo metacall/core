@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #include <cs_loader/netcore.h>
 
@@ -42,6 +42,46 @@ reflect_function *netcore::get_functions(int *count)
 	return this->functions;
 }
 
+reflect_class *netcore::get_classes(int *count)
+{
+	this->core_get_classes(&this->classes_count, this->classes);
+
+	*count = this->classes_count;
+
+	return this->classes;
+}
+
+reflect_constructor *netcore::get_constructors(int *count)
+{
+	this->core_get_constructors(
+		&this->constructors_count,
+		this->constructors);
+
+	*count = this->constructors_count;
+
+	return this->constructors;
+}
+
+reflect_method *netcore::get_methods(int *count)
+{
+	this->core_get_methods(&this->methods_count, this->methods);
+
+	*count = this->methods_count;
+
+	return this->methods;
+}
+
+reflect_attribute *netcore::get_attributes(int *count)
+{
+	this->core_get_attributes(
+		&this->attributes_count,
+		this->attributes);
+
+	*count = this->attributes_count;
+
+	return this->attributes;
+}
+
 bool netcore::create_delegates()
 {
 	if (!this->create_delegate(this->delegate_execution_path_w, delegate_cast(&this->core_execution_path_w)))
@@ -55,6 +95,66 @@ bool netcore::create_delegates()
 	}
 
 	if (!this->create_delegate(this->delegate_get_functions, delegate_cast(&this->core_get_functions)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_classes, delegate_cast(&this->core_get_classes)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_constructors, delegate_cast(&this->core_get_constructors)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_methods, delegate_cast(&this->core_get_methods)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_attributes, delegate_cast(&this->core_get_attributes)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_create_object, delegate_cast(&this->core_create_object)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_invoke_object, delegate_cast(&this->core_invoke_object)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_invoke_static, delegate_cast(&this->core_invoke_static)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_object_attribute, delegate_cast(&this->core_get_object_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_set_object_attribute, delegate_cast(&this->core_set_object_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_static_attribute, delegate_cast(&this->core_get_static_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_set_static_attribute, delegate_cast(&this->core_set_static_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_destroy_object, delegate_cast(&this->core_destroy_object)))
 	{
 		return false;
 	}
@@ -286,6 +386,160 @@ execution_result *netcore::execute_with_params(const wchar_t *function, paramete
 	}
 
 	return NULL;
+}
+
+void *netcore::create_object(const char *class_name, parameters *params, long size)
+{
+	try
+	{
+		return this->core_create_object(class_name, params, size);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+execution_result *netcore::invoke_object(void *object, const char *method, parameters *params, long size)
+{
+	try
+	{
+		return this->core_invoke_object(object, method, params, size);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+execution_result *netcore::invoke_static(const char *class_name, const char *method, parameters *params, long size)
+{
+	try
+	{
+		return this->core_invoke_static(
+			class_name,
+			method,
+			params,
+			size);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+execution_result *netcore::get_object_attribute(void *object, const char *attribute)
+{
+	try
+	{
+		return this->core_get_object_attribute(object, attribute);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+bool netcore::set_object_attribute(void *object, const char *attribute, parameters *param)
+{
+	try
+	{
+		return this->core_set_object_attribute(
+				   object,
+				   attribute,
+				   param) == 0;
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return false;
+}
+
+execution_result *netcore::get_static_attribute(const char *class_name, const char *attribute)
+{
+	try
+	{
+		return this->core_get_static_attribute(
+			class_name,
+			attribute);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+bool netcore::set_static_attribute(const char *class_name, const char *attribute, parameters *param)
+{
+	try
+	{
+		return this->core_set_static_attribute(
+				   class_name,
+				   attribute,
+				   param) == 0;
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return false;
+}
+
+void netcore::destroy_object(void *object)
+{
+	try
+	{
+		this->core_destroy_object(object);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
 }
 
 void netcore::destroy_execution_result(execution_result *er)
