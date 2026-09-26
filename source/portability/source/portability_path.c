@@ -172,14 +172,14 @@ size_t portability_path_get_name_canonical(const char *const path, const size_t 
 
 size_t portability_path_get_fullname(const char *path, size_t path_size, char *name, size_t name_size)
 {
-	if (path == NULL || name == NULL)
+	if (path == NULL || name == NULL || name_size == 0)
 	{
 		return 0;
 	}
 
 	size_t i, count;
 
-	for (i = 0, count = 0; path[i] != '\0' && i < path_size && count < name_size; ++i)
+	for (i = 0, count = 0; path[i] != '\0' && i < path_size && count < name_size - 1; ++i)
 	{
 		name[count++] = path[i];
 
@@ -271,7 +271,7 @@ size_t portability_path_get_module_name(const char *path, size_t path_size, cons
 
 size_t portability_path_get_directory(const char *path, size_t path_size, char *directory, size_t directory_size)
 {
-	if (path == NULL || directory == NULL)
+	if (path == NULL || directory == NULL || directory_size == 0)
 	{
 		return 0;
 	}
@@ -286,6 +286,11 @@ size_t portability_path_get_directory(const char *path, size_t path_size, char *
 		{
 			last = i + 1;
 		}
+	}
+
+	if (last >= directory_size)
+	{
+		last = directory_size - 1;
 	}
 
 	directory[last] = '\0';

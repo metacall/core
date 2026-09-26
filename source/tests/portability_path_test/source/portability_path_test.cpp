@@ -305,6 +305,38 @@ TEST_F(portability_path_test, portability_path_test_get_path_of_filepath)
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
+TEST_F(portability_path_test, portability_path_test_get_fullname_exact_buffer)
+{
+	static const char base[] = "/usr/lib/libfoo.so";
+
+	char name[16];
+
+	memset(name, 'x', sizeof(name));
+
+	/* libfoo.so is 9 chars, a 9 byte buffer has no room for the terminator */
+	size_t size = portability_path_get_fullname(base, sizeof(base), name, 9);
+
+	EXPECT_STREQ(name, "libfoo.s");
+	EXPECT_EQ((size_t)size, (size_t)9);
+	EXPECT_EQ((char)'x', (char)name[9]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_path_of_path_exact_buffer)
+{
+	static const char base[] = "/usr/lib/";
+
+	char path[16];
+
+	memset(path, 'x', sizeof(path));
+
+	/* /usr/lib/ is 9 chars, a 9 byte buffer has no room for the terminator */
+	size_t size = portability_path_get_directory(base, sizeof(base), path, 9);
+
+	EXPECT_STREQ(path, "/usr/lib");
+	EXPECT_EQ((size_t)size, (size_t)9);
+	EXPECT_EQ((char)'x', (char)path[9]);
+}
+
 TEST_F(portability_path_test, portability_path_test_get_relative)
 {
 	static const char base[] = "/a/b/c/";
