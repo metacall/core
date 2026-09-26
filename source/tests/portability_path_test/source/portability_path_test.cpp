@@ -313,7 +313,11 @@ TEST_F(portability_path_test, portability_path_test_get_fullname_exact_buffer)
 
 	memset(name, 'x', sizeof(name));
 
-	/* libfoo.so is 9 chars, a 9 byte buffer has no room for the terminator */
+	/* The buffer is filled with 'x' but only 9 bytes are passed. libfoo.so is 9 chars,
+	* so there's no room for the terminator and the name gets truncated:
+	* libfoo.s\0xxxxxxx. Before the fix the whole libfoo.so was copied and the \0
+	* was written at name[9], one byte past the size, so name[9] must stay 'x'.
+	*/
 	size_t size = portability_path_get_fullname(base, sizeof(base), name, 9);
 
 	EXPECT_STREQ(name, "libfoo.s");
@@ -329,7 +333,9 @@ TEST_F(portability_path_test, portability_path_test_get_path_of_path_exact_buffe
 
 	memset(path, 'x', sizeof(path));
 
-	/* /usr/lib/ is 9 chars, a 9 byte buffer has no room for the terminator */
+	/* Same as above, /usr/lib/ is 9 chars so with 9 bytes it becomes /usr/lib\0xxxxxxx.
+	* Before the fix the \0 was written at path[9], so path[9] must stay 'x'.
+	*/
 	size_t size = portability_path_get_directory(base, sizeof(base), path, 9);
 
 	EXPECT_STREQ(path, "/usr/lib");
