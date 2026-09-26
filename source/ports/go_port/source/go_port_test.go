@@ -2,9 +2,11 @@ package metacall
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"reflect"
+	"runtime"
 	"sync"
 	"testing"
 	"unsafe"
@@ -206,6 +208,69 @@ func TestValues(t *testing.T) {
 
 		valueDestroy(ptr)
 	}
+}
+
+func TestObjectRaceCondition(t *testing.T) {
+	script := `class Rectangle:
+    color = "blue"
+    width = 0
+    height = 0
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    def area(self):
+        return self.width * self.height
+
+def getClass():
+    return Rectangle
+`
+
+	if err := LoadFromMemory("py", script); err != nil {
+		t.Fatalf("failed to load script: %v", err)
+	}
+
+	val, err := Call("getClass")
+	if err != nil {
+		t.Fatalf("failed to get class: %v", err)
+	}
+
+	class, ok := val.(*Class)
+	if !ok || class == nil {
+		t.Fatalf("expected *Class, got %T", val)
+	}
+
+	color, err := class.StaticGet("color")
+	if err != nil || color != "blue" {
+		t.Fatalf("expected static color 'blue', got %v (err: %v)", color, err)
+	}
+
+	if err := class.StaticSet("color", "red"); err != nil {
+		t.Fatalf("failed to set static attribute: %v", err)
+	}
+
+	newColor, err := class.StaticGet("color")
+	if err != nil || newColor != "red" {
+		t.Fatalf("expected updated color 'red', got %v (err: %v)", newColor, err)
+	}
+
+	obj, err := class.New("rectInstance", 10, 20)
+	if err != nil || obj == nil {
+		t.Fatalf("failed to create object instance: %v", err)
+	}
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			runtime.GC()
+		}
+	}()
+
+	res, err := obj.Get("width")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("width = %v\n", res)
 }
 
 func benchmarkNodeJS(b *testing.B, n int) {

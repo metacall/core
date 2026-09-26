@@ -252,7 +252,11 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 	ret := C.metacallfv_s(cFunc, (*unsafe.Pointer)(cArgs), length)
 
 	if ret != nil {
-		defer C.metacall_value_destroy(ret)
+		id := C.metacall_value_id(ret)
+		// calling value destroy on these types make the ptr in them a dangling pointer which causes a segfault when dereferencing
+		if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+			defer C.metacall_value_destroy(ret)
+		}
 		return valueToGo(ret), nil
 	}
 
@@ -343,7 +347,11 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 	ret := C.metacallfv_await_struct_s(cFunc, (*unsafe.Pointer)(cArgs), length, cCallbacks, goCallbacksPtr)
 
 	if ret != nil {
-		defer C.metacall_value_destroy(ret)
+		id := C.metacall_value_id(ret)
+		// calling value destroy on these types make the ptr in them a dangling pointer which causes a segfault when dereferencing
+		if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+			defer C.metacall_value_destroy(ret)
+		}
 		return valueToGo(ret), nil
 	}
 
@@ -452,7 +460,25 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 
 		return
 	}
+	// create class
+	if i, ok := arg.(*Class); ok {
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_class(i.ptr)
+		}
+	}
 
+	// create object
+	if i, ok := arg.(*Object); ok {
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_object(i.ptr)
+		}
+	}
 	// Create array
 	v := reflect.ValueOf(arg)
 	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
@@ -552,6 +578,14 @@ func valueToGo(value unsafe.Pointer) interface{} {
 		{
 			return C.GoString(C.metacall_value_to_string(value))
 		}
+	case C.METACALL_CLASS:
+		{
+			return newClass(value)
+		}
+	case C.METACALL_OBJECT:
+		{
+			return newObject(value, nil)
+		}
 	case C.METACALL_BUFFER:
 		{
 			buffer := C.metacall_value_to_buffer(value)
@@ -640,7 +674,6 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			}
 			return m
 		}
-
 		// TODO: Add more types
 	}
 	return nil
@@ -678,6 +711,10 @@ func DestroyUnsafe() {
 
 // Shutdown disables the metacall adapter waiting for all calls to complete
 func Destroy() {
+	runtime.GC()
+	runtime.Gosched()
+	runtime.GC()
+
 	lock.Lock()
 	close(toggle)
 	toggle = nil
