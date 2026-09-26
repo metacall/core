@@ -829,6 +829,12 @@ For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag a
 make memcheck
 ```
 
+For running only some tests with Valgrind, set `MEMCHECK_TEST` to a regex of the test names:
+
+```sh
+MEMCHECK_TEST=adt-vector-test make memcheck
+```
+
 For running a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_ADDRESS_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
 
 ```sh
