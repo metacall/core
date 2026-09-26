@@ -305,6 +305,48 @@ TEST_F(portability_path_test, portability_path_test_get_path_of_filepath)
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
+TEST_F(portability_path_test, portability_path_test_get_fullname_exact_buffer)
+{
+	static const char base[] = "/usr/lib/libfoo.so";
+
+	char name[16];
+
+	memset(name, 'x', sizeof(name));
+
+	/* 16 bytes filled with 'x', but only 9 are passed as size (libfoo.so is 9 chars):
+	*
+	*          0  1  2  3  4  5  6  7  8    9  10 ...
+	* before:  l  i  b  f  o  o  .  s  o  | \0 x  ...   <- \0 written out of bounds
+	* after:   l  i  b  f  o  o  .  s  \0 | x  x  ...   <- truncated, name[9] untouched
+	*/
+	size_t size = portability_path_get_fullname(base, sizeof(base), name, 9);
+
+	EXPECT_STREQ(name, "libfoo.s");
+	EXPECT_EQ((size_t)size, (size_t)9);
+	EXPECT_EQ((char)'x', (char)name[9]);
+}
+
+TEST_F(portability_path_test, portability_path_test_get_path_of_path_exact_buffer)
+{
+	static const char base[] = "/usr/lib/";
+
+	char path[16];
+
+	memset(path, 'x', sizeof(path));
+
+	/* 16 bytes filled with 'x', but only 9 are passed as size (/usr/lib/ is 9 chars):
+	*
+	*          0  1  2  3  4  5  6  7  8    9  10 ...
+	* before:  /  u  s  r  /  l  i  b  /  | \0 x  ...   <- \0 written out of bounds
+	* after:   /  u  s  r  /  l  i  b  \0 | x  x  ...   <- truncated, path[9] untouched
+	*/
+	size_t size = portability_path_get_directory(base, sizeof(base), path, 9);
+
+	EXPECT_STREQ(path, "/usr/lib");
+	EXPECT_EQ((size_t)size, (size_t)9);
+	EXPECT_EQ((char)'x', (char)path[9]);
+}
+
 TEST_F(portability_path_test, portability_path_test_get_relative)
 {
 	static const char base[] = "/a/b/c/";
