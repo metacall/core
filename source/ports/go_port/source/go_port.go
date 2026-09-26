@@ -26,10 +26,12 @@ package metacall
 
 #include <metacall/metacall.h>
 
-// TODO: Sanitizer
-// #if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
-// void __lsan_do_leak_check(void);
-// #endif
+// Since go already have its own sanitizers we don't need to use c sanitizers in go port
+// as it will conflict with c sanitizers runtime and cause segfault. also c sanitizers can't
+// identify goroutines leak, deadlocks and can false positive memory created by c and passed
+// to go as a leak so it's better to use go sanitizers.
+// to use go sanitizers use the following flags with go commands (build, test, ...):
+// -race -> flag for thread sanitizer | -asan -> for address sanitizer | -msan -> for memeort sanitizer
 
 // Since main.go has //export directives we can't place function definitions in
 // it - we'll get multiple definition errors from the linker (see
@@ -40,6 +42,10 @@ package metacall
 
 // Based on: https://eli.thegreenplace.net/2019/passing-callbacks-and-pointers-to-cgo/
 
+static inline void *metacall_error_throw_msg(const char *label, const char *message) {
+	return metacall_error_throw(label, 0, "", "%s", message);
+}
+
 extern void *resolveCgo(void *, void *);
 extern void *rejectCgo(void *, void *);
 
@@ -48,18 +54,47 @@ import "C"
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"math"
+	"net/http"
+	"net/http/pprof"
+	"os"
 	"reflect"
 	"runtime"
 	"sync"
 	"unsafe"
+
+	// library to provide a symbolic backtrace of cgo functions	to help debugging and monitoring of c functions
+	// this library works with pprof of go
+	_ "github.com/ianlancetaylor/cgosymbolizer"
+	"github.com/joho/godotenv"
 )
 
+const QUEUEBUFFSIZE = 1
+
+// interface for all works with execute and cancel functions
+type safeWork interface {
+	execute()
+	cancel(err error)
+}
+type callReturnSafeWork struct {
+	value interface{}
+	err   error
+}
 type loadFromFileSafeWork struct {
 	tag     string
 	scripts []string
 	err     chan error
+}
+
+func (w *loadFromFileSafeWork) execute() {
+	err := LoadFromFileUnsafe(w.tag, w.scripts)
+	w.err <- err
+}
+func (w *loadFromFileSafeWork) cancel(err error) {
+	w.err <- err
 }
 
 type loadFromMemorySafeWork struct {
@@ -68,15 +103,82 @@ type loadFromMemorySafeWork struct {
 	err    chan error
 }
 
-type callReturnSafeWork struct {
-	value interface{}
-	err   error
+func (w *loadFromMemorySafeWork) execute() {
+	err := LoadFromMemoryUnsafe(w.tag, w.buffer)
+	w.err <- err
+}
+func (w *loadFromMemorySafeWork) cancel(err error) {
+	w.err <- err
+}
+
+type loadFromPackageSafeWork struct {
+	tag  string
+	pack string
+	err  chan error
+}
+
+func (w *loadFromPackageSafeWork) execute() {
+	err := LoadFromPackageUnsafe(w.tag, w.pack)
+	w.err <- err
+}
+func (w *loadFromPackageSafeWork) cancel(err error) {
+	w.err <- err
+}
+
+type loadFromPackageExSafeWork struct {
+	tag     string
+	pack    string
+	options interface{}
+	err     chan error
+}
+
+func (w *loadFromPackageExSafeWork) execute() {
+	err := LoadFromPackageExUnsafe(w.tag, w.pack, w.options)
+	w.err <- err
+}
+func (w *loadFromPackageExSafeWork) cancel(err error) {
+	w.err <- err
+}
+
+type loadFromConfigSafeWork struct {
+	config string
+	err    chan error
+}
+
+func (w *loadFromConfigSafeWork) execute() {
+	err := LoadFromConfigUnsafe(w.config)
+	w.err <- err
+}
+func (w *loadFromConfigSafeWork) cancel(err error) {
+	w.err <- err
+}
+
+type executionPathSafeWork struct {
+	tag  string
+	path string
+	err  chan error
+}
+
+func (w *executionPathSafeWork) execute() {
+	err := ExecutionPathUnsafe(w.tag, w.path)
+	w.err <- err
+}
+func (w *executionPathSafeWork) cancel(err error) {
+	w.err <- err
 }
 
 type callSafeWork struct {
 	function string
 	args     []interface{}
 	ret      chan callReturnSafeWork
+}
+
+func (w *callSafeWork) execute() {
+	value, err := CallUnsafe(w.function, w.args...)
+	w.ret <- callReturnSafeWork{value, err}
+}
+func (w *callSafeWork) cancel(err error) {
+	w.ret <- callReturnSafeWork{nil, err}
 }
 
 type awaitCallback func(interface{}, interface{}) interface{}
@@ -90,6 +192,14 @@ type awaitSafeWork struct {
 	ctx      interface{}
 }
 
+func (w *awaitSafeWork) execute() {
+	value, err := AwaitUnsafe(w.function, w.resolve, w.reject, w.ctx, w.args...)
+	w.ret <- callReturnSafeWork{value, err}
+}
+func (w *awaitSafeWork) cancel(err error) {
+	w.ret <- callReturnSafeWork{nil, err}
+}
+
 type awaitCallbacks struct {
 	resolve awaitCallback
 	reject  awaitCallback
@@ -99,16 +209,15 @@ type awaitCallbacks struct {
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
 var (
-	queue  = make(chan interface{}, 1) // Queue for dispatching the work
-	toggle chan struct{}               // Channel for stopping the queue
-	lock   sync.Mutex                  // Lock for the queue
-	wg     sync.WaitGroup              // Wait group for the queue (needed to obtain return values)
+	queue       = make(chan safeWork, QUEUEBUFFSIZE) // Queue for dispatching the work
+	toggle      chan struct{}                        // Channel for stopping the queue
+	lock        sync.Mutex                           // Lock for the queue
+	rootCtx     context.Context                      // root context to manage cancelation
+	rootCancel  context.CancelFunc                   // cancel function to drain and destroy jobs in queue
+	errShutdown = errors.New("runtime shutdown")     // err to be sent to cancel() when shutting down
 )
 
 func InitializeUnsafe() error {
-	// TODO: Sanitizer
-	// C.__lsan_do_leak_check()
-
 	// TODO: Remove this once go loader is implemented
 	if result := int(C.metacall_initialize()); result != 0 {
 		return fmt.Errorf("initializing MetaCall (error code %d)", result)
@@ -119,20 +228,30 @@ func InitializeUnsafe() error {
 
 // Start starts the metacall adapter
 func Initialize() error {
+	// load .env file and start profile server only in debug mode
+	_ = godotenv.Load()
+	mode := os.Getenv("MODE")
+	if mode == "debug" {
+		startProfilesServer()
+	}
+
 	lock.Lock()
 	defer lock.Unlock()
 
-	if toggle != nil {
+	if rootCtx != nil {
 		// Already running
 		return nil
 	}
 
+	rootCtx, rootCancel = context.WithCancel(context.Background())
 	toggle = make(chan struct{}, 1)
 	initErr := make(chan error, 1)
 
-	go func(initErr chan error, toggle <-chan struct{}) {
+	go func(ctx context.Context, initErr chan error) {
+		defer close(toggle)
 		// Bind this goroutine to its thread
 		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
 
 		// Initialize MetaCall
 		if err := InitializeUnsafe(); err != nil {
@@ -144,37 +263,25 @@ func Initialize() error {
 
 		for {
 			select {
-			case <-toggle:
+			case <-ctx.Done():
 				// Shutdown
-				DestroyUnsafe()
-				return
-			case w := <-queue:
-				switch v := w.(type) {
-				case loadFromFileSafeWork:
-					{
-						err := LoadFromFileUnsafe(v.tag, v.scripts)
-						v.err <- err
-					}
-				case loadFromMemorySafeWork:
-					{
-						err := LoadFromMemoryUnsafe(v.tag, v.buffer)
-						v.err <- err
-					}
-				case callSafeWork:
-					{
-						value, err := CallUnsafe(v.function, v.args...)
-						v.ret <- callReturnSafeWork{value, err}
-					}
-				case awaitSafeWork:
-					{
-						value, err := AwaitUnsafe(v.function, v.resolve, v.reject, v.ctx, v.args...)
-						v.ret <- callReturnSafeWork{value, err}
+				for {
+					select {
+					//drain queue
+					case w := <-queue:
+						w.cancel(errShutdown)
+					// call destroy for metacall after queue is empty
+					default:
+						DestroyUnsafe()
+						return
 					}
 				}
-				wg.Done()
+			// execute work in queue
+			case w := <-queue:
+				w.execute()
 			}
 		}
-	}(initErr, toggle)
+	}(rootCtx, initErr)
 
 	return <-initErr
 }
@@ -228,6 +335,76 @@ func LoadFromMemoryUnsafe(tag string, buffer string) error {
 	return nil
 }
 
+func LoadFromPackageUnsafe(tag string, pack string) error {
+	cTag := C.CString(tag)
+	defer C.free(unsafe.Pointer(cTag))
+
+	cPack := C.CString(pack)
+	defer C.free(unsafe.Pointer(cPack))
+
+	if int(C.metacall_load_from_package(cTag, cPack, nil)) != 0 {
+		return fmt.Errorf("%s loader failed to load from package: %s", tag, pack)
+	}
+
+	return nil
+}
+
+func LoadFromPackageExUnsafe(tag string, pack string, options interface{}) error {
+	cTag := C.CString(tag)
+	defer C.free(unsafe.Pointer(cTag))
+
+	cPack := C.CString(pack)
+	defer C.free(unsafe.Pointer(cPack))
+
+	// Convert options to metacall value (need goToValue for map/array)
+	var optVal unsafe.Pointer
+	if options != nil {
+		goToValue(options, &optVal)
+		defer C.metacall_value_destroy(optVal)
+	}
+
+	if int(C.metacall_load_from_package_ex(cTag, cPack, nil, optVal)) != 0 {
+		return fmt.Errorf("%s loader failed to load from package: %s", tag, pack)
+	}
+	return nil
+}
+
+func LoadFromConfigUnsafe(config string) error {
+	cConfig := C.CString(config)
+	defer C.free(unsafe.Pointer(cConfig))
+
+	if int(C.metacall_load_from_configuration(cConfig, nil, nil)) != 0 {
+		return fmt.Errorf("failed to load config: %s", config)
+	}
+
+	return nil
+}
+
+func LoadFromConfigExUnsafe(config string) error {
+	cConfig := C.CString(config)
+	defer C.free(unsafe.Pointer(cConfig))
+
+	// if int(C.metacall_load_from_configuration_export(cConfig, nil, nil)) != 0 {
+	// 	return fmt.Errorf("failed to load config: %s", config)
+	// }
+
+	return nil
+}
+
+func ExecutionPathUnsafe(tag string, path string) error {
+	cTag := C.CString(tag)
+	defer C.free(unsafe.Pointer(cTag))
+
+	cPath := C.CString(path)
+	defer C.free(unsafe.Pointer(cPath))
+
+	if int(C.metacall_execution_path(cTag, cPath)) != 0 {
+		return fmt.Errorf("%s failed to load from execution path: %s", tag, path)
+	}
+
+	return nil
+}
+
 func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 	cFunc, err := getFunction(function)
 	if err != nil {
@@ -252,8 +429,17 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 	ret := C.metacallfv_s(cFunc, (*unsafe.Pointer)(cArgs), length)
 
 	if ret != nil {
-		defer C.metacall_value_destroy(ret)
-		return valueToGo(ret), nil
+		id := C.metacall_value_id(ret)
+		// calling value destroy on these types make the ptr in them a dangling pointer which causes a segfault when dereferencing
+		if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+			defer C.metacall_value_destroy(ret)
+		}
+
+		v := valueToGo(ret)
+		if err, ok := v.(error); ok {
+			return nil, err
+		}
+		return v, nil
 	}
 
 	return nil, nil
@@ -261,20 +447,31 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 
 // Call sends work and blocks until it's processed
 func Call(function string, args ...interface{}) (interface{}, error) {
-	ret := make(chan callReturnSafeWork, 1)
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return nil, errShutdown
+	}
 
-	w := callSafeWork{
+	ret := make(chan callReturnSafeWork, 1)
+	w := &callSafeWork{
 		function: function,
 		args:     args,
 		ret:      ret,
 	}
-
-	wg.Add(1)
-	queue <- w
-
-	result := <-ret
-
-	return result.value, result.err
+	// if ctx canceled return, otherwise send work to queue
+	select {
+	case <-ctx.Done():
+		return nil, errShutdown
+	case queue <- w:
+	}
+	// if ctx canceled return, otherwise return finished work from ret chan
+	// seperated frow above switch cause of returning values
+	select {
+	case <-ctx.Done():
+		return nil, errShutdown
+	case result := <-ret:
+		return result.value, result.err
+	}
 }
 
 //export goResolve
@@ -337,14 +534,24 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 		reject:  reject,
 		ctx:     ctx,
 	}
-
 	goCallbacksPtr := pointerSave(&goCallbacks)
 
 	ret := C.metacallfv_await_struct_s(cFunc, (*unsafe.Pointer)(cArgs), length, cCallbacks, goCallbacksPtr)
 
 	if ret != nil {
-		defer C.metacall_value_destroy(ret)
-		return valueToGo(ret), nil
+		id := C.metacall_value_id(ret)
+		// calling value destroy on these types make the ptr in them a dangling pointer which causes a segfault when dereferencing
+		if id != C.METACALL_CLASS && id != C.METACALL_OBJECT && id != C.METACALL_FUTURE {
+			defer C.metacall_value_destroy(ret)
+		}
+		v := valueToGo(ret)
+		if err, ok := v.(error); ok {
+			return nil, err
+		}
+		return v, nil
+	} else {
+		// delete and free ptr if metacallfv_await_struct_s failed with nil
+		pointerDelete(goCallbacksPtr)
 	}
 
 	return nil, nil
@@ -352,9 +559,14 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 
 // Await sends asynchronous work and blocks until it's processed
 func Await(function string, resolve, reject awaitCallback, ctx interface{}, args ...interface{}) (interface{}, error) {
+	rCtx := checkRootCtx()
+	if rCtx == nil {
+		return nil, errShutdown
+	}
+
 	ret := make(chan callReturnSafeWork, 1)
 
-	w := awaitSafeWork{
+	w := &awaitSafeWork{
 		function: function,
 		args:     args,
 		ret:      ret,
@@ -363,12 +575,18 @@ func Await(function string, resolve, reject awaitCallback, ctx interface{}, args
 		ctx:      ctx,
 	}
 
-	wg.Add(1)
-	queue <- w
+	select {
+	case <-rCtx.Done():
+		return nil, errShutdown
+	case queue <- w:
+	}
 
-	result := <-ret
-
-	return result.value, result.err
+	select {
+	case <-rCtx.Done():
+		return nil, errShutdown
+	case result := <-ret:
+		return result.value, result.err
+	}
 }
 
 func getFunction(function string) (unsafe.Pointer, error) {
@@ -382,134 +600,138 @@ func getFunction(function string) (unsafe.Pointer, error) {
 }
 
 func goToValue(arg interface{}, ptr *unsafe.Pointer) {
+	// type-switch is performance wise from multiple if statements
+	switch i := arg.(type) {
 	// Create null
-	if arg == nil {
+	case nil:
 		*ptr = C.metacall_value_create_null()
-		return
-	}
 
 	// Create bool
-	if i, ok := arg.(bool); ok {
+	case bool:
 		if i {
 			*ptr = C.metacall_value_create_bool(C.uchar(1))
-			return
 		} else {
 			*ptr = C.metacall_value_create_bool(C.uchar(0))
-			return
 		}
-	}
 
 	// Create char
-	if i, ok := arg.(byte); ok {
+	case byte:
 		*ptr = C.metacall_value_create_char((C.char)(i))
-		return
-	}
 
 	// Create short
-	if i, ok := arg.(int16); ok {
+	case int16:
 		*ptr = C.metacall_value_create_short((C.short)(i))
-		return
-	}
+
+	// create int from int32
+	case int32:
+		*ptr = C.metacall_value_create_int((C.int)(i))
 
 	// Create int
-	if i, ok := arg.(int); ok {
-		*ptr = C.metacall_value_create_int((C.int)(i))
-		return
-	}
+	case int:
+		// check if it is 32 or 64 bit
+		if i >= math.MinInt32 && i <= math.MaxInt32 {
+			*ptr = C.metacall_value_create_int((C.int)(i))
+		} else {
+			*ptr = C.metacall_value_create_long((C.long)(i))
+		}
 
 	// Create long
-	if i, ok := arg.(int64); ok {
+	case int64:
 		*ptr = C.metacall_value_create_long((C.long)(i))
-		return
-	}
 
 	// Create float32
-	if i, ok := arg.(float32); ok {
+	case float32:
 		*ptr = C.metacall_value_create_float((C.float)(i))
-		return
-	}
 
 	// Create float64
-	if i, ok := arg.(float64); ok {
+	case float64:
 		*ptr = C.metacall_value_create_double((C.double)(i))
-		return
-	}
 
 	// Create string
-	if str, ok := arg.(string); ok {
-		cStr := C.CString(str)
+	case string:
+		cStr := C.CString(i)
 		defer C.free(unsafe.Pointer(cStr))
-		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
-		return
-	}
+		*ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(i)))
 
-	if buf, ok := arg.(bytes.Buffer); ok {
-		str := buf.String()
+	// Create buffer
+	case bytes.Buffer:
+		str := i.String()
 		p := unsafe.Pointer(C.CString(str))
 		defer C.free(p)
 
 		*ptr = C.metacall_value_create_buffer(p, (C.size_t)(len(str)))
 
-		return
-	}
+	// Create pointer
+	case unsafe.Pointer:
+		*ptr = C.metacall_value_create_ptr(i)
 
-	// Create array
-	v := reflect.ValueOf(arg)
-	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
-		length := v.Len()
-		*ptr = C.metacall_value_create_array(nil, (C.size_t)(length))
-		cArgs := C.metacall_value_to_array(*ptr)
-		for index := 0; index < length; index++ {
-			goToValue(v.Index(index).Interface(), (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
+	// Create exception
+	case error:
+		cMsg := C.CString(i.Error())
+		cLabel := C.CString("Error")
+
+		defer C.free(unsafe.Pointer(cMsg))
+		defer C.free(unsafe.Pointer(cLabel))
+
+		*ptr = C.metacall_error_throw_msg(cLabel, cMsg)
+
+	// create class
+	case *Class:
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_class(i.ptr)
 		}
-		return
-	}
 
-	// Create map
-	if v.Kind() == reflect.Map {
-		length := v.Len()
-		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
-		defer C.free(unsafe.Pointer(cArgs))
-		for index, m := 0, v.MapRange(); m.Next(); index++ {
-			pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
-
-			goToValue(pair, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
+	// create object
+	case *Object:
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_object(i.ptr)
 		}
-		*ptr = C.metacall_value_create_map((*unsafe.Pointer)(cArgs), (C.size_t)(length))
-		return
-	}
 
-	/*
+	// create future
+	case *Future:
+		if i.val != nil {
+			// increment internal refrence so caller cleanup do not destroy go instance
+			*ptr = C.metacall_value_copy(i.val)
+		} else {
+			*ptr = C.metacall_value_create_future(i.ptr)
+		}
+
+	default:
+		v := reflect.ValueOf(arg)
+
+		switch v.Kind() {
+		// Create array
+		case reflect.Slice, reflect.Array:
+			length := v.Len()
+			*ptr = C.metacall_value_create_array(nil, (C.size_t)(length))
+			cArgs := C.metacall_value_to_array(*ptr)
+			for index := 0; index < length; index++ {
+				goToValue(v.Index(index).Interface(), (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
+			}
 
 		// Create map
-		if v.Kind() == reflect.Map {
+		case reflect.Map:
 			length := v.Len()
-			*ptr = C.metacall_value_create_map(nil, (C.size_t)(length))
-			cArgs := C.metacall_value_to_map(*ptr)
+			cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
+			defer C.free(unsafe.Pointer(cArgs))
 
 			for index, m := 0, v.MapRange(); m.Next(); index++ {
-				// Access to current element of the map
-				mapIndex := unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)
+				pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
 
-				// Get the map pair
-				array := C.metacall_value_to_array(mapIndex)
-
-				// Transform the key
-				key := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(0)*PtrSizeInBytes))
-				goToValue(m.Key(), key)
-
-				// Transform the value
-				val := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(array))+uintptr(1)*PtrSizeInBytes))
-				goToValue(m.Value(), val)
+				goToValue(pair, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(index)*PtrSizeInBytes)))
 			}
-			return
+			*ptr = C.metacall_value_create_map((*unsafe.Pointer)(cArgs), (C.size_t)(length))
+
+		default:
+			*ptr = nil
 		}
-
-	*/
-
-	// TODO: Add more types
-
-	*ptr = nil
+	}
 }
 
 func valueToGo(value unsafe.Pointer) interface{} {
@@ -560,6 +782,10 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			b := *bytes.NewBuffer(C.GoBytes(buffer, C.int(size)))
 
 			return b
+		}
+	case C.METACALL_PTR:
+		{
+			return C.metacall_value_to_ptr(value)
 		}
 	case C.METACALL_ARRAY:
 		{
@@ -640,51 +866,266 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			}
 			return m
 		}
+	case C.METACALL_CLASS:
+		{
+			return newClass(value)
+		}
+	case C.METACALL_OBJECT:
+		{
+			return newObject(value, nil)
+		}
+	case C.METACALL_FUTURE:
+		{
+			return newFuture(value)
+		}
+	case C.METACALL_EXCEPTION:
+		{
+			var exception C.struct_metacall_exception_type
 
-		// TODO: Add more types
+			if C.metacall_error_from_value(value, &exception) == 0 {
+				return errors.New(C.GoString(exception.label) + " : " + C.GoString(exception.message))
+			}
+			return errors.New("Metacall Exception: UNKNOWN")
+		}
+	case C.METACALL_THROWABLE:
+		{
+			throw := C.metacall_value_to_throwable(unsafe.Pointer(value))
+			val := C.metacall_throwable_value(throw)
+			v := valueToGo(val)
+
+			if err, ok := v.(error); ok {
+				return err
+			}
+			// for languages that do not throw an error like JS
+			e := fmt.Errorf("%v", v)
+			return e
+		}
 	}
 	return nil
 }
 
 func LoadFromFile(tag string, scripts []string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
 	result := make(chan error, 1)
-	w := loadFromFileSafeWork{
+	w := &loadFromFileSafeWork{
 		tag,
 		scripts,
 		result,
 	}
-	wg.Add(1)
-	queue <- w
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
 
-	return <-result
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
 }
 
 func LoadFromMemory(tag string, buffer string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
 	result := make(chan error, 1)
-	w := loadFromMemorySafeWork{
+	w := &loadFromMemorySafeWork{
 		tag,
 		buffer,
 		result,
 	}
-	wg.Add(1)
-	queue <- w
 
-	return <-result
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
 }
 
+func LoadFromPackage(tag string, pack string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &loadFromPackageSafeWork{
+		tag:  tag,
+		pack: pack,
+		err:  result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func LoadFromPackageEx(tag string, pack string, options interface{}) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &loadFromPackageExSafeWork{
+		tag:     tag,
+		pack:    pack,
+		options: options,
+		err:     result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func LoadFromConfig(config string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &loadFromConfigSafeWork{
+		config: config,
+		err:    result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func ExecutionPath(tag string, path string) error {
+	ctx := checkRootCtx()
+	if ctx == nil {
+		return errShutdown
+	}
+
+	result := make(chan error, 1)
+	w := &executionPathSafeWork{
+		tag:  tag,
+		path: path,
+		err:  result,
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-ctx.Done():
+		return errShutdown
+	case res := <-result:
+		return res
+	}
+}
+
+func checkRootCtx() context.Context {
+	// lock to prevent race condition when accessing global variable rootCtx
+	lock.Lock()
+	// reject call when Initialize() was never called or Destroy() ran or in progress
+	if rootCtx == nil || rootCtx.Err() != nil {
+		lock.Unlock()
+		return nil
+	}
+	ctx := rootCtx
+	lock.Unlock()
+	return ctx
+}
 func DestroyUnsafe() {
 	C.metacall_destroy()
 }
 
 // Shutdown disables the metacall adapter waiting for all calls to complete
 func Destroy() {
+	// Run GC and wait for pending finalizers before shutting down MetaCall
+	// call garbage collector twice to give enough finalizers time to execute
+	runtime.GC()
+	runtime.Gosched()
+	runtime.GC()
+
 	lock.Lock()
-	close(toggle)
-	toggle = nil
+	if rootCancel != nil {
+		// cancel root ctx and assign it to nil when shutting down
+		rootCancel()
+		rootCancel = nil
+		rootCtx = nil
+	}
+	tog := toggle
 	lock.Unlock()
 
-	// Wait for all work to complete
-	wg.Wait()
+	if tog != nil {
+		// wait for DestroyUnsafe() to finish
+		<-tog
+	}
+}
+
+// start localhost server for profiles for monitoring and debugging
+// profiles can be accessed using command "go tool pprof http://localhost:6060/debug/pprof/name?debug=n"
+// name is to be replaced with the wanted profile name and put n=0 for binary format, n>0 for plain text,
+// n=2 for the full stack trace of all running goroutines in a format identical to an unrecovered panic.
+// see https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/ for profiles names and more info about them
+func startProfilesServer() {
+	monitMux := http.NewServeMux()
+
+	// register profiles
+	monitMux.HandleFunc("/debug/pprof/", pprof.Index)          // heap and goroutine
+	monitMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline) // go command arguments
+	monitMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)   // translation helper for memory addresses
+	monitMux.HandleFunc("/debug/pprof/trace", pprof.Trace)     // trace
+
+	// start goroutine for localhost to display the profiles
+	go func() {
+		err := http.ListenAndServe("localhost:6060", monitMux)
+		if err != nil {
+			return
+		}
+	}()
 }
 
 func valueDestroy(v unsafe.Pointer) {
