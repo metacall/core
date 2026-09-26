@@ -679,8 +679,10 @@ func DestroyUnsafe() {
 // Shutdown disables the metacall adapter waiting for all calls to complete
 func Destroy() {
 	lock.Lock()
-	close(toggle)
-	toggle = nil
+	if toggle != nil {
+		close(toggle)
+		toggle = nil
+	}
 	lock.Unlock()
 
 	// Wait for all work to complete
