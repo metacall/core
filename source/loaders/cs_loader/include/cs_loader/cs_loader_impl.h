@@ -18,7 +18,8 @@
 #include <string.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 CS_LOADER_API loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration config);

@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #include <cs_loader/host_environment.h>
 
@@ -57,7 +57,7 @@ host_environment::host_environment(char *dotnet_root) :
 	{
 		if (!_wgetenv_s(&outSize, coreRoot, MAX_LONGPATH, W("CORE_ROOT")) == 0 && outSize > 0)
 		{
-			//error ?
+			// error ?
 		}
 		else
 		{
