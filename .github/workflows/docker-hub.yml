@@ -134,7 +134,7 @@ jobs:
           name: digests-${{ env.PLATFORM_SAFE }}
           path: .bake/digests/*
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
   merge:
     name: Merge digests for the manifest
