@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #include <cs_loader/simple_netcore.h>
 
@@ -52,6 +52,106 @@ reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count
 	netcore *core = (netcore *)handle;
 
 	return core->get_functions(count);
+}
+
+reflect_class *simple_netcore_get_classes(netcore_handle handle, int *count)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->get_classes(count);
+}
+
+reflect_constructor *simple_netcore_get_constructors(netcore_handle handle, int *count)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->get_constructors(count);
+}
+
+reflect_method *simple_netcore_get_methods(netcore_handle handle, int *count)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->get_methods(count);
+}
+
+reflect_attribute *simple_netcore_get_attributes(netcore_handle handle, int *count)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->get_attributes(count);
+}
+
+void *simple_netcore_create_object(netcore_handle handle, const char *class_name, parameters *params, long size)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->create_object(class_name, params, size);
+}
+
+execution_result *simple_netcore_invoke_object(netcore_handle handle, void *object, const char *method, parameters *params, long size)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->invoke_object(object, method, params, size);
+}
+
+execution_result *simple_netcore_invoke_static(netcore_handle handle, const char *class_name, const char *method, parameters *params, long size)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->invoke_static(
+		class_name,
+		method,
+		params,
+		size);
+}
+
+execution_result *simple_netcore_get_object_attribute(netcore_handle handle, void *object, const char *attribute)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->get_object_attribute(object, attribute);
+}
+
+int simple_netcore_set_object_attribute(netcore_handle handle, void *object, const char *attribute, parameters *param)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->set_object_attribute(
+			   object,
+			   attribute,
+			   param) ?
+			   0 :
+			   1;
+}
+
+execution_result *simple_netcore_get_static_attribute(netcore_handle handle, const char *class_name, const char *attribute)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->get_static_attribute(
+		class_name,
+		attribute);
+}
+
+int simple_netcore_set_static_attribute(netcore_handle handle, const char *class_name, const char *attribute, parameters *param)
+{
+	netcore *core = (netcore *)handle;
+
+	return core->set_static_attribute(
+			   class_name,
+			   attribute,
+			   param) ?
+			   0 :
+			   1;
+}
+
+void simple_netcore_destroy_object(netcore_handle handle, void *object)
+{
+	netcore *core = (netcore *)handle;
+
+	core->destroy_object(object);
 }
 
 int simple_netcore_load_script_from_files(netcore_handle handle, const char *files[MAX_FILES], size_t size)

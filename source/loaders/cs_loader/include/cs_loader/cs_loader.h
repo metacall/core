@@ -14,7 +14,8 @@
 #include <loader/loader_impl_interface.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 CS_LOADER_API loader_impl_interface cs_loader_impl_interface_singleton(void);

@@ -16,12 +16,13 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef _SIMPLE_NETCORE_H_
 #define _SIMPLE_NETCORE_H_
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <cs_loader/defs.h>
@@ -37,6 +38,30 @@ typedef char source_file[512];
 netcore_handle simple_netcore_create(char *dotnet_root, char *dotnet_loader_assembly_path);
 
 reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count);
+
+reflect_class *simple_netcore_get_classes(netcore_handle handle, int *count);
+
+reflect_constructor *simple_netcore_get_constructors(netcore_handle handle, int *count);
+
+reflect_method *simple_netcore_get_methods(netcore_handle handle, int *count);
+
+reflect_attribute *simple_netcore_get_attributes(netcore_handle handle, int *count);
+
+void *simple_netcore_create_object(netcore_handle handle, const char *class_name, parameters *params, long size);
+
+execution_result *simple_netcore_invoke_object(netcore_handle handle, void *object, const char *method, parameters *params, long size);
+
+execution_result *simple_netcore_invoke_static(netcore_handle handle, const char *class_name, const char *method, parameters *params, long size);
+
+execution_result *simple_netcore_get_object_attribute(netcore_handle handle, void *object, const char *attribute);
+
+int simple_netcore_set_object_attribute(netcore_handle handle, void *object, const char *attribute, parameters *param);
+
+execution_result *simple_netcore_get_static_attribute(netcore_handle handle, const char *class_name, const char *attribute);
+
+int simple_netcore_set_static_attribute(netcore_handle handle, const char *class_name, const char *attribute, parameters *param);
+
+void simple_netcore_destroy_object(netcore_handle handle, void *object);
 
 int simple_netcore_load_script_from_files(netcore_handle handle, const char *files[MAX_FILES], size_t size);
 
