@@ -321,7 +321,7 @@ void vector_pop_back(vector v)
 	{
 		--v->size;
 
-		if (v->capacity / VECTOR_CAPACITY_MIN_USED < v->size)
+		if (v->size < v->capacity / VECTOR_CAPACITY_MIN_USED)
 		{
 			if (vector_reserve(v, v->size * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
@@ -377,7 +377,7 @@ void vector_pop_front(vector v)
 
 		memmove(v->data, vector_data_offset_bytes(v, v->type_size), v->size * v->type_size);
 
-		if (v->capacity / VECTOR_CAPACITY_MIN_USED < v->size)
+		if (v->size < v->capacity / VECTOR_CAPACITY_MIN_USED)
 		{
 			if (vector_reserve(v, v->size * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
@@ -401,8 +401,8 @@ void vector_insert_empty(vector v, size_t position)
 
 		if (position < v->size)
 		{
-			memmove(vector_data_offset_bytes(v, position * v->type_size),
-				vector_data_offset_bytes(v, (position + 1) * v->type_size),
+			memmove(vector_data_offset_bytes(v, (position + 1) * v->type_size),
+				vector_data_offset_bytes(v, position * v->type_size),
 				(v->size - position) * v->type_size);
 		}
 
@@ -452,7 +452,7 @@ void vector_erase(vector v, size_t position)
 
 		--v->size;
 
-		if (v->capacity / VECTOR_CAPACITY_MIN_USED < v->size)
+		if (v->size < v->capacity / VECTOR_CAPACITY_MIN_USED)
 		{
 			if (vector_reserve(v, v->size * VECTOR_CAPACITY_INCREMENT) != 0)
 			{

@@ -1,9 +1,14 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_MOCK)
+	return()
+endif()
+
 #
 # Executable name and options
 #
 
 # Target name
-set(target reflect-value-cast-test)
+set(target metacall-path-overflow-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,15 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/reflect_value_cast_bool_test.cpp
-	${source_path}/reflect_value_cast_char_test.cpp
-	${source_path}/reflect_value_cast_short_test.cpp
-	${source_path}/reflect_value_cast_int_test.cpp
-	${source_path}/reflect_value_cast_long_test.cpp
-	${source_path}/reflect_value_cast_float_test.cpp
-	${source_path}/reflect_value_cast_double_test.cpp
-	${source_path}/reflect_value_cast_array_test.cpp
-	${source_path}/reflect_value_cast_sign_extension_test.cpp
+	${source_path}/metacall_path_overflow_test.cpp
 )
 
 # Group source files
@@ -76,20 +73,6 @@ target_include_directories(${target}
 	PRIVATE
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
-
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::version,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::preprocessor,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::environment,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::format,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::threading,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::log,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::memory,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::portability,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::adt,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::reflect,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::dynlink,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::plugin,INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::serial,INCLUDE_DIRECTORIES>
 )
 
 #
@@ -150,9 +133,25 @@ add_test(NAME ${target}
 )
 
 #
-# Define test labels
+# Define dependencies
+#
+
+add_dependencies(${target}
+	mock_loader
+	rapid_json_serial
+)
+
+#
+# Define test properties
 #
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
 )

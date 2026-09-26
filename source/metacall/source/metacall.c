@@ -445,13 +445,23 @@ size_t metacall_args_size(void)
 int metacall_execution_path(const char *tag, const char *path)
 {
 	loader_path path_impl;
+	size_t length;
 
 	if (tag == NULL || path == NULL)
 	{
 		return 1;
 	}
 
-	strncpy(path_impl, path, LOADER_PATH_SIZE - 1);
+	length = strnlen(path, LOADER_PATH_SIZE);
+
+	if (length >= LOADER_PATH_SIZE)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Path size too large");
+		return 1;
+	}
+
+	strncpy(path_impl, path, length);
+	path_impl[length] = '\0';
 
 	return loader_execution_path(tag, path_impl);
 }
@@ -484,28 +494,45 @@ int metacall_load_from_file_ex(const char *tag, const char *paths[], size_t size
 {
 	loader_path *path_impl;
 	size_t iterator;
+	int result = 1;
 
 	if (size == 0)
 	{
-		return 1;
+		goto input_error;
 	}
 
 	path_impl = (loader_path *)malloc(sizeof(loader_path) * size);
 
 	if (path_impl == NULL)
 	{
-		return 1;
+		goto input_error;
 	}
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		strncpy(path_impl[iterator], paths[iterator], LOADER_PATH_SIZE);
+		size_t length;
+
+		if (paths[iterator] == NULL)
+		{
+			goto malloc_error;
+		}
+
+		length = strnlen(paths[iterator], LOADER_PATH_SIZE);
+
+		if (length >= LOADER_PATH_SIZE)
+		{
+			goto malloc_error;
+		}
+
+		strncpy(path_impl[iterator], paths[iterator], length);
+		path_impl[iterator][length] = '\0';
 	}
 
-	int result = loader_load_from_file(tag, (const loader_path *)path_impl, size, handle, data);
+	result = loader_load_from_file(tag, (const loader_path *)path_impl, size, handle, data);
 
+malloc_error:
 	free(path_impl);
-
+input_error:
 	return result;
 }
 

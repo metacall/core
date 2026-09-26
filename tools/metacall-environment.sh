@@ -88,6 +88,7 @@ case "$(uname -m)" in
 			ARCHITECTURE="amd64"
 		fi
 		;;
+	amd64) ARCHITECTURE="amd64";;
 	armv6*) ARCHITECTURE="armv6";;
 	armv7*|armhf|armel)
 		if grep -q "vfpv3" /proc/cpuinfo; then
@@ -332,7 +333,93 @@ sub_python(){
 		pip3 install joblib
 		pip3 install scikit-learn
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y python3
+		# TODO: Implement other sanitizers instrumentation
+		# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+		if [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+			# Search the FreeBSD package repository for Python and install build dependencies
+			PYTHON_PKG=$(pkg search -q -x '^python3' | sort -V | tail -n 1)
+			$SUDO_CMD pkg install -y git pkgconf openssl readline sqlite3 libffi bzip2 gdbm expat
+
+			# Get the Python version: python315-3.15.0.b2 -> 3.15.0.b2
+			PYTHON_PKG_VERSION="${PYTHON_PKG#*-}"
+
+			# Remove the dot immediately after the third numeric component: 3.15.0.b2 -> 3.15.0b2
+			PYTHON_VERSION=$(printf '%s\n' "$PYTHON_PKG_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)\./\1/')
+
+			# Get major and minor version: 3.15.0b2 -> python3.15
+			PYTHON_EXE=$(printf '%s\n' "$PYTHON_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/python\1/')
+
+			git clone --depth=1 --single-branch --branch "v${PYTHON_VERSION}" https://github.com/python/cpython.git
+			cd cpython
+	
+			# Define Python instrumentation
+			if [ $INSTALL_MEMCHECK = 1 ]; then
+				sed -i '' 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
+				BUILD_FLAGS="--with-valgrind"
+				BUILD_LDFLAGS=""
+			elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+				printf "leak:*libpython*" > ./asan.supp
+				export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
+				export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
+				BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+			elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+				export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
+				BUILD_LDFLAGS="-fsanitize=thread"
+				# PYTHON_EXE="${PYTHON_EXE}t"
+			elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:poison_in_dtor=0"
+				BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
+				BUILD_LDFLAGS="-fsanitize=memory"
+			fi
+	
+			# Configure
+			export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE $(pkg-config --cflags expat)"
+			export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS} $(pkg-config --libs-only-L expat)"
+
+			./configure \
+				--prefix=/usr/local \
+				--enable-shared \
+				--without-pymalloc \
+				--without-static-libpython \
+				--without-ensurepip \
+				--with-system-expat \
+				--with-system-ffi \
+				--with-dbmliborder=bdb:gdbm \
+				${BUILD_FLAGS}
+	
+			# Build and install
+			gmake -j$(sysctl -n hw.ncpu)
+			$SUDO_CMD gmake altinstall
+	
+			# Unset environment variables
+			unset ASAN_OPTIONS
+			unset UBSAN_OPTIONS
+			unset TSAN_OPTIONS
+			unset MSAN_OPTIONS
+			unset CFLAGS
+			unset LDFLAGS
+	
+			# Define python as the default one
+			$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
+	
+			# Install Pip
+			# fetch https://bootstrap.pypa.io/get-pip.py
+			# python3 get-pip.py --user --break-system-packages
+			# export PATH="$(python3 -m site --user-base)/bin:$PATH"
+	
+			# Bootstrap pip and install python test dependencies
+			# $SUDO_CMD python3 -m pip install --upgrade \
+			#	requests \
+			#	setuptools \
+			#	wheel \
+			#	rsa
+			cd ..
+			$SUDO_CMD rm -rf ./cpython
+		else
+			$SUDO_CMD pkg install -y python3
+		fi
 	fi
 }
 
@@ -346,7 +433,7 @@ sub_ruby(){
 			# TODO: Enable when Ruby supports other sanitizers
 			# if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; }; then
 			if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ]; }; then
-				# Download Ruby dependencies and source
+				# Download Ruby build dependencies
 				RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
 				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby
@@ -390,6 +477,7 @@ sub_ruby(){
 					--enable-shared \
 					--enable-debug-env \
 					--disable-yjit \
+					--disable-install-doc \
 					cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer -DUSE_MN_THREADS=0 -DUSE_RUBY_DEBUG_LOG=1" \
 					ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
 					optflags="-O0" \
@@ -425,7 +513,63 @@ sub_ruby(){
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y ruby
+		# TODO: Enable when Ruby supports other sanitizers
+		# if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; }; then
+		if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ]; }; then
+			# Download Ruby build dependencies
+			$SUDO_CMD pkg install -y ruby git gmake bison autoconf automake libyaml gmp openssl
+
+			# Download Ruby source
+			git clone --depth 1 --single-branch --branch ruby_3_4 https://github.com/ruby/ruby.git
+			cd ruby
+
+			# Build Ruby with instrumentation
+			if [ $INSTALL_MEMCHECK = 1 ]; then
+				BUILD_FLAGS="--with-valgrind"
+				BUILD_CFLAGS=""
+				BUILD_LDFLAGS=""
+			elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+				export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+				export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS=""
+				BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
+				BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+			elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+				export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS=""
+				BUILD_CFLAGS="-fsanitize=thread"
+				BUILD_LDFLAGS="-fsanitize=thread"
+			elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS=""
+				BUILD_CFLAGS="-fsanitize=memory"
+				BUILD_LDFLAGS="-fsanitize=memory"
+			fi
+
+			./autogen.sh
+			mkdir build && cd build
+			../configure \
+				${BUILD_FLAGS} \
+				--enable-shared \
+				--enable-debug-env \
+				--disable-yjit \
+				--disable-install-doc \
+				--with-coroutine=${ARCHITECTURE} \
+				cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer -DUSE_MN_THREADS=0 -DUSE_RUBY_DEBUG_LOG=1" \
+				ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+				optflags="-O0" \
+				debugflags="-ggdb3" \
+				--prefix=/usr/local
+
+			export MAKEFLAGS="--jobs $(sysctl -n hw.ncpu)"
+			gmake -j$(sysctl -n hw.ncpu)
+			$SUDO_CMD gmake -j$(sysctl -n hw.ncpu) install
+
+			cd ../../..
+			rm -rf ./ruby
+		else
+			$SUDO_CMD pkg install -y ruby
+		fi
 	fi
 }
 
@@ -1095,6 +1239,10 @@ sub_clang(){
 			$SUDO_CMD update-alternatives --install /usr/bin/cc cc $CC 100
 			$SUDO_CMD update-alternatives --install /usr/bin/c++ c++ $CXX 100
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# Set Clang as default compiler (it comes preinstalled by default)
+		export CC="/usr/bin/clang"
+		export CXX="/usr/bin/clang++"
 	fi
 }
 

@@ -77,6 +77,7 @@ case "$(uname -m)" in
 			ARCHITECTURE="amd64"
 		fi
 		;;
+	amd64) ARCHITECTURE="amd64";;
 	armv6*) ARCHITECTURE="armv6";;
 	armv7*|armhf|armel)
 		if grep -q "vfpv3" /proc/cpuinfo; then
