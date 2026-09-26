@@ -313,10 +313,11 @@ TEST_F(portability_path_test, portability_path_test_get_fullname_exact_buffer)
 
 	memset(name, 'x', sizeof(name));
 
-	/* The buffer is filled with 'x' but only 9 bytes are passed. libfoo.so is 9 chars,
-	* so there's no room for the terminator and the name gets truncated:
-	* libfoo.s\0xxxxxxx. Before the fix the whole libfoo.so was copied and the \0
-	* was written at name[9], one byte past the size, so name[9] must stay 'x'.
+	/* 16 bytes filled with 'x', but only 9 are passed as size (libfoo.so is 9 chars):
+	*
+	*          0  1  2  3  4  5  6  7  8    9  10 ...
+	* before:  l  i  b  f  o  o  .  s  o  | \0 x  ...   <- \0 written out of bounds
+	* after:   l  i  b  f  o  o  .  s  \0 | x  x  ...   <- truncated, name[9] untouched
 	*/
 	size_t size = portability_path_get_fullname(base, sizeof(base), name, 9);
 
@@ -333,8 +334,11 @@ TEST_F(portability_path_test, portability_path_test_get_path_of_path_exact_buffe
 
 	memset(path, 'x', sizeof(path));
 
-	/* Same as above, /usr/lib/ is 9 chars so with 9 bytes it becomes /usr/lib\0xxxxxxx.
-	* Before the fix the \0 was written at path[9], so path[9] must stay 'x'.
+	/* 16 bytes filled with 'x', but only 9 are passed as size (/usr/lib/ is 9 chars):
+	*
+	*          0  1  2  3  4  5  6  7  8    9  10 ...
+	* before:  /  u  s  r  /  l  i  b  /  | \0 x  ...   <- \0 written out of bounds
+	* after:   /  u  s  r  /  l  i  b  \0 | x  x  ...   <- truncated, path[9] untouched
 	*/
 	size_t size = portability_path_get_directory(base, sizeof(base), path, 9);
 
