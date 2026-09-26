@@ -21,8 +21,7 @@
 #ifndef _SIMPLE_NETCORE_H_
 #define _SIMPLE_NETCORE_H_
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include <cs_loader/defs.h>

@@ -122,8 +122,8 @@ int simple_netcore_set_object_attribute(netcore_handle handle, void *object, con
 			   object,
 			   attribute,
 			   param) ?
-			   0 :
-			   1;
+				 0 :
+				 1;
 }
 
 execution_result *simple_netcore_get_static_attribute(netcore_handle handle, const char *class_name, const char *attribute)
@@ -143,8 +143,8 @@ int simple_netcore_set_static_attribute(netcore_handle handle, const char *class
 			   class_name,
 			   attribute,
 			   param) ?
-			   0 :
-			   1;
+				 0 :
+				 1;
 }
 
 void simple_netcore_destroy_object(netcore_handle handle, void *object)
