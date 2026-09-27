@@ -35,6 +35,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/threading.h
 	${include_path}/threading_atomic.h
+	${include_path}/threading_thread.h
 	${include_path}/threading_thread_id.h
 	${include_path}/threading_atomic_ref_count.h
 	${include_path}/threading_mutex.h
@@ -60,16 +61,19 @@ if(WIN32)
 	set(sources
 		${sources}
 		${source_path}/threading_mutex_win32.c
+		${source_path}/threading_thread_win32.c
 	)
 elseif(APPLE)
 	set(sources
 		${sources}
 		${source_path}/threading_mutex_macos.c
+		${source_path}/threading_thread_unix.c
 	)
 else()
 	set(sources
 		${sources}
 		${source_path}/threading_mutex_pthread.c
+		${source_path}/threading_thread_unix.c
 	)
 endif()
 

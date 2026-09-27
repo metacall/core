@@ -41,8 +41,12 @@
 
 #include <memory/memory_sanitizer.h>
 
+#include <threading/threading_thread.h>
 #include <threading/threading_thread_id.h>
 
+#if !defined(_WIN32)
+#include <signal.h>
+#endif
 #include <metacall/metacall.h>
 
 #include <stdbool.h>
@@ -122,9 +126,11 @@ struct loader_impl_py_type
 	PyObject *asyncio_module;
 	PyObject *asyncio_iscoroutinefunction;
 	PyObject *asyncio_loop;
+	threading_thread asyncio_thread;
 	PyObject *thread_background_future_check;
 	PyObject *thread_background_module;
 	PyObject *thread_background_start;
+	PyObject *thread_background_run;
 	PyObject *thread_background_send;
 	PyObject *thread_background_stop;
 	PyObject *thread_background_register_atexit;
@@ -1938,6 +1944,44 @@ error_import_module:
 	return 1;
 }
 
+static void *py_loader_impl_asyncio_thread_worker(void *data)
+{
+	loader_impl_py py_impl = (loader_impl_py)data;
+
+	py_loader_thread_acquire();
+
+	PyObject *loop = PyObject_GetAttrString(py_impl->asyncio_loop, "loop");
+
+	if (loop == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error produced while retrieving the event loop for the asyncio thread");
+		py_loader_impl_error_print(py_impl);
+	}
+	else
+	{
+		PyObject *args_tuple = PyTuple_New(1);
+		PyTuple_SetItem(args_tuple, 0, loop);
+
+		PyObject *result = PyObject_Call(py_impl->thread_background_run, args_tuple, NULL);
+
+		Py_DecRef(args_tuple);
+
+		if (result == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Error produced while running the asyncio thread");
+			py_loader_impl_error_print(py_impl);
+		}
+		else
+		{
+			Py_DecRef(result);
+		}
+	}
+
+	py_loader_thread_release();
+
+	return NULL;
+}
+
 int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int host)
 {
 	PyObject *module_name = PyUnicode_DecodeFSDefault("asyncio");
@@ -1994,6 +2038,12 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 		goto error_after_py_task_callback_handler;
 	}
 
+	if (threading_thread_create(&py_impl->asyncio_thread, &py_loader_impl_asyncio_thread_worker, (void *)py_impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error produced while creating the native asyncio thread");
+		goto error_after_asyncio_loop;
+	}
+
 	/* When running in host, we must register a thread atexit for finalizing the background threads
 	before Python_AtExit, just before when all threads are join (except by daemon threads) */
 	if (host == 1)
@@ -2007,6 +2057,8 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 
 	return 0;
 
+error_after_asyncio_loop:
+	Py_DecRef(py_impl->asyncio_loop);
 error_after_py_task_callback_handler:
 	Py_DecRef(py_impl->py_task_callback_handler);
 error_after_asyncio_iscoroutinefunction:
@@ -2270,19 +2322,11 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"	return asyncio.wrap_future(task, loop=tl.loop)\n"
 		/* Stop background loop enqueues at the end of the event loop
 		the task to be finished, so effectively it waits until the event loop finishes */
-		"def stop_background_loop(tl, join):\n"
+		"def stop_background_loop(tl):\n"
 #if DEBUG_ENABLED
 		"	print('Requesting loop to stop', flush=True)\n"
 #endif
 		"	tl.loop.call_soon_threadsafe(tl.loop.stop)\n"
-		"	if join:\n"
-#if DEBUG_ENABLED
-		"		print('Waiting for thread to join', flush=True)\n"
-#endif
-		"		tl.t.join()\n"
-#if DEBUG_ENABLED
-		"		print('Background loop stopped', flush=True)\n"
-#endif
 		"def atexit_background_loop(tl):\n"
 		/* Checks if py_port_impl_module contains py_loader_port_atexit and executes it */
 		"	getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)()\n"
@@ -2343,6 +2387,14 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		goto error_thread_background_start;
 	}
 
+	py_impl->thread_background_run = PyObject_GetAttrString(py_impl->thread_background_module, "background_loop");
+
+	if (py_impl->thread_background_run == NULL || !PyCallable_Check(py_impl->thread_background_run))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting background_loop function");
+		goto error_thread_background_run;
+	}
+
 	py_impl->thread_background_send = PyObject_GetAttrString(py_impl->thread_background_module, "send_background_loop");
 
 	if (py_impl->thread_background_send == NULL || !PyCallable_Check(py_impl->thread_background_send))
@@ -2375,6 +2427,8 @@ error_thread_background_stop:
 	Py_DecRef(py_impl->thread_background_stop);
 error_thread_background_send:
 	Py_DecRef(py_impl->thread_background_send);
+error_thread_background_run:
+	Py_DecRef(py_impl->thread_background_run);
 error_thread_background_start:
 	Py_DecRef(py_impl->thread_background_start);
 error_thread_background_future_check:
@@ -2466,6 +2520,13 @@ error_set_item:
 
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
+	/* Ignore SIGPIPE on POSIX systems so closing the asyncio loop self-pipe
+	does not terminate the host process */
+#if defined(SIGPIPE)
+	signal(SIGPIPE, SIG_IGN);
+#endif
+
+
 	const int host = loader_impl_get_option_host(impl);
 	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
 	int traceback_initialized = 1;
@@ -2623,6 +2684,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 error_after_thread_background_module:
 	Py_DecRef(py_impl->thread_background_module);
 	Py_DecRef(py_impl->thread_background_start);
+	Py_DecRef(py_impl->thread_background_run);
 	Py_DecRef(py_impl->thread_background_send);
 	Py_DecRef(py_impl->thread_background_stop);
 	Py_DecRef(py_impl->thread_background_register_atexit);
@@ -4086,80 +4148,6 @@ int py_loader_impl_finalize(loader_impl_py py_impl, const int host)
 	return 0;
 }
 
-#if defined(WIN32) || defined(_WIN32)
-/* On Windows, threads are destroyed when atexit is executed, we should control this in order to avoid deadlocks */
-static long py_loader_impl_asyncio_thread_native_id(loader_impl_py py_impl)
-{
-	PyObject *thread_obj = PyObject_GetAttrString(py_impl->asyncio_loop, "t");
-
-	if (thread_obj == NULL)
-	{
-		return -1;
-	}
-
-	PyObject *native_id_obj = PyObject_GetAttrString(thread_obj, "native_id");
-	Py_DecRef(thread_obj);
-
-	if (thread_obj == NULL)
-	{
-		return -1;
-	}
-
-	long native_id = PyLong_AsLong(native_id_obj);
-	Py_DecRef(native_id_obj);
-
-	if (PyErr_Occurred())
-	{
-		py_loader_impl_error_print(py_impl);
-		return -1;
-	}
-
-	return native_id;
-}
-
-static int py_loader_impl_check_thread(loader_impl_py py_impl)
-{
-	long thread_id = py_loader_impl_asyncio_thread_native_id(py_impl);
-
-	if (thread_id == -1)
-	{
-		return -1;
-	}
-
-	HANDLE thread_handle = OpenThread(THREAD_QUERY_INFORMATION | SYNCHRONIZE, FALSE, thread_id);
-
-	if (thread_handle == NULL)
-	{
-		return 1;
-	}
-
-	DWORD result = WaitForSingleObject(thread_handle, 0);
-
-	CloseHandle(thread_handle);
-
-	if (result == WAIT_TIMEOUT)
-	{
-		return 0;
-	}
-	else if (result == WAIT_OBJECT_0)
-	{
-		/* This workaround forces to skip thread waiting, so it avoids deadlocks */
-		PyObject *sys_modules = PyImport_GetModuleDict();
-
-		if (PyDict_DelItemString(sys_modules, "threading") < 0)
-		{
-			PyErr_Print();
-		}
-
-		return 1;
-	}
-	else
-	{
-		return -1;
-	}
-}
-#endif
-
 int py_loader_impl_destroy(loader_impl impl)
 {
 	const int host = loader_impl_get_option_host(impl);
@@ -4177,21 +4165,33 @@ int py_loader_impl_destroy(loader_impl impl)
 	py_loader_thread_acquire();
 
 	/* Stop event loop for async calls */
-#if defined(WIN32) || defined(_WIN32)
-	if (py_loader_impl_check_thread(py_impl) == 0)
-#endif
 	{
-		PyObject *args_tuple = PyTuple_New(2);
+		PyObject *args_tuple = PyTuple_New(1);
 		Py_IncRef(py_impl->asyncio_loop);
 		PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
-		/* If it is host, do not join the thread */
-		PyTuple_SetItem(args_tuple, 1, PyBool_FromLong(!host));
-		PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
+		PyObject *stop_result = PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
 		Py_DecRef(args_tuple);
 
-		if (PyErr_Occurred() != NULL)
+		if (stop_result == NULL)
 		{
 			py_loader_impl_error_print(py_impl);
+		}
+		else
+		{
+			Py_DecRef(stop_result);
+		}
+
+		if (host == 1)
+		{
+			threading_thread_detach(&py_impl->asyncio_thread);
+		}
+		else
+		{
+			Py_BEGIN_ALLOW_THREADS
+			threading_thread_join(&py_impl->asyncio_thread, NULL);
+			Py_END_ALLOW_THREADS
+
+			threading_thread_destroy(&py_impl->asyncio_thread);
 		}
 	}
 
@@ -4218,6 +4218,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DecRef(py_impl->thread_background_future_check);
 	Py_DecRef(py_impl->thread_background_module);
 	Py_DecRef(py_impl->thread_background_start);
+	Py_DecRef(py_impl->thread_background_run);
 	Py_DecRef(py_impl->thread_background_send);
 	Py_DecRef(py_impl->thread_background_stop);
 	Py_DecRef(py_impl->thread_background_register_atexit);
