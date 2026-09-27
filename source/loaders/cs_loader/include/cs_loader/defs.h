@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef _DEFS_H_
 #define _DEFS_H_
@@ -52,6 +52,76 @@ typedef struct
 	reflect_param pars[10];
 } reflect_function;
 
+typedef struct
+{
+	char name[100];
+} reflect_class;
+
+typedef struct
+{
+	char class_name[100];
+	int param_count;
+	reflect_param pars[10];
+} reflect_constructor;
+
+typedef struct
+{
+	char class_name[100];
+	short return_type;
+	int param_count;
+	char name[100];
+	int is_static;
+	reflect_param pars[10];
+} reflect_method;
+
+typedef struct
+{
+	char class_name[100];
+	short type;
+	char name[100];
+	int is_static;
+} reflect_attribute;
+
+typedef void(get_classes_c)(int *, void *);
+
+typedef void(get_constructors_c)(int *, void *);
+
+typedef void(get_methods_c)(int *, void *);
+
+typedef void(get_attributes_c)(int *, void *);
+
+typedef void *(create_object_c)(const char *,
+	parameters *,
+	long);
+
+typedef execution_result *(invoke_object_c)(void *,
+	const char *,
+	parameters *,
+	long);
+
+typedef execution_result *(invoke_static_c)(const char *,
+	const char *,
+	parameters *,
+	long);
+
+typedef execution_result *(get_object_attribute_c)(void *,
+	const char *);
+
+typedef int(set_object_attribute_c)(
+	void *,
+	const char *,
+	parameters *);
+
+typedef execution_result *(get_static_attribute_c)(const char *,
+	const char *);
+
+typedef int(set_static_attribute_c)(
+	const char *,
+	const char *,
+	parameters *);
+
+typedef void(destroy_object_c)(void *);
+
 typedef char(execution_path_w)(const wchar_t *source);
 typedef char(execution_path_c)(const char *source);
 
@@ -75,7 +145,7 @@ typedef void(destroy_clr)(void);
 
 #if defined(__linux) || defined(linux) || defined(__APPLE__) || defined(__MACH__)
 	/* On Linux and macOS, CoreCLR uses narrow char APIs (const char *).
-	* Only Windows uses wide char (wchar_t) for its CLR host API. */
+	 * Only Windows uses wide char (wchar_t) for its CLR host API. */
 	#define W(str) str
 typedef char CHARSTRING;
 #else

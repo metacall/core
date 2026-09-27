@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -32,6 +32,57 @@ namespace CSLoader
             public string name;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
             public ReflectParam[] pars;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct ReflectClass
+        {
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string name;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct ReflectConstructor
+        {
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string className;
+
+            public int paramcount;
+
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public ReflectParam[] pars;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct ReflectMethod
+        {
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string className;
+
+            public type_primitive_id returnType;
+            public int paramcount;
+
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string name;
+
+            public int isStatic;
+
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public ReflectParam[] pars;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct ReflectAttribute
+        {
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string className;
+
+            public type_primitive_id type;
+
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string name;
+
+            public int isStatic;
         }
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = CharSet.Ansi)]

@@ -100,6 +100,58 @@ namespace CSLoader
             }
         }
 
+        public static void GetClasses(ref int count, IntPtr p)
+        {
+            ReflectClass[] classes = loader.Classes();
+
+            count = classes.Length;
+
+            for (int i = 0; i < classes.Length; ++i)
+            {
+                Marshal.StructureToPtr(classes[i], p, false);
+                p = IntPtr.Add(p, Marshal.SizeOf<ReflectClass>());
+            }
+        }
+
+        public static void GetConstructors(ref int count, IntPtr p)
+        {
+            ReflectConstructor[] constructors = loader.Constructors();
+
+            count = constructors.Length;
+
+            for (int i = 0; i < constructors.Length; ++i)
+            {
+                Marshal.StructureToPtr(constructors[i], p, false);
+                p = IntPtr.Add(p, Marshal.SizeOf<ReflectConstructor>());
+            }
+        }
+
+        public static void GetMethods(ref int count, IntPtr p)
+        {
+            ReflectMethod[] methods = loader.Methods();
+
+            count = methods.Length;
+
+            for (int i = 0; i < methods.Length; ++i)
+            {
+                Marshal.StructureToPtr(methods[i], p, false);
+                p = IntPtr.Add(p, Marshal.SizeOf<ReflectMethod>());
+            }
+        }
+
+        public static void GetAttributes(ref int count, IntPtr p)
+        {
+            ReflectAttribute[] attributes = loader.Attributes();
+
+            count = attributes.Length;
+
+            for (int i = 0; i < attributes.Length; ++i)
+            {
+                Marshal.StructureToPtr(attributes[i], p, false);
+                p = IntPtr.Add(p, Marshal.SizeOf<ReflectAttribute>());
+            }
+        }
+
         public unsafe static bool LoadFilesC([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]IntPtr[] source, long size)
         {
             return Load(source.Select(x => Marshal.PtrToStringAnsi(x)).ToArray());
@@ -128,6 +180,67 @@ namespace CSLoader
         public static bool LoadSourceW([MarshalAs(UnmanagedType.LPWStr)]string source)
         {
             return Load(source);
+        }
+
+        public static IntPtr CreateObjectC([MarshalAs(UnmanagedType.LPStr)] string className, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] Parameters[] parameters, long size)
+        {
+            return loader.CreateObject(
+                className,
+                parameters,
+                size);
+        }
+
+        public unsafe static IntPtr InvokeObjectC(IntPtr handle, [MarshalAs(UnmanagedType.LPStr)] string method, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] Parameters[] parameters, long size)
+        {
+            return (IntPtr)loader.InvokeObject(
+                handle,
+                method,
+                parameters,
+                size);
+        }
+
+        public unsafe static IntPtr InvokeStaticC([MarshalAs(UnmanagedType.LPStr)] string className, [MarshalAs(UnmanagedType.LPStr)] string method, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] Parameters[] parameters, long size)
+        {
+            return (IntPtr)loader.InvokeStatic(
+                className,
+                method,
+                parameters,
+                size);
+        }
+
+        public unsafe static IntPtr GetObjectAttributeC(IntPtr handle, [MarshalAs(UnmanagedType.LPStr)] string attribute)
+        {
+            return (IntPtr)loader.GetObjectAttribute(
+                handle,
+                attribute);
+        }
+
+        public static int SetObjectAttributeC(IntPtr handle, [MarshalAs(UnmanagedType.LPStr)] string attribute, [MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] Parameters[] parameters)
+        {
+            return loader.SetObjectAttribute(
+                handle,
+                attribute,
+                parameters) ? 0 : 1;
+        }
+
+        public unsafe static IntPtr GetStaticAttributeC([MarshalAs(UnmanagedType.LPStr)] string className, [MarshalAs(UnmanagedType.LPStr)] string attribute)
+        {
+            return (IntPtr)loader.GetStaticAttribute(
+                className,
+                attribute);
+        }
+
+        public static int SetStaticAttributeC([MarshalAs(UnmanagedType.LPStr)] string className, [MarshalAs(UnmanagedType.LPStr)] string attribute, [MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] Parameters[] parameters)
+        {
+            return loader.SetStaticAttribute(
+                className,
+                attribute,
+                parameters) ? 0 : 1;
+        }
+
+        public static void DestroyObjectC(IntPtr handle)
+        {
+            loader.DestroyObject(handle);
         }
 
         public unsafe static IntPtr ExecuteC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)] string function)
