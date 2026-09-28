@@ -65,6 +65,7 @@ typedef struct loader_impl_py_function_type
 	PyObject *func;
 	PyObject **values; // Cache and re-use the values array
 	loader_impl impl;
+	int has_kwargs;
 } * loader_impl_py_function;
 
 typedef struct loader_impl_py_future_type
@@ -175,6 +176,8 @@ static object_interface py_object_interface_singleton(void);
 static class_interface py_class_interface_singleton(void);
 
 static size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable);
+
+static int py_loader_impl_discover_callable_has_kwargs(loader_impl_py py_impl, PyObject *callable);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
 
@@ -1086,6 +1089,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 			Py_IncRef(obj);
 			py_func->func = obj;
 			py_func->impl = impl;
+			py_func->has_kwargs = py_loader_impl_discover_callable_has_kwargs(py_impl, obj);
 
 			f = function_create(NULL, args_count, py_func, &function_py_singleton);
 
@@ -1544,13 +1548,22 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		goto finalize;
 	}
 
-	PyObject *tuple_args = PyTuple_New(args_size);
+	PyObject *dict_kwargs = NULL;
+	size_t pos_args_size = args_size;
+
+	if (py_func->has_kwargs && args_size > 0 && value_type_id((value)args[args_size - 1]) == TYPE_MAP)
+	{
+		pos_args_size = args_size - 1;
+		dict_kwargs = py_loader_impl_value_to_capi(py_func->impl, TYPE_MAP, args[args_size - 1]);
+	}
+
+	PyObject *tuple_args = PyTuple_New(pos_args_size);
 
 	/* Allocate dynamically more space for values in case of variable arguments */
-	bool is_var_args = args_size > signature_args_size || py_func->values == NULL;
-	PyObject **values = is_var_args ? malloc(sizeof(PyObject *) * args_size) : py_func->values;
+	bool is_var_args = pos_args_size > signature_args_size || py_func->values == NULL;
+	PyObject **values = is_var_args ? malloc(sizeof(PyObject *) * (pos_args_size == 0 ? 1 : pos_args_size)) : py_func->values;
 
-	for (size_t args_count = 0; args_count < args_size; ++args_count)
+	for (size_t args_count = 0; args_count < pos_args_size; ++args_count)
 	{
 		type t = args_count < signature_args_size ? signature_get_type(s, args_count) : NULL;
 		type_id id = t == NULL ? value_type_id((value)args[args_count]) : type_index(t);
@@ -1562,7 +1575,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 	}
 
-	PyObject *result = PyObject_CallObject(py_func->func, tuple_args);
+	PyObject *result = (dict_kwargs != NULL)
+		? PyObject_Call(py_func->func, tuple_args, dict_kwargs)
+		: PyObject_CallObject(py_func->func, tuple_args);
+
+	Py_XDECREF(dict_kwargs);
 
 	/* End of recursive call */
 	Py_LeaveRecursiveCall();
@@ -1612,12 +1629,22 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 	py_loader_thread_acquire();
 
+	PyObject *dict_kwargs = NULL;
+	size_t pos_args_size = args_size;
+
+	if (py_func->has_kwargs && args_size > 0 && value_type_id((value)args[args_size - 1]) == TYPE_MAP)
+	{
+		pos_args_size = args_size - 1;
+		dict_kwargs = py_loader_impl_value_to_capi(py_func->impl, TYPE_MAP, args[args_size - 1]);
+	}
+
 	/* Allocate dynamically more space for values in case of variable arguments */
-	void **values = args_size > signature_args_size ? malloc(sizeof(void *) * args_size) : py_func->values;
+	bool is_var_args = pos_args_size > signature_args_size || py_func->values == NULL;
+	void **values = is_var_args ? malloc(sizeof(void *) * (pos_args_size == 0 ? 1 : pos_args_size)) : py_func->values;
 
-	tuple_args = PyTuple_New(args_size);
+	tuple_args = PyTuple_New(pos_args_size);
 
-	for (args_count = 0; args_count < args_size; ++args_count)
+	for (args_count = 0; args_count < pos_args_size; ++args_count)
 	{
 		type t = args_count < signature_args_size ? signature_get_type(s, args_count) : NULL;
 
@@ -1640,11 +1667,19 @@ function_return function_py_interface_await(function func, function_impl impl, f
 		}
 	}
 
-	PyObject *coroutine = PyObject_CallObject(py_func->func, tuple_args);
+	PyObject *coroutine = (dict_kwargs != NULL)
+		? PyObject_Call(py_func->func, tuple_args, dict_kwargs)
+		: PyObject_CallObject(py_func->func, tuple_args);
+
+	Py_XDECREF(dict_kwargs);
 
 	if (coroutine == NULL || PyErr_Occurred() != NULL)
 	{
 		Py_DecRef(coroutine);
+		if (is_var_args)
+		{
+			free(values);
+		}
 		goto error;
 	}
 
@@ -1700,7 +1735,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	Py_DecRef(args_tuple);
 
 	/* Variable arguments */
-	if (args_size > signature_args_size)
+	if (is_var_args)
 	{
 		free(values);
 	}
@@ -3276,6 +3311,29 @@ unsupported_callable:
 	return args_count;
 }
 
+int py_loader_impl_discover_callable_has_kwargs(loader_impl_py py_impl, PyObject *callable)
+{
+	int has_kwargs = 0;
+	PyObject *spec = PyObject_CallFunction(py_impl->inspect_getfullargspec, "O", callable);
+
+	if (spec == NULL)
+	{
+		PyErr_Clear();
+		return 0;
+	}
+
+	PyObject *varkw = PyTuple_GetItem(spec, 2);
+
+	if (varkw != NULL && varkw != Py_None)
+	{
+		has_kwargs = 1;
+	}
+
+	Py_DecRef(spec);
+
+	return has_kwargs;
+}
+
 int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
@@ -3844,6 +3902,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 			Py_IncRef(module_dict_val);
 			py_func->func = module_dict_val;
 			py_func->impl = impl;
+			py_func->has_kwargs = py_loader_impl_discover_callable_has_kwargs(py_impl, module_dict_val);
 
 			function f = function_create(func_name, discover_args_count, py_func, &function_py_singleton);
 
