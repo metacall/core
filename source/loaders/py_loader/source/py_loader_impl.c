@@ -1485,7 +1485,7 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 			PyObject *args = PyObject_GetAttrString(error_value, "args");
 
 			/* Retrieve the contents of the exception (TODO: Pass the exception directly as value when we support the exception type?) */
-			if (args != NULL && PyTuple_Check(args))
+			if (args != NULL && PyTuple_Check(args) && PyTuple_Size(args) > 0)
 			{
 				PyObject *val = PyTuple_GetItem(args, 0);
 				type_id id = py_loader_impl_capi_to_value_type(callback_state->impl, val);
