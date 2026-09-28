@@ -2280,9 +2280,8 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"sys.settrace(trace_calls)\n"
 #endif
 		"class ThreadLoop:\n"
-		"	def __init__(self, loop, t):\n"
+		"	def __init__(self, loop):\n"
 		"		self.loop = loop\n"
-		"		self.t = t\n"
 		"def future_check(f):\n"
 		"	return asyncio.isfuture(f)\n"
 		"def future_create(tl):\n"
@@ -2325,9 +2324,10 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 #if DEBUG_ENABLED
 		"	loop.set_debug(True)\n"
 #endif
-		"	t = threading.Thread(target=background_loop, name='MetaCallEventLoop', args=(loop,), daemon=False)\n"
-		"	t.start()\n"
-		"	return ThreadLoop(loop, t)\n"
+		/* The loop is only created here, it is run exclusively by the native thread
+		(see py_loader_impl_asyncio_thread_worker). A Python threading.Thread must never
+		be started for it: two threads running the same loop corrupt it on Windows */
+		"	return ThreadLoop(loop)\n"
 		"def send_background_loop(tl, coro, callback, capsule):\n"
 		"	task = asyncio.run_coroutine_threadsafe(coro, tl.loop)\n"
 		"	task.__metacall_capsule = capsule\n"
