@@ -60,12 +60,15 @@
 */
 #define DEBUG_PRINT_ENABLED 0
 
+#define PY_LOADER_INDEX_INVALID -1
+
 typedef struct loader_impl_py_function_type
 {
 	PyObject *func;
 	PyObject **values; // Cache and re-use the values array
 	loader_impl impl;
-	int has_kwargs;
+	int varargs_index;
+	int kwargs_index;
 } * loader_impl_py_function;
 
 typedef struct loader_impl_py_future_type
@@ -175,9 +178,9 @@ static object_interface py_object_interface_singleton(void);
 
 static class_interface py_class_interface_singleton(void);
 
-static size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable);
+static void py_loader_impl_discover_callable_indices(loader_impl_py py_impl, PyObject *callable, size_t *args_count, int *varargs_index, int *kwargs_index);
 
-static int py_loader_impl_discover_callable_has_kwargs(loader_impl_py py_impl, PyObject *callable);
+static size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
 
@@ -1077,7 +1080,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		else
 		{
 			loader_impl_py py_impl = loader_impl_get(impl);
-			size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, obj);
+			size_t args_count = 0;
 			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
 			function f = NULL;
 
@@ -1086,10 +1089,11 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 				return NULL;
 			}
 
+			py_loader_impl_discover_callable_indices(py_impl, obj, &args_count, &py_func->varargs_index, &py_func->kwargs_index);
+
 			Py_IncRef(obj);
 			py_func->func = obj;
 			py_func->impl = impl;
-			py_func->has_kwargs = py_loader_impl_discover_callable_has_kwargs(py_impl, obj);
 
 			f = function_create(NULL, args_count, py_func, &function_py_singleton);
 
@@ -1551,7 +1555,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	PyObject *dict_kwargs = NULL;
 	size_t pos_args_size = args_size;
 
-	if (py_func->has_kwargs && args_size > 0 && value_type_id((value)args[args_size - 1]) == TYPE_MAP)
+	if (py_func->kwargs_index != PY_LOADER_INDEX_INVALID && args_size > 0 && value_type_id((value)args[args_size - 1]) == TYPE_MAP)
 	{
 		pos_args_size = args_size - 1;
 		dict_kwargs = py_loader_impl_value_to_capi(py_func->impl, TYPE_MAP, args[args_size - 1]);
@@ -1632,7 +1636,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	PyObject *dict_kwargs = NULL;
 	size_t pos_args_size = args_size;
 
-	if (py_func->has_kwargs && args_size > 0 && value_type_id((value)args[args_size - 1]) == TYPE_MAP)
+	if (py_func->kwargs_index != PY_LOADER_INDEX_INVALID && args_size > 0 && value_type_id((value)args[args_size - 1]) == TYPE_MAP)
 	{
 		pos_args_size = args_size - 1;
 		dict_kwargs = py_loader_impl_value_to_capi(py_func->impl, TYPE_MAP, args[args_size - 1]);
@@ -3266,10 +3270,23 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 	return t;
 }
 
-size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable)
+void py_loader_impl_discover_callable_indices(loader_impl_py py_impl, PyObject *callable, size_t *args_count, int *varargs_index, int *kwargs_index)
 {
-	/* TODO: Improve this in the future, adding positional arguments, variable arguments and others */
-	size_t args_count = 0;
+	if (args_count != NULL)
+	{
+		*args_count = 0;
+	}
+
+	if (varargs_index != NULL)
+	{
+		*varargs_index = PY_LOADER_INDEX_INVALID;
+	}
+
+	if (kwargs_index != NULL)
+	{
+		*kwargs_index = PY_LOADER_INDEX_INVALID;
+	}
+
 	PyObject *spec = PyObject_CallFunction(py_impl->inspect_getfullargspec, "O", callable);
 
 	if (spec == NULL)
@@ -3277,61 +3294,72 @@ size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObj
 		/* This means we have a PyCFunction which cannot be introspected, we let varargs to do the calls */
 		/* TODO: In the future we should check if this is a callback from metacall because then we can obtain the function signature */
 		PyErr_Clear();
-		goto unsupported_callable;
+		return;
 	}
 
 	PyObject *args = PyTuple_GetItem(spec, 0);
+	size_t count = 0;
 
-	if (args == NULL)
+	if (args != NULL)
 	{
-		/* If there's no arguments, let's Python deal with this as variable arguments */
-		goto clear_spec;
+		count = (size_t)PyObject_Size(args);
+
+		PyObject *is_method = PyObject_CallFunction(py_impl->inspect_ismethod, "O", callable);
+
+		if (is_method != NULL)
+		{
+			/* Do not count self parameter */
+			if (PyObject_IsTrue(is_method) == 1 && count > 0)
+			{
+				count--;
+			}
+
+			Py_DecRef(is_method);
+		}
 	}
 
-	/* Get the number of arguments */
-	args_count = (size_t)PyObject_Size(args);
-
-	PyObject *is_method = PyObject_CallFunction(py_impl->inspect_ismethod, "O", callable);
-
-	if (is_method == NULL)
+	if (args_count != NULL)
 	{
-		goto clear_spec;
+		*args_count = count;
 	}
 
-	/* Do not count self parameter */
-	if (PyObject_IsTrue(is_method) == 1)
+	PyObject *varargs = PyTuple_GetItem(spec, 1);
+
+	if (varargs != NULL && varargs != Py_None)
 	{
-		args_count--;
-	}
-
-	Py_DecRef(is_method);
-clear_spec:
-	Py_DecRef(spec); /* The elements from the tuple (args) are cleaned here */
-unsupported_callable:
-	return args_count;
-}
-
-int py_loader_impl_discover_callable_has_kwargs(loader_impl_py py_impl, PyObject *callable)
-{
-	int has_kwargs = 0;
-	PyObject *spec = PyObject_CallFunction(py_impl->inspect_getfullargspec, "O", callable);
-
-	if (spec == NULL)
-	{
-		PyErr_Clear();
-		return 0;
+		if (varargs_index != NULL)
+		{
+			*varargs_index = (int)count;
+		}
 	}
 
 	PyObject *varkw = PyTuple_GetItem(spec, 2);
 
 	if (varkw != NULL && varkw != Py_None)
 	{
-		has_kwargs = 1;
+		if (kwargs_index != NULL)
+		{
+			if (varargs_index != NULL && *varargs_index != PY_LOADER_INDEX_INVALID)
+			{
+				*kwargs_index = *varargs_index + 1;
+			}
+			else
+			{
+				*kwargs_index = (int)count;
+			}
+		}
 	}
 
 	Py_DecRef(spec);
+}
 
-	return has_kwargs;
+size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable)
+{
+	size_t args_count = 0;
+
+	py_loader_impl_discover_callable_indices(py_impl, callable, &args_count, NULL, NULL);
+
+	return args_count;
 }
 
 int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
@@ -3890,7 +3918,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 		else if (PyCallable_Check(module_dict_val))
 		{
 			const char *func_name = PyUnicode_AsUTF8(module_dict_key);
-			size_t discover_args_count = py_loader_impl_discover_callable_args_count(py_impl, module_dict_val);
+			size_t discover_args_count = 0;
 			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
 
 			if (py_func == NULL)
@@ -3899,10 +3927,11 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 				return 1;
 			}
 
+			py_loader_impl_discover_callable_indices(py_impl, module_dict_val, &discover_args_count, &py_func->varargs_index, &py_func->kwargs_index);
+
 			Py_IncRef(module_dict_val);
 			py_func->func = module_dict_val;
 			py_func->impl = impl;
-			py_func->has_kwargs = py_loader_impl_discover_callable_has_kwargs(py_impl, module_dict_val);
 
 			function f = function_create(func_name, discover_args_count, py_func, &function_py_singleton);
 
