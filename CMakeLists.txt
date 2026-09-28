@@ -155,11 +155,12 @@ include(Portability)
 #
 
 find_package(ClangFormat)
+find_package(ClangTidy)
 
-if(ClangFormat_FOUND)
+if(ClangFormat_FOUND OR ClangTidy_FOUND)
 	include(ClangDevTools)
 else()
-    message(WARNING "Linting disabled: clang-format executable not found")
+    message(WARNING "Linting disabled: clang-format and clang-tidy executables not found")
 endif()
 
 #
