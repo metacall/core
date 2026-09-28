@@ -134,6 +134,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	py_loader
+	python-varargs
 )
 
 #
