@@ -437,7 +437,7 @@ args_error:
 
 size_t metacall_args_size(void)
 {
-	const size_t args_size = METACALL_ARGS_SIZE;
+	static const size_t args_size = METACALL_ARGS_SIZE;
 
 	return args_size;
 }
