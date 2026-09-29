@@ -2533,11 +2533,6 @@ error_set_item:
 
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
-	/* Ignore SIGPIPE on POSIX systems so closing the asyncio loop self-pipe
-	does not terminate the host process */
-#if defined(SIGPIPE)
-	signal(SIGPIPE, SIG_IGN);
-#endif
 
 
 	const int host = loader_impl_get_option_host(impl);
