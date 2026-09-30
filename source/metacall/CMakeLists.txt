@@ -57,6 +57,7 @@ set(headers
 	${include_path}/metacall_allocator.h
 	${include_path}/metacall_error.h
 	${include_path}/metacall_link.h
+	${include_path}/metacall_self_register.h
 )
 
 set(sources
@@ -66,6 +67,7 @@ set(sources
 	${source_path}/metacall_allocator.c
 	${source_path}/metacall_error.c
 	${source_path}/metacall_link.c
+	${source_path}/metacall_self_register.c
 )
 
 if(OPTION_FORK_SAFE)
