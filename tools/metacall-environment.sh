@@ -62,6 +62,7 @@ INSTALL_MEMORY_SANITIZER=0
 INSTALL_CLANG=0
 INSTALL_CLANG_MSAN=0
 INSTALL_CLANG_FORMAT=0
+INSTALL_CLANG_TIDY=0
 INSTALL_BACKTRACE=0
 INSTALL_SANDBOX=0
 INSTALL_ANDROID=0
@@ -1362,6 +1363,88 @@ sub_clang_format(){
 	fi
 }
 
+# Clang tidy
+sub_clang_tidy(){
+	echo "configure clang tidy"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			UBUNTU_CODENAME=""
+
+			. /etc/os-release
+
+			if [ "${LINUX_DISTRO}" = "debian" ]; then
+				if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "forky" ]; then
+					CODENAME="unstable"
+					TOOLCHAIN="llvm-toolchain"
+				else
+					CODENAME="${VERSION_CODENAME}"
+					TOOLCHAIN="llvm-toolchain-${CODENAME}"
+				fi
+
+			elif [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+				if [ -n "${UBUNTU_CODENAME}" ]; then
+					CODENAME="${UBUNTU_CODENAME}"
+				else
+					CODENAME="${VERSION_CODENAME}"
+				fi
+
+				TOOLCHAIN="llvm-toolchain-${CODENAME}"
+			fi
+
+			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+				| $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+
+			echo "deb https://apt.llvm.org/${CODENAME}/ ${TOOLCHAIN} main" \
+				| $SUDO_CMD tee /etc/apt/sources.list.d/llvm.list > /dev/null
+
+			$SUDO_CMD apt-get update
+
+			LLVM_VERSION=$(apt-cache depends clang-tidy \
+				| sed -n 's/.*clang-tidy-\([0-9][0-9]*\).*/\1/p' \
+				| head -n 1)
+
+			if [ -z "${LLVM_VERSION}" ]; then
+				echo "Unable to determine clang-tidy version"
+				return 1
+			fi
+
+			if [ "${TOOLCHAIN}" = "llvm-toolchain" ]; then
+				VERSIONED_TOOLCHAIN="llvm-toolchain-${LLVM_VERSION}"
+			else
+				VERSIONED_TOOLCHAIN="${TOOLCHAIN}-${LLVM_VERSION}"
+			fi
+
+			echo "deb https://apt.llvm.org/${CODENAME}/ ${VERSIONED_TOOLCHAIN} main" \
+				| $SUDO_CMD tee -a /etc/apt/sources.list.d/llvm.list > /dev/null
+
+			$SUDO_CMD apt-get update
+			$SUDO_CMD apt-get install -y --no-install-recommends clang-tidy
+
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache clang-extra-tools
+		fi
+
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install llvm
+
+		LLVM_BIN="$(brew --prefix llvm)/bin"
+		export PATH="${LLVM_BIN}:${PATH}"
+
+		if [ -n "${GITHUB_PATH:-}" ]; then
+			echo "${LLVM_BIN}" >> "${GITHUB_PATH}"
+		fi
+	fi
+
+	if ! command -v clang-tidy > /dev/null 2>&1; then
+		echo "clang-tidy installation failed"
+		return 1
+	fi
+
+	clang-tidy --version
+}
+
 # Backtrace (this only improves stack traces verbosity but backtracing is enabled by default)
 sub_backtrace(){
 	echo "configure backtrace"
@@ -1513,6 +1596,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_CLANG_FORMAT = 1 ]; then
 		sub_clang_format
+	fi
+	if [ $INSTALL_CLANG_TIDY = 1 ]; then
+		sub_clang_tidy
 	fi
 	if [ $INSTALL_BACKTRACE = 1 ]; then
 		sub_backtrace
@@ -1682,6 +1768,10 @@ sub_options(){
 			echo "clangformat selected"
 			INSTALL_CLANG_FORMAT=1
 		fi
+		if [ "$option" = 'clangtidy' ]; then
+			echo "clangtidy selected"
+			INSTALL_CLANG_TIDY=1
+		fi
 		if [ "$option" = 'backtrace' ]; then
 			echo "backtrace selected"
 			INSTALL_BACKTRACE=1
@@ -1737,6 +1827,7 @@ sub_help() {
 	echo "	clang"
 	echo "	clang-msan"
 	echo "	clangformat"
+	echo "	clangtidy"
 	echo "	backtrace"
 	echo "	sandbox"
 	echo "	android"

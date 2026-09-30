@@ -329,6 +329,59 @@ function Add-to-Path {
 	Write-Output "PATH:: " $Env:PATH
 }
 
+function Set-ClangTidy {
+	Write-Output "Install clang-tidy"
+	Set-Location $ROOT_DIR
+
+	$RuntimeDir = "$env:ProgramFiles\LLVM"
+	$DepsDir = "$ROOT_DIR\dependencies"
+
+	mkdir -Force $DepsDir | Out-Null
+
+	$Release = Invoke-RestMethod `
+		-Uri "https://api.github.com/repos/llvm/llvm-project/releases/latest"
+
+	$Asset = $Release.assets |
+		Where-Object { $_.name -match '^LLVM-.*-win64\.(msi|exe)$' } |
+		Select-Object -First 1
+
+	if ($Null -eq $Asset) {
+		throw "LLVM Windows installer not found."
+	}
+
+	$Installer = "$DepsDir\$($Asset.name)"
+
+	if (!(Test-Path -Path $Installer)) {
+		Write-Output "LLVM installer not found, downloading now..."
+		Invoke-WebRequest `
+			-Uri $Asset.browser_download_url `
+			-OutFile $Installer
+	}
+
+	Write-Output "Installing $($Asset.name)"
+
+	if ($Installer.EndsWith(".msi")) {
+		Start-Process `
+			-FilePath "msiexec.exe" `
+			-ArgumentList "/i", "`"$Installer`"", "/qn", "/norestart" `
+			-Wait
+	}
+	else {
+		Start-Process `
+			-FilePath $Installer `
+			-ArgumentList "/S" `
+			-Wait
+	}
+
+	Add-to-Path "$RuntimeDir\bin"
+
+	if (!(Test-Path -Path "$RuntimeDir\bin\clang-tidy.exe")) {
+		throw "clang-tidy installation failed."
+	}
+
+	clang-tidy --version
+}
+
 function Set-Base {
 	$DepsDir = "$ROOT_DIR\dependencies"
 
@@ -456,6 +509,10 @@ function Configure {
 		if ("$var" -eq 'clangformat') {
 			Write-Output "clangformat selected"
 		}
+		if ("$var" -eq 'clangtidy') {
+			Write-Output "clangtidy selected"
+			Set-ClangTidy
+		}
 	}
 }
 
@@ -488,6 +545,7 @@ function Help {
 	Write-Output "	metacall"
 	Write-Output "	pack"
 	Write-Output "	clangformat"
+	Write-Output "	clangtidy"
 	Write-Output ""
 }
 
