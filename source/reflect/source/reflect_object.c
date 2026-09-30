@@ -369,16 +369,14 @@ int object_delete(object obj)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->destructor != NULL)
 	{
-		int error = obj->interface->destructor(obj, obj->impl);
+		int result = obj->interface->destructor(obj, obj->impl);
 
-		if (error != 0)
+		if (result != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object %s destructor", obj->name);
-
-			return 2;
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object destructor %d: %d", obj->name, result);
 		}
 
-		return 0;
+		return result;
 	}
 
 	return 1;

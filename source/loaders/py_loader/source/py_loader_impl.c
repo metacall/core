@@ -1362,38 +1362,19 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_CLASS)
 	{
-		klass obj = value_to_class(v);
-
-		/* TODO: This is completely wrong and it needs a refactor */
-		/* TODO: The return value of class_impl_get may not be a loader_impl_py_class, it can be a loader_impl_node_class too */
-		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the class dynamically */
-		loader_impl_py_class obj_impl = class_impl_get(obj);
-
-		if (obj_impl == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_class when converting value to python capi");
-			return NULL;
-		}
-
-		return obj_impl->cls;
+		/* TODO: Implement it */
+		/* klass cls = value_to_class(v); */
+		static value null_exception = NULL;
+		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python class not implemented yet for arguments");
+		return py_loader_impl_value_to_capi(impl, TYPE_EXCEPTION, &null_exception);
 	}
 	else if (id == TYPE_OBJECT)
 	{
-		object obj = value_to_object(v);
-
-		/* TODO: This is completely wrong and it needs a refactor */
-		/* TODO: The return value of object_impl_get may not be a loader_impl_py_object, it can be a loader_impl_node_node too */
-		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the object dynamically */
-		loader_impl_py_object obj_impl = object_impl_get(obj);
-		Py_IncRef(obj_impl->obj);
-
-		if (obj_impl == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_object when converting value to python capi");
-			return NULL;
-		}
-
-		return obj_impl->obj;
+		/* TODO: Implement it */
+		/* object obj = value_to_object(v); */
+		static value null_exception = NULL;
+		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python object not implemented yet for arguments");
+		return py_loader_impl_value_to_capi(impl, TYPE_EXCEPTION, &null_exception);
 	}
 	else if (id == TYPE_EXCEPTION)
 	{

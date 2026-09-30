@@ -88,6 +88,257 @@ portability_static_assert((int)sizeof(value_id_map) / sizeof(value_id_map[0]) ==
 
 /* -- Methods -- */
 
+static int metacall_future_create(future f, future_impl impl)
+{
+	(void)f;
+	(void)impl;
+
+	return 0;
+}
+
+static future_return metacall_future_await(future f, future_impl impl, future_resolve_callback resolve, future_reject_callback reject, void *context)
+{
+	(void)f;
+	(void)impl;
+	(void)resolve;
+	(void)reject;
+	(void)context;
+
+	return NULL;
+}
+
+static void metacall_future_destroy(future f, future_impl impl)
+{
+	(void)f;
+	(void)impl;
+}
+
+static future_interface metacall_future_singleton(void)
+{
+	static struct future_interface_type metacall_future_interface = {
+		&metacall_future_create,
+		&metacall_future_await,
+		&metacall_future_destroy
+	};
+
+	return &metacall_future_interface;
+}
+
+static int metacall_function_create(function f, function_impl impl)
+{
+	(void)f;
+	(void)impl;
+
+	return 0;
+}
+
+static function_return metacall_function_invoke(function f, function_impl impl, function_args args, size_t argc)
+{
+	(void)f;
+	(void)impl;
+	(void)args;
+	(void)argc;
+
+	return NULL;
+}
+
+static function_return metacall_function_await(function f, function_impl impl, function_args args, size_t argc, function_resolve_callback resolve, function_reject_callback reject, void *context)
+{
+	(void)f;
+	(void)impl;
+	(void)args;
+	(void)argc;
+	(void)resolve;
+	(void)reject;
+	(void)context;
+
+	return NULL;
+}
+
+static void metacall_function_destroy(function f, function_impl impl)
+{
+	(void)f;
+	(void)impl;
+}
+
+static function_interface metacall_function_singleton(void)
+{
+	static struct function_interface_type metacall_function_interface = {
+		&metacall_function_create,
+		&metacall_function_invoke,
+		&metacall_function_await,
+		&metacall_function_destroy
+	};
+
+	return &metacall_function_interface;
+}
+
+static int metacall_class_create(klass cls, class_impl impl)
+{
+	(void)cls;
+	(void)impl;
+
+	return 0;
+}
+
+static object metacall_class_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
+{
+	(void)cls;
+	(void)impl;
+	(void)name;
+	(void)ctor;
+	(void)args;
+	(void)argc;
+
+	return NULL;
+}
+
+static value metacall_class_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
+{
+	(void)cls;
+	(void)impl;
+	(void)accessor;
+
+	return NULL;
+}
+
+static int metacall_class_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
+{
+	(void)cls;
+	(void)impl;
+	(void)accessor;
+	(void)v;
+
+	return 0;
+}
+
+static value metacall_class_static_invoke(klass cls, class_impl impl, method method, class_args args, size_t argc)
+{
+	(void)cls;
+	(void)impl;
+	(void)method;
+	(void)args;
+	(void)argc;
+
+	return NULL;
+}
+
+static value metacall_class_static_await(klass cls, class_impl impl, method method, class_args args, size_t argc, class_resolve_callback resolve, class_reject_callback reject, void *context)
+{
+	(void)cls;
+	(void)impl;
+	(void)method;
+	(void)args;
+	(void)argc;
+	(void)resolve;
+	(void)reject;
+	(void)context;
+
+	return NULL;
+}
+
+static void metacall_class_destroy(klass cls, class_impl impl)
+{
+	(void)cls;
+	(void)impl;
+}
+
+static class_interface metacall_class_singleton(void)
+{
+	static struct class_interface_type metacall_class_interface = {
+		&metacall_class_create,
+		&metacall_class_constructor,
+		&metacall_class_static_get,
+		&metacall_class_static_set,
+		&metacall_class_static_invoke,
+		&metacall_class_static_await,
+		&metacall_class_destroy
+	};
+
+	return &metacall_class_interface;
+}
+
+static int metacall_object_create(object obj, object_impl impl)
+{
+	(void)obj;
+	(void)impl;
+
+	return 0;
+}
+
+static value metacall_object_get(object obj, object_impl impl, struct accessor_type *accessor)
+{
+	(void)obj;
+	(void)impl;
+	(void)accessor;
+
+	return NULL;
+}
+
+static int metacall_object_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
+{
+	(void)obj;
+	(void)impl;
+	(void)accessor;
+	(void)v;
+
+	return 0;
+}
+
+static value metacall_object_method_invoke(object obj, object_impl impl, method method, object_args args, size_t argc)
+{
+	(void)obj;
+	(void)impl;
+	(void)method;
+	(void)args;
+	(void)argc;
+
+	return NULL;
+}
+
+static value metacall_object_method_await(object obj, object_impl impl, method method, object_args args, size_t argc, object_resolve_callback resolve, object_reject_callback reject, void *context)
+{
+	(void)obj;
+	(void)impl;
+	(void)method;
+	(void)args;
+	(void)argc;
+	(void)resolve;
+	(void)reject;
+	(void)context;
+
+	return NULL;
+}
+
+static int metacall_object_destructor(object obj, object_impl impl)
+{
+	(void)obj;
+	(void)impl;
+
+	return 0;
+}
+
+static void metacall_object_destroy(object obj, object_impl impl)
+{
+	(void)obj;
+	(void)impl;
+}
+
+static object_interface metacall_object_singleton(void)
+{
+	static struct object_interface_type metacall_object_interface = {
+		&metacall_object_create,
+		&metacall_object_get,
+		&metacall_object_set,
+		&metacall_object_method_invoke,
+		&metacall_object_method_await,
+		&metacall_object_destructor,
+		&metacall_object_destroy
+	};
+
+	return &metacall_object_interface;
+}
+
 void *metacall_value_create(enum metacall_value_id id)
 {
 	switch (id)
@@ -129,19 +380,19 @@ void *metacall_value_create(enum metacall_value_id id)
 			return value_create_ptr(NULL);
 
 		case METACALL_FUTURE:
-			return value_create_future(future_create(NULL, NULL));
+			return value_create_future(future_create(NULL, &metacall_future_singleton));
 
 		case METACALL_FUNCTION:
-			return value_create_function(function_create(NULL, 0, NULL, NULL));
+			return value_create_function(function_create(NULL, 0, NULL, &metacall_function_singleton));
 
 		case METACALL_NULL:
 			return value_create_null();
 
 		case METACALL_CLASS:
-			return value_create_class(class_create(NULL, ACCESSOR_TYPE_STATIC, NULL, NULL));
+			return value_create_class(class_create(NULL, ACCESSOR_TYPE_STATIC, NULL, &metacall_class_singleton));
 
 		case METACALL_OBJECT:
-			return value_create_object(object_create("", ACCESSOR_TYPE_STATIC, NULL, NULL, metacall_value_create(METACALL_CLASS)));
+			return value_create_object(object_create(NULL, ACCESSOR_TYPE_STATIC, NULL, &metacall_object_singleton, metacall_value_create(METACALL_CLASS)));
 
 		case METACALL_EXCEPTION:
 			return value_create_exception(exception_create_const("", "", 0, ""));
