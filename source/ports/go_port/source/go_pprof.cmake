@@ -1,0 +1,19 @@
+# Sanitize the variables
+string(REPLACE "\"" "" CMAKE_Go_COMPILER "${CMAKE_Go_COMPILER}")
+string(REPLACE "\"" "" GO_FLAGS "${GO_FLAGS}")
+string(REPLACE "\"" "" GO_PPROF_TASK "${GO_PPROF_TASK}")
+string(REPLACE "\"" "" PPROF_ARG "${PPROF_ARG}")
+string(REPLACE "\"" "" GO_PPROF_GOROUTINE "${GO_PPROF_GOROUTINE}")
+
+execute_process(COMMAND
+    ${CMAKE_Go_COMPILER} ${GO_PPROF_TASK} pprof -text ${GO_PPROF_GOROUTINE}
+    RESULT_VARIABLE PPROF_RESULT
+    ERROR_VARIABLE PPROF_ERROR
+    OUTPUT_VARIABLE PPROF_OUTPUT
+)
+
+message(STATUS "${PPROF_OUTPUT}")
+
+if(PPROF_RESULT)
+	message(FATAL_ERROR "Go port failed with result: ${PPROF_RESULT}\n${PPROF_ERROR}")
+endif()
