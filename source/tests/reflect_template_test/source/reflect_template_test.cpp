@@ -52,7 +52,10 @@ TEST_F(reflect_template_test, DefaultConstructor)
 	function f = template_instantiate_function(
 		tpl,
 		args,
-		1);
+		1,
+		NULL,
+		NULL
+	);
 
 	ASSERT_NE((function)NULL, f);
 
@@ -93,7 +96,7 @@ TEST_F(reflect_template_test, MultipleParameters)
 		{ "U", TEMPLATE_ARGUMENT_TYPE, { float_type } }
 	};
 
-	function f = template_instantiate_function(tpl, args, 2);
+	function f = template_instantiate_function(tpl, args, 2, NULL, NULL);
 
 	ASSERT_NE((function)NULL, f);
 
@@ -148,7 +151,9 @@ TEST_F(reflect_template_test, NestedTemplate)
 	function pair = template_instantiate_function(
 		pair_tpl,
 		pair_args,
-		2);
+		2, 
+	    NULL,
+	    NULL);
 
 	ASSERT_NE((function)NULL, pair);
 
@@ -161,7 +166,9 @@ TEST_F(reflect_template_test, NestedTemplate)
 	function vector = template_instantiate_function(
 		vector_tpl,
 		vector_args,
-		1);
+		1,
+		NULL,
+		NULL);
 
 	ASSERT_NE((function)NULL, vector);
 

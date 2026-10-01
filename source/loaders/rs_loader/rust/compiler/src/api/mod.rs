@@ -77,6 +77,10 @@ extern "C" {
 
     fn function_call(func: OpaqueType, args: OpaqueTypeList, size: usize) -> OpaqueType;
 
+    fn value_create_double(d: f64) -> OpaqueType;
+
+    fn value_to_double(v: OpaqueType) -> f64;
+
     fn function_signature(function: OpaqueType) -> OpaqueType;
 
     fn value_create_function(function: OpaqueType) -> OpaqueType;
@@ -149,7 +153,13 @@ extern "C" {
 
     fn template_destroy(tpl: OpaqueType) -> ();
 
-    fn template_instantiate_function(tpl: OpaqueType, args: OpaqueType, size: usize) -> OpaqueType;
+    fn template_instantiate_function(
+        tpl: OpaqueType,
+        args: OpaqueType,
+        size: usize,
+        function_impl: OpaqueType,
+        singleton: OpaqueType,
+    ) -> OpaqueType;
 }
 
 pub const TEMPLATE_TYPE_FUNCTION: c_int = 0;
@@ -225,8 +235,18 @@ pub unsafe fn destroy_template(tpl: OpaqueType) {
 pub unsafe fn instantiate_template_function(
     tpl: OpaqueType,
     args: &mut [TemplateArgument],
+    function_impl: OpaqueType,
+    singleton: OpaqueType,
 ) -> OpaqueType {
-    unsafe { template_instantiate_function(tpl, args.as_mut_ptr() as OpaqueType, args.len()) }
+    unsafe {
+        template_instantiate_function(
+            tpl,
+            args.as_mut_ptr() as OpaqueType,
+            args.len(),
+            function_impl,
+            singleton,
+        )
+    }
 }
 
 /// # Safety
@@ -269,6 +289,17 @@ pub unsafe fn int_from_value(v: OpaqueType) -> i32 {
 /// `loader_impl` must be a valid initialized loader implementation pointer.
 pub unsafe fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecycleState {
     (unsafe { loader_impl_get(loader_impl) }) as *mut LoaderLifecycleState
+}
+/// # Safety/// The returned opaque pointer is owned by MetaCall and must be used
+/// according to the MetaCall value API.
+pub unsafe fn create_double_value(value: f64) -> OpaqueType {
+    value_create_double(value)
+}
+
+/// # Safety
+/// `v` must be a valid MetaCall value containing a double.
+pub unsafe fn double_from_value(v: OpaqueType) -> f64 {
+    value_to_double(v)
 }
 
 static mut RS_LOADER_PTR: *mut c_void = std::ptr::null_mut();

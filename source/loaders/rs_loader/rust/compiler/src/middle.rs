@@ -9,6 +9,7 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
         reference: Reference::No,
         ty: FunctionType::Null,
         generic: vec![],
+        generic_name: None,
     };
     match &ty.kind() {
         TyKind::Int(i) => match i {

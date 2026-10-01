@@ -1,7 +1,23 @@
 pub mod class;
-use super::{config::Input, rustc_span::FileName::Custom, CompilerCallbacks, Function, Source};
+use super::{
+    config::Input, rustc_span::FileName::Custom, CompilerCallbacks, Function, FunctionParameter,
+    FunctionType, Source,
+};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
+
+fn template_instantiation_types(template: &Function) -> Vec<String> {
+    match template.generics.len() {
+        1 => vec!["i32".to_string()],
+        2 => vec!["i32".to_string(), "f64".to_string()],
+        _ => panic!(
+            "no poc instantiation types configured for template {}",
+            template.name
+        ),
+    }
+}
+
 fn generate_function_wrapper(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
@@ -27,17 +43,46 @@ fn generate_function_wrapper(functions: &[Function]) -> String {
     ret
 }
 
+fn build_generic_mapping(template: &Function, types: &[String]) -> HashMap<String, String> {
+    template
+        .generics
+        .iter()
+        .cloned()
+        .zip(types.iter().cloned())
+        .collect()
+}
+
+fn substitute_type(param: &FunctionParameter, mapping: &HashMap<String, String>) -> String {
+    if matches!(param.ty, FunctionType::Complex) {
+        if let Some(concrete_type) = param
+            .generic_name
+            .as_ref()
+            .and_then(|name| mapping.get(name))
+        {
+            return concrete_type.clone();
+        }
+    }
+
+    param.ty.to_string()
+}
+
 fn generate_instantiated_function_wrapper(template: &Function, types: &[String]) -> String {
     let wrapper_name = template.instantiate_name(types.to_vec());
+
+    let mapping = build_generic_mapping(template, types);
 
     let args = template
         .args
         .iter()
-        .map(|arg| format!("{}: {}", arg.name, types[0]))
+        .map(|arg| format!("{}: {}", arg.name, substitute_type(arg, &mapping)))
         .collect::<Vec<_>>()
         .join(", ");
 
-    let return_type = types[0].clone();
+    let return_type = template
+        .ret
+        .as_ref()
+        .map(|ret| substitute_type(ret, &mapping))
+        .unwrap_or_else(|| "()".to_string());
 
     let call_args = template
         .args
@@ -234,11 +279,11 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             content.push_str(&function_wrapper);
 
             for template in &callbacks.templates {
-                if template.name == "identity" {
-                    let instantiated_wrapper =
-                        generate_instantiated_function_wrapper(template, &["i32".to_string()]);
-                    content.push_str(&instantiated_wrapper);
-                }
+                let types = template_instantiation_types(template);
+
+                let instantiated_wrapper = generate_instantiated_function_wrapper(template, &types);
+
+                content.push_str(&instantiated_wrapper);
             }
             let class_wrapper =
                 generate_class_wrapper(&callbacks.classes.iter().collect::<Vec<_>>());

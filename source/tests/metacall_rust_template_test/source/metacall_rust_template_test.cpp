@@ -15,9 +15,12 @@ TEST_F(metacall_rust_template_test, DefaultConstructor)
 	ASSERT_EQ(0, metacall_initialize());
 
 	const char script[] =
-		"pub fn identity<T>(x: T) -> T {"
-		"	x"
-		"}";
+        "pub fn identity<T>(x: T) -> T {"
+        "    x"
+        "}"
+        "pub fn pair<T, U>(a: T, b: U) -> U {"
+        "    b"
+        "}";
 
 	int result = metacall_load_from_memory(
 		"rs",

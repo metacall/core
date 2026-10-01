@@ -11,6 +11,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParamete
         reference: Reference::No,
         ty: FunctionType::Null,
         generic: vec![],
+        generic_name: None,
     };
     match &ty.kind {
         TyKind::Path(_, path) => {
@@ -19,6 +20,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParamete
 
             if generics.contains(&symbol_string) {
                 result.ty = FunctionType::Complex;
+                result.generic_name = Some(symbol_string.clone());
                 result.name = symbol_string;
                 return result;
             }
@@ -35,6 +37,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParamete
                 "bool" => result.ty = FunctionType::bool,
                 "i8" => result.ty = FunctionType::char,
                 "str" => result.ty = FunctionType::String,
+                "complex" => result.ty = FunctionType::Complex,
                 "Vec" => {
                     result.ty = FunctionType::Array;
                     if let Some(args) = &segment.args {

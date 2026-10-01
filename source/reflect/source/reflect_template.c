@@ -165,7 +165,9 @@ const char *template_parameter(
 function template_instantiate_function(
 	reflect_template tpl,
 	template_argument args[],
-	size_t size)
+	size_t size,
+    function_impl impl,
+	function_impl_interface_singleton singleton)
 {
 	if (tpl == NULL ||
 		tpl->type != TEMPLATE_TYPE_FUNCTION ||
@@ -223,8 +225,8 @@ function template_instantiate_function(
 	function f = function_create(
 		function_name,
 		size,
-		NULL,
-		NULL);
+		impl,
+		singleton);
 
 	if (f == NULL)
 	{

@@ -69,7 +69,9 @@ REFLECT_API const char *template_parameter(
 REFLECT_API function template_instantiate_function(
 	reflect_template tpl,
 	template_argument args[],
-	size_t size);
+	size_t size,
+	function_impl impl,
+	function_impl_interface_singleton singleton);
 
 	#ifdef __cplusplus
 }

@@ -363,6 +363,7 @@ pub struct FunctionParameter {
     reference: Reference,
     ty: FunctionType,
     generic: Vec<FunctionParameter>,
+    generic_name: Option<String>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -516,6 +517,7 @@ impl CompilerCallbacks {
                                 reference: Reference::No,
                                 ty: FunctionType::Complex,
                                 generic: vec![],
+                                generic_name: None,
                             },
                         });
                     }
