@@ -44,9 +44,6 @@
 #include <threading/threading_thread.h>
 #include <threading/threading_thread_id.h>
 
-#if !defined(_WIN32)
-#include <signal.h>
-#endif
 #include <metacall/metacall.h>
 
 #include <stdbool.h>
