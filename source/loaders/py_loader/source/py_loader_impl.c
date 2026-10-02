@@ -1579,7 +1579,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 	}
 
-	PyObject *result = (dict_kwargs != NULL) ? PyObject_Call(py_func->func, tuple_args, dict_kwargs) : PyObject_CallObject(py_func->func, tuple_args);
+	PyObject *result = PyObject_Call(py_func->func, tuple_args, dict_kwargs);
 
 	Py_XDECREF(dict_kwargs);
 
@@ -1669,7 +1669,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 		}
 	}
 
-	PyObject *coroutine = (dict_kwargs != NULL) ? PyObject_Call(py_func->func, tuple_args, dict_kwargs) : PyObject_CallObject(py_func->func, tuple_args);
+	PyObject *coroutine = PyObject_Call(py_func->func, tuple_args, dict_kwargs);
 
 	Py_XDECREF(dict_kwargs);
 
