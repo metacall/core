@@ -348,6 +348,45 @@ function Set-Base {
 	}
 }
 
+function Set-SCCache {
+	$Version = if ($Env:SCCACHE_VERSION) { $Env:SCCACHE_VERSION } else { '0.18.0' }
+	$Target = if ($Env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'aarch64-pc-windows-msvc' } else { 'x86_64-pc-windows-msvc' }
+	$DepsDir = "$ROOT_DIR\dependencies\sccache"
+
+	if (Get-Command sccache -ErrorAction SilentlyContinue) {
+		$InstalledVersion = ((sccache --version) -join ' ') -replace '.*?([0-9]+\.[0-9]+\.[0-9]+).*', '$1'
+
+		if ($InstalledVersion -eq $Version) {
+			Write-Output "sccache $Version already installed"
+			return
+		}
+	}
+
+	$Archive = "sccache-v$Version-$Target.zip"
+	$BaseUrl = "https://github.com/mozilla/sccache/releases/download/v$Version"
+
+	New-Item -ItemType Directory -Force -Path $DepsDir | Out-Null
+	(New-Object Net.WebClient).DownloadFile("$BaseUrl/$Archive", "$DepsDir\$Archive")
+	(New-Object Net.WebClient).DownloadFile("$BaseUrl/$Archive.sha256", "$DepsDir\$Archive.sha256")
+
+	# The sidecar is a bare hash, not a sha256sum line
+	$ExpectedHash = (Get-Content "$DepsDir\$Archive.sha256").Trim()
+	$ActualHash = (Get-FileHash "$DepsDir\$Archive" -Algorithm SHA256).Hash.ToLower()
+
+	if ($ExpectedHash -ne $ActualHash) {
+		Write-Output "sccache checksum mismatch for $Archive"
+		Exit 1
+	}
+
+	Expand-Archive -Path "$DepsDir\$Archive" -DestinationPath "$DepsDir\extract" -Force
+	Copy-Item "$DepsDir\extract\sccache-v$Version-$Target\sccache.exe" "$DepsDir\sccache.exe" -Force
+	Remove-Item "$DepsDir\extract" -Recurse -Force
+	Remove-Item "$DepsDir\$Archive", "$DepsDir\$Archive.sha256" -Force
+
+	Add-to-Path $DepsDir
+	sccache --version
+}
+
 # Configure
 function Configure {
 	# Create option variables file 
@@ -456,6 +495,10 @@ function Configure {
 		if ("$var" -eq 'clangformat') {
 			Write-Output "clangformat selected"
 		}
+		if (("$var" -eq 'sccache') -or ("$var" -eq 'compiler-cache')) {
+			Write-Output "sccache selected"
+			Set-SCCache
+		}
 	}
 }
 
@@ -488,6 +531,7 @@ function Help {
 	Write-Output "	metacall"
 	Write-Output "	pack"
 	Write-Output "	clangformat"
+	Write-Output "	sccache"
 	Write-Output ""
 }
 
