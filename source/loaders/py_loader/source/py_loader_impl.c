@@ -3926,6 +3926,8 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 	log_write("metacall", LOG_LEVEL_ERROR, error_format_str, type_str, value_str, traceback_str ? traceback_str : traceback_not_found);
 
+	Py_DecRef(type_str_obj);
+	Py_DecRef(value_str_obj);
 	Py_DecRef(traceback_list);
 	Py_DecRef(separator);
 	Py_DecRef(traceback_str_obj);
@@ -3982,6 +3984,7 @@ value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject
 
 	ret = value_create_throwable(th);
 
+	Py_DecRef(value_str_obj);
 	Py_DecRef(traceback_list);
 	Py_DecRef(separator);
 	Py_DecRef(traceback_str_obj);
