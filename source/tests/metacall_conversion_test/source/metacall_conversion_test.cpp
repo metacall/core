@@ -90,6 +90,8 @@ TEST_F(metacall_conversion_test, DefaultConstructor)
 			metacall_value_destroy(ret);
 			metacall_value_destroy(args[0]);
 		}
+
+		std::cout << std::endl;
 	}
 
 	metacall_destroy();
