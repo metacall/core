@@ -305,11 +305,10 @@ static int lua_loader_impl_load_from_file_handle(loader_impl_lua lua_impl, const
 	{
 		if (lua_loader_impl_error_capture(lua_impl->vm, &error_message, &error_size) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to allocate memory for error during loading file: %s", path);
+			log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to load file %s: %s", path, error_message);
 			return 1;
 		}
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to load file %s: %s", path, error_message);
 		return 1;
 	}
 
@@ -347,6 +346,7 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		const char *path = paths[iterator];
+		int loaded = 0;
 
 		/* Try to load directly first (absolute or relative to CWD) */
 		if (lua_loader_impl_load_from_file_handle(lua_impl, path, handle) == 0)
@@ -359,7 +359,6 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 			/* Try execution paths for relative paths */
 			size_t exec_path_count = vector_size(lua_impl->execution_paths);
 			size_t exec_path_iterator;
-			int loaded = 0;
 
 			for (exec_path_iterator = 0; exec_path_iterator < exec_path_count; ++exec_path_iterator)
 			{
@@ -375,12 +374,13 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 					break;
 				}
 			}
+		}
 
-			if (!loaded)
-			{
-				free(handle);
-				return NULL;
-			}
+		if (!loaded)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to load file %s: File not found", path);
+			free(handle);
+			return NULL;
 		}
 	}
 

@@ -1015,7 +1015,8 @@ TEST_F(metacall_lua_mixed_test, load_and_call_external_script)
 		metacall_value_destroy(ret_nested);
 
 		/* Test variadic function from external script */
-		void *ret_varargs = metacall("lua_mixed_sum_varargs", 1, 2, 3, 4, 5);
+		const enum metacall_value_id varargs_ids[] = { METACALL_INT, METACALL_INT, METACALL_INT, METACALL_INT, METACALL_INT };
+		void *ret_varargs = metacallt_s("lua_mixed_sum_varargs", varargs_ids, 5, 1, 2, 3, 4, 5);
 		EXPECT_NE((void *)NULL, (void *)ret_varargs);
 		metacall_value_destroy(ret_varargs);
 	}
