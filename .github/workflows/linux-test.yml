@@ -14,10 +14,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   linux-test:
     name: Linux GCC Test
     runs-on: ubuntu-latest
+    env:
+      METACALL_CACHE_BACKEND: ${{ vars.METACALL_CACHE_BACKEND || 'registry' }}
+      METACALL_BUILD_COMPILER_CACHE: ${{ vars.METACALL_CACHE_BACKEND != 'local' && 'sccache' || '' }}
+      METACALL_CACHE_REPOSITORY: ghcr.io/${{ github.repository }}-cache
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +37,50 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Buildx (the cache backends need the container driver)
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the cache registry
+        if: env.METACALL_CACHE_BACKEND == 'registry'
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Resolve compiler cache identity
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        run: ./docker-compose.sh cache-identity test >> "$GITHUB_ENV"
+        env:
+          METACALL_BUILD_TYPE: ${{ matrix.build }}
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
+      - name: Restore compiler cache
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: sccache
+        uses: actions/cache@v4
+        with:
+          path: metacall-sccache
+          key: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-${{ github.sha }}
+          restore-keys: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-
+
+      - name: Inject compiler cache into the build
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-map: |
+            {
+              "metacall-sccache": {
+                "target": "/ccache",
+                "id": "sccache-${{ env.METACALL_CACHE_PROFILE }}"
+              }
+            }
+          skip-extraction: ${{ steps.sccache.outputs.cache-hit == 'true' }}
 
       - name: Install, build and run tests (build)
         run: ./docker-compose.sh build
@@ -54,12 +106,59 @@ jobs:
 
     env:
       SANITIZER_SKIP_SUMMARY: 1
+      METACALL_CACHE_BACKEND: ${{ vars.METACALL_CACHE_BACKEND || 'registry' }}
+      METACALL_BUILD_COMPILER_CACHE: ${{ vars.METACALL_CACHE_BACKEND != 'local' && 'sccache' || '' }}
+      METACALL_CACHE_REPOSITORY: ghcr.io/${{ github.repository }}-cache
 
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Buildx (the cache backends need the container driver)
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the cache registry
+        if: env.METACALL_CACHE_BACKEND == 'registry'
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Resolve compiler cache identity
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        run: ./docker-compose.sh cache-identity test-${{ matrix.sanitizer }} >> "$GITHUB_ENV"
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
+      - name: Restore compiler cache
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: sccache
+        uses: actions/cache@v4
+        with:
+          path: metacall-sccache
+          key: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-${{ github.sha }}
+          restore-keys: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-
+
+      - name: Inject compiler cache into the build
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-map: |
+            {
+              "metacall-sccache": {
+                "target": "/ccache",
+                "id": "sccache-${{ env.METACALL_CACHE_PROFILE }}"
+              }
+            }
+          skip-extraction: ${{ steps.sccache.outputs.cache-hit == 'true' }}
 
       - name: Install, build and run thread sanitizer tests
         run: ./docker-compose.sh test-${{ matrix.sanitizer }}
@@ -71,6 +170,11 @@ jobs:
     name: Linux Valgrind Memcheck Test
     runs-on: ubuntu-latest
 
+    env:
+      METACALL_CACHE_BACKEND: ${{ vars.METACALL_CACHE_BACKEND || 'registry' }}
+      METACALL_BUILD_COMPILER_CACHE: ${{ vars.METACALL_CACHE_BACKEND != 'local' && 'sccache' || '' }}
+      METACALL_CACHE_REPOSITORY: ghcr.io/${{ github.repository }}-cache
+
     strategy:
       fail-fast: false
       matrix:
@@ -81,6 +185,50 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Buildx (the cache backends need the container driver)
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the cache registry
+        if: env.METACALL_CACHE_BACKEND == 'registry'
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Resolve compiler cache identity
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        run: ./docker-compose.sh cache-identity test-memcheck >> "$GITHUB_ENV"
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
+      - name: Restore compiler cache
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: sccache
+        uses: actions/cache@v4
+        with:
+          path: metacall-sccache
+          key: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-${{ github.sha }}
+          restore-keys: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-
+
+      - name: Inject compiler cache into the build
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-map: |
+            {
+              "metacall-sccache": {
+                "target": "/ccache",
+                "id": "sccache-${{ env.METACALL_CACHE_PROFILE }}"
+              }
+            }
+          skip-extraction: ${{ steps.sccache.outputs.cache-hit == 'true' }}
 
       - name: Install, build and run Valgrind memcheck tests
         run: ./docker-compose.sh test-memcheck
@@ -100,12 +248,59 @@ jobs:
 
     env:
       SANITIZER_SKIP_SUMMARY: 1
+      METACALL_CACHE_BACKEND: ${{ vars.METACALL_CACHE_BACKEND || 'registry' }}
+      METACALL_BUILD_COMPILER_CACHE: ${{ vars.METACALL_CACHE_BACKEND != 'local' && 'sccache' || '' }}
+      METACALL_CACHE_REPOSITORY: ghcr.io/${{ github.repository }}-cache
 
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Buildx (the cache backends need the container driver)
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the cache registry
+        if: env.METACALL_CACHE_BACKEND == 'registry'
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Resolve compiler cache identity
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        run: ./docker-compose.sh cache-identity test-${{ matrix.clang }} >> "$GITHUB_ENV"
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
+      - name: Restore compiler cache
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: sccache
+        uses: actions/cache@v4
+        with:
+          path: metacall-sccache
+          key: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-${{ github.sha }}
+          restore-keys: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-
+
+      - name: Inject compiler cache into the build
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-map: |
+            {
+              "metacall-sccache": {
+                "target": "/ccache",
+                "id": "sccache-${{ env.METACALL_CACHE_PROFILE }}"
+              }
+            }
+          skip-extraction: ${{ steps.sccache.outputs.cache-hit == 'true' }}
 
       - name: Install, build and run Clang tests
         run: ./docker-compose.sh test-${{ matrix.clang }}
@@ -117,6 +312,11 @@ jobs:
     name: Linux Clang Memory Sanitizer Test
     runs-on: ubuntu-latest
 
+    env:
+      METACALL_CACHE_BACKEND: ${{ vars.METACALL_CACHE_BACKEND || 'registry' }}
+      METACALL_BUILD_COMPILER_CACHE: ${{ vars.METACALL_CACHE_BACKEND != 'local' && 'sccache' || '' }}
+      METACALL_CACHE_REPOSITORY: ghcr.io/${{ github.repository }}-cache
+
     strategy:
       fail-fast: false
       matrix:
@@ -127,6 +327,50 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Buildx (the cache backends need the container driver)
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the cache registry
+        if: env.METACALL_CACHE_BACKEND == 'registry'
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Resolve compiler cache identity
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        run: ./docker-compose.sh cache-identity test-memory-sanitizer >> "$GITHUB_ENV"
+        env:
+          METACALL_BUILD_TYPE: debug
+          METACALL_BASE_IMAGE: ${{ matrix.image }}
+
+      - name: Restore compiler cache
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        id: sccache
+        uses: actions/cache@v4
+        with:
+          path: metacall-sccache
+          key: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-${{ github.sha }}
+          restore-keys: metacall-sccache-${{ env.METACALL_CACHE_SCOPE }}-
+
+      - name: Inject compiler cache into the build
+        if: env.METACALL_CACHE_BACKEND != 'local'
+        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-map: |
+            {
+              "metacall-sccache": {
+                "target": "/ccache",
+                "id": "sccache-${{ env.METACALL_CACHE_PROFILE }}"
+              }
+            }
+          skip-extraction: ${{ steps.sccache.outputs.cache-hit == 'true' }}
 
       - name: Install, build and run Memory Sanitizer tests
         run: ./docker-compose.sh test-memory-sanitizer

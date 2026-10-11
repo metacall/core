@@ -45,6 +45,7 @@ $Global:BUILD_PORTS =             0
 $Global:BUILD_ADDRESS_SANITIZER = 0
 $Global:BUILD_THREAD_SANITIZER =  0
 $Global:BUILD_MEMORY_SANITIZER =  0
+$Global:BUILD_COMPILER_CACHE =  0
 $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 
 $Global:Arguments = $args
@@ -163,6 +164,10 @@ function sub-options {
 		if ("$option" -eq 'memory-sanitizer') {
 			echo "Build with memory sanitizers"
 			$Global:BUILD_MEMORY_SANITIZER = 1
+		}
+		if (("$option" -eq 'sccache') -or ("$option" -eq 'compiler-cache')) {
+			echo "Build with compiler cache"
+			$Global:BUILD_COMPILER_CACHE = 1
 		}
 	}
 }
@@ -433,6 +438,13 @@ function sub-configure {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	}
 
+	# Compiler Cache
+	if ($BUILD_COMPILER_CACHE -eq 1) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_CACHE=On"
+	} else {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_CACHE=Off"
+	}
+
 	# Build type
 	$Global:BUILD_STRING = "$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
@@ -482,6 +494,7 @@ function sub-help {
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
 	echo "	memory-sanitizer: build with memory sanitizer"
+	echo "	sccache: build with compiler cache"
 	echo ""
 }
 

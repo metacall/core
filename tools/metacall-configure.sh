@@ -55,6 +55,7 @@ BUILD_CLANG=0
 BUILD_ADDRESS_SANITIZER=0
 BUILD_THREAD_SANITIZER=0
 BUILD_MEMORY_SANITIZER=0
+BUILD_COMPILER_CACHE=0
 BUILD_ANDROID=0
 
 # Operative System detection
@@ -249,6 +250,10 @@ sub_options() {
 		if [ "$option" = 'memory-sanitizer' ]; then
 			echo "Build with memory sanitizer"
 			BUILD_MEMORY_SANITIZER=1
+		fi
+		if [ "$option" = 'sccache' ] || [ "$option" = 'compiler-cache' ]; then
+			echo "Build with compiler cache"
+			BUILD_COMPILER_CACHE=1
 		fi
 		if [ "$option" = 'android' ]; then
 			echo "Cross-compile to android"
@@ -642,6 +647,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_MEMORY_SANITIZER=Off"
 	fi
 
+	# Compiler Cache
+	if [ $BUILD_COMPILER_CACHE = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_CACHE=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_CACHE=Off"
+	fi
+
 	# Android
 	if [ $BUILD_ANDROID = 1 ]; then
 		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-30}"
@@ -718,6 +730,7 @@ sub_help() {
 	echo "	coverage: build all coverage reports"
 	echo "	memcheck: build with memcheck"
 	echo "	clang: build with clang compiler"
+	echo "	sccache: build with compiler cache"
 	echo "	clang-msan: build with clang compiler with memory sanitizer"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
@@ -731,7 +744,7 @@ case "$#" in
 		sub_help
 		;;
 	*)
-		sub_options $@
+		sub_options "$@"
 		sub_configure
 		;;
 esac
