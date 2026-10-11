@@ -12,7 +12,7 @@ else()
 endif()
 
 # Check C compilers
-# cgo supports only GCC, Clang, AppleClang
+# Cgo supports only GCC, Clang, AppleClang
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
 	execute_process(
 		COMMAND ${CMAKE_C_COMPILER} -print-resource-dir
@@ -59,10 +59,10 @@ set(sources
 )
 
 # Flags
-# set(GO_FLAGS "")
-# set(GO_SAN_FLAGS "")
+# Set(GO_FLAGS "")
+# Set(GO_SAN_FLAGS "")
 
-# set to debug so that the pprof server starts and records the data
+# Set to debug so that the pprof server starts and records the data
 set(GO_MODE "MODE=debug")
 
 

@@ -1,11 +1,11 @@
 if(CMAKE_HOST_WIN32)
-# convert \ of windows to /
-file(TO_CMAKE_PATH "${CGO_CFLAGS}" CGO_CFLAGS)
-file(TO_CMAKE_PATH "${CGO_LDFLAGS}" CGO_LDFLAGS)
-file(TO_CMAKE_PATH "${CC}" CC)
-file(TO_CMAKE_PATH "${CMAKE_Go_COMPILER}" CMAKE_Go_COMPILER)
-file(TO_CMAKE_PATH "${GOPATH}" GOPATH)
-file(TO_CMAKE_PATH "${LIBRARY_PATH}" LIBRARY_PATH)
+    # Convert \ of windows to /
+    file(TO_CMAKE_PATH "${CGO_CFLAGS}" CGO_CFLAGS)
+    file(TO_CMAKE_PATH "${CGO_LDFLAGS}" CGO_LDFLAGS)
+    file(TO_CMAKE_PATH "${CC}" CC)
+    file(TO_CMAKE_PATH "${CMAKE_Go_COMPILER}" CMAKE_Go_COMPILER)
+    file(TO_CMAKE_PATH "${GOPATH}" GOPATH)
+    file(TO_CMAKE_PATH "${LIBRARY_PATH}" LIBRARY_PATH)
 endif()
 
 # Sanitize the variables
@@ -29,7 +29,6 @@ string(REPLACE "\"" "" CGO_SAN_FLAGS "${CGO_SAN_FLAGS}")
 
 if(NOT "${SANITIZER_COMPILE_DEFINITIONS}" STREQUAL "")
     set(CGO_CFLAGS "${CGO_CFLAGS} -D${SANITIZER_COMPILE_DEFINITIONS}")
-    # TODO: Add sanitizer flags (-fsanitize=address...) to CGO_CFLAGS and CGO_LDFLAGS
 endif()
 
 # Override CGO flags

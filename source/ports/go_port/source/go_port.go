@@ -66,15 +66,15 @@ import (
 	"sync"
 	"unsafe"
 
-	// library to provide a symbolic backtrace of cgo functions	to help debugging and monitoring of c functions
-	// this library works with pprof of go
+	// Library to provide a symbolic backtrace of cgo functions	to help debugging and monitoring of c functions
+	// This library works with pprof of go
 	_ "github.com/ianlancetaylor/cgosymbolizer"
 	"github.com/joho/godotenv"
 )
 
 const QUEUEBUFFSIZE = 1
 
-// interface for all works with execute and cancel functions
+// Interface for all works with execute and cancel functions
 type safeWork interface {
 	execute()
 	cancel(err error)
@@ -212,9 +212,9 @@ var (
 	queue       = make(chan safeWork, QUEUEBUFFSIZE) // Queue for dispatching the work
 	toggle      chan struct{}                        // Channel for stopping the queue
 	lock        sync.Mutex                           // Lock for the queue
-	rootCtx     context.Context                      // root context to manage cancelation
-	rootCancel  context.CancelFunc                   // cancel function to drain and destroy jobs in queue
-	errShutdown = errors.New("runtime shutdown")     // err to be sent to cancel() when shutting down
+	rootCtx     context.Context                      // Root context to manage cancelation
+	rootCancel  context.CancelFunc                   // Cancel function to drain and destroy jobs in queue
+	errShutdown = errors.New("runtime shutdown")     // Err to be sent to cancel() when shutting down
 )
 
 func InitializeUnsafe() error {
@@ -226,9 +226,9 @@ func InitializeUnsafe() error {
 	return nil
 }
 
-// Start starts the metacall adapter
+// Start the metacall adapter
 func Initialize() error {
-	// load .env file and start profile server only in debug mode
+	// Load .env file and start profile server only in debug mode
 	_ = godotenv.Load()
 	mode := os.Getenv("MODE")
 	if mode == "debug" {
@@ -267,16 +267,16 @@ func Initialize() error {
 				// Shutdown
 				for {
 					select {
-					//drain queue
+					// Drain queue
 					case w := <-queue:
 						w.cancel(errShutdown)
-					// call destroy for metacall after queue is empty
+					// Call destroy for metacall after queue is empty
 					default:
 						DestroyUnsafe()
 						return
 					}
 				}
-			// execute work in queue
+			// Execute work in queue
 			case w := <-queue:
 				w.execute()
 			}
@@ -384,9 +384,7 @@ func LoadFromConfigExUnsafe(config string) error {
 	cConfig := C.CString(config)
 	defer C.free(unsafe.Pointer(cConfig))
 
-	// if int(C.metacall_load_from_configuration_export(cConfig, nil, nil)) != 0 {
-	// 	return fmt.Errorf("failed to load config: %s", config)
-	// }
+	// TODO: implement external config loading
 
 	return nil
 }
@@ -429,8 +427,8 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 	ret := C.metacallfv_s(cFunc, (*unsafe.Pointer)(cArgs), length)
 
 	if ret != nil {
-		// can't destroy future, class, object until they are nolonger wanted
-		// destroying cause a dangling pointer and thus a segfault when used
+		// Can't destroy future, class, object until they are nolonger wanted
+		// Destroying cause a dangling pointer and thus a segfault when used
 		id := C.metacall_value_id(ret)
 		if id != C.METACALL_FUTURE && id != C.METACALL_CLASS && id != C.METACALL_OBJECT {
 			defer C.metacall_value_destroy(ret)
@@ -459,14 +457,14 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 		args:     args,
 		ret:      ret,
 	}
-	// if ctx canceled return, otherwise send work to queue
+	// If ctx canceled return, otherwise send work to queue
 	select {
 	case <-ctx.Done():
 		return nil, errShutdown
 	case queue <- w:
 	}
-	// if ctx canceled return, otherwise return finished work from ret chan
-	// seperated frow above switch cause of returning values
+	// If ctx canceled return, otherwise return finished work from ret chan
+	// Seperated from above switch cause of returning values
 	select {
 	case <-ctx.Done():
 		return nil, errShutdown
@@ -475,7 +473,7 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	}
 }
 
-//export goResolve
+// Export goResolve
 func goResolve(v unsafe.Pointer, ctx unsafe.Pointer) unsafe.Pointer {
 	var ptr unsafe.Pointer
 	goCb := pointerGet(ctx).(*awaitCallbacks)
@@ -485,7 +483,7 @@ func goResolve(v unsafe.Pointer, ctx unsafe.Pointer) unsafe.Pointer {
 	return ptr
 }
 
-//export goReject
+// Export goReject
 func goReject(v unsafe.Pointer, ctx unsafe.Pointer) unsafe.Pointer {
 	var ptr unsafe.Pointer
 	goCb := pointerGet(ctx).(*awaitCallbacks)
@@ -540,8 +538,8 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 	ret := C.metacallfv_await_struct_s(cFunc, (*unsafe.Pointer)(cArgs), length, cCallbacks, goCallbacksPtr)
 
 	if ret != nil {
-		// can't destroy future, class, object until they are nolonger wanted
-		// destroying cause a dangling pointer and thus a segfault when used
+		// Can't destroy future, class, object until they are nolonger wanted
+		// Destroying cause a dangling pointer and thus a segfault when used
 		id := C.metacall_value_id(ret)
 		if id != C.METACALL_FUTURE && id != C.METACALL_CLASS && id != C.METACALL_OBJECT {
 			defer C.metacall_value_destroy(ret)
@@ -553,7 +551,7 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 		}
 		return v, nil
 	} else {
-		// delete and free ptr if metacallfv_await_struct_s failed with nil
+		// Delete and free ptr if metacallfv_await_struct_s failed with nil
 		pointerDelete(goCallbacksPtr)
 	}
 
@@ -603,7 +601,7 @@ func getFunction(function string) (unsafe.Pointer, error) {
 }
 
 func goToValue(arg interface{}, ptr *unsafe.Pointer) {
-	// type-switch is performance wise from multiple if statements
+	// Type-switch is performance wise from multiple if statements
 	switch i := arg.(type) {
 	// Create null
 	case nil:
@@ -625,13 +623,13 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 	case int16:
 		*ptr = C.metacall_value_create_short((C.short)(i))
 
-	// create int from int32
+	// Create int from int32
 	case int32:
 		*ptr = C.metacall_value_create_int((C.int)(i))
 
 	// Create int
 	case int:
-		// check if it is 32 or 64 bit
+		// Check if it is 32 or 64 bit
 		if i >= math.MinInt32 && i <= math.MaxInt32 {
 			*ptr = C.metacall_value_create_int((C.int)(i))
 		} else {
@@ -678,28 +676,28 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 
 		*ptr = C.metacall_error_throw_msg(cLabel, cMsg)
 
-	// create class
+	// Create class
 	case *Class:
 		if i.val != nil {
-			// increment internal refrence so caller cleanup do not destroy go instance
+			// Increment internal refrence so caller cleanup do not destroy go instance
 			*ptr = C.metacall_value_copy(i.val)
 		} else {
 			*ptr = C.metacall_value_create_class(i.ptr)
 		}
 
-	// create object
+	// Create object
 	case *Object:
 		if i.val != nil {
-			// increment internal refrence so caller cleanup do not destroy go instance
+			// Increment internal refrence so caller cleanup do not destroy go instance
 			*ptr = C.metacall_value_copy(i.val)
 		} else {
 			*ptr = C.metacall_value_create_object(i.ptr)
 		}
 
-	// create future
+	// Create future
 	case *Future:
 		if i.val != nil {
-			// increment internal refrence so caller cleanup do not destroy go instance
+			// Increment internal refrence so caller cleanup do not destroy go instance
 			*ptr = C.metacall_value_copy(i.val)
 		} else {
 			*ptr = C.metacall_value_create_future(i.ptr)
@@ -767,7 +765,6 @@ func valueToGo(value unsafe.Pointer) interface{} {
 		{
 			return float32(C.metacall_value_to_float(value))
 		}
-
 	case C.METACALL_DOUBLE:
 		{
 			return float64(C.metacall_value_to_double(value))
@@ -899,7 +896,7 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			if err, ok := v.(error); ok {
 				return err
 			}
-			// for languages that do not throw an error like JS
+			// For languages that do not throw an error like JS
 			e := fmt.Errorf("%v", v)
 			return e
 		}
@@ -1069,9 +1066,9 @@ func ExecutionPath(tag string, path string) error {
 }
 
 func checkRootCtx() context.Context {
-	// lock to prevent race condition when accessing global variable rootCtx
+	// Lock to prevent race condition when accessing global variable rootCtx
 	lock.Lock()
-	// reject call when Initialize() was never called or Destroy() ran or in progress
+	// Reject call when Initialize() was never called or Destroy() ran or in progress
 	if rootCtx == nil || rootCtx.Err() != nil {
 		lock.Unlock()
 		return nil
@@ -1087,14 +1084,14 @@ func DestroyUnsafe() {
 // Shutdown disables the metacall adapter waiting for all calls to complete
 func Destroy() {
 	// Run GC and wait for pending finalizers before shutting down MetaCall
-	// call garbage collector twice to give enough finalizers time to execute
+	// Call garbage collector twice to give enough finalizers time to execute
 	runtime.GC()
 	runtime.Gosched()
 	runtime.GC()
 
 	lock.Lock()
 	if rootCancel != nil {
-		// cancel root ctx and assign it to nil when shutting down
+		// Cancel root ctx and assign it to nil when shutting down
 		rootCancel()
 		rootCancel = nil
 		rootCtx = nil
@@ -1103,26 +1100,26 @@ func Destroy() {
 	lock.Unlock()
 
 	if tog != nil {
-		// wait for DestroyUnsafe() to finish
+		// Wait for DestroyUnsafe() to finish
 		<-tog
 	}
 }
 
-// start localhost server for profiles for monitoring and debugging
-// profiles can be accessed using command "go tool pprof http://localhost:6060/debug/pprof/name?debug=n"
+// Start localhost server for profiles for monitoring and debugging
+// Profiles can be accessed using command "go tool pprof http://localhost:6060/debug/pprof/name?debug=n"
 // name is to be replaced with the wanted profile name and put n=0 for binary format, n>0 for plain text,
 // n=2 for the full stack trace of all running goroutines in a format identical to an unrecovered panic.
-// see https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/ for profiles names and more info about them
+// See https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/ for profiles names and more info about them
 func startProfilesServer() {
 	monitMux := http.NewServeMux()
 
-	// register profiles
-	monitMux.HandleFunc("/debug/pprof/", pprof.Index)          // heap and goroutine
-	monitMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline) // go command arguments
-	monitMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)   // translation helper for memory addresses
-	monitMux.HandleFunc("/debug/pprof/trace", pprof.Trace)     // trace
+	// Register profiles
+	monitMux.HandleFunc("/debug/pprof/", pprof.Index)          // Heap and goroutine
+	monitMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline) // Go command arguments
+	monitMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)   // Translation helper for memory addresses
+	monitMux.HandleFunc("/debug/pprof/trace", pprof.Trace)     // Trace
 
-	// start goroutine for localhost to display the profiles
+	// Start goroutine for localhost to display the profiles
 	go func() {
 		err := http.ListenAndServe("localhost:6060", monitMux)
 		if err != nil {

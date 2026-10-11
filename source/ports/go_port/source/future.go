@@ -47,7 +47,7 @@ func (f *Future) Await() (interface{}, error) {
 
 	retValCh := make(chan futureResult, 1)
 
-	//create callbacks for metacall_await_future to use them via goReject & goResolve
+	// Create callbacks for metacall_await_future to use them via goReject & goResolve
 	callbacks := &awaitCallbacks{
 		resolve: func(val, _ interface{}) interface{} {
 			retValCh <- futureResult{value: val, err: nil}
@@ -63,13 +63,13 @@ func (f *Future) Await() (interface{}, error) {
 		},
 	}
 
-	// use handle to prevent breaking cgo pointer-passing rules
-	// await.go calls goResolve or goReject convert ctxPtr back and reads its content
+	// Use handle to prevent breaking cgo pointer-passing rules
+	// Await.go calls goResolve or goReject convert ctxPtr back and reads its content
 	ctxPtr := pointerSave(callbacks)
 
 	C.metacall_await_future(f.ptr, C.metacall_await_callback(C.resolveCgo), C.metacall_await_callback(C.rejectCgo), ctxPtr)
 
-	// block until a value returned
+	// Block until a value returned
 	ret := <-retValCh
 	if ret.value == nil && ret.err == nil {
 		return nil, errors.New("failed to get value from future")

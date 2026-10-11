@@ -25,7 +25,7 @@ type Class struct {
 func newClass(value unsafe.Pointer) *Class {
 	p := C.metacall_value_to_class(value)
 	cls := &Class{val: value, ptr: p}
-	// associate a finalizer so when value is not needed anymore GC destroy and free it
+	// Associate a finalizer so when value is not needed anymore GC destroy and free it
 	runtime.SetFinalizer(cls, func(c *Class) {
 		if c.val != nil {
 			C.metacall_value_destroy(c.val)

@@ -26,7 +26,7 @@ type Object struct {
 func newObject(value unsafe.Pointer, cls *Class) *Object {
 	p := C.metacall_value_to_object(value)
 	obj := &Object{parentCls: cls, val: value, ptr: p}
-	// associate a finalizer so when value is not needed anymore GC destroy and free it
+	// Associate a finalizer so when value is not needed anymore GC destroy and free it
 	runtime.SetFinalizer(obj, func(o *Object) {
 		if o.val != nil {
 			C.metacall_value_destroy(o.val)

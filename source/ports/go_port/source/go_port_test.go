@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	}
 	_ = godotenv.Load()
 
-	// if benchmark {
+	// If benchmark {
 	buffer := "module.exports = { benchmark: async x => x }"
 
 	if err := LoadFromMemory("node", buffer); err != nil {
@@ -480,8 +480,8 @@ func TestNodeJSFuture(t *testing.T) {
 }
 
 func TestGoRoutineLeaks(t *testing.T) {
-	// this test is for race condition when shutdown occur with non-empty queue which triggers a deadlock and a goroutine leak
-	// start the port and fill the queue
+	// This test is for race condition when shutdown occur with non-empty queue which triggers a deadlock and a goroutine leak
+	// Start the port and fill the queue
 	buffer := "module.exports = { leak_test: (x) => x }"
 	if err := LoadFromMemory("node", buffer); err != nil {
 		t.Fatal(err)
@@ -491,7 +491,7 @@ func TestGoRoutineLeaks(t *testing.T) {
 	stop := make(chan interface{})
 	shutdown := make(chan interface{})
 	var wg sync.WaitGroup
-	// start concurrent callers
+	// Start concurrent callers
 	for i := 0; i < ws; i++ {
 		wg.Add(1)
 		go func() {
@@ -507,7 +507,7 @@ func TestGoRoutineLeaks(t *testing.T) {
 		}()
 	}
 
-	// call Destroy() to start shutdown concurrently with worker register in queue
+	// Call Destroy() to start shutdown concurrently with worker register in queue
 	time.Sleep(2 * time.Millisecond)
 	go func() {
 		Destroy()
@@ -523,10 +523,10 @@ func TestGoRoutineLeaks(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		timedOut = true
 	}
-	// getting the goroutine leaks and deadlocks profile and store it
+	// Getting the goroutine leaks and deadlocks profile and store it
 	prof := pprof.Lookup("goroutine")
 	if prof != nil {
-		// create file to store the report
+		// Create file to store the report
 		fileName := "Goroutine_leaks_report.pprof"
 		var filePath string
 		if filePath = os.Getenv("PPROFDIR"); filePath == "" {
@@ -549,7 +549,7 @@ func TestProfilesServer(t *testing.T) {
 	if mode != "debug" {
 		return
 	}
-	// use http instead of curl for cross-platform support
+	// Use http instead of curl for cross-platform support
 	c := &http.Client{}
 	reqs := [3][2]string{
 		{"goroutine", "http://localhost:6060/debug/pprof/goroutine?debug=0"},
@@ -578,7 +578,7 @@ func TestProfilesServer(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		// create .pprof file for go tool pprof
+		// Create .pprof file for go tool pprof
 		var filePath string
 		if filePath = os.Getenv("PPROFDIR"); filePath == "" {
 			filePath, _ = os.Getwd()
