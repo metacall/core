@@ -1331,6 +1331,8 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			{
 				/* TODO: Report error */
 			}
+			Py_DecRef(key);
+			Py_DecRef(item);
 		}
 
 		return dict;
