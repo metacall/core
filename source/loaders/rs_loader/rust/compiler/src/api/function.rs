@@ -153,3 +153,19 @@ pub fn register_function(function_registration: FunctionRegistration) {
         }
     };
 }
+
+/// # Safety
+/// `ctx` must be a valid MetaCall context and `function` must be a valid
+/// MetaCall function.
+pub unsafe fn register_existing_function(ctx: OpaqueType, function: OpaqueType) {
+    let sp = context_scope(ctx);
+    let name = function_name(function);
+
+    let v = value_create_function(function);
+
+    let result = scope_define(sp, name, v);
+
+    if result != 0 {
+        value_type_destroy(v);
+    }
+}

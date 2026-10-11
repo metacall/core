@@ -19,17 +19,33 @@
  */
 
 #ifndef RS_LOADER_IMPL_H
-#define RS_LOADER_IMPL_H 1
+	#define RS_LOADER_IMPL_H 1
 
-#include <rs_loader/rs_loader_api.h>
+	#include <rs_loader/rs_loader_api.h>
 
-#include <loader/loader_impl_interface.h>
+	#include <loader/loader_impl_interface.h>
 
-#include <configuration/configuration.h>
+	#include <configuration/configuration.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+	#include <stddef.h>
+
+	#ifdef __cplusplus
+extern "C"
+{
+	#endif
+
+typedef struct rs_loader_template_instantiation
+{
+	const char *template_name;
+	const char **types;
+	size_t type_count;
+} rs_loader_template_instantiation;
+
+typedef struct rs_loader_load_data
+{
+	const rs_loader_template_instantiation *instantiations;
+	size_t instantiation_count;
+} rs_loader_load_data;
 
 RS_LOADER_API loader_impl_data rs_loader_impl_initialize(loader_impl impl, configuration config);
 
@@ -49,8 +65,8 @@ RS_LOADER_API int rs_loader_impl_destroy(loader_impl impl);
 
 RS_LOADER_API const char *get_attr_name(struct accessor_type *accessor);
 
-#ifdef __cplusplus
+	#ifdef __cplusplus
 }
-#endif
+	#endif
 
 #endif /* RS_LOADER_IMPL_H */

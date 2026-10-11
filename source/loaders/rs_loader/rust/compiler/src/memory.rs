@@ -1,4 +1,4 @@
-use crate::{compile, CompilerState, RegistrationError, Source};
+use crate::{compile, CompilerState, RegistrationError, Source, TemplateInstantiation};
 
 use std::ffi::c_void;
 
@@ -11,11 +11,18 @@ pub struct MemoryRegistration {
     pub dynlink: Option<DynlinkLibrary>,
 }
 impl MemoryRegistration {
-    pub fn new(name: String, code: String) -> Result<MemoryRegistration, RegistrationError> {
-        let state = match compile(Source::build(Source::Memory {
-            name: name.clone(),
-            code,
-        })) {
+    pub fn new(
+        name: String,
+        code: String,
+        instantiations: &[TemplateInstantiation],
+    ) -> Result<MemoryRegistration, RegistrationError> {
+        let state = match compile(
+            Source::build(Source::Memory {
+                name: name.clone(),
+                code,
+            }),
+            instantiations,
+        ) {
             Ok(state) => state,
             Err(error) => {
                 return Err(RegistrationError::CompilationError(format!(

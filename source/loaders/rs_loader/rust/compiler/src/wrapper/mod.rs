@@ -3,20 +3,10 @@ use super::{
     config::Input, rustc_span::FileName::Custom, CompilerCallbacks, Function, FunctionParameter,
     FunctionType, Source,
 };
+use crate::TemplateInstantiation;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
-
-fn template_instantiation_types(template: &Function) -> Vec<String> {
-    match template.generics.len() {
-        1 => vec!["i32".to_string()],
-        2 => vec!["i32".to_string(), "f64".to_string()],
-        _ => panic!(
-            "no poc instantiation types configured for template {}",
-            template.name
-        ),
-    }
-}
 
 fn generate_function_wrapper(functions: &[Function]) -> String {
     let mut ret = String::new();
@@ -30,10 +20,6 @@ fn generate_function_wrapper(functions: &[Function]) -> String {
 
             ret.push_str("\tBox::into_raw(Box::new(f))\n");
         } else {
-            println!(
-                "Rust Loader: function {} is a template {:?}",
-                func.name, func.generics
-            );
             ret.push_str("\tstd::ptr::null_mut()\n");
         }
         //ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
@@ -237,7 +223,10 @@ fn generate_class_wrapper_for_package(classes: &[&crate::Class]) -> String {
     }
     ret
 }
-pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<CompilerCallbacks> {
+pub fn generate_wrapper(
+    callbacks: CompilerCallbacks,
+    instantiations: &[TemplateInstantiation],
+) -> std::io::Result<CompilerCallbacks> {
     match callbacks.source.source {
         Source::Package { ref path } => {
             let mut content = String::new();
@@ -278,12 +267,17 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let function_wrapper = generate_function_wrapper(&callbacks.functions);
             content.push_str(&function_wrapper);
 
-            for template in &callbacks.templates {
-                let types = template_instantiation_types(template);
+            for instantiation in instantiations {
+                if let Some(template) = callbacks
+                    .templates
+                    .iter()
+                    .find(|template| template.name == instantiation.template)
+                {
+                    let instantiated_wrapper =
+                        generate_instantiated_function_wrapper(template, &instantiation.types);
 
-                let instantiated_wrapper = generate_instantiated_function_wrapper(template, &types);
-
-                content.push_str(&instantiated_wrapper);
+                    content.push_str(&instantiated_wrapper);
+                }
             }
             let class_wrapper =
                 generate_class_wrapper(&callbacks.classes.iter().collect::<Vec<_>>());

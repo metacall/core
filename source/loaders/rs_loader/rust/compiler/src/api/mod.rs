@@ -20,8 +20,8 @@ pub const TEMPLATE_ARGUMENT_TYPE: c_int = 0;
 pub const TEMPLATE_ARGUMENT_TEMPLATE: c_int = 1;
 
 pub use function::{
-    function_singleton, register_function, FunctionCreate, FunctionInputSignature,
-    FunctionRegistration,
+    function_singleton, register_existing_function, register_function, FunctionCreate,
+    FunctionInputSignature, FunctionRegistration,
 };
 
 pub use class::{class_singleton, register_class, ClassCreate, ClassRegistration};
@@ -290,7 +290,8 @@ pub unsafe fn int_from_value(v: OpaqueType) -> i32 {
 pub unsafe fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecycleState {
     (unsafe { loader_impl_get(loader_impl) }) as *mut LoaderLifecycleState
 }
-/// # Safety/// The returned opaque pointer is owned by MetaCall and must be used
+/// # Safety
+/// The returned opaque pointer is owned by MetaCall and must be used
 /// according to the MetaCall value API.
 pub unsafe fn create_double_value(value: f64) -> OpaqueType {
     value_create_double(value)

@@ -58,25 +58,11 @@ static void template_format(
 		return;
 	}
 
-	strncat(
-		buffer,
-		tpl->name,
-		size - strlen(buffer) - 1);
-
-	strncat(
-		buffer,
-		"<",
-		size - strlen(buffer) - 1);
+	strncat(buffer, tpl->name, size - strlen(buffer) - 1);
 
 	for (size_t i = 0; i < args_size; i++)
 	{
-		if (i > 0)
-		{
-			strncat(
-				buffer,
-				", ",
-				size - strlen(buffer) - 1);
-		}
+		strncat(buffer, "_", size - strlen(buffer) - 1);
 
 		if (args[i].kind == TEMPLATE_ARGUMENT_TYPE)
 		{
@@ -98,11 +84,6 @@ static void template_format(
 				size - strlen(buffer) - 1);
 		}
 	}
-
-	strncat(
-		buffer,
-		">",
-		size - strlen(buffer) - 1);
 }
 
 const char *template_name(reflect_template tpl)
@@ -166,7 +147,7 @@ function template_instantiate_function(
 	reflect_template tpl,
 	template_argument args[],
 	size_t size,
-    function_impl impl,
+	function_impl impl,
 	function_impl_interface_singleton singleton)
 {
 	if (tpl == NULL ||

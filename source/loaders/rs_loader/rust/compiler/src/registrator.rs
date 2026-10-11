@@ -1,8 +1,8 @@
+use crate::api::ClassRegistration;
 use crate::api::{
-    add_template_parameter, call_function, class_singleton, create_double_value, create_int_value,
-    create_template, double_from_value, function_singleton, get_loader_type,
-    instantiate_template_function, int_from_value, register_class, register_function, ClassCreate,
-    ClassRegistration, FunctionCreate, FunctionInputSignature, FunctionRegistration, OpaqueType,
+    add_template_parameter, class_singleton, create_template, function_singleton, get_loader_type,
+    instantiate_template_function, register_class, register_existing_function, register_function,
+    ClassCreate, FunctionCreate, FunctionInputSignature, FunctionRegistration, OpaqueType,
     TemplateArgument, TEMPLATE_ARGUMENT_TYPE, TEMPLATE_TYPE_FUNCTION,
 };
 use crate::wrapper::class;
@@ -11,11 +11,6 @@ use std::ffi::CString;
 //use crate::template::*;
 
 fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate {
-    println!(
-        "Creating MetaCall function: {}, generics: {:?}",
-        func.name, func.generics
-    );
-
     let name = func.name.clone();
     let args_count = func.args.len();
     let register_func_name = format!("rs_loader_impl_register_fn_{}", name);
@@ -34,6 +29,16 @@ fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate 
         function_impl,
         singleton: function_singleton as OpaqueType,
     }
+}
+
+pub fn instantiate_template_by_types(
+    template: &Function,
+    types: &[String],
+    tpl: OpaqueType,
+    dynlink: &DynlinkLibrary,
+    loader_impl: OpaqueType,
+) -> OpaqueType {
+    instantiate_template(template, types, tpl, dynlink, loader_impl)
 }
 
 fn instantiate_template(
@@ -136,8 +141,6 @@ pub fn register(
     ctx: OpaqueType,
 ) {
     for func in state.functions.iter() {
-        println!("Function: {}, Generics: {:?}", func.name, func.generics);
-
         let function_registration = FunctionRegistration {
             ctx,
             loader_impl,
@@ -176,65 +179,51 @@ pub fn register(
             );
         }
 
-        if template.name == "identity" {
-            let instantiated =
-                instantiate_template(template, &["i32".to_string()], tpl, dynlink, loader_impl);
-
-            assert!(
-                !instantiated.is_null(),
-                "Failed to instantiate template {}",
-                template.name
-            );
-
-            let input = unsafe { create_int_value(42) };
-            assert!(!input.is_null());
-
-            let mut call_args = [input];
-
-            let result = unsafe { call_function(instantiated, &mut call_args) };
-
-            assert!(!result.is_null());
-
-            let returned = unsafe { int_from_value(result) };
-
-            println!("identity<i32>(42) returned {}", returned);
-
-            assert_eq!(returned, 42);
-        }
-
-        if template.name == "pair" {
-            let instantiated = instantiate_template(
+        for instantiation in state
+            .instantiations
+            .iter()
+            .filter(|instantiation| instantiation.template == template.name)
+        {
+            let function = instantiate_template_by_types(
                 template,
-                &["i32".to_string(), "f64".to_string()],
+                &instantiation.types,
                 tpl,
                 dynlink,
                 loader_impl,
             );
 
-            assert!(
-                !instantiated.is_null(),
-                "failed to instantiate template {}",
-                template.name
-            );
-
-            let input_a = unsafe { create_int_value(42) };
-            let input_b = unsafe { create_double_value(3.25) };
-
-            assert!(!input_a.is_null());
-            assert!(!input_b.is_null());
-
-            let mut call_args = [input_a, input_b];
-
-            let result = unsafe { call_function(instantiated, &mut call_args) };
-
-            assert!(!result.is_null());
-
-            let returned = unsafe { double_from_value(result) };
-
-            println!("pair<i32, f64>(42, 3.25) returned {}", returned);
-
-            assert_eq!(returned, 3.25);
+            unsafe {
+                register_existing_function(ctx, function);
+            }
         }
+    }
+
+    for instantiation in &state.instantiations {
+        let template = state
+            .templates
+            .iter()
+            .find(|template| template.name == instantiation.template)
+            .unwrap_or_else(|| panic!("Template {} not found", instantiation.template));
+
+        let tpl = unsafe { create_template(&template.name, TEMPLATE_TYPE_FUNCTION) };
+
+        assert!(
+            !tpl.is_null(),
+            "failed to create template {}",
+            template.name
+        );
+
+        for generic in &template.generics {
+            let result = unsafe { add_template_parameter(tpl, generic) };
+
+            assert_eq!(
+                result, 0,
+                "Failed to add generic parameter {} to {}",
+                generic, template.name
+            );
+        }
+
+        instantiate_template_by_types(template, &instantiation.types, tpl, dynlink, loader_impl);
     }
 
     // Register classes

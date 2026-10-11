@@ -63,6 +63,12 @@ pub enum RegistrationError {
     DynlinkError(String),
 }
 
+#[derive(Clone, Debug)]
+pub struct TemplateInstantiation {
+    pub template: String,
+    pub types: Vec<String>,
+}
+
 struct SourceInput(config::Input);
 
 impl Clone for SourceInput {
@@ -427,6 +433,7 @@ pub struct CompilerState {
     functions: Vec<Function>,
     templates: Vec<Function>,
     classes: Vec<Class>,
+    instantiations: Vec<TemplateInstantiation>,
 }
 
 #[derive(Clone, Debug)]
@@ -481,9 +488,6 @@ impl CompilerCallbacks {
         let krate = match metacall_crate {
             Some(k) => *k,
             None => {
-                for krate in tcx.crates(()) {
-                    eprintln!(" here - {}", tcx.crate_name(*krate));
-                }
                 return;
             }
         };
@@ -660,10 +664,6 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
 
             config.opts.externs = Externs::new(externs);
 
-            eprintln!("DEBUG EXTERNS:");
-            for (name, entry) in config.opts.externs.iter() {
-                eprintln!("extern crate: {} -> {:?}", name, entry);
-            }
             let dep_path = self
                 .source
                 .input_path
@@ -1046,7 +1046,10 @@ fn run_compiler(
     });
 }
 
-pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
+pub fn compile(
+    source: SourceImpl,
+    instantiations: &[TemplateInstantiation],
+) -> Result<CompilerState, CompilerError> {
     let destination = std::env::temp_dir().join(generate_random_string(5));
     let result = std::fs::create_dir(&destination);
 
@@ -1105,17 +1108,37 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     // Parse fails, stop
     parsing_result?;
 
-    println!("Functions:");
-    for f in &callbacks.functions {
-        println!("  {}", f.name);
+    for instantiation in instantiations {
+        let Some(template) = callbacks
+            .templates
+            .iter()
+            .find(|template| template.name == instantiation.template)
+        else {
+            let err = format!("Template '{}' not found.", instantiation.template);
+            return Err(CompilerError {
+                diagnostics: String::new(),
+                errors: err.clone(),
+                err,
+            });
+        };
+
+        if template.generics.len() != instantiation.types.len() {
+            let err = format!(
+                "Template '{}' expects {} types, got {}.",
+                template.name,
+                template.generics.len(),
+                instantiation.types.len()
+            );
+            return Err(CompilerError {
+                diagnostics: String::new(),
+                errors: err.clone(),
+                err,
+            });
+        }
     }
 
-    println!("Templates:");
-    for t in &callbacks.templates {
-        println!("  {} {:?}", t.name, t.generics);
-    }
-
-    let mut patched_callback = generate_wrapper(callbacks).expect("Unable to generate wrapper");
+    let mut patched_callback =
+        generate_wrapper(callbacks, instantiations).expect("Unable to generate wrapper");
 
     // Generate binary
     match rustc_driver::catch_fatal_errors(|| {
@@ -1126,6 +1149,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
             functions: patched_callback.functions,
             templates: patched_callback.templates,
             classes: patched_callback.classes,
+            instantiations: instantiations.to_vec(),
         }),
         Err(err) => {
             // Read buffered diagnostics
