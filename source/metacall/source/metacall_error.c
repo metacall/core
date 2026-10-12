@@ -24,7 +24,13 @@
 
 #include <reflect/reflect_value_type.h>
 
+#include <portability/portability_compiler.h>
+
 #include <log/log.h>
+
+/* -- Private Variables -- */
+
+static PORTABILITY_THREAD_LOCAL value metacall_error_last_v = NULL;
 
 /* -- Methods -- */
 
@@ -92,13 +98,34 @@ int metacall_error_from_value(void *v, metacall_exception ex)
 
 int metacall_error_last(metacall_exception ex)
 {
-	// TODO
-	(void)ex;
+	if (metacall_error_last_v == NULL)
+	{
+		return 1;
+	}
 
-	return 1;
+	return metacall_error_from_value(metacall_error_last_v, ex);
 }
 
 void metacall_error_clear(void)
 {
-	// TODO
+	if (metacall_error_last_v != NULL)
+	{
+		value_type_destroy(metacall_error_last_v);
+		metacall_error_last_v = NULL;
+	}
+}
+
+void metacall_error_set_last(void *v)
+{
+	if (v == NULL || type_id_throwable(value_type_id((value)v)) != 0)
+	{
+		return;
+	}
+
+	if (metacall_error_last_v != NULL)
+	{
+		value_type_destroy(metacall_error_last_v);
+	}
+
+	metacall_error_last_v = value_type_copy((value)v);
 }
