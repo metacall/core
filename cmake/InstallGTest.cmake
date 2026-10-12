@@ -51,7 +51,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	endif()
 	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
 
-	if(MSVC)
+	if(WIN32)
 		# Build statically on Windows for avoiding DLL location issues (avoid populating the variable to the cache)
 		set(_CACHE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 		set(BUILD_SHARED_LIBS OFF)
@@ -59,7 +59,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 
 	FetchContent_MakeAvailable(googletest)
 
-	if(MSVC)
+	if(WIN32)
 		# Restore shared library value
 		set(BUILD_SHARED_LIBS ${_CACHE_BUILD_SHARED_LIBS})
 	endif()
