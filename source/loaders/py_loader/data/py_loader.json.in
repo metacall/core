@@ -1,0 +1,7 @@
+{
+	"python_home": "@PYTHON_HOME@",
+	"search_paths": [ @LOADER_SEARCH_PATHS@ ],
+	"dependencies": {
+		@LOADER_DEPENDENCIES@
+	}
+}
