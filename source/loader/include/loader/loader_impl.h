@@ -107,6 +107,8 @@ LOADER_API value loader_impl_metadata(loader_impl impl);
 
 LOADER_API int loader_impl_clear(void *handle);
 
+LOADER_API void loader_impl_set_uninitialized(loader_impl impl);
+
 LOADER_API void loader_impl_destroy_objects(loader_impl impl);
 
 LOADER_API void loader_impl_destroy_deallocate(loader_impl impl);

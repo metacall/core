@@ -840,9 +840,22 @@ void loader_destroy(void)
 				log_write("metacall", LOG_LEVEL_ERROR, "Failed to clear host loader");
 			}
 		}
-		else
+		else if (manager_impl->host != NULL)
 		{
-			plugin_destroyed(manager_impl->host);
+			loader_impl host_impl = plugin_impl_type(manager_impl->host, loader_impl);
+
+			/* If the host runtime has been already destroyed by the host itself (i.e from the port),
+			* deallocate the loader without destroying the runtime again, otherwise keep it alive
+			* because the runtime is managed externally and it may be already finalized */
+			if (loader_manager_impl_is_destroyed(manager_impl, host_impl) == 0)
+			{
+				loader_impl_set_uninitialized(host_impl);
+				plugin_destructor(manager_impl->host);
+			}
+			else
+			{
+				plugin_destroyed(manager_impl->host);
+			}
 		}
 
 		manager_impl->host = NULL;

@@ -904,6 +904,13 @@ int loader_impl_is_initialized(loader_impl impl)
 	return impl->init;
 }
 
+void loader_impl_set_uninitialized(loader_impl impl)
+{
+	/* The runtime has been destroyed outside of MetaCall (i.e by the host),
+	* mark it as uninitialized so its destroy is not called again */
+	impl->init = 1;
+}
+
 loader_impl loader_impl_create(const loader_tag tag)
 {
 	loader_impl impl = loader_impl_allocate(tag);
