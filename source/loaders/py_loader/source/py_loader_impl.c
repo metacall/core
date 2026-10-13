@@ -1383,8 +1383,6 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			return NULL;
 		}
 
-		Py_IncRef(obj_impl->cls);
-
 		return obj_impl->cls;
 	}
 	else if (id == TYPE_OBJECT)
