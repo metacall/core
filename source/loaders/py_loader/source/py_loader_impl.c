@@ -388,20 +388,20 @@ int py_object_interface_set(object obj, object_impl impl, struct accessor_type *
 	loader_impl_py_object py_object = (loader_impl_py_object)impl;
 	PyObject *pyobject_object = py_object->obj;
 	PyObject *key_py_str = PyUnicode_FromString(attribute_name(accessor->data.attr));
-	PyObject *pyvalue = py_loader_impl_value_to_capi(py_object->impl, value_type_id(v), v);
-	int retval = PyObject_GenericSetAttr(pyobject_object, key_py_str, pyvalue);
+	PyObject *py_value = py_loader_impl_value_to_capi(py_object->impl, value_type_id(v), v);
+	int result = PyObject_GenericSetAttr(pyobject_object, key_py_str, py_value);
 
 	Py_DecRef(key_py_str);
-	Py_DecRef(pyvalue);
+	Py_DecRef(py_value);
 
-	if (retval != 0)
+	if (result != 0)
 	{
 		py_loader_impl_error_print(loader_impl_get(py_object->impl));
 	}
 
 	py_loader_thread_release();
 
-	return retval;
+	return result;
 }
 
 value py_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
@@ -686,6 +686,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 	int result = PyObject_SetAttr(py_class->cls, key_py_str, py_value);
 
 	Py_DecRef(key_py_str);
+	Py_DecRef(py_value);
 
 	py_loader_thread_release();
 
@@ -738,6 +739,8 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 	}
 
 	ret = py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(cls_impl->impl, python_object));
+
+	Py_DecRef(python_object);
 
 cleanup:
 	py_loader_thread_release();
@@ -1426,6 +1429,10 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			{
 				/* TODO: Report error */
 			}
+
+			/* PyDict_SetItem does not steal the references */
+			Py_DecRef(key);
+			Py_DecRef(item);
 		}
 
 		return dict;
@@ -4133,6 +4140,8 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 	log_write("metacall", LOG_LEVEL_ERROR, error_format_str, type_str, value_str, traceback_str ? traceback_str : traceback_not_found);
 
+	Py_DecRef(type_str_obj);
+	Py_DecRef(value_str_obj);
 	Py_DecRef(traceback_list);
 	Py_DecRef(separator);
 	Py_DecRef(traceback_str_obj);
@@ -4189,6 +4198,7 @@ value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject
 
 	ret = value_create_throwable(th);
 
+	Py_DecRef(value_str_obj);
 	Py_DecRef(traceback_list);
 	Py_DecRef(separator);
 	Py_DecRef(traceback_str_obj);

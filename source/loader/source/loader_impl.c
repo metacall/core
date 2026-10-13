@@ -1951,6 +1951,13 @@ void loader_impl_destroy(plugin p, loader_impl impl)
 
 				impl->init = 1;
 			}
+			else
+			{
+				/* The loader was never initialized, so its destroy (which calls loader_unload_children)
+				* is not executed and the objects must be cleared here, otherwise they leak
+				*/
+				loader_impl_destroy_objects(impl);
+			}
 
 			/* Remove the loader library from the library list */
 			plugin_descriptor desc = plugin_desc(p);
