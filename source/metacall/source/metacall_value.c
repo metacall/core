@@ -392,7 +392,7 @@ void *metacall_value_create(enum metacall_value_id id)
 			return value_create_class(class_create(NULL, ACCESSOR_TYPE_STATIC, NULL, &metacall_class_singleton));
 
 		case METACALL_OBJECT:
-			return value_create_object(object_create(NULL, ACCESSOR_TYPE_STATIC, NULL, &metacall_object_singleton, metacall_value_create(METACALL_CLASS)));
+			return value_create_object(object_create(NULL, ACCESSOR_TYPE_STATIC, NULL, &metacall_object_singleton, class_create(NULL, ACCESSOR_TYPE_STATIC, NULL, &metacall_class_singleton)));
 
 		case METACALL_EXCEPTION:
 			return value_create_exception(exception_create_const("", "", 0, ""));
