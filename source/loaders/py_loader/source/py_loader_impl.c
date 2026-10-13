@@ -372,6 +372,7 @@ int py_object_interface_set(object obj, object_impl impl, struct accessor_type *
 	int retval = PyObject_GenericSetAttr(pyobject_object, key_py_str, pyvalue);
 
 	Py_DecRef(key_py_str);
+	Py_DecRef(pyvalue);
 
 	py_loader_thread_release();
 
@@ -601,6 +602,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 	int result = PyObject_SetAttr(py_class->cls, key_py_str, py_value);
 
 	Py_DecRef(key_py_str);
+	Py_DecRef(py_value);
 
 	py_loader_thread_release();
 
@@ -653,6 +655,8 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 	}
 
 	ret = py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(cls_impl->impl, python_object));
+
+	Py_DecRef(python_object);
 
 cleanup:
 	py_loader_thread_release();
@@ -1331,6 +1335,10 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			{
 				/* TODO: Report error */
 			}
+
+			/* PyDict_SetItem does not steal the references */
+			Py_DecRef(key);
+			Py_DecRef(item);
 		}
 
 		return dict;
