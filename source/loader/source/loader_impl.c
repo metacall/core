@@ -1828,8 +1828,7 @@ void loader_impl_destroy_objects(loader_impl impl)
 	* destroy has been issued, so while it is destroying, we can still
 	* retrieve the data for introspection or for whatever we need
 	*/
-	/* The objects may have been already destroyed by the loader destroy (through loader_unload_children) */
-	if (impl != NULL && impl->handle_impl_init_order != NULL)
+	if (impl != NULL)
 	{
 		/* Destroy all handles in inverse creation order */
 		size_t iterator = vector_size(impl->handle_impl_init_order);
