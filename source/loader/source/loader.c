@@ -695,9 +695,11 @@ value loader_metadata_impl(plugin p, loader_impl impl)
 
 value loader_metadata(void)
 {
-	value *values, v = value_create_map(NULL, plugin_manager_size(&loader_manager));
+	value *values, v;
 	struct set_small_iterator_type it;
 	size_t values_it;
+
+	v = value_create_map(NULL, plugin_manager_size(&loader_manager));
 
 	if (v == NULL)
 	{
@@ -740,6 +742,18 @@ void loader_set_destroyed(loader_impl impl)
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 
 	loader_manager_impl_set_destroyed(manager_impl, impl);
+}
+
+int loader_destroy_runtime(loader_impl impl)
+{
+	/* Destroy the runtime of a loader before MetaCall gets destroyed, this is used by the hosts
+	* (i.e from the ports) for destroying the loader while the runtime is still alive, then
+	* mark it as destroyed so the remaining values do not access to the runtime anymore */
+	int result = loader_impl_destroy_runtime(impl);
+
+	loader_set_destroyed(impl);
+
+	return result;
 }
 
 void loader_unload_children(loader_impl impl)
@@ -844,12 +858,11 @@ void loader_destroy(void)
 		{
 			loader_impl host_impl = plugin_impl_type(manager_impl->host, loader_impl);
 
-			/* If the host runtime has been already destroyed by the host itself (i.e from the port),
-			* deallocate the loader without destroying the runtime again, otherwise keep it alive
-			* because the runtime is managed externally and it may be already finalized */
-			if (loader_manager_impl_is_destroyed(manager_impl, host_impl) == 0)
+			/* If the host runtime has been already destroyed by the host itself (i.e from the port with loader_destroy_runtime),
+			* deallocate the loader (the runtime destroy is not called again), otherwise do not touch it because the runtime
+			* is managed externally and it may be already finalized */
+			if (loader_impl_is_initialized(host_impl) != 0)
 			{
-				loader_impl_set_uninitialized(host_impl);
 				plugin_destructor(manager_impl->host);
 			}
 			else

@@ -4863,6 +4863,15 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	loader_set_destroyed(node_impl->impl);
 }
 
+int node_loader_impl_destroy_host(loader_impl_node node_impl, napi_env env)
+{
+	/* When running in host mode, the destroy is issued by the host itself from the JavaScript thread (i.e process.on('exit')),
+	* destroy the loader through MetaCall, so it can be deallocated later on without destroying the runtime again */
+	node_loader_impl_env(node_impl, env);
+
+	return loader_destroy_runtime(node_impl->impl);
+}
+
 void node_loader_impl_try_destroy(loader_impl_node node_impl)
 {
 	loader_impl_async_destroy_safe_type destroy_safe(node_impl);
@@ -4904,6 +4913,11 @@ int node_loader_impl_destroy(loader_impl impl)
 
 		/* Wait for node thread to finish */
 		uv_thread_join(&node_impl->thread);
+	}
+	else
+	{
+		/* In host mode, this is called from node_loader_impl_destroy_host, so we are already in the JavaScript thread */
+		node_loader_impl_destroy_safe_impl(node_impl, node_impl->env);
 	}
 
 	/* Clear condition syncronization object */

@@ -990,17 +990,10 @@ static PyObject *py_loader_port_atexit(PyObject *self, PyObject *args)
 	(void)self;
 	(void)args;
 
-	if (impl != NULL)
+	/* Destroy the loader while the runtime is still alive, so MetaCall can deallocate it later without destroying the runtime again */
+	if (impl != NULL && loader_destroy_runtime(impl) != 0)
 	{
-		if (py_loader_impl_destroy(impl) != 0)
-		{
-			PyErr_SetString(PyExc_RuntimeErrorPtr(), "Failed to destroy Python Loader on MetaCall.");
-		}
-		else
-		{
-			/* Mark the loader as destroyed, so MetaCall can deallocate it without destroying the runtime again */
-			loader_set_destroyed(impl);
-		}
+		PyErr_SetString(PyExc_RuntimeErrorPtr(), "Failed to destroy Python Loader on MetaCall.");
 	}
 
 	return Py_ReturnNone();
