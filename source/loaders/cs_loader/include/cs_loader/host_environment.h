@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef _HOST_ENVIRONMENT_H_
 #define _HOST_ENVIRONMENT_H_

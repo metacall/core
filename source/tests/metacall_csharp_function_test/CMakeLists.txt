@@ -48,6 +48,8 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(sources
 	${source_path}/main.cpp
 	${source_path}/metacall_csharp_function_test.cpp
+	${source_path}/metacall_csharp_metadata_test.cpp
+	${source_path}/metacall_csharp_native_metadata_test.cpp
 )
 
 # Group source files
@@ -65,6 +67,12 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Build executable
 add_executable(${target}
 	${sources}
+)
+
+# Compile the production bridge for native delegate fault-injection tests.
+target_sources(${target}
+	PRIVATE
+	${PROJECT_SOURCE_DIR}/source/loaders/cs_loader/source/netcore.cpp
 )
 
 # Create namespaced alias
@@ -86,6 +94,7 @@ set_target_properties(${target}
 
 target_include_directories(${target}
 	PRIVATE
+	${PROJECT_SOURCE_DIR}/source/loaders/cs_loader/include
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
 )
@@ -96,6 +105,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
+	${META_PROJECT_NAME}::log
 	${DEFAULT_LIBRARIES}
 
 	GTest
@@ -168,24 +178,35 @@ if(OPTION_TEST_MEMORYCHECK)
 	return()
 endif()
 
-add_test(NAME ${target}
-	COMMAND $<TARGET_FILE:${target}>
-)
-
-#
-# Define test properties
-#
-
-set_property(TEST ${target}
-	PROPERTY LABELS ${target}
-
-	# TODO: Valgrind also fails with C#
-	MEMCHECK_IGNORE
-)
-
+# CoreCLR must not be shut down and restarted between cases in one process.
+# Register each case separately while preserving the test environment.
 include(TestEnvironmentVariables)
 
-test_environment_variables(${target}
-	""
-	${TESTS_ENVIRONMENT_VARIABLES}
+set(function_test_cases
+	metacall_csharp_function_test.DefaultConstructor
+	metacall_csharp_function_test.MoreThan100Functions
+	metacall_csharp_function_test.FunctionMetadataSurvivesRepeatedLoad
+	metacall_csharp_metadata_test.ManagedMetadataCapacityContract
+	metacall_csharp_metadata_test.ManagedNativeMetadataLayoutsMatch
+	metacall_csharp_metadata_test.ManagedMetadataEmptyAndFailureContract
+	metacall_csharp_native_metadata_test.NativeMetadataRetryAndFailureContract
 )
+
+foreach(test_case IN LISTS function_test_cases)
+	string(REGEX REPLACE "^.*\\." "" case_name "${test_case}")
+	set(test_name "${target}-${case_name}")
+
+	add_test(NAME ${test_name}
+		COMMAND $<TARGET_FILE:${target}>
+			"--gtest_filter=${test_case}"
+	)
+
+	set_property(TEST ${test_name}
+		PROPERTY LABELS ${target} MEMCHECK_IGNORE
+	)
+
+	test_environment_variables(${test_name}
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+endforeach()
