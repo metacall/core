@@ -163,11 +163,8 @@ endif()
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+		"--gtest_filter=metacall_csharp_class_test.DefaultConstructor"
 )
-
-#
-# Define dependencies
-#
 
 add_dependencies(${target}
 	cs_loader
@@ -187,6 +184,22 @@ set_property(TEST ${target}
 include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)
+
+set(class_metadata_test "${target}-MoreThan100ClassMetadataRecords")
+
+add_test(NAME ${class_metadata_test}
+	COMMAND $<TARGET_FILE:${target}>
+		"--gtest_filter=metacall_csharp_class_test.MoreThan100ClassMetadataRecords"
+)
+
+set_property(TEST ${class_metadata_test}
+	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+)
+
+test_environment_variables(${class_metadata_test}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 )

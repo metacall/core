@@ -88,68 +88,105 @@ namespace CSLoader
         {
             return loader.Functions();
         }
-        public static void GetFunctions(ref int count, IntPtr p)
-        {
-            var f = loader.Functions();
-            count = f.Length;
 
-            foreach (var item in f)
+        private static int WriteMetadata<T>(Func<T[]> getRecords, ref int count, IntPtr destination, int capacity) where T : struct
+        {
+            // Must match metadata_status in defs.h.
+            const int success = 0;
+            const int insufficientCapacity = 1;
+            const int failure = 2;
+            const int invalidArgument = 3;
+
+            count = -1;
+
+            if (capacity < 0 ||
+                (destination == IntPtr.Zero && capacity != 0))
             {
-                Marshal.StructureToPtr(item, p, false);
-                p += Marshal.SizeOf<ReflectFunction>();
+                return invalidArgument;
+            }
+
+            try
+            {
+                T[] records = getRecords();
+                count = records.Length;
+
+                // A null destination with zero capacity is a count query.
+                if (destination == IntPtr.Zero)
+                {
+                    return success;
+                }
+
+                // Validate capacity before writing any records.
+                if (capacity < records.Length)
+                {
+                    return insufficientCapacity;
+                }
+
+                if (records.Length == 0)
+                {
+                    return success;
+                }
+
+                int recordSize = Marshal.SizeOf<T>();
+                IntPtr current = destination;
+
+                for (int i = 0; i < records.Length; ++i)
+                {
+                    Marshal.StructureToPtr(records[i], current, false);
+
+                    if (i + 1 < records.Length)
+                    {
+                        current = IntPtr.Add(current, recordSize);
+                    }
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                count = -1;
+
+                // Logging must not allow an exception to cross the bridge.
+                try
+                {
+                    log.Error("Failed to export metadata", ex);
+                }
+                catch (Exception)
+                {
+                }
+
+                return failure;
             }
         }
 
-        public static void GetClasses(ref int count, IntPtr p)
+        public static int GetFunctionsV2(ref int count, IntPtr destination, int capacity)
         {
-            ReflectClass[] classes = loader.Classes();
-
-            count = classes.Length;
-
-            for (int i = 0; i < classes.Length; ++i)
-            {
-                Marshal.StructureToPtr(classes[i], p, false);
-                p = IntPtr.Add(p, Marshal.SizeOf<ReflectClass>());
-            }
+            return WriteMetadata<ReflectFunction>(
+                loader.Functions, ref count, destination, capacity);
         }
 
-        public static void GetConstructors(ref int count, IntPtr p)
+        public static int GetClassesV2(ref int count, IntPtr destination, int capacity)
         {
-            ReflectConstructor[] constructors = loader.Constructors();
-
-            count = constructors.Length;
-
-            for (int i = 0; i < constructors.Length; ++i)
-            {
-                Marshal.StructureToPtr(constructors[i], p, false);
-                p = IntPtr.Add(p, Marshal.SizeOf<ReflectConstructor>());
-            }
+            return WriteMetadata<ReflectClass>(
+                loader.Classes, ref count, destination, capacity);
         }
 
-        public static void GetMethods(ref int count, IntPtr p)
+        public static int GetConstructorsV2(ref int count, IntPtr destination, int capacity)
         {
-            ReflectMethod[] methods = loader.Methods();
-
-            count = methods.Length;
-
-            for (int i = 0; i < methods.Length; ++i)
-            {
-                Marshal.StructureToPtr(methods[i], p, false);
-                p = IntPtr.Add(p, Marshal.SizeOf<ReflectMethod>());
-            }
+            return WriteMetadata<ReflectConstructor>(
+                loader.Constructors, ref count, destination, capacity);
         }
 
-        public static void GetAttributes(ref int count, IntPtr p)
+        public static int GetMethodsV2(ref int count, IntPtr destination, int capacity)
         {
-            ReflectAttribute[] attributes = loader.Attributes();
+            return WriteMetadata<ReflectMethod>(
+                loader.Methods, ref count, destination, capacity);
+        }
 
-            count = attributes.Length;
-
-            for (int i = 0; i < attributes.Length; ++i)
-            {
-                Marshal.StructureToPtr(attributes[i], p, false);
-                p = IntPtr.Add(p, Marshal.SizeOf<ReflectAttribute>());
-            }
+        public static int GetAttributesV2(ref int count, IntPtr destination, int capacity)
+        {
+            return WriteMetadata<ReflectAttribute>(
+                loader.Attributes, ref count, destination, capacity);
         }
 
         public unsafe static bool LoadFilesC([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]IntPtr[] source, long size)

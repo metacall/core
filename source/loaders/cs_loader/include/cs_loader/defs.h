@@ -82,13 +82,13 @@ typedef struct
 	int is_static;
 } reflect_attribute;
 
-typedef void(get_classes_c)(int *, void *);
+typedef int(get_classes_c)(int *, void *, int);
 
-typedef void(get_constructors_c)(int *, void *);
+typedef int(get_constructors_c)(int *, void *, int);
 
-typedef void(get_methods_c)(int *, void *);
+typedef int(get_methods_c)(int *, void *, int);
 
-typedef void(get_attributes_c)(int *, void *);
+typedef int(get_attributes_c)(int *, void *, int);
 
 typedef void *(create_object_c)(const char *,
 	parameters *,
@@ -139,7 +139,15 @@ typedef execution_result *(execute_function_c)(const char *function);
 typedef execution_result *(execute_function_w)(const wchar_t *function);
 typedef execution_result *(execute_function_with_params_w)(const wchar_t *function, parameters *);
 typedef execution_result *(execute_function_with_params_c)(const char *function, parameters *);
-typedef void(get_loaded_functions)(int *, reflect_function *);
+typedef int(get_loaded_functions)(int *, reflect_function *, int);
+
+enum metadata_status
+{
+	METADATA_SUCCESS = 0,
+	METADATA_INSUFFICIENT_CAPACITY = 1,
+	METADATA_FAILURE = 2,
+	METADATA_INVALID_ARGUMENT = 3
+};
 
 typedef void(destroy_clr)(void);
 

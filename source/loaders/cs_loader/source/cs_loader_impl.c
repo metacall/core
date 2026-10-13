@@ -40,7 +40,7 @@
 typedef struct
 {
 	netcore_handle handle;
-	reflect_function *func;
+	reflect_function func;
 } cs_function;
 
 typedef struct
@@ -419,29 +419,29 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	cs_function *cs_f = (cs_function *)impl;
 	execution_result *result;
 
-	if (cs_f->func->param_count == 0)
+	if (cs_f->func.param_count == 0)
 	{
-		result = simple_netcore_invoke(cs_f->handle, cs_f->func->name);
+		result = simple_netcore_invoke(cs_f->handle, cs_f->func.name);
 	}
 	else
 	{
 		// TODO: Do not hardcode this, take the information from the function and (probably) preload the list of arguments
 		parameters params[10];
 
-		for (int i = 0; i < cs_f->func->param_count; ++i)
+		for (int i = 0; i < cs_f->func.param_count; ++i)
 		{
 			params[i].ptr = args[i];
-			params[i].type = cs_f->func->pars[i].type;
+			params[i].type = cs_f->func.pars[i].type;
 		}
 
-		result = simple_netcore_invoke_with_params(cs_f->handle, cs_f->func->name, params);
+		result = simple_netcore_invoke_with_params(cs_f->handle, cs_f->func.name, params);
 	}
 
 	value v = NULL;
 
 	if (result->ptr != NULL)
 	{
-		switch (cs_f->func->return_type)
+		switch (cs_f->func.return_type)
 		{
 			case TYPE_BOOL: {
 				v = value_create_bool(*(boolean *)result->ptr);
@@ -723,6 +723,19 @@ static int cs_loader_impl_discover_classes(loader_impl impl, netcore_handle nhan
 
 	reflect_attribute *attributes = simple_netcore_get_attributes(nhandle, &attribute_count);
 
+	/* Do not register classes from incomplete or failed metadata retrieval. */
+	if (class_count < 0 ||
+		constructor_count < 0 ||
+		method_count < 0 ||
+		attribute_count < 0 ||
+		(class_count > 0 && classes == NULL) ||
+		(constructor_count > 0 && constructors == NULL) ||
+		(method_count > 0 && methods == NULL) ||
+		(attribute_count > 0 && attributes == NULL))
+	{
+		return 1;
+	}
+
 	for (int i = 0; i < class_count; ++i)
 	{
 		cs_class *cs_c = (cs_class *)calloc(1, sizeof(cs_class));
@@ -870,35 +883,58 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	functions = simple_netcore_get_functions(nhandle, &function_count);
 
+	if (function_count < 0 ||
+		(function_count > 0 && functions == NULL))
+	{
+		return 1;
+	}
+
 	function f = NULL;
 
 	for (int i = 0; i < function_count; ++i)
 	{
 		cs_function *cs_f = (cs_function *)malloc(sizeof(cs_function));
 
-		cs_f->func = &functions[i];
+		if (cs_f == NULL)
+		{
+			return 1;
+		}
+
+		cs_f->func = functions[i];
 		cs_f->handle = nhandle;
 
 		f = function_create(functions[i].name, functions[i].param_count, cs_f, &function_cs_singleton);
 
-		if (f != NULL)
+		if (f == NULL)
 		{
-			signature s = function_signature(f);
+			/* Failed creation does not take ownership of cs_f. */
+			free(cs_f);
+			return 1;
+		}
 
-			signature_set_return(s, loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].return_type)));
+		signature s = function_signature(f);
 
-			for (int j = 0; j < functions[i].param_count; ++j)
-			{
-				type t = loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].pars[j].type));
+		signature_set_return(s, loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].return_type)));
 
-				signature_set(s, j, functions[i].pars[j].name, t);
-			}
+		for (int j = 0; j < functions[i].param_count; ++j)
+		{
+			type t = loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].pars[j].type));
+
+			signature_set(s, j, functions[i].pars[j].name, t);
 		}
 
 		value v = value_create_function(f);
 
+		if (v == NULL)
+		{
+			/* The function owns cs_f after successful creation. */
+			function_destroy(f);
+			return 1;
+		}
+
 		if (scope_define(sp, function_name(f), v) != 0)
 		{
+			/* Destroying the value also releases its function and cs_f. */
 			value_type_destroy(v);
 			return 1;
 		}

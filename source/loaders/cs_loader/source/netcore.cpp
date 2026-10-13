@@ -24,6 +24,122 @@
 
 #include <exception>
 
+#include <limits>
+
+namespace
+{
+template <typename Record, typename Writer>
+Record *cs_get_metadata(Writer writer, std::vector<Record> &records, int &stored_count, int *count, const char *label)
+{
+	if (count == nullptr)
+	{
+		return nullptr;
+	}
+
+	/* Failure remains distinguishable from successful empty metadata. */
+	*count = -1;
+
+	if (writer == nullptr)
+	{
+		return nullptr;
+	}
+
+	try
+	{
+		const int maximum_attempts = 3;
+
+		for (int attempt = 0; attempt < maximum_attempts; ++attempt)
+		{
+			int required = -1;
+			int status = writer(&required, nullptr, 0);
+
+			if (status != METADATA_SUCCESS || required < 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR,
+					"Failed to query C# %s metadata", label);
+				return nullptr;
+			}
+
+			std::vector<Record> next_records;
+			const size_t required_size = static_cast<size_t>(required);
+
+			if (required_size > next_records.max_size() ||
+				required_size > std::numeric_limits<size_t>::max() / sizeof(Record))
+			{
+				log_write("metacall", LOG_LEVEL_ERROR,
+					"C# %s metadata size exceeds native limits", label);
+				return nullptr;
+			}
+
+			if (required == 0)
+			{
+				records.swap(next_records);
+				stored_count = 0;
+				*count = 0;
+				return nullptr;
+			}
+
+			/* The managed writer needs actual elements, not reserved capacity. */
+			next_records.resize(required_size);
+
+			int written = -1;
+
+			status = writer(
+				&written,
+				next_records.data(),
+				required);
+
+			if (status == METADATA_INSUFFICIENT_CAPACITY)
+			{
+				if (written <= required)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR,
+						"Invalid C# %s metadata capacity response", label);
+					return nullptr;
+				}
+
+				/* Discard this buffer and query again on the next attempt. */
+				continue;
+			}
+
+			if (status != METADATA_SUCCESS ||
+				written < 0 ||
+				written > required)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR,
+					"Failed to fill C# %s metadata", label);
+				return nullptr;
+			}
+
+			next_records.resize(static_cast<size_t>(written));
+
+			/* Publish only a completely successful result. */
+			records.swap(next_records);
+			stored_count = written;
+			*count = written;
+
+			return records.empty() ? nullptr : records.data();
+		}
+
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"C# %s metadata capacity retry limit reached", label);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"Failed to allocate or retrieve C# %s metadata: %s",
+			label, ex.what());
+	}
+	catch (...)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"Unexpected failure retrieving C# %s metadata", label);
+	}
+
+	return nullptr;
+}
+} // namespace
+
 netcore::netcore(char *dotnet_root, char *dotnet_loader_assembly_path) :
 	dotnet_root(dotnet_root), dotnet_loader_assembly_path(dotnet_loader_assembly_path), initialized(false)
 {
@@ -35,51 +151,28 @@ netcore::~netcore()
 
 reflect_function *netcore::get_functions(int *count)
 {
-	this->core_get_functions(&this->functions_count, this->functions);
-
-	*count = this->functions_count;
-
-	return this->functions;
+	return cs_get_metadata(this->core_get_functions, this->functions, this->functions_count, count, "function");
 }
 
 reflect_class *netcore::get_classes(int *count)
 {
-	this->core_get_classes(&this->classes_count, this->classes);
-
-	*count = this->classes_count;
-
-	return this->classes;
+	return cs_get_metadata(this->core_get_classes, this->classes, this->classes_count, count, "class");
 }
 
 reflect_constructor *netcore::get_constructors(int *count)
 {
-	this->core_get_constructors(
-		&this->constructors_count,
-		this->constructors);
-
-	*count = this->constructors_count;
-
-	return this->constructors;
+	return cs_get_metadata(
+		this->core_get_constructors, this->constructors, this->constructors_count, count, "constructor");
 }
 
 reflect_method *netcore::get_methods(int *count)
 {
-	this->core_get_methods(&this->methods_count, this->methods);
-
-	*count = this->methods_count;
-
-	return this->methods;
+	return cs_get_metadata(this->core_get_methods, this->methods, this->methods_count, count, "method");
 }
 
 reflect_attribute *netcore::get_attributes(int *count)
 {
-	this->core_get_attributes(
-		&this->attributes_count,
-		this->attributes);
-
-	*count = this->attributes_count;
-
-	return this->attributes;
+	return cs_get_metadata(this->core_get_attributes, this->attributes, this->attributes_count, count, "attribute");
 }
 
 bool netcore::create_delegates()

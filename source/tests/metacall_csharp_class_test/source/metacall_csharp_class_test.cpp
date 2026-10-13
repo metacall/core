@@ -26,6 +26,8 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
+#include <string>
 
 class metacall_csharp_class_test : public testing::Test
 {
@@ -128,3 +130,127 @@ TEST_F(metacall_csharp_class_test, DefaultConstructor)
 
 	metacall_destroy();
 }
+
+#if defined(OPTION_BUILD_LOADERS_CS)
+TEST_F(metacall_csharp_class_test, MoreThan100ClassMetadataRecords)
+{
+	ASSERT_EQ(0, metacall_initialize());
+
+	struct metacall_cleanup
+	{
+		~metacall_cleanup()
+		{
+			metacall_destroy();
+		}
+	} cleanup;
+
+	using owned_value = std::unique_ptr<void, decltype(&metacall_value_destroy)>;
+
+	auto expect_integer_result = [](void *raw, int expected) {
+		owned_value ret(raw, &metacall_value_destroy);
+
+		ASSERT_NE(nullptr, ret.get());
+		EXPECT_EQ(METACALL_INT, metacall_value_id(ret.get()));
+
+		if (metacall_value_id(ret.get()) == METACALL_INT)
+		{
+			EXPECT_EQ(expected, metacall_value_to_int(ret.get()));
+		}
+	};
+
+	const int class_count = 101;
+	std::string source;
+
+	for (int i = 0; i < class_count; ++i)
+	{
+		const std::string suffix = std::to_string(i);
+		const std::string class_name = "MetadataBoundaryClass" + suffix;
+
+		source +=
+			"public class " + class_name + "\n"
+										   "{\n"
+										   "    public int value;\n"
+										   "    public static int total = " +
+			suffix + ";\n"
+					 "    public " +
+			class_name + "(int start) { value = start; }\n"
+						 "    public int MetadataInstanceMethod" +
+			suffix +
+			"(int delta) { return value + delta; }\n"
+			"    public static int MetadataStaticMethod" +
+			suffix +
+			"(int input) { return input + " + suffix + "; }\n"
+													   "}\n";
+	}
+
+	ASSERT_EQ(0, metacall_load_from_memory(
+					 "cs",
+					 source.c_str(),
+					 source.size() + 1,
+					 nullptr));
+
+	for (int i = 0; i < class_count; ++i)
+	{
+		SCOPED_TRACE(i);
+
+		const std::string suffix = std::to_string(i);
+		const std::string class_name = "MetadataBoundaryClass" + suffix;
+
+		void *cls = metacall_class(class_name.c_str());
+		ASSERT_NE(nullptr, cls);
+
+		/* Exercise this class's constructor. */
+		owned_value start(metacall_value_create_int(i), &metacall_value_destroy);
+		ASSERT_NE(nullptr, start.get());
+
+		void *constructor_args[] = { start.get() };
+
+		owned_value object_value(
+			metacall_class_new(cls, class_name.c_str(), constructor_args, 1),
+			&metacall_value_destroy);
+
+		ASSERT_NE(nullptr, object_value.get());
+		ASSERT_EQ(METACALL_OBJECT, metacall_value_id(object_value.get()));
+
+		void *obj = metacall_value_to_object(object_value.get());
+		ASSERT_NE(nullptr, obj);
+
+		/* Exercise the instance attribute exported for this class. */
+		expect_integer_result(metacall_object_get(obj, "value"), i);
+
+		owned_value updated(
+			metacall_value_create_int(1000 + i),
+			&metacall_value_destroy);
+
+		ASSERT_NE(nullptr, updated.get());
+		ASSERT_EQ(0, metacall_object_set(obj, "value", updated.get()));
+
+		expect_integer_result(metacall_object_get(obj, "value"), 1000 + i);
+
+		/* Exercise both method kinds using their unique names. */
+		owned_value input(metacall_value_create_int(7), &metacall_value_destroy);
+		ASSERT_NE(nullptr, input.get());
+
+		void *method_args[] = { input.get() };
+
+		const std::string instance_method = "MetadataInstanceMethod" + suffix;
+
+		expect_integer_result(
+			metacallt_object(obj, instance_method.c_str(), METACALL_INT, method_args, 1),
+			1007 + i);
+
+		const std::string static_method = "MetadataStaticMethod" + suffix;
+
+		expect_integer_result(
+			metacallt_class(cls, static_method.c_str(), METACALL_INT, method_args, 1),
+			7 + i);
+
+		/* Exercise the static attribute exported for this class. */
+		expect_integer_result(metacall_class_static_get(cls, "total"), i);
+
+		ASSERT_EQ(0, metacall_class_static_set(cls, "total", updated.get()));
+
+		expect_integer_result(metacall_class_static_get(cls, "total"), 1000 + i);
+	}
+}
+#endif /* OPTION_BUILD_LOADERS_CS */

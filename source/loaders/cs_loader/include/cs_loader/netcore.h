@@ -23,6 +23,7 @@
 
 #include <cs_loader/defs.h>
 #include <stdlib.h>
+#include <vector>
 
 class netcore
 {
@@ -41,20 +42,20 @@ private:
 	}
 
 protected:
-	reflect_function functions[100]; // TODO: Improve this, make it dynamic
-	int functions_count;
+	std::vector<reflect_function> functions;
+	int functions_count = 0;
 
-	reflect_class classes[100];
-	int classes_count;
+	std::vector<reflect_class> classes;
+	int classes_count = 0;
 
-	reflect_constructor constructors[100];
-	int constructors_count;
+	std::vector<reflect_constructor> constructors;
+	int constructors_count = 0;
 
-	reflect_method methods[100];
-	int methods_count;
+	std::vector<reflect_method> methods;
+	int methods_count = 0;
 
-	reflect_attribute attributes[100];
-	int attributes_count;
+	std::vector<reflect_attribute> attributes;
+	int attributes_count = 0;
 
 	char *dotnet_root;
 	char *dotnet_loader_assembly_path;
@@ -114,11 +115,11 @@ public:
 	const CHARSTRING *delegate_execute_c = W("ExecuteC");
 	const CHARSTRING *delegate_execute_with_params_w = W("ExecuteWithParamsW");
 	const CHARSTRING *delegate_execute_with_params_c = W("ExecuteWithParamsC");
-	const CHARSTRING *delegate_get_functions = W("GetFunctions");
-	const CHARSTRING *delegate_get_classes = W("GetClasses");
-	const CHARSTRING *delegate_get_constructors = W("GetConstructors");
-	const CHARSTRING *delegate_get_methods = W("GetMethods");
-	const CHARSTRING *delegate_get_attributes = W("GetAttributes");
+	const CHARSTRING *delegate_get_functions = W("GetFunctionsV2");
+	const CHARSTRING *delegate_get_classes = W("GetClassesV2");
+	const CHARSTRING *delegate_get_constructors = W("GetConstructorsV2");
+	const CHARSTRING *delegate_get_methods = W("GetMethodsV2");
+	const CHARSTRING *delegate_get_attributes = W("GetAttributesV2");
 	const CHARSTRING *delegate_destroy_execution_result = W("DestroyExecutionResult");
 	const CHARSTRING *delegate_create_object = W("CreateObjectC");
 	const CHARSTRING *delegate_invoke_object = W("InvokeObjectC");
