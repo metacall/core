@@ -221,6 +221,7 @@ if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BU
 endif()
 
 # Address sanitizer does not work with Rust on Linux in NodeJS executable test
+# (the preloaded sanitizer is inherited by the linker spawned by rustc, which fails due to leaks)
 if(PROJECT_OS_LINUX AND OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_RS)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS)
 endif()
