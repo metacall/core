@@ -198,6 +198,8 @@ sub_python(){
 				git clone --depth=1 --single-branch --branch "${PYTHON_VERSION}" https://github.com/python/cpython.git
 				cd cpython
 				PYTHON_EXE="${PYTHON_PKG}d"
+				BUILD_CFLAGS=""
+				PYTHON_DISABLED_MODULES=""
 
 				# Define Python instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
@@ -218,13 +220,36 @@ sub_python(){
 					# PYTHON_EXE="${PYTHON_PKG}t"
 					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:poison_in_dtor=0"
-					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
-					BUILD_LDFLAGS="-fsanitize=memory"
+					export MSAN_OPTIONS="use_sigaltstack=0:poison_in_dtor=0"
+
+					# OpenSSL must be instrumented, otherwise MSan reports false positives in libcrypto (_ssl, _hashlib, _asyncio)
+					OPENSSL_VERSION=$(find /usr/include -path "*/openssl/opensslv.h" | head -n 1 | xargs sed -n 's/^# *define OPENSSL_VERSION_STR "\(.*\)"/\1/p')
+					git clone --depth=1 --single-branch --branch "openssl-${OPENSSL_VERSION}" https://github.com/openssl/openssl.git
+					cd openssl
+					CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
+						./Configure enable-msan no-asm no-tests \
+							--prefix=/usr/local/msan \
+							--libdir=lib \
+							--openssldir=/usr/lib/ssl \
+							-Wl,-rpath,/usr/local/msan/lib
+					make -j$(nproc)
+					$SUDO_CMD make install_sw
+					cd ..
+					rm -rf ./openssl
+
+					# Disable modules that depend on uninstrumented libraries and are not used by MetaCall
+					PYTHON_DISABLED_MODULES="readline _curses _curses_panel _dbm _gdbm _tkinter _sqlite3 _bz2 _lzma _uuid _crypt nis"
+					for module in ${PYTHON_DISABLED_MODULES}; do
+						export "py_cv_module_${module}=n/a"
+					done
+
+					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug --with-openssl=/usr/local/msan --with-openssl-rpath=auto"
+					BUILD_CFLAGS="-fsanitize-recover=memory"
+					BUILD_LDFLAGS="-fsanitize=memory -fsanitize-recover=memory"
 				fi
 
 				# Configure
-				export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE"
+				export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE ${BUILD_CFLAGS}"
 				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
 				./configure \
 					--prefix=/usr/local \
@@ -248,6 +273,9 @@ sub_python(){
 				unset MSAN_OPTIONS
 				unset CFLAGS
 				unset LDFLAGS
+				for module in ${PYTHON_DISABLED_MODULES}; do
+					unset "py_cv_module_${module}"
+				done
 
 				# Define python as the default one
 				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
