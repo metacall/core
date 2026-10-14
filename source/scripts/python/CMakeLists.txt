@@ -35,3 +35,5 @@ add_subdirectory(wasm)
 add_subdirectory(badimport)
 add_subdirectory(watzon)
 add_subdirectory(fnmesh)
+add_subdirectory(varargs)
+
