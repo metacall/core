@@ -488,6 +488,10 @@ sub_ruby(){
 				make -j$(nproc)
 				$SUDO_CMD make -j$(nproc) install
 
+				# Ruby master builds power_assert from a git revision with a dev version (2.0.4dev) that
+				# does not match bundled_gems (2.0.3), so make install skips it and test-unit fails to load
+				$SUDO_CMD /usr/local/bin/gem install --local ../gems/power_assert-*.gem
+
 				cd ../../..
 				rm -rf ./ruby
 			else
