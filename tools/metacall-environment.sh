@@ -987,8 +987,41 @@ sub_rpc(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# Install development files and documentation for libcurl (OpenSSL flavour)
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+			if [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# cURL must be instrumented, otherwise MSan reports false positives in libcurl, tests only use plain HTTP so SSL is disabled
+				CURL_VERSION=$(apt-cache show libcurl4-openssl-dev | grep ^Version | head -n 1 | awk '{print $2}' | sed -e 's/^[0-9]*://' -e 's/-.*//')
+				git clone --depth=1 --single-branch --branch "curl-$(echo "${CURL_VERSION}" | tr '.' '_')" https://github.com/curl/curl.git
+				cd curl
+				CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
+					cmake -B build -S . \
+						-DCMAKE_BUILD_TYPE=Debug \
+						-DCMAKE_DEBUG_POSTFIX= \
+						-DCMAKE_INSTALL_PREFIX=/usr/local/msan \
+						-DCMAKE_INSTALL_LIBDIR=lib \
+						-DBUILD_SHARED_LIBS=ON \
+						-DBUILD_CURL_EXE=OFF \
+						-DBUILD_TESTING=OFF \
+						-DCURL_ENABLE_SSL=OFF \
+						-DCURL_ZLIB=OFF \
+						-DCURL_BROTLI=OFF \
+						-DCURL_ZSTD=OFF \
+						-DUSE_NGHTTP2=OFF \
+						-DUSE_LIBIDN2=OFF \
+						-DCURL_USE_LIBPSL=OFF \
+						-DCURL_USE_LIBSSH2=OFF \
+						-DCURL_DISABLE_LDAP=ON
+				cmake --build build -j$(nproc)
+				$SUDO_CMD cmake --install build
+				cd ..
+				rm -rf ./curl
+				mkdir -p "$ROOT_DIR/build"
+				CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
+				echo "-DCURL_ROOT=/usr/local/msan" >> $CMAKE_CONFIG_PATH
+				echo "-DCURL_NO_CURL_CMAKE=ON" >> $CMAKE_CONFIG_PATH
+			else
+				# Install development files and documentation for libcurl (OpenSSL flavour)
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl-dev
 		fi

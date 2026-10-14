@@ -208,11 +208,8 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 
 	CURLcode res;
 
-	/* Skip curl_multi_perform and curl_multi_cleanup use-of-uninitialized-value from heap allocation in uninstrumented libcurl */
-	memory_sanitizer_uninstrumented({
-		res = curl_easy_perform(easy);
-		curl_easy_cleanup(easy);
-	});
+	res = curl_easy_perform(easy);
+	curl_easy_cleanup(easy);
 
 	/* Clear the request buffer */
 	metacall::metacall_allocator_free(rpc_function->rpc_impl->allocator, buffer);
@@ -255,11 +252,8 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 			curl_multi_add_handle(rpc_impl->async_multi, ctx->easy);
 		}
 
-		/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
-		memory_sanitizer_uninstrumented({
-			/* Drive all active transfers forward */
-			curl_multi_perform(rpc_impl->async_multi, &still_running);
-		});
+		/* Drive all active transfers forward */
+		curl_multi_perform(rpc_impl->async_multi, &still_running);
 
 		/* Check for completed transfers */
 		CURLMsg *msg;
@@ -279,10 +273,7 @@ static void rpc_poll_loop(loader_impl_rpc rpc_impl)
 				/* Remove from multi handle */
 				curl_multi_remove_handle(rpc_impl->async_multi, easy);
 
-				/* Skip curl_easy_cleanup and curl_multi_cleanup use-of-uninitialized-value from heap allocation in uninstrumented libcurl */
-				memory_sanitizer_uninstrumented({
-					curl_easy_cleanup(easy);
-				});
+				curl_easy_cleanup(easy);
 
 				if (done_ctx == NULL)
 				{
@@ -538,10 +529,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	/* Skip OPENSSL_init_crypto use-of-uninitialized-value from heap allocation of CRYPTO_malloc in uninstrumented libcrypto */
-	memory_sanitizer_uninstrumented({
-		curl_global_init(CURL_GLOBAL_ALL);
-	});
+	curl_global_init(CURL_GLOBAL_ALL);
 
 	/* Initialize discover CURL object */
 	rpc_impl->discover_curl = curl_easy_init();
@@ -834,10 +822,7 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 				log_write("metacall", metacall::detail::LOG_LEVEL_DEBUG, "Trying to connect to %s retry %d/%d with timeout %d", inspect_url.c_str(), retry_count + 1, retry, timeout);
 
-				/* Skip curl_multi_perform use-of-uninitialized-value from heap allocation of curl_mvaprintf in uninstrumented libcurl */
-				memory_sanitizer_uninstrumented({
-					res = curl_easy_perform(rpc_impl->discover_curl);
-				});
+				res = curl_easy_perform(rpc_impl->discover_curl);
 
 			} while (retry_count++ < retry && res != CURLE_OK);
 
@@ -885,12 +870,9 @@ int rpc_loader_impl_destroy(loader_impl impl)
 		rpc_impl->poll_thread.join();
 	}
 
-	/* Skip curl_multi_cleanup use-of-uninitialized-value from heap allocation in uninstrumented libcurl */
-	memory_sanitizer_uninstrumented({
-		/* Clean up async multi and discover handle */
-		curl_multi_cleanup(rpc_impl->async_multi);
-		curl_easy_cleanup(rpc_impl->discover_curl);
-	});
+	/* Clean up async multi and discover handle */
+	curl_multi_cleanup(rpc_impl->async_multi);
+	curl_easy_cleanup(rpc_impl->discover_curl);
 
 	curl_slist_free_all(rpc_impl->headers);
 
