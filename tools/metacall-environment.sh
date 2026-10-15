@@ -232,10 +232,10 @@ sub_python(){
 					cd openssl
 					CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
 						./Configure enable-msan no-asm no-tests \
-							--prefix=/usr/local \
+							--prefix=/usr/local/msan \
 							--libdir=lib \
 							--openssldir=/usr/lib/ssl \
-							-Wl,-rpath,/usr/local/lib
+							-Wl,-rpath,/usr/local/msan/lib
 					make -j$(nproc)
 					$SUDO_CMD make install_sw
 					cd ..
@@ -247,7 +247,7 @@ sub_python(){
 						export "py_cv_module_${module}=n/a"
 					done
 
-					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug --with-openssl=/usr/local --with-openssl-rpath=auto"
+					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug --with-openssl=/usr/local/msan --with-openssl-rpath=auto"
 					BUILD_CFLAGS="-fsanitize-recover=memory"
 					BUILD_LDFLAGS="-fsanitize=memory -fsanitize-recover=memory"
 				fi
@@ -1001,7 +1001,7 @@ sub_rpc(){
 					cmake -B build -S . \
 						-DCMAKE_BUILD_TYPE=Debug \
 						-DCMAKE_DEBUG_POSTFIX= \
-						-DCMAKE_INSTALL_PREFIX=/usr/local \
+						-DCMAKE_INSTALL_PREFIX=/usr/local/msan \
 						-DCMAKE_INSTALL_LIBDIR=lib \
 						-DBUILD_SHARED_LIBS=ON \
 						-DBUILD_CURL_EXE=OFF \
@@ -1019,10 +1019,6 @@ sub_rpc(){
 				$SUDO_CMD cmake --install build
 				cd ..
 				rm -rf ./curl
-				mkdir -p "$ROOT_DIR/build"
-				CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
-				echo "-DCURL_INCLUDE_DIR=/usr/local/include" >> $CMAKE_CONFIG_PATH
-				echo "-DCURL_LIBRARY=/usr/local/lib/libcurl.so" >> $CMAKE_CONFIG_PATH
 			else
 				# Install development files and documentation for libcurl (OpenSSL flavour)
 				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
@@ -1338,6 +1334,11 @@ sub_clang_msan(){
 		# Download matching LLVM source tree
 		git clone --depth=1 -b "llvmorg-${CLANG_VERSION}" https://github.com/llvm/llvm-project /tmp/msan/llvm-project
 
+		# Newer linux-libc-dev does not ship linux/scc.h anymore, remove it from compiler-rt (the scc sizes are unused)
+		sed -i -e '/#include <linux\/scc.h>/d' -e '/struct_scc_/d' \
+			/tmp/msan/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.cpp \
+			/tmp/msan/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.h
+
 		# Stage 1: rebuild clang matching distro version
 		# Install into /usr to override existing system clang
 		cmake \
@@ -1365,6 +1366,7 @@ sub_clang_msan(){
 			-DLLVM_TARGETS_TO_BUILD=Native \
 			-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF \
 			-DLIBCXXABI_USE_LLVM_UNWINDER=OFF \
+			-DLLVM_INCLUDE_TESTS=OFF \
 			-DCMAKE_INSTALL_PREFIX=/usr
 
 		ninja -C /tmp/msan/cxx_build/ -j$(nproc)
