@@ -213,6 +213,10 @@ sub_python(){
 					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+					if [ $INSTALL_CLANG = 1 ]; then
+						# Link the C++ part of the sanitizer runtime (clang only links it with clang++), required by C++ libraries instrumented with UBSan (i.e: __ubsan_vptr_type_cache)
+						BUILD_LDFLAGS="${BUILD_LDFLAGS} -fsanitize-link-c++-runtime -lstdc++"
+					fi
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
@@ -485,7 +489,8 @@ sub_ruby(){
 					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS=""
 					BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
-					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+					# Link the C++ part of the sanitizer runtime (clang only links it with clang++), required by C++ libraries instrumented with UBSan (i.e: __ubsan_vptr_type_cache)
+					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-link-c++-runtime -lstdc++"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS=""
