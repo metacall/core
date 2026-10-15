@@ -4845,6 +4845,67 @@ void node_loader_impl_walk(uv_handle_t *handle, void *arg)
 }
 #endif
 
+#if NODE_MAJOR_VERSION < 18
+/* In NodeJS < 18, the second pass phantom callbacks of N-API references are posted by V8 as a platform task
+* after a non-forced GC, and node_napi_env__::CallFinalizer defers the finalizer with a SetImmediate capturing
+* the raw napi_env (without taking a reference to it). If a GC happens in the last JavaScript turn (process 'exit'),
+* the task stays pending until node::FreeEnvironment, where it can run after the napi_env (or the reference) has been
+* deleted by the cleanup hooks, producing a use after free. A forced GC invokes all pending second pass callbacks
+* synchronously, so the finalizers are deferred before node::FreeEnvironment and they run in the first CleanupHandles,
+* while the napi_env is still alive. This must be the last JavaScript executed, so it is registered at destroy time
+* in order to run after the 'exit' handlers registered by the user code.
+*/
+static void node_loader_impl_destroy_flush_finalizers(void)
+{
+	v8::Isolate *isolate = v8::Isolate::GetCurrent();
+
+	if (isolate != nullptr)
+	{
+		isolate->LowMemoryNotification();
+	}
+}
+
+static napi_value node_loader_impl_destroy_flush_finalizers_callback(napi_env env, napi_callback_info info)
+{
+	(void)env;
+	(void)info;
+
+	node_loader_impl_destroy_flush_finalizers();
+
+	return nullptr;
+}
+
+static void node_loader_impl_destroy_flush_finalizers_register(loader_impl_node node_impl, napi_env env)
+{
+	napi_status status;
+	napi_value global, process, on, argv[2];
+
+	status = napi_get_reference_value(env, node_impl->global_ref, &global);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_get_named_property(env, global, "process", &process);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_get_named_property(env, process, "on", &on);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_create_string_utf8(env, "exit", NAPI_AUTO_LENGTH, &argv[0]);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_create_function(env, nullptr, 0, &node_loader_impl_destroy_flush_finalizers_callback, nullptr, &argv[1]);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_call_function(env, process, on, 2, argv, nullptr);
+
+	node_loader_impl_exception(env, status);
+}
+#endif
+
 void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env)
 {
 	napi_status status;
@@ -4857,6 +4918,20 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
+
+#if NODE_MAJOR_VERSION < 18
+	if (loader_impl_get_option_host(node_impl->impl) == 0)
+	{
+		/* Register the flush as the last 'exit' handler, it will run after the user ones */
+		node_loader_impl_destroy_flush_finalizers_register(node_impl, env);
+	}
+	else
+	{
+		/* In host mode we are already inside the 'exit' event (bootstrap.js), so listeners added now are not
+		* invoked by the current emit, flush the finalizers directly instead */
+		node_loader_impl_destroy_flush_finalizers();
+	}
+#endif
 
 	/* Clear thread safe functions except by destroy one */
 	if (loader_impl_get_option_host(node_impl->impl) == 0)
