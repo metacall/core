@@ -43,6 +43,8 @@ TEST_F(metacall_c_conversion_test, DefaultConstructor)
 
 		ASSERT_EQ((int)0, (int)metacall_loader_types("c", &c_loader_types, &size));
 
+		ASSERT_NE((metacall_loader_type *)NULL, (metacall_loader_type *)c_loader_types);
+
 		for (size_t i = 0; i < size; ++i)
 		{
 			std::cout
@@ -54,6 +56,8 @@ TEST_F(metacall_c_conversion_test, DefaultConstructor)
 
 			unique_types.insert(std::make_pair(metacall_type_name, c_loader_types[i].id));
 		}
+
+		free(c_loader_types);
 	}
 
 	// Run identity type

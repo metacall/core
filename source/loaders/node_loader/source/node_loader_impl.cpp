@@ -4103,16 +4103,62 @@ void node_loader_impl_thread_log(void *data)
 }
 #endif
 
+static int node_loader_impl_initialize_types(loader_impl impl)
+{
+	static struct
+	{
+		type_id id;
+		const char *name;
+	} type_id_name_pair[] = {
+		{ TYPE_BOOL, "boolean" },
+		{ TYPE_DOUBLE, "number" },
+		{ TYPE_STRING, "string" },
+		{ TYPE_NULL, "null" },
+		{ TYPE_NULL, "undefined" },
+		{ TYPE_BUFFER, "Buffer" },
+		{ TYPE_ARRAY, "Array" },
+		{ TYPE_MAP, "Map" },
+		{ TYPE_OBJECT, "Object" },
+		{ TYPE_FUNCTION, "Function" },
+		{ TYPE_FUTURE, "Promise" },
+		{ TYPE_EXCEPTION, "Error" }
+	};
+
+	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+	for (index = 0; index < size; ++index)
+	{
+		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, NULL);
+
+		if (t != NULL)
+		{
+			if (loader_impl_type_define(impl, type_name(t), t) != 0)
+			{
+				type_destroy(t);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_node node_impl;
-
-	(void)impl;
 
 	node_impl = new loader_impl_node_type();
 
 	if (node_impl == nullptr)
 	{
+		return NULL;
+	}
+
+	if (node_loader_impl_initialize_types(impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS type initialization");
+
+		delete node_impl;
 		return NULL;
 	}
 
@@ -4144,10 +4190,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread condition creation");
 
-		/* TODO: Clear resources */
-
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4155,10 +4198,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread mutex creation");
 
-		/* TODO: Clear resources */
-
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4175,10 +4215,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Logging Thread creation");
 
-			/* TODO: Clear resources */
-
 			delete node_impl;
-
 			return NULL;
 		}
 	}
@@ -4189,7 +4226,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid startup arguments creation");
 
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4200,10 +4236,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 
-			/* TODO: Clear resources */
-
 			delete node_impl;
-
 			return NULL;
 		}
 

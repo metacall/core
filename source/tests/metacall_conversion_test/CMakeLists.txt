@@ -1,3 +1,8 @@
+# Check if serials and the C++ port are enabled
+if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_RAPID_JSON OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_CXX)
+	return()
+endif()
+
 #
 # Executable name and options
 #
@@ -80,7 +85,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::metacall
+	${META_PROJECT_NAME}::cxx_port
 )
 
 #
@@ -90,6 +95,9 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	# Output path of the type table
+	METACALL_TYPE_TABLE_PATH="${PROJECT_OUTPUT_DIR}/metacall_type_table.json"
 )
 
 #
@@ -136,6 +144,10 @@ add_loader_dependencies(${target}
 	py_loader
 	rb_loader
 	lua_loader
+)
+
+add_dependencies(${target}
+	rapid_json_serial
 )
 
 #

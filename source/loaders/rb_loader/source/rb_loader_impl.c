@@ -974,7 +974,7 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 		const char *name;
 	} type_id_name_pair[] = {
 		{ TYPE_BOOL, "Boolean" },
-		{ TYPE_INT, "Fixnum" },
+		{ TYPE_LONG, "Fixnum" },
 		{ TYPE_LONG, "Bignum" },
 		{ TYPE_DOUBLE, "Float" },
 		{ TYPE_STRING, "String" },
