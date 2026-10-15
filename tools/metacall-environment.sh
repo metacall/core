@@ -228,10 +228,10 @@ sub_python(){
 					cd openssl
 					CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
 						./Configure enable-msan no-asm no-tests \
-							--prefix=/usr/local/msan \
+							--prefix=/usr/local \
 							--libdir=lib \
 							--openssldir=/usr/lib/ssl \
-							-Wl,-rpath,/usr/local/msan/lib
+							-Wl,-rpath,/usr/local/lib
 					make -j$(nproc)
 					$SUDO_CMD make install_sw
 					cd ..
@@ -243,7 +243,7 @@ sub_python(){
 						export "py_cv_module_${module}=n/a"
 					done
 
-					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug --with-openssl=/usr/local/msan --with-openssl-rpath=auto"
+					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug --with-openssl=/usr/local --with-openssl-rpath=auto"
 					BUILD_CFLAGS="-fsanitize-recover=memory"
 					BUILD_LDFLAGS="-fsanitize=memory -fsanitize-recover=memory"
 				fi
@@ -982,7 +982,7 @@ sub_file(){
 
 # RPC
 sub_rpc(){
-	echo "cofingure rpc"
+	echo "configure rpc"
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
@@ -996,7 +996,7 @@ sub_rpc(){
 					cmake -B build -S . \
 						-DCMAKE_BUILD_TYPE=Debug \
 						-DCMAKE_DEBUG_POSTFIX= \
-						-DCMAKE_INSTALL_PREFIX=/usr/local/msan \
+						-DCMAKE_INSTALL_PREFIX=/usr/local \
 						-DCMAKE_INSTALL_LIBDIR=lib \
 						-DBUILD_SHARED_LIBS=ON \
 						-DBUILD_CURL_EXE=OFF \
@@ -1016,8 +1016,8 @@ sub_rpc(){
 				rm -rf ./curl
 				mkdir -p "$ROOT_DIR/build"
 				CMAKE_CONFIG_PATH="$ROOT_DIR/build/CMakeConfig.txt"
-				echo "-DCURL_ROOT=/usr/local/msan" >> $CMAKE_CONFIG_PATH
-				echo "-DCURL_NO_CURL_CMAKE=ON" >> $CMAKE_CONFIG_PATH
+				echo "-DCURL_INCLUDE_DIR=/usr/local/include" >> $CMAKE_CONFIG_PATH
+				echo "-DCURL_LIBRARY=/usr/local/lib/libcurl.so" >> $CMAKE_CONFIG_PATH
 			else
 				# Install development files and documentation for libcurl (OpenSSL flavour)
 				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
