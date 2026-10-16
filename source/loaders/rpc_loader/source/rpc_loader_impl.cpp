@@ -816,6 +816,9 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 			do
 			{
+				/* Discard partial or complete data received by a previous failed attempt */
+				write_data.buffer.clear();
+
 				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
 				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
 				curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_TIMEOUT_MS, timeout);
