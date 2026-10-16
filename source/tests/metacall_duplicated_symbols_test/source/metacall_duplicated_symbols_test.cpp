@@ -91,14 +91,14 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 			"end\n";
 
 		const enum metacall_value_id say_multiply_int_ids[] = {
-			METACALL_INT, METACALL_INT
+			METACALL_LONG, METACALL_LONG
 		};
 
 		/* Test global scope get_second which belongs to ducktype.rb */
 
 		void *ret = metacallt("get_second", say_multiply_int_ids, 5, 7);
 
-		EXPECT_EQ((int)7, (int)metacall_value_to_int(ret));
+		EXPECT_EQ((long)7, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
@@ -107,15 +107,15 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rb", bufferB, sizeof(bufferB), &handleB));
 
 		void *args[2] = {
-			metacall_value_create_int(234),
-			metacall_value_create_int(432)
+			metacall_value_create_long(234),
+			metacall_value_create_long(432)
 		};
 
 		/* Test handleA get_second which belongs to bufferA */
 
 		ret = metacallhv_s(handleA, "get_second", args, 2);
 
-		EXPECT_EQ((int)4, (int)metacall_value_to_int(ret));
+		EXPECT_EQ((long)4, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
@@ -123,7 +123,7 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 
 		ret = metacallhv_s(handleB, "get_second", args, 2);
 
-		EXPECT_EQ((int)6, (int)metacall_value_to_int(ret));
+		EXPECT_EQ((long)6, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 

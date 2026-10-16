@@ -432,20 +432,16 @@ int loader_impl_lua_value_to_lua(lua_State *L, value v)
 			}
 			else
 			{
-				size_t len = value_type_size(v);
-				if (len > 0 && str[len - 1] == '\0')
-				{
-					--len;
-				}
-				lua_pushlstring(L, str, len);
+				size_t size = value_type_size(v);
+				lua_pushlstring(L, str, size - 1);
 			}
 			break;
 		}
 
 		case TYPE_BUFFER: {
-			size_t len = value_type_size(v);
+			size_t size = value_type_size(v);
 			void *ptr = value_to_buffer(v);
-			lua_pushlstring(L, (const char *)ptr, len);
+			lua_pushlstring(L, (const char *)ptr, size);
 			break;
 		}
 
@@ -482,8 +478,11 @@ int loader_impl_lua_value_to_lua(lua_State *L, value v)
 		}
 
 		case TYPE_FUNCTION: {
-			int ref = value_to_int(v);
-			lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+			// TODO: Create a function on the fly and pass it to Lua
+			// function f = value_to_function(v);
+			// lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+			// TODO: Remove this
+			lua_pushnil(L);
 			break;
 		}
 

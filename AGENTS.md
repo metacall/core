@@ -115,6 +115,28 @@ cmake -DOPTION_BUILD_ADDRESS_SANITIZER=On ..
 cmake -DOPTION_BUILD_THREAD_SANITIZER=On ..
 ```
 
+### Debug Test Failures with reproducible Docker Environment
+
+The `dev` image build runs the tests, so a failing test stops the build and leaves no image to inspect. Before building, temporarily append `|| true` to the build step in `tools/docker/Dockerfile` so the image is created even when tests fail (do not commit this change):
+
+```dockerfile
+# Build test and install MetaCall libraries
+RUN cd $METACALL_PATH/build \
+	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS} || true
+```
+
+Build the image with the failing configuration, for example Thread Sanitizer:
+
+```sh
+./docker-compose.sh test-thread-sanitizer
+```
+
+Then open a shell in the built image to reproduce and investigate the failing tests:
+
+```sh
+docker run --rm -it metacall/core:dev bash
+```
+
 ## Code Formatting
 
 Format C/C++ code with `clang-format` version 12. CI enforces it (`jidicula/clang-format-action`, `clang-format-version: 12`); newer versions cause reformat noise.

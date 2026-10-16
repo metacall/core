@@ -528,7 +528,7 @@ macro(check_symbol_executable symbol binary_path result_var)
 			ERROR_QUIET
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
-		string(FIND "${dumpbin_output}" symbol SYMBOL_FOUND)
+		string(FIND "${dumpbin_output}" "${symbol}" SYMBOL_FOUND)
 		if(NOT SYMBOL_FOUND EQUAL -1)
 			set(${result_var} TRUE PARENT_SCOPE)
 		else()
@@ -544,7 +544,7 @@ macro(check_symbol_executable symbol binary_path result_var)
 				ERROR_QUIET
 				OUTPUT_STRIP_TRAILING_WHITESPACE
 			)
-			string(FIND "${nm_output}" symbol SYMBOL_FOUND)
+			string(FIND "${nm_output}" "${symbol}" SYMBOL_FOUND)
 			if(NOT SYMBOL_FOUND EQUAL -1)
 				set(${result_var} TRUE PARENT_SCOPE)
 			else()
@@ -562,6 +562,59 @@ endfunction()
 
 function(check_tsan_executable binary_path result_var)
 	check_symbol_executable("__tsan_init" "${binary_path}" ${result_var})
+endfunction()
+
+function(check_msan_executable binary_path result_var)
+	check_symbol_executable("__msan_init" "${binary_path}" ${result_var})
+endfunction()
+
+# Check if the fork symbol of an executable built with the current compile and link options
+# is imported from a shared library, so the detours can patch it through the PLT, this fails when
+# the fork symbol is defined inside the executable itself (for example, Thread Sanitizer runtime
+# linked statically defines fork as a weak interceptor: https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors)
+function(check_fork_patchable result_var)
+	set(probe_path "${CMAKE_BINARY_DIR}/CMakeFiles/CheckForkPatchable")
+
+	file(WRITE "${probe_path}/fork.c"
+		"#include <unistd.h>\nint main(void)\n{\n\treturn (int)fork();\n}\n"
+	)
+
+	# Use the same options as the rest of the targets (generator expressions are not supported by try_compile)
+	get_directory_property(probe_compile_options COMPILE_OPTIONS)
+	get_directory_property(probe_link_options LINK_OPTIONS)
+	list(FILTER probe_compile_options EXCLUDE REGEX "^\\$<")
+	list(FILTER probe_link_options EXCLUDE REGEX "^\\$<")
+
+	try_compile(probe_compiled
+		"${probe_path}/build"
+		"${probe_path}/fork.c"
+		COMPILE_DEFINITIONS ${probe_compile_options}
+		LINK_OPTIONS ${probe_link_options}
+		LINK_LIBRARIES ${SANITIZER_LIBRARIES}
+		COPY_FILE "${probe_path}/fork"
+	)
+
+	find_program(NM_EXECUTABLE nm)
+
+	if(NOT probe_compiled OR NOT NM_EXECUTABLE)
+		set(${result_var} FALSE PARENT_SCOPE)
+		return()
+	endif()
+
+	execute_process(
+		COMMAND ${NM_EXECUTABLE} -u "${probe_path}/fork"
+		OUTPUT_VARIABLE nm_output
+		ERROR_QUIET
+	)
+
+	# Undefined symbols: "U fork@GLIBC_2.2.5" (GNU nm), "U fork" (FreeBSD), "_fork" (MacOS)
+	string(REGEX MATCH "(^|\n)[ \t]*(U[ \t]+)?_?fork(@[^\n]*)?(\n|$)" FORK_IMPORTED "${nm_output}")
+
+	if(FORK_IMPORTED)
+		set(${result_var} TRUE PARENT_SCOPE)
+	else()
+		set(${result_var} FALSE PARENT_SCOPE)
+	endif()
 endfunction()
 
 #

@@ -30,6 +30,7 @@ INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
 INSTALL_RAPIDJSON=0
+INSTALL_SIMDJSON=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_NETCORE5=0
@@ -198,6 +199,8 @@ sub_python(){
 				git clone --depth=1 --single-branch --branch "${PYTHON_VERSION}" https://github.com/python/cpython.git
 				cd cpython
 				PYTHON_EXE="${PYTHON_PKG}d"
+				BUILD_CFLAGS=""
+				PYTHON_DISABLED_MODULES=""
 
 				# Define Python instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
@@ -211,6 +214,10 @@ sub_python(){
 					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+					if [ $INSTALL_CLANG = 1 ]; then
+						# Link the C++ part of the sanitizer runtime (clang only links it with clang++), required by C++ libraries instrumented with UBSan (i.e: __ubsan_vptr_type_cache)
+						BUILD_LDFLAGS="${BUILD_LDFLAGS} -fsanitize-link-c++-runtime -lstdc++"
+					fi
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
@@ -218,13 +225,36 @@ sub_python(){
 					# PYTHON_EXE="${PYTHON_PKG}t"
 					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:poison_in_dtor=0"
-					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
-					BUILD_LDFLAGS="-fsanitize=memory"
+					export MSAN_OPTIONS="use_sigaltstack=0:poison_in_dtor=0"
+
+					# OpenSSL must be instrumented, otherwise MSan reports false positives in libcrypto (_ssl, _hashlib, _asyncio)
+					OPENSSL_VERSION=$(find /usr/include -path "*/openssl/opensslv.h" | head -n 1 | xargs sed -n 's/^# *define OPENSSL_VERSION_STR "\(.*\)"/\1/p')
+					git clone --depth=1 --single-branch --branch "openssl-${OPENSSL_VERSION}" https://github.com/openssl/openssl.git
+					cd openssl
+					CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
+						./Configure enable-msan no-asm no-tests \
+							--prefix=/usr/local/msan \
+							--libdir=lib \
+							--openssldir=/usr/lib/ssl \
+							-Wl,-rpath,/usr/local/msan/lib
+					make -j$(nproc)
+					$SUDO_CMD make install_sw
+					cd ..
+					rm -rf ./openssl
+
+					# Disable modules that depend on uninstrumented libraries and are not used by MetaCall
+					PYTHON_DISABLED_MODULES="readline _curses _curses_panel _dbm _gdbm _tkinter _sqlite3 _bz2 _lzma _uuid _crypt nis"
+					for module in ${PYTHON_DISABLED_MODULES}; do
+						export "py_cv_module_${module}=n/a"
+					done
+
+					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug --with-openssl=/usr/local/msan --with-openssl-rpath=auto"
+					BUILD_CFLAGS="-fsanitize-recover=memory"
+					BUILD_LDFLAGS="-fsanitize=memory -fsanitize-recover=memory"
 				fi
 
 				# Configure
-				export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE"
+				export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE ${BUILD_CFLAGS}"
 				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
 				./configure \
 					--prefix=/usr/local \
@@ -248,6 +278,9 @@ sub_python(){
 				unset MSAN_OPTIONS
 				unset CFLAGS
 				unset LDFLAGS
+				for module in ${PYTHON_DISABLED_MODULES}; do
+					unset "py_cv_module_${module}"
+				done
 
 				# Define python as the default one
 				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
@@ -457,7 +490,8 @@ sub_ruby(){
 					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS=""
 					BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
-					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+					# Link the C++ part of the sanitizer runtime (clang only links it with clang++), required by C++ libraries instrumented with UBSan (i.e: __ubsan_vptr_type_cache)
+					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-link-c++-runtime -lstdc++"
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					BUILD_FLAGS=""
@@ -479,7 +513,7 @@ sub_ruby(){
 					--disable-yjit \
 					--disable-install-doc \
 					cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer -DUSE_MN_THREADS=0 -DUSE_RUBY_DEBUG_LOG=1" \
-					ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+					LDFLAGS="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
 					optflags="-O0" \
 					debugflags="-ggdb3" \
 					--prefix=/usr/local
@@ -487,6 +521,10 @@ sub_ruby(){
 				export MAKEFLAGS="--jobs $(nproc)"
 				make -j$(nproc)
 				$SUDO_CMD make -j$(nproc) install
+
+				# Ruby master builds power_assert from a git revision with a dev version (2.0.4dev) that
+				# does not match bundled_gems (2.0.3), so make install skips it and test-unit fails to load
+				$SUDO_CMD /usr/local/bin/gem install --local ../gems/power_assert-*.gem
 
 				cd ../../..
 				rm -rf ./ruby
@@ -556,7 +594,7 @@ sub_ruby(){
 				--disable-install-doc \
 				--with-coroutine=${ARCHITECTURE} \
 				cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer -DUSE_MN_THREADS=0 -DUSE_RUBY_DEBUG_LOG=1" \
-				ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+				LDFLAGS="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
 				optflags="-O0" \
 				debugflags="-ggdb3" \
 				--prefix=/usr/local
@@ -588,6 +626,47 @@ sub_rapidjson(){
 		make -j$(getconf _NPROCESSORS_ONLN)
 		$SUDO_CMD make install
 		cd ../.. && rm -rf ./rapidjson
+	fi
+}
+
+# SimdJSON
+sub_simdjson(){
+	echo "configure simdjson"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		# The definitions must match the ones used by cmake/SimdJSONOptions.cmake,
+		# so the same environment variables must be defined when building MetaCall
+		SIMDJSON_CXX_FLAGS="${SIMDJSON_EXTRA_CXX_FLAGS:-}"
+
+		if [ "${SIMDJSON_UTF8VALIDATION:-}" = "ON" ] || [ "${SIMDJSON_UTF8VALIDATION:-}" = "On" ] || [ "${SIMDJSON_UTF8VALIDATION:-}" = "1" ]; then
+			SIMDJSON_SKIPUTF8VALIDATION=OFF
+		else
+			SIMDJSON_SKIPUTF8VALIDATION=ON
+		fi
+
+		for definition in $(echo "${SIMDJSON_EXTRA_DEFINITIONS:-}" | tr ';' ' '); do
+			SIMDJSON_CXX_FLAGS="${SIMDJSON_CXX_FLAGS} -D${definition}"
+		done
+
+		git clone --depth 1 --branch v5.0.5 https://github.com/simdjson/simdjson.git
+		cd simdjson
+		mkdir build
+		cd build
+		cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+			-DCMAKE_CXX_FLAGS="${SIMDJSON_CXX_FLAGS}" \
+			-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+			-DCMAKE_INSTALL_LIBDIR=lib \
+			-DBUILD_SHARED_LIBS=OFF \
+			-DSIMDJSON_DEVELOPER_MODE=OFF \
+			-DSIMDJSON_SINGLEHEADER=ON \
+			-DSIMDJSON_SKIPUTF8VALIDATION=${SIMDJSON_SKIPUTF8VALIDATION} \
+			-DSIMDJSON_ENABLE_THREADS=OFF \
+			-DSIMDJSON_IMPLEMENTATION="${SIMDJSON_IMPLEMENTATION:-}" \
+			..
+		make -j$(getconf _NPROCESSORS_ONLN)
+		$SUDO_CMD make install
+		cd ../.. && rm -rf ./simdjson
 	fi
 }
 
@@ -950,13 +1029,42 @@ sub_file(){
 
 # RPC
 sub_rpc(){
-	echo "cofingure rpc"
+	echo "configure rpc"
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# Install development files and documentation for libcurl (OpenSSL flavour)
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+			if [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# cURL must be instrumented, otherwise MSan reports false positives in libcurl, tests only use plain HTTP so SSL is disabled
+				CURL_VERSION=$(apt-cache show libcurl4-openssl-dev | grep ^Version | head -n 1 | awk '{print $2}' | sed -e 's/^[0-9]*://' -e 's/-.*//')
+				git clone --depth=1 --single-branch --branch "curl-$(echo "${CURL_VERSION}" | tr '.' '_')" https://github.com/curl/curl.git
+				cd curl
+				CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
+					cmake -B build -S . \
+						-DCMAKE_BUILD_TYPE=Debug \
+						-DCMAKE_DEBUG_POSTFIX= \
+						-DCMAKE_INSTALL_PREFIX=/usr/local/msan \
+						-DCMAKE_INSTALL_LIBDIR=lib \
+						-DBUILD_SHARED_LIBS=ON \
+						-DBUILD_CURL_EXE=OFF \
+						-DBUILD_TESTING=OFF \
+						-DCURL_ENABLE_SSL=OFF \
+						-DCURL_ZLIB=OFF \
+						-DCURL_BROTLI=OFF \
+						-DCURL_ZSTD=OFF \
+						-DUSE_NGHTTP2=OFF \
+						-DUSE_LIBIDN2=OFF \
+						-DCURL_USE_LIBPSL=OFF \
+						-DCURL_USE_LIBSSH2=OFF \
+						-DCURL_DISABLE_LDAP=ON
+				cmake --build build -j$(nproc)
+				$SUDO_CMD cmake --install build
+				cd ..
+				rm -rf ./curl
+			else
+				# Install development files and documentation for libcurl (OpenSSL flavour)
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl-dev
 		fi
@@ -1268,6 +1376,11 @@ sub_clang_msan(){
 		# Download matching LLVM source tree
 		git clone --depth=1 -b "llvmorg-${CLANG_VERSION}" https://github.com/llvm/llvm-project /tmp/msan/llvm-project
 
+		# Newer linux-libc-dev does not ship linux/scc.h anymore, remove it from compiler-rt (the scc sizes are unused)
+		sed -i -e '/#include <linux\/scc.h>/d' -e '/struct_scc_/d' \
+			/tmp/msan/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.cpp \
+			/tmp/msan/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.h
+
 		# Stage 1: rebuild clang matching distro version
 		# Install into /usr to override existing system clang
 		cmake \
@@ -1295,6 +1408,7 @@ sub_clang_msan(){
 			-DLLVM_TARGETS_TO_BUILD=Native \
 			-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF \
 			-DLIBCXXABI_USE_LLVM_UNWINDER=OFF \
+			-DLLVM_INCLUDE_TESTS=OFF \
 			-DCMAKE_INSTALL_PREFIX=/usr
 
 		ninja -C /tmp/msan/cxx_build/ -j$(nproc)
@@ -1451,6 +1565,9 @@ sub_install(){
 	if [ $INSTALL_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
+	if [ $INSTALL_SIMDJSON = 1 ]; then
+		sub_simdjson
+	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
 	fi
@@ -1576,6 +1693,10 @@ sub_options(){
 		if [ "$option" = 'rapidjson' ]; then
 			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
+		fi
+		if [ "$option" = 'simdjson' ]; then
+			echo "simdjson selected"
+			INSTALL_SIMDJSON=1
 		fi
 		if [ "$option" = 'v8' ] || [ "$option" = 'v8rep54' ]; then
 			echo "v8 selected"
@@ -1712,6 +1833,7 @@ sub_help() {
 	echo "	netcore7"
 	echo "	netcore8"
 	echo "	rapidjson"
+	echo "	simdjson"
 	echo "	v8"
 	echo "	v8rep51"
 	echo "	v8rep54"

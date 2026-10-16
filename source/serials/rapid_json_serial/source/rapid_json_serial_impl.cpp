@@ -96,7 +96,8 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v, r
 
 		str[0] = value_to_char(v);
 
-		json_v->SetString(str, length);
+		/* The string is stored in the stack, so it must be copied */
+		json_v->SetString(str, length, rapid_json_allocator);
 	}
 	else if (id == TYPE_SHORT)
 	{
@@ -150,7 +151,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v, r
 
 		for (size_t iterator = 0; iterator < size; ++iterator)
 		{
-			const char *data = (const char *)(((uintptr_t)buffer) + iterator);
+			const unsigned char *data = (const unsigned char *)(((uintptr_t)buffer) + iterator);
 
 			rapidjson::Value json_inner_value;
 
@@ -327,7 +328,8 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v, r
 
 		std::string s = ostream.str();
 
-		json_v->SetString(s.c_str(), static_cast<rapidjson::SizeType>(s.length()));
+		/* The string is temporary, so it must be copied */
+		json_v->SetString(s.c_str(), static_cast<rapidjson::SizeType>(s.length()), rapid_json_allocator);
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -446,17 +448,11 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 		return value_create_long((long)ui);
 	}
-	else if (v->IsFloat() == true || v->IsLosslessFloat() == true)
-	{
-		float f = v->GetFloat();
-
-		return value_create_float(f);
-	}
-	else if (v->IsDouble() == true || v->IsLosslessDouble() == true)
+	else if (v->IsDouble() == true)
 	{
 		double d = v->GetDouble();
 
-		return value_create_double((double)d);
+		return value_create_double(d);
 	}
 	else if (v->IsString() == true /*&& v->GetStringLength() > 1*/)
 	{

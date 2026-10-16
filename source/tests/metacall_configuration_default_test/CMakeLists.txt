@@ -155,7 +155,7 @@ if(WIN32)
 	# Windows requires metacall to be in the same folder as the executable in order to run the test properly
 	add_custom_command(TARGET ${target} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:metacall> ${CONFIGURATION_DEFAULT_OUTPUT_DIRECTORY}
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:rapid_json_serial> ${CONFIGURATION_DEFAULT_OUTPUT_DIRECTORY}
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:simd_json_serial> ${CONFIGURATION_DEFAULT_OUTPUT_DIRECTORY}
 	)
 endif()
 
