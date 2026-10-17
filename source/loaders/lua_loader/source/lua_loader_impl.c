@@ -132,7 +132,6 @@ static int lua_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_FUNCTION, "function" },
 		{ TYPE_ARRAY, "table" },
 		{ TYPE_MAP, "table" },
-		{ TYPE_PTR, "any" } /* Generic any type for dynamic typing */
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -306,11 +305,10 @@ static int lua_loader_impl_load_from_file_handle(loader_impl_lua lua_impl, const
 	{
 		if (lua_loader_impl_error_capture(lua_impl->vm, &error_message, &error_size) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to allocate memory for error during loading file: %s", path);
+			log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to load file %s: %s", path, error_message);
 			return 1;
 		}
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to load file %s: %s", path, error_message);
 		return 1;
 	}
 
@@ -348,6 +346,7 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		const char *path = paths[iterator];
+		int loaded = 0;
 
 		/* Try to load directly first (absolute or relative to CWD) */
 		if (lua_loader_impl_load_from_file_handle(lua_impl, path, handle) == 0)
@@ -360,7 +359,6 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 			/* Try execution paths for relative paths */
 			size_t exec_path_count = vector_size(lua_impl->execution_paths);
 			size_t exec_path_iterator;
-			int loaded = 0;
 
 			for (exec_path_iterator = 0; exec_path_iterator < exec_path_count; ++exec_path_iterator)
 			{
@@ -376,12 +374,13 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_path
 					break;
 				}
 			}
+		}
 
-			if (!loaded)
-			{
-				free(handle);
-				return NULL;
-			}
+		if (!loaded)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Lua failed to load file %s: File not found", path);
+			free(handle);
+			return NULL;
 		}
 	}
 
@@ -507,7 +506,7 @@ static function_return function_lua_interface_invoke(function func, function_imp
 	lua_rawgeti(L, LUA_REGISTRYINDEX, lua_impl->error_handler_ref);
 	int errfunc_idx = lua_gettop(L);
 	top = errfunc_idx;
-	capture_results = (ret_type != NULL && type_index(ret_type) != TYPE_NULL);
+	capture_results = type_index(ret_type) != TYPE_NULL;
 
 	lua_rawgeti(L, LUA_REGISTRYINDEX, lua_func->func_ref);
 
@@ -650,19 +649,6 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 			lua_func->func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 			lua_func->impl = impl;
 
-			function f = function_create(func_name, 0, lua_func, &function_lua_singleton);
-			if (f == NULL)
-			{
-				luaL_unref(L, LUA_REGISTRYINDEX, lua_func->func_ref);
-				free(lua_func);
-				lua_pop(L, 2);
-				lua_settop(L, top);
-				return 1;
-			}
-
-			signature s = function_signature(f);
-			signature_set_return(s, loader_impl_type(impl, "any"));
-
 			/* Get parameter count using debug.getinfo */
 			int nparams = 0;
 			int isvararg = 0;
@@ -708,10 +694,29 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 				nparams = 64; /* Allow up to 64 arguments for variadic functions */
 			}
 
-			/* Set signature parameters */
-			for (int i = 0; i < nparams; i++)
+			if (nparams < 0)
 			{
-				signature_set(s, i, "", loader_impl_type(impl, "any"));
+				nparams = 0;
+			}
+
+			function f = function_create(func_name, (size_t)nparams, lua_func, &function_lua_singleton);
+			if (f == NULL)
+			{
+				luaL_unref(L, LUA_REGISTRYINDEX, lua_func->func_ref);
+				free(lua_func);
+				lua_pop(L, 2);
+				lua_settop(L, top);
+				return 1;
+			}
+
+			signature s = function_signature(f);
+			signature_set_return(s, NULL);
+
+			/* Set signature parameters */
+			for (size_t i = 0; i < (size_t)nparams; ++i)
+			{
+				// TODO: Implement getting the function names for at least LuaJIT 5.1
+				signature_set(s, i, "", NULL);
 			}
 
 			value v = value_create_function(f);

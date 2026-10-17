@@ -300,7 +300,10 @@ napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 		return nullptr;
 	}
 
-	node_loader_impl_destroy_safe_impl(node_impl_cast.data, env);
+	if (node_loader_impl_destroy_host(node_impl_cast.data, env) != 0)
+	{
+		napi_throw_error(env, nullptr, "Failed to destroy NodeJS Loader on MetaCall");
+	}
 
 	return nullptr;
 }

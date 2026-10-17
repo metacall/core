@@ -167,6 +167,36 @@ class_impl class_impl_get(klass cls)
 	return cls->impl;
 }
 
+class_interface class_interface_get(klass cls)
+{
+	if (cls != NULL)
+	{
+		return cls->interface;
+	}
+
+	return NULL;
+}
+
+void class_attributes_begin(klass cls, set_iterator it)
+{
+	set_iterator_begin(it, cls != NULL ? cls->attributes : NULL);
+}
+
+void class_static_attributes_begin(klass cls, set_iterator it)
+{
+	set_iterator_begin(it, cls != NULL ? cls->static_attributes : NULL);
+}
+
+void class_methods_begin(klass cls, map_iterator it)
+{
+	map_iterator_begin(it, cls != NULL ? cls->methods : NULL);
+}
+
+void class_static_methods_begin(klass cls, map_iterator it)
+{
+	map_iterator_begin(it, cls != NULL ? cls->static_methods : NULL);
+}
+
 const char *class_name(klass cls)
 {
 	if (cls != NULL)
