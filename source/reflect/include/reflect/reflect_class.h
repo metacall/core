@@ -21,6 +21,8 @@
 #ifndef REFLECT_CLASS_H
 #define REFLECT_CLASS_H 1
 
+#include <adt/adt_map.h>
+#include <adt/adt_set.h>
 #include <adt/adt_vector.h>
 
 #include <reflect/reflect_accessor.h>
@@ -78,6 +80,16 @@ REFLECT_API int class_increment_reference(klass cls);
 REFLECT_API int class_decrement_reference(klass cls);
 
 REFLECT_API class_impl class_impl_get(klass cls);
+
+REFLECT_API class_interface class_interface_get(klass cls);
+
+REFLECT_API void class_attributes_begin(klass cls, set_iterator it);
+
+REFLECT_API void class_static_attributes_begin(klass cls, set_iterator it);
+
+REFLECT_API void class_methods_begin(klass cls, map_iterator it);
+
+REFLECT_API void class_static_methods_begin(klass cls, map_iterator it);
 
 REFLECT_API object class_new(klass cls, const char *name, constructor ctor, class_args args, size_t argc);
 

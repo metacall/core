@@ -65,6 +65,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
       - [5.3.2 Serials](#532-serials)
         - [5.3.2.1 MetaCall](#5321-metacall)
         - [5.3.2.2 RapidJSON](#5322-rapidjson)
+        - [5.3.2.3 SimdJSON](#5323-simdjson)
       - [5.3.3 Detours](#533-detours)
         - [5.3.3.1 PLTHook](#5331-plthook)
     - [5.4 Ports](#54-ports)
@@ -526,6 +527,8 @@ Async/await is implemented using Python's standard `asyncio` facilities. The asy
 
 ##### 5.3.2.2 RapidJSON
 
+##### 5.3.2.3 SimdJSON
+
 #### 5.3.3 Detours
 
 ##### 5.3.3.1 PLTHook
@@ -887,7 +890,6 @@ Usage: `metacall-environment.sh` list of components, example:
 |       Components                                   |                                            Description                                                 |
 |:---------------------------------------------------|-------------------------------------------------------------------------------------------------------:|
 |       base                                         |         Compiler and base requirements for compiling MetaCall.                                         |
-|       rapidjson                                    |         Installs RapidJSON serialization for serializing MetaCall data with JSON.                      |
 |       pack                                         |         Bundle scripts into one deployable runtime.                                                    |
 |       sandbox                                      |         Provides isolated execution contexts for safer script execution.                               |
 |       backtrace                                    |         Generates detailed stack traces and improves error diagnostics across languages.               |

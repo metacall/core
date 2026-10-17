@@ -379,10 +379,6 @@ function Configure {
 			Write-Output "netcore 5 selected"
 			# TODO
 		}
-		if ("$var" -eq 'rapidjson') {
-			Write-Output "rapidjson selected"
-			# TODO
-		}
 		if (("$var" -eq 'v8') -or ("$var" -eq 'v8rep54')) {
 			Write-Output "v8 selected"
 			# TODO
@@ -468,7 +464,6 @@ function Help {
 	Write-Output "	netcore"
 	Write-Output "	netcore2"
 	Write-Output "	netcore5"
-	Write-Output "	rapidjson"
 	Write-Output "	v8"
 	Write-Output "	v8rep51"
 	Write-Output "	v8rep54"

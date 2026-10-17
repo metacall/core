@@ -68,8 +68,6 @@ TEST_F(metacall_rust_conversion_test, DefaultConstructor)
 			{ METACALL_MAP, "HashMap<String, String>" },
 		};
 
-		size_t id = 0;
-
 		for (const auto &t : rust_types)
 		{
 			oss << "fn identity_" << metacall_value_id_name(t.id) << "(x: " << t.rust_type << ") -> " << t.rust_type << " { x }";

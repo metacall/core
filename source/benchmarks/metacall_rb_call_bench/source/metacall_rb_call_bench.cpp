@@ -50,7 +50,7 @@ BENCHMARK_DEFINE_F(metacall_rb_call_bench, call_va_args)
 					state.SkipWithError("Null return value from int_mem_type");
 				}
 
-				if (metacall_value_to_int(ret) != 0)
+				if (metacall_value_to_long(ret) != 0)
 				{
 					state.SkipWithError("Invalid return value from int_mem_type");
 				}
@@ -104,7 +104,7 @@ BENCHMARK_DEFINE_F(metacall_rb_call_bench, call_array_args)
 					state.SkipWithError("Null return value from int_mem_type");
 				}
 
-				if (metacall_value_to_int(ret) != 0)
+				if (metacall_value_to_long(ret) != 0)
 				{
 					state.SkipWithError("Invalid return value from int_mem_type");
 				}
