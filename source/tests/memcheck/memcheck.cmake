@@ -86,7 +86,7 @@ message("")
 message("Memcheck failed tests:")
 
 foreach(failed_test ${failed_tests})
-	string(REGEX REPLACE "^[0-9]+:" "" name "${failed_test}")
+	string(REGEX REPLACE "^([0-9]+):" "\\1 - " name "${failed_test}")
 	message("	${name}")
 endforeach()
 
