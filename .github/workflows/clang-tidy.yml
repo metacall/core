@@ -1,0 +1,70 @@
+name: Clang Tidy
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-tidy:
+    name: Clang Tidy (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+
+      - name: Install clang-tidy
+        if: runner.os != 'Windows'
+        run: ./tools/metacall-environment.sh debug clangtidy rapidjson
+
+      - name: Install clang-tidy
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\tools\metacall-environment.ps1 clangtidy
+
+      - name: Set macOS SDK
+        if: runner.os == 'macOS'
+        run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "$GITHUB_ENV"
+
+      - name: Configure macOS
+        if: runner.os == 'macOS'
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+
+          cmake \
+            -S . \
+            -B build \
+            -G Ninja \
+            -DCMAKE_C_COMPILER="${LLVM_PREFIX}/bin/clang" \
+            -DCMAKE_CXX_COMPILER="${LLVM_PREFIX}/bin/clang++" \
+            -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Configure 
+        if: runner.os != 'macOS'
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Prepare RapidJSON
+        if: runner.os == 'macOS'
+        run: cmake --build build --target rapid-json-depends
+
+      - name: Prepare RapidJSON
+        if: runner.os == 'Windows'
+        run: cmake --build build --target rapid-json-depends
+
+      - name: Run clang-tidy
+        run: cmake --build build --target clang-tidy
