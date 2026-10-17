@@ -511,7 +511,12 @@ value simd_json_serial_impl_deserialize(serial_handle handle, const char *buffer
 	/* SimdJSON requires SIMDJSON_PADDING readable bytes after the document, if the padding
 	 * does not cross a page boundary it can be read safely without copying the buffer,
 	 * otherwise the parser copies it into its own (reused) padded buffer */
+#if defined(__MEMORYCHECK__) || defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	/* Sanitizers and Valgrind report the padding read past the allocation, so always use the padded copy */
+	bool realloc_if_needed = true;
+#else
 	bool realloc_if_needed = ((uintptr_t)(buffer + length) % SIMD_JSON_SERIAL_PAGE_SIZE) + simdjson::SIMDJSON_PADDING > SIMD_JSON_SERIAL_PAGE_SIZE;
+#endif
 
 	simdjson::dom::element element;
 

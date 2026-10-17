@@ -29,8 +29,6 @@ BUILD_TYPE=Release
 INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
-INSTALL_RAPIDJSON=0
-INSTALL_SIMDJSON=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_NETCORE5=0
@@ -608,65 +606,6 @@ sub_ruby(){
 		else
 			$SUDO_CMD pkg install -y ruby
 		fi
-	fi
-}
-
-# RapidJSON
-sub_rapidjson(){
-	echo "configure rapidjson"
-	cd $ROOT_DIR
-
-	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		git clone https://github.com/Tencent/rapidjson.git
-		cd rapidjson
-		git checkout 24b5e7a8b27f42fa16b96fc70aade9106cf7102f
-		mkdir build
-		cd build
-		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
-		make -j$(getconf _NPROCESSORS_ONLN)
-		$SUDO_CMD make install
-		cd ../.. && rm -rf ./rapidjson
-	fi
-}
-
-# SimdJSON
-sub_simdjson(){
-	echo "configure simdjson"
-	cd $ROOT_DIR
-
-	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		# The definitions must match the ones used by cmake/SimdJSONOptions.cmake,
-		# so the same environment variables must be defined when building MetaCall
-		SIMDJSON_CXX_FLAGS="${SIMDJSON_EXTRA_CXX_FLAGS:-}"
-
-		if [ "${SIMDJSON_UTF8VALIDATION:-}" = "ON" ] || [ "${SIMDJSON_UTF8VALIDATION:-}" = "On" ] || [ "${SIMDJSON_UTF8VALIDATION:-}" = "1" ]; then
-			SIMDJSON_SKIPUTF8VALIDATION=OFF
-		else
-			SIMDJSON_SKIPUTF8VALIDATION=ON
-		fi
-
-		for definition in $(echo "${SIMDJSON_EXTRA_DEFINITIONS:-}" | tr ';' ' '); do
-			SIMDJSON_CXX_FLAGS="${SIMDJSON_CXX_FLAGS} -D${definition}"
-		done
-
-		git clone --depth 1 --branch v5.0.5 https://github.com/simdjson/simdjson.git
-		cd simdjson
-		mkdir build
-		cd build
-		cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-			-DCMAKE_CXX_FLAGS="${SIMDJSON_CXX_FLAGS}" \
-			-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-			-DCMAKE_INSTALL_LIBDIR=lib \
-			-DBUILD_SHARED_LIBS=OFF \
-			-DSIMDJSON_DEVELOPER_MODE=OFF \
-			-DSIMDJSON_SINGLEHEADER=ON \
-			-DSIMDJSON_SKIPUTF8VALIDATION=${SIMDJSON_SKIPUTF8VALIDATION} \
-			-DSIMDJSON_ENABLE_THREADS=OFF \
-			-DSIMDJSON_IMPLEMENTATION="${SIMDJSON_IMPLEMENTATION:-}" \
-			..
-		make -j$(getconf _NPROCESSORS_ONLN)
-		$SUDO_CMD make install
-		cd ../.. && rm -rf ./simdjson
 	fi
 }
 
@@ -1562,12 +1501,6 @@ sub_install(){
 	if [ $INSTALL_RUBY = 1 ]; then
 		sub_ruby
 	fi
-	if [ $INSTALL_RAPIDJSON = 1 ]; then
-		sub_rapidjson
-	fi
-	if [ $INSTALL_SIMDJSON = 1 ]; then
-		sub_simdjson
-	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
 	fi
@@ -1689,14 +1622,6 @@ sub_options(){
 		if [ "$option" = 'netcore8' ]; then
 			echo "netcore 8 selected"
 			INSTALL_NETCORE8=1
-		fi
-		if [ "$option" = 'rapidjson' ]; then
-			echo "rapidjson selected"
-			INSTALL_RAPIDJSON=1
-		fi
-		if [ "$option" = 'simdjson' ]; then
-			echo "simdjson selected"
-			INSTALL_SIMDJSON=1
 		fi
 		if [ "$option" = 'v8' ] || [ "$option" = 'v8rep54' ]; then
 			echo "v8 selected"
@@ -1832,8 +1757,6 @@ sub_help() {
 	echo "	netcore5"
 	echo "	netcore7"
 	echo "	netcore8"
-	echo "	rapidjson"
-	echo "	simdjson"
 	echo "	v8"
 	echo "	v8rep51"
 	echo "	v8rep54"

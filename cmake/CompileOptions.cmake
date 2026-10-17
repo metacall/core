@@ -355,6 +355,13 @@ endif()
 # They are empty by default
 set(DEFAULT_COMPILE_OPTIONS)
 
+# Sanitizer compile options, they are exposed in order to be propagated to external
+# projects (ExternalProject_Add) which do not inherit the options from add_compile_options
+set(SANITIZER_COMPILE_OPTIONS)
+set(SANITIZER_CXX_COMPILE_OPTIONS)
+set(SANITIZER_LINK_OPTIONS)
+set(SANITIZER_CXX_LINK_OPTIONS)
+
 if(WIN32 AND MSVC)
 	# Build runtime as multithreaded shared library
 	# if(${CMAKE_VERSION} VERSION_LESS "3.15")
@@ -415,16 +422,28 @@ if(WIN32 AND MSVC)
 
 	# Sanitizers
 	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(/fsanitize=thread)
-		add_link_options(/INCREMENTAL:NO)
+		set(SANITIZER_COMPILE_OPTIONS
+			/fsanitize=thread
+		)
+		set(SANITIZER_LINK_OPTIONS
+			/INCREMENTAL:NO
+		)
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(/fsanitize=address)
-		# add_compile_options(/fsanitize=undefined)
-		add_link_options(/INCREMENTAL:NO)
+		set(SANITIZER_COMPILE_OPTIONS
+			/fsanitize=address
+			# /fsanitize=undefined
+		)
+		set(SANITIZER_LINK_OPTIONS
+			/INCREMENTAL:NO
+		)
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(/fsanitize=memory)
-		add_compile_options(/fsanitize=leak)
-		add_link_options(/INCREMENTAL:NO)
+		set(SANITIZER_COMPILE_OPTIONS
+			/fsanitize=memory
+			/fsanitize=leak
+		)
+		set(SANITIZER_LINK_OPTIONS
+			/INCREMENTAL:NO
+		)
 	endif()
 
 endif()
@@ -452,47 +471,67 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PRO
 
 	# Sanitizers
 	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(-fno-omit-frame-pointer)
-		add_compile_options(-fno-optimize-sibling-calls)
-		add_compile_options(-fsanitize=thread)
+		set(SANITIZER_COMPILE_OPTIONS
+			-fno-omit-frame-pointer
+			-fno-optimize-sibling-calls
+			-fsanitize=thread
+		)
 		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
-			add_link_options(-fsanitize=thread)
+			set(SANITIZER_LINK_OPTIONS
+				-fsanitize=thread
+			)
 		endif()
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(-fno-omit-frame-pointer)
-		add_compile_options(-fno-optimize-sibling-calls)
-		add_compile_options(-fsanitize=undefined)
-		add_compile_options(-fsanitize=address)
-		add_compile_options(-fsanitize-address-use-after-scope)
-		add_compile_options(-fsanitize=float-divide-by-zero)
-		add_compile_options(-fsanitize=float-cast-overflow)
+		set(SANITIZER_COMPILE_OPTIONS
+			-fno-omit-frame-pointer
+			-fno-optimize-sibling-calls
+			-fsanitize=undefined
+			-fsanitize=address
+			-fsanitize-address-use-after-scope
+			-fsanitize=float-divide-by-zero
+			-fsanitize=float-cast-overflow
+		)
 		if(PROJECT_OS_FAMILY MATCHES "unix")
 			if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-				add_compile_options(-fsanitize=pointer-compare)
-				add_compile_options(-fsanitize=pointer-subtract)
+				list(APPEND SANITIZER_COMPILE_OPTIONS
+					-fsanitize=pointer-compare
+					-fsanitize=pointer-subtract
+				)
 			elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
-				add_compile_options(-fsanitize-address-poison-custom-array-cookie)
+				list(APPEND SANITIZER_COMPILE_OPTIONS
+					-fsanitize-address-poison-custom-array-cookie
+				)
 			endif()
 		endif()
 		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
-			add_link_options(-fsanitize=undefined)
-			add_link_options(-fsanitize=address)
-			add_link_options(-fsanitize-address-use-after-scope)
+			set(SANITIZER_LINK_OPTIONS
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize-address-use-after-scope
+			)
 		endif()
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
-		add_compile_options(-fno-omit-frame-pointer)
-		add_compile_options(-fno-optimize-sibling-calls)
-		add_compile_options(-fsanitize=undefined)
-		add_compile_options(-fsanitize=memory)
-		add_compile_options(-fsanitize-memory-track-origins=2)
-		add_compile_options(-fsanitize-memory-use-after-dtor)
-		add_compile_options(-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.ignorelist)
-		add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
-		add_link_options(-fsanitize=undefined)
-		add_link_options(-fsanitize=memory)
-		add_link_options(-fsanitize-memory-track-origins=2)
-		add_link_options(-fsanitize-memory-use-after-dtor)
+		set(SANITIZER_CXX_COMPILE_OPTIONS
+			-stdlib=libc++
+		)
+		set(SANITIZER_COMPILE_OPTIONS
+			-fno-omit-frame-pointer
+			-fno-optimize-sibling-calls
+			-fsanitize=undefined
+			-fsanitize=memory
+			-fsanitize-memory-track-origins=2
+			-fsanitize-memory-use-after-dtor
+			-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.ignorelist
+		)
+		set(SANITIZER_CXX_LINK_OPTIONS
+			-stdlib=libc++
+		)
+		set(SANITIZER_LINK_OPTIONS
+			-fsanitize=undefined
+			-fsanitize=memory
+			-fsanitize-memory-track-origins=2
+			-fsanitize-memory-use-after-dtor
+		)
 	endif()
 
 	# Debug symbols
@@ -514,6 +553,27 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PRO
 		add_compile_options(-O0)
 	endif()
 endif()
+
+# Apply sanitizer compile options
+add_compile_options(${SANITIZER_COMPILE_OPTIONS})
+
+foreach(option IN LISTS SANITIZER_CXX_COMPILE_OPTIONS)
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:${option}>)
+endforeach()
+
+# Apply sanitizer link options
+add_link_options(${SANITIZER_LINK_OPTIONS})
+
+foreach(option IN LISTS SANITIZER_CXX_LINK_OPTIONS)
+	add_link_options($<$<COMPILE_LANGUAGE:CXX>:${option}>)
+endforeach()
+
+# Build the sanitizer compile and link flags as a string for external projects
+string(REPLACE ";" " " SANITIZER_C_FLAGS "${SANITIZER_COMPILE_OPTIONS}")
+string(REPLACE ";" " " SANITIZER_CXX_FLAGS "${SANITIZER_COMPILE_OPTIONS};${SANITIZER_CXX_COMPILE_OPTIONS}")
+string(STRIP "${SANITIZER_CXX_FLAGS}" SANITIZER_CXX_FLAGS)
+string(REPLACE ";" " " SANITIZER_LINKER_FLAGS "${SANITIZER_LINK_OPTIONS};${SANITIZER_CXX_LINK_OPTIONS}")
+string(STRIP "${SANITIZER_LINKER_FLAGS}" SANITIZER_LINKER_FLAGS)
 
 macro(check_symbol_executable symbol binary_path result_var)
 	if(WIN32)

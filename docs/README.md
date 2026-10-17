@@ -890,7 +890,6 @@ Usage: `metacall-environment.sh` list of components, example:
 |       Components                                   |                                            Description                                                 |
 |:---------------------------------------------------|-------------------------------------------------------------------------------------------------------:|
 |       base                                         |         Compiler and base requirements for compiling MetaCall.                                         |
-|       rapidjson                                    |         Installs RapidJSON serialization for serializing MetaCall data with JSON.                      |
 |       pack                                         |         Bundle scripts into one deployable runtime.                                                    |
 |       sandbox                                      |         Provides isolated execution contexts for safer script execution.                               |
 |       backtrace                                    |         Generates detailed stack traces and improves error diagnostics across languages.               |

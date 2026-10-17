@@ -119,11 +119,18 @@ static void serial_bench_serialize(benchmark::State &state, const char *name, st
 
 	value v = serial_deserialize(serial_create(SERIAL_BENCH_REFERENCE), json.c_str(), json.size() + 1, allocator);
 
+	if (v == NULL)
+	{
+		state.SkipWithError("Failed to initialize the serialization benchmark value");
+		return;
+	}
+
 	serial s = serial_create(name);
 
-	if (v == NULL || s == NULL)
+	if (s == NULL)
 	{
-		state.SkipWithError("Failed to initialize the serialization benchmark");
+		state.SkipWithError("Failed to initialize the serialization benchmark serial");
+		value_type_destroy(v);
 		return;
 	}
 
@@ -133,9 +140,9 @@ static void serial_bench_serialize(benchmark::State &state, const char *name, st
 	{
 		size_t size = 0;
 
+		/* Do not wrap the result in benchmark::DoNotOptimize, it is already consumed by the deallocation
+		* and GCC with AddressSanitizer miscompiles the "+m,r" constraint, leaving the local uninitialized */
 		char *buffer = serial_serialize(s, v, &size, allocator);
-
-		benchmark::DoNotOptimize(buffer);
 
 		if (buffer == NULL)
 		{
@@ -168,8 +175,6 @@ static void serial_bench_deserialize(benchmark::State &state, const char *name, 
 	for (auto _ : state)
 	{
 		value v = serial_deserialize(s, json.c_str(), json.size() + 1, allocator);
-
-		benchmark::DoNotOptimize(v);
 
 		if (v == NULL)
 		{

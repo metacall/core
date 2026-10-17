@@ -312,60 +312,6 @@ function Set-Lua {
 	Write-Output "-DLuaJIT_LIBRARY_SEARCH_PATHS=""$LuaDir""" >> $EnvOpts
 }
 
-function Set-SimdJSON {
-	Write-Output "Installing SimdJSON"
-
-	Set-Location $ROOT_DIR
-	$DepsDir = "$ROOT_DIR\dependencies"
-	$Version = "5.0.5"
-
-	if (!(Test-Path -Path "$DepsDir\simdjson")) {
-		Set-Location $DepsDir
-		git clone --depth 1 --branch "v$Version" https://github.com/simdjson/simdjson
-	}
-
-	# The definitions must match the ones used by cmake/SimdJSONOptions.cmake,
-	# so the same environment variables must be defined when building MetaCall
-	$SimdJSONCxxFlags = "$env:SIMDJSON_EXTRA_CXX_FLAGS"
-
-	if (("$env:SIMDJSON_UTF8VALIDATION" -eq "ON") -or ("$env:SIMDJSON_UTF8VALIDATION" -eq "On") -or ("$env:SIMDJSON_UTF8VALIDATION" -eq "1")) {
-		$SimdJSONSkipUTF8Validation = "OFF"
-	} else {
-		$SimdJSONSkipUTF8Validation = "ON"
-	}
-
-	if ("$env:SIMDJSON_EXTRA_DEFINITIONS" -ne "") {
-		foreach ($Definition in "$env:SIMDJSON_EXTRA_DEFINITIONS".Split(';')) {
-			$SimdJSONCxxFlags = "$SimdJSONCxxFlags /D$Definition"
-		}
-	}
-
-	$InstallDir = "$DepsDir\simdjson\build\dist"
-
-	mkdir "$DepsDir\simdjson\build"
-	mkdir "$InstallDir"
-	Set-Location "$DepsDir\simdjson\build"
-
-	# Use Debug in order to match the MSVC runtime of MetaCall build
-	cmake -DCMAKE_BUILD_TYPE=Debug `
-		"-DCMAKE_CXX_FLAGS_INIT=$SimdJSONCxxFlags" `
-		-DBUILD_SHARED_LIBS=OFF `
-		-DSIMDJSON_DEVELOPER_MODE=OFF `
-		-DSIMDJSON_SINGLEHEADER=ON `
-		-DSIMDJSON_SKIPUTF8VALIDATION="$SimdJSONSkipUTF8Validation" `
-		-DSIMDJSON_ENABLE_THREADS=OFF `
-		-DSIMDJSON_IMPLEMENTATION="$env:SIMDJSON_IMPLEMENTATION" `
-		..
-	cmake --build . --config Debug "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)"
-	cmake --install . --config Debug --prefix "$InstallDir"
-
-	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
-	$SimdJSONDir = $InstallDir.Replace('\', '/')
-
-	Write-Output "-DSIMDJSON_INCLUDE_DIR=""$SimdJSONDir/include""" >> $EnvOpts
-	Write-Output "-DSIMDJSON_LIBRARY_DIR=""$SimdJSONDir/lib""" >> $EnvOpts
-}
-
 function Add-to-Path {
 	$GivenPath = $args[0]
 
@@ -432,14 +378,6 @@ function Configure {
 		if ("$var" -eq 'netcore5') {
 			Write-Output "netcore 5 selected"
 			# TODO
-		}
-		if ("$var" -eq 'rapidjson') {
-			Write-Output "rapidjson selected"
-			# TODO
-		}
-		if ("$var" -eq 'simdjson') {
-			Write-Output "simdjson selected"
-			Set-SimdJSON
 		}
 		if (("$var" -eq 'v8') -or ("$var" -eq 'v8rep54')) {
 			Write-Output "v8 selected"
@@ -526,8 +464,6 @@ function Help {
 	Write-Output "	netcore"
 	Write-Output "	netcore2"
 	Write-Output "	netcore5"
-	Write-Output "	rapidjson"
-	Write-Output "	simdjson"
 	Write-Output "	v8"
 	Write-Output "	v8rep51"
 	Write-Output "	v8rep54"

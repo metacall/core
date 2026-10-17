@@ -31,8 +31,9 @@ if(NOT SIMDJSON_FOUND OR USE_BUNDLED_SIMDJSON)
 
 	include(SimdJSONOptions)
 
-	# Build the compile flags of the library with the same definitions used by the consumers
-	set(SIMDJSON_BUILD_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SIMDJSON_CXX_FLAGS}")
+	# Build the compile flags of the library with the same definitions used by the consumers, the sanitizer
+	# flags are propagated because the external project does not inherit them from add_compile_options
+	set(SIMDJSON_BUILD_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_CXX_FLAGS} ${SIMDJSON_CXX_FLAGS}")
 
 	foreach(definition IN LISTS SIMDJSON_COMPILE_DEFINITIONS)
 		# UTF-8 validation is always defined by SimdJSON build system through SIMDJSON_SKIPUTF8VALIDATION
@@ -60,6 +61,8 @@ if(NOT SIMDJSON_FOUND OR USE_BUNDLED_SIMDJSON)
 			-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 			-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} # Use the same build type as MetaCall
 			-DCMAKE_CXX_FLAGS=${SIMDJSON_BUILD_CXX_FLAGS}
+			-DCMAKE_EXE_LINKER_FLAGS=${SANITIZER_LINKER_FLAGS}
+			-DCMAKE_SHARED_LINKER_FLAGS=${SANITIZER_LINKER_FLAGS}
 			-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 			-DCMAKE_INSTALL_PREFIX=${SIMDJSON_ROOT_DIR}
 			-DCMAKE_INSTALL_LIBDIR=lib
