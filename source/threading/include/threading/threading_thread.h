@@ -29,12 +29,31 @@
 extern "C" {
 #endif
 
+/* -- Type Definitions -- */
+
+typedef void *(*threading_thread_routine)(void *);
+
 /* -- Headers -- */
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(_WIN64)
 	#include <windows.h>
 
-typedef HANDLE threading_thread;
+/* _beginthreadex requires a callback of type (unsigned (__stdcall *)(void *)),
+which is not compatible with threading_thread_routine (void *(*)(void *)) and
+its 32 bit exit code cannot carry a pointer. So the thread carries the real
+routine, its argument and its result, and the native callback trampolines into
+the routine through it. Because of this, the thread memory must remain valid
+until the routine finishes (after threading_thread_join or, if detached, until
+the routine returns) */
+typedef struct threading_thread_type
+{
+	HANDLE handle;
+	threading_thread_routine routine;
+	void *arg;
+	void *result;
+
+} threading_thread;
+
 typedef DWORD threading_thread_id;
 #elif (defined(linux) || defined(__linux) || defined(__linux__) || defined(__gnu_linux) || defined(__gnu_linux__) || defined(__TOS_LINUX__)) || \
 	defined(__FreeBSD__) || \
@@ -51,10 +70,6 @@ typedef pthread_t threading_thread_id;
 #else
 	#error "Platform not supported for thread implementation"
 #endif
-
-/* -- Type Definitions -- */
-
-typedef void *(*threading_thread_routine)(void *);
 
 /* -- Methods -- */
 
@@ -84,9 +99,7 @@ THREADING_API int threading_thread_create(threading_thread *thread, threading_th
 *    Pointer to the thread handle to be waited on
 *
 *  @param[out] result
-*    If not null, receives the value returned by the thread routine.
-*    On Windows the underlying native return value only carries an
-*    exit code, so @result is always set to NULL there
+*    If not null, receives the value returned by the thread routine
 *
 *  @return
 *    Zero on success, non-zero on failure

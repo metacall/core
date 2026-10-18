@@ -23,55 +23,33 @@
 #include <threading/threading_thread.h>
 
 #include <process.h>
-#include <stdlib.h>
 
-/* -- Private Type Definitions -- */
-
-/* _beginthreadex requires a callback of type (unsigned (__stdcall *)(void *)),
-which is not compatible with threading_thread_routine (void *(*)(void *)) as
-defined by the pthread based implementation. This trampoline carries the real
-routine and its argument through _beginthreadex without relying on an invalid
-cast between incompatible function pointer types */
-typedef struct threading_thread_win32_trampoline_type
-{
-	threading_thread_routine routine;
-	void *arg;
-
-} * threading_thread_win32_trampoline;
+/* -- Private Methods -- */
 
 static unsigned __stdcall threading_thread_win32_routine(void *data)
 {
-	threading_thread_win32_trampoline trampoline = (threading_thread_win32_trampoline)data;
-	threading_thread_routine routine = trampoline->routine;
-	void *arg = trampoline->arg;
+	threading_thread *thread = (threading_thread *)data;
 
-	free(trampoline);
-
-	routine(arg);
+	thread->result = thread->routine(thread->arg);
 
 	return 0;
 }
 
+/* -- Methods -- */
+
 int threading_thread_create(threading_thread *thread, threading_thread_routine routine, void *arg)
 {
-	threading_thread_win32_trampoline trampoline = malloc(sizeof(struct threading_thread_win32_trampoline_type));
-
-	if (trampoline == NULL)
-	{
-		return 1;
-	}
-
-	trampoline->routine = routine;
-	trampoline->arg = arg;
+	thread->routine = routine;
+	thread->arg = arg;
+	thread->result = NULL;
 
 	/* _beginthreadex is used instead of CreateThread because the thread calls into
 	the C runtime and into Python, both of which require proper per-thread CRT
 	initialization that only _beginthreadex guarantees */
-	*thread = (HANDLE)_beginthreadex(NULL, 0, &threading_thread_win32_routine, trampoline, 0, NULL);
+	thread->handle = (HANDLE)_beginthreadex(NULL, 0, &threading_thread_win32_routine, thread, 0, NULL);
 
-	if (*thread == NULL)
+	if (thread->handle == NULL)
 	{
-		free(trampoline);
 		return 1;
 	}
 
@@ -80,16 +58,14 @@ int threading_thread_create(threading_thread *thread, threading_thread_routine r
 
 int threading_thread_join(threading_thread *thread, void **result)
 {
-	if (WaitForSingleObject(*thread, INFINITE) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(thread->handle, INFINITE) != WAIT_OBJECT_0)
 	{
 		return 1;
 	}
 
-	/* The native Win32 thread result only carries a 32 bit exit code, not an
-	arbitrary pointer, so there is no value that can be safely handed back here */
 	if (result != NULL)
 	{
-		*result = NULL;
+		*result = thread->result;
 	}
 
 	return 0;
@@ -97,7 +73,7 @@ int threading_thread_join(threading_thread *thread, void **result)
 
 int threading_thread_detach(threading_thread *thread)
 {
-	if (CloseHandle(*thread) == 0)
+	if (CloseHandle(thread->handle) == FALSE)
 	{
 		return 1;
 	}
@@ -112,5 +88,5 @@ threading_thread_id threading_thread_self(void)
 
 void threading_thread_destroy(threading_thread *thread)
 {
-	CloseHandle(*thread);
+	CloseHandle(thread->handle);
 }
