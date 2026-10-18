@@ -11,7 +11,9 @@
 #
 # Python
 #
-called_from_lib:libpython*
+# TODO: py_loader_impl_initialize_asyncio_module thread is producing data races
+# when instrumenting python with thread sanitizer, we should review it and add here
+# any suppression if required, or solve the threading bugs if any
 #
 # Suppress race condition from Python 10 async io: https://github.com/python/cpython/issues/116912
 race:socketpair

@@ -35,7 +35,7 @@ if [ "${BUILD_SANITIZER}" != "address-sanitizer" ] && [ "${BUILD_SANITIZER}" != 
 fi
 
 # Install
-"${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} rapidjson pack backtrace
+"${SCRIPT_DIR}/metacall-environment.sh" base ${BUILD_LANGUAGES[@]} pack backtrace
 
 # Configure and Build
 export LOADER_LIBRARY_PATH="${BUILD_DIR}"

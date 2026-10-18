@@ -203,6 +203,8 @@ func TestValues(t *testing.T) {
 		if v := valueToGo(ptr); !reflect.DeepEqual(v, tt.want) {
 			t.Errorf("name: %s, input: %T,%v, want: %T,%v, got: %T,%v", tt.name, tt.input, tt.input, tt.want, tt.want, v, v)
 		}
+
+		valueDestroy(ptr)
 	}
 }
 
@@ -243,4 +245,60 @@ func BenchmarkNodeJSParallel(b *testing.B) {
 			benchmarkNodeJS(b, 5)
 		}
 	})
+}
+
+func TestMapConsumerTypeSwitch(t *testing.T) {
+	// Scenario 1: Uniform string keys (Fast path)
+	// Output: map[string]interface{}
+	inputStr := map[string]interface{}{"key": 1}
+	var ptrStr unsafe.Pointer
+	goToValue(inputStr, &ptrStr)
+	defer valueDestroy(ptrStr)
+
+	vStr := valueToGo(ptrStr)
+	switch m := vStr.(type) {
+	case map[string]interface{}:
+		if val, ok := m["key"]; !ok || val != 1 {
+			t.Errorf("Consumer failed to read from map[string]interface{}: %v", m)
+		}
+	default:
+		t.Fatalf("Expected map[string]interface{}, got %T", vStr)
+	}
+
+	// Scenario 2: Uniform non-string keys (Reflect path)
+	// Output: map[int]interface{}
+	inputInt := map[int]string{1: "one"}
+	var ptrInt unsafe.Pointer
+	goToValue(inputInt, &ptrInt)
+	defer valueDestroy(ptrInt)
+
+	vInt := valueToGo(ptrInt)
+	switch m := vInt.(type) {
+	case map[int]interface{}:
+		if val, ok := m[1]; !ok || val != "one" {
+			t.Errorf("Consumer failed to read from map[int]interface{}: %v", m)
+		}
+	default:
+		t.Fatalf("Expected map[int]interface{}, got %T", vInt)
+	}
+
+	// Scenario 3: Mixed keys (Fallback path)
+	// Output: map[interface{}]interface{}
+	inputMixed := map[interface{}]interface{}{"str": 1, 2: "int"}
+	var ptrMixed unsafe.Pointer
+	goToValue(inputMixed, &ptrMixed)
+	defer valueDestroy(ptrMixed)
+
+	vMixed := valueToGo(ptrMixed)
+	switch m := vMixed.(type) {
+	case map[interface{}]interface{}:
+		if val, ok := m["str"]; !ok || val != 1 {
+			t.Errorf("Consumer failed to read from map[interface{}]interface{}: %v", m)
+		}
+		if val, ok := m[2]; !ok || val != "int" {
+			t.Errorf("Consumer failed to read from map[interface{}]interface{}: %v", m)
+		}
+	default:
+		t.Fatalf("Expected map[interface{}]interface{}, got %T", vMixed)
+	}
 }

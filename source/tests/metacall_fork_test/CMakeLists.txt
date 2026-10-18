@@ -3,6 +3,16 @@ if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS)
 	return()
 endif()
 
+# Fork safety patches the fork symbol through the PLT, if the symbol is defined in the
+# executable itself (i.e Thread Sanitizer linked statically overrides it with the
+# interceptor and becomes a weak symbol), the test cannot hook it, so it is disabled
+# https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors
+check_fork_patchable(FORK_PATCHABLE)
+if(NOT FORK_PATCHABLE)
+	message(WARNING "Fork safety is enabled but the tests are compiled with compile options that disallow fork to be patched, skipping the test")
+	return()
+endif()
+
 #
 # Executable name and options
 #

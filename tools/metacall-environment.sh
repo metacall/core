@@ -29,7 +29,6 @@ BUILD_TYPE=Release
 INSTALL_BASE=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
-INSTALL_RAPIDJSON=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_NETCORE5=0
@@ -52,6 +51,7 @@ INSTALL_C=0
 INSTALL_COBOL=0
 INSTALL_GO=0
 INSTALL_RUST=0
+INSTALL_LUA=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_MEMCHECK=0
@@ -87,6 +87,7 @@ case "$(uname -m)" in
 			ARCHITECTURE="amd64"
 		fi
 		;;
+	amd64) ARCHITECTURE="amd64";;
 	armv6*) ARCHITECTURE="armv6";;
 	armv7*|armhf|armel)
 		if grep -q "vfpv3" /proc/cpuinfo; then
@@ -164,8 +165,18 @@ sub_base(){
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
 		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
+
+		# Install libc debug symbols
+		if [ "${BUILD_TYPE}" = "Debug" ]; then
+			VERSION=$(freebsd-version -u | cut -d- -f1)
+			wget -qO- "http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${ARCHITECTURE}/${VERSION}-RELEASE/base-dbg.txz" | $SUDO_CMD tar -zxvf - -C /
+		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
 		pkgman install -y cmake git make wget getconf gcc_syslibs_devel
+
+		# Enable debug crash reports
+		mkdir -p ~/config/settings/system/debug_server
+		printf 'default_action report\n' > ~/config/settings/system/debug_server/settings
 	fi
 }
 
@@ -176,44 +187,101 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-				# Download Python source
+			# TODO: || [ $INSTALL_THREAD_SANITIZER = 1 ]
+			# Enable thread sanitizer instrumentation when we find the bug: https://github.com/metacall/core/issues/848
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# Download Python build dependencies and source
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
-				mkdir python && cd python
-				apt-get source "${PYTHON_PKG}"
-				SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
-				cd "$SRC_DIR"
+				PYTHON_VERSION="${PYTHON_PKG#python}"
+				git clone --depth=1 --single-branch --branch "${PYTHON_VERSION}" https://github.com/python/cpython.git
+				cd cpython
+				PYTHON_EXE="${PYTHON_PKG}d"
+				BUILD_CFLAGS=""
+				PYTHON_DISABLED_MODULES=""
 
-				# Build Python with instrumentation
+				# Define Python instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
-					printf "leak:*libpython*" &> ./asan.supp
-					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
-					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
 					BUILD_FLAGS="--with-valgrind"
 					BUILD_LDFLAGS=""
+					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
-					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer"
+					printf "leak:*libpython*" &> ./asan.supp
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+					if [ $INSTALL_CLANG = 1 ]; then
+						# Link the C++ part of the sanitizer runtime (clang only links it with clang++), required by C++ libraries instrumented with UBSan (i.e: __ubsan_vptr_type_cache)
+						BUILD_LDFLAGS="${BUILD_LDFLAGS} -fsanitize-link-c++-runtime -lstdc++"
+					fi
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
-					BUILD_FLAGS="--with-thread-sanitizer"
+					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
 					BUILD_LDFLAGS="-fsanitize=thread"
+					# PYTHON_EXE="${PYTHON_PKG}t"
+					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-memory-sanitizer"
-					BUILD_LDFLAGS="-fsanitize=memory"
-					export CC="/usr/bin/clang"
-					export CXX="/usr/bin/clang++"
+					export MSAN_OPTIONS="use_sigaltstack=0:poison_in_dtor=0"
+
+					# OpenSSL must be instrumented, otherwise MSan reports false positives in libcrypto (_ssl, _hashlib, _asyncio)
+					OPENSSL_VERSION=$(find /usr/include -path "*/openssl/opensslv.h" | head -n 1 | xargs sed -n 's/^# *define OPENSSL_VERSION_STR "\(.*\)"/\1/p')
+					git clone --depth=1 --single-branch --branch "openssl-${OPENSSL_VERSION}" https://github.com/openssl/openssl.git
+					cd openssl
+					CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
+						./Configure enable-msan no-asm no-tests \
+							--prefix=/usr/local/msan \
+							--libdir=lib \
+							--openssldir=/usr/lib/ssl \
+							-Wl,-rpath,/usr/local/msan/lib
+					make -j$(nproc)
+					$SUDO_CMD make install_sw
+					cd ..
+					rm -rf ./openssl
+
+					# Disable modules that depend on uninstrumented libraries and are not used by MetaCall
+					PYTHON_DISABLED_MODULES="readline _curses _curses_panel _dbm _gdbm _tkinter _sqlite3 _bz2 _lzma _uuid _crypt nis"
+					for module in ${PYTHON_DISABLED_MODULES}; do
+						export "py_cv_module_${module}=n/a"
+					done
+
+					BUILD_FLAGS="--with-memory-sanitizer --with-pydebug --with-openssl=/usr/local/msan --with-openssl-rpath=auto"
+					BUILD_CFLAGS="-fsanitize-recover=memory"
+					BUILD_LDFLAGS="-fsanitize=memory -fsanitize-recover=memory"
 				fi
+
+				# Configure
+				export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE ${BUILD_CFLAGS}"
 				export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS}"
-				./configure --prefix=/usr/local --enable-shared --with-pydebug --without-pymalloc ${BUILD_FLAGS} --with-ensurepip=no
+				./configure \
+					--prefix=/usr/local \
+					--enable-shared \
+					--without-pymalloc \
+					--without-static-libpython \
+					--without-ensurepip \
+					--with-system-expat \
+					--with-system-ffi \
+					--with-dbmliborder=bdb:gdbm \
+					${BUILD_FLAGS}
+
+				# Build and install
 				make -j$(nproc)
 				$SUDO_CMD make altinstall
 
+				# Unset environment variables
+				unset ASAN_OPTIONS
+				unset UBSAN_OPTIONS
+				unset TSAN_OPTIONS
+				unset MSAN_OPTIONS
+				unset CFLAGS
+				unset LDFLAGS
+				for module in ${PYTHON_DISABLED_MODULES}; do
+					unset "py_cv_module_${module}"
+				done
+
 				# Define python as the default one
-				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_PKG}d" /usr/bin/python3
+				$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
 
 				# Install Pip
 				wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
@@ -223,13 +291,9 @@ sub_python(){
 					requests \
 					setuptools \
 					wheel \
-					rsa \
-					scipy \
-					numpy \
-					scikit-learn \
-					joblib
-				cd ../..
-				rm -rf ./python
+					rsa
+				cd ..
+				rm -rf ./cpython
 			else
 				if [ "${BUILD_TYPE}" = "Debug" ]; then
 					PYTHON3_PKG=python3-dbg
@@ -300,7 +364,93 @@ sub_python(){
 		pip3 install joblib
 		pip3 install scikit-learn
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y python3
+		# TODO: Implement other sanitizers instrumentation
+		# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+		if [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+			# Search the FreeBSD package repository for Python and install build dependencies
+			PYTHON_PKG=$(pkg search -q -x '^python3' | sort -V | tail -n 1)
+			$SUDO_CMD pkg install -y git pkgconf openssl readline sqlite3 libffi bzip2 gdbm expat
+
+			# Get the Python version: python315-3.15.0.b2 -> 3.15.0.b2
+			PYTHON_PKG_VERSION="${PYTHON_PKG#*-}"
+
+			# Remove the dot immediately after the third numeric component: 3.15.0.b2 -> 3.15.0b2
+			PYTHON_VERSION=$(printf '%s\n' "$PYTHON_PKG_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)\./\1/')
+
+			# Get major and minor version: 3.15.0b2 -> python3.15
+			PYTHON_EXE=$(printf '%s\n' "$PYTHON_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/python\1/')
+
+			git clone --depth=1 --single-branch --branch "v${PYTHON_VERSION}" https://github.com/python/cpython.git
+			cd cpython
+	
+			# Define Python instrumentation
+			if [ $INSTALL_MEMCHECK = 1 ]; then
+				sed -i '' 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
+				BUILD_FLAGS="--with-valgrind"
+				BUILD_LDFLAGS=""
+			elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+				printf "leak:*libpython*" > ./asan.supp
+				export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
+				export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
+				BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+			elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+				export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
+				BUILD_LDFLAGS="-fsanitize=thread"
+				# PYTHON_EXE="${PYTHON_EXE}t"
+			elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:poison_in_dtor=0"
+				BUILD_FLAGS="--with-memory-sanitizer --with-pydebug"
+				BUILD_LDFLAGS="-fsanitize=memory"
+			fi
+	
+			# Configure
+			export CFLAGS="-O0 -g3 -fno-omit-frame-pointer -fno-stack-protector -U_FORTIFY_SOURCE $(pkg-config --cflags expat)"
+			export LDFLAGS="-Wl,-rpath,/usr/local/lib ${BUILD_LDFLAGS} $(pkg-config --libs-only-L expat)"
+
+			./configure \
+				--prefix=/usr/local \
+				--enable-shared \
+				--without-pymalloc \
+				--without-static-libpython \
+				--without-ensurepip \
+				--with-system-expat \
+				--with-system-ffi \
+				--with-dbmliborder=bdb:gdbm \
+				${BUILD_FLAGS}
+	
+			# Build and install
+			gmake -j$(sysctl -n hw.ncpu)
+			$SUDO_CMD gmake altinstall
+	
+			# Unset environment variables
+			unset ASAN_OPTIONS
+			unset UBSAN_OPTIONS
+			unset TSAN_OPTIONS
+			unset MSAN_OPTIONS
+			unset CFLAGS
+			unset LDFLAGS
+	
+			# Define python as the default one
+			$SUDO_CMD ln -sf "/usr/local/bin/${PYTHON_EXE}" /usr/bin/python3
+	
+			# Install Pip
+			# fetch https://bootstrap.pypa.io/get-pip.py
+			# python3 get-pip.py --user --break-system-packages
+			# export PATH="$(python3 -m site --user-base)/bin:$PATH"
+	
+			# Bootstrap pip and install python test dependencies
+			# $SUDO_CMD python3 -m pip install --upgrade \
+			#	requests \
+			#	setuptools \
+			#	wheel \
+			#	rsa
+			cd ..
+			$SUDO_CMD rm -rf ./cpython
+		else
+			$SUDO_CMD pkg install -y python3
+		fi
 	fi
 }
 
@@ -311,63 +461,79 @@ sub_ruby(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# TODO:
-			# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-			# 	# Download Ruby source
-			# 	RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
-			# 	$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
-			# 	mkdir ruby && cd ruby
-			# 	apt-get source "${RUBY_PKG}"
-			# 	SRC_DIR=$(find . -maxdepth 2 -type d -name "debian" -exec dirname {} \;)
-			# 	cd "$SRC_DIR"
+			# TODO: Enable when Ruby supports other sanitizers
+			# if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; }; then
+			if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ]; }; then
+				# Download Ruby build dependencies
+				RUBY_PKG=$(apt-cache show ruby | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
+				$SUDO_CMD apt-get build-dep -y "${RUBY_PKG}"
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby
 
-			# 	# Build Ruby with instrumentation
-			# 	if [ $INSTALL_MEMCHECK = 1 ]; then
-			# 		# TODO: Apparently valgrind does not need instrumentation?
-			# 		BUILD_CFLAGS=""
-			# 		BUILD_LDFLAGS=""
-			# 	elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
-			# 		export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
-			# 		export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
-			# 		BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
-			# 	elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
-			# 		export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=thread"
-			# 		BUILD_LDFLAGS="-fsanitize=thread"
-			# 	elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
-			# 		export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-			# 		BUILD_CFLAGS="-fsanitize=memory"
-			# 		BUILD_LDFLAGS="-fsanitize=memory"
-			# 		export CC="/usr/bin/clang"
-			# 		export CXX="/usr/bin/clang++"
-			# 	fi
+				# https://docs.ruby-lang.org/en/3.4/contributing/building_ruby_md.html#label-Building+with+Address+Sanitizer
+				# ASAN will not work properly on any currently released version of Ruby;
+				# the necessary support is currently only present on Ruby’s master branch
+				# (and the whole test suite passes only as of commit Revision 9d0a5148).
+				git clone --depth=1 --single-branch --branch master https://github.com/ruby/ruby.git
+				cd ruby
+				git fetch --depth=1 origin 9d0a5148ae062a0481a4a18fbeb9cfd01dc10428
+				git checkout 9d0a5148ae062a0481a4a18fbeb9cfd01dc10428
 
-			# 	./autogen.sh
-			# 	mkdir build && cd build
-			# 	../configure \
-			# 		--enable-shared \
-			# 		--enable-debug-env \
-			# 		cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer" \
-			# 		ldflags="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
-			# 		cppflags="-DUSE_RUBY_DEBUG_LOG=1" \
-			# 		optflags="-O0" \
-			# 		debugflags="-ggdb3" \
-			# 		--prefix=/usr/local
+				# Build Ruby with instrumentation
+				if [ $INSTALL_MEMCHECK = 1 ]; then
+					BUILD_FLAGS="--with-valgrind"
+					BUILD_CFLAGS=""
+					BUILD_LDFLAGS=""
+				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS=""
+					BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
+					# Link the C++ part of the sanitizer runtime (clang only links it with clang++), required by C++ libraries instrumented with UBSan (i.e: __ubsan_vptr_type_cache)
+					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined -fsanitize-link-c++-runtime -lstdc++"
+				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS=""
+					BUILD_CFLAGS="-fsanitize=thread"
+					BUILD_LDFLAGS="-fsanitize=thread"
+				elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+					export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					BUILD_FLAGS=""
+					BUILD_CFLAGS="-fsanitize=memory"
+					BUILD_LDFLAGS="-fsanitize=memory"
+				fi
 
-			# 	make -j$(nproc)
-			# 	$SUDO_CMD make install
+				./autogen.sh
+				mkdir build && cd build
+				../configure \
+					${BUILD_FLAGS} \
+					--enable-shared \
+					--enable-debug-env \
+					--disable-yjit \
+					--disable-install-doc \
+					cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer -DUSE_MN_THREADS=0 -DUSE_RUBY_DEBUG_LOG=1" \
+					LDFLAGS="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+					optflags="-O0" \
+					debugflags="-ggdb3" \
+					--prefix=/usr/local
 
-			# 	cd ../../..
-			# 	rm -rf ./ruby
-			# else
+				export MAKEFLAGS="--jobs $(nproc)"
+				make -j$(nproc)
+				$SUDO_CMD make -j$(nproc) install
+
+				# Ruby master builds power_assert from a git revision with a dev version (2.0.4dev) that
+				# does not match bundled_gems (2.0.3), so make install skips it and test-unit fails to load
+				$SUDO_CMD /usr/local/bin/gem install --local ../gems/power_assert-*.gem
+
+				cd ../../..
+				rm -rf ./ruby
+			else
 				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
 
 				# TODO: Review conflict with NodeJS (currently rails test is disabled)
 				#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
 				#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
 				#$SUDO_CMD gem install rails
-			# fi
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache ruby ruby-dev
 		fi
@@ -383,25 +549,63 @@ sub_ruby(){
 		echo "-DRuby_EXECUTABLE=$RUBY_PREFIX/bin/ruby" >> $CMAKE_CONFIG_PATH
 		echo "-DRuby_VERSION=$RUBY_VERSION" >> $CMAKE_CONFIG_PATH
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y ruby
-	fi
-}
+		# TODO: Enable when Ruby supports other sanitizers
+		# if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; }; then
+		if [ $INSTALL_CLANG = 1 ] && { [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ]; }; then
+			# Download Ruby build dependencies
+			$SUDO_CMD pkg install -y ruby git gmake bison autoconf automake libyaml gmp openssl
 
-# RapidJSON
-sub_rapidjson(){
-	echo "configure rapidjson"
-	cd $ROOT_DIR
+			# Download Ruby source
+			git clone --depth 1 --single-branch --branch ruby_3_4 https://github.com/ruby/ruby.git
+			cd ruby
 
-	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
-		git clone https://github.com/Tencent/rapidjson.git
-		cd rapidjson
-		git checkout 24b5e7a8b27f42fa16b96fc70aade9106cf7102f
-		mkdir build
-		cd build
-		cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
-		make -j$(getconf _NPROCESSORS_ONLN)
-		$SUDO_CMD make install
-		cd ../.. && rm -rf ./rapidjson
+			# Build Ruby with instrumentation
+			if [ $INSTALL_MEMCHECK = 1 ]; then
+				BUILD_FLAGS="--with-valgrind"
+				BUILD_CFLAGS=""
+				BUILD_LDFLAGS=""
+			elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
+				export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0"
+				export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS=""
+				BUILD_CFLAGS="-fsanitize=address -fsanitize=undefined"
+				BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
+			elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
+				export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS=""
+				BUILD_CFLAGS="-fsanitize=thread"
+				BUILD_LDFLAGS="-fsanitize=thread"
+			elif [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				export MSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+				BUILD_FLAGS=""
+				BUILD_CFLAGS="-fsanitize=memory"
+				BUILD_LDFLAGS="-fsanitize=memory"
+			fi
+
+			./autogen.sh
+			mkdir build && cd build
+			../configure \
+				${BUILD_FLAGS} \
+				--enable-shared \
+				--enable-debug-env \
+				--disable-yjit \
+				--disable-install-doc \
+				--with-coroutine=${ARCHITECTURE} \
+				cflags="${BUILD_CFLAGS} -fno-omit-frame-pointer -DUSE_MN_THREADS=0 -DUSE_RUBY_DEBUG_LOG=1" \
+				LDFLAGS="${BUILD_LDFLAGS} -fno-omit-frame-pointer" \
+				optflags="-O0" \
+				debugflags="-ggdb3" \
+				--prefix=/usr/local
+
+			export MAKEFLAGS="--jobs $(sysctl -n hw.ncpu)"
+			gmake -j$(sysctl -n hw.ncpu)
+			$SUDO_CMD gmake -j$(sysctl -n hw.ncpu) install
+
+			cd ../../..
+			rm -rf ./ruby
+		else
+			$SUDO_CMD pkg install -y ruby
+		fi
 	fi
 }
 
@@ -764,13 +968,42 @@ sub_file(){
 
 # RPC
 sub_rpc(){
-	echo "cofingure rpc"
+	echo "configure rpc"
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# Install development files and documentation for libcurl (OpenSSL flavour)
-			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+			if [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+				# cURL must be instrumented, otherwise MSan reports false positives in libcurl, tests only use plain HTTP so SSL is disabled
+				CURL_VERSION=$(apt-cache show libcurl4-openssl-dev | grep ^Version | head -n 1 | awk '{print $2}' | sed -e 's/^[0-9]*://' -e 's/-.*//')
+				git clone --depth=1 --single-branch --branch "curl-$(echo "${CURL_VERSION}" | tr '.' '_')" https://github.com/curl/curl.git
+				cd curl
+				CC="${CC}" CFLAGS="-fsanitize=memory -fsanitize-recover=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O1" LDFLAGS="-fsanitize=memory" \
+					cmake -B build -S . \
+						-DCMAKE_BUILD_TYPE=Debug \
+						-DCMAKE_DEBUG_POSTFIX= \
+						-DCMAKE_INSTALL_PREFIX=/usr/local/msan \
+						-DCMAKE_INSTALL_LIBDIR=lib \
+						-DBUILD_SHARED_LIBS=ON \
+						-DBUILD_CURL_EXE=OFF \
+						-DBUILD_TESTING=OFF \
+						-DCURL_ENABLE_SSL=OFF \
+						-DCURL_ZLIB=OFF \
+						-DCURL_BROTLI=OFF \
+						-DCURL_ZSTD=OFF \
+						-DUSE_NGHTTP2=OFF \
+						-DUSE_LIBIDN2=OFF \
+						-DCURL_USE_LIBPSL=OFF \
+						-DCURL_USE_LIBSSH2=OFF \
+						-DCURL_DISABLE_LDAP=ON
+				cmake --build build -j$(nproc)
+				$SUDO_CMD cmake --install build
+				cd ..
+				rm -rf ./curl
+			else
+				# Install development files and documentation for libcurl (OpenSSL flavour)
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
 			$SUDO_CMD apk add --no-cache curl-dev
 		fi
@@ -952,7 +1185,7 @@ sub_rust(){
 
 			RUST_DISTRO="${VERSION_CODENAME}"
 			DEV_PACKAGE="rust-toolchain-dev-${RUST_DISTRO}-${ARCHITECTURE}.tar.gz"
-			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.3"
+			RUST_RELEASE_URL="https://github.com/metacall/rust-toolchain/releases/download/v0.0.5"
 
 			wget -qO- "${RUST_RELEASE_URL}/${DEV_PACKAGE}" | $SUDO_CMD tar -xzf - -C /
 
@@ -966,9 +1199,31 @@ sub_rust(){
 			return
 		fi
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
-		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		# TODO:
+		echo "darwin not implemented"
+		return
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
+		# TODO:
+		echo "freebsd not implemented"
+		return
+	fi
+}
+
+# Lua
+sub_lua(){
+	echo "configure lua"
+	cd $ROOT_DIR
+
+	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libluajit-5.1-dev
+		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
+			$SUDO_CMD apk add --no-cache luajit-dev
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
+		brew install luajit
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		$SUDO_CMD pkg install -y luajit
 	fi
 }
 
@@ -1016,24 +1271,40 @@ sub_memcheck(){
 	fi
 }
 
+# Clang Compiler
 sub_clang(){
 	echo "configure clang"
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang libclang-rt-dev llvm
+
+			# Set Clang as default compiler
+			export CC="/usr/bin/clang"
+			export CXX="/usr/bin/clang++"
+			$SUDO_CMD update-alternatives --install /usr/bin/cc cc $CC 100
+			$SUDO_CMD update-alternatives --install /usr/bin/c++ c++ $CXX 100
+		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# Set Clang as default compiler (it comes preinstalled by default)
+		export CC="/usr/bin/clang"
+		export CXX="/usr/bin/clang++"
 	fi
 }
 
+# Clang Compiler with Memory Sanitizer
 sub_clang_msan(){
 	echo "configure clang msan"
 	cd $ROOT_DIR
 
 	if [ "${OPERATIVE_SYSTEM}" = 'Linux' ]; then
-		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-			clang lld libclang-rt-dev llvm-dev \
-			build-essential cmake ninja-build git ca-certificates \
-			python3 python3-dev
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+				clang lld libclang-rt-dev llvm-dev \
+				build-essential cmake ninja-build git ca-certificates \
+				python3 python3-dev
+		fi
 
 		# Compile clang with memory sanitizer
 		mkdir -p /tmp/msan
@@ -1043,6 +1314,11 @@ sub_clang_msan(){
 
 		# Download matching LLVM source tree
 		git clone --depth=1 -b "llvmorg-${CLANG_VERSION}" https://github.com/llvm/llvm-project /tmp/msan/llvm-project
+
+		# Newer linux-libc-dev does not ship linux/scc.h anymore, remove it from compiler-rt (the scc sizes are unused)
+		sed -i -e '/#include <linux\/scc.h>/d' -e '/struct_scc_/d' \
+			/tmp/msan/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.cpp \
+			/tmp/msan/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.h
 
 		# Stage 1: rebuild clang matching distro version
 		# Install into /usr to override existing system clang
@@ -1071,12 +1347,22 @@ sub_clang_msan(){
 			-DLLVM_TARGETS_TO_BUILD=Native \
 			-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF \
 			-DLIBCXXABI_USE_LLVM_UNWINDER=OFF \
+			-DLLVM_INCLUDE_TESTS=OFF \
 			-DCMAKE_INSTALL_PREFIX=/usr
 
 		ninja -C /tmp/msan/cxx_build/ -j$(nproc)
 		$SUDO_CMD ninja -C /tmp/msan/cxx_build/ install
 
 		rm -rf /tmp/msan
+
+		# Set Clang as default compiler
+		export CC="/usr/bin/clang"
+		export CXX="/usr/bin/clang++"
+
+		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
+			$SUDO_CMD update-alternatives --install /usr/bin/cc cc $CC 100
+			$SUDO_CMD update-alternatives --install /usr/bin/c++ c++ $CXX 100
+		fi
 	fi
 }
 
@@ -1215,9 +1501,6 @@ sub_install(){
 	if [ $INSTALL_RUBY = 1 ]; then
 		sub_ruby
 	fi
-	if [ $INSTALL_RAPIDJSON = 1 ]; then
-		sub_rapidjson
-	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
 	fi
@@ -1268,6 +1551,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_RUST = 1 ]; then
 		sub_rust
+	fi
+	if [ $INSTALL_LUA = 1 ]; then
+		sub_lua
 	fi
 	if [ $INSTALL_PACK = 1 ]; then
 		sub_pack
@@ -1337,10 +1623,6 @@ sub_options(){
 			echo "netcore 8 selected"
 			INSTALL_NETCORE8=1
 		fi
-		if [ "$option" = 'rapidjson' ]; then
-			echo "rapidjson selected"
-			INSTALL_RAPIDJSON=1
-		fi
 		if [ "$option" = 'v8' ] || [ "$option" = 'v8rep54' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
@@ -1405,6 +1687,10 @@ sub_options(){
 		if [ "$option" = 'rust' ]; then
 			echo "rust selected"
 			INSTALL_RUST=1
+		fi
+		if [ "$option" = 'lua' ]; then
+			echo "lua selected"
+			INSTALL_LUA=1
 		fi
 		if [ "$option" = 'pack' ]; then
 			echo "pack selected"
@@ -1471,7 +1757,6 @@ sub_help() {
 	echo "	netcore5"
 	echo "	netcore7"
 	echo "	netcore8"
-	echo "	rapidjson"
 	echo "	v8"
 	echo "	v8rep51"
 	echo "	v8rep54"
@@ -1486,6 +1771,8 @@ sub_help() {
 	echo "	c"
 	echo "	cobol"
 	echo "	go"
+	echo "	rust"
+	echo "	lua"
 	echo "	pack"
 	echo "	coverage"
 	echo "	memcheck"

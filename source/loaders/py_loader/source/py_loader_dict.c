@@ -203,8 +203,6 @@ PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v)
 	union py_loader_impl_dict_cast dict_cast = { &py_loader_impl_dict_type };
 	PyObject *args, *wrapper;
 	struct py_loader_impl_dict_obj *wrapper_obj;
-	PyObject *key, *value;
-	Py_ssize_t pos = 0;
 
 	py_loader_thread_acquire();
 
@@ -219,13 +217,6 @@ PyObject *py_loader_impl_finalizer_wrap_dict(PyObject *obj, void *v)
 	{
 		py_loader_thread_release();
 		return NULL;
-	}
-
-	/* At this point the references are incremented due to the copy, so we need to decrement them */
-	while (PyDict_Next(obj, &pos, &key, &value))
-	{
-		Py_DecRef(key);
-		Py_DecRef(value);
 	}
 
 	py_loader_thread_release();

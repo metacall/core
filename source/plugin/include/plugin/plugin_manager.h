@@ -28,7 +28,7 @@
 #include <plugin/plugin_impl.h>
 #include <plugin/plugin_loader.h>
 
-#include <adt/adt_set.h>
+#include <adt/adt_set_small.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,7 +56,7 @@ struct plugin_manager_type
 {
 	char *name;						/* Defines the plugin manager name (a pointer to a static string defining the manager type) */
 	char *library_path;				/* Defines current library path */
-	set plugins;					/* Contains the plugins indexed by name */
+	set_small plugins;				/* Contains the plugins indexed by name */
 	plugin_manager_interface iface; /* Hooks into the plugin manager from the implementation */
 	void *impl;						/* User defined plugin manager data */
 	plugin_loader l;				/* Pointer to the loader, it defines the low level details for loading and unloading libraries */

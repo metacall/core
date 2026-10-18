@@ -32,7 +32,7 @@ netcore_linux::netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_pat
 {
 	if (dotnet_root == NULL)
 	{
-		const char* core_root = getenv("CORE_ROOT");
+		const char *core_root = getenv("CORE_ROOT");
 
 		if (core_root != NULL)
 		{
@@ -69,9 +69,10 @@ netcore_linux::~netcore_linux()
 {
 	this->stop();
 
-	if (this->libHandle)
+	if (this->libHandle != NULL)
 	{
 		dynlink_unload(this->libHandle);
+		this->libHandle = NULL;
 	}
 }
 

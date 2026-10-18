@@ -47,16 +47,20 @@ TEST_F(metacall_python_port_c_lib_metacall_test, DefaultConstructor)
 		"    'libs': ['" METACALL_LIBRARY "']\n"
 		"})\n"
 		/* Print all MetaCall APIs (metacall_lib is a dict subclass; use key iteration, not dir) */
-		"print([k for k in metacall_lib.keys() if k.startswith('metacall')])\n"
+		"print([k for k in metacall_lib.keys() if k.startswith('metacall')], flush=True)\n"
 		/* Print info */
 		"metacall_lib['metacall_print_info']()\n"
 		/* MetaCall Load from Memory */
 		"script = 'module.exports = { metacircular: () => 46 }'\n"
-		"assert metacall_lib['metacall_load_from_memory']('node', script, len(script) + 1, None) == 0, 'metacall load from memory failed'\n"
+		"metacall_load_from_memory = metacall_lib['metacall_load_from_memory']\n"
+		"print(metacall_load_from_memory, flush=True)\n"
+		"load_from_mem_result = metacall_load_from_memory('node', script, len(script) + 1, None)\n"
+		"print(load_from_mem_result, flush=True)\n"
+		"assert load_from_mem_result == 0, 'metacall load from memory failed'\n"
 		"result = metacall_lib['metacall']('metacircular')\n"
-		"print(result)\n"
+		"print(result, flush=True)\n"
 		"metacircular = metacall_lib['metacall_value_to_double'](result)\n"
-		"print(metacircular)\n"
+		"print(metacircular, flush=True)\n"
 		"assert metacircular == 46, 'metacircular must be 46, invoke failed'\n"
 		"\n";
 

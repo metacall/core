@@ -13,6 +13,8 @@
 #include <detour/detour.h>
 #include <detour/detour_interface.h>
 
+#include <adt/adt_set.h>
+
 #include <log/log.h>
 
 /* -- Definitions -- */

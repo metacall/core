@@ -4063,6 +4063,11 @@ void node_loader_impl_thread(void *data)
 	/* Skip node::ResetSignalHandlers use-of-uninitialized-value from node::Start of uninstrumented libnode */
 	memory_sanitizer_disable();
 
+	/* Grow stack size to avoid "Error: Maximum call stack size exceeded" on complex callback tests */
+#if defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
+	v8::V8::SetFlagsFromString("--stack-size=8192");
+#endif
+
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
 
@@ -4098,16 +4103,62 @@ void node_loader_impl_thread_log(void *data)
 }
 #endif
 
+static int node_loader_impl_initialize_types(loader_impl impl)
+{
+	static struct
+	{
+		type_id id;
+		const char *name;
+	} type_id_name_pair[] = {
+		{ TYPE_BOOL, "boolean" },
+		{ TYPE_DOUBLE, "number" },
+		{ TYPE_STRING, "string" },
+		{ TYPE_NULL, "null" },
+		{ TYPE_NULL, "undefined" },
+		{ TYPE_BUFFER, "Buffer" },
+		{ TYPE_ARRAY, "Array" },
+		{ TYPE_MAP, "Map" },
+		{ TYPE_OBJECT, "Object" },
+		{ TYPE_FUNCTION, "Function" },
+		{ TYPE_FUTURE, "Promise" },
+		{ TYPE_EXCEPTION, "Error" }
+	};
+
+	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+	for (index = 0; index < size; ++index)
+	{
+		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, NULL);
+
+		if (t != NULL)
+		{
+			if (loader_impl_type_define(impl, type_name(t), t) != 0)
+			{
+				type_destroy(t);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_node node_impl;
-
-	(void)impl;
 
 	node_impl = new loader_impl_node_type();
 
 	if (node_impl == nullptr)
 	{
+		return NULL;
+	}
+
+	if (node_loader_impl_initialize_types(impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS type initialization");
+
+		delete node_impl;
 		return NULL;
 	}
 
@@ -4139,10 +4190,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread condition creation");
 
-		/* TODO: Clear resources */
-
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4150,10 +4198,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread mutex creation");
 
-		/* TODO: Clear resources */
-
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4170,10 +4215,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Logging Thread creation");
 
-			/* TODO: Clear resources */
-
 			delete node_impl;
-
 			return NULL;
 		}
 	}
@@ -4184,7 +4226,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid startup arguments creation");
 
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4195,10 +4236,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 
-			/* TODO: Clear resources */
-
 			delete node_impl;
-
 			return NULL;
 		}
 
@@ -4807,6 +4845,67 @@ void node_loader_impl_walk(uv_handle_t *handle, void *arg)
 }
 #endif
 
+#if NODE_MAJOR_VERSION < 18
+/* In NodeJS < 18, the second pass phantom callbacks of N-API references are posted by V8 as a platform task
+* after a non-forced GC, and node_napi_env__::CallFinalizer defers the finalizer with a SetImmediate capturing
+* the raw napi_env (without taking a reference to it). If a GC happens in the last JavaScript turn (process 'exit'),
+* the task stays pending until node::FreeEnvironment, where it can run after the napi_env (or the reference) has been
+* deleted by the cleanup hooks, producing a use after free. A forced GC invokes all pending second pass callbacks
+* synchronously, so the finalizers are deferred before node::FreeEnvironment and they run in the first CleanupHandles,
+* while the napi_env is still alive. This must be the last JavaScript executed, so it is registered at destroy time
+* in order to run after the 'exit' handlers registered by the user code.
+*/
+static void node_loader_impl_destroy_flush_finalizers(void)
+{
+	v8::Isolate *isolate = v8::Isolate::GetCurrent();
+
+	if (isolate != nullptr)
+	{
+		isolate->LowMemoryNotification();
+	}
+}
+
+static napi_value node_loader_impl_destroy_flush_finalizers_callback(napi_env env, napi_callback_info info)
+{
+	(void)env;
+	(void)info;
+
+	node_loader_impl_destroy_flush_finalizers();
+
+	return nullptr;
+}
+
+static void node_loader_impl_destroy_flush_finalizers_register(loader_impl_node node_impl, napi_env env)
+{
+	napi_status status;
+	napi_value global, process, on, argv[2];
+
+	status = napi_get_reference_value(env, node_impl->global_ref, &global);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_get_named_property(env, global, "process", &process);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_get_named_property(env, process, "on", &on);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_create_string_utf8(env, "exit", NAPI_AUTO_LENGTH, &argv[0]);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_create_function(env, nullptr, 0, &node_loader_impl_destroy_flush_finalizers_callback, nullptr, &argv[1]);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_call_function(env, process, on, 2, argv, nullptr);
+
+	node_loader_impl_exception(env, status);
+}
+#endif
+
 void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env)
 {
 	napi_status status;
@@ -4819,6 +4918,20 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
+
+#if NODE_MAJOR_VERSION < 18
+	if (loader_impl_get_option_host(node_impl->impl) == 0)
+	{
+		/* Register the flush as the last 'exit' handler, it will run after the user ones */
+		node_loader_impl_destroy_flush_finalizers_register(node_impl, env);
+	}
+	else
+	{
+		/* In host mode we are already inside the 'exit' event (bootstrap.js), so listeners added now are not
+		* invoked by the current emit, flush the finalizers directly instead */
+		node_loader_impl_destroy_flush_finalizers();
+	}
+#endif
 
 	/* Clear thread safe functions except by destroy one */
 	if (loader_impl_get_option_host(node_impl->impl) == 0)
@@ -4856,6 +4969,15 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	* the runtime (at least the NodeJS Loader related part) destroyed.
 	*/
 	loader_set_destroyed(node_impl->impl);
+}
+
+int node_loader_impl_destroy_host(loader_impl_node node_impl, napi_env env)
+{
+	/* When running in host mode, the destroy is issued by the host itself from the JavaScript thread (i.e process.on('exit')),
+	* destroy the loader through MetaCall, so it can be deallocated later on without destroying the runtime again */
+	node_loader_impl_env(node_impl, env);
+
+	return loader_destroy_runtime(node_impl->impl);
 }
 
 void node_loader_impl_try_destroy(loader_impl_node node_impl)
@@ -4899,6 +5021,11 @@ int node_loader_impl_destroy(loader_impl impl)
 
 		/* Wait for node thread to finish */
 		uv_thread_join(&node_impl->thread);
+	}
+	else
+	{
+		/* In host mode, this is called from node_loader_impl_destroy_host, so we are already in the JavaScript thread */
+		node_loader_impl_destroy_safe_impl(node_impl, node_impl->env);
 	}
 
 	/* Clear condition syncronization object */

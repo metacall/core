@@ -469,7 +469,7 @@ func goToValue(arg interface{}, ptr *unsafe.Pointer) {
 	if v.Kind() == reflect.Map {
 		length := v.Len()
 		cArgs := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
-
+		defer C.free(unsafe.Pointer(cArgs))
 		for index, m := 0, v.MapRange(); m.Next(); index++ {
 			pair := [2]interface{}{m.Key().Interface(), m.Value().Interface()}
 
@@ -579,15 +579,65 @@ func valueToGo(value unsafe.Pointer) interface{} {
 			tuples := C.metacall_value_to_map(value)
 			size := C.metacall_value_count(value)
 
-			m := make(map[string]interface{}, size)
+			if size == 0 {
+				return make(map[string]interface{})
+			}
+
+			// First pass: retrieve all keys and values, detect key types
+			type KeyValuePair struct {
+				Key   interface{}
+				Value interface{}
+			}
+			pairs := make([]KeyValuePair, size)
+
+			var uniformType reflect.Type
+			isUniform := true
+
 			for i := C.size_t(0); i < size; i++ {
 				pair := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(tuples)) + uintptr(i*PtrSizeInBytes)))
 				p := reflect.ValueOf(valueToGo(*pair))
 
-				key := p.Index(0).Interface().(string)
-				m[key] = p.Index(1).Interface()
+				key := p.Index(0).Interface()
+				val := p.Index(1).Interface()
+
+				pairs[i] = KeyValuePair{Key: key, Value: val}
+
+				keyType := reflect.TypeOf(key)
+				if keyType != nil && !keyType.Comparable() {
+					panic(fmt.Errorf("metacall: map key type %v is not usable as a Go map key", keyType))
+				}
+
+				if i == 0 {
+					uniformType = keyType
+				} else if isUniform && keyType != uniformType {
+					isUniform = false
+				}
 			}
 
+			// Second pass: construct the map
+			if isUniform && uniformType != nil && uniformType.Kind() == reflect.String {
+				// Fast path: map[string]interface{}
+				m := make(map[string]interface{}, size)
+				for _, pair := range pairs {
+					m[pair.Key.(string)] = pair.Value
+				}
+				return m
+			} else if isUniform {
+				// TODO: revisit with Go generics
+				// Reflect uniform path: map[T]interface{}
+				mapType := reflect.MapOf(uniformType, reflect.TypeOf((*interface{})(nil)).Elem())
+				m := reflect.MakeMapWithSize(mapType, int(size))
+				for _, pair := range pairs {
+					m.SetMapIndex(reflect.ValueOf(pair.Key), reflect.ValueOf(pair.Value))
+				}
+				return m.Interface()
+			}
+
+			// Fallback path: map[interface{}]interface{}
+			m := make(map[interface{}]interface{}, size)
+			for _, pair := range pairs {
+				m[pair.Key] = pair.Value
+			}
 			return m
 		}
 
@@ -635,4 +685,8 @@ func Destroy() {
 
 	// Wait for all work to complete
 	wg.Wait()
+}
+
+func valueDestroy(v unsafe.Pointer) {
+	C.metacall_value_destroy(v)
 }

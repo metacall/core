@@ -8,7 +8,12 @@ endif()
 #
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(Python3_FIND_ABI "ON" "ANY" "ANY")
+	set(Python3_FIND_ABI
+		ANY	# pydebug
+		ANY	# pymalloc
+		ANY	# unicode
+		ANY	# free-threaded (gil disabled)
+	)
 	find_package(Python3 COMPONENTS Interpreter Development)
 
 	# Fallback to release if not found
@@ -36,8 +41,8 @@ if(NOT Python3_LIBRARY AND Python3_LIBRARIES)
 
 			# Match the right keyword
 			if((CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "debug") OR
-			   (NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "optimized") OR
-			   (keyword STREQUAL "general"))  # general applies to all configs
+				(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND keyword STREQUAL "optimized") OR
+				(keyword STREQUAL "general"))  # general applies to all configs
 				set(Python3_LIBRARY ${lib_path})
 			endif()
 
@@ -117,8 +122,10 @@ set(headers
 	${include_path}/py_loader_impl.h
 	${include_path}/py_loader_port.h
 	${include_path}/py_loader_threading.h
+	${include_path}/py_loader_class.h
 	${include_path}/py_loader_dict.h
 	${include_path}/py_loader_func.h
+	${include_path}/py_loader_object.h
 	${include_path}/py_loader_symbol_fallback.h
 )
 
@@ -127,8 +134,10 @@ set(sources
 	${source_path}/py_loader_impl.c
 	${source_path}/py_loader_port.c
 	${source_path}/py_loader_threading.cpp
+	${source_path}/py_loader_class.c
 	${source_path}/py_loader_dict.c
 	${source_path}/py_loader_func.c
+	${source_path}/py_loader_object.c
 	${source_path}/py_loader_symbol_fallback.c
 )
 

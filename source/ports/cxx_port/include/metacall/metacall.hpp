@@ -24,17 +24,43 @@
 /* -- Headers -- */
 
 #include <array>
+#include <cstdlib>
 #include <cstring>
+#include <map>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
 namespace metacall
 {
 #include <metacall/metacall.h>
+
+namespace detail
+{
+// clang-format off
+#include <version/version.h>
+#include <preprocessor/preprocessor.h>
+#include <environment/environment.h>
+#include <format/format.h>
+#include <threading/threading.h>
+#include <log/log.h>
+#include <memory/memory.h>
+#include <portability/portability.h>
+#include <adt/adt.h>
+#include <filesystem/filesystem.h>
+#include <dynlink/dynlink.h>
+#include <plugin/plugin.h>
+#include <detour/detour.h>
+#include <reflect/reflect.h>
+#include <serial/serial.h>
+#include <configuration/configuration.h>
+#include <loader/loader.h>
+// clang-format on
+} /* namespace detail */
 
 class value_base
 {
@@ -55,6 +81,17 @@ public:
 	// Release the unique pointer and return its contents
 	void *release()
 	{
+		return value_ptr.release();
+	}
+
+	// Release the value if it is owned, otherwise copy it, because a view does not own the value it points to
+	void *release_or_copy()
+	{
+		if (value_ptr.get_deleter() == &value_base::noop_destructor)
+		{
+			return metacall_value_copy(to_raw());
+		}
+
 		return value_ptr.release();
 	}
 
@@ -444,6 +481,112 @@ public:
 		return METACALL_ARRAY;
 	}
 
+	class iterator
+	{
+	public:
+		using iterator_category = std::random_access_iterator_tag;
+		using value_type = value_cast;
+		using difference_type = std::ptrdiff_t;
+		using reference = value_cast;
+		using pointer = void;
+
+		explicit iterator(void **ptr) :
+			ptr(ptr)
+		{
+		}
+
+		reference operator*() const
+		{
+			return value_cast(*ptr);
+		}
+
+		iterator &operator++()
+		{
+			++ptr;
+			return *this;
+		}
+
+		iterator operator++(int)
+		{
+			iterator tmp(*this);
+			++(*this);
+			return tmp;
+		}
+
+		iterator &operator--()
+		{
+			--ptr;
+			return *this;
+		}
+
+		iterator operator--(int)
+		{
+			iterator tmp(*this);
+			--(*this);
+			return tmp;
+		}
+
+		iterator &operator+=(difference_type n)
+		{
+			ptr += n;
+			return *this;
+		}
+
+		iterator &operator-=(difference_type n)
+		{
+			ptr -= n;
+			return *this;
+		}
+
+		iterator operator+(difference_type n) const
+		{
+			return iterator(ptr + n);
+		}
+
+		iterator operator-(difference_type n) const
+		{
+			return iterator(ptr - n);
+		}
+
+		difference_type operator-(const iterator &other) const
+		{
+			return ptr - other.ptr;
+		}
+
+		bool operator==(const iterator &other) const
+		{
+			return ptr == other.ptr;
+		}
+
+		bool operator!=(const iterator &other) const
+		{
+			return !(*this == other);
+		}
+
+		bool operator<(const iterator &other) const
+		{
+			return ptr < other.ptr;
+		}
+
+	private:
+		void **ptr;
+	};
+
+	iterator begin() const
+	{
+		return iterator(to_array());
+	}
+
+	iterator end() const
+	{
+		return iterator(to_array() + size());
+	}
+
+	std::size_t size() const
+	{
+		return metacall_value_count(to_raw());
+	}
+
 private:
 	void **to_array() const
 	{
@@ -497,7 +640,7 @@ template <>
 template <>
 inline void *value_typed<array>::create(array &v)
 {
-	return v.release();
+	return v.release_or_copy();
 }
 
 template <>
@@ -527,36 +670,60 @@ public:
 	using key_type = K;
 	using value_type = V;
 	using pair_type = std::pair<K, V>;
-	using pair_value_type = std::pair<value_typed<K>, value_typed<V>>;
+	using container_type = std::unordered_map<K, V>;
 
-	map_typed(std::initializer_list<pair_type> list) :
-		value_base(metacall_value_create_map(NULL, list.size()))
+	// Key value pair used for building a map, it creates the MetaCall values eagerly so non-copyable
+	// values (like nested maps or arrays) can be moved into the map, even from a const initializer list
+	class entry
 	{
-		if (value_ptr == nullptr)
+	public:
+		entry(const K &key, const V &v) :
+			key(value_typed<K>::create(key), &metacall_value_destroy),
+			value(value_typed<V>::create(v), &metacall_value_destroy)
 		{
-			throw std::runtime_error("Failed to create MetaCall map value");
+			validate();
 		}
 
-		void **map_array = metacall_value_to_map(to_raw());
-		size_t index = 0;
-
-		for (const auto &pair : list)
+		entry(const K &key, V &&v) :
+			key(value_typed<K>::create(key), &metacall_value_destroy),
+			value(value_typed<V>::create(v), &metacall_value_destroy)
 		{
-			void *tuple = metacall_value_create_array(nullptr, 2);
-			void **tuple_array = metacall_value_to_array(tuple);
-
-			// Create the pair
-			auto value_pair = std::make_pair(value_typed<K>(pair.first, &value_base::noop_destructor), value_typed<V>(pair.second, &value_base::noop_destructor));
-
-			// Insert into metacall value map
-			tuple_array[0] = value_pair.first.to_raw();
-			tuple_array[1] = value_pair.second.to_raw();
-
-			map_array[index++] = tuple;
-
-			// Store into the map
-			m.emplace(pair.first, std::move(value_pair));
+			validate();
 		}
+
+	private:
+		friend class map_typed;
+
+		void validate() const
+		{
+			if (key == nullptr || value == nullptr)
+			{
+				throw std::runtime_error("Failed to create MetaCall map entry");
+			}
+		}
+
+		// Mutable allows to take the ownership of the values from a const entry of the initializer list
+		mutable std::unique_ptr<void, void (*)(void *)> key, value;
+	};
+
+	map_typed(std::initializer_list<entry> list) :
+		value_base(create(list.begin(), list.end(), list.size()))
+	{
+		rehash();
+	}
+
+	explicit map_typed(std::vector<entry> &&entries) :
+		value_base(create(entries.begin(), entries.end(), entries.size()))
+	{
+		rehash();
+	}
+
+	// Build the map at runtime from a range of pairs (std::map, std::unordered_map, std::vector<std::pair<K, V>>...),
+	// values are copied, use std::make_move_iterator in order to move them instead
+	template <typename Iterator, typename = decltype((*std::declval<Iterator &>()).first)>
+	map_typed(Iterator first, Iterator last) :
+		map_typed(entries(first, last))
+	{
 	}
 
 	explicit map_typed(void *value_ptr) :
@@ -570,21 +737,27 @@ public:
 		rehash();
 	}
 
-	V operator[](const K &key) const
+	// The copy is a view of the map, it does not own the value and it shares the converted elements
+	map_typed(const map_typed &m) :
+		value_base(m.to_raw(), &value_base::noop_destructor), m(m.m) {}
+
+	map_typed(map_typed &&m) noexcept = default;
+
+	const V &operator[](const K &key) const
 	{
-		return m.at(key).second.to_value();
+		return m->at(key);
 	}
 
 	std::optional<V> operator()(const K &key) const
 	{
-		auto it = m.find(key);
+		auto it = m->find(key);
 
-		if (it == m.end())
+		if (it == m->end())
 		{
 			return std::nullopt;
 		}
 
-		return it->second.second.to_value();
+		return it->second;
 	}
 
 	static enum metacall_value_id id()
@@ -592,29 +765,138 @@ public:
 		return METACALL_MAP;
 	}
 
+	class iterator
+	{
+	public:
+		using map_iterator = typename container_type::const_iterator;
+
+		using iterator_category = std::forward_iterator_tag;
+		using difference_type = std::ptrdiff_t;
+		using value_type = typename container_type::value_type;
+		using pointer = const value_type *;
+		using reference = const value_type &;
+
+		explicit iterator(map_iterator it) :
+			it(it) {}
+
+		reference operator*() const
+		{
+			return *it;
+		}
+
+		pointer operator->() const
+		{
+			return &(*it);
+		}
+
+		iterator &operator++()
+		{
+			++it;
+			return *this;
+		}
+
+		iterator operator++(int)
+		{
+			iterator tmp(*this);
+			++(*this);
+			return tmp;
+		}
+
+		bool operator==(const iterator &other) const
+		{
+			return it == other.it;
+		}
+
+		bool operator!=(const iterator &other) const
+		{
+			return !(*this == other);
+		}
+
+	private:
+		map_iterator it;
+	};
+
+	iterator begin() const
+	{
+		return iterator(m->cbegin());
+	}
+
+	iterator end() const
+	{
+		return iterator(m->cend());
+	}
+
 protected:
+	// Convert the elements once, so operator[] and iterators do not need to convert them on each access
 	void rehash()
 	{
 		void *ptr = to_raw();
 		void **map_array = metacall_value_to_map(ptr);
 		const size_t size = metacall_value_count(ptr);
+		auto container = std::make_shared<container_type>();
 
-		m.clear();
+		container->reserve(size);
 
 		for (size_t index = 0; index < size; ++index)
 		{
 			void **tuple_array = metacall_value_to_array(map_array[index]);
 
-			// Create the values
-			auto pair = std::make_pair(value_typed<K>(tuple_array[0]), value_typed<V>(tuple_array[1]));
-
-			// Store into the map
-			m.emplace(pair.first.to_value(), std::move(pair));
+			container->emplace(value_typed<K>(tuple_array[0]).to_value(), value_typed<V>(tuple_array[1]).to_value());
 		}
+
+		m = std::move(container);
 	}
 
 private:
-	std::unordered_map<K, pair_value_type> m;
+	template <typename Iterator>
+	static std::vector<entry> entries(Iterator first, Iterator last)
+	{
+		std::vector<entry> result;
+
+		for (; first != last; ++first)
+		{
+			auto &&pair = *first;
+
+			result.emplace_back(pair.first, std::forward<decltype(pair)>(pair).second);
+		}
+
+		return result;
+	}
+
+	template <typename EntryIterator>
+	static void *create(EntryIterator first, EntryIterator last, size_t size)
+	{
+		std::unique_ptr<void, void (*)(void *)> map_value(metacall_value_create_map(NULL, size), &metacall_value_destroy);
+
+		if (map_value == nullptr)
+		{
+			throw std::runtime_error("Failed to create MetaCall map value");
+		}
+
+		void **map_array = metacall_value_to_map(map_value.get());
+
+		for (size_t index = 0; first != last; ++first, ++index)
+		{
+			void *tuple = metacall_value_create_array(NULL, 2);
+
+			if (tuple == NULL)
+			{
+				// The map is destroyed with the tuples inserted until now
+				throw std::runtime_error("Failed to create MetaCall map tuple");
+			}
+
+			void **tuple_array = metacall_value_to_array(tuple);
+
+			tuple_array[0] = first->key.release();
+			tuple_array[1] = first->value.release();
+
+			map_array[index] = tuple;
+		}
+
+		return map_value.release();
+	}
+
+	std::shared_ptr<const container_type> m;
 };
 
 // Partial specialization of map for value
@@ -624,12 +906,17 @@ class value_typed<map_typed<K, V>> : public value_base
 public:
 	using map_type = map_typed<K, V>;
 
-	explicit value_typed(void *ptr, void (*destructor)(void *) = &metacall_value_destroy) :
+	explicit value_typed(void *ptr, void (*destructor)(void *) = &value_base::noop_destructor) :
 		value_base(ptr, destructor) {}
 
 	static void *create(map_type &v)
 	{
-		return v.release();
+		return v.release_or_copy();
+	}
+
+	static void *create(const map_type &v)
+	{
+		return metacall_value_copy(v.to_raw());
 	}
 
 	static enum metacall_value_id id()
@@ -716,6 +1003,20 @@ auto register_function_args(void *args[])
 	return register_function_args_tuple<Args...>(args, std::make_index_sequence<sizeof...(Args)>());
 }
 
+// Type id of the return value, void functions return null
+template <typename Ret>
+enum metacall_value_id return_id()
+{
+	if constexpr (std::is_void_v<Ret>)
+	{
+		return METACALL_NULL;
+	}
+	else
+	{
+		return value_typed<std::remove_cv_t<std::remove_reference_t<Ret>>>::id();
+	}
+}
+
 template <typename Ret>
 int register_function(const char *name, Ret (*func)(void), void **func_ptr)
 {
@@ -733,11 +1034,22 @@ int register_function(const char *name, Ret (*func)(void), void **func_ptr)
 		// Get target function from closure
 		auto func = (Ret(*)(void))(data);
 
-		// Execute the call
-		auto result = func();
+		if constexpr (std::is_void_v<Ret>)
+		{
+			// Execute the call
+			func();
 
-		// Generate return value
-		return value_typed<Ret>::create(result);
+			// Generate null return value
+			return metacall_value_create_null();
+		}
+		else
+		{
+			// Execute the call
+			auto result = func();
+
+			// Generate return value
+			return value_typed<Ret>::create(result);
+		}
 	};
 
 	enum metacall_value_id types[] = { METACALL_INVALID };
@@ -746,7 +1058,7 @@ int register_function(const char *name, Ret (*func)(void), void **func_ptr)
 		name,
 		invoke,
 		func_ptr,
-		value_typed<std::remove_cv_t<std::remove_reference_t<Ret>>>::id(),
+		return_id<Ret>(),
 		0,
 		types,
 		(void *)(func));
@@ -774,11 +1086,22 @@ int register_function(const char *name, Ret (*func)(Args...), void **func_ptr)
 		// Get target function from closure
 		auto func = (Ret(*)(Args...))(data);
 
-		// Apply the function to the unpacked arguments
-		auto result = std::apply(func, tuple_args);
+		if constexpr (std::is_void_v<Ret>)
+		{
+			// Apply the function to the unpacked arguments
+			std::apply(func, tuple_args);
 
-		// Generate return value
-		return value_typed<Ret>::create(result);
+			// Generate null return value
+			return metacall_value_create_null();
+		}
+		else
+		{
+			// Apply the function to the unpacked arguments
+			auto result = std::apply(func, tuple_args);
+
+			// Generate return value
+			return value_typed<Ret>::create(result);
+		}
 	};
 
 	enum metacall_value_id types[] = { value_typed<std::remove_cv_t<std::remove_reference_t<Args>>>::id()... };
@@ -787,7 +1110,7 @@ int register_function(const char *name, Ret (*func)(Args...), void **func_ptr)
 		name,
 		invoke,
 		func_ptr,
-		value_typed<std::remove_cv_t<std::remove_reference_t<Ret>>>::id(),
+		return_id<Ret>(),
 		sizeof...(Args),
 		types,
 		(void *)(func));
@@ -812,7 +1135,10 @@ public:
 
 	~function() {}
 
-	value_typed<Ret> operator()(Args &&...args) const
+	// Void functions do not return a value
+	using return_type = std::conditional_t<std::is_void_v<Ret>, void, value_typed<Ret>>;
+
+	return_type operator()(Args &&...args) const
 	{
 		constexpr std::size_t size = sizeof...(Args);
 		std::array<value_base, size> value_args = { { detail::to_value_base(std::forward<Args>(args))... } };
@@ -830,7 +1156,14 @@ public:
 			throw std::runtime_error("MetaCall invokation has failed by returning NULL");
 		}
 
-		return value_typed<Ret>(ret, &metacall_value_destroy);
+		if constexpr (std::is_void_v<Ret>)
+		{
+			metacall_value_destroy(ret);
+		}
+		else
+		{
+			return value_typed<Ret>(ret, &metacall_value_destroy);
+		}
 	}
 
 private:
@@ -865,7 +1198,7 @@ function<Ret, Args...> register_function(Ret (*func)(Args...))
 }
 
 template <typename Ret, typename... Args>
-value_typed<Ret> metacall(std::string name, Args &&...args)
+std::conditional_t<std::is_void_v<Ret>, void, value_typed<Ret>> metacall(std::string name, Args &&...args)
 {
 	constexpr std::size_t size = sizeof...(Args);
 	std::array<value_base, size> value_args = { { detail::to_value_base(std::forward<Args>(args))... } };
@@ -876,14 +1209,21 @@ value_typed<Ret> metacall(std::string name, Args &&...args)
 		raw_args[i] = value_args[i].to_raw();
 	}
 
-	void *ret = metacallv_s(name.c_str(), null_safe_args(raw_args.data()), size);
+	void *ret = metacallv_s(name.c_str(), detail::null_safe_args(raw_args.data()), size);
 
 	if (ret == NULL)
 	{
 		throw std::runtime_error("MetaCall invokation to '" + name + "' has failed by returning NULL");
 	}
 
-	return value_typed<Ret>(ret, &metacall_value_destroy);
+	if constexpr (std::is_void_v<Ret>)
+	{
+		metacall_value_destroy(ret);
+	}
+	else
+	{
+		return value_typed<Ret>(ret, &metacall_value_destroy);
+	}
 }
 
 class value : public value_base
@@ -915,13 +1255,13 @@ public:
 		value_base(metacall_value_create_null()) {}
 
 	value(array &a) :
-		value_base(a.release()) {}
+		value_base(a.release_or_copy()) {}
 	value(const array &arr) :
 		value_base(metacall_value_copy(arr.to_raw())) {}
 
 	template <class K, class V>
 	value(map_typed<K, V> &m) :
-		value_base(m.release()) {}
+		value_base(m.release_or_copy()) {}
 
 	template <class K, class V>
 	value(const map_typed<K, V> &m) :
@@ -962,7 +1302,12 @@ public:
 
 	static void *create(value &v)
 	{
-		return v.release();
+		return v.release_or_copy();
+	}
+
+	static void *create(const value &v)
+	{
+		return metacall_value_copy(v.to_raw());
 	}
 
 	enum metacall_value_id id()
@@ -975,6 +1320,28 @@ public:
 		return value(to_raw(), &value_base::noop_destructor);
 	}
 };
+
+inline std::map<std::string, enum metacall_value_id> loader_types(const std::string &tag)
+{
+	struct metacall_loader_type *array = NULL;
+	size_t size = 0;
+
+	if (metacall_loader_types(tag.c_str(), &array, &size) != 0)
+	{
+		throw std::runtime_error("Failed to retrieve the types of loader '" + tag + "'");
+	}
+
+	/* The array is owned by the caller, names are owned by the loader */
+	std::unique_ptr<struct metacall_loader_type, void (*)(void *)> types(array, &std::free);
+	std::map<std::string, enum metacall_value_id> result;
+
+	for (size_t i = 0; i < size; ++i)
+	{
+		result.emplace(types.get()[i].name, types.get()[i].id);
+	}
+
+	return result;
+}
 
 } /* namespace metacall */
 

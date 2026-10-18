@@ -65,6 +65,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
       - [5.3.2 Serials](#532-serials)
         - [5.3.2.1 MetaCall](#5321-metacall)
         - [5.3.2.2 RapidJSON](#5322-rapidjson)
+        - [5.3.2.3 SimdJSON](#5323-simdjson)
       - [5.3.3 Detours](#533-detours)
         - [5.3.3.1 PLTHook](#5331-plthook)
     - [5.4 Ports](#54-ports)
@@ -488,6 +489,26 @@ The common lifecycle is `initialize` -> optional `execution_path` -> `load_from_
 
 ##### 5.3.1.1 Python
 
+The Python Loader embeds CPython, and communicates with it through the Python C API.
+
+- **Tag**: `py`
+- **CMake flag**: `OPTION_BUILD_LOADERS_PY` (requires `OPTION_BUILD_LOADERS` to be enabled as well; the loader is not built if the parent option is off)
+- **Test**: [`metacall-python-test`](https://github.com/metacall/core/tree/c38c21d086d52c4f7d1ddbb79f095efbf2207d7d/source/tests/metacall_python_test)
+- **Minimum version**: Python >= 3.5, enforced through a compile-time check in [`py_loader_impl.c`](https://github.com/metacall/core/blob/c38c21d086d52c4f7d1ddbb79f095efbf2207d7d/source/loaders/py_loader/source/py_loader_impl.c#L2124). 
+##### Runtime behavior
+
+**Threading and the GIL**
+
+ The Python loader operates under CPython's Global Interpreter Lock (GIL). When interacting with Python objects, the loader acquires the Python thread state before accessing them and releases it afterward using `py_loader_thread_acquire()` and `py_loader_thread_release()`. Newer CPython versions also support optional free-threaded builds where the GIL can be disabled.[Check official python documentation](https://docs.python.org/3/howto/free-threading-python.html)
+
+**Async/await**
+
+Async/await is implemented using Python's standard `asyncio` facilities. The asyncio event loop runs in a separate thread to avoid blocking the calling thread (see [`py_loader_impl.c`](https://github.com/metacall/core/blob/c38c21d086d52c4f7d1ddbb79f095efbf2207d7d/source/loaders/py_loader/source/py_loader_impl.c#L2217)). Results are handled through futures and callbacks.
+##### Limitations
+
+- `load_from_package` is unimplemented and always returns `NULL`. Python has no compiled-package format directly comparable to the shared libraries or bytecode packages used by other loaders; the closest equivalent is `.pyc` bytecode which is loaded the same way as a regular `.py` file through `load_from_file` instead.
+
+
 ##### 5.3.1.2 NodeJS
 
 ##### 5.3.1.3 JavaScript
@@ -505,6 +526,8 @@ The common lifecycle is `initialize` -> optional `execution_path` -> `load_from_
 ##### 5.3.2.1 MetaCall
 
 ##### 5.3.2.2 RapidJSON
+
+##### 5.3.2.3 SimdJSON
 
 #### 5.3.3 Detours
 
@@ -809,6 +832,12 @@ For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag a
 make memcheck
 ```
 
+For running only some tests with Valgrind, set `MEMCHECK_TEST` to a regex of the test names:
+
+```sh
+MEMCHECK_TEST=adt-vector-test make memcheck
+```
+
 For running a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_ADDRESS_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
 
 ```sh
@@ -861,7 +890,6 @@ Usage: `metacall-environment.sh` list of components, example:
 |       Components                                   |                                            Description                                                 |
 |:---------------------------------------------------|-------------------------------------------------------------------------------------------------------:|
 |       base                                         |         Compiler and base requirements for compiling MetaCall.                                         |
-|       rapidjson                                    |         Installs RapidJSON serialization for serializing MetaCall data with JSON.                      |
 |       pack                                         |         Bundle scripts into one deployable runtime.                                                    |
 |       sandbox                                      |         Provides isolated execution contexts for safer script execution.                               |
 |       backtrace                                    |         Generates detailed stack traces and improves error diagnostics across languages.               |
@@ -1180,7 +1208,7 @@ Full stack trace for a specific error:
 grep -B5 -A 30 "use-of-uninitialized-value\|WARNING: MemorySanitizer" log.txt
 ```
 
-> **Note:** The `msan-ignorelist.txt` file is compile-time only. After editing it, always run `cmake ..` followed by a rebuild  otherwise changes are silently ignored since `make` reuses cached object files compiled under the old rules.
+> **Note:** The `msan.ignorelist` file is compile-time only. After editing it, always run `cmake ..` followed by a rebuild  otherwise changes are silently ignored since `make` reuses cached object files compiled under the old rules.
 
 ## 9. Benchmarks
 

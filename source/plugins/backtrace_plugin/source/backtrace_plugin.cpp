@@ -20,22 +20,27 @@
 
 #include <backtrace_plugin/backtrace_plugin.h>
 
-#include <backward.hpp>
+/* This plugin is async unsafe and produces noise when interacting with Thread Sanitizer, remove this when it is async safe */
+#if !defined(__THREAD_SANITIZER__)
+	#include <backward.hpp>
 
-#include <log/log.h>
+	#include <log/log.h>
 
 static backward::SignalHandling signal_handling;
+#endif
 
 int backtrace_plugin(void *loader, void *handle)
 {
 	(void)loader;
 	(void)handle;
 
+#if !defined(__THREAD_SANITIZER__)
 	if (signal_handling.loaded() == false)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Backtrace plugin failed to load, you need unwind/libunwind for stacktracing and libbfd/libdw/libdwarf for the debug information. Install the required libraries and recompile to utilise the backtrace plugin. For more information visit https://github.com/bombela/backward-cpp");
 		return 1;
 	}
+#endif
 
 	return 0;
 }
