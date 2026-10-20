@@ -22,6 +22,8 @@
 
 #include <threading/threading_atomic_ref_count.h>
 
+#include <reflect/reflect_memory_tracker.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
@@ -33,6 +35,8 @@ struct future_type
 	future_interface interface;
 	threading_atomic_ref_count_type ref;
 };
+
+reflect_memory_tracker(future_stats);
 
 future future_create(future_impl impl, future_impl_interface_singleton singleton)
 {
@@ -69,6 +73,8 @@ future future_create(future_impl impl, future_impl_interface_singleton singleton
 		}
 	}
 
+	reflect_memory_tracker_allocation(future_stats);
+
 	return f;
 }
 
@@ -84,6 +90,8 @@ int future_increment_reference(future f)
 		return 1;
 	}
 
+	reflect_memory_tracker_increment(future_stats);
+
 	return 0;
 }
 
@@ -98,6 +106,8 @@ int future_decrement_reference(future f)
 	{
 		return 1;
 	}
+
+	reflect_memory_tracker_decrement(future_stats);
 
 	return 0;
 }
@@ -121,6 +131,11 @@ future_return future_await(future f, future_resolve_callback resolve_callback, f
 	return NULL;
 }
 
+void future_stats_debug(void)
+{
+	reflect_memory_tracker_print(future_stats, "FUTURES");
+}
+
 void future_destroy(future f)
 {
 	if (f != NULL)
@@ -140,6 +155,8 @@ void future_destroy(future f)
 			threading_atomic_ref_count_destroy(&f->ref);
 
 			free(f);
+
+			reflect_memory_tracker_deallocation(future_stats);
 		}
 	}
 }
