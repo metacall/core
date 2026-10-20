@@ -18,14 +18,20 @@ include("${CMAKE_CURRENT_LIST_DIR}/../source/go_port.cmake")
 foreach(PROFILE ${GO_PPROF_PROFILES})
 	set(PROFILE_FILE "${GO_PPROF_DIR}/${PROFILE}.pprof")
 
-	if(NOT EXISTS "${PROFILE_FILE}")
-		# Profiles may not be generated when the tests fail
+	set(PROFILE_SIZE 0)
+
+	if(EXISTS "${PROFILE_FILE}")
+		file(SIZE "${PROFILE_FILE}" PROFILE_SIZE)
+	endif()
+
+	if(PROFILE_SIZE EQUAL 0)
+		# Profiles may not be generated or may be empty when the tests fail (i.e crash before flushing the CPU profile)
 		if(GO_PORT_ERROR)
-			message(WARNING "Go profile not found: ${PROFILE_FILE}")
+			message(WARNING "Go profile not found or empty: ${PROFILE_FILE}")
 			continue()
 		endif()
 
-		message(FATAL_ERROR "Go profile not found: ${PROFILE_FILE}")
+		message(FATAL_ERROR "Go profile not found or empty: ${PROFILE_FILE}")
 	endif()
 
 	execute_process(COMMAND

@@ -54,6 +54,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInf
 	endif()
 endif()
 
+# Symbolizer of cgo backtraces, only in builds with debug information (Debug or RelWithDebInfo) without address, thread or memory sanitizer or memcheck (see source/symbolizer.go)
+if((CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo") AND NOT OPTION_BUILD_ADDRESS_SANITIZER AND NOT OPTION_BUILD_THREAD_SANITIZER AND NOT OPTION_TEST_MEMORYCHECK)
+	list(APPEND GO_PORT_FLAGS -tags=symbolizer)
+endif()
+
 # Find the compiler (name-<major> or name) with the same major version as the metacall C compiler
 macro(go_port_find_cc name)
 	string(TOUPPER "${name}" GO_PORT_CC_NAME)
@@ -76,6 +81,9 @@ if(GO_PORT_SANITIZER_FLAGS)
 	endif()
 endif()
 
+# Go flags passed to the build and test tasks
+list(JOIN GO_PORT_FLAGS " " GO_PORT_BUILD_FLAGS)
+
 # Pass memory check and sanitizer definitions to cgo
 set(GO_PORT_COMPILE_DEFINITIONS
 	${MEMORYCHECK_COMPILE_DEFINITIONS}
@@ -95,7 +103,7 @@ add_custom_target(${target}
 		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
 		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
 		-DGO_TASK="build"
-		-DGO_FLAGS="${GO_PORT_FLAGS}"
+		-DGO_FLAGS="${GO_PORT_BUILD_FLAGS}"
 		-DGO_CC="${GO_PORT_CC}"
 		-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/go_port.cmake
@@ -129,7 +137,7 @@ add_test(NAME ${target}
 		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
 		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
 		-DGO_TASK="test"
-		-DGO_FLAGS="${GO_PORT_FLAGS}"
+		-DGO_FLAGS="${GO_PORT_BUILD_FLAGS}"
 		-DGO_CC="${GO_PORT_CC}"
 		-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/go_port.cmake
@@ -177,61 +185,67 @@ test_environment_variables(${target}
 # Define profiling test
 #
 
-# Profiles are generated without race detector because it distorts the results, sanitizers are kept
-# because metacall is instrumented and it must be linked with them
-set(GO_PORT_PPROF_DIR "${CMAKE_CURRENT_BINARY_DIR}/pprof")
-file(MAKE_DIRECTORY "${GO_PORT_PPROF_DIR}")
+# Profiles are only generated in release builds (Release or RelWithDebInfo) without sanitizers or memory check (valgrind),
+# because the instrumentation distorts the results and it conflicts with the profiler (i.e ThreadSanitizer intercepts
+# the SIGPROF handler and delivers the signal with a stale context, which crashes the Go runtime while unwinding the stack)
+if((CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+	AND NOT OPTION_BUILD_ADDRESS_SANITIZER
+	AND NOT OPTION_BUILD_THREAD_SANITIZER
+	AND NOT OPTION_BUILD_MEMORY_SANITIZER
+	AND NOT OPTION_TEST_MEMORYCHECK)
+	set(GO_PORT_PPROF_DIR "${CMAKE_CURRENT_BINARY_DIR}/pprof")
+	file(MAKE_DIRECTORY "${GO_PORT_PPROF_DIR}")
 
-set(GO_PORT_PPROF_FLAGS ${GO_PORT_FLAGS})
-list(REMOVE_ITEM GO_PORT_PPROF_FLAGS -race)
-list(APPEND GO_PORT_PPROF_FLAGS
-	-outputdir ${GO_PORT_PPROF_DIR}
-	-o ${GO_PORT_PPROF_DIR}/${target}.test
-	-cpuprofile cpu.pprof
-	-memprofile mem.pprof
-	-blockprofile block.pprof
-	-mutexprofile mutex.pprof
-)
-list(JOIN GO_PORT_PPROF_FLAGS " " GO_PORT_PPROF_FLAGS)
+	set(GO_PORT_PPROF_FLAGS ${GO_PORT_FLAGS})
+	list(APPEND GO_PORT_PPROF_FLAGS
+		-outputdir ${GO_PORT_PPROF_DIR}
+		-o ${GO_PORT_PPROF_DIR}/${target}.test
+		-cpuprofile cpu.pprof
+		-memprofile mem.pprof
+		-blockprofile block.pprof
+		-mutexprofile mutex.pprof
+	)
+	list(JOIN GO_PORT_PPROF_FLAGS " " GO_PORT_PPROF_FLAGS)
 
-# Profiles to be analyzed, the goroutine leaks profile is only generated when NodeJS loader is enabled
-set(GO_PORT_PPROF_PROFILES cpu mem block mutex goroutine)
-if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE)
-	list(APPEND GO_PORT_PPROF_PROFILES goroutine_leaks)
+	# Profiles to be analyzed, the goroutine leaks profile is only generated when NodeJS loader is enabled
+	set(GO_PORT_PPROF_PROFILES cpu mem block mutex goroutine)
+	if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE)
+		list(APPEND GO_PORT_PPROF_PROFILES goroutine_leaks)
+	endif()
+	list(JOIN GO_PORT_PPROF_PROFILES " " GO_PORT_PPROF_PROFILES)
+
+	add_test(NAME ${target}_pprof
+		COMMAND ${CMAKE_COMMAND}
+			-DGOPATH="${GOPATH}"
+			-DCMAKE_Go_COMPILER="${CMAKE_Go_COMPILER}"
+			-DCGO_CFLAGS="${GO_PORT_CGO_CFLAGS}"
+			-DCGO_LDFLAGS="${GO_PORT_CGO_LDFLAGS}"
+			-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
+			-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
+			-DGO_TASK="test"
+			-DGO_FLAGS="${GO_PORT_PPROF_FLAGS}"
+			-DGO_CC="${GO_PORT_CC}"
+			-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
+			-DGO_PPROF_DIR="${GO_PORT_PPROF_DIR}"
+			-DGO_PPROF_BINARY="${GO_PORT_PPROF_DIR}/${target}.test"
+			-DGO_PPROF_PROFILES="${GO_PORT_PPROF_PROFILES}"
+			-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeGoProfiler.cmake
+	)
+
+	set_property(TEST ${target}_pprof
+		PROPERTY LABELS ${target}
+	)
+
+	set_property(TEST ${target}_pprof
+		PROPERTY RESOURCE_LOCK ${target}_sources
+	)
+
+	test_environment_variables(${target}_pprof
+		""
+		${GO_PORT_TEST_ENVIRONMENT_VARIABLES}
+		"PPROFDIR=${GO_PORT_PPROF_DIR}"
+	)
 endif()
-list(JOIN GO_PORT_PPROF_PROFILES " " GO_PORT_PPROF_PROFILES)
-
-add_test(NAME ${target}_pprof
-	COMMAND ${CMAKE_COMMAND}
-		-DGOPATH="${GOPATH}"
-		-DCMAKE_Go_COMPILER="${CMAKE_Go_COMPILER}"
-		-DCGO_CFLAGS="${GO_PORT_CGO_CFLAGS}"
-		-DCGO_LDFLAGS="${GO_PORT_CGO_LDFLAGS}"
-		-DLIBRARY_PATH_NAME="${PROJECT_LIBRARY_PATH_NAME}"
-		-DLIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
-		-DGO_TASK="test"
-		-DGO_FLAGS="${GO_PORT_PPROF_FLAGS}"
-		-DGO_CC="${GO_PORT_CC}"
-		-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
-		-DGO_PPROF_DIR="${GO_PORT_PPROF_DIR}"
-		-DGO_PPROF_BINARY="${GO_PORT_PPROF_DIR}/${target}.test"
-		-DGO_PPROF_PROFILES="${GO_PORT_PPROF_PROFILES}"
-		-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeGoProfiler.cmake
-)
-
-set_property(TEST ${target}_pprof
-	PROPERTY LABELS ${target}
-)
-
-set_property(TEST ${target}_pprof
-	PROPERTY RESOURCE_LOCK ${target}_sources
-)
-
-test_environment_variables(${target}_pprof
-	""
-	${GO_PORT_TEST_ENVIRONMENT_VARIABLES}
-	"PPROFDIR=${GO_PORT_PPROF_DIR}"
-)
 
 #
 # Define benchmark test

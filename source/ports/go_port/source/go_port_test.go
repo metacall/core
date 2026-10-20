@@ -481,7 +481,7 @@ def getClass():
 	}
 }
 
-// Run the garbage collector so the finalizers of the wrappers destroy their values
+// Run the garbage collector so the finalizers are called
 func runFinalizers() {
 	for i := 0; i < 3; i++ {
 		runtime.GC()

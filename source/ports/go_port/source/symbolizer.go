@@ -1,4 +1,4 @@
-//go:build !asan
+//go:build symbolizer
 
 /*
  *	MetaCall Go Port by Parra Studios
@@ -24,7 +24,9 @@ package metacall
 
 import (
 	// Library to provide a symbolic backtrace of cgo functions to help debugging and monitoring of C functions
-	// This library works with pprof of Go. It is disabled with address sanitizer because it allocates the
-	// executable path at initialization and never frees it, which is reported by LeakSanitizer
+	// This library works with pprof of Go. It is only enabled in builds with debug information (symbolizer tag) and
+	// disabled with address sanitizer because it allocates the executable path at initialization and never
+	// frees it, which is reported by LeakSanitizer, and with thread sanitizer because libbacktrace is called
+	// by the Go runtime from the profiling signal handler, which produces data race reports
 	_ "github.com/ianlancetaylor/cgosymbolizer"
 )

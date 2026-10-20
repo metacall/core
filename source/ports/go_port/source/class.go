@@ -68,7 +68,8 @@ func (c *Class) New(name string, args ...interface{}) (*Object, error) {
 	}
 
 	cls := C.metacall_class_new(c.ptr, cName, (*unsafe.Pointer)(cArgs), argNum)
-	// Keep the wrapper alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
+
+	// Keep the class alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
 	runtime.KeepAlive(c)
 
 	if cls == nil {
@@ -91,7 +92,8 @@ func (c *Class) StaticGet(key string) (interface{}, error) {
 	defer C.free(unsafe.Pointer(cKey))
 
 	ret := C.metacall_class_static_get(c.ptr, cKey)
-	// Keep the wrapper alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
+
+	// Keep the class alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
 	runtime.KeepAlive(c)
 
 	if ret == nil {
@@ -119,7 +121,8 @@ func (c *Class) StaticSet(key string, val interface{}) error {
 	defer C.metacall_value_destroy(p)
 
 	result := C.metacall_class_static_set(c.ptr, cKey, p)
-	// Keep the wrapper alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
+
+	// Keep the class alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
 	runtime.KeepAlive(c)
 
 	if result != 0 {

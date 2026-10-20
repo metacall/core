@@ -2,17 +2,16 @@
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/metacall/core/source/ports/go_port/source)](https://pkg.go.dev/github.com/metacall/core/source/ports/go_port/source) [![Go Report Card](https://goreportcard.com/badge/github.com/metacall/core)](https://goreportcard.com/report/github.com/metacall/core)
 
-This project implements a wrapper of MetaCall API for Go.
+This project implements a wrapper of MetaCall C API for Go. We support all MetaCall types, see this README for more info about MetaCall project and its type system [MetaCall Core README](https://github.com/metacall/core/blob/develop/docs/README.md). Currently, Neither MetaCall support unsigned types nor the Go port.
 
 ## Examples
+
+# Calling a TypeScript function in Go
 
 `test.ts`:
 ```ts
 export function concat(left: string, right: string): string {
         return left + right;
-}
-export async function sum(a: number, b: number): Promise<number> {
-	return a + b;
 }
 ```
 
@@ -23,6 +22,7 @@ package main
 import (
 	metacall "github.com/metacall/core/source/ports/go_port/source"
 	"os"
+	"fmt"
 )
 
 func main() {
@@ -49,14 +49,40 @@ func main() {
 	}
 
 	if str, ok := ret.(string); ok {
-		fmt.Println(str)
+		fmt.Println(str) // "helloworld"
 	}
-	
-	// Calling async function in TypeScript
+}
+```
+
+# Calling TypeScript async function in Go
+
+`test.ts`:
+```ts
+export async function sum(a: number, b: number): Promise<number> {
+	return a + b;
+}
+```
+
+`main.go`:
+```go
+package main
+
+import (
+	metacall "github.com/metacall/core/source/ports/go_port/source"
+	"os"
+	"fmt"
+	"sync"
+)
+
+func main() {
 	var sum int
+
+	// WaitGroup is optional, there are other ways to handle the result in a non blocking way:
+	// 1) the future can be chained (here it is discared) or
+	// 2) we can pass a value in ctx for executing res.Send(...) in a server handler for example
 	var wg sync.WaitGroup
-	// WaitGroup is not necessary, the promise can be chained or pass value in ctx for executing res.Send(...)
 	wg.Add(1)
+
 	_, err := metacall.Await("sum",
 		func(value interface{}, ctx interface{}) interface{} {
 			log.Println("from resolve callback ", value)
@@ -72,13 +98,121 @@ func main() {
 		},
 		nil,
 		10, 20)
+
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(sum)
+
+	// Wait until the callback calls wg.Done()
+	wg.Wait()
+
+	fmt.Println(sum) // 30
 }
 ```
+
+# Calling Python script using a configuration in Go
+
+`example.py`:
+```py
+def appName():
+    return "metacall"
+```
+
+`test.json`:
+```json
+{
+	"language_id": "py",
+	"path": ".",
+	"scripts": [ "example.py" ]
+}
+```
+
+`main.go`:
+```go
+package main
+
+import (
+	metacall "github.com/metacall/core/source/ports/go_port/source"
+	"fmt"
+)
+
+func main() {
+	if err := metacall.LoadFromConfig("test.json"); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	val, err := Call("appName")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	strVal, ok := val.(string)
+	if ok {
+		fmt.Println(strVal)
+		return
+	}
+}
+```
+
+# Calling MetaCall C package in Go
+`main.go`:
+```go
+package main
+
+import (
+	metacall "github.com/metacall/core/source/ports/go_port/source"
+	"fmt"
+)
+
+func main() {
+	options := map[string]interface{}{
+		"libs":                 []string{"./lib/libmetacall.so"},
+		"headers":              []string{"./include/metacall/metacall.h"},
+		"include_search_paths": []string{"./include"},
+	}
+	if err := LoadFromPackageEx("c", "metacall", options); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	val, err := Call("metacall_print_info")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	str, ok := val.(string)
+	if ok {
+		fmt.Println(str)
+		return
+	}
+}
+```
+
+## MetaCall APIs in Go
+
+| API | Go implementation | Functionality |
+|---|---|---|
+| metacall_load_from_file | LoadFromFile | load from a local file |
+| metacall_load_from_memory | LoadFromMemory | load scripts from memory |
+| metacall_load_from_package | LoadFromPackage | load from a simple package, module, ..etc providing it exists on local device in standard path (using LD_LIBRARY_PATH or given full path to the function)|
+| metacall_load_from_package_ex | LoadFromPackageEx | load from a complex package, module, ..etc providing it exists on local device in non standard path (custom include paths, multiple libs)|
+| metacall_load_from_configuration | LoadFromConfig | parses a configuration block or file to dynamically resolve paths, target runtimes, and dependencies |
+| metacall_execution_path | ExecutionPath | append or define search pathes of runtime libraries, headers, ...etc for MetaCall loaders |
+
+## Debuging
+
+Go port uses Go profiles (goroutine, heap, trace, cmdline, symbol) and symbolizers to monitor and locate any leaks or bugs during development. Profiles are exported to a localhost server, you can see them by using go pprof cli tool via command `go tool pprof http://localhost:6060/debug/pprof/name?debug=n` (change name with the profile, n with values >= 0) for more info about Go profiles visit [Profiling go with pprof](https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/). To enable profiles create a `.env` from `.env.example`. you can use Go sanitizers also to improve the debugging.
+
+## Prerequisites
+
+- Go: 1.17 or higher
+- Python: 3.12 or higher (for testing with go test)
+- C compiler for CGO: Clang (preferred) or GCC
+- MetaCall Core
 
 ## Building
 

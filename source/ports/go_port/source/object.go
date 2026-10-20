@@ -48,7 +48,8 @@ func (o *Object) Get(key string) (interface{}, error) {
 	defer C.free(unsafe.Pointer(cKey))
 
 	ret := C.metacall_object_get(o.ptr, cKey)
-	// Keep the wrapper alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
+
+	// Keep the object alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
 	runtime.KeepAlive(o)
 
 	if ret == nil {
@@ -76,7 +77,8 @@ func (o *Object) Set(key string, val interface{}) error {
 	defer C.metacall_value_destroy(p)
 
 	result := C.metacall_object_set(o.ptr, cKey, p)
-	// Keep the wrapper alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
+
+	// Keep the object alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
 	runtime.KeepAlive(o)
 
 	if result != 0 {
@@ -117,7 +119,8 @@ func (o *Object) Call(method string, args ...interface{}) (interface{}, error) {
 	}
 
 	ret := C.metacallv_object(o.ptr, cMethod, (*unsafe.Pointer)(cArgs), argNum)
-	// Keep the wrapper alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
+
+	// Keep the object alive until the call finishes, otherwise its finalizer can destroy the value meanwhile
 	runtime.KeepAlive(o)
 
 	if ret == nil {
