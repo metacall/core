@@ -2280,6 +2280,9 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"	try:\n"
 		"		loop.run_forever()\n"
 		"	finally:\n"
+#if DEBUG_ENABLED
+		"		print('Loop stopping, cleaning up...', flush=True)\n"
+#endif
 		"		try:\n"
 		"			pending = asyncio.all_tasks(loop)\n"
 		"			while pending:\n"
@@ -2302,6 +2305,9 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"				loop.close()\n"
 		"		except Exception as e:\n"
 		"			print(f\"Error closing loop: {e}\", flush=True)\n"
+#if DEBUG_ENABLED
+		"		print('Event loop closed', flush=True)\n"
+#endif
 		"def start_background_loop():\n"
 		"	loop = asyncio.new_event_loop()\n"
 #if DEBUG_ENABLED
