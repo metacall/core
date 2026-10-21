@@ -4180,7 +4180,18 @@ int py_loader_impl_destroy(loader_impl impl)
 
 		py_loader_thread_release();
 
+		PyThreadState *save_state = NULL;
+		if (PyGILState_Check() == 1)
+		{
+			save_state = PyEval_SaveThread();
+		}
+
 		threading_thread_join(&py_impl->asyncio_thread, NULL);
+
+		if (save_state != NULL)
+		{
+			PyEval_RestoreThread(save_state);
+		}
 
 		py_loader_thread_acquire();
 
