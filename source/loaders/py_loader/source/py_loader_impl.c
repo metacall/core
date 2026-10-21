@@ -1792,8 +1792,8 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	Py_IncRef(py_impl->asyncio_loop);
 	Py_IncRef(coroutine);
 	Py_IncRef(py_impl->py_task_callback_handler);
-	Py_IncRef(callback_status);
 
+	/* The tuple steals the only reference of callback_status, then the task keeps it alive */
 	PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
 	PyTuple_SetItem(args_tuple, 1, coroutine);
 	PyTuple_SetItem(args_tuple, 2, py_impl->py_task_callback_handler);
@@ -2863,20 +2863,14 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 {
 	if (module->name != NULL)
 	{
-		PyObject *system_modules = PySys_GetObject("modules");
+		PyObject *system_modules = PyImport_GetModuleDict();
 
-		// TODO: Sometimes this fails, seems that sys.modules does not contain the item.
-		// Probably is because of the new import system which is using importlib, but
-		// it does not seem something problematic although it will be interesting
-		// to check it out so we are sure there's no leaked memory
-		if (PyObject_HasAttr(system_modules, module->name) == 1)
+		/* The sys.modules is a dict, so the module must be looked up by key (not by attribute) */
+		if (PyDict_Contains(system_modules, module->name) == 1)
 		{
-			PyObject *item = PyObject_GetItem(system_modules, module->name);
-
-			if (item != NULL)
+			if (PyDict_DelItem(system_modules, module->name) != 0)
 			{
-				Py_DecRef(item);
-				PyObject_DelItem(system_modules, module->name);
+				PyErr_Clear();
 			}
 		}
 
@@ -3779,6 +3773,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 			PyObject *method_static = PyObject_CallObject(py_impl->inspect_getattr_static, args);
 			Py_DecRef(args);
 			bool is_static_method = PyObject_TypeCheck(method_static, PyStaticMethodTypePtr());
+			Py_DecRef(method_static);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s, static method: %d",
 				PyUnicode_AsUTF8(tuple_key),
@@ -3830,9 +3825,6 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 						PyUnicode_AsUTF8(tuple_key),
 						class_name(c));
 				}
-
-				/* Delete the reference of the method here instead of in py_method_interface_destroy */
-				Py_DecRef(tuple_val);
 			}
 			else
 			{
