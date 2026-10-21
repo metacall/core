@@ -1633,6 +1633,11 @@ value loader_impl_handle_export(void *handle)
 
 context loader_impl_handle_context(void *handle)
 {
+	if (handle == NULL)
+	{
+		return NULL;
+	}
+
 	loader_handle_impl handle_impl = handle;
 
 	return handle_impl->ctx;
