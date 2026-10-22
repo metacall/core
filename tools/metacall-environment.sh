@@ -209,7 +209,10 @@ sub_python(){
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 					printf "leak:*libpython*" &> ./asan.supp
 					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
-					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					# Disable the symbolizer of UBSan, the reports of CPython (i.e function type mismatch in the GC traverse functions) spawn
+					# llvm-symbolizer in the multiprocessing forkserver of compileall (make altinstall), and the workers forked from it inherit
+					# its pipes, so the concurrent requests of the workers get mixed and all of them block forever reading the symbolizer
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:symbolize=0"
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 					if [ $INSTALL_CLANG = 1 ]; then
