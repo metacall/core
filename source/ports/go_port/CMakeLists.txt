@@ -36,23 +36,37 @@ include(Portability)
 set(GO_PORT_FLAGS)
 set(GO_PORT_CC)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-	if(OPTION_BUILD_ADDRESS_SANITIZER)
-		set(GO_PORT_FLAGS -asan)
-	elseif(OPTION_BUILD_THREAD_SANITIZER)
-		# Go code is not instrumented because -race embeds its own runtime which is incompatible
-		# with libtsan, but cgo synchronizes the calls between Go and C when C is instrumented
-	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-		set(GO_PORT_FLAGS -msan)
-	elseif(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT OPTION_TEST_MEMORYCHECK)
-		# Detect data races of the Go code when no sanitizer or memory check (valgrind) is enabled
+# Platforms (apart from Linux) where the race detector of Go is supported: darwin/amd64, darwin/arm64, freebsd/amd64 and windows/amd64,
+# Go does not support -asan nor -msan in them, and -race is incompatible with the sanitizer runtimes, so with sanitizers only the cgo code is instrumented
+if((PROJECT_OS_FAMILY MATCHES "macos" AND (PROJECT_ARCH_AMD64 OR PROJECT_ARCH_AARCH64))
+	OR (PROJECT_OS_BSD AND PROJECT_ARCH_AMD64)
+	OR (PROJECT_OS_WIN AND PROJECT_ARCH_AMD64))
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug"
+		AND NOT OPTION_BUILD_ADDRESS_SANITIZER
+		AND NOT OPTION_BUILD_THREAD_SANITIZER
+		AND NOT OPTION_BUILD_MEMORY_SANITIZER
+		AND NOT OPTION_TEST_MEMORYCHECK)
 		set(GO_PORT_FLAGS -race)
 	endif()
-endif()
+elseif(PROJECT_OS_LINUX)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		if(OPTION_BUILD_ADDRESS_SANITIZER)
+			set(GO_PORT_FLAGS -asan)
+		elseif(OPTION_BUILD_THREAD_SANITIZER)
+			# Go code is not instrumented because -race embeds its own runtime which is incompatible
+			# with libtsan, but cgo synchronizes the calls between Go and C when C is instrumented
+		elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+			set(GO_PORT_FLAGS -msan)
+		elseif(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT OPTION_TEST_MEMORYCHECK)
+			# Detect data races of the Go code when no sanitizer or memory check (valgrind) is enabled
+			set(GO_PORT_FLAGS -race)
+		endif()
+	endif()
 
-# Symbolizer of cgo backtraces, only in builds with debug information (Debug or RelWithDebInfo) without address, thread or memory sanitizer or memcheck (see source/symbolizer.go)
-if((CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo") AND NOT OPTION_BUILD_ADDRESS_SANITIZER AND NOT OPTION_BUILD_THREAD_SANITIZER AND NOT OPTION_TEST_MEMORYCHECK)
-	list(APPEND GO_PORT_FLAGS -tags=symbolizer)
+	# Symbolizer of cgo backtraces, only in builds with debug information (Debug or RelWithDebInfo) without address, thread or memory sanitizer or memcheck (see source/symbolizer.go)
+	if((CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo") AND NOT OPTION_BUILD_ADDRESS_SANITIZER AND NOT OPTION_BUILD_THREAD_SANITIZER AND NOT OPTION_TEST_MEMORYCHECK)
+		list(APPEND GO_PORT_FLAGS -tags=symbolizer)
+	endif()
 endif()
 
 # Use the same sanitizer flags as metacall, they are passed to cgo by environment
