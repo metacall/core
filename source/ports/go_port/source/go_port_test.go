@@ -312,6 +312,13 @@ func TestValues(t *testing.T) {
 	const MIN_LONG = int64(-1 << (BitsPerWord - 1))
 	const MAX_LONG = int64(1<<(BitsPerWord-1) - 1)
 
+	// In 32-bit systems, int fits in metacall int, so it is returned as int
+	var INT_SYS_MIN, INT_SYS_MAX interface{} = int64(MIN_LONG), int64(MAX_LONG)
+
+	if BitsPerWord == 32 {
+		INT_SYS_MIN, INT_SYS_MAX = int(MIN_LONG), int(MAX_LONG)
+	}
+
 	// Create pointer values
 	var nullPtr *int = nil
 	b := byte('H')
@@ -340,8 +347,8 @@ func TestValues(t *testing.T) {
 		{"int32_max", int32(2147483647), int(2147483647)},
 		{"int_32sys_min", int(-2147483648), int(-2147483648)},
 		{"int_32sys_max", int(2147483647), int(2147483647)},
-		{"int_64sys_min", int(MIN_LONG), int64(MIN_LONG)},
-		{"int_64sys_max", int(MAX_LONG), int64(MAX_LONG)},
+		{"int_64sys_min", int(MIN_LONG), INT_SYS_MIN},
+		{"int_64sys_max", int(MAX_LONG), INT_SYS_MAX},
 		{"long", int64(3), int64(3)},
 		{"long_min", MIN_LONG, MIN_LONG},
 		{"long_max", MAX_LONG, MAX_LONG},
