@@ -1532,14 +1532,14 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	return NULL;
 }
 
-PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
+PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *py_future)
 {
 	py_loader_thread_acquire();
 
 	/* self will always be NULL */
 	(void)self;
 
-	PyObject *capsule = PyObject_GetAttrString(pyfuture, "__metacall_capsule");
+	PyObject *capsule = PyObject_GetAttrString(py_future, "__metacall_capsule");
 
 	if (capsule == NULL)
 	{
@@ -1551,11 +1551,11 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 	loader_impl_py_await_invoke_callback_state callback_state = PyCapsule_GetPointer(capsule, NULL);
 	Py_DecRef(capsule);
 
-	/* pyfuture should never raise InvalidStateError exception here */
+	/* py_future should never raise InvalidStateError exception here */
 	/* because this is a callback set in Future.add_done_callback */
 
 	PyObject *result_str = PyUnicode_FromString("result");
-	PyObject *result = PyObject_CallMethodObjArgs(pyfuture, result_str, NULL);
+	PyObject *result = PyObject_CallMethodObjArgs(py_future, result_str, NULL);
 	Py_DecRef(result_str);
 
 	value v = NULL, ret = NULL;
@@ -1625,6 +1625,9 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 		PyObject *py_result = py_loader_impl_value_to_capi(impl, value_type_id(ret), ret);
 
 		py_loader_thread_release();
+
+		/* The value returned by the callback is owned by the loader, it has been copied into py_result */
+		value_type_destroy(ret);
 
 		return py_result;
 	}
