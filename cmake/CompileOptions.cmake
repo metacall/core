@@ -476,7 +476,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PRO
 			-fno-optimize-sibling-calls
 			-fsanitize=thread
 		)
-		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
+		if(PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "unix")
 			set(SANITIZER_LINK_OPTIONS
 				-fsanitize=thread
 			)
@@ -503,7 +503,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PRO
 				)
 			endif()
 		endif()
-		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
+		if(PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "unix")
 			set(SANITIZER_LINK_OPTIONS
 				-fsanitize=undefined
 				-fsanitize=address

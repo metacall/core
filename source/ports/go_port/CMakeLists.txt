@@ -34,20 +34,16 @@ include(Portability)
 
 # Sanitizers are only enabled in Debug or RelWithDebInfo (as in CompileOptions)
 set(GO_PORT_FLAGS)
-set(GO_PORT_SANITIZER_FLAGS)
 set(GO_PORT_CC)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 	if(OPTION_BUILD_ADDRESS_SANITIZER)
 		set(GO_PORT_FLAGS -asan)
-		set(GO_PORT_SANITIZER_FLAGS -fsanitize=address)
 	elseif(OPTION_BUILD_THREAD_SANITIZER)
 		# Go code is not instrumented because -race embeds its own runtime which is incompatible
 		# with libtsan, but cgo synchronizes the calls between Go and C when C is instrumented
-		set(GO_PORT_SANITIZER_FLAGS -fsanitize=thread)
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 		set(GO_PORT_FLAGS -msan)
-		set(GO_PORT_SANITIZER_FLAGS -fsanitize=memory)
 	elseif(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT OPTION_TEST_MEMORYCHECK)
 		# Detect data races of the Go code when no sanitizer or memory check (valgrind) is enabled
 		set(GO_PORT_FLAGS -race)
@@ -59,6 +55,20 @@ if((CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebIn
 	list(APPEND GO_PORT_FLAGS -tags=symbolizer)
 endif()
 
+# Use the same sanitizer flags as metacall, they are passed to cgo by environment
+# because the cgo allowlist of #cgo directives rejects most of them (see source/go_port.cmake)
+set(GO_PORT_SANITIZER_CFLAGS ${SANITIZER_COMPILE_OPTIONS})
+set(GO_PORT_SANITIZER_LDFLAGS ${SANITIZER_LINK_OPTIONS})
+
+# Clang only links the C++ runtime of UBSan (vptr checks of the C++ libraries like simd_json_serial)
+# when linking with clang++, but cgo links with clang, so it must be linked explicitly with the C++ standard library
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" AND "-fsanitize=undefined" IN_LIST SANITIZER_LINK_OPTIONS)
+	list(APPEND GO_PORT_SANITIZER_LDFLAGS -fsanitize-link-c++-runtime -lstdc++)
+endif()
+
+list(JOIN GO_PORT_SANITIZER_CFLAGS " " GO_PORT_SANITIZER_CFLAGS)
+list(JOIN GO_PORT_SANITIZER_LDFLAGS " " GO_PORT_SANITIZER_LDFLAGS)
+
 # Find the compiler (name-<major> or name) with the same major version as the metacall C compiler
 macro(go_port_find_cc name)
 	string(TOUPPER "${name}" GO_PORT_CC_NAME)
@@ -68,7 +78,7 @@ macro(go_port_find_cc name)
 	set(GO_PORT_CC "${GO_PORT_${GO_PORT_CC_NAME}}")
 endmacro()
 
-if(GO_PORT_SANITIZER_FLAGS)
+if(GO_PORT_SANITIZER_CFLAGS)
 	# Go must link with the same compiler used for building metacall, otherwise the sanitizer runtimes differ
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		# Go only detects GCC if 'CC --version' starts with gcc, so generic names like cc do not work
@@ -91,8 +101,8 @@ set(GO_PORT_COMPILE_DEFINITIONS
 )
 list(JOIN GO_PORT_COMPILE_DEFINITIONS " " GO_PORT_COMPILE_DEFINITIONS)
 
-set(GO_PORT_CGO_CFLAGS "-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include -Wall ${GO_PORT_SANITIZER_FLAGS}")
-set(GO_PORT_CGO_LDFLAGS "-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d> ${GO_PORT_SANITIZER_FLAGS}")
+set(GO_PORT_CGO_CFLAGS "-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include -Wall")
+set(GO_PORT_CGO_LDFLAGS "-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>")
 
 add_custom_target(${target}
 	COMMAND ${CMAKE_COMMAND}
@@ -105,6 +115,8 @@ add_custom_target(${target}
 		-DGO_TASK="build"
 		-DGO_FLAGS="${GO_PORT_BUILD_FLAGS}"
 		-DGO_CC="${GO_PORT_CC}"
+		-DGO_SANITIZER_CFLAGS="${GO_PORT_SANITIZER_CFLAGS}"
+		-DGO_SANITIZER_LDFLAGS="${GO_PORT_SANITIZER_LDFLAGS}"
 		-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/go_port.cmake
 	SOURCES ${sources}
@@ -139,6 +151,8 @@ add_test(NAME ${target}
 		-DGO_TASK="test"
 		-DGO_FLAGS="${GO_PORT_BUILD_FLAGS}"
 		-DGO_CC="${GO_PORT_CC}"
+		-DGO_SANITIZER_CFLAGS="${GO_PORT_SANITIZER_CFLAGS}"
+		-DGO_SANITIZER_LDFLAGS="${GO_PORT_SANITIZER_LDFLAGS}"
 		-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/go_port.cmake
 )
@@ -225,6 +239,8 @@ if((CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDeb
 			-DGO_TASK="test"
 			-DGO_FLAGS="${GO_PORT_PPROF_FLAGS}"
 			-DGO_CC="${GO_PORT_CC}"
+			-DGO_SANITIZER_CFLAGS="${GO_PORT_SANITIZER_CFLAGS}"
+			-DGO_SANITIZER_LDFLAGS="${GO_PORT_SANITIZER_LDFLAGS}"
 			-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
 			-DGO_PPROF_DIR="${GO_PORT_PPROF_DIR}"
 			-DGO_PPROF_BINARY="${GO_PORT_PPROF_DIR}/${target}.test"
@@ -281,6 +297,8 @@ add_test(NAME ${target}_bench
 		-DGO_TASK="test"
 		-DGO_FLAGS="${GO_PORT_BENCH_FLAGS}"
 		-DGO_CC="${GO_PORT_CC}"
+		-DGO_SANITIZER_CFLAGS="${GO_PORT_SANITIZER_CFLAGS}"
+		-DGO_SANITIZER_LDFLAGS="${GO_PORT_SANITIZER_LDFLAGS}"
 		-DCOMPILE_DEFINITIONS="${GO_PORT_COMPILE_DEFINITIONS}"
 		-DGO_OUTPUT_FILE="${CMAKE_BINARY_DIR}/benchmarks/${target}_bench.txt"
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/source/go_port.cmake

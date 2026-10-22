@@ -11,6 +11,8 @@ string(REPLACE "\"" "" COMPILE_DEFINITIONS "${COMPILE_DEFINITIONS}")
 string(REPLACE "\"" "" GO_TASK "${GO_TASK}")
 string(REPLACE "\"" "" GO_FLAGS "${GO_FLAGS}")
 string(REPLACE "\"" "" GO_CC "${GO_CC}")
+string(REPLACE "\"" "" GO_SANITIZER_CFLAGS "${GO_SANITIZER_CFLAGS}")
+string(REPLACE "\"" "" GO_SANITIZER_LDFLAGS "${GO_SANITIZER_LDFLAGS}")
 string(REPLACE "\"" "" GO_OUTPUT_FILE "${GO_OUTPUT_FILE}")
 
 # Memory check and sanitizer definitions (__MEMORYCHECK__, __ADDRESS_SANITIZER__...)
@@ -26,6 +28,16 @@ separate_arguments(GO_FLAGS UNIX_COMMAND "${GO_FLAGS}")
 # Use the same C compiler as metacall when sanitizers are enabled
 if(NOT "${GO_CC}" STREQUAL "")
 	set(GO_ENV CC=${GO_CC})
+endif()
+
+# Sanitizer flags of metacall, passed by environment because the cgo allowlist only applies to #cgo directives
+# and it rejects most of them (i.e -fno-optimize-sibling-calls), the CGO_CFLAGS default (-g -O2) is kept
+if(NOT "${GO_SANITIZER_CFLAGS}" STREQUAL "")
+	list(APPEND GO_ENV "CGO_CFLAGS=-g -O2 ${GO_SANITIZER_CFLAGS}")
+endif()
+
+if(NOT "${GO_SANITIZER_LDFLAGS}" STREQUAL "")
+	list(APPEND GO_ENV "CGO_LDFLAGS=${GO_SANITIZER_LDFLAGS}")
 endif()
 
 # Override CGO flags in all files that contain them
