@@ -135,18 +135,49 @@ elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Cla
 	)
 elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -lasan -lubsan)
+
+	# The dynamic TLS tracking of GCC 11 (libasan.so.6) with glibc 2.35 (Ubuntu Jammy) records invalid ranges, then
+	# LeakSanitizer crashes when scanning them at exit (DTLS 9 at 0x0000648000be-0x0010648011c0, Tracer caught signal 11),
+	# disabling the interception of __tls_get_addr skips the dynamic TLS in the scan, it may report false positives but never hide leaks
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 12)
+		set(SANITIZER_ASAN_OPTIONS_TLS ":intercept_tls_get_addr=0")
+	endif()
+
+	# GCC 11 lays out the over-aligned locals (64 bytes, AVX-512) assuming the frame of the real stack, which is aligned by the function
+	# itself, but with detect_stack_use_after_return=1 the frame is allocated in the fake stack of ASan and they end up misaligned by 32 bytes,
+	# so the aligned AVX-512 moves fault (SEGV on unknown address, high value address) when running in a CPU with AVX-512 (only some CI runners),
+	# for example in the icelake implementation of SimdJSON when parsing the configuration (json_structural_indexer::index<128>, simd.h:46):
+	#
+	#	67b201:	and    rsp,0xffffffffffffffc0				# real stack aligned to 64, frame at rsp+0x1a0 (0x20 mod 64)
+	#	67b257:	mov    rax,QWORD PTR [rip+0x46ad72]		# __asan_option_detect_stack_use_after_return
+	#	67b261:	jne    67c17e							# if enabled, frame = __asan_stack_malloc_9(0x4c00) (0x00 mod 64)
+	#	67b26f:	lea    r14,[rax+0x4c20]
+	#	67c87b:	vmovdqa64 ZMMWORD PTR [r14-0xa00],zmm0	# aligned with the real stack, misaligned by 0x20 with the fake stack
+	#
+	# Reproduced in Ubuntu Jammy (GCC 11.4.0, SimdJSON 5.0.5) with metacall-initialize-test emulating Ice Lake with Intel SDE 10.13.1 (sde64 -icx):
+	#	- Without SDE (no AVX-512): passed
+	#	- SDE with detect_stack_use_after_return=1: SDE ERROR: executed instruction with an unaligned memory reference to address 0x7fa868f7b220
+	#	  INSTR: 0x7fa86205887b: vmovdqa64 zmmword ptr [r14-0xa00], zmm0 (same instruction as in CI: pc 0x7f7b3235887b)
+	#	- SDE with detect_stack_use_after_return=0: passed
+	#	- SDE with SIMDJSON_FORCE_IMPLEMENTATION=haswell: passed (it avoids the AVX-512 code of SimdJSON only, not the miscompilation)
+	set(SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN 1)
+
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 12)
+		set(SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN 0)
+	endif()
+
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:report_objects=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
 		# Specify handle_segv=0 and detect_leaks=0 for the JVM (https://blog.gypsyengineer.com/en/security/running-java-with-addresssanitizer.html)
-		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200"
+		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=${SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN}:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200${SANITIZER_ASAN_OPTIONS_TLS}"
 
 		# TODO: We should document each flag why is it used, because now we do not know what runtime has each requirement and why.
 		# Another option should be to separate by runtimes and only set up them on the ASAN tests that require them,
 		# because we do not need to disable all features on all tests, this may hide bugs in the core library for example.
 
 		# Specify use_sigaltstack=0 as CoreCLR uses own alternate stack for signal handlers (https://github.com/swgillespie/coreclr/commit/bec020aa466d08e49e007d0011b0e79f8f7c7a62)
-		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200"
+		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=${SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN}:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200${SANITIZER_ASAN_OPTIONS_TLS}"
 
 		"UBSAN_OPTIONS=print_stacktrace=1"
 	)
