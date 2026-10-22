@@ -185,7 +185,12 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	/* Execute the callback */
 	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(result);
 
-	return trampoline->resolve_trampoline(trampoline->node_impl, env, trampoline->resolve_callback, recv, args[1], trampoline->context);
+	napi_value ret = trampoline->resolve_trampoline(trampoline->node_impl, env, trampoline->resolve_callback, recv, args[1], trampoline->context);
+
+	/* The wrap has been removed so the finalizer will not be called, release the trampoline here */
+	delete trampoline;
+
+	return ret;
 }
 
 napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
@@ -240,7 +245,12 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	/* Execute the callback */
 	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(result);
 
-	return trampoline->reject_trampoline(trampoline->node_impl, env, trampoline->reject_callback, recv, args[1], trampoline->context);
+	napi_value ret = trampoline->reject_trampoline(trampoline->node_impl, env, trampoline->reject_callback, recv, args[1], trampoline->context);
+
+	/* The wrap has been removed so the finalizer will not be called, release the trampoline here */
+	delete trampoline;
+
+	return ret;
 }
 
 napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
@@ -290,7 +300,10 @@ napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 		return nullptr;
 	}
 
-	node_loader_impl_destroy_safe_impl(node_impl_cast.data, env);
+	if (node_loader_impl_destroy_host(node_impl_cast.data, env) != 0)
+	{
+		napi_throw_error(env, nullptr, "Failed to destroy NodeJS Loader on MetaCall");
+	}
 
 	return nullptr;
 }

@@ -75,7 +75,9 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((float)metacall_value_to_float(ret), (float)5.0f);
+		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)5.0);
 
 		metacall_value_destroy(ret);
 

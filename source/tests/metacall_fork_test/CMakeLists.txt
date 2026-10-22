@@ -3,10 +3,13 @@ if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS)
 	return()
 endif()
 
-# Thread Sanitizer compiled statically is incompatible with fork safety
-# because fork symbol is overriden by the interceptor and becomes a weak symbol
+# Fork safety patches the fork symbol through the PLT, if the symbol is defined in the
+# executable itself (i.e Thread Sanitizer linked statically overrides it with the
+# interceptor and becomes a weak symbol), the test cannot hook it, so it is disabled
 # https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors
-if(OPTION_BUILD_THREAD_SANITIZER AND NOT SANITIZER_LIBRARIES_PATH)
+check_fork_patchable(FORK_PATCHABLE)
+if(NOT FORK_PATCHABLE)
+	message(WARNING "Fork safety is enabled but the tests are compiled with compile options that disallow fork to be patched, skipping the test")
 	return()
 endif()
 

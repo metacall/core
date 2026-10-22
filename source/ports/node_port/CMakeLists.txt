@@ -221,6 +221,7 @@ if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BU
 endif()
 
 # Address sanitizer does not work with Rust on Linux in NodeJS executable test
+# (the preloaded sanitizer is inherited by the linker spawned by rustc, which fails due to leaks)
 if(PROJECT_OS_LINUX AND OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_RS)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS)
 endif()
@@ -233,8 +234,15 @@ endif()
 
 message(STATUS "Test ${node_port_test_exec}")
 
+# Grow stack size to avoid "Error: Maximum call stack size exceeded" on complex callback tests,
+# NodeJS is the host here so the node_loader cannot set it, the main thread stack (8 MB by default)
+# is shared with the native frames of the calls between runtimes, so leave enough room for them
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	set(NodeJS_STACK_SIZE "--stack-size=4096")
+endif()
+
 add_test(NAME ${node_port_test_exec}
-	COMMAND ${NodeJS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test.js"
+	COMMAND ${NodeJS_EXECUTABLE} ${NodeJS_STACK_SIZE} "${CMAKE_CURRENT_SOURCE_DIR}/test.js"
 )
 
 # Define test labels

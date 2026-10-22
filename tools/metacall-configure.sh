@@ -442,6 +442,11 @@ sub_configure() {
 	if [ $BUILD_RPC = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RPC=On"
 
+		# Use the instrumented cURL from metacall-environment.sh, it is outside of the default search paths
+		if [ $BUILD_MEMORY_SANITIZER = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DCURL_INCLUDE_DIR=/usr/local/msan/include -DCURL_LIBRARY=/usr/local/msan/lib/libcurl.so"
+		fi
+
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RPC=On"
 		fi

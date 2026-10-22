@@ -1,3 +1,4 @@
+#include <loader/loader.h>
 /*
  *	MetaCall Library by Parra Studios
  *	A library for providing a foreign function interface calls.
@@ -44,6 +45,22 @@ TEST_F(metacall_path_overflow_test, DefaultConstructor)
 	const size_t size = sizeof(scripts) / sizeof(scripts[0]);
 
 	EXPECT_NE((int)0, (int)metacall_load_from_file("mock", scripts, size, NULL));
+
+	metacall_destroy();
+}
+
+TEST_F(metacall_path_overflow_test, ExecutionPathOverflow)
+{
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+	std::string path_fit(LOADER_PATH_SIZE - 1, 'a');
+	EXPECT_EQ(metacall_execution_path("mock", path_fit.c_str()), 0);
+
+	std::string path_exact(LOADER_PATH_SIZE, 'b');
+	EXPECT_NE(metacall_execution_path("mock", path_exact.c_str()), 0);
+
+	std::string path_overflow(LOADER_PATH_SIZE + 1, 'c');
+	EXPECT_NE(metacall_execution_path("mock", path_overflow.c_str()), 0);
 
 	metacall_destroy();
 }
