@@ -30,14 +30,33 @@ if(NOT "${GO_CC}" STREQUAL "")
 	set(GO_ENV CC=${GO_CC})
 endif()
 
-# Sanitizer flags of metacall, passed by environment because the cgo allowlist only applies to #cgo directives
-# and it rejects most of them (i.e -fno-optimize-sibling-calls), the CGO_CFLAGS default (-g -O2) is kept
+# Expression matching exactly each one of the flags, the cgo allowlist must match the whole flag so each one is escaped and the expression is anchored
+function(go_port_cgo_allow flags result)
+	separate_arguments(flags_list UNIX_COMMAND "${flags}")
+	set(allow)
+
+	foreach(flag ${flags_list})
+		string(REGEX REPLACE "([][.+*?^$(){}|\\\\])" "\\\\\\1" flag "${flag}")
+		list(APPEND allow "${flag}")
+	endforeach()
+
+	list(JOIN allow "|" allow)
+	set(${result} "^(${allow})$" PARENT_SCOPE)
+endfunction()
+
+# Sanitizer flags of metacall, they are added to the #cgo directives so they only instrument this package (passing them by CGO_CFLAGS
+# environment instruments all the cgo packages too, including runtime/cgo, which crashes with thread sanitizer in MacOS), the flags
+# rejected by the cgo allowlist of the directives (i.e -fno-optimize-sibling-calls) are allowed with CGO_CFLAGS_ALLOW and CGO_LDFLAGS_ALLOW
 if(NOT "${GO_SANITIZER_CFLAGS}" STREQUAL "")
-	list(APPEND GO_ENV "CGO_CFLAGS=-g -O2 ${GO_SANITIZER_CFLAGS}")
+	set(CGO_CFLAGS "${CGO_CFLAGS} ${GO_SANITIZER_CFLAGS}")
+	go_port_cgo_allow("${GO_SANITIZER_CFLAGS}" GO_SANITIZER_CFLAGS_ALLOW)
+	list(APPEND GO_ENV "CGO_CFLAGS_ALLOW=${GO_SANITIZER_CFLAGS_ALLOW}")
 endif()
 
 if(NOT "${GO_SANITIZER_LDFLAGS}" STREQUAL "")
-	list(APPEND GO_ENV "CGO_LDFLAGS=${GO_SANITIZER_LDFLAGS}")
+	set(CGO_LDFLAGS "${CGO_LDFLAGS} ${GO_SANITIZER_LDFLAGS}")
+	go_port_cgo_allow("${GO_SANITIZER_LDFLAGS}" GO_SANITIZER_LDFLAGS_ALLOW)
+	list(APPEND GO_ENV "CGO_LDFLAGS_ALLOW=${GO_SANITIZER_LDFLAGS_ALLOW}")
 endif()
 
 # Override CGO flags in all files that contain them

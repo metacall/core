@@ -69,8 +69,7 @@ elseif(PROJECT_OS_LINUX)
 	endif()
 endif()
 
-# Use the same sanitizer flags as metacall, they are passed to cgo by environment
-# because the cgo allowlist of #cgo directives rejects most of them (see source/go_port.cmake)
+# Use the same sanitizer flags as metacall, they are added to the #cgo directives (see source/go_port.cmake)
 set(GO_PORT_SANITIZER_CFLAGS ${SANITIZER_COMPILE_OPTIONS})
 set(GO_PORT_SANITIZER_LDFLAGS ${SANITIZER_LINK_OPTIONS})
 
