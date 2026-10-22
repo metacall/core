@@ -610,6 +610,8 @@ void function_rb_interface_destroy(function func, function_impl impl)
 			log_write("metacall", LOG_LEVEL_DEBUG, "Unreferencing Ruby function '%s' from module", function_name(func));
 
 			rb_undef(rb_function->module, rb_to_id(name));
+
+			rb_gc_unregister_address(&rb_function->args_hash);
 		}
 
 		free(rb_function);
@@ -1282,6 +1284,9 @@ loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE
 		rb_module->module = module;
 		rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
 
+		/* Root the instance, it is only referenced from C so the GC would collect it */
+		rb_gc_register_address(&rb_module->instance);
+
 		rb_extend_object(rb_module->instance, rb_module->module);
 
 		rb_include_module(rb_module->instance, rb_module->module);
@@ -1291,6 +1296,8 @@ loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE
 		if (!(rb_module->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), rb_module->function_map) == 0))
 		{
 			rb_loader_impl_key_clear(rb_module->function_map);
+
+			rb_gc_unregister_address(&rb_module->instance);
 
 			free(rb_module);
 
@@ -1639,6 +1646,8 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 			}
 
 			rb_loader_impl_key_clear((*rb_module)->function_map);
+
+			rb_gc_unregister_address(&(*rb_module)->instance);
 		}
 
 		free(*rb_module);
@@ -1683,6 +1692,9 @@ loader_impl_rb_function rb_function_create(loader_impl impl, loader_impl_rb_modu
 		rb_function->method_id = id;
 		rb_function->args_hash = rb_hash_new();
 		rb_function->impl = impl;
+
+		/* Root the arguments hash, it is only referenced from C so the GC would collect it */
+		rb_gc_register_address(&rb_function->args_hash);
 
 		return rb_function;
 	}
