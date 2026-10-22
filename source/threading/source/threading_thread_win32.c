@@ -73,7 +73,16 @@ int threading_thread_join(threading_thread *thread, void **result)
 
 int threading_thread_detach(threading_thread *thread)
 {
-	if (CloseHandle(thread->handle) == FALSE)
+	HANDLE handle = thread->handle;
+
+	if (handle == NULL)
+	{
+		return 1;
+	}
+
+	thread->handle = NULL;
+
+	if (CloseHandle(handle) == FALSE)
 	{
 		return 1;
 	}
@@ -88,5 +97,11 @@ threading_thread_id threading_thread_self(void)
 
 void threading_thread_destroy(threading_thread *thread)
 {
+	if (thread->handle == NULL)
+	{
+		return;
+	}
+
 	CloseHandle(thread->handle);
+	thread->handle = NULL;
 }

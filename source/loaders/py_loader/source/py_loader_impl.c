@@ -4371,7 +4371,11 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Destroy children loaders */
 	loader_unload_children(impl);
 
-	py_loader_thread_acquire();
+	/* If we are on host, the GIL is already acquired, so we skip it */
+	if (host == 0)
+	{
+		py_loader_thread_acquire();
+	}
 
 	/* Stop event loop for async calls */
 	{
@@ -4392,22 +4396,11 @@ int py_loader_impl_destroy(loader_impl impl)
 
 		py_loader_thread_release();
 
-		PyThreadState *save_state = NULL;
-		if (PyGILState_Check() == 1)
-		{
-			save_state = PyEval_SaveThread();
-		}
-
 		threading_thread_join(&py_impl->asyncio_thread, NULL);
 
-		if (save_state != NULL)
-		{
-			PyEval_RestoreThread(save_state);
-		}
+		threading_thread_destroy(&py_impl->asyncio_thread);
 
 		py_loader_thread_acquire();
-
-		threading_thread_destroy(&py_impl->asyncio_thread);
 	}
 
 	/* Delete all the objects from the destructors of the other threads */
@@ -4459,12 +4452,6 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Destroy the class and object caches after finalizing, so the types and objects released during finalization can still remove their entries */
 	py_loader_impl_class_type_destroy();
 	py_loader_impl_object_type_destroy();
-
-	if (host == 1)
-	{
-		/* On host, release the GIL and let Python continue until it calls Py_Finalize by itself */
-		py_loader_thread_release();
-	}
 
 	free(py_impl);
 
