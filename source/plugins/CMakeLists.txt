@@ -4,7 +4,7 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_
 endif()
 
 # Plugins options
-option(OPTION_BUILD_PLUGINS_BACKTRACE "Build cross-platform backtrace plugin." ON)
+option(OPTION_BUILD_PLUGINS_BACKTRACE "Build cross-platform backtrace plugin." OFF)
 option(OPTION_BUILD_PLUGINS_SANDBOX "Build cross-platform Linux sandbox plugin." OFF)
 
 # Plugin sub-projects
