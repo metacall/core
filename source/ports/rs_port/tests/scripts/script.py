@@ -14,3 +14,9 @@ def test_object():
     return TestClass()
 def return_the_argument_py(argument):
     return argument
+def return_small_number():
+    return 42
+def return_negative_int():
+    return -1
+def return_large_number():
+    return 9223372036854775807  # i64::MAX

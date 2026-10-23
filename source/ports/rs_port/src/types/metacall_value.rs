@@ -207,6 +207,157 @@ impl MetaCallValue for f64 {
         unsafe { metacall_value_create_double(self) }
     }
 }
+
+//Equivalent to MetaCall long type.
+impl MetaCallValue for u8 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_LONG
+    }
+
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
+        let id = unsafe { metacall_value_id(v) };
+
+        let value_i64 = match id {
+            metacall_value_id::METACALL_SHORT => unsafe {
+                metacall_value_to_short(v) as i64
+            },
+            metacall_value_id::METACALL_INT => unsafe {
+                metacall_value_to_int(v) as i64
+            },
+            metacall_value_id::METACALL_LONG => unsafe {
+                metacall_value_to_long(v) 
+            },
+            _ => return Err(Box::new(0u8)),
+        };
+
+
+        if value_i64 < 0 || value_i64 > u8::MAX as i64 {
+            return Err(Box::new(value_i64));
+        }
+
+        Ok(value_i64 as u8)
+    }
+
+    fn into_metacall_raw(self) -> *mut c_void {
+        // safer to send as LONG (i64)
+        unsafe { metacall_value_create_long(self as i64) }
+    }
+}
+
+//Equivalent to MetaCall long type.
+impl MetaCallValue for u16 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_LONG
+    }
+
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
+        let id = unsafe { metacall_value_id(v) };
+
+        let value_i64 = match id {
+            metacall_value_id::METACALL_SHORT => unsafe {
+                metacall_value_to_short(v) as i64
+            },
+            metacall_value_id::METACALL_INT => unsafe {
+                metacall_value_to_int(v) as i64
+            },
+            metacall_value_id::METACALL_LONG => unsafe {
+                metacall_value_to_long(v) 
+            },
+            _ => return Err(Box::new(0u16)),
+        };
+
+
+        if value_i64 < 0 || value_i64 > u16::MAX as i64 {
+            return Err(Box::new(value_i64));
+        }
+
+        Ok(value_i64 as u16)
+    }
+
+    fn into_metacall_raw(self) -> *mut c_void {
+        // safer to send as LONG (i64)
+        unsafe { metacall_value_create_long(self as i64) }
+    }
+}
+
+//Equivalent to MetaCall long type.
+impl MetaCallValue for u32 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_LONG
+    }
+
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
+        let id = unsafe { metacall_value_id(v) };
+
+        let value_i64 = match id {
+            metacall_value_id::METACALL_INT => unsafe {
+                metacall_value_to_int(v) as i64
+            },
+            metacall_value_id::METACALL_LONG => unsafe {
+                metacall_value_to_long(v)
+            },
+            _ => {
+                return Err(Box::new(0u32));
+            }
+        };
+
+        if value_i64 < 0 {
+            return Err(Box::new(value_i64));
+        }
+
+        if value_i64 > u32::MAX as i64 {
+            return Err(Box::new(value_i64));
+        }
+
+        Ok(value_i64 as u32)
+    }
+
+    fn into_metacall_raw(self) -> *mut c_void {
+        // safer to send as LONG (i64)
+        unsafe { metacall_value_create_long(self as i64) }
+    }
+}
+
+// TODO:
+// MetaCall does not provide an unsigned 64-bit type. Since METACALL_LONG maps to i64, values above i64::MAX, cannot be represented safely.
+// Proper support for u64 may require: Adding i128 support in MetaCall
+// For now, u64 support is intentionally not implemented. Only emits warning when value exceeds i64::MAX
+impl MetaCallValue for u64 {
+    fn get_metacall_id() -> metacall_value_id {
+        metacall_value_id::METACALL_LONG
+    }
+
+    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
+        let id = unsafe { metacall_value_id(v) };
+
+        let value_i64 = match id {
+            metacall_value_id::METACALL_INT => unsafe {
+                metacall_value_to_int(v) as i64
+            },
+            metacall_value_id::METACALL_LONG => unsafe {
+                metacall_value_to_long(v)
+            },
+            _ => {
+                return Err(Box::new(0u64));
+            }
+        };
+
+        if value_i64 < 0 {
+            return Err(Box::new(value_i64));
+        }
+
+        Ok(value_i64 as u64)
+    }
+
+    fn into_metacall_raw(self) -> *mut c_void {
+        if self > i64::MAX as u64 {
+            eprintln!("Warning: u64 value exceeds i64::MAX, precision loss possible");
+        }
+
+        unsafe { metacall_value_create_long(self as i64) }
+    }
+}
+
 /// Equivalent to MetaCall string type.
 impl MetaCallValue for String {
     fn get_metacall_id() -> metacall_value_id {
