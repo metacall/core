@@ -148,6 +148,7 @@ static VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 	const char *function_name;
 	size_t args_size, iterator;
 	value *args, result;
+	VALUE rb_result;
 
 	(void)self;
 
@@ -197,7 +198,11 @@ static VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 		free(args);
 	}
 
-	return rb_type_serialize(result);
+	rb_result = rb_type_serialize(result);
+
+	value_type_destroy(result);
+
+	return rb_result;
 }
 
 static VALUE rb_loader_port_inspect(VALUE self)
