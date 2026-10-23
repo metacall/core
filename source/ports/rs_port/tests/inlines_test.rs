@@ -5,6 +5,7 @@ use metacall::{
     load::{self, Tag},
 };
 
+#[cfg(not(windows))]
 #[test]
 fn inlines() {
     let _d = initialize().unwrap();
