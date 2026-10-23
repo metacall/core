@@ -209,7 +209,10 @@ sub_python(){
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 					printf "leak:*libpython*" &> ./asan.supp
 					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
-					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					# Disable the symbolizer of UBSan, the reports of CPython (i.e function type mismatch in the GC traverse functions) spawn
+					# llvm-symbolizer in the multiprocessing forkserver of compileall (make altinstall), and the workers forked from it inherit
+					# its pipes, so the concurrent requests of the workers get mixed and all of them block forever reading the symbolizer
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:symbolize=0"
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 					if [ $INSTALL_CLANG = 1 ]; then
@@ -367,15 +370,20 @@ sub_python(){
 		# TODO: Implement other sanitizers instrumentation
 		# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 		if [ $INSTALL_THREAD_SANITIZER = 1 ]; then
-			# Search the FreeBSD package repository for Python and install build dependencies
-			PYTHON_PKG=$(pkg search -q -x '^python3' | sort -V | tail -n 1)
+			# Use the default Python version of FreeBSD (the dependency of the python3 metapackage, i.e python312-3.12.15),
+			# the same one installed without sanitizers, instead of the latest one which can be a pre-release
+			PYTHON_PKG=$(pkg rquery '%dn-%dv' python3 | grep -E '^python3[0-9]+-' | head -n 1)
 			$SUDO_CMD pkg install -y git pkgconf openssl readline sqlite3 libffi bzip2 gdbm expat
 
-			# Get the Python version: python315-3.15.0.b2 -> 3.15.0.b2
+			# Get the Python version: python312-3.12.15_1 -> 3.12.15_1
 			PYTHON_PKG_VERSION="${PYTHON_PKG#*-}"
 
-			# Remove the dot immediately after the third numeric component: 3.15.0.b2 -> 3.15.0b2
-			PYTHON_VERSION=$(printf '%s\n' "$PYTHON_PKG_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)\./\1/')
+			# Convert the FreeBSD version into the CPython tag: remove the port revision and epoch (3.12.15_1,1 -> 3.12.15),
+			# and the pre-release names (3.15.0.a1 -> 3.15.0a1, 3.15.0.b2 -> 3.15.0b2, 3.15.0.r2 -> 3.15.0rc2)
+			PYTHON_VERSION=$(printf '%s\n' "$PYTHON_PKG_VERSION" | sed -E \
+				-e 's/[_,].*$//' \
+				-e 's/^([0-9]+\.[0-9]+\.[0-9]+)\.r([0-9]+)$/\1rc\2/' \
+				-e 's/^([0-9]+\.[0-9]+\.[0-9]+)\.([ab][0-9]+)$/\1\2/')
 
 			# Get major and minor version: 3.15.0b2 -> python3.15
 			PYTHON_EXE=$(printf '%s\n' "$PYTHON_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/python\1/')

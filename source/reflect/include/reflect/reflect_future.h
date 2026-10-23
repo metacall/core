@@ -57,7 +57,13 @@ typedef future_interface (*future_impl_interface_singleton)(void);
 
 REFLECT_API future future_create(future_impl impl, future_impl_interface_singleton singleton);
 
+REFLECT_API int future_increment_reference(future f);
+
+REFLECT_API int future_decrement_reference(future f);
+
 REFLECT_API future_return future_await(future f, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void *context);
+
+REFLECT_API void future_stats_debug(void);
 
 REFLECT_API void future_destroy(future f);
 
