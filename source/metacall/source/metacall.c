@@ -39,6 +39,9 @@
 
 #include <portability/portability_atexit.h>
 #include <portability/portability_constructor.h>
+#include <portability/portability_path.h>
+
+#include <dynlink/dynlink.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,11 +70,13 @@ static int metacall_initialize_argc = 0;
 static char **metacall_initialize_argv = NULL;
 static void *plugin_extension_handle = NULL;
 static void *plugin_core_handle = NULL;
+static void *metacall_self_handle = NULL;
 static loader_path plugin_path = { 0 };
 
 /* -- Private Methods -- */
 
 static int metacall_plugin_extension_load(void);
+static int metacall_self_load(void);
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
 static type_id *metacall_type_ids(void *args[], size_t size);
 static void metacall_detour_destructor(void);
@@ -193,6 +198,98 @@ plugin_load_from_path_error:
 	metacall_value_destroy(args[0]);
 	metacall_value_destroy(args[1]);
 plugin_extension_error:
+	return result;
+}
+
+static int metacall_self_load(void)
+{
+	dynlink_path lib_path = { 0 }, inc_path = { 0 }, hdr_path = { 0 }, lib_file = { 0 };
+	dynlink_path raw_inc_path = { 0 }, raw_hdr_path = { 0 }, raw_lib_file = { 0 };
+	const char name[] = "metacall"
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG__) || defined(__DEBUG))
+		"d"
+#endif
+		;
+	loader_tag tag = "c";
+	loader_path pkg = "metacall";
+	size_t length = 0;
+	void *options, **m, **t, **a;
+	int result;
+
+	if (dynlink_library_path(name, lib_path, &length) != 0)
+	{
+		return 1;
+	}
+
+	/* Strip trailing slash if present to avoid double slash //.. which breaks canonical path resolution */
+	if (length > 0 && (lib_path[length - 1] == '/' || lib_path[length - 1] == '\\'))
+	{
+		lib_path[length - 1] = '\0';
+	}
+
+	snprintf(raw_lib_file, sizeof(raw_lib_file), "%s/%s%s.%s", lib_path, dynlink_prefix(), name, dynlink_extension());
+	snprintf(raw_hdr_path, sizeof(raw_hdr_path), "%s/../include/metacall/metacall.h", lib_path);
+	snprintf(raw_inc_path, sizeof(raw_inc_path), "%s/../include", lib_path);
+
+	if (portability_path_file_exists(raw_hdr_path) != 0)
+	{
+		/* Check multiarch layout (e.g. /usr/lib/x86_64-linux-gnu/../../include) */
+		snprintf(raw_hdr_path, sizeof(raw_hdr_path), "%s/../../include/metacall/metacall.h", lib_path);
+		snprintf(raw_inc_path, sizeof(raw_inc_path), "%s/../../include", lib_path);
+	}
+
+	if (portability_path_file_exists(raw_hdr_path) != 0)
+	{
+		/* Check development build tree */
+		snprintf(raw_hdr_path, sizeof(raw_hdr_path), "%s/../source/metacall/include/metacall/metacall.h", lib_path);
+		snprintf(raw_inc_path, sizeof(raw_inc_path), "%s/../source/metacall/include", lib_path);
+
+		if (portability_path_file_exists(raw_hdr_path) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall self-load could not find metacall.h header");
+			return 1;
+		}
+	}
+
+	(void)portability_path_canonical(raw_inc_path, strnlen(raw_inc_path, sizeof(raw_inc_path)) + 1, inc_path, sizeof(inc_path));
+	(void)portability_path_canonical(raw_hdr_path, strnlen(raw_hdr_path, sizeof(raw_hdr_path)) + 1, hdr_path, sizeof(hdr_path));
+	(void)portability_path_canonical(raw_lib_file, strnlen(raw_lib_file, sizeof(raw_lib_file)) + 1, lib_file, sizeof(lib_file));
+
+	options = metacall_value_create_map(NULL, 3);
+	if (options == NULL)
+	{
+		return 1;
+	}
+
+	m = metacall_value_to_map(options);
+
+	/* 1. include_search_paths: [ inc_path ] */
+	m[0] = metacall_value_create_array(NULL, 2);
+	t = metacall_value_to_array(m[0]);
+	t[0] = metacall_value_create_string("include_search_paths", sizeof("include_search_paths") - 1);
+	t[1] = metacall_value_create_array(NULL, 1);
+	a = metacall_value_to_array(t[1]);
+	a[0] = metacall_value_create_string(inc_path, strlen(inc_path));
+
+	/* 2. headers: [ hdr_path ] */
+	m[1] = metacall_value_create_array(NULL, 2);
+	t = metacall_value_to_array(m[1]);
+	t[0] = metacall_value_create_string("headers", sizeof("headers") - 1);
+	t[1] = metacall_value_create_array(NULL, 1);
+	a = metacall_value_to_array(t[1]);
+	a[0] = metacall_value_create_string(hdr_path, strlen(hdr_path));
+
+	/* 3. libs: [ lib_file ] */
+	m[2] = metacall_value_create_array(NULL, 2);
+	t = metacall_value_to_array(m[2]);
+	t[0] = metacall_value_create_string("libs", sizeof("libs") - 1);
+	t[1] = metacall_value_create_array(NULL, 1);
+	a = metacall_value_to_array(t[1]);
+	a[0] = metacall_value_create_string(lib_file, strlen(lib_file));
+
+	/* Load package into handle */
+	result = loader_load_from_package(tag, pkg, &metacall_self_handle, options);
+	metacall_value_destroy(options);
 	return result;
 }
 
@@ -332,6 +429,17 @@ int metacall_initialize(void)
 	}
 
 	metacall_initialize_flag = 0;
+
+	/* Self-load MetaCall C API into private handle via c_loader if opt-in and not in host mode */
+	const char *self_load_env = environment_variable_get("METACALL_SELF_LOAD", NULL);
+	if (self_load_env != NULL && strcmp(self_load_env, "0") != 0 && self_load_env[0] != '\0' &&
+		environment_variable_get("METACALL_HOST", NULL) == NULL)
+	{
+		if (metacall_self_load() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall failed to self-load runtime");
+		}
+	}
 
 	return 0;
 }
@@ -1159,6 +1267,16 @@ void *metacall_handle(const char *tag, const char *name)
 	return (void *)loader_get_handle(tag, name);
 }
 
+void *metacall_handle_self(void)
+{
+	if (loader_impl_handle_validate(metacall_self_handle) != 0)
+	{
+		return NULL;
+	}
+
+	return metacall_self_handle;
+}
+
 const char *metacall_handle_id(void *handle)
 {
 	if (loader_impl_handle_validate(handle) != 0)
@@ -1624,6 +1742,7 @@ void *metacallfms(void *func, const char *buffer, size_t size, void *allocator)
 			if (args_count != value_type_count(v))
 			{
 				value_type_destroy(v);
+
 				return NULL;
 			}
 
@@ -2461,6 +2580,7 @@ void metacall_destroy(void)
 		/* Set to null the plugin extension and core plugin handles */
 		plugin_extension_handle = NULL;
 		plugin_core_handle = NULL;
+		metacall_self_handle = NULL;
 
 		/* Set initialization flag to destroyed */
 		metacall_initialize_flag = 1;
