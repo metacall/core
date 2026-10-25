@@ -4541,18 +4541,8 @@ void node_loader_impl_handle_promise(loader_impl_async_handle_promise_safe_type 
 	}
 	else
 	{
-		/* Submit the task to the async queue */
-		if (handle_promise_safe->threadsafe_async.initialize(handle_promise_safe->node_impl, [](uv_async_t *handle) {
-				loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
-				node_loader_impl_handle_promise_safe(handle_promise_safe->env, handle_promise_safe);
-			}) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Filed to initialize promise safe async handle");
-		}
-		else
-		{
-			handle_promise_safe->threadsafe_async.invoke(handle_promise_safe);
-		}
+		/* Submit the task to the async queue, the handle was initialized in the JavaScript thread when creating the promise */
+		handle_promise_safe->threadsafe_async.invoke(handle_promise_safe);
 	}
 }
 
@@ -4581,6 +4571,23 @@ napi_value node_loader_impl_promise_await(loader_impl_node node_impl, napi_env e
 		return nullptr;
 	}
 
+	/* Initialize the async handle here in the JavaScript thread, because the promise can be resolved from another thread
+	* (for example, the asyncio thread of Python), and the handle keeps the event loop alive while the promise is pending,
+	* so the loader is not destroyed until it is resolved */
+	if (handle_promise_safe->threadsafe_async.initialize(node_impl, [](uv_async_t *handle) {
+			loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
+			node_loader_impl_handle_promise_safe(handle_promise_safe->env, handle_promise_safe);
+		}) != 0)
+	{
+		napi_throw_error(env, nullptr, "Failed to initialize promise safe async handle");
+
+		delete handle_promise_safe;
+
+		return nullptr;
+	}
+
+	handle_promise_safe->threadsafe_async.async_handle.data = static_cast<void *>(handle_promise_safe);
+
 	auto resolve = [](void *result, void *data) -> void * {
 		static const char promise_error_str[] = "Failed to resolve the promise";
 
@@ -4604,11 +4611,20 @@ napi_value node_loader_impl_promise_await(loader_impl_node node_impl, napi_env e
 	/* Await to the function */
 	void *ret = metacall_await_s(name, args, size, resolve, reject, handle_promise_safe);
 
-	if (metacall_value_id(ret) == METACALL_THROWABLE)
+	if (ret == NULL || metacall_value_id(ret) == METACALL_THROWABLE)
 	{
-		napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+		if (ret != NULL)
+		{
+			napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
 
-		napi_throw(env, result);
+			napi_throw(env, result);
+		}
+
+		/* The promise will not be resolved, close the handle so it does not keep the event loop alive */
+		if (handle_promise_safe->result == NULL)
+		{
+			handle_promise_safe->destroy();
+		}
 	}
 
 	/* The promise is resolved or rejected through handle_promise_safe, so the returned future is not needed anymore,
