@@ -143,6 +143,13 @@ jobs:
           esac
           cp "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/$ANDROID_TRIPLET/libc++_shared.so" build/
 
+      # The reactivecircus/android-emulator-runner uses cmdline-tools/latest, which contains the outdated preinstalled sdkmanager
+      - name: Use the updated command line tools in the emulator
+        run: |
+          SDKMANAGER_DIR="$(dirname "$(dirname "$(command -v sdkmanager)")")"
+          rm -rf "$ANDROID_HOME/cmdline-tools/latest"
+          cp -r "$SDKMANAGER_DIR" "$ANDROID_HOME/cmdline-tools/latest"
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
