@@ -24,10 +24,8 @@ jobs:
       fail-fast: false
       matrix:
         abi: [x86_64]
-        api-level: [30]
-        build: [release]
-        # TODO: This may be removed
-        target: [google_apis]
+        api-level: [33]
+        build: [debug]
 
     env:
       ANDROID_NDK_VERSION: "26.1.10909125"
@@ -46,6 +44,8 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install Android NDK
         run: |
@@ -66,35 +66,82 @@ jobs:
           ANDROID_ABI: ${{ matrix.abi }}
         run: ../tools/metacall-configure.sh ${{ matrix.build }} base android scripts tests
 
+      # Tests cannot run on the host, they are executed in the emulator job
       - name: Build
         working-directory: ./build
-        run: ../tools/metacall-build.sh ${{ matrix.build }} tests
+        run: ../tools/metacall-build.sh ${{ matrix.build }}
 
-  #     - name: Upload build artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
-  #         path: ./build
+      # Use a tarball because upload-artifact does not preserve file permissions
+      - name: Package build
+        run: tar -czf android-build.tar.gz build
 
-  # android-emulator-test:
-  #   name: Android Emulator Test
-  #   needs: android-build
-  #   runs-on: ubuntu-latest
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
+          path: android-build.tar.gz
+          retention-days: 7
 
-  #   # TODO: Add more architectures
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       api-level: [30]
-  #       target: [google_apis]
-  #       arch: [x86_64]
-  #       build: [release]
+  android-emulator-test:
+    name: Android Emulator Test
+    needs: android-build
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+    # TODO: Add more architectures
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [x86_64]
+        api-level: [33]
+        build: [debug]
+        target: [google_apis]
+
+    env:
+      ANDROID_NDK_VERSION: "26.1.10909125"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android NDK
+        run: |
+          sdkmanager --install "ndk;${{ env.ANDROID_NDK_VERSION }}"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+          echo "ANDROID_NDK=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: ./tools/metacall-environment.sh ${{ matrix.build }} base android
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
+
+      # Touch extracted files so they are newer than the checkout and the build is not redone
+      - name: Extract build
+        run: tar -xzmf android-build.tar.gz
+
+      # The build uses ANDROID_STL=c++_shared, so the C++ runtime must be pushed with the binaries
+      - name: Copy C++ runtime
+        run: |
+          case "${{ matrix.abi }}" in
+            x86_64) ANDROID_TRIPLET=x86_64-linux-android;;
+            *) echo "Unsupported ABI: ${{ matrix.abi }}"; exit 1;;
+          esac
+          cp "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/$ANDROID_TRIPLET/libc++_shared.so" build/
 
       - name: Enable KVM
         run: |
@@ -102,41 +149,17 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # - name: Download build artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: android-build-${{ matrix.abi }}-api${{ matrix.api-level }}-${{ matrix.build }}
-      #     path: build
-
-      # - name: Set up JDK 17
-      #   uses: actions/setup-java@v4
-      #   with:
-      #     java-version: '17'
-      #     distribution: 'temurin'
-
-      # - name: Setup Android SDK
-      #   uses: android-actions/setup-android@v3
-
-      # - name: Install Android NDK for libc++_shared.so
-      #   run: |
-      #     sdkmanager --install "ndk;26.1.10909125"
-      #     echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
-
       - name: Run tests on Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
-          arch: ${{ matrix.arch }}
+          arch: ${{ matrix.abi }}
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          # Each line of the script runs as a separate command
           script: |
-            echo "=== Pushing test files to emulator ==="
-            adb push build/ /data/local/tmp/metacall/
-
-            echo ""
-            echo "=== Files on emulator ==="
-            adb shell "ls -la /data/local/tmp/metacall/"
-
-            echo "TODO: Run CTest with emulator"
+            adb shell "mkdir -p /data/local/tmp/metacall"
+            adb push build /data/local/tmp/metacall/
+            cd build && ../tools/metacall-build.sh ${{ matrix.build }} tests

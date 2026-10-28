@@ -157,6 +157,17 @@ function(test_environment_variables target args)
 			PROPERTY ENVIRONMENT "${MAKE_LOCAL_CTEST_ENVIRONMENT}"
 		)
 
+		# Write the environment variables into a file, so the Android emulator script can load them in the device
+		if(ANDROID AND CMAKE_CROSSCOMPILING_EMULATOR)
+			set(ANDROID_EMULATOR_ENV_FILE "${PROJECT_BINARY_DIR}/android-emulator/${target}.env")
+			string(REPLACE ";" "\n" ANDROID_EMULATOR_ENV "${MAKE_LOCAL_CTEST_ENVIRONMENT}")
+			file(WRITE "${ANDROID_EMULATOR_ENV_FILE}" "${ANDROID_EMULATOR_ENV}\n")
+
+			set_property(TEST ${target}
+				APPEND PROPERTY ENVIRONMENT "ANDROID_EMULATOR_ENV_FILE=${ANDROID_EMULATOR_ENV_FILE}"
+			)
+		endif()
+
 	endif()
 
 endfunction()
