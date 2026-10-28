@@ -203,7 +203,7 @@ sub_python(){
 				# Define Python instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
-					BUILD_FLAGS="--with-valgrind"
+					BUILD_FLAGS="--with-valgrind --with-pydebug --without-pymalloc"
 					BUILD_LDFLAGS=""
 					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
@@ -394,7 +394,7 @@ sub_python(){
 			# Define Python instrumentation
 			if [ $INSTALL_MEMCHECK = 1 ]; then
 				sed -i '' 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
-				BUILD_FLAGS="--with-valgrind"
+				BUILD_FLAGS="--with-valgrind --with-pydebug --without-pymalloc"
 				BUILD_LDFLAGS=""
 			elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 				printf "leak:*libpython*" > ./asan.supp
