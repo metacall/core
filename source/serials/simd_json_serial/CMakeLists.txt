@@ -17,8 +17,6 @@ if(NOT SIMDJSON_FOUND)
 		message(SEND_ERROR "SimdJSON libraries not found")
 		return()
 	endif()
-
-	set(SIMDJSON_INSTALL TRUE)
 endif()
 
 #
@@ -100,10 +98,6 @@ target_compile_definitions(SimdJSON
 	INTERFACE
 	${SIMDJSON_COMPILE_DEFINITIONS}
 )
-
-if(SIMDJSON_INSTALL)
-	add_dependencies(SimdJSON simd-json-depends)
-endif()
 
 # Add target dependencies
 add_dependencies(${target}
