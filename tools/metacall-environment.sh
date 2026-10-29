@@ -164,7 +164,7 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
+		$SUDO_CMD pkg install -y cmake-core git gmake wget gnupg ca_root_nss
 
 		# Install libc debug symbols
 		if [ "${BUILD_TYPE}" = "Debug" ]; then
