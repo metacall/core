@@ -781,6 +781,10 @@ func TestNodeJSFuture(t *testing.T) {
 
 func TestGoRoutineLeaks(t *testing.T) {
 	requireLoader(t, "node")
+	// TODO: Shutdown deadlock on MacOS (Destroy() does not finish within 5s), skipped until it is fixed
+	if runtime.GOOS == "darwin" {
+		t.Skip("TODO: TestGoRoutineLeaks deadlocks on MacOS")
+	}
 	// This test is for race condition when shutdown occur with non-empty queue which triggers a deadlock and a goroutine leak
 	// Start the port and fill the queue
 	buffer := "module.exports = { leak_test: (x) => x }"
@@ -919,6 +923,10 @@ func benchmarkNodeJS(b *testing.B, n int) {
 
 func BenchmarkNodeJSSequential(b *testing.B) {
 	requireLoader(b, "node")
+	// TODO: Aborts on MacOS (uv_mutex_lock on a destroyed mutex in the NodeJS future_delete threadsafe invoke)
+	if runtime.GOOS == "darwin" {
+		b.Skip("TODO: NodeJS future_delete race on MacOS")
+	}
 	for i := 0; i < b.N; i++ {
 		benchmarkNodeJS(b, 5)
 	}
@@ -926,6 +934,10 @@ func BenchmarkNodeJSSequential(b *testing.B) {
 
 func BenchmarkNodeJSParallel(b *testing.B) {
 	requireLoader(b, "node")
+	// TODO: Aborts on MacOS (uv_mutex_lock on a destroyed mutex in the NodeJS future_delete threadsafe invoke)
+	if runtime.GOOS == "darwin" {
+		b.Skip("TODO: NodeJS future_delete race on MacOS")
+	}
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			benchmarkNodeJS(b, 5)

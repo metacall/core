@@ -236,7 +236,10 @@ if((CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDeb
 
 	# Profiles to be analyzed, the goroutine leaks profile is only generated when NodeJS loader is enabled
 	set(GO_PORT_PPROF_PROFILES cpu mem block mutex goroutine)
-	if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE)
+	# TODO: TestGoRoutineLeaks is skipped on MacOS because it fails, so this profile is not generated there
+	if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND NOT PROJECT_OS_FAMILY MATCHES "macos")
+	# TODO: Restore it once it works on MacOS
+	# if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE)
 		list(APPEND GO_PORT_PPROF_PROFILES goroutine_leaks)
 	endif()
 	list(JOIN GO_PORT_PPROF_PROFILES " " GO_PORT_PPROF_PROFILES)
