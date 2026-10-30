@@ -123,9 +123,9 @@ TEST_F(metacall_ruby_conversion_test, DefaultConstructor)
 			EXPECT_EQ((enum metacall_value_id)METACALL_ARRAY, (enum metacall_value_id)metacall_value_id(ret));
 			void **ret_arr = metacall_value_to_array(ret);
 			EXPECT_EQ((size_t)3, metacall_value_count(ret));
-			EXPECT_EQ((int)1, metacall_value_to_int(ret_arr[0]));
-			EXPECT_EQ((int)2, metacall_value_to_int(ret_arr[1]));
-			EXPECT_EQ((int)3, metacall_value_to_int(ret_arr[2]));
+			EXPECT_EQ((int)1, metacall_value_to_long(ret_arr[0]));
+			EXPECT_EQ((int)2, metacall_value_to_long(ret_arr[1]));
+			EXPECT_EQ((int)3, metacall_value_to_long(ret_arr[2]));
 			metacall_value_destroy(ret);
 			metacall_value_destroy(args[0]);
 		}
