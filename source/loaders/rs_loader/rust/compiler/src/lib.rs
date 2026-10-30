@@ -54,12 +54,19 @@ pub mod memory;
 mod middle;
 pub mod package;
 pub(crate) mod registrator;
+pub mod template;
 pub mod wrapper;
 use wrapper::generate_wrapper;
 pub mod api;
 pub enum RegistrationError {
     CompilationError(String),
     DynlinkError(String),
+}
+
+#[derive(Clone, Debug)]
+pub struct TemplateInstantiation {
+    pub template: String,
+    pub types: Vec<String>,
 }
 
 struct SourceInput(config::Input);
@@ -362,6 +369,7 @@ pub struct FunctionParameter {
     reference: Reference,
     ty: FunctionType,
     generic: Vec<FunctionParameter>,
+    generic_name: Option<String>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -369,6 +377,7 @@ pub struct Function {
     name: String,
     ret: Option<FunctionParameter>,
     args: Vec<FunctionParameter>,
+    generics: Vec<String>,
 }
 
 impl Function {
@@ -377,6 +386,28 @@ impl Function {
             return false;
         }
         matches!(self.args[0].ty, FunctionType::This)
+    }
+
+    pub fn instantiate(&self, types: Vec<String>) -> Function {
+        let mut function = self.clone();
+
+        function.generics.clear();
+
+        function.name = format!("{}::<{}>", self.name, types.join(", "));
+
+        function
+    }
+
+    pub fn instantiate_name(&self, types: Vec<String>) -> String {
+        format!(
+            "{}_{}",
+            self.name,
+            types
+                .iter()
+                .map(|t| t.replace("::", "_"))
+                .collect::<Vec<_>>()
+                .join("_")
+        )
     }
 }
 
@@ -400,7 +431,9 @@ pub struct Class {
 pub struct CompilerState {
     output: PathBuf,
     functions: Vec<Function>,
+    templates: Vec<Function>,
     classes: Vec<Class>,
+    instantiations: Vec<TemplateInstantiation>,
 }
 
 #[derive(Clone, Debug)]
@@ -415,6 +448,7 @@ pub struct CompilerCallbacks {
     is_parsing: bool,
     destination: PathBuf,
     functions: Vec<Function>,
+    templates: Vec<Function>,
     classes: Vec<Class>,
 }
 
@@ -423,7 +457,14 @@ impl CompilerCallbacks {
         let mut item_visitor = ItemVisitor::new();
         rustc_ast::visit::walk_crate(&mut item_visitor, krate);
         self.classes = item_visitor.classes.into_values().collect();
-        self.functions = item_visitor.functions;
+
+        for function in item_visitor.functions {
+            self.functions.push(function);
+        }
+
+        for template in item_visitor.templates {
+            self.templates.push(template);
+        }
     }
 
     fn analyze_metadata<'tcx>(&mut self, tcx: TyCtxt<'tcx>) {
@@ -447,9 +488,6 @@ impl CompilerCallbacks {
         let krate = match metacall_crate {
             Some(k) => *k,
             None => {
-                for krate in tcx.crates(()) {
-                    eprintln!(" here - {}", tcx.crate_name(*krate));
-                }
                 return;
             }
         };
@@ -483,6 +521,7 @@ impl CompilerCallbacks {
                                 reference: Reference::No,
                                 ty: FunctionType::Complex,
                                 generic: vec![],
+                                generic_name: None,
                             },
                         });
                     }
@@ -505,17 +544,36 @@ impl CompilerCallbacks {
                                     .enumerate()
                                     .map(|(i, _)| rustc_span::Ident::from_str(&format!("arg{}", i)))
                                     .collect();
+
+                                let generics = tcx
+                                    .generics_of(fn_def_id)
+                                    .own_params
+                                    .iter()
+                                    .map(|param| param.name.to_string())
+                                    .collect::<Vec<String>>();
+
                                 let function = middle::handle_fn(
                                     assoc.ident(tcx).to_string(),
                                     &fn_sig,
                                     &names,
+                                    generics,
                                 );
-                                if function.name == "new" {
-                                    class.constructor = Some(function);
-                                } else if function.has_self() {
-                                    class.methods.push(function);
+
+                                let is_generic = !function.generics.is_empty();
+
+                                if is_generic {
+                                    self.templates.push(function.clone());
                                 } else {
-                                    class.static_methods.push(function);
+                                    self.functions.push(function.clone());
+                                }
+                                if function.generics.is_empty() {
+                                    if function.name == "new" {
+                                        class.constructor = Some(function);
+                                    } else if function.has_self() {
+                                        class.methods.push(function);
+                                    } else {
+                                        class.static_methods.push(function);
+                                    }
                                 }
                             }
                         }
@@ -533,8 +591,20 @@ impl CompilerCallbacks {
                         .enumerate()
                         .map(|(i, _)| rustc_span::Ident::from_str(&format!("arg{}", i)))
                         .collect();
-                    self.functions
-                        .push(middle::handle_fn(ident.to_string(), &fn_sig, &names));
+
+                    let generics = tcx
+                        .generics_of(def_id)
+                        .own_params
+                        .iter()
+                        .map(|param| param.name.to_string())
+                        .collect::<Vec<String>>();
+                    let function = middle::handle_fn(ident.to_string(), &fn_sig, &names, generics);
+
+                    if function.generics.is_empty() {
+                        self.functions.push(function);
+                    } else {
+                        self.templates.push(function);
+                    }
                 }
 
                 _ => {}
@@ -594,10 +664,6 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
 
             config.opts.externs = Externs::new(externs);
 
-            eprintln!("DEBUG EXTERNS:");
-            for (name, entry) in config.opts.externs.iter() {
-                eprintln!("extern crate: {} -> {:?}", name, entry);
-            }
             let dep_path = self
                 .source
                 .input_path
@@ -693,6 +759,7 @@ enum ImplKind {
 struct ItemVisitor {
     functions: Vec<Function>,
     classes: HashMap<String, Class>,
+    templates: Vec<Function>,
 }
 
 impl ItemVisitor {
@@ -700,6 +767,7 @@ impl ItemVisitor {
         Self {
             functions: vec![],
             classes: HashMap::new(),
+            templates: vec![],
         }
     }
 }
@@ -717,7 +785,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                     if let Some(ident) = field.ident {
                         let attr = Attribute {
                             name: ident.to_string(),
-                            ty: ast::handle_ty(&field.ty),
+                            ty: ast::handle_ty(&field.ty, &vec![]),
                         };
                         class.attributes.push(attr);
                     }
@@ -728,6 +796,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                     items,
                     self_ty,
                     of_trait,
+                    generics,
                     ..
                 } = impl_kind;
                 let impl_kind = match of_trait {
@@ -756,10 +825,10 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                         if sig.decl.has_self() {
                             match impl_kind {
                                 ImplKind::Drop => {
-                                    class.destructor = Some(ast::handle_fn(name, sig));
+                                    class.destructor = Some(ast::handle_fn(name, sig, generics));
                                 }
                                 _ => {
-                                    class.methods.push(ast::handle_fn(name, sig));
+                                    class.methods.push(ast::handle_fn(name, sig, generics));
                                 }
                             }
                         } else {
@@ -771,20 +840,25 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                                         rustc_ast::TyKind::Path(_, p) => {
                                             let ret_name = p.segments[0].ident.to_string();
                                             if ret_name == "Self" || ret_name == class_name_str {
-                                                class.constructor = Some(ast::handle_fn(name, sig));
+                                                class.constructor =
+                                                    Some(ast::handle_fn(name, sig, generics));
                                             } else {
                                                 class
                                                     .static_methods
-                                                    .push(ast::handle_fn(name, sig));
+                                                    .push(ast::handle_fn(name, sig, generics));
                                             }
                                         }
                                         _ => {
-                                            class.static_methods.push(ast::handle_fn(name, sig));
+                                            class
+                                                .static_methods
+                                                .push(ast::handle_fn(name, sig, generics));
                                         }
                                     }
                                 }
                                 rustc_ast::FnRetTy::Default(_) => {
-                                    class.static_methods.push(ast::handle_fn(name, sig));
+                                    class
+                                        .static_methods
+                                        .push(ast::handle_fn(name, sig, generics));
                                 }
                             }
                         }
@@ -794,7 +868,14 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
 
             ItemKind::Fn(box fn_item) => {
                 let item = fn_item.ident.to_string();
-                self.functions.push(ast::handle_fn(item, &fn_item.sig));
+
+                let function = ast::handle_fn(item, &fn_item.sig, &fn_item.generics);
+
+                if function.generics.is_empty() {
+                    self.functions.push(function);
+                } else {
+                    self.templates.push(function);
+                }
             }
             _ => {}
         }
@@ -965,7 +1046,10 @@ fn run_compiler(
     });
 }
 
-pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
+pub fn compile(
+    source: SourceImpl,
+    instantiations: &[TemplateInstantiation],
+) -> Result<CompilerState, CompilerError> {
     let destination = std::env::temp_dir().join(generate_random_string(5));
     let result = std::fs::create_dir(&destination);
 
@@ -980,6 +1064,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         is_parsing: true,
         destination,
         functions: Default::default(),
+        templates: Default::default(),
         classes: Default::default(),
     };
 
@@ -1023,7 +1108,37 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     // Parse fails, stop
     parsing_result?;
 
-    let mut patched_callback = generate_wrapper(callbacks).expect("Unable to generate wrapper");
+    for instantiation in instantiations {
+        let Some(template) = callbacks
+            .templates
+            .iter()
+            .find(|template| template.name == instantiation.template)
+        else {
+            let err = format!("Template '{}' not found.", instantiation.template);
+            return Err(CompilerError {
+                diagnostics: String::new(),
+                errors: err.clone(),
+                err,
+            });
+        };
+
+        if template.generics.len() != instantiation.types.len() {
+            let err = format!(
+                "Template '{}' expects {} types, got {}.",
+                template.name,
+                template.generics.len(),
+                instantiation.types.len()
+            );
+            return Err(CompilerError {
+                diagnostics: String::new(),
+                errors: err.clone(),
+                err,
+            });
+        }
+    }
+
+    let mut patched_callback =
+        generate_wrapper(callbacks, instantiations).expect("Unable to generate wrapper");
 
     // Generate binary
     match rustc_driver::catch_fatal_errors(|| {
@@ -1032,7 +1147,9 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
             functions: patched_callback.functions,
+            templates: patched_callback.templates,
             classes: patched_callback.classes,
+            instantiations: instantiations.to_vec(),
         }),
         Err(err) => {
             // Read buffered diagnostics
@@ -1104,6 +1221,42 @@ mod tests {
             })) {
                 Err(comp_err) => assert!(false, "compilation failed: {}", comp_err.errors),
                 Ok(comp_state) => assert!(comp_state.output.exists()),
+            }
+        })
+    }
+
+    #[test]
+    fn test_compile_generics() {
+        run_test(|| {
+            let result = compile(Source::build(Source::Memory {
+                name: String::from("generic_test.rs"),
+                code: String::from(
+                    r#"
+                pub fn add<T>(a: T, b: T) -> T {
+                    a
+                }
+
+                pub fn normal(a: i32) -> i32 {
+                    a
+                }
+                "#,
+                ),
+            }));
+
+            match result {
+                Err(comp_err) => {
+                    assert!(false, "compilation failed: {}", comp_err.errors)
+                }
+
+                Ok(comp_state) => {
+                    assert!(comp_state.functions.iter().any(|f| f.name == "normal"));
+
+                    assert!(comp_state.templates.iter().any(|f| f.name == "add"));
+
+                    assert!(!comp_state.functions.iter().any(|f| f.name == "add"));
+
+                    assert!(!comp_state.templates.iter().any(|f| f.name == "normal"));
+                }
             }
         })
     }

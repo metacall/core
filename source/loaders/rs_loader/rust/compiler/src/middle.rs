@@ -9,6 +9,7 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
         reference: Reference::No,
         ty: FunctionType::Null,
         generic: vec![],
+        generic_name: None,
     };
     match &ty.kind() {
         TyKind::Int(i) => match i {
@@ -78,11 +79,17 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
     result
 }
 
-pub fn handle_fn<'a>(name: String, sig: &Binder<'a, FnSig<'a>>, names: &[Ident]) -> Function {
+pub fn handle_fn<'a>(
+    name: String,
+    sig: &Binder<'a, FnSig<'a>>,
+    names: &[Ident],
+    generics: Vec<String>,
+) -> Function {
     let mut function = Function {
         name,
         ret: None,
         args: vec![],
+        generics,
     };
     // parse input and output
     let inputs = sig.inputs().skip_binder();

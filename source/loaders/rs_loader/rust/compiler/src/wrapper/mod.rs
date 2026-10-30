@@ -1,7 +1,13 @@
 pub mod class;
-use super::{config::Input, rustc_span::FileName::Custom, CompilerCallbacks, Function, Source};
+use super::{
+    config::Input, rustc_span::FileName::Custom, CompilerCallbacks, Function, FunctionParameter,
+    FunctionType, Source,
+};
+use crate::TemplateInstantiation;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
+
 fn generate_function_wrapper(functions: &[Function]) -> String {
     let mut ret = String::new();
     for func in functions {
@@ -9,10 +15,84 @@ fn generate_function_wrapper(functions: &[Function]) -> String {
             "#[unsafe(no_mangle)]\npub unsafe extern \"C\" fn rs_loader_impl_register_fn_{}() -> *mut Function {{\n",
             func.name
         ));
-        ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
-        ret.push_str("\tBox::into_raw(Box::new(f))\n}\n");
+        if func.generics.is_empty() {
+            ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
+
+            ret.push_str("\tBox::into_raw(Box::new(f))\n");
+        } else {
+            ret.push_str("\tstd::ptr::null_mut()\n");
+        }
+        //ret.push_str(&format!("\tlet f = Function::new({});\n", func.name));
+        //ret.push_str("\tBox::into_raw(Box::new(f))\n}\n");
+        ret.push_str("}\n");
     }
     ret
+}
+
+fn build_generic_mapping(template: &Function, types: &[String]) -> HashMap<String, String> {
+    template
+        .generics
+        .iter()
+        .cloned()
+        .zip(types.iter().cloned())
+        .collect()
+}
+
+fn substitute_type(param: &FunctionParameter, mapping: &HashMap<String, String>) -> String {
+    if matches!(param.ty, FunctionType::Complex) {
+        if let Some(concrete_type) = param
+            .generic_name
+            .as_ref()
+            .and_then(|name| mapping.get(name))
+        {
+            return concrete_type.clone();
+        }
+    }
+
+    param.ty.to_string()
+}
+
+fn generate_instantiated_function_wrapper(template: &Function, types: &[String]) -> String {
+    let wrapper_name = template.instantiate_name(types.to_vec());
+
+    let mapping = build_generic_mapping(template, types);
+
+    let args = template
+        .args
+        .iter()
+        .map(|arg| format!("{}: {}", arg.name, substitute_type(arg, &mapping)))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let return_type = template
+        .ret
+        .as_ref()
+        .map(|ret| substitute_type(ret, &mapping))
+        .unwrap_or_else(|| "()".to_string());
+
+    let call_args = template
+        .args
+        .iter()
+        .map(|arg| arg.name.clone())
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    format!(
+        "pub fn {wrapper_name}({args}) -> {return_type} {{\n\
+            {name}::<{types}>({call_args})\n\
+        }}\n\
+        #[unsafe(no_mangle)]\n\
+        pub unsafe extern \"C\" fn rs_loader_impl_register_fn_{wrapper_name}() -> *mut Function {{\n\
+            let f = Function::new({wrapper_name});\n\
+            Box::into_raw(Box::new(f))\n\
+        }}\n",
+        wrapper_name = wrapper_name,
+        args = args,
+        return_type = return_type,
+        name = template.name,
+        types = types.join(", "),
+        call_args = call_args,
+    )
 }
 
 fn generate_class_wrapper(classes: &[&crate::Class]) -> String {
@@ -143,7 +223,10 @@ fn generate_class_wrapper_for_package(classes: &[&crate::Class]) -> String {
     }
     ret
 }
-pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<CompilerCallbacks> {
+pub fn generate_wrapper(
+    callbacks: CompilerCallbacks,
+    instantiations: &[TemplateInstantiation],
+) -> std::io::Result<CompilerCallbacks> {
     match callbacks.source.source {
         Source::Package { ref path } => {
             let mut content = String::new();
@@ -183,6 +266,19 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper(&callbacks.functions);
             content.push_str(&function_wrapper);
+
+            for instantiation in instantiations {
+                if let Some(template) = callbacks
+                    .templates
+                    .iter()
+                    .find(|template| template.name == instantiation.template)
+                {
+                    let instantiated_wrapper =
+                        generate_instantiated_function_wrapper(template, &instantiation.types);
+
+                    content.push_str(&instantiated_wrapper);
+                }
+            }
             let class_wrapper =
                 generate_class_wrapper(&callbacks.classes.iter().collect::<Vec<_>>());
             content.push_str(&class_wrapper);

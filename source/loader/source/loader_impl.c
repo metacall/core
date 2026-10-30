@@ -317,7 +317,7 @@ void loader_impl_configuration_environment(loader_impl impl)
 	 *     ...
 	 * ]
 	 * Reference: https://github.com/metacall/core/issues/760
-	*/
+	 */
 
 	value env_array_value;
 	size_t entry_count;
@@ -791,11 +791,11 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	library_path = plugin_manager_library_path(manager);
 
 	/* The library path priority order is the following:
-	* 1) In the configuration <tag>_loader.json, the flag loader_library_path.
-	* 2) The environment variable LOADER_LIBRARY_PATH.
-	* 3) The directory of the path of (lib)metacall.{so,dll,dylib,...}
-	* 4) Default install paths defined at compile time.
-	*/
+	 * 1) In the configuration <tag>_loader.json, the flag loader_library_path.
+	 * 2) The environment variable LOADER_LIBRARY_PATH.
+	 * 3) The directory of the path of (lib)metacall.{so,dll,dylib,...}
+	 * 4) Default install paths defined at compile time.
+	 */
 
 	/* Check if the configuration has a custom loader_library_path, otherwise set it up */
 	if (impl->config != NULL && configuration_value_type(impl->config, loader_library_path, TYPE_STRING) == NULL)
@@ -842,10 +842,10 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	}
 
 	/* The scripts path priority order is the following:
-	* 1) The library path.
-	* 2) The delimiter based paths defined in LOADER_SCRIPT_PATH.
-	* 3) The execution paths defined before the initialization of a loader (for example, all metacall_execution_path(...) called before metacall_load_from_file(...)).
-	*/
+	 * 1) The library path.
+	 * 2) The delimiter based paths defined in LOADER_SCRIPT_PATH.
+	 * 3) The execution paths defined before the initialization of a loader (for example, all metacall_execution_path(...) called before metacall_load_from_file(...)).
+	 */
 
 	/* Load the library path as execution path */
 	loader_library_path_value = configuration_value_type(impl->config, loader_library_path, TYPE_STRING);
@@ -1822,12 +1822,12 @@ int loader_impl_clear(void *handle)
 void loader_impl_destroy_objects(loader_impl impl)
 {
 	/* This iterates through all functions, classes objects and types,
-	* it is necessary to be executed on demand because those can have
-	* implementations in the loader implementation which need to be GCed
-	* or freed properly before the runtime goes down but after the
-	* destroy has been issued, so while it is destroying, we can still
-	* retrieve the data for introspection or for whatever we need
-	*/
+	 * it is necessary to be executed on demand because those can have
+	 * implementations in the loader implementation which need to be GCed
+	 * or freed properly before the runtime goes down but after the
+	 * destroy has been issued, so while it is destroying, we can still
+	 * retrieve the data for introspection or for whatever we need
+	 */
 	if (impl != NULL)
 	{
 		/* Destroy all handles in inverse creation order */
