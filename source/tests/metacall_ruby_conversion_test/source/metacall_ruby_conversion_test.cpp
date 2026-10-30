@@ -50,7 +50,7 @@ TEST_F(metacall_ruby_conversion_test, DefaultConstructor)
 
 			EXPECT_NE((void *)NULL, (void *)ret);
 
-			EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
 
 			metacall_value_destroy(ret);
 			metacall_value_destroy(args[0]);
