@@ -29,5 +29,7 @@ Fixes #(issue_no)
 - [ ] I have tested my code with `OPTION_BUILD_THREAD_SANITIZER` or `./docker-compose.sh test-thread-sanitizer &> output`.
 - [ ] I have tested with `Helgrind` in case my code works with threading.
 - [ ] I have run `make clang-format` in order to format my code and my code follows the style guidelines.
+- [ ] I have linked the Issue or Discussion with maintainer scope approval (community-first workflow, else the PR stays ignored).
+- [ ] I have disclosed AI assistance in the PR description (`AI-ASSISTED: yes/no`, model, human reviewer) and I own each line.
 
-If you are unclear about any of the above checks, have a look at our documentation [here](https://github.com/metacall/core/blob/develop/docs/README.md#63-debugging).
+If you are unclear about any of the above checks, have a look at our documentation [here](https://github.com/metacall/core/blob/develop/docs/README.md#73-debugging).

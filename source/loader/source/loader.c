@@ -542,11 +542,11 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 
 value loader_get(const char *name)
 {
-	struct set_iterator_type it;
+	struct set_small_iterator_type it;
 
-	for (set_iterator_begin(&it, loader_manager.plugins); set_iterator_end(&it) != 0; set_iterator_next(&it))
+	for (set_small_iterator_begin(&it, loader_manager.plugins); set_small_iterator_end(&it) != 0; set_small_iterator_next(&it))
 	{
-		plugin p = set_iterator_value(&it);
+		plugin p = set_small_iterator_value(&it);
 
 		loader_impl impl = plugin_impl_type(p, loader_impl);
 
@@ -695,9 +695,11 @@ value loader_metadata_impl(plugin p, loader_impl impl)
 
 value loader_metadata(void)
 {
-	value *values, v = value_create_map(NULL, plugin_manager_size(&loader_manager));
-	struct set_iterator_type it;
+	value *values, v;
+	struct set_small_iterator_type it;
 	size_t values_it;
+
+	v = value_create_map(NULL, plugin_manager_size(&loader_manager));
 
 	if (v == NULL)
 	{
@@ -706,9 +708,9 @@ value loader_metadata(void)
 
 	values = value_to_map(v);
 
-	for (set_iterator_begin(&it, loader_manager.plugins), values_it = 0; set_iterator_end(&it) != 0; set_iterator_next(&it))
+	for (set_small_iterator_begin(&it, loader_manager.plugins), values_it = 0; set_small_iterator_end(&it) != 0; set_small_iterator_next(&it))
 	{
-		plugin p = set_iterator_value(&it);
+		plugin p = set_small_iterator_value(&it);
 
 		loader_impl impl = plugin_impl_type(p, loader_impl);
 
@@ -740,6 +742,18 @@ void loader_set_destroyed(loader_impl impl)
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 
 	loader_manager_impl_set_destroyed(manager_impl, impl);
+}
+
+int loader_destroy_runtime(loader_impl impl)
+{
+	/* Destroy the runtime of a loader before MetaCall gets destroyed, this is used by the hosts
+	* (i.e from the ports) for destroying the loader while the runtime is still alive, then
+	* mark it as destroyed so the remaining values do not access to the runtime anymore */
+	int result = loader_impl_destroy_runtime(impl);
+
+	loader_set_destroyed(impl);
+
+	return result;
 }
 
 void loader_unload_children(loader_impl impl)
@@ -840,9 +854,21 @@ void loader_destroy(void)
 				log_write("metacall", LOG_LEVEL_ERROR, "Failed to clear host loader");
 			}
 		}
-		else
+		else if (manager_impl->host != NULL)
 		{
-			plugin_destroyed(manager_impl->host);
+			loader_impl host_impl = plugin_impl_type(manager_impl->host, loader_impl);
+
+			/* If the host runtime has been already destroyed by the host itself (i.e from the port with loader_destroy_runtime),
+			* deallocate the loader (the runtime destroy is not called again), otherwise do not touch it because the runtime
+			* is managed externally and it may be already finalized */
+			if (loader_impl_is_initialized(host_impl) != 0)
+			{
+				plugin_destructor(manager_impl->host);
+			}
+			else
+			{
+				plugin_destroyed(manager_impl->host);
+			}
 		}
 
 		manager_impl->host = NULL;

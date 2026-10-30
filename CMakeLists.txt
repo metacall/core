@@ -168,6 +168,13 @@ endif()
 
 include(CompileOptions)
 
+# Thread Sanitizer compiled statically is incompatible with fork safety
+# because fork symbol is overriden by the interceptor and becomes a weak symbol
+# https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors
+if(OPTION_BUILD_THREAD_SANITIZER AND NOT SANITIZER_LIBRARIES_PATH)
+	set(OPTION_FORK_SAFE OFF CACHE BOOL "Enable fork safety." FORCE)
+endif()
+
 #
 # Coverage
 #
@@ -250,6 +257,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(OPTION_BUILD_TESTS OR OPTION_BUILD_BENCHMARKS)
 	enable_testing()
+
+	# Run the tests through the emulator when cross-compiling to Android
+	include(AndroidEmulatorTest)
 endif()
 
 #

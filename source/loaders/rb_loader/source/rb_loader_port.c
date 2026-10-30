@@ -21,11 +21,16 @@
 #include <rb_loader/rb_loader_impl.h>
 #include <rb_loader/rb_loader_port.h>
 
+#include <loader/loader.h>
+#include <loader/loader_impl.h>
+
 #include <format/format.h>
 
 #include <metacall/metacall.h>
 
 #include <rb_loader/rb_loader_include.h>
+
+#include <ruby/vm.h>
 
 static loader_impl rb_loader_impl = NULL;
 
@@ -143,6 +148,7 @@ static VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 	const char *function_name;
 	size_t args_size, iterator;
 	value *args, result;
+	VALUE rb_result;
 
 	(void)self;
 
@@ -192,7 +198,11 @@ static VALUE rb_loader_port_metacall(int argc, VALUE *argv, VALUE self)
 		free(args);
 	}
 
-	return rb_type_serialize(result);
+	rb_result = rb_type_serialize(result);
+
+	value_type_destroy(result);
+
+	return rb_result;
 }
 
 static VALUE rb_loader_port_inspect(VALUE self)
@@ -234,18 +244,25 @@ static VALUE rb_loader_port_inspect(VALUE self)
 
 static VALUE rb_loader_port_atexit(VALUE self)
 {
-	static int atexit_executed = 0;
-
 	(void)self;
 
-	if (atexit_executed == 0 && rb_loader_impl_destroy(rb_loader_impl) != 0)
+	/* Destroy the loader while the runtime is still alive (called from Kernel#exit in the port),
+	* so MetaCall can deallocate it later without destroying the runtime again */
+	if (loader_destroy_runtime(rb_loader_impl) != 0)
 	{
-		rb_raise(rb_eSystemExit, "Failed to destroy Ruby Loader from MetaCall");
+		rb_raise(rb_eRuntimeError, "Failed to destroy Ruby Loader from MetaCall");
 	}
 
-	atexit_executed = 1;
-
 	return Qnil;
+}
+
+static void rb_loader_port_vm_at_exit(ruby_vm_t *vm)
+{
+	(void)vm;
+
+	/* The VM is being torn down after all at_exit procs, if the loader was not destroyed by the port,
+	* mark it as destroyed for preventing the remaining values to access the VM during metacall_destroy */
+	loader_set_destroyed(rb_loader_impl);
 }
 
 int rb_loader_port_initialize(loader_impl impl)
@@ -267,7 +284,13 @@ int rb_loader_port_initialize(loader_impl impl)
 	rb_define_module_function(rb_loader_port, "metacall_load_from_memory", rb_loader_port_load_from_memory, 2);
 	rb_define_module_function(rb_loader_port, "metacall", rb_loader_port_metacall, -1);
 	rb_define_module_function(rb_loader_port, "metacall_inspect", rb_loader_port_inspect, 0);
-	rb_define_module_function(rb_loader_port, "rb_loader_port_atexit", rb_loader_port_atexit, 0);
+
+	/* Exit hooks are only needed when Ruby is the host, otherwise the runtime is destroyed by MetaCall */
+	if (loader_impl_get_option_host(impl) == 1)
+	{
+		rb_define_module_function(rb_loader_port, "rb_loader_port_atexit", rb_loader_port_atexit, 0);
+		ruby_vm_at_exit(&rb_loader_port_vm_at_exit);
+	}
 
 	rb_loader_impl = impl;
 

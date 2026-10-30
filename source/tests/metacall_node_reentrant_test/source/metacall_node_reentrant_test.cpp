@@ -94,6 +94,8 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 			EXPECT_NE((void *)NULL, (void *)ret);
 
 			EXPECT_EQ((double)137438953472.0, (double)metacall_value_to_double(ret));
+
+			metacall_value_destroy(ret);
 		}
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */

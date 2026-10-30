@@ -155,7 +155,7 @@ sub_test_clang() {
 # Build MetaCall Docker Compose with Memory Sanitizer for testing
 sub_test_memory_sanitizer() {
 	# Enable build with clang
-	export METACALL_BUILD_CLANG=clangmsan
+	export METACALL_BUILD_CLANG=clang-msan
 
 	# Enable build with memory sanitizer
 	export METACALL_BUILD_SANITIZER=memory-sanitizer
@@ -400,6 +400,8 @@ sub_help() {
 	echo "	coverage"
 	echo "	test-memcheck"
 	echo "	test-clang"
+	echo "	test-clang-address-sanitizer"
+	echo "	test-clang-thread-sanitizer"
 	echo "	cache"
 	echo "	platform"
 	echo "	push"
@@ -439,6 +441,16 @@ case "$1" in
 		;;
 	test-clang)
 		sub_test_clang
+		;;
+	test-clang-address-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
+		export METACALL_BUILD_SANITIZER="address-sanitizer"
+		sub_test_sanitizer
+		;;
+	test-clang-thread-sanitizer)
+		export METACALL_BUILD_CLANG="clang"
+		export METACALL_BUILD_SANITIZER="thread-sanitizer"
+		sub_test_sanitizer
 		;;
 	cache)
 		sub_cache

@@ -117,6 +117,12 @@ target_link_options(${target}
 # Define test
 #
 
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	# With sanitizers each error log prints a symbolized stack trace (see log_impl_write), so the benchmark
+	# measures the sanitizer symbolizer instead of the log (it takes more than one hour with clang address sanitizer)
+	return()
+endif()
+
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 		--benchmark_out=${CMAKE_BINARY_DIR}/benchmarks/${target}.json
@@ -136,6 +142,9 @@ add_dependencies(${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+
+	# Benchmarks are too slow under valgrind, skip them in memcheck
+	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)

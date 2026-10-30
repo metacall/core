@@ -159,9 +159,9 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 	}
 	else if (v_type == T_FIXNUM)
 	{
-		int i = FIX2INT(v);
+		long l = FIX2LONG(v);
 
-		*result = value_create_int(i);
+		*result = value_create_long(l);
 
 		return "Fixnum";
 	}
@@ -186,7 +186,7 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 		long length = RSTRING_LEN(v);
 		char *str = StringValuePtr(v);
 
-		if (length > 0 && str != NULL)
+		if (length >= 0 && str != NULL)
 		{
 			*result = value_create_string(str, (size_t)length);
 		}
@@ -200,14 +200,19 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 	}
 	else if (v_type == T_ARRAY)
 	{
-		size_t iterator, size = RARRAY_LEN(v);
-
+		long size = RARRAY_LEN(v);
 		VALUE *array_ptr = RARRAY_PTR(v);
 
-		*result = value_create_array(NULL, size);
+		if (size < 0)
+		{
+			size = 0;
+		}
+
+		*result = value_create_array(NULL, (size_t)size);
 
 		if (size > 0 && *result != NULL)
 		{
+			long iterator;
 			value *v_array_ptr = value_to_array(*result);
 
 			for (iterator = 0; iterator < size; ++iterator, ++array_ptr)
@@ -258,25 +263,63 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 #endif
 	else if (v_type == T_OBJECT)
 	{
-		loader_impl_rb_object rb_obj = malloc(sizeof(struct loader_impl_rb_object_type));
-		VALUE object_class = rb_obj_class(v);
-		value obj_cls_val = NULL;
+		if (rb_obj_is_kind_of(v, rb_eException))
+		{
+			VALUE name = rb_class_name(rb_class_of(v));
+			VALUE message = rb_funcall(v, rb_intern("message"), 0);
+			VALUE backtrace = rb_funcall(v, rb_intern("backtrace"), 0);
 
-		rb_type_deserialize(impl, object_class, &obj_cls_val);
+			const char *name_str = StringValueCStr(name);
+			const char *message_str = StringValueCStr(message);
+			const char *backtrace_str = "";
 
-		klass cls = value_to_class(obj_cls_val);
-		VALUE inspect = rb_inspect(v);
-		char *inspect_str = StringValuePtr(inspect);
-		object o = object_create(inspect_str, ACCESSOR_TYPE_DYNAMIC, rb_obj, &rb_object_interface_singleton, cls);
+			ID errno_id_method = rb_intern("errno");
+			int64_t errno_id = 0;
 
-		rb_obj->object = v;
-		rb_obj->object_class = object_class;
-		rb_obj->impl = impl;
-		rb_obj->obj_cls_val = obj_cls_val;
+			if (!NIL_P(backtrace))
+			{
+				VALUE backtrace_joined = rb_ary_join(backtrace, rb_str_new_cstr("\n"));
+				backtrace_str = StringValueCStr(backtrace_joined);
+			}
 
-		*result = value_create_object(o);
+			if (rb_respond_to(v, errno_id_method))
+			{
+				VALUE errno_value = rb_funcall(v, errno_id_method, 0);
 
-		return "Object";
+				if (!NIL_P(errno_value))
+				{
+					errno_id = NUM2INT(errno_value);
+				}
+			}
+
+			exception ex = exception_create_const(message_str, name_str, errno_id, backtrace_str);
+
+			*result = value_create_exception(ex);
+
+			return "Exception";
+		}
+		else
+		{
+			loader_impl_rb_object rb_obj = malloc(sizeof(struct loader_impl_rb_object_type));
+			VALUE object_class = rb_obj_class(v);
+			value obj_cls_val = NULL;
+
+			rb_type_deserialize(impl, object_class, &obj_cls_val);
+
+			klass cls = value_to_class(obj_cls_val);
+			VALUE inspect = rb_inspect(v);
+			char *inspect_str = StringValuePtr(inspect);
+			object o = object_create(inspect_str, ACCESSOR_TYPE_DYNAMIC, rb_obj, &rb_object_interface_singleton, cls);
+
+			rb_obj->object = v;
+			rb_obj->object_class = object_class;
+			rb_obj->impl = impl;
+			rb_obj->obj_cls_val = obj_cls_val;
+
+			*result = value_create_object(o);
+
+			return "Object";
+		}
 	}
 	else if (v_type == T_CLASS)
 	{
@@ -331,7 +374,7 @@ VALUE rb_type_serialize(value v)
 	}
 	else if (v_type == TYPE_CHAR)
 	{
-		return INT2NUM((int)value_to_char(v));
+		return CHR2FIX((signed char)value_to_char(v));
 	}
 	else if (v_type == TYPE_SHORT)
 	{
@@ -358,6 +401,14 @@ VALUE rb_type_serialize(value v)
 		const char *str = value_to_string(v);
 
 		return rb_str_new_cstr(str);
+	}
+	else if (v_type == TYPE_BUFFER)
+	{
+		size_t size = value_type_size(v);
+
+		const char *buffer = value_to_buffer(v);
+
+		return rb_str_new(buffer, size);
 	}
 	else if (v_type == TYPE_NULL)
 	{
@@ -405,9 +456,9 @@ VALUE rb_type_serialize(value v)
 	}
 	else
 	{
-		rb_raise(rb_eArgError, "Unsupported return type");
+		VALUE exc = rb_exc_new_cstr(rb_eArgError, "Unsupported return type");
 
-		return Qnil;
+		return exc;
 	}
 }
 
@@ -639,6 +690,8 @@ void function_rb_interface_destroy(function func, function_impl impl)
 			log_write("metacall", LOG_LEVEL_DEBUG, "Unreferencing Ruby function '%s' from module", function_name(func));
 
 			rb_undef(rb_function->module, rb_to_id(name));
+
+			rb_gc_unregister_address(&rb_function->args_hash);
 		}
 
 		free(rb_function);
@@ -1003,7 +1056,7 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 		const char *name;
 	} type_id_name_pair[] = {
 		{ TYPE_BOOL, "Boolean" },
-		{ TYPE_INT, "Fixnum" },
+		{ TYPE_LONG, "Fixnum" },
 		{ TYPE_LONG, "Bignum" },
 		{ TYPE_DOUBLE, "Float" },
 		{ TYPE_STRING, "String" },
@@ -1115,8 +1168,9 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 				*/
 				if (rb_loader_impl_interactive_terminal() && (argv == NULL || argc <= 1))
 				{
-					static char *proxy_argv[] = { "ruby", "-e", "\"\"" };
-					ruby_options(3, proxy_argv);
+					static char *proxy_argv[] = { "ruby", "-e", "0", NULL };
+					static int proxy_argc = (int)(sizeof(proxy_argv) / sizeof(proxy_argv[0])) - 1;
+					ruby_options(proxy_argc, proxy_argv);
 				}
 				else
 				{
@@ -1310,6 +1364,9 @@ loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE
 		rb_module->module = module;
 		rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
 
+		/* Root the instance, it is only referenced from C so the GC would collect it */
+		rb_gc_register_address(&rb_module->instance);
+
 		rb_extend_object(rb_module->instance, rb_module->module);
 
 		rb_include_module(rb_module->instance, rb_module->module);
@@ -1319,6 +1376,8 @@ loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE
 		if (!(rb_module->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), rb_module->function_map) == 0))
 		{
 			rb_loader_impl_key_clear(rb_module->function_map);
+
+			rb_gc_unregister_address(&rb_module->instance);
 
 			free(rb_module);
 
@@ -1667,6 +1726,8 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 			}
 
 			rb_loader_impl_key_clear((*rb_module)->function_map);
+
+			rb_gc_unregister_address(&(*rb_module)->instance);
 		}
 
 		free(*rb_module);
@@ -1711,6 +1772,9 @@ loader_impl_rb_function rb_function_create(loader_impl impl, loader_impl_rb_modu
 		rb_function->method_id = id;
 		rb_function->args_hash = rb_hash_new();
 		rb_function->impl = impl;
+
+		/* Root the arguments hash, it is only referenced from C so the GC would collect it */
+		rb_gc_register_address(&rb_function->args_hash);
 
 		return rb_function;
 	}

@@ -35,10 +35,11 @@ extern "C" {
 #include <stdint.h>
 
 #if !defined(_WIN32) && \
-	(defined(unix) || defined(__unix__) || defined(__unix) || \
-		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__))
+		(defined(unix) || defined(__unix__) || defined(__unix) || \
+			defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+			defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+			(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) || \
+	defined(__HAIKU__) || defined(__BEOS__)
 
 	#include <unistd.h>
 
@@ -97,7 +98,8 @@ extern "C" {
 #elif defined(FORMAT_32BIT) || \
 	(defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
 	defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
-	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
+	defined(__HAIKU__) || defined(__BEOS__)
 	#define FORMAT_PREFIX "z"
 #elif defined(FORMAT_64BIT)
 	#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)

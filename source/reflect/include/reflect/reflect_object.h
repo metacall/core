@@ -81,6 +81,10 @@ REFLECT_API int object_decrement_reference(object obj);
 
 REFLECT_API object_impl object_impl_get(object obj);
 
+REFLECT_API object_interface object_interface_get(object obj);
+
+REFLECT_API klass object_class_get(object obj);
+
 REFLECT_API int object_set(object obj, const char *key, value v);
 
 REFLECT_API value object_get(object obj, const char *key);

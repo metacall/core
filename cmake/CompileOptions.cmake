@@ -75,12 +75,13 @@ if(OPTION_TEST_MEMORYCHECK)
 	)
 
 	set(MEMORYCHECK_COMMAND_OPTIONS "--leak-check=full")
-	# set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-leak-kinds=all")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-leak-kinds=all")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --trace-children=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-reachable=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-origins=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=100")
-	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all-non-file") # for JITs
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all") # for JITs
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-dl.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-python.supp")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_SOURCE_DIR}/source/tests/memcheck/valgrind-node.supp")
@@ -102,6 +103,7 @@ if(OPTION_TEST_MEMORYCHECK)
 	# This is needed in order to allow valgrind to properly track malloc in Python
 	set(TESTS_MEMCHECK_ENVIRONMENT_VARIABLES
 		"PYTHONMALLOC=malloc"
+		"PYTHONDEVMODE=1"
 	)
 else()
 	set(MEMORYCHECK_COMPILE_DEFINITIONS)
@@ -112,34 +114,73 @@ endif()
 # ThreadSanitizer is incompatible with AddressSanitizer and LeakSanitizer
 if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -ltsan)
-	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-		"TSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
-	)
+	if(PROJECT_OS_BSD)
+		set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
+			"TSAN_OPTIONS=external_symbolizer_path=/usr/bin/llvm-symbolizer:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
+		)
+	else()
+		set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
+			"TSAN_OPTIONS=verbosity=1:halt_on_error=1:history_size=7:report_signal_unsafe=1:report_thread_leaks=1:second_deadlock_stack=1:force_seq_cst_atomics=1:symbolize=1:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
+		)
+	endif()
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__THREAD_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -lmsan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.supp"
+		"MSAN_OPTIONS=verbosity=1:external_symbolizer_path=/usr/bin/llvm-symbolizer"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__MEMORY_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(SANITIZER_LIBRARIES -lasan -lubsan)
+
+	# The dynamic TLS tracking of GCC 11 (libasan.so.6) with glibc 2.35 (Ubuntu Jammy) records invalid ranges, then
+	# LeakSanitizer crashes when scanning them at exit (DTLS 9 at 0x0000648000be-0x0010648011c0, Tracer caught signal 11),
+	# disabling the interception of __tls_get_addr skips the dynamic TLS in the scan, it may report false positives but never hide leaks
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 12)
+		set(SANITIZER_ASAN_OPTIONS_TLS ":intercept_tls_get_addr=0")
+	endif()
+
+	# GCC 11 lays out the over-aligned locals (64 bytes, AVX-512) assuming the frame of the real stack, which is aligned by the function
+	# itself, but with detect_stack_use_after_return=1 the frame is allocated in the fake stack of ASan and they end up misaligned by 32 bytes,
+	# so the aligned AVX-512 moves fault (SEGV on unknown address, high value address) when running in a CPU with AVX-512 (only some CI runners),
+	# for example in the icelake implementation of SimdJSON when parsing the configuration (json_structural_indexer::index<128>, simd.h:46):
+	#
+	#	67b201:	and    rsp,0xffffffffffffffc0				# real stack aligned to 64, frame at rsp+0x1a0 (0x20 mod 64)
+	#	67b257:	mov    rax,QWORD PTR [rip+0x46ad72]		# __asan_option_detect_stack_use_after_return
+	#	67b261:	jne    67c17e							# if enabled, frame = __asan_stack_malloc_9(0x4c00) (0x00 mod 64)
+	#	67b26f:	lea    r14,[rax+0x4c20]
+	#	67c87b:	vmovdqa64 ZMMWORD PTR [r14-0xa00],zmm0	# aligned with the real stack, misaligned by 0x20 with the fake stack
+	#
+	# Reproduced in Ubuntu Jammy (GCC 11.4.0, SimdJSON 5.0.5) with metacall-initialize-test emulating Ice Lake with Intel SDE 10.13.1 (sde64 -icx):
+	#	- Without SDE (no AVX-512): passed
+	#	- SDE with detect_stack_use_after_return=1: SDE ERROR: executed instruction with an unaligned memory reference to address 0x7fa868f7b220
+	#	  INSTR: 0x7fa86205887b: vmovdqa64 zmmword ptr [r14-0xa00], zmm0 (same instruction as in CI: pc 0x7f7b3235887b)
+	#	- SDE with detect_stack_use_after_return=0: passed
+	#	- SDE with SIMDJSON_FORCE_IMPLEMENTATION=haswell: passed (it avoids the AVX-512 code of SimdJSON only, not the miscompilation)
+	set(SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN 1)
+
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 12)
+		set(SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN 0)
+	endif()
+
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
-		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
+		"LSAN_OPTIONS=verbosity=1:log_threads=1:report_objects=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
 		# Specify handle_segv=0 and detect_leaks=0 for the JVM (https://blog.gypsyengineer.com/en/security/running-java-with-addresssanitizer.html)
-		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=0"
+		# "ASAN_OPTIONS=handle_segv=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=${SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN}:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200${SANITIZER_ASAN_OPTIONS_TLS}"
 
 		# TODO: We should document each flag why is it used, because now we do not know what runtime has each requirement and why.
 		# Another option should be to separate by runtimes and only set up them on the ASAN tests that require them,
 		# because we do not need to disable all features on all tests, this may hide bugs in the core library for example.
 
 		# Specify use_sigaltstack=0 as CoreCLR uses own alternate stack for signal handlers (https://github.com/swgillespie/coreclr/commit/bec020aa466d08e49e007d0011b0e79f8f7c7a62)
-		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=0"
+		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=1:strict_string_checks=1:detect_stack_use_after_return=${SANITIZER_ASAN_DETECT_STACK_USE_AFTER_RETURN}:check_initialization_order=1:strict_init_order=1:fast_unwind_on_malloc=1:malloc_context_size=200${SANITIZER_ASAN_OPTIONS_TLS}"
+
+		"UBSAN_OPTIONS=print_stacktrace=1"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__ADDRESS_SANITIZER__=1"
@@ -166,6 +207,10 @@ function(find_sanitizer NAME)
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 
+		if(PROJECT_OS_NAME MATCHES "Linux")
+			set(NAME "${NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+		endif()
+
 		file(GLOB CLANG_RUNTIME_CANDIDATES
 			"${CLANG_RUNTIME_DIR}/*${NAME}*.so"
 			"${CLANG_RUNTIME_DIR}/*${NAME}*.dylib"
@@ -174,12 +219,14 @@ function(find_sanitizer NAME)
 		list(LENGTH CLANG_RUNTIME_CANDIDATES CLANG_RUNTIME_CANDIDATES_SIZE)
 
 		if(CLANG_RUNTIME_CANDIDATES_SIZE GREATER 0)
-			list(GET CLANG_RUNTIME_CANDIDATES 0 CLANG_LIB_PATH)
+			list(GET CLANG_RUNTIME_CANDIDATES 0 LIB_PATH)
 		endif()
 	endif()
 
-	if(CLANG_LIB_PATH)
-		set(LIB${NAME_UPPER}_PATH "${CLANG_LIB_PATH}" PARENT_SCOPE)
+	message(STATUS "Sanitizer ${NAME}: ${LIB_PATH}")
+
+	if(LIB_PATH)
+		set(LIB${NAME_UPPER}_PATH "${LIB_PATH}" PARENT_SCOPE)
 	endif()
 endfunction()
 
@@ -210,7 +257,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL 
 				)
 			endif()
 		endif()
-	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+	elseif(OPTION_BUILD_MEMORY_SANITIZER AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
 		find_sanitizer(msan)
 		find_sanitizer(ubsan)
 		if(LIBMSAN_PATH AND LIBUBSAN_PATH)
@@ -220,13 +267,46 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL 
 			)
 		endif()
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER)
-		find_sanitizer(asan)
-		find_sanitizer(ubsan)
-		if(LIBASAN_PATH AND LIBUBSAN_PATH)
-			set(SANITIZER_LIBRARIES_PATH
-				"${LIBASAN_PATH}"
-				"${LIBUBSAN_PATH}"
-			)
+		if(PROJECT_OS_FAMILY MATCHES "macos" AND ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			# Here there is the list of all libraries for different MacOS platforms:
+			#
+			# libclang_rt.asan_iossim_dynamic.dylib
+			# libclang_rt.asan_ios_dynamic.dylib
+			# libclang_rt.asan_osx_dynamic.dylib
+			# libclang_rt.asan_tvossim_dynamic.dylib
+			# libclang_rt.asan_tvos_dynamic.dylib
+			# libclang_rt.asan_watchossim_dynamic.dylib
+			# libclang_rt.asan_watchos_dynamic.dylib
+			# libclang_rt.asan_xrossim_dynamic.dylib
+			# libclang_rt.asan_xros_dynamic.dylib
+			#
+			# We are supporting OSX only for now.
+			find_sanitizer(asan_osx_dynamic)
+			find_sanitizer(ubsan_osx_dynamic)
+			if(LIBASAN_OSX_DYNAMIC_PATH AND LIBUBSAN_OSX_DYNAMIC_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_OSX_DYNAMIC_PATH}"
+					"${LIBUBSAN_OSX_DYNAMIC_PATH}"
+				)
+			endif()
+		elseif(PROJECT_OS_NAME MATCHES "Linux" AND "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+			find_sanitizer(asan)
+			find_sanitizer(ubsan_standalone)
+			if(LIBASAN_PATH AND LIBUBSAN_STANDALONE_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_PATH}"
+					"${LIBUBSAN_STANDALONE_PATH}"
+				)
+			endif()
+		else()
+			find_sanitizer(asan)
+			find_sanitizer(ubsan)
+			if(LIBASAN_PATH AND LIBUBSAN_PATH)
+				set(SANITIZER_LIBRARIES_PATH
+					"${LIBASAN_PATH}"
+					"${LIBUBSAN_PATH}"
+				)
+			endif()
 		endif()
 	endif()
 endif()
@@ -307,6 +387,13 @@ endif()
 # They are empty by default
 set(DEFAULT_COMPILE_OPTIONS)
 
+# Sanitizer compile options, they are exposed in order to be propagated to external
+# projects (ExternalProject_Add) which do not inherit the options from add_compile_options
+set(SANITIZER_COMPILE_OPTIONS)
+set(SANITIZER_CXX_COMPILE_OPTIONS)
+set(SANITIZER_LINK_OPTIONS)
+set(SANITIZER_CXX_LINK_OPTIONS)
+
 if(WIN32 AND MSVC)
 	# Build runtime as multithreaded shared library
 	# if(${CMAKE_VERSION} VERSION_LESS "3.15")
@@ -367,21 +454,33 @@ if(WIN32 AND MSVC)
 
 	# Sanitizers
 	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(/fsanitize=thread)
-		add_link_options(/INCREMENTAL:NO)
+		set(SANITIZER_COMPILE_OPTIONS
+			/fsanitize=thread
+		)
+		set(SANITIZER_LINK_OPTIONS
+			/INCREMENTAL:NO
+		)
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(/fsanitize=address)
-		# add_compile_options(/fsanitize=undefined)
-		add_link_options(/INCREMENTAL:NO)
+		set(SANITIZER_COMPILE_OPTIONS
+			/fsanitize=address
+			# /fsanitize=undefined
+		)
+		set(SANITIZER_LINK_OPTIONS
+			/INCREMENTAL:NO
+		)
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(/fsanitize=memory)
-		add_compile_options(/fsanitize=leak)
-		add_link_options(/INCREMENTAL:NO)
+		set(SANITIZER_COMPILE_OPTIONS
+			/fsanitize=memory
+			/fsanitize=leak
+		)
+		set(SANITIZER_LINK_OPTIONS
+			/INCREMENTAL:NO
+		)
 	endif()
 
 endif()
 
-if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
+if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "beos")
 
 	if(PROJECT_OS_FAMILY MATCHES "macos")
 		# We cannot enable "stack-protector-strong" On OS X due to a bug in clang compiler (current version 7.0.2)
@@ -404,60 +503,109 @@ if (PROJECT_OS_FAMILY MATCHES "unix" OR PROJECT_OS_FAMILY MATCHES "macos")
 
 	# Sanitizers
 	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(-fno-omit-frame-pointer)
-		add_compile_options(-fno-optimize-sibling-calls)
-		add_compile_options(-fsanitize=thread)
-		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
-			add_link_options(-fsanitize=thread)
+		set(SANITIZER_COMPILE_OPTIONS
+			-fno-omit-frame-pointer
+			-fno-optimize-sibling-calls
+			-fsanitize=thread
+		)
+		if(PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "unix")
+			set(SANITIZER_LINK_OPTIONS
+				-fsanitize=thread
+			)
 		endif()
 	elseif(OPTION_BUILD_ADDRESS_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options(-fno-omit-frame-pointer)
-		add_compile_options(-fno-optimize-sibling-calls)
-		add_compile_options(-fsanitize=undefined)
-		add_compile_options(-fsanitize=address)
-		add_compile_options(-fsanitize-address-use-after-scope)
-		add_compile_options(-fsanitize=float-divide-by-zero)
-		add_compile_options(-fsanitize=float-cast-overflow)
+		set(SANITIZER_COMPILE_OPTIONS
+			-fno-omit-frame-pointer
+			-fno-optimize-sibling-calls
+			-fsanitize=undefined
+			-fsanitize=address
+			-fsanitize-address-use-after-scope
+			-fsanitize=float-divide-by-zero
+			-fsanitize=float-cast-overflow
+		)
 		if(PROJECT_OS_FAMILY MATCHES "unix")
 			if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-				add_compile_options(-fsanitize=pointer-compare)
-				add_compile_options(-fsanitize=pointer-subtract)
-				add_compile_options(-fuse-ld=gold)
+				list(APPEND SANITIZER_COMPILE_OPTIONS
+					-fsanitize=pointer-compare
+					-fsanitize=pointer-subtract
+				)
+			elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+				list(APPEND SANITIZER_COMPILE_OPTIONS
+					-fsanitize-address-poison-custom-array-cookie
+				)
 			endif()
-			add_compile_options(-fsanitize=leak)
 		endif()
-		if(PROJECT_OS_FAMILY MATCHES "macos" OR (PROJECT_OS_FAMILY MATCHES "unix" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
-			add_link_options(-fsanitize=undefined)
-			add_link_options(-fsanitize=address)
-			add_link_options(-fsanitize-address-use-after-scope)
+		if(PROJECT_OS_FAMILY MATCHES "macos" OR PROJECT_OS_FAMILY MATCHES "unix")
+			set(SANITIZER_LINK_OPTIONS
+				-fsanitize=undefined
+				-fsanitize=address
+				-fsanitize-address-use-after-scope
+			)
 		endif()
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-		add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
-		add_compile_options(-fno-omit-frame-pointer)
-		add_compile_options(-fno-optimize-sibling-calls)
-		add_compile_options(-fsanitize=undefined)
-		add_compile_options(-fsanitize=memory)
-		add_compile_options(-fsanitize-memory-track-origins)
-		add_compile_options(-fsanitize-memory-use-after-dtor)
-		add_compile_options(-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan-ignorelist.txt)
-		add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
-		add_link_options(-fsanitize=undefined)
-		add_link_options(-fsanitize=memory)
-		add_link_options(-fsanitize-memory-track-origins)
-		add_link_options(-fsanitize-memory-use-after-dtor)
+		set(SANITIZER_CXX_COMPILE_OPTIONS
+			-stdlib=libc++
+		)
+		set(SANITIZER_COMPILE_OPTIONS
+			-fno-omit-frame-pointer
+			-fno-optimize-sibling-calls
+			-fsanitize=undefined
+			-fsanitize=memory
+			-fsanitize-memory-track-origins=2
+			-fsanitize-memory-use-after-dtor
+			-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/msan.ignorelist
+		)
+		set(SANITIZER_CXX_LINK_OPTIONS
+			-stdlib=libc++
+		)
+		set(SANITIZER_LINK_OPTIONS
+			-fsanitize=undefined
+			-fsanitize=memory
+			-fsanitize-memory-track-origins=2
+			-fsanitize-memory-use-after-dtor
+		)
 	endif()
 
 	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		add_compile_options(-g)
+		if(OPTION_TEST_MEMORYCHECK AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang"))
+			add_compile_options(-ggdb3)
+		else()
+			add_compile_options(-g)
+		endif()
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
 	endif()
 
 	# Optimizations
 	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		add_compile_options(-O3)
+	elseif(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+		add_compile_options(-O1)
+	elseif(OPTION_TEST_MEMORYCHECK)
+		add_compile_options(-O0)
 	endif()
 endif()
+
+# Apply sanitizer compile options
+add_compile_options(${SANITIZER_COMPILE_OPTIONS})
+
+foreach(option IN LISTS SANITIZER_CXX_COMPILE_OPTIONS)
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:${option}>)
+endforeach()
+
+# Apply sanitizer link options
+add_link_options(${SANITIZER_LINK_OPTIONS})
+
+foreach(option IN LISTS SANITIZER_CXX_LINK_OPTIONS)
+	add_link_options($<$<COMPILE_LANGUAGE:CXX>:${option}>)
+endforeach()
+
+# Build the sanitizer compile and link flags as a string for external projects
+string(REPLACE ";" " " SANITIZER_C_FLAGS "${SANITIZER_COMPILE_OPTIONS}")
+string(REPLACE ";" " " SANITIZER_CXX_FLAGS "${SANITIZER_COMPILE_OPTIONS};${SANITIZER_CXX_COMPILE_OPTIONS}")
+string(STRIP "${SANITIZER_CXX_FLAGS}" SANITIZER_CXX_FLAGS)
+string(REPLACE ";" " " SANITIZER_LINKER_FLAGS "${SANITIZER_LINK_OPTIONS};${SANITIZER_CXX_LINK_OPTIONS}")
+string(STRIP "${SANITIZER_LINKER_FLAGS}" SANITIZER_LINKER_FLAGS)
 
 macro(check_symbol_executable symbol binary_path result_var)
 	if(WIN32)
@@ -472,7 +620,7 @@ macro(check_symbol_executable symbol binary_path result_var)
 			ERROR_QUIET
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
-		string(FIND "${dumpbin_output}" symbol SYMBOL_FOUND)
+		string(FIND "${dumpbin_output}" "${symbol}" SYMBOL_FOUND)
 		if(NOT SYMBOL_FOUND EQUAL -1)
 			set(${result_var} TRUE PARENT_SCOPE)
 		else()
@@ -488,7 +636,7 @@ macro(check_symbol_executable symbol binary_path result_var)
 				ERROR_QUIET
 				OUTPUT_STRIP_TRAILING_WHITESPACE
 			)
-			string(FIND "${nm_output}" symbol SYMBOL_FOUND)
+			string(FIND "${nm_output}" "${symbol}" SYMBOL_FOUND)
 			if(NOT SYMBOL_FOUND EQUAL -1)
 				set(${result_var} TRUE PARENT_SCOPE)
 			else()
@@ -506,6 +654,59 @@ endfunction()
 
 function(check_tsan_executable binary_path result_var)
 	check_symbol_executable("__tsan_init" "${binary_path}" ${result_var})
+endfunction()
+
+function(check_msan_executable binary_path result_var)
+	check_symbol_executable("__msan_init" "${binary_path}" ${result_var})
+endfunction()
+
+# Check if the fork symbol of an executable built with the current compile and link options
+# is imported from a shared library, so the detours can patch it through the PLT, this fails when
+# the fork symbol is defined inside the executable itself (for example, Thread Sanitizer runtime
+# linked statically defines fork as a weak interceptor: https://maskray.me/blog/2023-01-08-all-about-sanitizer-interceptors)
+function(check_fork_patchable result_var)
+	set(probe_path "${CMAKE_BINARY_DIR}/CMakeFiles/CheckForkPatchable")
+
+	file(WRITE "${probe_path}/fork.c"
+		"#include <unistd.h>\nint main(void)\n{\n\treturn (int)fork();\n}\n"
+	)
+
+	# Use the same options as the rest of the targets (generator expressions are not supported by try_compile)
+	get_directory_property(probe_compile_options COMPILE_OPTIONS)
+	get_directory_property(probe_link_options LINK_OPTIONS)
+	list(FILTER probe_compile_options EXCLUDE REGEX "^\\$<")
+	list(FILTER probe_link_options EXCLUDE REGEX "^\\$<")
+
+	try_compile(probe_compiled
+		"${probe_path}/build"
+		"${probe_path}/fork.c"
+		COMPILE_DEFINITIONS ${probe_compile_options}
+		LINK_OPTIONS ${probe_link_options}
+		LINK_LIBRARIES ${SANITIZER_LIBRARIES}
+		COPY_FILE "${probe_path}/fork"
+	)
+
+	find_program(NM_EXECUTABLE nm)
+
+	if(NOT probe_compiled OR NOT NM_EXECUTABLE)
+		set(${result_var} FALSE PARENT_SCOPE)
+		return()
+	endif()
+
+	execute_process(
+		COMMAND ${NM_EXECUTABLE} -u "${probe_path}/fork"
+		OUTPUT_VARIABLE nm_output
+		ERROR_QUIET
+	)
+
+	# Undefined symbols: "U fork@GLIBC_2.2.5" (GNU nm), "U fork" (FreeBSD), "_fork" (MacOS)
+	string(REGEX MATCH "(^|\n)[ \t]*(U[ \t]+)?_?fork(@[^\n]*)?(\n|$)" FORK_IMPORTED "${nm_output}")
+
+	if(FORK_IMPORTED)
+		set(${result_var} TRUE PARENT_SCOPE)
+	else()
+		set(${result_var} FALSE PARENT_SCOPE)
+	endif()
 endfunction()
 
 #

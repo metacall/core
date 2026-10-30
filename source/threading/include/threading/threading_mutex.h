@@ -43,7 +43,8 @@ typedef CRITICAL_SECTION threading_mutex_impl_type;
 	defined(__NetBSD__) || \
 	defined(__OpenBSD__) || \
 	(defined(bsdi) || defined(__bsdi__)) || \
-	defined(__DragonFly__)
+	defined(__DragonFly__) || \
+	defined(__HAIKU__)
 	#include <pthread.h>
 	#define THREADING_MUTEX_INITIALIZE PTHREAD_MUTEX_INITIALIZER
 typedef pthread_mutex_t threading_mutex_impl_type;

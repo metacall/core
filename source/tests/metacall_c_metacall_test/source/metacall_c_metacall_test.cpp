@@ -33,7 +33,7 @@ TEST_F(metacall_c_metacall_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	metacall::map<std::string, metacall::array> options = {
+	metacall::map_typed<std::string, metacall::array> options = {
 		{ "include_search_paths", metacall::array(METACALL_API_INCLUDE_DIR, METACALL_INCLUDE_DIR) },
 		{ "headers", metacall::array(METACALL_INCLUDE_DIR "/metacall/metacall.h") },
 		{ "libs", metacall::array(METACALL_LIBRARY) /* TODO: Right now we only support one lib */ }

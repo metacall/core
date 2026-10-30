@@ -36,3 +36,22 @@ const execFilePromises = promisify(execFile);
 	assert.ok(typeof result === 'number', `Expected float, but got ${typeof result}`);
 	assert.strictEqual(result, 369.04999999999995);
 })();
+
+// C#
+(() => {
+	// .NET 8 has no support for these architectures (mirrors sub_netcore8 in metacall-environment.sh).
+	if (['ia32', 'arm', 'riscv64'].includes(process.arch)) {
+		console.log(`netcore8 has no support for ${process.arch}`);
+		return;
+	}
+
+	metacall_load_from_file('cs', ['./Sum.cs']);
+
+	const result = metacall('sum_cs', 3, 4);
+	console.log(result);
+	assert.strictEqual(result, 7);
+
+	const greeting = metacall('greet_cs', 'MetaCall');
+	console.log(greeting);
+	assert.strictEqual(greeting, 'Hello MetaCall from C#!');
+})();

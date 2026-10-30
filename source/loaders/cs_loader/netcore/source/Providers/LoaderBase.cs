@@ -37,7 +37,7 @@ namespace CSLoader.Providers
         protected readonly ILog log;
         protected readonly List<string> paths = new List<string>();
 
-protected LoaderBase(ILog log)
+		protected LoaderBase(ILog log)
         {
             this.log = log;
         }
@@ -268,7 +268,6 @@ protected LoaderBase(ILog log)
 
         public void LoadFunctions(Assembly assembly, string scriptHandle)
         {
-			this.log.Info(" >>> NEW C# LOADER IS ACTUALLY RUNNING! <<<");
 			try
 			{
 				Type[] types = assembly.GetTypes();
@@ -279,7 +278,6 @@ protected LoaderBase(ILog log)
 
 					// Handle top-level function class
 					bool isTopLevelClass = (type.Name == "<Program>$" || type.Name == "Program") && type.GetMethod("<Main>$", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly) != null;
-
 
 					if (isTopLevelClass)
 					{

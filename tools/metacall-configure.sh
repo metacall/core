@@ -22,6 +22,7 @@
 set -euxo
 
 ROOT_DIR=$(pwd)
+SOURCE_DIR=$(cd -P "$(dirname "$0")/.." && pwd)
 BUILD_TYPE=Release
 BUILD_PYTHON=0
 BUILD_RUBY=0
@@ -41,6 +42,7 @@ BUILD_C=0
 BUILD_COBOL=0
 BUILD_GO=0
 BUILD_RUST=0
+BUILD_LUA=0
 BUILD_ZIG=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
@@ -63,6 +65,7 @@ case "$(uname -s)" in
 	CYGWIN*)	OPERATIVE_SYSTEM=Cygwin;;
 	MINGW*)		OPERATIVE_SYSTEM=MinGW;;
 	FreeBSD*)	OPERATIVE_SYSTEM=FreeBSD;;
+	Haiku*)		OPERATIVE_SYSTEM=Haiku;;
 	*)			OPERATIVE_SYSTEM="Unknown"
 esac
 
@@ -75,6 +78,7 @@ case "$(uname -m)" in
 			ARCHITECTURE="amd64"
 		fi
 		;;
+	amd64) ARCHITECTURE="amd64";;
 	armv6*) ARCHITECTURE="armv6";;
 	armv7*|armhf|armel)
 		if grep -q "vfpv3" /proc/cpuinfo; then
@@ -191,6 +195,10 @@ sub_options() {
 			echo "Build with rust support"
 			BUILD_RUST=1
 		fi
+		if [ "$option" = 'lua' ]; then
+			echo "Build with lua support"
+			BUILD_LUA=1
+		fi
 		if [ "$option" = 'zig' ]; then
 			echo "Build with zig support"
 			BUILD_ZIG=1
@@ -227,7 +235,7 @@ sub_options() {
 			echo "Build with memcheck"
 			BUILD_MEMCHECK=1
 		fi
-		if [ "$option" = 'clang' ] || [ "$option" = 'clangmsan' ]; then
+		if [ "$option" = 'clang' ] || [ "$option" = 'clang-msan' ]; then
 			echo "Build with clang compiler"
 			BUILD_CLANG=1
 		fi
@@ -435,6 +443,11 @@ sub_configure() {
 	if [ $BUILD_RPC = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RPC=On"
 
+		# Use the instrumented cURL from metacall-environment.sh, it is outside of the default search paths
+		if [ $BUILD_MEMORY_SANITIZER = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DCURL_INCLUDE_DIR=/usr/local/msan/include -DCURL_LIBRARY=/usr/local/msan/lib/libcurl.so"
+		fi
+
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RPC=On"
 		fi
@@ -537,6 +550,20 @@ sub_configure() {
 		fi
 	fi
 
+	# Lua
+	if [ $BUILD_LUA = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_LUA=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_LUA=On"
+		fi
+
+		# TODO
+		# if [ $BUILD_PORTS = 1 ]; then
+		# 	BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_LUA=On"
+		# fi
+	fi
+
 	# Zig
 	if [ $BUILD_ZIG = 1 ]; then
 		# TODO
@@ -623,16 +650,29 @@ sub_configure() {
 
 	# Android
 	if [ $BUILD_ANDROID = 1 ]; then
-		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-30}"
+		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-33}"
 		ANDROID_ABI="${ANDROID_ABI:-x86_64}"
+		ANDROID_DEVICE_DIR="${ANDROID_DEVICE_DIR:-/data/local/tmp/metacall}"
+
+		# Run the tests in the device through adb
+		ANDROID_EMULATOR="${SOURCE_DIR}/tools/metacall-android-emulator.sh;${SOURCE_DIR};${ROOT_DIR};${ANDROID_DEVICE_DIR}"
 
 		BUILD_STRING="$BUILD_STRING \
 			-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
 			-DANDROID_ABI=${ANDROID_ABI} \
 			-DANDROID_PLATFORM=android-${ANDROID_API_LEVEL} \
 			-DANDROID_STL=c++_shared \
+			-DANDROID_DEVICE_DIR=${ANDROID_DEVICE_DIR} \
+			-DCMAKE_CROSSCOMPILING_EMULATOR=${ANDROID_EMULATOR} \
 			-Wno-dev \
 			-G Ninja"
+	fi
+
+	# Haiku
+	if [ "${OPERATIVE_SYSTEM}" = "Haiku" ]; then
+		# By default Haiku does not support stack protection
+		BUILD_STRING="$BUILD_STRING \
+			-DOPTION_BUILD_SECURITY=Off"
 	fi
 
 	# Split cmake config file line by line and add each line to the build string
@@ -652,7 +692,7 @@ sub_configure() {
 		export CC=/usr/bin/clang
 		export CXX=/usr/bin/clang++
 	fi
-	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING "$SOURCE_DIR"
 }
 
 sub_help() {
@@ -677,6 +717,7 @@ sub_help() {
 	echo "	cobol: build with cobol support"
 	echo "	go: build with go support"
 	echo "	rust: build with rust support"
+	echo "	lua: build with lua support"
 	echo "	zig: build with zig support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
@@ -689,9 +730,10 @@ sub_help() {
 	echo "	coverage: build all coverage reports"
 	echo "	memcheck: build with memcheck"
 	echo "	clang: build with clang compiler"
+	echo "	clang-msan: build with clang compiler with memory sanitizer"
 	echo "	address-sanitizer: build with address sanitizer"
 	echo "	thread-sanitizer: build with thread sanitizer"
-	echo "	memory-sanitizer: build with memory sanitizer (requires clang)"
+	echo "	memory-sanitizer: build with memory sanitizer (requires clang-msan)"
 	echo "	android: cross-compile to android"
 	echo ""
 }

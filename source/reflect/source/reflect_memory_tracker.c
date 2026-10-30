@@ -23,6 +23,7 @@
 #include <reflect/reflect_class.h>
 #include <reflect/reflect_exception.h>
 #include <reflect/reflect_function.h>
+#include <reflect/reflect_future.h>
 #include <reflect/reflect_object.h>
 
 void reflect_memory_tracker_debug(void)
@@ -32,5 +33,6 @@ void reflect_memory_tracker_debug(void)
 	class_stats_debug();
 	object_stats_debug();
 	exception_stats_debug();
+	future_stats_debug();
 #endif
 }

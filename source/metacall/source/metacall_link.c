@@ -84,7 +84,8 @@ FARPROC metacall_link_hook(HMODULE handle, LPCSTR symbol)
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
+	defined(__HAIKU__)
 
 	#include <dlfcn.h>
 

@@ -65,6 +65,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
       - [5.3.2 Serials](#532-serials)
         - [5.3.2.1 MetaCall](#5321-metacall)
         - [5.3.2.2 RapidJSON](#5322-rapidjson)
+        - [5.3.2.3 SimdJSON](#5323-simdjson)
       - [5.3.3 Detours](#533-detours)
         - [5.3.3.1 PLTHook](#5331-plthook)
     - [5.4 Ports](#54-ports)
@@ -88,6 +89,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
     - [8.1 Docker Support](#81-docker-support)
     - [8.1.1 Docker Development](#811-docker-development)
     - [8.1.2 Docker Testing](#812-docker-testing)
+    - [8.1.3 Docker MSan Development](#813-docker-msan-development)
   - [9. Benchmarks](#9-benchmarks)
   - [10. License](#10-license)
 
@@ -487,6 +489,26 @@ The common lifecycle is `initialize` -> optional `execution_path` -> `load_from_
 
 ##### 5.3.1.1 Python
 
+The Python Loader embeds CPython, and communicates with it through the Python C API.
+
+- **Tag**: `py`
+- **CMake flag**: `OPTION_BUILD_LOADERS_PY` (requires `OPTION_BUILD_LOADERS` to be enabled as well; the loader is not built if the parent option is off)
+- **Test**: [`metacall-python-test`](https://github.com/metacall/core/tree/c38c21d086d52c4f7d1ddbb79f095efbf2207d7d/source/tests/metacall_python_test)
+- **Minimum version**: Python >= 3.5, enforced through a compile-time check in [`py_loader_impl.c`](https://github.com/metacall/core/blob/c38c21d086d52c4f7d1ddbb79f095efbf2207d7d/source/loaders/py_loader/source/py_loader_impl.c#L2124). 
+##### Runtime behavior
+
+**Threading and the GIL**
+
+ The Python loader operates under CPython's Global Interpreter Lock (GIL). When interacting with Python objects, the loader acquires the Python thread state before accessing them and releases it afterward using `py_loader_thread_acquire()` and `py_loader_thread_release()`. Newer CPython versions also support optional free-threaded builds where the GIL can be disabled.[Check official python documentation](https://docs.python.org/3/howto/free-threading-python.html)
+
+**Async/await**
+
+Async/await is implemented using Python's standard `asyncio` facilities. The asyncio event loop runs in a separate thread to avoid blocking the calling thread (see [`py_loader_impl.c`](https://github.com/metacall/core/blob/c38c21d086d52c4f7d1ddbb79f095efbf2207d7d/source/loaders/py_loader/source/py_loader_impl.c#L2217)). Results are handled through futures and callbacks.
+##### Limitations
+
+- `load_from_package` is unimplemented and always returns `NULL`. Python has no compiled-package format directly comparable to the shared libraries or bytecode packages used by other loaders; the closest equivalent is `.pyc` bytecode which is loaded the same way as a regular `.py` file through `load_from_file` instead.
+
+
 ##### 5.3.1.2 NodeJS
 
 ##### 5.3.1.3 JavaScript
@@ -504,6 +526,8 @@ The common lifecycle is `initialize` -> optional `execution_path` -> `load_from_
 ##### 5.3.2.1 MetaCall
 
 ##### 5.3.2.2 RapidJSON
+
+##### 5.3.2.3 SimdJSON
 
 #### 5.3.3 Detours
 
@@ -713,6 +737,64 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 ## 6. Application Programming Interface (API)
 
+The C API is declared in [`metacall.h`](../source/metacall/include/metacall/metacall.h). This example requires the [Python loader](#5311-python) and links against `libmetacall`; see [7.4](#74-build-using-scripts) for setup.
+
+```c
+#include <stdio.h>
+#include <metacall/metacall.h>
+
+int main(void)
+{
+	static const char source[] =
+		"def answer() -> int:\n"
+		"    return 42\n";
+	void *handle = NULL;
+	void *result = NULL;
+	int status = 1;
+
+	if (metacall_initialize() != 0)
+	{
+		return status;
+	}
+
+	if (metacall_load_from_memory("py", source, sizeof(source), &handle) != 0)
+	{
+		goto cleanup;
+	}
+
+	result = metacallhv_s(handle, "answer", metacall_null_args, 0);
+	if (result != NULL && metacall_value_id(result) == METACALL_LONG)
+	{
+		printf("%ld\n", metacall_value_to_long(result));
+		status = 0;
+	}
+
+cleanup:
+	metacall_value_destroy(result);
+	if (handle != NULL && metacall_clear(handle) != 0)
+	{
+		status = 1;
+	}
+	metacall_destroy();
+	return status;
+}
+```
+
+Save the example as `example.c`. With MetaCall's headers and library on the compiler and runtime search paths, compile and run on Linux:
+
+```sh
+cc -std=c99 -Wall -Wextra example.c -lmetacall -o example
+./example
+```
+
+For a custom installation, supply the compiler's `-I` and `-L` paths and the dynamic linker's library path. Set plugin and configuration paths as described in [4.2 Environment Variables](#42-environment-variables).
+
+The program prints `42`. Python's `int` annotation maps to `METACALL_LONG` in the [loader](../source/loaders/py_loader/source/py_loader_impl.c). Initialization, loading, and clearing return zero on success. Calls return a value, or `NULL` on failure; release returned values with `metacall_value_destroy` (which accepts `NULL`).
+
+Passing `&handle` with `handle = NULL` creates a private scope, accessed through handle-scoped calls such as `metacallhv_s`. Passing `&handle` when `handle` already references a loaded handle adds symbols to its scope; passing `NULL` instead exposes symbols in the loader scope for calls such as `metacall`.
+
+`metacall_clear(handle)` unloads one handle; do not free it or reuse it or its function references afterward. `metacall_destroy()` shuts down the runtimes and any remaining handles. Initialize and destroy on the same thread. See [`metacall_clear_test`](../source/tests/metacall_clear_test/source/metacall_clear_test.cpp) for further handle examples.
+
 ## 7. Build System
 
 Follow these steps to build and install **METACALL** manually.
@@ -808,6 +890,12 @@ For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag a
 make memcheck
 ```
 
+For running only some tests with Valgrind, set `MEMCHECK_TEST` to a regex of the test names:
+
+```sh
+MEMCHECK_TEST=adt-vector-test make memcheck
+```
+
 For running a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_ADDRESS_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
 
 ```sh
@@ -860,7 +948,6 @@ Usage: `metacall-environment.sh` list of components, example:
 |       Components                                   |                                            Description                                                 |
 |:---------------------------------------------------|-------------------------------------------------------------------------------------------------------:|
 |       base                                         |         Compiler and base requirements for compiling MetaCall.                                         |
-|       rapidjson                                    |         Installs RapidJSON serialization for serializing MetaCall data with JSON.                      |
 |       pack                                         |         Bundle scripts into one deployable runtime.                                                    |
 |       sandbox                                      |         Provides isolated execution contexts for safer script execution.                               |
 |       backtrace                                    |         Generates detailed stack traces and improves error diagnostics across languages.               |
@@ -1093,6 +1180,93 @@ runtime __metacall_host__
 ```
 
 Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.
+### 8.1.3 Docker MSan Development
+
+This method is used for iterating on **Memory Sanitizer** (MSan) fixes locally without waiting for CI on every change. The idea is to build the Docker image **once** (with a trick to allow build errors), then mount your local `source/` and `cmake/` directories so code changes are reflected instantly inside the running container.
+
+Prerequisites:
+- At least **20GB** of free disk space
+- Close all heavy applications before building  this maxes out CPU and RAM
+
+1. Clean Docker completely
+```sh
+docker system prune --all -f
+docker buildx prune --all -f
+```
+
+2. Patch the Dockerfile to allow build errors
+In `tools/docker/Dockerfile` near line 85, add `|| true` at the end of the build command (same line):
+
+```dockerfile
+RUN cd $METACALL_PATH/build \
+    && $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS} || true
+```
+
+This prevents Docker from aborting the image build if compilation has errors — since MSan builds often have expected failures during development.
+
+3. Build the Docker image (once)
+In one terminal:
+```sh
+./docker-compose.sh test-memory-sanitizer &> output.txt
+```
+In a second terminal, watch progress live:
+```sh
+tail -f output.txt
+```
+
+> For a lighter build without MSan (useful for contributors with less disk space):
+> ```sh
+> # Completely disable sanitizers:
+> ./docker-compose.sh test &> output.txt
+> # Or with address sanitizer:
+> ./docker-compose.sh test-address-sanitizer &> output.txt
+> ```
+
+4. Run the container with shared volumes
+```sh
+docker run --rm \
+  -v `pwd`/cmake:/usr/local/metacall/cmake \
+  -v `pwd`/source:/usr/local/metacall/source \
+  -it metacall/core:dev
+```
+
+Edit source files in VSCode on the host  changes are reflected instantly inside the container.
+
+5. Build and test inside the container
+```sh
+cd /usr/local/metacall/build
+cmake ..                          # required after any ignorelist or CMake changes
+make -j8 <target>                  # build a specific target
+```
+
+Example targets:
+```sh
+make -j8 metacall-py-call-bench
+make -j8 metacall-node-call-bench
+make -j8 metacall-node-bench
+```
+
+Run a specific test:
+```sh
+ctest -VV -R <test-name>
+```
+
+Run all benchmarks and save full log:
+```sh
+ctest -VV -R bench &> log.txt
+```
+
+Quick triage show only MSan error summaries:
+```sh
+grep "SUMMARY:" log.txt
+```
+
+Full stack trace for a specific error:
+```sh
+grep -B5 -A 30 "use-of-uninitialized-value\|WARNING: MemorySanitizer" log.txt
+```
+
+> **Note:** The `msan.ignorelist` file is compile-time only. After editing it, always run `cmake ..` followed by a rebuild  otherwise changes are silently ignored since `make` reuses cached object files compiled under the old rules.
 
 ## 9. Benchmarks
 

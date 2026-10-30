@@ -103,6 +103,37 @@ set_target_properties(${target}
 )
 
 #
+# Tests
+#
+
+# C# NetCore instrumentation for Valgrind is not supported right now on MetaCall
+# and we do not have a way to check if is instrumented or not checking the library
+# so we skip directly the test to avoid false positives
+if(OPTION_BUILD_TESTS AND NOT OPTION_TEST_MEMORYCHECK)
+	set(DOTNET_TEST_PROJECT ${CMAKE_CURRENT_SOURCE_DIR}/source/Test/CSLoader.Tests.csproj)
+
+	add_test(NAME cs_loader_test
+		COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} test ${DOTNET_TEST_PROJECT}
+			--configuration $<IF:$<CONFIG:Debug>,Debug,Release>
+			--logger "console;verbosity=detailed"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+
+	set_property(TEST cs_loader_test
+		PROPERTY LABELS cs_loader_test
+	)
+
+	include(TestEnvironmentVariables)
+
+	# Lets the net7.0 test host run on a newer runtime if 7.0 isn't installed
+	test_environment_variables(cs_loader_test
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+		"DOTNET_ROLL_FORWARD=Major"
+	)
+endif()
+
+#
 # Deployment
 #
 

@@ -26,7 +26,7 @@
 
 #include <metacall/metacall.h>
 
-struct py_loader_impl_func_obj
+struct py_loader_impl_func_type
 {
 	PyObject_HEAD
 		loader_impl impl;
@@ -36,7 +36,7 @@ struct py_loader_impl_func_obj
 
 static void py_loader_impl_func_dealloc(PyObject *self)
 {
-	struct py_loader_impl_func_obj *wrapped = (struct py_loader_impl_func_obj *)self;
+	struct py_loader_impl_func_type *wrapped = (struct py_loader_impl_func_type *)self;
 
 	/* Clean the MetaCall function value */
 	metacall_value_destroy(wrapped->callback);
@@ -47,7 +47,7 @@ static void py_loader_impl_func_dealloc(PyObject *self)
 
 static PyObject *py_loader_impl_func_call(PyObject *self, PyObject *args, PyObject *kwds)
 {
-	struct py_loader_impl_func_obj *wrapped = (struct py_loader_impl_func_obj *)self;
+	struct py_loader_impl_func_type *wrapped = (struct py_loader_impl_func_type *)self;
 
 	/* TODO: Support callback named arguments call? */
 	(void)kwds;
@@ -122,7 +122,7 @@ static PyObject *py_loader_impl_func_call(PyObject *self, PyObject *args, PyObje
 
 static PyTypeObject py_loader_impl_func_type = {
 	PyVarObject_HEAD_INIT(NULL, 0) "PyCFunctionWrapper",
-	sizeof(struct py_loader_impl_func_obj),
+	sizeof(struct py_loader_impl_func_type),
 	0,
 	(destructor)py_loader_impl_func_dealloc,		  /* tp_dealloc */
 	0,												  /* tp_vectorcall_offset */
@@ -189,7 +189,7 @@ int py_loader_impl_func_check(PyObject *obj)
 
 void *py_loader_impl_func_copy(PyObject *obj)
 {
-	struct py_loader_impl_func_obj *wrapped = (struct py_loader_impl_func_obj *)obj;
+	struct py_loader_impl_func_type *wrapped = (struct py_loader_impl_func_type *)obj;
 
 	if (wrapped == NULL)
 	{
@@ -201,7 +201,7 @@ void *py_loader_impl_func_copy(PyObject *obj)
 
 PyObject *py_loader_impl_func_new(loader_impl impl, loader_impl_py py_impl, value callback)
 {
-	struct py_loader_impl_func_obj *wrapped = PyObject_New(struct py_loader_impl_func_obj, &py_loader_impl_func_type);
+	struct py_loader_impl_func_type *wrapped = PyObject_New(struct py_loader_impl_func_type, &py_loader_impl_func_type);
 
 	if (wrapped == NULL)
 	{

@@ -66,16 +66,29 @@ endif()
 # Define test (Ruby)
 #
 
-# Check if we can use preloaded sanitizers
-if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
-	AND NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
-	return()
+set(rb_port_test_executable "${rb_port_test}_executable")
+
+# Check if Ruby is compiled with Sanitizers
+if(OPTION_BUILD_ADDRESS_SANITIZER)
+	check_asan_executable("${Ruby_EXECUTABLE}" Ruby_SANITIZER)
+elseif(OPTION_BUILD_THREAD_SANITIZER)
+	check_tsan_executable("${Ruby_EXECUTABLE}" Ruby_SANITIZER)
+elseif(OPTION_BUILD_MEMORY_SANITIZER)
+	check_msan_executable("${Ruby_EXECUTABLE}" Ruby_SANITIZER)
 endif()
 
-set(rb_port_test_executable "${rb_port_test}_executable")
+if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	AND NOT Ruby_SANITIZER)
+	# Check if we can use preloaded sanitizers
+	if(NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
+		return()
+	endif()
+	set(Ruby_PRELOAD "${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}")
+endif()
 
 message(STATUS "Test ${rb_port_test_executable}")
 
+# Define test (Ruby)
 add_test(NAME ${rb_port_test_executable}
 	COMMAND ${Ruby_EXECUTABLE} "${rb_port_test_path}"
 	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test"
@@ -96,5 +109,5 @@ test_environment_variables(${rb_port_test_executable}
 	${TESTS_ENVIRONMENT_VARIABLES}
 	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
 	${TESTS_SANITIZER_ENVIRONMENT_VARIABLES}
-	${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}
+	${Ruby_PRELOAD}
 )

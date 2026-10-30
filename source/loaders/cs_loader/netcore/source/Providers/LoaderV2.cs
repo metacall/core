@@ -195,7 +195,6 @@ namespace CSLoader.Providers
 		}
 
         private readonly Dictionary<string, CollectibleAssemblyLoadContext> loadContext = new Dictionary<string, CollectibleAssemblyLoadContext>();
-        private WeakReference contextWeakRef;
     }
 }
 #endif

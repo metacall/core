@@ -18,9 +18,11 @@
  *
  */
 
+#include <py_loader/py_loader_class.h>
 #include <py_loader/py_loader_dict.h>
 #include <py_loader/py_loader_func.h>
 #include <py_loader/py_loader_impl.h>
+#include <py_loader/py_loader_object.h>
 #include <py_loader/py_loader_port.h>
 #include <py_loader/py_loader_symbol_fallback.h>
 #include <py_loader/py_loader_threading.h>
@@ -34,13 +36,17 @@
 #include <reflect/reflect_class.h>
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
+#include <reflect/reflect_object.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
 
 #include <log/log.h>
 
+#include <adt/adt_set.h>
+
 #include <memory/memory_sanitizer.h>
 
+#include <threading/threading_thread.h>
 #include <threading/threading_thread_id.h>
 
 #include <metacall/metacall.h>
@@ -59,6 +65,9 @@
 * Set it to 0 in order to remove all the noise.
 */
 #define DEBUG_PRINT_ENABLED 0
+
+/* Arguments up to this size are converted into the stack, avoiding the allocation in each method call */
+#define PY_LOADER_IMPL_METHOD_ARGS_STACK_SIZE 16
 
 typedef struct loader_impl_py_function_type
 {
@@ -86,7 +95,6 @@ typedef struct loader_impl_py_object_type
 {
 	PyObject *obj;
 	loader_impl impl;
-	value obj_class;
 
 } * loader_impl_py_object;
 
@@ -118,13 +126,18 @@ struct loader_impl_py_type
 	PyObject *import_module;
 	PyObject *import_function;
 
+	/* Cache of classes indexed by Python type, it holds a strong reference to each type, so the address cannot be reused */
+	set class_cache;
+
 	/* Start asyncio required modules */
 	PyObject *asyncio_module;
 	PyObject *asyncio_iscoroutinefunction;
 	PyObject *asyncio_loop;
+	threading_thread asyncio_thread;
 	PyObject *thread_background_future_check;
 	PyObject *thread_background_module;
 	PyObject *thread_background_start;
+	PyObject *thread_background_run;
 	PyObject *thread_background_send;
 	PyObject *thread_background_stop;
 	PyObject *thread_background_register_atexit;
@@ -185,6 +198,10 @@ static type py_loader_impl_get_type(loader_impl impl, PyObject *obj);
 static int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_class, klass c);
 
 static int py_loader_impl_discover_class(loader_impl impl, PyObject *read_only_dict, klass c);
+
+static value py_loader_impl_class_value(loader_impl impl, loader_impl_py py_impl, PyObject *py_class);
+
+static void py_loader_impl_class_cache_destroy(loader_impl_py py_impl);
 
 static void py_loader_impl_value_ptr_finalize(value v, void *data);
 
@@ -333,7 +350,6 @@ int py_object_interface_create(object obj, object_impl impl)
 
 	py_obj->impl = NULL;
 	py_obj->obj = NULL;
-	py_obj->obj_class = NULL;
 
 	return 0;
 }
@@ -351,7 +367,14 @@ value py_object_interface_get(object obj, object_impl impl, struct accessor_type
 	PyObject *generic_attr = PyObject_GenericGetAttr(pyobject_object, key_py_str);
 	Py_DecRef(key_py_str);
 
-	value v = py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_object->impl, generic_attr));
+	if (generic_attr == NULL)
+	{
+		py_loader_impl_error_print(loader_impl_get(py_object->impl));
+		py_loader_thread_release();
+		return NULL;
+	}
+
+	value v = py_loader_impl_capi_to_value(py_object->impl, generic_attr, py_loader_impl_capi_to_value_type(py_object->impl, generic_attr));
 	Py_DecRef(generic_attr);
 
 	py_loader_thread_release();
@@ -368,14 +391,20 @@ int py_object_interface_set(object obj, object_impl impl, struct accessor_type *
 	loader_impl_py_object py_object = (loader_impl_py_object)impl;
 	PyObject *pyobject_object = py_object->obj;
 	PyObject *key_py_str = PyUnicode_FromString(attribute_name(accessor->data.attr));
-	PyObject *pyvalue = py_loader_impl_value_to_capi(py_object->impl, value_type_id(v), v);
-	int retval = PyObject_GenericSetAttr(pyobject_object, key_py_str, pyvalue);
+	PyObject *py_value = py_loader_impl_value_to_capi(py_object->impl, value_type_id(v), v);
+	int result = PyObject_GenericSetAttr(pyobject_object, key_py_str, py_value);
 
 	Py_DecRef(key_py_str);
+	Py_DecRef(py_value);
+
+	if (result != 0)
+	{
+		py_loader_impl_error_print(loader_impl_get(py_object->impl));
+	}
 
 	py_loader_thread_release();
 
-	return retval;
+	return result;
 }
 
 value py_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
@@ -390,36 +419,85 @@ value py_object_interface_method_invoke(object obj, object_impl impl, method m, 
 	}
 
 	value ret = NULL;
+	PyObject *stack_args[PY_LOADER_IMPL_METHOD_ARGS_STACK_SIZE];
+	PyObject **py_args = argc < PY_LOADER_IMPL_METHOD_ARGS_STACK_SIZE ? stack_args : malloc(sizeof(PyObject *) * (argc + 1));
+
+	if (py_args == NULL)
+	{
+		return NULL;
+	}
 
 	py_loader_thread_acquire();
 
-	PyObject *args_tuple = PyTuple_New(argc);
+	PyObject *name = PyUnicode_FromString(method_name(m));
 
-	if (args_tuple == NULL)
+	if (name == NULL)
 	{
 		goto release;
 	}
 
-	for (size_t i = 0; i < argc; i++)
+	/* The first argument is the instance itself */
+	py_args[0] = obj_impl->obj;
+
+	for (size_t args_count = 0; args_count < argc; ++args_count)
 	{
-		PyTuple_SET_ITEM(args_tuple, i, py_loader_impl_value_to_capi(obj_impl->impl, value_type_id(args[i]), args[i]));
+		PyObject *arg = py_loader_impl_value_to_capi(obj_impl->impl, value_type_id(args[args_count]), args[args_count]);
+
+		py_args[args_count + 1] = arg != NULL ? arg : Py_ReturnNone();
 	}
 
-	PyObject *python_object = PyObject_CallMethod(obj_impl->obj, method_name(m), "O", args_tuple, NULL);
+#if PY_VERSION_HEX >= 0x03090000
+	/* Call the method without building the arguments tuple nor the bound method */
+	PyObject *result = PyObject_VectorcallMethod(name, py_args, argc + 1, NULL);
+#else
+	PyObject *result = NULL;
+	PyObject *callable = PyObject_GetAttr(obj_impl->obj, name);
 
-	Py_DecRef(args_tuple);
-
-	if (python_object == NULL)
+	if (callable != NULL)
 	{
+		PyObject *args_tuple = PyTuple_New(argc);
+
+		if (args_tuple != NULL)
+		{
+			for (size_t args_count = 0; args_count < argc; ++args_count)
+			{
+				Py_IncRef(py_args[args_count + 1]);
+				PyTuple_SET_ITEM(args_tuple, args_count, py_args[args_count + 1]);
+			}
+
+			result = PyObject_Call(callable, args_tuple, NULL);
+
+			Py_DecRef(args_tuple);
+		}
+
+		Py_DecRef(callable);
+	}
+#endif
+
+	for (size_t args_count = 0; args_count < argc; ++args_count)
+	{
+		Py_DecRef(py_args[args_count + 1]);
+	}
+
+	Py_DecRef(name);
+
+	if (result == NULL)
+	{
+		ret = py_loader_impl_error_value(loader_impl_get(obj_impl->impl));
 		goto release;
 	}
 
-	ret = py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(obj_impl->impl, python_object));
+	ret = py_loader_impl_capi_to_value(obj_impl->impl, result, py_loader_impl_capi_to_value_type(obj_impl->impl, result));
 
-	Py_DecRef(python_object);
+	Py_DecRef(result);
 
 release:
 	py_loader_thread_release();
+
+	if (py_args != stack_args)
+	{
+		free(py_args);
+	}
 
 	return ret;
 }
@@ -465,11 +543,6 @@ void py_object_interface_destroy(object obj, object_impl impl)
 			}
 		}
 
-		if (py_object->obj_class != NULL)
-		{
-			value_type_destroy(py_object->obj_class);
-		}
-
 		free(py_object);
 	}
 }
@@ -503,23 +576,28 @@ int py_class_interface_create(klass cls, class_impl impl)
 
 object py_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
 {
-	(void)cls;
 	(void)ctor;
 
 	loader_impl_py_class py_cls = impl;
 
 	loader_impl_py_object py_obj = malloc(sizeof(struct loader_impl_py_object_type));
 
+	if (py_obj == NULL)
+	{
+		return NULL;
+	}
+
 	object obj = object_create(name, ACCESSOR_TYPE_STATIC, py_obj, &py_object_interface_singleton, cls);
 
 	if (obj == NULL)
 	{
+		free(py_obj);
 		return NULL;
 	}
 
 	/* Get loader implementation from class */
 	py_obj->impl = py_cls->impl;
-	py_obj->obj_class = NULL;
+	py_obj->obj = NULL;
 
 	py_loader_thread_acquire();
 
@@ -528,27 +606,30 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 	if (args_tuple == NULL)
 	{
 		py_loader_thread_release();
+		object_destroy(obj);
 		return NULL;
 	}
 
 	for (size_t i = 0; i < argc; i++)
 	{
-		PyTuple_SET_ITEM(args_tuple, i, py_loader_impl_value_to_capi(py_cls->impl, value_type_id(args[i]), args[i]));
+		PyObject *arg = py_loader_impl_value_to_capi(py_cls->impl, value_type_id(args[i]), args[i]);
+
+		PyTuple_SET_ITEM(args_tuple, i, arg != NULL ? arg : Py_ReturnNone());
 	}
 
 	/* Calling the class will create an instance (object) */
-	PyObject *python_object = PyObject_CallObject(py_cls->cls, args_tuple);
+	PyObject *python_object = PyObject_Call(py_cls->cls, args_tuple, NULL);
 
 	Py_DecRef(args_tuple);
 
 	if (python_object == NULL)
 	{
+		py_loader_impl_error_print(loader_impl_get(py_cls->impl));
 		py_loader_thread_release();
 		object_destroy(obj);
 		return NULL;
 	}
 
-	Py_IncRef(py_cls->cls);
 	py_loader_thread_release();
 	py_obj->obj = python_object;
 
@@ -574,7 +655,14 @@ value py_class_interface_static_get(klass cls, class_impl impl, struct accessor_
 	PyObject *generic_attr = PyObject_GenericGetAttr(pyobject_class, key_py_str);
 	Py_DecRef(key_py_str);
 
-	value v = py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_class->impl, generic_attr));
+	if (generic_attr == NULL)
+	{
+		py_loader_impl_error_print(loader_impl_get(py_class->impl));
+		py_loader_thread_release();
+		return NULL;
+	}
+
+	value v = py_loader_impl_capi_to_value(py_class->impl, generic_attr, py_loader_impl_capi_to_value_type(py_class->impl, generic_attr));
 	Py_DecRef(generic_attr);
 
 	py_loader_thread_release();
@@ -601,6 +689,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 	int result = PyObject_SetAttr(py_class->cls, key_py_str, py_value);
 
 	Py_DecRef(key_py_str);
+	Py_DecRef(py_value);
 
 	py_loader_thread_release();
 
@@ -653,6 +742,8 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 	}
 
 	ret = py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(cls_impl->impl, python_object));
+
+	Py_DecRef(python_object);
 
 cleanup:
 	py_loader_thread_release();
@@ -826,6 +917,16 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	else if (PyFunction_Check(obj) || PyCFunction_Check(obj) || py_loader_impl_func_check(obj))
 	{
 		return TYPE_FUNCTION;
+	}
+	else if (py_loader_impl_class_check(obj))
+	{
+		/* It must be checked before inspect.isclass, wrapped classes are handled by their own path */
+		return TYPE_CLASS;
+	}
+	else if (py_loader_impl_object_check(obj))
+	{
+		/* It must be checked before the future check, which calls into Python */
+		return TYPE_OBJECT;
 	}
 	else if (obj == Py_NonePtr())
 	{
@@ -1135,55 +1236,55 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	}
 	else if (id == TYPE_CLASS)
 	{
-		loader_impl_py_class py_cls = malloc(sizeof(struct loader_impl_py_class_type));
-
-		Py_IncRef(obj);
-
-		PyObject *qualname = PyObject_GetAttrString(obj, "__qualname__");
-		klass c = class_create(PyUnicode_AsUTF8(qualname), ACCESSOR_TYPE_STATIC, py_cls, &py_class_interface_singleton);
-		Py_DecRef(qualname);
-
-		py_cls->impl = impl;
-		py_cls->cls = obj;
-
-		// TODO: We should register the class during the discover as a type, so here we would
-		// be able to retrieve the the class instance by using loader_impl_type
-
-		if (py_loader_impl_discover_class(impl, obj, c) != 0)
+		/* Check if we are passing our own wrapped class */
+		if (py_loader_impl_class_check(obj))
 		{
-			class_destroy(c);
-			return NULL;
+			return py_loader_impl_class_copy(obj);
 		}
 
-		v = value_create_class(c);
+		v = py_loader_impl_class_value(impl, loader_impl_get(impl), obj);
 	}
 	else if (id == TYPE_OBJECT)
 	{
+		/* Check if we are passing our own wrapped object */
+		if (py_loader_impl_object_check(obj))
+		{
+			return py_loader_impl_object_copy(obj);
+		}
+
+		value obj_cls = py_loader_impl_class_value(impl, loader_impl_get(impl), (PyObject *)Py_TYPE(obj));
+
+		if (obj_cls == NULL)
+		{
+			return NULL;
+		}
+
 		loader_impl_py_object py_obj = malloc(sizeof(struct loader_impl_py_object_type));
 
-		Py_IncRef(obj);
-
-		PyObject *object_class = PyObject_Type(obj); /* Increments the class reference count */
-
-		value obj_cls = py_loader_impl_capi_to_value(impl, object_class, py_loader_impl_capi_to_value_type(impl, object_class));
+		if (py_obj == NULL)
+		{
+			value_type_destroy(obj_cls);
+			return NULL;
+		}
 
 		/* Not using class_new() here because the object is already instantiated in the runtime */
 		/* So we must avoid calling it's constructor again */
-		PyObject *repr = PyObject_Repr(obj);
-		object o = object_create(PyUnicode_AsUTF8(repr), ACCESSOR_TYPE_STATIC, py_obj, &py_object_interface_singleton, value_to_class(obj_cls));
-		Py_DecRef(repr);
+		klass c = value_to_class(obj_cls);
+		object o = object_create(class_name(c), ACCESSOR_TYPE_STATIC, py_obj, &py_object_interface_singleton, c);
+
+		/* The object holds its own reference to the class */
+		value_type_destroy(obj_cls);
+
+		if (o == NULL)
+		{
+			free(py_obj);
+			return NULL;
+		}
+
+		Py_IncRef(obj);
 
 		py_obj->impl = impl;
 		py_obj->obj = obj;
-		py_obj->obj_class = obj_cls;
-
-		/*
-		if (py_loader_impl_validate_object(impl, obj, o) != 0)
-		{
-			object_destroy(o);
-			return NULL;
-		}
-		*/
 
 		v = value_create_object(o);
 	}
@@ -1331,6 +1432,10 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			{
 				/* TODO: Report error */
 			}
+
+			/* PyDict_SetItem does not steal the references */
+			Py_DecRef(key);
+			Py_DecRef(item);
 		}
 
 		return dict;
@@ -1362,38 +1467,39 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_CLASS)
 	{
-		klass obj = value_to_class(v);
+		klass cls = value_to_class(v);
 
-		/* TODO: This is completely wrong and it needs a refactor */
-		/* TODO: The return value of class_impl_get may not be a loader_impl_py_class, it can be a loader_impl_node_class too */
-		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the class dynamically */
-		loader_impl_py_class obj_impl = class_impl_get(obj);
-
-		if (obj_impl == NULL)
+		/* If the class comes from this loader, unwrap it and return the original Python class */
+		if (class_interface_get(cls) == py_class_interface_singleton())
 		{
-			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_class when converting value to python capi");
-			return NULL;
+			loader_impl_py_class py_cls = (loader_impl_py_class)class_impl_get(cls);
+
+			if (py_cls != NULL && py_cls->cls != NULL)
+			{
+				Py_IncRef(py_cls->cls);
+				return py_cls->cls;
+			}
 		}
 
-		return obj_impl->cls;
+		return py_loader_impl_class_new(impl, v);
 	}
 	else if (id == TYPE_OBJECT)
 	{
 		object obj = value_to_object(v);
 
-		/* TODO: This is completely wrong and it needs a refactor */
-		/* TODO: The return value of object_impl_get may not be a loader_impl_py_object, it can be a loader_impl_node_node too */
-		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the object dynamically */
-		loader_impl_py_object obj_impl = object_impl_get(obj);
-		Py_IncRef(obj_impl->obj);
-
-		if (obj_impl == NULL)
+		/* If the object comes from this loader, unwrap it and return the original Python object */
+		if (object_interface_get(obj) == py_object_interface_singleton())
 		{
-			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_object when converting value to python capi");
-			return NULL;
+			loader_impl_py_object py_obj = (loader_impl_py_object)object_impl_get(obj);
+
+			if (py_obj != NULL && py_obj->obj != NULL)
+			{
+				Py_IncRef(py_obj->obj);
+				return py_obj->obj;
+			}
 		}
 
-		return obj_impl->obj;
+		return py_loader_impl_object_new(impl, v);
 	}
 	else if (id == TYPE_EXCEPTION)
 	{
@@ -1429,14 +1535,14 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	return NULL;
 }
 
-PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
+PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *py_future)
 {
 	py_loader_thread_acquire();
 
 	/* self will always be NULL */
 	(void)self;
 
-	PyObject *capsule = PyObject_GetAttrString(pyfuture, "__metacall_capsule");
+	PyObject *capsule = PyObject_GetAttrString(py_future, "__metacall_capsule");
 
 	if (capsule == NULL)
 	{
@@ -1448,11 +1554,11 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 	loader_impl_py_await_invoke_callback_state callback_state = PyCapsule_GetPointer(capsule, NULL);
 	Py_DecRef(capsule);
 
-	/* pyfuture should never raise InvalidStateError exception here */
+	/* py_future should never raise InvalidStateError exception here */
 	/* because this is a callback set in Future.add_done_callback */
 
 	PyObject *result_str = PyUnicode_FromString("result");
-	PyObject *result = PyObject_CallMethodObjArgs(pyfuture, result_str, NULL);
+	PyObject *result = PyObject_CallMethodObjArgs(py_future, result_str, NULL);
 	Py_DecRef(result_str);
 
 	value v = NULL, ret = NULL;
@@ -1479,7 +1585,7 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 			PyObject *args = PyObject_GetAttrString(error_value, "args");
 
 			/* Retrieve the contents of the exception (TODO: Pass the exception directly as value when we support the exception type?) */
-			if (args != NULL && PyTuple_Check(args))
+			if (args != NULL && PyTuple_Check(args) && PyTuple_Size(args) > 0)
 			{
 				PyObject *val = PyTuple_GetItem(args, 0);
 				type_id id = py_loader_impl_capi_to_value_type(callback_state->impl, val);
@@ -1522,6 +1628,9 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 		PyObject *py_result = py_loader_impl_value_to_capi(impl, value_type_id(ret), ret);
 
 		py_loader_thread_release();
+
+		/* The value returned by the callback is owned by the loader, it has been copied into py_result */
+		value_type_destroy(ret);
 
 		return py_result;
 	}
@@ -1689,8 +1798,8 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	Py_IncRef(py_impl->asyncio_loop);
 	Py_IncRef(coroutine);
 	Py_IncRef(py_impl->py_task_callback_handler);
-	Py_IncRef(callback_status);
 
+	/* The tuple steals the only reference of callback_status, then the task keeps it alive */
 	PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
 	PyTuple_SetItem(args_tuple, 1, coroutine);
 	PyTuple_SetItem(args_tuple, 2, py_impl->py_task_callback_handler);
@@ -1938,6 +2047,35 @@ error_import_module:
 	return 1;
 }
 
+static void *py_loader_impl_asyncio_thread_worker(void *data)
+{
+	loader_impl_py py_impl = (loader_impl_py)data;
+
+	py_loader_thread_acquire();
+
+	PyObject *args_tuple = PyTuple_New(1);
+	Py_IncRef(py_impl->asyncio_loop);
+	PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
+
+	PyObject *result = PyObject_Call(py_impl->thread_background_run, args_tuple, NULL);
+
+	Py_DecRef(args_tuple);
+
+	if (result == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error produced while running the asyncio thread");
+		py_loader_impl_error_print(py_impl);
+	}
+	else
+	{
+		Py_DecRef(result);
+	}
+
+	py_loader_thread_release();
+
+	return NULL;
+}
+
 int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int host)
 {
 	PyObject *module_name = PyUnicode_DecodeFSDefault("asyncio");
@@ -1994,6 +2132,12 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 		goto error_after_py_task_callback_handler;
 	}
 
+	if (threading_thread_create(&py_impl->asyncio_thread, &py_loader_impl_asyncio_thread_worker, (void *)py_impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error produced while creating the native asyncio thread");
+		goto error_after_asyncio_loop;
+	}
+
 	/* When running in host, we must register a thread atexit for finalizing the background threads
 	before Python_AtExit, just before when all threads are join (except by daemon threads) */
 	if (host == 1)
@@ -2007,6 +2151,8 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int h
 
 	return 0;
 
+error_after_asyncio_loop:
+	Py_DecRef(py_impl->asyncio_loop);
 error_after_py_task_callback_handler:
 	Py_DecRef(py_impl->py_task_callback_handler);
 error_after_asyncio_iscoroutinefunction:
@@ -2227,18 +2373,14 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"threading.settrace(trace_calls)\n"
 		"sys.settrace(trace_calls)\n"
 #endif
-		"class ThreadLoop:\n"
-		"	def __init__(self, loop, t):\n"
-		"		self.loop = loop\n"
-		"		self.t = t\n"
 		"def future_check(f):\n"
 		"	return asyncio.isfuture(f)\n"
-		"def future_create(tl):\n"
-		"	return tl.loop.create_future()\n"
-		"def future_resolve(tl, f, value):\n"
-		"	tl.loop.call_soon_threadsafe(f.set_result, value)\n"
-		"def future_reject(tl, f, exception):\n"
-		"	tl.loop.call_soon_threadsafe(f.set_exception, exception)\n"
+		"def future_create(loop):\n"
+		"	return loop.create_future()\n"
+		"def future_resolve(loop, f, value):\n"
+		"	loop.call_soon_threadsafe(f.set_result, value)\n"
+		"def future_reject(loop, f, exception):\n"
+		"	loop.call_soon_threadsafe(f.set_exception, exception)\n"
 		"def background_loop(loop):\n"
 		"	asyncio.set_event_loop(loop)\n"
 		"	try:\n"
@@ -2248,10 +2390,27 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"		print('Loop stopping, cleaning up...', flush=True)\n"
 #endif
 		"		try:\n"
-		"			loop.run_until_complete(loop.shutdown_asyncgens())\n"
+		"			pending = asyncio.all_tasks(loop)\n"
+		"			while pending:\n"
+		"				loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))\n"
+		"				pending = asyncio.all_tasks(loop)\n"
+		"		except Exception as e:\n"
+		"			print(f\"Error waiting for pending tasks: {e}\", flush=True)\n"
+		"		try:\n"
+		"			if not loop.is_closed():\n"
+		"				loop.run_until_complete(loop.shutdown_asyncgens())\n"
 		"		except Exception as e:\n"
 		"			print(f\"Error during shutdown_asyncgens: {e}\", flush=True)\n"
-		"		loop.close()\n"
+		"		try:\n"
+		"			if not loop.is_closed() and hasattr(loop, 'shutdown_default_executor'):\n"
+		"				loop.run_until_complete(loop.shutdown_default_executor())\n"
+		"		except Exception as e:\n"
+		"			print(f\"Error during shutdown_default_executor: {e}\", flush=True)\n"
+		"		try:\n"
+		"			if not loop.is_closed():\n"
+		"				loop.close()\n"
+		"		except Exception as e:\n"
+		"			print(f\"Error closing loop: {e}\", flush=True)\n"
 #if DEBUG_ENABLED
 		"		print('Event loop closed', flush=True)\n"
 #endif
@@ -2260,34 +2419,29 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 #if DEBUG_ENABLED
 		"	loop.set_debug(True)\n"
 #endif
-		"	t = threading.Thread(target=background_loop, name='MetaCallEventLoop', args=(loop,), daemon=False)\n"
-		"	t.start()\n"
-		"	return ThreadLoop(loop, t)\n"
-		"def send_background_loop(tl, coro, callback, capsule):\n"
-		"	task = asyncio.run_coroutine_threadsafe(coro, tl.loop)\n"
+		/* The loop is only created here, it is run exclusively by the native thread
+		(see py_loader_impl_asyncio_thread_worker). A Python threading.Thread must never
+		be started for it: two threads running the same loop corrupt it on Windows */
+		"	return loop\n"
+		"def send_background_loop(loop, coro, callback, capsule):\n"
+		"	task = asyncio.run_coroutine_threadsafe(coro, loop)\n"
 		"	task.__metacall_capsule = capsule\n"
 		"	task.add_done_callback(callback)\n"
-		"	return asyncio.wrap_future(task, loop=tl.loop)\n"
-		/* Stop background loop enqueues at the end of the event loop
-		the task to be finished, so effectively it waits until the event loop finishes */
-		"def stop_background_loop(tl, join):\n"
+		"	return asyncio.wrap_future(task, loop=loop)\n"
+		/* Stop background loop only enqueues the stop request into the event loop and returns
+		immediately, it does not wait for anything. Once processed, run_forever returns and
+		background_loop waits for all pending tasks to finish, so the caller must join the
+		native thread (see py_loader_impl_asyncio_thread_worker) in order to wait for the loop to finish */
+		"def stop_background_loop(loop):\n"
 #if DEBUG_ENABLED
 		"	print('Requesting loop to stop', flush=True)\n"
 #endif
-		"	tl.loop.call_soon_threadsafe(tl.loop.stop)\n"
-		"	if join:\n"
-#if DEBUG_ENABLED
-		"		print('Waiting for thread to join', flush=True)\n"
-#endif
-		"		tl.t.join()\n"
-#if DEBUG_ENABLED
-		"		print('Background loop stopped', flush=True)\n"
-#endif
-		"def atexit_background_loop(tl):\n"
+		"	loop.call_soon_threadsafe(loop.stop)\n"
+		"def atexit_background_loop(loop):\n"
 		/* Checks if py_port_impl_module contains py_loader_port_atexit and executes it */
 		"	getattr(sys.modules.get('py_port_impl_module'), 'py_loader_port_atexit', lambda: None)()\n"
-		"def register_atexit_background_loop(tl):\n"
-		"	threading._register_atexit(atexit_background_loop, tl)\n";
+		"def register_atexit_background_loop(loop):\n"
+		"	threading._register_atexit(atexit_background_loop, loop)\n";
 
 	/* How to use the module: */
 	/*
@@ -2343,6 +2497,14 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		goto error_thread_background_start;
 	}
 
+	py_impl->thread_background_run = PyObject_GetAttrString(py_impl->thread_background_module, "background_loop");
+
+	if (py_impl->thread_background_run == NULL || !PyCallable_Check(py_impl->thread_background_run))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting background_loop function");
+		goto error_thread_background_run;
+	}
+
 	py_impl->thread_background_send = PyObject_GetAttrString(py_impl->thread_background_module, "send_background_loop");
 
 	if (py_impl->thread_background_send == NULL || !PyCallable_Check(py_impl->thread_background_send))
@@ -2375,6 +2537,8 @@ error_thread_background_stop:
 	Py_DecRef(py_impl->thread_background_stop);
 error_thread_background_send:
 	Py_DecRef(py_impl->thread_background_send);
+error_thread_background_run:
+	Py_DecRef(py_impl->thread_background_run);
 error_thread_background_start:
 	Py_DecRef(py_impl->thread_background_start);
 error_thread_background_future_check:
@@ -2578,6 +2742,38 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_import;
 	}
 
+	/* Initialize custom dict type */
+	if (py_loader_impl_dict_type_init() < 0)
+	{
+		goto error_after_import;
+	}
+
+	/* Initialize custom function type */
+	if (py_loader_impl_func_type_init() < 0)
+	{
+		goto error_after_import;
+	}
+
+	/* Initialize custom object type (it must be initialized before the class type, it is the base of the generated classes) */
+	if (py_loader_impl_object_type_init() < 0)
+	{
+		goto error_after_import;
+	}
+
+	/* Initialize custom class type */
+	if (py_loader_impl_class_type_init() < 0)
+	{
+		goto error_after_import;
+	}
+
+	/* Initialize the cache of classes indexed by Python type */
+	py_impl->class_cache = set_create(&hash_callback_ptr, &comparable_callback_ptr);
+
+	if (py_impl->class_cache == NULL)
+	{
+		goto error_after_import;
+	}
+
 	/* Initialize thread module for supporting threaded async */
 	if (py_loader_impl_initialize_thread_background_module(py_impl) != 0)
 	{
@@ -2596,18 +2792,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		}
 	}
 
-	/* Initialize custom dict type */
-	if (py_loader_impl_dict_type_init() < 0)
-	{
-		goto error_after_asyncio_module;
-	}
-
-	/* Initialize custom function type */
-	if (py_loader_impl_func_type_init() < 0)
-	{
-		goto error_after_asyncio_module;
-	}
-
 	if (gil_release)
 	{
 		py_loader_thread_release();
@@ -2620,14 +2804,10 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	return py_impl;
 
-error_after_asyncio_module:
-	Py_DecRef(py_impl->asyncio_iscoroutinefunction);
-	Py_DecRef(py_impl->asyncio_loop);
-	Py_DecRef(py_impl->asyncio_module);
-	Py_DecRef(py_impl->py_task_callback_handler);
 error_after_thread_background_module:
 	Py_DecRef(py_impl->thread_background_module);
 	Py_DecRef(py_impl->thread_background_start);
+	Py_DecRef(py_impl->thread_background_run);
 	Py_DecRef(py_impl->thread_background_send);
 	Py_DecRef(py_impl->thread_background_stop);
 	Py_DecRef(py_impl->thread_background_register_atexit);
@@ -2745,20 +2925,14 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 {
 	if (module->name != NULL)
 	{
-		PyObject *system_modules = PySys_GetObject("modules");
+		PyObject *system_modules = PyImport_GetModuleDict();
 
-		// TODO: Sometimes this fails, seems that sys.modules does not contain the item.
-		// Probably is because of the new import system which is using importlib, but
-		// it does not seem something problematic although it will be interesting
-		// to check it out so we are sure there's no leaked memory
-		if (PyObject_HasAttr(system_modules, module->name) == 1)
+		/* The sys.modules is a dict, so the module must be looked up by key (not by attribute) */
+		if (PyDict_Contains(system_modules, module->name) == 1)
 		{
-			PyObject *item = PyObject_GetItem(system_modules, module->name);
-
-			if (item != NULL)
+			if (PyDict_DelItem(system_modules, module->name) != 0)
 			{
-				Py_DecRef(item);
-				PyObject_DelItem(system_modules, module->name);
+				PyErr_Clear();
 			}
 		}
 
@@ -3661,6 +3835,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 			PyObject *method_static = PyObject_CallObject(py_impl->inspect_getattr_static, args);
 			Py_DecRef(args);
 			bool is_static_method = PyObject_TypeCheck(method_static, PyStaticMethodTypePtr());
+			Py_DecRef(method_static);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s, static method: %d",
 				PyUnicode_AsUTF8(tuple_key),
@@ -3712,9 +3887,6 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 						PyUnicode_AsUTF8(tuple_key),
 						class_name(c));
 				}
-
-				/* Delete the reference of the method here instead of in py_method_interface_destroy */
-				Py_DecRef(tuple_val);
 			}
 			else
 			{
@@ -3767,6 +3939,92 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 }
 */
 
+value py_loader_impl_class_value(loader_impl impl, loader_impl_py py_impl, PyObject *py_class)
+{
+	/* Reuse the class, so the introspection is done only once per Python type */
+	value v = (value)set_get(py_impl->class_cache, (set_key)py_class);
+
+	if (v != NULL)
+	{
+		return value_type_copy(v);
+	}
+
+	loader_impl_py_class py_cls = malloc(sizeof(struct loader_impl_py_class_type));
+
+	if (py_cls == NULL)
+	{
+		return NULL;
+	}
+
+	PyObject *qualname = PyObject_GetAttrString(py_class, "__qualname__");
+	const char *name = qualname != NULL ? PyUnicode_AsUTF8(qualname) : NULL;
+
+	if (name == NULL)
+	{
+		PyErr_Clear();
+		name = ((PyTypeObject *)py_class)->tp_name;
+	}
+
+	klass c = class_create(name, ACCESSOR_TYPE_STATIC, py_cls, &py_class_interface_singleton);
+
+	Py_DecRef(qualname);
+
+	if (c == NULL)
+	{
+		free(py_cls);
+		return NULL;
+	}
+
+	Py_IncRef(py_class);
+
+	py_cls->impl = impl;
+	py_cls->cls = py_class;
+
+	if (py_loader_impl_discover_class(impl, py_class, c) != 0)
+	{
+		class_destroy(c);
+		return NULL;
+	}
+
+	v = value_create_class(c);
+
+	if (v == NULL)
+	{
+		class_destroy(c);
+		return NULL;
+	}
+
+	/* The cache owns one reference to the value and one to the Python type */
+	if (set_insert(py_impl->class_cache, (set_key)py_class, (set_value)v) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "Failed to cache the MetaCall class %s", name);
+		return v;
+	}
+
+	Py_IncRef(py_class);
+
+	return value_type_copy(v);
+}
+
+void py_loader_impl_class_cache_destroy(loader_impl_py py_impl)
+{
+	struct set_iterator_type it;
+
+	if (py_impl->class_cache == NULL)
+	{
+		return;
+	}
+
+	for (set_iterator_begin(&it, py_impl->class_cache); set_iterator_end(&it) != 0; set_iterator_next(&it))
+	{
+		value_type_destroy(set_iterator_value(&it));
+		Py_DecRef((PyObject *)set_iterator_key(&it));
+	}
+
+	set_destroy(py_impl->class_cache);
+	py_impl->class_cache = NULL;
+}
+
 int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context ctx)
 {
 	py_loader_thread_acquire();
@@ -3785,38 +4043,43 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 
 	while (PyDict_Next(module_dict, &position, &module_dict_key, &module_dict_val))
 	{
+		// Wrapped classes are also types, so test for them first
+		if (py_loader_impl_class_check(module_dict_val))
+		{
+			/* This special case for our own classes skips the introspection phase */
+			const char *cls_name = PyUnicode_AsUTF8(module_dict_key);
+			scope sp = context_scope(ctx);
+			value v = py_loader_impl_class_copy(module_dict_val);
+
+			if (scope_define(sp, cls_name, v) != 0)
+			{
+				py_loader_thread_release();
+				value_type_destroy(v);
+				return 1;
+			}
+		}
 		// Class is also PyCallable, so test for class first
-		if (PyObject_TypeCheck(module_dict_val, PyTypeTypePtr()))
+		else if (PyObject_TypeCheck(module_dict_val, PyTypeTypePtr()))
 		// PyObject_IsSubclass(module_dict_val, (PyObject *)PyTypeTypePtr()) == 0
 		{
 			const char *cls_name = PyUnicode_AsUTF8(module_dict_key);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class name %s", cls_name);
 
-			loader_impl_py_class py_cls = malloc(sizeof(struct loader_impl_py_class_type));
+			value v = py_loader_impl_class_value(impl, py_impl, module_dict_val);
 
-			Py_IncRef(module_dict_val);
-
-			klass c = class_create(cls_name, ACCESSOR_TYPE_STATIC, py_cls, &py_class_interface_singleton);
-
-			py_cls->impl = impl;
-			py_cls->cls = module_dict_val;
-
-			if (py_loader_impl_discover_class(impl, module_dict_val, c) == 0)
-			{
-				scope sp = context_scope(ctx);
-				value v = value_create_class(c);
-				if (scope_define(sp, cls_name, v) != 0)
-				{
-					py_loader_thread_release();
-					value_type_destroy(v);
-					return 1;
-				}
-			}
-			else
+			if (v == NULL)
 			{
 				py_loader_thread_release();
-				class_destroy(c);
+				return 1;
+			}
+
+			scope sp = context_scope(ctx);
+
+			if (scope_define(sp, cls_name, v) != 0)
+			{
+				py_loader_thread_release();
+				value_type_destroy(v);
 				return 1;
 			}
 		}
@@ -3931,6 +4194,8 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 	log_write("metacall", LOG_LEVEL_ERROR, error_format_str, type_str, value_str, traceback_str ? traceback_str : traceback_not_found);
 
+	Py_DecRef(type_str_obj);
+	Py_DecRef(value_str_obj);
 	Py_DecRef(traceback_list);
 	Py_DecRef(separator);
 	Py_DecRef(traceback_str_obj);
@@ -3987,6 +4252,7 @@ value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject
 
 	ret = value_create_throwable(th);
 
+	Py_DecRef(value_str_obj);
 	Py_DecRef(traceback_list);
 	Py_DecRef(separator);
 	Py_DecRef(traceback_str_obj);
@@ -4091,80 +4357,6 @@ int py_loader_impl_finalize(loader_impl_py py_impl, const int host)
 	return 0;
 }
 
-#if defined(WIN32) || defined(_WIN32)
-/* On Windows, threads are destroyed when atexit is executed, we should control this in order to avoid deadlocks */
-static long py_loader_impl_asyncio_thread_native_id(loader_impl_py py_impl)
-{
-	PyObject *thread_obj = PyObject_GetAttrString(py_impl->asyncio_loop, "t");
-
-	if (thread_obj == NULL)
-	{
-		return -1;
-	}
-
-	PyObject *native_id_obj = PyObject_GetAttrString(thread_obj, "native_id");
-	Py_DecRef(thread_obj);
-
-	if (thread_obj == NULL)
-	{
-		return -1;
-	}
-
-	long native_id = PyLong_AsLong(native_id_obj);
-	Py_DecRef(native_id_obj);
-
-	if (PyErr_Occurred())
-	{
-		py_loader_impl_error_print(py_impl);
-		return -1;
-	}
-
-	return native_id;
-}
-
-static int py_loader_impl_check_thread(loader_impl_py py_impl)
-{
-	long thread_id = py_loader_impl_asyncio_thread_native_id(py_impl);
-
-	if (thread_id == -1)
-	{
-		return -1;
-	}
-
-	HANDLE thread_handle = OpenThread(THREAD_QUERY_INFORMATION | SYNCHRONIZE, FALSE, thread_id);
-
-	if (thread_handle == NULL)
-	{
-		return 1;
-	}
-
-	DWORD result = WaitForSingleObject(thread_handle, 0);
-
-	CloseHandle(thread_handle);
-
-	if (result == WAIT_TIMEOUT)
-	{
-		return 0;
-	}
-	else if (result == WAIT_OBJECT_0)
-	{
-		/* This workaround forces to skip thread waiting, so it avoids deadlocks */
-		PyObject *sys_modules = PyImport_GetModuleDict();
-
-		if (PyDict_DelItemString(sys_modules, "threading") < 0)
-		{
-			PyErr_Print();
-		}
-
-		return 1;
-	}
-	else
-	{
-		return -1;
-	}
-}
-#endif
-
 int py_loader_impl_destroy(loader_impl impl)
 {
 	const int host = loader_impl_get_option_host(impl);
@@ -4179,29 +4371,43 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Destroy children loaders */
 	loader_unload_children(impl);
 
-	py_loader_thread_acquire();
+	/* If we are on host, the GIL is already acquired, so we skip it */
+	if (host == 0)
+	{
+		py_loader_thread_acquire();
+	}
 
 	/* Stop event loop for async calls */
-#if defined(WIN32) || defined(_WIN32)
-	if (py_loader_impl_check_thread(py_impl) == 0)
-#endif
 	{
-		PyObject *args_tuple = PyTuple_New(2);
+		PyObject *args_tuple = PyTuple_New(1);
 		Py_IncRef(py_impl->asyncio_loop);
 		PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
-		/* If it is host, do not join the thread */
-		PyTuple_SetItem(args_tuple, 1, PyBool_FromLong(!host));
-		PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
+		PyObject *stop_result = PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
 		Py_DecRef(args_tuple);
 
-		if (PyErr_Occurred() != NULL)
+		if (stop_result == NULL)
 		{
 			py_loader_impl_error_print(py_impl);
 		}
+		else
+		{
+			Py_DecRef(stop_result);
+		}
+
+		py_loader_thread_release();
+
+		threading_thread_join(&py_impl->asyncio_thread, NULL);
+
+		threading_thread_destroy(&py_impl->asyncio_thread);
+
+		py_loader_thread_acquire();
 	}
 
 	/* Delete all the objects from the destructors of the other threads */
 	py_loader_thread_destroy();
+
+	/* Release the classes indexed by Python type while the runtime is still alive */
+	py_loader_impl_class_cache_destroy(py_impl);
 
 	/* Destroy all Python loader objects */
 	Py_DecRef(py_impl->inspect_signature);
@@ -4223,6 +4429,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DecRef(py_impl->thread_background_future_check);
 	Py_DecRef(py_impl->thread_background_module);
 	Py_DecRef(py_impl->thread_background_start);
+	Py_DecRef(py_impl->thread_background_run);
 	Py_DecRef(py_impl->thread_background_send);
 	Py_DecRef(py_impl->thread_background_stop);
 	Py_DecRef(py_impl->thread_background_register_atexit);
@@ -4242,11 +4449,9 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Destroy Python runtime itself (only when it is not the host) */
 	result = py_loader_impl_finalize(py_impl, host);
 
-	if (host == 1)
-	{
-		/* On host, release the GIL and let Python continue until it calls Py_Finalize by itself */
-		py_loader_thread_release();
-	}
+	/* Destroy the class and object caches after finalizing, so the types and objects released during finalization can still remove their entries */
+	py_loader_impl_class_type_destroy();
+	py_loader_impl_object_type_destroy();
 
 	free(py_impl);
 

@@ -79,6 +79,8 @@ TEST_F(metacall_node_port_c_lib_metacall_test, DefaultConstructor)
 		"	const metacircular = metacall.metacall_value_to_double(result);\n"
 		"	console.log(metacircular);\n"
 		"	assert(metacircular == 69, 'metacircular must be 69, invoke failed');\n"
+		"	metacall.metacall_value_destroy(handle_ptr);\n"
+		"	metacall.metacall_value_destroy(args[0]);\n"
 		"}\n"
 		"\n";
 

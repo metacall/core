@@ -20,6 +20,7 @@
 
 #include <adt/adt_set.h>
 
+#include <reflect/reflect_class.h>
 #include <reflect/reflect_object.h>
 #include <reflect/reflect_value_type.h>
 
@@ -94,6 +95,12 @@ object object_create(const char *name, enum accessor_type_id accessor, object_im
 		}
 	}
 
+	/* The object keeps its class alive, it is released in object_destroy */
+	if (cls != NULL && class_increment_reference(cls) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid class reference counter in object: %s", obj->name ? obj->name : "<anonymous>");
+	}
+
 	reflect_memory_tracker_allocation(object_stats);
 
 	return obj;
@@ -146,6 +153,26 @@ int object_decrement_reference(object obj)
 object_impl object_impl_get(object obj)
 {
 	return obj->impl;
+}
+
+object_interface object_interface_get(object obj)
+{
+	if (obj != NULL)
+	{
+		return obj->interface;
+	}
+
+	return NULL;
+}
+
+klass object_class_get(object obj)
+{
+	if (obj != NULL)
+	{
+		return obj->cls;
+	}
+
+	return NULL;
 }
 
 vector object_methods(object obj, const char *key)
@@ -369,16 +396,14 @@ int object_delete(object obj)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->destructor != NULL)
 	{
-		int error = obj->interface->destructor(obj, obj->impl);
+		int result = obj->interface->destructor(obj, obj->impl);
 
-		if (error != 0)
+		if (result != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object %s destructor", obj->name);
-
-			return 2;
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object destructor %d: %d", obj->name, result);
 		}
 
-		return 0;
+		return result;
 	}
 
 	return 1;
@@ -416,6 +441,12 @@ void object_destroy(object obj)
 			if (obj->interface != NULL && obj->interface->destroy != NULL)
 			{
 				obj->interface->destroy(obj, obj->impl);
+			}
+
+			/* Release the class after the object implementation, it may need the class during its destruction */
+			if (obj->cls != NULL)
+			{
+				class_destroy(obj->cls);
 			}
 
 			if (obj->name != NULL)

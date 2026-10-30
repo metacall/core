@@ -23,6 +23,7 @@
 # DOTNET_COMMAND - Return DotNET command
 
 # Prevent vervosity if already included
+include(FindPackageHandleStandardArgs)
 if(DOTNET_FOUND)
 	set(DOTNET_FIND_QUIETLY TRUE)
 endif()

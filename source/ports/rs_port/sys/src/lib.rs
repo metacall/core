@@ -366,7 +366,7 @@ pub fn build() {
                 );
 
                 println!(
-                    "cargo:warning=Library {} found in: {} with runtime search path: {}",
+                    "Library {} found in: {} with runtime search path: {}",
                     lib_path.library,
                     lib_path.path.display(),
                     lib_path.search.display()

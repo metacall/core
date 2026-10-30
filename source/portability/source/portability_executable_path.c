@@ -26,6 +26,8 @@
 	#include <mach-o/dyld.h>
 #elif defined(__FreeBSD__)
 	#include <sys/sysctl.h>
+#elif defined(__HAIKU__)
+	#include <be/kernel/image.h>
 #endif
 
 int portability_executable_path(portability_executable_path_str path, portability_executable_path_length *length)
@@ -46,6 +48,27 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	{
 		return 1;
 	}
+#elif defined(__NetBSD__)
+	*length = readlink("/proc/curproc/exe", path, path_max_length);
+#elif defined(__DragonFly__)
+	*length = readlink("/proc/curproc/file", path, path_max_length);
+#elif defined(__HAIKU__)
+	image_info info;
+	int32 cookie = 0;
+	*length = 0;
+	while (get_next_image_info(B_CURRENT_TEAM, &cookie, &info) == B_OK)
+	{
+		if (info.type == B_APP_IMAGE)
+		{
+			strncpy(path, info.name, path_max_length);
+			*length = strnlen(path, path_max_length);
+			break;
+		}
+	}
+#elif defined(sun) || defined(__sun)
+	const char *path_ptr = getexecname();
+	*length = strnlen(path_ptr, path_max_length);
+	strncpy(path, path_ptr, *length);
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
 	*length = readlink("/proc/self/exe", path, path_max_length);
@@ -64,14 +87,6 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	}
 
 	*length = strnlen(path, PORTABILITY_PATH_SIZE);
-#elif defined(__NetBSD__)
-	*length = readlink("/proc/curproc/exe", path, path_max_length);
-#elif defined(__DragonFly__)
-	*length = readlink("/proc/curproc/file", path, path_max_length);
-#elif defined(sun) || defined(__sun)
-	const char *path_ptr = getexecname();
-	*length = strnlen(path_ptr, path_max_length);
-	strncpy(path, path_ptr, *length);
 #endif
 
 	if (*length <= 0 || *length == path_max_length)
