@@ -72,8 +72,8 @@ TEST_F(metacall_ruby_conversion_test, DefaultConstructor)
 			void *args[1] = { metacall_value_create_int(42) };
 			void *ret = metacallhv(handle, "identity", args);
 			EXPECT_NE((void *)NULL, (void *)ret);
-			EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
-			EXPECT_EQ((int)42, metacall_value_to_int(ret));
+			EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_EQ((long)42, metacall_value_to_long(ret));
 			metacall_value_destroy(ret);
 			metacall_value_destroy(args[0]);
 		}
@@ -83,7 +83,7 @@ TEST_F(metacall_ruby_conversion_test, DefaultConstructor)
 			void *args[1] = { metacall_value_create_long(123456789L) };
 			void *ret = metacallhv(handle, "identity", args);
 			EXPECT_NE((void *)NULL, (void *)ret);
-			EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
 			metacall_value_destroy(ret);
 			metacall_value_destroy(args[0]);
 		}
