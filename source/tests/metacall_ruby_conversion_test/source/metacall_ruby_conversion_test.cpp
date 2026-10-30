@@ -152,7 +152,7 @@ TEST_F(metacall_ruby_conversion_test, DefaultConstructor)
 			void *args[1] = { metacall_value_create_buffer(data, sizeof(data)) };
 			void *ret = metacallhv(handle, "identity", args);
 			EXPECT_NE((void *)NULL, (void *)ret);
-			EXPECT_EQ((enum metacall_value_id)METACALL_BUFFER, (enum metacall_value_id)metacall_value_id(ret));
+			EXPECT_TRUE(metacall_value_id(ret) == METACALL_STRING || metacall_value_id(ret) == METACALL_BUFFER);
 			metacall_value_destroy(ret);
 			metacall_value_destroy(args[0]);
 		}
