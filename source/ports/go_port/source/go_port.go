@@ -479,6 +479,31 @@ func goReject(v unsafe.Pointer, ctx unsafe.Pointer) unsafe.Pointer {
 	return ptr
 }
 
+// Create the C callbacks and save the Go callbacks into a handle (goResolve or goReject delete it once one of them is executed)
+func awaitCallbacksSave(resolve, reject awaitCallback, ctx interface{}) (C.metacall_await_callbacks, unsafe.Pointer) {
+	cCallbacks := C.metacall_await_callbacks{}
+
+	if resolve != nil {
+		cCallbacks.resolve = C.metacall_await_callback(C.resolveCgo)
+	} else {
+		cCallbacks.resolve = nil
+	}
+
+	if reject != nil {
+		cCallbacks.reject = C.metacall_await_callback(C.rejectCgo)
+	} else {
+		cCallbacks.reject = nil
+	}
+
+	goCallbacks := awaitCallbacks{
+		resolve: resolve,
+		reject:  reject,
+		ctx:     ctx,
+	}
+
+	return cCallbacks, pointerSave(&goCallbacks)
+}
+
 func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}, args ...interface{}) (interface{}, error) {
 	cFunc, err := getFunction(function)
 	if err != nil {
@@ -500,26 +525,7 @@ func AwaitUnsafe(function string, resolve, reject awaitCallback, ctx interface{}
 		C.free(unsafe.Pointer(cArgs))
 	}()
 
-	cCallbacks := C.metacall_await_callbacks{}
-
-	if resolve != nil {
-		cCallbacks.resolve = C.metacall_await_callback(C.resolveCgo)
-	} else {
-		cCallbacks.resolve = nil
-	}
-
-	if reject != nil {
-		cCallbacks.reject = C.metacall_await_callback(C.rejectCgo)
-	} else {
-		cCallbacks.reject = nil
-	}
-
-	goCallbacks := awaitCallbacks{
-		resolve: resolve,
-		reject:  reject,
-		ctx:     ctx,
-	}
-	goCallbacksPtr := pointerSave(&goCallbacks)
+	cCallbacks, goCallbacksPtr := awaitCallbacksSave(resolve, reject, ctx)
 
 	ret := C.metacallfv_await_struct_s(cFunc, (*unsafe.Pointer)(cArgs), length, cCallbacks, goCallbacksPtr)
 

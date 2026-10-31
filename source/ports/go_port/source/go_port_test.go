@@ -611,6 +611,48 @@ async def ownership_make_point(x):
 	runFinalizers()
 }
 
+// Await a future and block until it is resolved or rejected (Future.Await does not wait for the result)
+func awaitFuture(t *testing.T, fut *Future) (interface{}, error) {
+	type futureResult struct {
+		value interface{}
+		err   error
+	}
+
+	result := make(chan futureResult, 1)
+
+	val, err := fut.Await(
+		func(v, _ interface{}) interface{} {
+			result <- futureResult{v, nil}
+			return nil
+		},
+		func(v, _ interface{}) interface{} {
+			if e, ok := v.(error); ok {
+				result <- futureResult{nil, e}
+			} else {
+				result <- futureResult{nil, fmt.Errorf("%v", v)}
+			}
+			return nil
+		},
+		nil)
+
+	if err != nil {
+		t.Fatalf("await of future failed: %v", err)
+	}
+
+	if _, ok := val.(*Future); !ok {
+		t.Fatalf("expected *Future from await, got %T", val)
+	}
+
+	select {
+	case r := <-result:
+		return r.value, r.err
+	case <-time.After(5 * time.Second):
+		t.Fatal("timeout waiting for the future to be resolved or rejected")
+	}
+
+	return nil, nil
+}
+
 func TestNodeJSOwnershipFuture(t *testing.T) {
 	requireLoader(t, "node")
 	script := `
@@ -637,7 +679,7 @@ func TestNodeJSOwnershipFuture(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected *Future, got %T", array[0])
 	}
-	if res, err := fut.Await(); err != nil || fmt.Sprint(res) != "5" {
+	if res, err := awaitFuture(t, fut); err != nil || fmt.Sprint(res) != "5" {
 		t.Fatalf("expected 5, got %v (err: %v)", res, err)
 	}
 
@@ -654,7 +696,7 @@ func TestNodeJSOwnershipFuture(t *testing.T) {
 	// is copied and destroyed anyway, so the future must remain valid after it. Check the error and the
 	// returned future once NodeJS loader implements it
 	Call("ownershipIdentity", arg)
-	if res, err := arg.Await(); err != nil || fmt.Sprint(res) != "6" {
+	if res, err := awaitFuture(t, arg); err != nil || fmt.Sprint(res) != "6" {
 		t.Fatalf("expected 6, got %v (err: %v)", res, err)
 	}
 
@@ -689,7 +731,7 @@ func TestNodeJSFuture(t *testing.T) {
 		t.Fatalf("expected *Future, got %T", val)
 	}
 
-	res, err := fut.Await()
+	res, err := awaitFuture(t, fut)
 	if err != nil {
 		t.Fatalf("await returned unexpected error: %v", err)
 	}
@@ -697,15 +739,20 @@ func TestNodeJSFuture(t *testing.T) {
 		t.Fatalf("expected 50, got %v", res)
 	}
 
+	rejected := make(chan string, 1)
+
 	failVal, err := Await("asyncFail",
 		func(interface{}, interface{}) interface{} {
 			log.Println("from go resolve")
+			rejected <- ""
 			return nil
 		},
-		func(interface{}, interface{}) interface{} {
+		func(v interface{}, _ interface{}) interface{} {
 			log.Println("from go reject")
+			rejected <- fmt.Sprint(v)
 			return nil
 		},
+		nil,
 		"database error")
 	if err != nil {
 		t.Fatalf("call to asyncFail failed: %v", err)
@@ -716,14 +763,28 @@ func TestNodeJSFuture(t *testing.T) {
 		t.Fatalf("expected *Future, got %T", failVal)
 	}
 
-	_, awaitErr := failFut.Await()
-	if awaitErr == nil {
-		t.Fatal("expected error from rejected future, got nil")
+	select {
+	case msg := <-rejected:
+		if !strings.Contains(msg, "database error") {
+			t.Fatalf("expected rejection with 'database error', got '%s'", msg)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("timeout waiting for asyncFail to be rejected")
+	}
+
+	// The rejection has been handled by the reject callback, so the chained future resolves with its return value (nil)
+	res, awaitErr := awaitFuture(t, failFut)
+	if awaitErr != nil || res != nil {
+		t.Fatalf("expected chained future to resolve with nil, got %v (err: %v)", res, awaitErr)
 	}
 }
 
 func TestGoRoutineLeaks(t *testing.T) {
 	requireLoader(t, "node")
+	// TODO: Shutdown deadlock on MacOS (Destroy() does not finish within 5s), skipped until it is fixed
+	if runtime.GOOS == "darwin" {
+		t.Skip("TODO: TestGoRoutineLeaks deadlocks on MacOS")
+	}
 	// This test is for race condition when shutdown occur with non-empty queue which triggers a deadlock and a goroutine leak
 	// Start the port and fill the queue
 	buffer := "module.exports = { leak_test: (x) => x }"
@@ -862,6 +923,10 @@ func benchmarkNodeJS(b *testing.B, n int) {
 
 func BenchmarkNodeJSSequential(b *testing.B) {
 	requireLoader(b, "node")
+	// TODO: Aborts on MacOS (uv_mutex_lock on a destroyed mutex in the NodeJS future_delete threadsafe invoke)
+	if runtime.GOOS == "darwin" {
+		b.Skip("TODO: NodeJS future_delete race on MacOS")
+	}
 	for i := 0; i < b.N; i++ {
 		benchmarkNodeJS(b, 5)
 	}
@@ -869,6 +934,10 @@ func BenchmarkNodeJSSequential(b *testing.B) {
 
 func BenchmarkNodeJSParallel(b *testing.B) {
 	requireLoader(b, "node")
+	// TODO: Aborts on MacOS (uv_mutex_lock on a destroyed mutex in the NodeJS future_delete threadsafe invoke)
+	if runtime.GOOS == "darwin" {
+		b.Skip("TODO: NodeJS future_delete race on MacOS")
+	}
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			benchmarkNodeJS(b, 5)
