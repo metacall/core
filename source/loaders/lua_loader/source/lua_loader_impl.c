@@ -119,18 +119,14 @@ static int lua_loader_impl_initialize_types(loader_impl impl)
 		const char *name;
 	} type_id_name_pair[] = {
 		{ TYPE_BOOL, "boolean" },
-		{ TYPE_CHAR, "string" },
-		{ TYPE_SHORT, "number" },
-		{ TYPE_INT, "number" },
-		{ TYPE_LONG, "number" },
-		{ TYPE_FLOAT, "number" },
 		{ TYPE_DOUBLE, "number" },
+#if LUA_VERSION_NUM >= 503
+		{ TYPE_LONG, "integer" },
+#endif
 		{ TYPE_STRING, "string" },
-		{ TYPE_BUFFER, "string" },
 		{ TYPE_PTR, "userdata" },
 		{ TYPE_NULL, "nil" },
 		{ TYPE_FUNCTION, "function" },
-		{ TYPE_ARRAY, "table" },
 		{ TYPE_MAP, "table" },
 	};
 
@@ -139,13 +135,16 @@ static int lua_loader_impl_initialize_types(loader_impl impl)
 	for (index = 0; index < size; ++index)
 	{
 		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, NULL);
-		if (t != NULL)
+
+		if (t == NULL)
 		{
-			if (loader_impl_type_define(impl, type_name(t), t) != 0)
-			{
-				type_destroy(t);
-				return 1;
-			}
+			return 1;
+		}
+
+		if (loader_impl_type_define(impl, type_name(t), t) != 0)
+		{
+			type_destroy(t);
+			return 1;
 		}
 	}
 
