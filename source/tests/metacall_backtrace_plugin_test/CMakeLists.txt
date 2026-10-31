@@ -98,11 +98,13 @@ target_link_libraries(${target}
 # Compile definitions
 #
 
+test_runtime_path(BACKTRACE_PLUGIN_PATH "${PROJECT_OUTPUT_DIR}/plugins/backtrace_plugin/metacall.json")
+
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	BACKTRACE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/backtrace_plugin/metacall.json"
+	BACKTRACE_PLUGIN_PATH="${BACKTRACE_PLUGIN_PATH}"
 )
 
 #

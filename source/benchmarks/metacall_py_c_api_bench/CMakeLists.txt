@@ -159,4 +159,7 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+
+	# Benchmarks are too slow under valgrind, skip them in memcheck
+	MEMCHECK_IGNORE
 )

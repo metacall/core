@@ -22,6 +22,7 @@
 set -euxo
 
 ROOT_DIR=$(pwd)
+SOURCE_DIR=$(cd -P "$(dirname "$0")/.." && pwd)
 BUILD_TYPE=Release
 BUILD_PYTHON=0
 BUILD_RUBY=0
@@ -649,14 +650,20 @@ sub_configure() {
 
 	# Android
 	if [ $BUILD_ANDROID = 1 ]; then
-		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-30}"
+		ANDROID_API_LEVEL="${ANDROID_API_LEVEL:-33}"
 		ANDROID_ABI="${ANDROID_ABI:-x86_64}"
+		ANDROID_DEVICE_DIR="${ANDROID_DEVICE_DIR:-/data/local/tmp/metacall}"
+
+		# Run the tests in the device through adb
+		ANDROID_EMULATOR="${SOURCE_DIR}/tools/metacall-android-emulator.sh;${SOURCE_DIR};${ROOT_DIR};${ANDROID_DEVICE_DIR}"
 
 		BUILD_STRING="$BUILD_STRING \
 			-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
 			-DANDROID_ABI=${ANDROID_ABI} \
 			-DANDROID_PLATFORM=android-${ANDROID_API_LEVEL} \
 			-DANDROID_STL=c++_shared \
+			-DANDROID_DEVICE_DIR=${ANDROID_DEVICE_DIR} \
+			-DCMAKE_CROSSCOMPILING_EMULATOR=${ANDROID_EMULATOR} \
 			-Wno-dev \
 			-G Ninja"
 	fi
@@ -685,7 +692,7 @@ sub_configure() {
 		export CC=/usr/bin/clang
 		export CXX=/usr/bin/clang++
 	fi
-	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING ..
+	cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING "$SOURCE_DIR"
 }
 
 sub_help() {

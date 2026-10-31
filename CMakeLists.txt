@@ -257,6 +257,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(OPTION_BUILD_TESTS OR OPTION_BUILD_BENCHMARKS)
 	enable_testing()
+
+	# Run the tests through the emulator when cross-compiling to Android
+	include(AndroidEmulatorTest)
 endif()
 
 #

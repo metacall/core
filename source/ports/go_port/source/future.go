@@ -13,7 +13,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 	"runtime"
 	"unsafe"
 )
@@ -23,9 +22,21 @@ type Future struct {
 	val unsafe.Pointer
 	ptr unsafe.Pointer
 }
-type futureResult struct {
-	value interface{}
-	err   error
+
+type awaitFutureSafeWork struct {
+	future  *Future
+	ret     chan callReturnSafeWork
+	resolve awaitCallback
+	reject  awaitCallback
+	ctx     interface{}
+}
+
+func (w *awaitFutureSafeWork) execute() {
+	value, err := w.future.AwaitUnsafe(w.resolve, w.reject, w.ctx)
+	w.ret <- callReturnSafeWork{value, err}
+}
+func (w *awaitFutureSafeWork) cancel(err error) {
+	w.ret <- callReturnSafeWork{nil, err}
 }
 
 func newFuture(value unsafe.Pointer) *Future {
@@ -44,43 +55,59 @@ func newFuture(value unsafe.Pointer) *Future {
 	return fut
 }
 
-func (f *Future) Await() (interface{}, error) {
-	if f.ptr == nil {
-		return nil, errors.New("can't call async on nil future")
+func (f *Future) AwaitUnsafe(resolve, reject awaitCallback, ctx interface{}) (interface{}, error) {
+	if f == nil || f.ptr == nil {
+		return nil, errors.New("can't await a nil future")
 	}
 
-	retValCh := make(chan futureResult, 1)
+	cCallbacks, goCallbacksPtr := awaitCallbacksSave(resolve, reject, ctx)
 
-	// Create callbacks for metacall_await_future to use them via goReject & goResolve
-	callbacks := &awaitCallbacks{
-		resolve: func(val, _ interface{}) interface{} {
-			retValCh <- futureResult{value: val, err: nil}
-			return nil
-		},
-		reject: func(val, _ interface{}) interface{} {
-			if e, ok := val.(error); ok {
-				retValCh <- futureResult{value: nil, err: e}
-			} else {
-				retValCh <- futureResult{value: nil, err: fmt.Errorf("%v", val)}
-			}
-			return nil
-		},
-	}
+	ret := C.metacall_await_future(f.ptr, cCallbacks.resolve, cCallbacks.reject, goCallbacksPtr)
 
-	// Use handle to prevent breaking cgo pointer-passing rules
-	// Await.go calls goResolve or goReject convert ctxPtr back and reads its content
-	ctxPtr := pointerSave(callbacks)
-
-	C.metacall_await_future(f.ptr, C.metacall_await_callback(C.resolveCgo), C.metacall_await_callback(C.rejectCgo), ctxPtr)
-
-	// Block until a value returned
-	ret := <-retValCh
-	if ret.value == nil && ret.err == nil {
-		return nil, errors.New("failed to get value from future")
-	}
-
-	// Keep f alive until Await finishes to prevent early finalizer destruction
+	// Keep f alive until the await has been registered to prevent early finalizer destruction
 	runtime.KeepAlive(f)
 
-	return ret.value, ret.err
+	if ret != nil {
+		v := valueToGoOwned(ret)
+		if err, ok := v.(error); ok {
+			return nil, err
+		}
+		return v, nil
+	} else {
+		// Delete and free ptr if metacall_await_future failed with nil
+		pointerDelete(goCallbacksPtr)
+	}
+
+	return nil, nil
+}
+
+// Await sends the asynchronous work for the future and blocks until it's processed (it does not wait for the future to be resolved or rejected)
+func (f *Future) Await(resolve, reject awaitCallback, ctx interface{}) (interface{}, error) {
+	rCtx := checkRootCtx()
+	if rCtx == nil {
+		return nil, errShutdown
+	}
+
+	ret := make(chan callReturnSafeWork, 1)
+
+	w := &awaitFutureSafeWork{
+		future:  f,
+		ret:     ret,
+		resolve: resolve,
+		reject:  reject,
+		ctx:     ctx,
+	}
+
+	select {
+	case <-rCtx.Done():
+		return nil, errShutdown
+	case queue <- w:
+	}
+
+	select {
+	case <-rCtx.Done():
+		return nil, errShutdown
+	case result := <-ret:
+		return result.value, result.err
+	}
 }
