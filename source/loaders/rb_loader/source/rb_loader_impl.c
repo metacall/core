@@ -402,14 +402,6 @@ VALUE rb_type_serialize(value v)
 
 		return rb_str_new_cstr(str);
 	}
-	else if (v_type == TYPE_BUFFER)
-	{
-		size_t size = value_type_size(v);
-
-		const char *buffer = value_to_buffer(v);
-
-		return rb_str_new(buffer, size);
-	}
 	else if (v_type == TYPE_NULL)
 	{
 		return Qnil;
