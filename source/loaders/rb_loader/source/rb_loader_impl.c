@@ -412,7 +412,22 @@ VALUE rb_type_serialize(value v)
 		size_t size = value_type_size(v);
 
 #if RUBY_API_VERSION_MAJOR >= 3 && RUBY_API_VERSION_MINOR >= 1
-		return rb_io_buffer_new((void *)buf, size, RB_IO_BUFFER_INTERNAL);
+		VALUE io_buf = rb_io_buffer_new(NULL, size, RB_IO_BUFFER_INTERNAL);
+
+		if (size > 0 && buf != NULL)
+		{
+			void *base = NULL;
+			size_t buf_size = 0;
+
+			rb_io_buffer_get_bytes_for_writing(io_buf, &base, &buf_size);
+
+			if (base != NULL)
+			{
+				memcpy(base, buf, size);
+			}
+		}
+
+		return io_buf;
 #else
 		/* Fallback when ruby/io/buffer.h is unavailable, return a string */
 		return rb_str_new(buf, (long)size);
