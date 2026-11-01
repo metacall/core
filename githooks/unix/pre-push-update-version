@@ -3,8 +3,15 @@
 # Fetch all tags first
 git fetch --tags $1
 
+# Skip the check if there are no tags (e.g. a fork cloned without tags)
+GIT_TAG_COMMIT=$(git rev-list --tags --max-count=1)
+
+if [ -z "${GIT_TAG_COMMIT}" ]; then
+    exit 0
+fi
+
 # Get the latest tag version
-GIT_TAG_VERSION=$(git describe --tags `git rev-list --tags --max-count=1` | cut -c2-)
+GIT_TAG_VERSION=$(git describe --tags ${GIT_TAG_COMMIT} | cut -c2-)
 FILE_VERSION=$(cat VERSION)
 
 # Checkout if the file version matches the last tag
