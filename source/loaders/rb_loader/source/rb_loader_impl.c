@@ -410,15 +410,12 @@ VALUE rb_type_serialize(value v)
 	{
 		const char *buf = value_to_buffer(v);
 		size_t size = value_type_size(v);
-		/* Copy the data into a Ruby String first to avoid memory lifetime issues */
-		VALUE str = rb_str_new(buf, (long)size);
+
 #if RUBY_API_VERSION_MAJOR >= 3 && RUBY_API_VERSION_MINOR >= 1
-		/* TODO: Reference original memory instead of copying once lifetime is guaranteed */
-		/* return rb_io_buffer_new((void *)buf, size, RB_IO_BUFFER_READONLY); */
-		return rb_io_buffer_new(RSTRING_PTR(str), size, RB_IO_BUFFER_READONLY);
+		return rb_io_buffer_new((void *)buf, size, RB_IO_BUFFER_INTERNAL);
 #else
-		/* Fallback when ruby/io/buffer.h is unavailable: return as binary string */
-		return str;
+		/* Fallback when ruby/io/buffer.h is unavailable, return a string */
+		return rb_str_new(buf, (long)size);
 #endif
 	}
 	else if (v_type == TYPE_ARRAY)
