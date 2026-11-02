@@ -76,6 +76,32 @@ static void *metacallv_method(void *target, const char *name, method_invoke_ptr 
 static type_id *metacall_type_ids(void *args[], size_t size);
 static void metacall_detour_destructor(void);
 
+/// Validate that an argument count fits the fixed size marshalling arrays
+///
+/// The public marshalling entry points use fixed METACALL_ARGS_SIZE stack
+/// arrays. Their loop bounds come from the callee signature or from a
+/// deserialized document, neither of which the C caller controls, so the count
+/// must be validated before any write happens
+///
+/// @param[in] args_count
+///    Number of arguments about to be written into the stack array
+///
+/// @return
+///    Zero if the count fits, different from zero otherwise
+static int metacall_args_size_validate(size_t args_count)
+{
+	if (args_count > METACALL_ARGS_SIZE)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"Argument count %" PRIuS " exceeds the maximum supported by this invocation path (%d). Use metacallv or reduce the function arity",
+			args_count, METACALL_ARGS_SIZE);
+
+		return 1;
+	}
+
+	return 0;
+}
+
 /* -- Costructors -- */
 
 portability_constructor(metacall_constructor)
@@ -649,6 +675,11 @@ void *metacall(const char *name, ...)
 
 		va_list va;
 
+		if (metacall_args_size_validate(args_count) != 0)
+		{
+			return NULL;
+		}
+
 		va_start(va, name);
 
 		for (iterator = 0; iterator < args_count; ++iterator)
@@ -756,6 +787,11 @@ void *metacallt(const char *name, const enum metacall_value_id ids[], ...)
 
 		va_list va;
 
+		if (metacall_args_size_validate(args_count) != 0)
+		{
+			return NULL;
+		}
+
 		va_start(va, ids);
 
 		for (iterator = 0; iterator < args_count; ++iterator)
@@ -854,6 +890,11 @@ void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t s
 		size_t iterator;
 
 		va_list va;
+
+		if (metacall_args_size_validate(size) != 0)
+		{
+			return NULL;
+		}
 
 		va_start(va, size);
 
@@ -960,6 +1001,11 @@ void *metacallht_s(void *handle, const char *name, const enum metacall_value_id 
 		size_t iterator;
 
 		va_list va;
+
+		if (metacall_args_size_validate(size) != 0)
+		{
+			return NULL;
+		}
 
 		va_start(va, size);
 
@@ -1277,6 +1323,11 @@ void *metacallf(void *func, ...)
 
 		va_list va;
 
+		if (metacall_args_size_validate(args_count) != 0)
+		{
+			return NULL;
+		}
+
 		va_start(va, func);
 
 		for (iterator = 0; iterator < args_count; ++iterator)
@@ -1403,6 +1454,13 @@ void *metacallfs(void *func, const char *buffer, size_t size, void *allocator)
 
 			args_count = value_type_count(v);
 
+			if (metacall_args_size_validate(args_count) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
 			v_array = value_to_array(v);
 
 			for (iterator = 0; iterator < args_count; ++iterator)
@@ -1461,6 +1519,11 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 		size_t iterator, args_count = signature_count(s);
 
 		value ret;
+
+		if (metacall_args_size_validate(args_count) != 0)
+		{
+			return NULL;
+		}
 
 		for (iterator = 0; iterator < args_count; ++iterator)
 		{
@@ -1620,6 +1683,13 @@ void *metacallfms(void *func, const char *buffer, size_t size, void *allocator)
 
 			args_count = signature_count(s);
 
+			if (metacall_args_size_validate(args_count) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
 			/* TODO: No optional arguments allowed, review in the future */
 			if (args_count != value_type_count(v))
 			{
@@ -1682,6 +1752,11 @@ int metacall_register(const char *name, void *(*invoke)(size_t, void *[], void *
 	type_id types[METACALL_ARGS_SIZE];
 
 	va_list va;
+
+	if (metacall_args_size_validate(size) != 0)
+	{
+		return 1;
+	}
 
 	va_start(va, size);
 
@@ -1963,6 +2038,13 @@ void *metacallfs_await(void *func, const char *buffer, size_t size, void *alloca
 
 			args_count = value_type_count(v);
 
+			if (metacall_args_size_validate(args_count) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
 			v_array = value_to_array(v);
 
 			for (iterator = 0; iterator < args_count; ++iterator)
@@ -2067,6 +2149,13 @@ void *metacallfms_await(void *func, const char *buffer, size_t size, void *alloc
 			}
 
 			args_count = signature_count(s);
+
+			if (metacall_args_size_validate(args_count) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
 
 			/* TODO: No optional arguments allowed, review in the future */
 			if (args_count != value_type_count(v))
