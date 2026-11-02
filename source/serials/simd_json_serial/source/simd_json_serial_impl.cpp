@@ -36,7 +36,7 @@ typedef struct simd_json_document_type
 	simdjson::builder::string_builder builder;
 	memory_allocator allocator;
 
-} * simd_json_document;
+} *simd_json_document;
 
 /* -- Private Methods -- */
 

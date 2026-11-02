@@ -40,7 +40,7 @@ typedef struct loader_impl_jl_function_type
 	// TODO: The reference to Julia function must be stored here
 	void *todo;
 
-} * loader_impl_jl_function;
+} *loader_impl_jl_function;
 
 typedef struct loader_impl_jl_handle_type
 {
@@ -48,7 +48,7 @@ typedef struct loader_impl_jl_handle_type
 	// This should contain a vector with all Julia scripts loaded
 	void *todo;
 
-} * loader_impl_jl_handle;
+} *loader_impl_jl_handle;
 
 typedef struct loader_impl_jl_type
 {
@@ -56,7 +56,7 @@ typedef struct loader_impl_jl_type
 	// This structure holds any data that must live between initialize and destroy
 	void *todo;
 
-} * loader_impl_jl;
+} *loader_impl_jl;
 
 int type_jl_interface_create(type t, type_impl impl)
 {

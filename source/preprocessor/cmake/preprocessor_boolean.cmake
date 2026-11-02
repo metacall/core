@@ -42,13 +42,22 @@ function(preprocessor_boolean_generate _bool_size)
 	file(READ ${preprocessor_path}/preprocessor_boolean_body.h.in preprocessor_boolean_body_in)
 
 	# Definition implementation: PREPROCESSOR_BOOL_IMPL
-	set(PREPROCESSOR_BOOL_IMPL_BODY "")
+	set(preprocessor_bool_impl_names "")
+	set(preprocessor_bool_impl_values "")
 
-	foreach(iterator RANGE 1 ${PREPROCESSOR_BOOL_SIZE})
+	foreach(iterator RANGE 0 ${PREPROCESSOR_BOOL_SIZE})
 
-		set(PREPROCESSOR_BOOL_IMPL_BODY "${PREPROCESSOR_BOOL_IMPL_BODY}#define PREPROCESSOR_BOOL_IMPL_${iterator} 1\n")
+		list(APPEND preprocessor_bool_impl_names "PREPROCESSOR_BOOL_IMPL_${iterator}")
+
+		if(iterator EQUAL 0)
+			list(APPEND preprocessor_bool_impl_values "0")
+		else()
+			list(APPEND preprocessor_bool_impl_values "1")
+		endif()
 
 	endforeach()
+
+	preprocessor_template_align(PREPROCESSOR_BOOL_IMPL_BODY "" preprocessor_bool_impl_names preprocessor_bool_impl_values)
 
 	# Configure boolean template headers
 	string(CONFIGURE ${preprocessor_boolean_headers_in} preprocessor_boolean_headers @ONLY)

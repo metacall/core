@@ -41,7 +41,7 @@
 struct py_loader_impl_object_type
 {
 	PyObject_HEAD
-		loader_impl impl;
+	loader_impl impl;
 	value obj;
 };
 
@@ -49,14 +49,14 @@ struct py_loader_impl_object_type
 struct py_loader_impl_object_attribute_type
 {
 	PyObject_HEAD
-		PyObject *name;
+	PyObject *name;
 };
 
 /* Method descriptor that forwards a method call of the instance to the MetaCall object */
 struct py_loader_impl_object_method_type
 {
 	PyObject_HEAD
-		PyObject *name;
+	PyObject *name;
 #if PY_LOADER_IMPL_VECTORCALL
 	vectorcallfunc vectorcall;
 #endif

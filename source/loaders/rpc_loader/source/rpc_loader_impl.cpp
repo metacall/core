@@ -59,13 +59,13 @@ typedef struct loader_impl_rpc_type
 	std::map<type_id, type> types;
 	std::set<std::string> execution_paths;
 
-} * loader_impl_rpc;
+} *loader_impl_rpc;
 
 typedef struct loader_impl_rpc_handle_type
 {
 	std::vector<metacall::map_typed<std::string, metacall::value>> configs;
 
-} * loader_impl_rpc_handle;
+} *loader_impl_rpc_handle;
 
 typedef struct loader_impl_rpc_function_type
 {
@@ -76,13 +76,13 @@ typedef struct loader_impl_rpc_function_type
 	std::string url;
 	int timeout;
 
-} * loader_impl_rpc_function;
+} *loader_impl_rpc_function;
 
 typedef struct loader_impl_rpc_write_data_type
 {
 	std::string buffer;
 
-} * loader_impl_rpc_write_data;
+} *loader_impl_rpc_write_data;
 
 /* Context for a single async RPC call */
 struct rpc_async_context

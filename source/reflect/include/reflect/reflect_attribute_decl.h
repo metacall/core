@@ -37,7 +37,7 @@ typedef struct attribute_interface_type
 {
 	attribute_impl_interface_destroy destroy;
 
-} * attribute_interface;
+} *attribute_interface;
 
 typedef attribute_interface (*attribute_impl_interface_singleton)(void);
 

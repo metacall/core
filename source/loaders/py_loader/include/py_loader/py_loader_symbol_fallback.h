@@ -41,8 +41,8 @@ PY_LOADER_NO_EXPORT int py_loader_symbol_fallback_initialize(dynlink py_library)
 	#undef PyCFunction_GET_SELF
 	#define PyCFunction_GET_SELF(func) \
 		(((PyCFunctionObject *)func)->m_ml->ml_flags & METH_STATIC ? \
-				  NULL : \
-				  ((PyCFunctionObject *)func)->m_self)
+				NULL : \
+				((PyCFunctionObject *)func)->m_self)
 
 	#undef PyBool_Check
 PY_LOADER_NO_EXPORT int PyBool_Check(const PyObject *ob);

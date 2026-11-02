@@ -49,18 +49,18 @@ typedef struct loader_impl_lua_type
 	lua_State *vm;
 	int error_handler_ref;
 	vector execution_paths;
-} * loader_impl_lua;
+} *loader_impl_lua;
 
 typedef struct loader_impl_lua_handle_type
 {
 	int env_ref;
-} * loader_impl_lua_handle;
+} *loader_impl_lua_handle;
 
 typedef struct loader_impl_lua_function_type
 {
 	int func_ref;
 	loader_impl impl;
-} * loader_impl_lua_function;
+} *loader_impl_lua_function;
 
 static int lua_loader_error_handler(lua_State *L)
 {

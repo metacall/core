@@ -36,7 +36,7 @@ typedef struct signature_node_type
 	char *name;
 	type t;
 
-} * signature_node;
+} *signature_node;
 
 struct signature_type
 {

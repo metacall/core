@@ -40,7 +40,7 @@ typedef struct rb_function_parameter_parser_type
 	char name[RB_LOADER_IMPL_PARSER_KEY];
 	char type[RB_LOADER_IMPL_PARSER_TYPE];
 
-} * rb_function_parameter_parser;
+} *rb_function_parameter_parser;
 
 typedef struct rb_function_parser_type
 {
@@ -48,7 +48,7 @@ typedef struct rb_function_parser_type
 	struct rb_function_parameter_parser_type params[RB_LOADER_IMPL_PARSER_PARAM];
 	size_t params_size;
 
-} * rb_function_parser;
+} *rb_function_parser;
 
 RB_LOADER_NO_EXPORT int rb_loader_impl_key_parse(const char *source, set function_map);
 

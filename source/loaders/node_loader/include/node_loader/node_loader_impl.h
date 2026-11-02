@@ -47,7 +47,7 @@ typedef struct loader_impl_async_func_await_trampoline_type
 	function_resolve_callback reject_callback;
 	void *context;
 
-} * loader_impl_async_func_await_trampoline;
+} *loader_impl_async_func_await_trampoline;
 
 NODE_LOADER_API loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config);
 

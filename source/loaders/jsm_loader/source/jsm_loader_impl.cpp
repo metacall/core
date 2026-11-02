@@ -51,13 +51,13 @@ typedef struct loader_impl_jsm_type
 	JSRuntime *runtime;
 	JSContext *cx;
 
-} * loader_impl_jsm;
+} *loader_impl_jsm;
 
 typedef struct loader_impl_jsm_handle_type
 {
 	void *todo;
 
-} * loader_impl_jsm_handle;
+} *loader_impl_jsm_handle;
 
 int function_jsm_interface_create(function func, function_impl impl)
 {

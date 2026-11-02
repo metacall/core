@@ -60,13 +60,13 @@ typedef struct loader_impl_rb_module_type
 	set function_map;
 	int empty;
 
-} * loader_impl_rb_module;
+} *loader_impl_rb_module;
 
 typedef struct loader_impl_rb_handle_type
 {
 	vector modules;
 
-} * loader_impl_rb_handle;
+} *loader_impl_rb_handle;
 
 typedef struct loader_impl_rb_function_type
 {
@@ -76,14 +76,14 @@ typedef struct loader_impl_rb_function_type
 	VALUE args_hash;
 	loader_impl impl;
 
-} * loader_impl_rb_function;
+} *loader_impl_rb_function;
 
 typedef struct loader_impl_rb_class_type
 {
 	VALUE class;
 	loader_impl impl;
 
-} * loader_impl_rb_class;
+} *loader_impl_rb_class;
 
 typedef struct loader_impl_rb_object_type
 {
@@ -92,14 +92,14 @@ typedef struct loader_impl_rb_object_type
 	loader_impl impl;
 	value obj_cls_val;
 
-} * loader_impl_rb_object;
+} *loader_impl_rb_object;
 
 typedef struct loader_impl_rb_module_eval_protect_type
 {
 	int argc;
 	VALUE *argv;
 	VALUE module;
-} * loader_impl_rb_module_eval_protect;
+} *loader_impl_rb_module_eval_protect;
 
 typedef struct loader_impl_rb_funcall_protect_type
 {
@@ -107,14 +107,14 @@ typedef struct loader_impl_rb_funcall_protect_type
 	VALUE *argv;
 	VALUE module_instance;
 	ID id;
-} * loader_impl_rb_funcall_protect;
+} *loader_impl_rb_funcall_protect;
 
 typedef struct loader_impl_rb_discover_module_protect_type
 {
 	loader_impl impl;
 	loader_impl_rb_module rb_module;
 	context ctx;
-} * loader_impl_rb_discover_module_protect;
+} *loader_impl_rb_discover_module_protect;
 
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);

@@ -29,7 +29,7 @@
 struct py_loader_impl_func_type
 {
 	PyObject_HEAD
-		loader_impl impl;
+	loader_impl impl;
 	loader_impl_py py_impl;
 	value callback;
 };

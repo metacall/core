@@ -77,7 +77,7 @@ typedef struct loader_impl_llvm_function_type
 	// TODO: The reference to LLVM function must be stored here
 	void *todo;
 
-} * loader_impl_llvm_function;
+} *loader_impl_llvm_function;
 
 typedef struct loader_impl_llvm_handle_type
 {
@@ -85,7 +85,7 @@ typedef struct loader_impl_llvm_handle_type
 	// This should contain a vector with all LLVM modules loaded (input.ll)
 	void *todo;
 
-} * loader_impl_llvm_handle;
+} *loader_impl_llvm_handle;
 
 typedef struct loader_impl_llvm_type
 {
@@ -93,7 +93,7 @@ typedef struct loader_impl_llvm_type
 	llvm::LLVMContext context;
 	llvm::SMDiagnostic error;
 
-} * loader_impl_llvm;
+} *loader_impl_llvm;
 
 int type_llvm_interface_create(type t, type_impl impl)
 {
