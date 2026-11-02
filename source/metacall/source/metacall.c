@@ -22,6 +22,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_self_register.h>
 
 #include <loader/loader.h>
 
@@ -323,6 +324,12 @@ int metacall_initialize(void)
 	if (metacall_link_initialize() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall link initialization");
+	}
+
+	/* Self-register metacall APIs so loaded scripts can call them directly */
+	if (metacall_self_register_all() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall self-registration failed");
 	}
 
 	/* Load core plugins */
