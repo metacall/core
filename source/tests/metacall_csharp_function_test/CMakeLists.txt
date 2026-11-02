@@ -105,8 +105,8 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::log
 	${DEFAULT_LIBRARIES}
+	${META_PROJECT_NAME}::log
 
 	GTest
 
@@ -190,6 +190,8 @@ set(function_test_cases
 	metacall_csharp_metadata_test.ManagedNativeMetadataLayoutsMatch
 	metacall_csharp_metadata_test.ManagedMetadataEmptyAndFailureContract
 	metacall_csharp_native_metadata_test.NativeMetadataRetryAndFailureContract
+	metacall_csharp_function_test.MetadataFailurePropagatesToLoad
+	metacall_csharp_native_metadata_test.NativeClassMetadataEmptyAndFailure
 )
 
 foreach(test_case IN LISTS function_test_cases)

@@ -115,11 +115,11 @@ public:
 	const CHARSTRING *delegate_execute_c = W("ExecuteC");
 	const CHARSTRING *delegate_execute_with_params_w = W("ExecuteWithParamsW");
 	const CHARSTRING *delegate_execute_with_params_c = W("ExecuteWithParamsC");
-	const CHARSTRING *delegate_get_functions = W("GetFunctionsV2");
-	const CHARSTRING *delegate_get_classes = W("GetClassesV2");
-	const CHARSTRING *delegate_get_constructors = W("GetConstructorsV2");
-	const CHARSTRING *delegate_get_methods = W("GetMethodsV2");
-	const CHARSTRING *delegate_get_attributes = W("GetAttributesV2");
+	const CHARSTRING *delegate_get_functions = W("GetFunctions");
+	const CHARSTRING *delegate_get_classes = W("GetClasses");
+	const CHARSTRING *delegate_get_constructors = W("GetConstructors");
+	const CHARSTRING *delegate_get_methods = W("GetMethods");
+	const CHARSTRING *delegate_get_attributes = W("GetAttributes");
 	const CHARSTRING *delegate_destroy_execution_result = W("DestroyExecutionResult");
 	const CHARSTRING *delegate_create_object = W("CreateObjectC");
 	const CHARSTRING *delegate_invoke_object = W("InvokeObjectC");

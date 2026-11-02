@@ -715,25 +715,58 @@ static int cs_loader_impl_discover_classes(loader_impl impl, netcore_handle nhan
 	int method_count = 0;
 	int attribute_count = 0;
 
-	reflect_class *classes = simple_netcore_get_classes(nhandle, &class_count);
+	reflect_class *classes = NULL;
 
-	reflect_constructor *constructors = simple_netcore_get_constructors(nhandle, &constructor_count);
-
-	reflect_method *methods = simple_netcore_get_methods(nhandle, &method_count);
-
-	reflect_attribute *attributes = simple_netcore_get_attributes(nhandle, &attribute_count);
-
-	/* Do not register classes from incomplete or failed metadata retrieval. */
-	if (class_count < 0 ||
-		constructor_count < 0 ||
-		method_count < 0 ||
-		attribute_count < 0 ||
-		(class_count > 0 && classes == NULL) ||
-		(constructor_count > 0 && constructors == NULL) ||
-		(method_count > 0 && methods == NULL) ||
-		(attribute_count > 0 && attributes == NULL))
+	if (simple_netcore_get_classes(nhandle, &classes, &class_count) != 0)
 	{
 		return 1;
+	}
+
+	reflect_constructor *constructors = NULL;
+
+	if (simple_netcore_get_constructors(nhandle, &constructors, &constructor_count) != 0)
+	{
+		return 1;
+	}
+
+	reflect_method *methods = NULL;
+
+	if (simple_netcore_get_methods(nhandle, &methods, &method_count) != 0)
+	{
+		return 1;
+	}
+
+	reflect_attribute *attributes = NULL;
+
+	if (simple_netcore_get_attributes(nhandle, &attributes, &attribute_count) != 0)
+	{
+		return 1;
+	}
+
+	for (int i = 0; i < constructor_count; ++i)
+	{
+		if (constructors[i].param_count < 0 ||
+			(size_t)constructors[i].param_count >
+				sizeof(constructors[i].pars) / sizeof(constructors[i].pars[0]))
+		{
+			log_write("metacall", LOG_LEVEL_ERROR,
+				"Unsupported C# constructor parameter count: %d",
+				constructors[i].param_count);
+			return 1;
+		}
+	}
+
+	for (int i = 0; i < method_count; ++i)
+	{
+		if (methods[i].param_count < 0 ||
+			(size_t)methods[i].param_count >
+				sizeof(methods[i].pars) / sizeof(methods[i].pars[0]))
+		{
+			log_write("metacall", LOG_LEVEL_ERROR,
+				"Unsupported C# method parameter count: %d",
+				methods[i].param_count);
+			return 1;
+		}
 	}
 
 	for (int i = 0; i < class_count; ++i)
@@ -879,12 +912,9 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 	scope sp = context_scope(ctx);
 
 	int function_count = 0;
-	reflect_function *functions;
+	reflect_function *functions = NULL;
 
-	functions = simple_netcore_get_functions(nhandle, &function_count);
-
-	if (function_count < 0 ||
-		(function_count > 0 && functions == NULL))
+	if (simple_netcore_get_functions(nhandle, &functions, &function_count) != 0)
 	{
 		return 1;
 	}

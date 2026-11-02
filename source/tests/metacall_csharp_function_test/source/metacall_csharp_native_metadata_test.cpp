@@ -224,4 +224,53 @@ TEST(metacall_csharp_native_metadata_test, NativeMetadataRetryAndFailureContract
 	EXPECT_EQ(nullptr, core.get_functions(&count));
 	EXPECT_EQ(-1, count);
 }
+
+TEST(metacall_csharp_native_metadata_test, NativeClassMetadataEmptyAndFailure)
+{
+	ASSERT_EQ(0, metacall_initialize());
+
+	struct metacall_cleanup
+	{
+		~metacall_cleanup()
+		{
+			metacall_destroy();
+		}
+	} cleanup;
+
+	class fake_netcore : public netcore
+	{
+	public:
+		fake_netcore() :
+			netcore(nullptr, nullptr) {}
+
+		bool start() override { return false; }
+		void stop() override {}
+		bool create_delegate(const CHARSTRING *, void **) override
+		{
+			return false;
+		}
+	};
+
+	fake_netcore core;
+	int count = 123;
+
+	/* A successful empty collection is not an error. */
+	core.core_get_classes = +[](int *out, void *, int) -> int {
+		*out = 0;
+		return METADATA_SUCCESS;
+	};
+
+	EXPECT_EQ(nullptr, core.get_classes(&count));
+	EXPECT_EQ(0, count);
+
+	/* A failed retrieval must remain distinguishable from empty. */
+	core.core_get_classes = +[](int *out, void *, int) -> int {
+		*out = -1;
+		return METADATA_FAILURE;
+	};
+
+	count = 123;
+	EXPECT_EQ(nullptr, core.get_classes(&count));
+	EXPECT_EQ(-1, count);
+}
 #endif /* OPTION_BUILD_LOADERS_CS */

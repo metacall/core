@@ -203,3 +203,67 @@ test_environment_variables(${class_metadata_test}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 )
+
+set(empty_class_test "${target}-EmptyClass")
+
+add_test(NAME ${empty_class_test}
+	COMMAND $<TARGET_FILE:${target}>
+		"--gtest_filter=metacall_csharp_class_test.EmptyClass"
+)
+
+set_property(TEST ${empty_class_test}
+	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+)
+
+test_environment_variables(${empty_class_test}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)
+
+set(constructor_10_test "${target}-ConstructorWith10Parameters")
+
+add_test(NAME ${constructor_10_test}
+	COMMAND $<TARGET_FILE:${target}>
+		"--gtest_filter=metacall_csharp_class_test.ConstructorWith10Parameters"
+)
+
+set_property(TEST ${constructor_10_test}
+	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+)
+
+test_environment_variables(${constructor_10_test}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)
+
+set(constructor_11_probe "${target}-ConstructorWith11ParametersProbe")
+
+add_test(NAME ${constructor_11_probe}
+	COMMAND $<TARGET_FILE:${target}>
+		"--gtest_filter=metacall_csharp_class_test.ConstructorWith11ParametersProbe"
+)
+
+set_property(TEST ${constructor_11_probe}
+	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+)
+
+test_environment_variables(${constructor_11_probe}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)
+
+set(static_class_test "${target}-StaticClassWithoutConstructors")
+
+add_test(NAME ${static_class_test}
+	COMMAND $<TARGET_FILE:${target}>
+		"--gtest_filter=metacall_csharp_class_test.StaticClassWithoutConstructors"
+)
+
+set_property(TEST ${static_class_test}
+	PROPERTY LABELS ${target} MEMCHECK_IGNORE
+)
+
+test_environment_variables(${static_class_test}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)

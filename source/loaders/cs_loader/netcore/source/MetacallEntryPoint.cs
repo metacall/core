@@ -159,34 +159,29 @@ namespace CSLoader
             }
         }
 
-        public static int GetFunctionsV2(ref int count, IntPtr destination, int capacity)
+        public static int GetFunctions(ref int count, IntPtr destination, int capacity)
         {
-            return WriteMetadata<ReflectFunction>(
-                loader.Functions, ref count, destination, capacity);
+            return WriteMetadata<ReflectFunction>(loader.Functions, ref count, destination, capacity);
         }
 
-        public static int GetClassesV2(ref int count, IntPtr destination, int capacity)
+        public static int GetClasses(ref int count, IntPtr destination, int capacity)
         {
-            return WriteMetadata<ReflectClass>(
-                loader.Classes, ref count, destination, capacity);
+            return WriteMetadata<ReflectClass>(loader.Classes, ref count, destination, capacity);
         }
 
-        public static int GetConstructorsV2(ref int count, IntPtr destination, int capacity)
+        public static int GetConstructors(ref int count, IntPtr destination, int capacity)
         {
-            return WriteMetadata<ReflectConstructor>(
-                loader.Constructors, ref count, destination, capacity);
+            return WriteMetadata<ReflectConstructor>(loader.Constructors, ref count, destination, capacity);
         }
 
-        public static int GetMethodsV2(ref int count, IntPtr destination, int capacity)
+        public static int GetMethods(ref int count, IntPtr destination, int capacity)
         {
-            return WriteMetadata<ReflectMethod>(
-                loader.Methods, ref count, destination, capacity);
+            return WriteMetadata<ReflectMethod>(loader.Methods, ref count, destination, capacity);
         }
 
-        public static int GetAttributesV2(ref int count, IntPtr destination, int capacity)
+        public static int GetAttributes(ref int count, IntPtr destination, int capacity)
         {
-            return WriteMetadata<ReflectAttribute>(
-                loader.Attributes, ref count, destination, capacity);
+            return WriteMetadata<ReflectAttribute>(loader.Attributes, ref count, destination, capacity);
         }
 
         public unsafe static bool LoadFilesC([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]IntPtr[] source, long size)

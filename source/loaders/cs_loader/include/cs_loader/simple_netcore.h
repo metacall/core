@@ -36,15 +36,15 @@ typedef char source_file[512];
 
 netcore_handle simple_netcore_create(char *dotnet_root, char *dotnet_loader_assembly_path);
 
-reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count);
+int simple_netcore_get_functions(netcore_handle handle, reflect_function **functions, int *count);
 
-reflect_class *simple_netcore_get_classes(netcore_handle handle, int *count);
+int simple_netcore_get_classes(netcore_handle handle, reflect_class **classes, int *count);
 
-reflect_constructor *simple_netcore_get_constructors(netcore_handle handle, int *count);
+int simple_netcore_get_constructors(netcore_handle handle, reflect_constructor **constructors, int *count);
 
-reflect_method *simple_netcore_get_methods(netcore_handle handle, int *count);
+int simple_netcore_get_methods(netcore_handle handle, reflect_method **methods, int *count);
 
-reflect_attribute *simple_netcore_get_attributes(netcore_handle handle, int *count);
+int simple_netcore_get_attributes(netcore_handle handle, reflect_attribute **attributes, int *count);
 
 void *simple_netcore_create_object(netcore_handle handle, const char *class_name, parameters *params, long size);
 

@@ -254,3 +254,153 @@ TEST_F(metacall_csharp_class_test, MoreThan100ClassMetadataRecords)
 	}
 }
 #endif /* OPTION_BUILD_LOADERS_CS */
+
+#if defined(OPTION_BUILD_LOADERS_CS)
+TEST_F(metacall_csharp_class_test, EmptyClass)
+{
+	ASSERT_EQ(0, metacall_initialize());
+
+	/* Always shut down, including after a fatal assertion. */
+	struct metacall_cleanup
+	{
+		~metacall_cleanup()
+		{
+			metacall_destroy();
+		}
+	} cleanup;
+
+	const char source[] = "public class DiscoveryEmptyClass { }";
+
+	ASSERT_EQ(0, metacall_load_from_memory(
+					 "cs", source, sizeof(source), nullptr));
+
+	ASSERT_NE(nullptr, metacall_class("DiscoveryEmptyClass"));
+}
+
+TEST_F(metacall_csharp_class_test, ConstructorWith10Parameters)
+{
+	ASSERT_EQ(0, metacall_initialize());
+
+	struct metacall_cleanup
+	{
+		~metacall_cleanup()
+		{
+			metacall_destroy();
+		}
+	} cleanup;
+
+	const char source[] =
+		"public class ConstructorBoundary10 {"
+		"  public int value;"
+		"  public ConstructorBoundary10("
+		"    int p0, int p1, int p2, int p3, int p4,"
+		"    int p5, int p6, int p7, int p8, int p9)"
+		"  { value = p9; }"
+		"}";
+
+	ASSERT_EQ(0, metacall_load_from_memory("cs", source, sizeof(source), nullptr));
+
+	void *cls = metacall_class("ConstructorBoundary10");
+	ASSERT_NE(nullptr, cls);
+
+	struct argument_cleanup
+	{
+		void *values[10] = {};
+
+		~argument_cleanup()
+		{
+			for (void *value : values)
+			{
+				if (value != nullptr)
+				{
+					metacall_value_destroy(value);
+				}
+			}
+		}
+	} args;
+
+	for (int i = 0; i < 10; ++i)
+	{
+		args.values[i] = metacall_value_create_int(i);
+		ASSERT_NE(nullptr, args.values[i]);
+	}
+
+	using owned_value = std::unique_ptr<void, decltype(&metacall_value_destroy)>;
+
+	owned_value object_value(
+		metacall_class_new(cls, "ConstructorBoundary10", args.values, 10),
+		&metacall_value_destroy);
+
+	ASSERT_NE(nullptr, object_value.get());
+	ASSERT_EQ(METACALL_OBJECT, metacall_value_id(object_value.get()));
+
+	void *obj = metacall_value_to_object(object_value.get());
+	ASSERT_NE(nullptr, obj);
+
+	owned_value value(metacall_object_get(obj, "value"), &metacall_value_destroy);
+	ASSERT_NE(nullptr, value.get());
+	ASSERT_EQ(METACALL_INT, metacall_value_id(value.get()));
+	EXPECT_EQ(9, metacall_value_to_int(value.get()));
+}
+
+TEST_F(metacall_csharp_class_test, ConstructorWith11ParametersProbe)
+{
+	ASSERT_EQ(0, metacall_initialize());
+
+	struct metacall_cleanup
+	{
+		~metacall_cleanup()
+		{
+			metacall_destroy();
+		}
+	} cleanup;
+
+	const char source[] =
+		"public class ConstructorBoundary11 {"
+		"  public ConstructorBoundary11("
+		"    int p0, int p1, int p2, int p3, int p4,"
+		"    int p5, int p6, int p7, int p8, int p9, int p10)"
+		"  { }"
+		"}";
+
+	EXPECT_NE(0, metacall_load_from_memory("cs", source, sizeof(source), nullptr));
+}
+
+TEST_F(metacall_csharp_class_test, StaticClassWithoutConstructors)
+{
+	ASSERT_EQ(0, metacall_initialize());
+
+	struct metacall_cleanup
+	{
+		~metacall_cleanup()
+		{
+			metacall_destroy();
+		}
+	} cleanup;
+
+	const char source[] =
+		"public static class DiscoveryStaticClass {"
+		"  public static int Twice(int value) { return value * 2; }"
+		"}";
+
+	ASSERT_EQ(0, metacall_load_from_memory("cs", source, sizeof(source), nullptr));
+
+	void *cls = metacall_class("DiscoveryStaticClass");
+	ASSERT_NE(nullptr, cls);
+
+	using owned_value = std::unique_ptr<void, decltype(&metacall_value_destroy)>;
+
+	owned_value input(metacall_value_create_int(21), &metacall_value_destroy);
+	ASSERT_NE(nullptr, input.get());
+
+	void *args[] = { input.get() };
+
+	owned_value result(
+		metacallt_class(cls, "Twice", METACALL_INT, args, 1),
+		&metacall_value_destroy);
+
+	ASSERT_NE(nullptr, result.get());
+	ASSERT_EQ(METACALL_INT, metacall_value_id(result.get()));
+	EXPECT_EQ(42, metacall_value_to_int(result.get()));
+}
+#endif

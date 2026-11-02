@@ -234,3 +234,29 @@ TEST_F(metacall_csharp_function_test, FunctionMetadataSurvivesRepeatedLoad)
 	}
 }
 #endif /* OPTION_BUILD_LOADERS_CS */
+
+#if defined(OPTION_BUILD_LOADERS_CS)
+TEST_F(metacall_csharp_function_test, MetadataFailurePropagatesToLoad)
+{
+	ASSERT_EQ(0, metacall_initialize());
+
+	struct metacall_cleanup
+	{
+		~metacall_cleanup()
+		{
+			metacall_destroy();
+		}
+	} cleanup;
+
+	/* Currently, function metadata has room for only ten parameters. */
+	const char failing_source[] =
+		"System.Console.WriteLine(\"Metadata failure fixture\");\n"
+		"static int MetadataFailureFunction("
+		"int a, int b, int c, int d, int e, int f, "
+		"int g, int h, int i, int j, int k) { return 0; }\n";
+
+	/* A metadata retrieval failure must not look like a successful load. */
+	EXPECT_NE(0, metacall_load_from_memory(
+					 "cs", failing_source, sizeof(failing_source), nullptr));
+}
+#endif

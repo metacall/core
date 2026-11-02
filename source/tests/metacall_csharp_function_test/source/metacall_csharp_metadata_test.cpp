@@ -59,11 +59,11 @@ static int CheckMetadataCapacityContract()
 	Type entry = assembly.GetType("CSLoader.MetacallEntryPoint", true);
 
 	string[] exportNames = {
-		"GetFunctionsV2",
-		"GetClassesV2",
-		"GetConstructorsV2",
-		"GetMethodsV2",
-		"GetAttributesV2"
+		"GetFunctions",
+		"GetClasses",
+		"GetConstructors",
+		"GetMethods",
+		"GetAttributes"
 	};
 
 	string[] recordNames = {

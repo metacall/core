@@ -47,39 +47,155 @@ netcore_handle simple_netcore_create(char *dotnet_root, char *dotnet_loader_asse
 	return (netcore_handle)core;
 }
 
-reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count)
+int simple_netcore_get_functions(
+	netcore_handle handle, reflect_function **functions, int *count)
 {
-	netcore *core = (netcore *)handle;
+	if (functions == nullptr || count == nullptr)
+	{
+		return 1;
+	}
 
-	return core->get_functions(count);
+	*functions = nullptr;
+	*count = 0;
+
+	if (handle == nullptr)
+	{
+		return 1;
+	}
+
+	netcore *core = (netcore *)handle;
+	int retrieved_count = -1;
+	reflect_function *retrieved = core->get_functions(&retrieved_count);
+
+	if (retrieved_count < 0 ||
+		(retrieved_count > 0 && retrieved == nullptr))
+	{
+		return 1;
+	}
+
+	*functions = retrieved;
+	*count = retrieved_count;
+	return 0;
 }
 
-reflect_class *simple_netcore_get_classes(netcore_handle handle, int *count)
+int simple_netcore_get_classes(netcore_handle handle, reflect_class **classes, int *count)
 {
-	netcore *core = (netcore *)handle;
+	if (classes == nullptr || count == nullptr)
+	{
+		return 1;
+	}
 
-	return core->get_classes(count);
+	*classes = nullptr;
+	*count = 0;
+
+	if (handle == nullptr)
+	{
+		return 1;
+	}
+
+	netcore *core = (netcore *)handle;
+	int retrieved_count = -1;
+	reflect_class *retrieved = core->get_classes(&retrieved_count);
+
+	if (retrieved_count < 0 || (retrieved_count > 0 && retrieved == nullptr))
+	{
+		return 1;
+	}
+
+	*classes = retrieved;
+	*count = retrieved_count;
+
+	return 0;
 }
 
-reflect_constructor *simple_netcore_get_constructors(netcore_handle handle, int *count)
+int simple_netcore_get_constructors(netcore_handle handle, reflect_constructor **constructors, int *count)
 {
-	netcore *core = (netcore *)handle;
+	if (constructors == nullptr || count == nullptr)
+	{
+		return 1;
+	}
 
-	return core->get_constructors(count);
+	*constructors = nullptr;
+	*count = 0;
+
+	if (handle == nullptr)
+	{
+		return 1;
+	}
+
+	netcore *core = (netcore *)handle;
+	int retrieved_count = -1;
+	reflect_constructor *retrieved = core->get_constructors(&retrieved_count);
+
+	if (retrieved_count < 0 || (retrieved_count > 0 && retrieved == nullptr))
+	{
+		return 1;
+	}
+
+	*constructors = retrieved;
+	*count = retrieved_count;
+
+	return 0;
 }
 
-reflect_method *simple_netcore_get_methods(netcore_handle handle, int *count)
+int simple_netcore_get_methods(netcore_handle handle, reflect_method **methods, int *count)
 {
-	netcore *core = (netcore *)handle;
+	if (methods == nullptr || count == nullptr)
+	{
+		return 1;
+	}
 
-	return core->get_methods(count);
+	*methods = nullptr;
+	*count = 0;
+
+	if (handle == nullptr)
+	{
+		return 1;
+	}
+
+	netcore *core = (netcore *)handle;
+	int retrieved_count = -1;
+	reflect_method *retrieved = core->get_methods(&retrieved_count);
+
+	if (retrieved_count < 0 || (retrieved_count > 0 && retrieved == nullptr))
+	{
+		return 1;
+	}
+
+	*methods = retrieved;
+	*count = retrieved_count;
+
+	return 0;
 }
 
-reflect_attribute *simple_netcore_get_attributes(netcore_handle handle, int *count)
+int simple_netcore_get_attributes(netcore_handle handle, reflect_attribute **attributes, int *count)
 {
-	netcore *core = (netcore *)handle;
+	if (attributes == nullptr || count == nullptr)
+	{
+		return 1;
+	}
 
-	return core->get_attributes(count);
+	*attributes = nullptr;
+	*count = 0;
+
+	if (handle == nullptr)
+	{
+		return 1;
+	}
+
+	netcore *core = (netcore *)handle;
+	int retrieved_count = -1;
+	reflect_attribute *retrieved = core->get_attributes(&retrieved_count);
+
+	if (retrieved_count < 0 || (retrieved_count > 0 && retrieved == nullptr))
+	{
+		return 1;
+	}
+
+	*attributes = retrieved;
+	*count = retrieved_count;
+
+	return 0;
 }
 
 void *simple_netcore_create_object(netcore_handle handle, const char *class_name, parameters *params, long size)
