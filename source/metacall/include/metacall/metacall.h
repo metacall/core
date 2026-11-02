@@ -752,6 +752,15 @@ METACALL_API void *metacall_handle(const char *tag, const char *name);
 
 /**
 *  @brief
+*    Get reference of the self-loaded MetaCall runtime handle
+*
+*  @return
+*    Handle reference to the self-loaded MetaCall runtime, null if self-load is disabled
+*/
+METACALL_API void *metacall_handle_self(void);
+
+/**
+*  @brief
 *    Get name of a @handle
 *
 *  @param[in] handle
