@@ -853,7 +853,13 @@ To format the entire C/C++ codebase use:
 cmake --build build --target clang-format
 ```
 
-Be aware that this target won't exist if clang-format was not installed when cmake was last run.
+The formatting requires clang-format 19 (install it with `./tools/metacall-environment.sh clangformat`). If it is not installed, it runs through docker or podman with the image `ghcr.io/jidicula/clang-format:19`. The targets `clang-format-check` and `eol-check` run the same checks as the CI (formatting and LF line endings). They can also run without a configured build:
+
+```sh
+cmake -DMODE=fix -P cmake/Format.cmake    # format in place
+cmake -DMODE=check -P cmake/Format.cmake  # check the formatting
+cmake -DMODE=eol -P cmake/Format.cmake    # check the line endings
+```
 
 ### 7.2 Coverage
 

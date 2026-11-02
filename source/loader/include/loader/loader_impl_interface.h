@@ -66,7 +66,7 @@ typedef struct loader_impl_interface_type
 	loader_impl_interface_discover discover;
 	loader_impl_interface_destroy destroy;
 
-} * loader_impl_interface;
+} *loader_impl_interface;
 
 typedef loader_impl_interface (*loader_impl_interface_singleton)(void);
 

@@ -6,14 +6,22 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   formatting-check:
     name: Formatting Check
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: Run clang-format style check for C/C++.
-      uses: jidicula/clang-format-action@v4.9.0
-      with:
-        clang-format-version: '12'
-        check-path: 'source'
+
+    # The clang-format version is defined in cmake/Format.cmake, if the runner
+    # does not provide it, it runs through docker with the same version
+    - name: Check the formatting of C/C++ sources (clang-format)
+      run: cmake -DMODE=check -P cmake/Format.cmake
+
+    # Run it even if the formatting check fails, so both results are reported
+    - name: Check the line endings of all tracked files (LF only)
+      if: ${{ !cancelled() }}
+      run: cmake -DMODE=eol -P cmake/Format.cmake

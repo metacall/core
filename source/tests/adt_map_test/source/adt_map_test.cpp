@@ -203,7 +203,7 @@ TEST_F(adt_map_test, map_structs)
 	{
 		const char *str;
 		int a;
-	} * stru;
+	} *stru;
 
 	static const char k[] = "random";
 

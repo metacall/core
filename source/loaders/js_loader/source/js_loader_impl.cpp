@@ -90,7 +90,7 @@ typedef struct loader_impl_js_type
 	Isolate::Scope *isolate_scope;
 	ArrayBufferAllocator allocator;
 
-} * loader_impl_js;
+} *loader_impl_js;
 
 typedef class loader_impl_js_function_type
 {
@@ -132,7 +132,7 @@ private:
 	Isolate *isolate_ref;
 	Persistent<Function> p_func;
 
-} * loader_impl_js_function;
+} *loader_impl_js_function;
 
 typedef class loader_impl_js_handle_type
 {
@@ -261,7 +261,7 @@ public:
 			signature_set_return(s, ret_type);
 
 			for (param_it = js_f->parameters.begin();
-				 param_it != js_f->parameters.end(); ++param_it)
+				param_it != js_f->parameters.end(); ++param_it)
 			{
 				type t = loader_impl_type(impl, param_it->type.c_str());
 
@@ -310,7 +310,7 @@ private:
 	Context::Scope ctx_scope;
 	Local<Script> script;
 
-} * loader_impl_js_handle;
+} *loader_impl_js_handle;
 
 int function_js_interface_create(function func, function_impl impl)
 {

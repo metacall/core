@@ -29,7 +29,7 @@ BraceWrapping:
     AfterObjCDeclaration: true
     AfterStruct:     true
     AfterUnion:      true
-    AfterExternBlock: true
+    AfterExternBlock: false
     BeforeCatch:     true
     BeforeElse:      true
     IndentBraces:    false
@@ -75,6 +75,7 @@ IndentWidth:     4
 # JavaScriptQuotes: Leave
 # JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
+LineEnding:      LF
 # MacroBlockBegin: ''
 # MacroBlockEnd:   ''
 # MaxEmptyLinesToKeep: 1
@@ -91,7 +92,7 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 #   - Delimiter:       pb
 #     Language:        TextProto
 #     BasedOnStyle:    google
-# ReflowComments:  true
+ReflowComments:  false
 # SortIncludes:    true
 # SortUsingDeclarations: true
 # SpaceAfterCStyleCast: false
@@ -105,6 +106,8 @@ SpacesBeforeTrailingComments: 1
 # SpacesInCStyleCastParentheses: false
 # SpacesInParentheses: false
 # SpacesInSquareBrackets: false
+StatementMacros:
+  - PyObject_HEAD
+  - PyObject_VAR_HEAD
 TabWidth:        4
-UseCRLF:         true
 UseTab:          Always

@@ -51,7 +51,7 @@ typedef struct future_interface_type
 	future_impl_interface_await await;
 	future_impl_interface_destroy destroy;
 
-} * future_interface;
+} *future_interface;
 
 typedef future_interface (*future_impl_interface_singleton)(void);
 

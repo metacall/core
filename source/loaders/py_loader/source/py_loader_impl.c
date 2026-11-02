@@ -74,7 +74,7 @@ typedef struct loader_impl_py_function_type
 	PyObject *func;
 	PyObject **values; // Cache and re-use the values array
 	loader_impl impl;
-} * loader_impl_py_function;
+} *loader_impl_py_function;
 
 typedef struct loader_impl_py_future_type
 {
@@ -82,35 +82,35 @@ typedef struct loader_impl_py_future_type
 	loader_impl_py py_impl;
 	PyObject *future;
 
-} * loader_impl_py_future;
+} *loader_impl_py_future;
 
 typedef struct loader_impl_py_class_type
 {
 	PyObject *cls;
 	loader_impl impl;
 
-} * loader_impl_py_class;
+} *loader_impl_py_class;
 
 typedef struct loader_impl_py_object_type
 {
 	PyObject *obj;
 	loader_impl impl;
 
-} * loader_impl_py_object;
+} *loader_impl_py_object;
 
 typedef struct loader_impl_py_handle_module_type
 {
 	PyObject *instance;
 	PyObject *name;
 
-} * loader_impl_py_handle_module;
+} *loader_impl_py_handle_module;
 
 typedef struct loader_impl_py_handle_type
 {
 	loader_impl_py_handle_module modules;
 	size_t size;
 
-} * loader_impl_py_handle;
+} *loader_impl_py_handle;
 
 struct loader_impl_py_type
 {
@@ -161,7 +161,7 @@ typedef struct loader_impl_py_await_invoke_callback_state_type
 	void *context;
 	PyObject *coroutine;
 
-} * loader_impl_py_await_invoke_callback_state;
+} *loader_impl_py_await_invoke_callback_state;
 
 static int py_loader_impl_check_class(loader_impl_py py_impl, PyObject *obj);
 

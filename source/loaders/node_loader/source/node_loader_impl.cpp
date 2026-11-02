@@ -8,8 +8,8 @@
 
 #if defined(WIN32) || defined(_WIN32)
 	#define WIN32_LEAN_AND_MEAN
-	#include <windows.h>
 	#include <io.h>
+	#include <windows.h>
 	#ifndef dup
 		#define dup _dup
 	#endif
@@ -185,7 +185,7 @@ typedef struct loader_impl_node_function_type
 	napi_ref func_ref;
 	napi_value *argv;
 
-} * loader_impl_node_function;
+} *loader_impl_node_function;
 
 typedef struct loader_impl_node_future_type
 {
@@ -193,7 +193,7 @@ typedef struct loader_impl_node_future_type
 	loader_impl_node node_impl;
 	napi_ref promise_ref;
 
-} * loader_impl_node_future;
+} *loader_impl_node_future;
 
 template <typename T>
 struct loader_impl_async_safe_type
@@ -691,7 +691,7 @@ typedef struct node_loader_impl_startup_args_type
 
 		return 0;
 	}
-} * node_loader_impl_startup_args;
+} *node_loader_impl_startup_args;
 
 struct loader_impl_node_type
 {
@@ -819,7 +819,7 @@ typedef struct loader_impl_napi_to_value_callback_closure_type
 	value func;
 	loader_impl_node node_impl;
 
-} * loader_impl_napi_to_value_callback_closure;
+} *loader_impl_napi_to_value_callback_closure;
 
 /* Type conversion */
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
@@ -2423,7 +2423,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 				if (args_size > signature_args_size)
 				{
-					delete[](func_argv);
+					delete[] (func_argv);
 				}
 			}
 		}

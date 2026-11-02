@@ -1,0 +1,19 @@
+# Line endings: text files use LF in the repository and in the working tree,
+# on every platform, independently of core.autocrlf. It is checked by the
+# CI and the pre-commit hook with: cmake -DMODE=eol -P cmake/Format.cmake
+* text=auto eol=lf
+
+# Binary files, never converted (some of them can be detected as text,
+# i.e: an empty or invalid module used in the tests)
+*.bmp binary
+*.gif binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.jar binary
+*.joblib binary
+*.nupkg binary
+*.wasm binary
+*.gz binary
+*.zip binary

@@ -21,6 +21,72 @@
 get_filename_component(preprocessor_path ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 #
+# Preprocessor template macro alignment
+#
+
+# Generates a block of consecutive macro definitions aligned in the same way
+# clang-format does with AlignConsecutiveMacros, UseTab: Always and TabWidth: 4
+# (see .clang-format), so the generated headers already pass the formatting check.
+# The values are aligned one column after the longest definition, padding with
+# a tab to the next tab stop, then tabs, then spaces; when the padding is a single
+# column or it does not reach the next tab stop, only spaces are used.
+#	_result: output variable where the generated block is stored
+#	_indent: string of tabs prepended to each definition
+#	_names: name of the list variable with the macro definitions (i.e: NAME or NAME(args))
+#	_values: name of the list variable with the macro values
+function(preprocessor_template_align _result _indent _names _values)
+
+	set(tab_width 4)
+
+	# Obtain the column where the definitions start
+	string(LENGTH "${_indent}" indent_length)
+	math(EXPR indent_column "${indent_length} * ${tab_width}")
+
+	# Obtain the column after the longest definition
+	set(align_column 0)
+
+	foreach(name IN LISTS ${_names})
+		string(LENGTH "#define ${name}" name_length)
+		math(EXPR name_column "${indent_column} + ${name_length} + 1")
+
+		if(name_column GREATER align_column)
+			set(align_column ${name_column})
+		endif()
+	endforeach()
+
+	# Generate the aligned definitions
+	set(result "")
+	list(LENGTH ${_names} names_length)
+	math(EXPR names_last "${names_length} - 1")
+
+	foreach(index RANGE ${names_last})
+		list(GET ${_names} ${index} name)
+		list(GET ${_values} ${index} value)
+
+		string(LENGTH "#define ${name}" name_length)
+		math(EXPR name_column "${indent_column} + ${name_length}")
+		math(EXPR padding "${align_column} - ${name_column}")
+		math(EXPR first_tab "${tab_width} - ${name_column} % ${tab_width}")
+
+		if(padding LESS first_tab OR padding EQUAL 1)
+			string(REPEAT " " ${padding} padding_str)
+		else()
+			math(EXPR padding "${padding} - ${first_tab}")
+			math(EXPR padding_tabs "${padding} / ${tab_width} + 1")
+			math(EXPR padding_spaces "${padding} % ${tab_width}")
+			string(REPEAT "\t" ${padding_tabs} padding_tabs_str)
+			string(REPEAT " " ${padding_spaces} padding_spaces_str)
+			set(padding_str "${padding_tabs_str}${padding_spaces_str}")
+		endif()
+
+		string(APPEND result "${_indent}#define ${name}${padding_str}${value}\n")
+	endforeach()
+
+	set(${_result} "${result}" PARENT_SCOPE)
+
+endfunction()
+
+#
 # Preprocessor template generation
 #
 
