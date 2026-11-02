@@ -24,8 +24,10 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
+#include <preprocessor/preprocessor_stringify.h>
+
 /* Amount of awaits and chains launched at once, each one creates its own async handle */
-#define METACALL_NODE_PYTHON_AWAIT_STRESS_SIZE "2000"
+#define METACALL_NODE_PYTHON_AWAIT_STRESS_SIZE 2000
 
 class metacall_node_python_await_stress_test : public testing::Test
 {
@@ -55,7 +57,7 @@ TEST_F(metacall_node_python_await_stress_test, DefaultConstructor)
 			"\treturn n * 2\n"
 			"`);\n"
 			/* NodeJS Check, everything runs in the V8 thread so plain counters are enough */
-			"const size = " METACALL_NODE_PYTHON_AWAIT_STRESS_SIZE ";\n"
+			"const size = " PREPROCESSOR_STRINGIFY(METACALL_NODE_PYTHON_AWAIT_STRESS_SIZE) ";\n"
 			"let awaits = 0;\n"
 			"let chains = 0;\n"
 			"process.on('exit', () => {\n"
