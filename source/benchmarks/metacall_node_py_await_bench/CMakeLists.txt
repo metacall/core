@@ -8,8 +8,8 @@ endif()
 #
 
 # Target name
-set(target metacall-node-python-await-stress-test)
-message(STATUS "Test ${target}")
+set(target metacall-node-py-await-bench)
+message(STATUS "Benchmark ${target}")
 
 #
 # Compiler warnings
@@ -31,8 +31,7 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
-	${source_path}/main.cpp
-	${source_path}/metacall_node_python_await_stress_test.cpp
+	${source_path}/metacall_node_py_await_bench.cpp
 )
 
 # Group source files
@@ -83,7 +82,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	GTest
+	GBench
 
 	${META_PROJECT_NAME}::metacall
 )
@@ -110,15 +109,6 @@ target_compile_options(${target}
 )
 
 #
-# Compile features
-#
-
-target_compile_features(${target}
-	PRIVATE
-	cxx_std_17
-)
-
-#
 # Linker options
 #
 
@@ -133,6 +123,7 @@ target_link_options(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+		--benchmark_out=${CMAKE_BINARY_DIR}/benchmarks/${target}.json
 )
 
 #
@@ -150,20 +141,14 @@ add_dependencies(${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+
+	# Benchmarks are too slow under valgrind, skip them in memcheck
+	MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(PY_DEBUG_ENVIRONMENT_VARIABLES
-		PYTHONTHREADDEBUG=1
-	)
-else()
-	set(PY_DEBUG_ENVIRONMENT_VARIABLES)
-endif()
-
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
-	${PY_DEBUG_ENVIRONMENT_VARIABLES}
 )
