@@ -164,7 +164,7 @@ sub_base(){
 	elif [ "${OPERATIVE_SYSTEM}" = "Darwin" ]; then
 		brew install llvm cmake git wget gnupg ca-certificates
 	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
-		$SUDO_CMD pkg install -y cmake git gmake wget gnupg ca_root_nss
+		$SUDO_CMD pkg install -y cmake-core git gmake wget gnupg ca_root_nss
 
 		# Install libc debug symbols
 		if [ "${BUILD_TYPE}" = "Debug" ]; then
@@ -203,13 +203,16 @@ sub_python(){
 				# Define Python instrumentation
 				if [ $INSTALL_MEMCHECK = 1 ]; then
 					sed -i 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
-					BUILD_FLAGS="--with-valgrind"
+					BUILD_FLAGS="--with-valgrind --with-pydebug --without-pymalloc"
 					BUILD_LDFLAGS=""
 					PYTHON_EXE="${PYTHON_PKG}"
 				elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 					printf "leak:*libpython*" &> ./asan.supp
 					export ASAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:detect_leaks=0:suppressions=$(pwd)/asan.supp"
-					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
+					# Disable the symbolizer of UBSan, the reports of CPython (i.e function type mismatch in the GC traverse functions) spawn
+					# llvm-symbolizer in the multiprocessing forkserver of compileall (make altinstall), and the workers forked from it inherit
+					# its pipes, so the concurrent requests of the workers get mixed and all of them block forever reading the symbolizer
+					export UBSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0:symbolize=0"
 					BUILD_FLAGS="--with-address-sanitizer --with-undefined-behavior-sanitizer --with-pydebug"
 					BUILD_LDFLAGS="-fsanitize=address -fsanitize=undefined"
 					if [ $INSTALL_CLANG = 1 ]; then
@@ -367,15 +370,20 @@ sub_python(){
 		# TODO: Implement other sanitizers instrumentation
 		# if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 		if [ $INSTALL_THREAD_SANITIZER = 1 ]; then
-			# Search the FreeBSD package repository for Python and install build dependencies
-			PYTHON_PKG=$(pkg search -q -x '^python3' | sort -V | tail -n 1)
+			# Use the default Python version of FreeBSD (the dependency of the python3 metapackage, i.e python312-3.12.15),
+			# the same one installed without sanitizers, instead of the latest one which can be a pre-release
+			PYTHON_PKG=$(pkg rquery '%dn-%dv' python3 | grep -E '^python3[0-9]+-' | head -n 1)
 			$SUDO_CMD pkg install -y git pkgconf openssl readline sqlite3 libffi bzip2 gdbm expat
 
-			# Get the Python version: python315-3.15.0.b2 -> 3.15.0.b2
+			# Get the Python version: python312-3.12.15_1 -> 3.12.15_1
 			PYTHON_PKG_VERSION="${PYTHON_PKG#*-}"
 
-			# Remove the dot immediately after the third numeric component: 3.15.0.b2 -> 3.15.0b2
-			PYTHON_VERSION=$(printf '%s\n' "$PYTHON_PKG_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)\./\1/')
+			# Convert the FreeBSD version into the CPython tag: remove the port revision and epoch (3.12.15_1,1 -> 3.12.15),
+			# and the pre-release names (3.15.0.a1 -> 3.15.0a1, 3.15.0.b2 -> 3.15.0b2, 3.15.0.r2 -> 3.15.0rc2)
+			PYTHON_VERSION=$(printf '%s\n' "$PYTHON_PKG_VERSION" | sed -E \
+				-e 's/[_,].*$//' \
+				-e 's/^([0-9]+\.[0-9]+\.[0-9]+)\.r([0-9]+)$/\1rc\2/' \
+				-e 's/^([0-9]+\.[0-9]+\.[0-9]+)\.([ab][0-9]+)$/\1\2/')
 
 			# Get major and minor version: 3.15.0b2 -> python3.15
 			PYTHON_EXE=$(printf '%s\n' "$PYTHON_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/python\1/')
@@ -386,7 +394,7 @@ sub_python(){
 			# Define Python instrumentation
 			if [ $INSTALL_MEMCHECK = 1 ]; then
 				sed -i '' 's|\/\* #define Py_USING_MEMORY_DEBUGGER \*\/|#define Py_USING_MEMORY_DEBUGGER|' Objects/obmalloc.c
-				BUILD_FLAGS="--with-valgrind"
+				BUILD_FLAGS="--with-valgrind --with-pydebug --without-pymalloc"
 				BUILD_LDFLAGS=""
 			elif [ $INSTALL_ADDRESS_SANITIZER = 1 ]; then
 				printf "leak:*libpython*" > ./asan.supp
@@ -1371,47 +1379,63 @@ sub_clang_format(){
 	echo "configure clang format"
 	cd $ROOT_DIR
 
+	# Keep it in sync with FORMAT_CLANG_FORMAT_VERSION in cmake/Format.cmake
+	LLVM_VERSION_STRING=21
+
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			LLVM_VERSION_STRING=12
-			UBUNTU_CODENAME=""
-			CODENAME_FROM_ARGUMENTS=""
+			$SUDO_CMD apt-get update
 
-			# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-			. /etc/os-release
+			# Use the package of the distribution if available, otherwise add the LLVM repository
+			# (i.e: Debian bookworm, trixie or Ubuntu jammy, noble do not provide this version)
+			if ! apt-cache policy clang-format-${LLVM_VERSION_STRING} 2>/dev/null | grep "Candidate:" | grep -qv "(none)"; then
+				UBUNTU_CODENAME=""
+				VERSION_ID=""
 
-			case ${LINUX_DISTRO} in
-				debian)
-					# For now bookworm || trixie == sid, change when trixie is released
-					if [ "${VERSION:-}" = "unstable" ] || [ "${VERSION:-}" = "testing" ] || [ "${VERSION_CODENAME}" = "bookworm" ] || [ "${VERSION_CODENAME}" = "trixie" ]; then
-						CODENAME="unstable"
-						LINKNAME=""
-					else
-						# "stable" Debian release
+				# Obtain VERSION_ID, VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+				. /etc/os-release
+
+				case ${LINUX_DISTRO} in
+					debian)
+						if [ -z "${VERSION_ID}" ]; then
+							# Debian testing and unstable do not define VERSION_ID, they do not provide this
+							# version and the LLVM repository builds for unstable are not installable anymore
+							echo "Error: clang-format ${LLVM_VERSION_STRING} is not available in this Debian version, use docker or podman instead (see cmake/Format.cmake)"
+							exit 1
+						fi
+
+						# Debian stable release
 						CODENAME="${VERSION_CODENAME}"
 						LINKNAME="-${CODENAME}"
-					fi
-					;;
-				*)
-					# ubuntu and its derivatives
-					if [ -n "${UBUNTU_CODENAME}" ]; then
-						CODENAME="${UBUNTU_CODENAME}"
-						if [ -n "${CODENAME}" ]; then
-							LINKNAME="-${CODENAME}"
-						fi
-					fi
-					;;
-			esac
+						;;
+					*)
+						# Ubuntu and its derivatives
+						CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME}}"
+						LINKNAME="-${CODENAME}"
+						;;
+				esac
 
-			wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-			$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
-			$SUDO_CMD apt-get update
-			$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
-			$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
+				$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends wget ca-certificates
+				wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+				echo "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main" | $SUDO_CMD tee /etc/apt/sources.list.d/llvm-toolchain-${LLVM_VERSION_STRING}.list > /dev/null
+				$SUDO_CMD apt-get update
+			fi
+
+			# It is installed as clang-format-<version>, cmake/FindClangFormat.cmake searches it by that name
+			if ! $SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}; then
+				echo "Error: clang-format ${LLVM_VERSION_STRING} could not be installed, use docker or podman instead (see cmake/Format.cmake)"
+				exit 1
+			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			$SUDO_CMD apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.15/main clang-extra-tools=12.0.1-r1
+			# Available since Alpine 3.23, it is installed in /usr/lib/llvm<version>/bin
+			if ! $SUDO_CMD apk add --no-cache clang${LLVM_VERSION_STRING}-extra-tools; then
+				echo "Error: clang-format ${LLVM_VERSION_STRING} is not available in this Alpine version, use docker or podman instead (see cmake/Format.cmake)"
+				exit 1
+			fi
 		fi
+	elif [ "${OPERATIVE_SYSTEM}" = "FreeBSD" ]; then
+		# It is installed in /usr/local/llvm<version>/bin
+		$SUDO_CMD pkg install -y llvm${LLVM_VERSION_STRING}
 	fi
 }
 

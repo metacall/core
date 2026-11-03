@@ -7,7 +7,7 @@
  */
 
 #ifndef CS_LOADER_H
-#define CS_LOADER_H 1
+#define CS_LOADER_H
 
 #include <cs_loader/cs_loader_api.h>
 

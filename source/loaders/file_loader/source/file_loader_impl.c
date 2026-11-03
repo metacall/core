@@ -46,8 +46,8 @@
 		#define WIN32_LEAN_AND_MEAN
 	#endif
 
-	#include <windows.h>
 	#include <sys/stat.h> /* Apparently it is supported on newer windows standards */
+	#include <windows.h>
 
 typedef struct _stat file_stat_type;
 
@@ -87,25 +87,25 @@ typedef struct loader_impl_file_descriptor_type
 	loader_path path;
 	size_t length;
 
-} * loader_impl_file_descriptor;
+} *loader_impl_file_descriptor;
 
 typedef struct loader_impl_file_type
 {
 	vector execution_paths;
 
-} * loader_impl_file;
+} *loader_impl_file;
 
 typedef struct loader_impl_file_handle_type
 {
 	vector paths;
 
-} * loader_impl_file_handle;
+} *loader_impl_file_handle;
 
 typedef struct loader_impl_file_function_type
 {
 	loader_impl_file_descriptor descriptor;
 
-} * loader_impl_file_function;
+} *loader_impl_file_function;
 
 static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path, size_t path_size);
 #if defined(FILE_LOADER_GLOB_SUPPORT)

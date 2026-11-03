@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_OBJECT_H
-#define REFLECT_OBJECT_H 1
+#define REFLECT_OBJECT_H
 
 #include <adt/adt_vector.h>
 
@@ -69,7 +69,7 @@ typedef struct object_interface_type
 	object_impl_interface_destructor destructor;
 	object_impl_interface_destroy destroy;
 
-} * object_interface;
+} *object_interface;
 
 typedef object_interface (*object_impl_interface_singleton)(void);
 

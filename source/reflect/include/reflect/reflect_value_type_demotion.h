@@ -19,7 +19,7 @@
 */
 
 #ifndef REFLECT_VALUE_TYPE_DEMOTION_H
-#define REFLECT_VALUE_TYPE_DEMOTION_H 1
+#define REFLECT_VALUE_TYPE_DEMOTION_H
 
 /* -- Headers -- */
 

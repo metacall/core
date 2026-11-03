@@ -19,7 +19,7 @@
  */
 
 #ifndef CLI_SANDBOX_PLUGIN_H
-#define CLI_SANDBOX_PLUGIN_H 1
+#define CLI_SANDBOX_PLUGIN_H
 
 #include <cli_sandbox_plugin/cli_sandbox_plugin_api.h>
 

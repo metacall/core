@@ -19,7 +19,7 @@
  */
 
 #ifndef SUM_EXTENSION_H
-#define SUM_EXTENSION_H 1
+#define SUM_EXTENSION_H
 
 #include <sum_extension/sum_extension_api.h>
 

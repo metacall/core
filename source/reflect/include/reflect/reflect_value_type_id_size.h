@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_VALUE_TYPE_ID_SIZE_H
-#define REFLECT_VALUE_TYPE_ID_SIZE_H 1
+#define REFLECT_VALUE_TYPE_ID_SIZE_H
 
 /* -- Headers -- */
 

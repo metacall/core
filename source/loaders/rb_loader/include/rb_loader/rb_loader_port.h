@@ -19,7 +19,7 @@
  */
 
 #ifndef RB_LOADER_PORT_H
-#define RB_LOADER_PORT_H 1
+#define RB_LOADER_PORT_H
 
 #include <rb_loader/rb_loader_api.h>
 

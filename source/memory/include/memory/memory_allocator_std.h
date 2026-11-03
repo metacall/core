@@ -19,7 +19,7 @@
  */
 
 #ifndef MEMORY_ALLOCATOR_STD_H
-#define MEMORY_ALLOCATOR_STD_H 1
+#define MEMORY_ALLOCATOR_STD_H
 
 /* -- Headers -- */
 

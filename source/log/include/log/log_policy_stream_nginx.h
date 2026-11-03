@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_POLICY_STREAM_NGINX_H
-#define LOG_POLICY_STREAM_NGINX_H 1
+#define LOG_POLICY_STREAM_NGINX_H
 
 /* -- Headers -- */
 

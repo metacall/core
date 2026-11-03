@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_ATTRIBUTE_DECL_H
-#define REFLECT_ATTRIBUTE_DECL_H 1
+#define REFLECT_ATTRIBUTE_DECL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +37,7 @@ typedef struct attribute_interface_type
 {
 	attribute_impl_interface_destroy destroy;
 
-} * attribute_interface;
+} *attribute_interface;
 
 typedef attribute_interface (*attribute_impl_interface_singleton)(void);
 

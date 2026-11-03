@@ -19,7 +19,7 @@
  */
 
 #ifndef FILESYSTEM_H
-#define FILESYSTEM_H 1
+#define FILESYSTEM_H
 
 /* -- Headers -- */
 

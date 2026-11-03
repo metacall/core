@@ -19,7 +19,7 @@
  */
 
 #ifndef CLI_CORE_PLUGIN_H
-#define CLI_CORE_PLUGIN_H 1
+#define CLI_CORE_PLUGIN_H
 
 #include <cli_core_plugin/cli_core_plugin_api.h>
 

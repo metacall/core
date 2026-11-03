@@ -19,7 +19,7 @@
  */
 
 #ifndef LOADER_HANDLE_H
-#define LOADER_HANDLE_H 1
+#define LOADER_HANDLE_H
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
  */
 
 #ifndef RS_LOADER_IMPL_H
-	#define RS_LOADER_IMPL_H 1
+#define RS_LOADER_IMPL_H
 
 	#include <rs_loader/rs_loader_api.h>
 

@@ -49,7 +49,7 @@ typedef struct loader_impl_wasm_type
 	wasm_engine_t *engine;
 	wasm_store_t *store;
 	vector paths;
-} * loader_impl_wasm;
+} *loader_impl_wasm;
 
 static int initialize_types(loader_impl impl);
 

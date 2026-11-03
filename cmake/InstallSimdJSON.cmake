@@ -20,7 +20,7 @@
 # The following variables are set:
 #
 # SIMDJSON_INCLUDE_DIRS - A list of directories where the SimdJSON headers are located.
-# SIMDJSON_LIBRARIES - The SimdJSON static library (compiled with -fPIC).
+# SIMDJSON_LIBRARIES - The SimdJSON static library target (compiled with -fPIC).
 # SIMDJSON_COMPILE_DEFINITIONS - Compile definitions shared by the library build and its consumers.
 # SIMDJSON_CXX_FLAGS - Custom SimdJSON compilation flags.
 
@@ -31,50 +31,54 @@ if(NOT SIMDJSON_FOUND OR USE_BUNDLED_SIMDJSON)
 
 	include(SimdJSONOptions)
 
-	# Build the compile flags of the library with the same definitions used by the consumers, the sanitizer
-	# flags are propagated because the external project does not inherit them from add_compile_options
-	set(SIMDJSON_BUILD_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_CXX_FLAGS} ${SIMDJSON_CXX_FLAGS}")
+	include(FetchContent)
 
+	# SimdJSON is built as part of the project, so it inherits the toolchain (i.e: Android), build type and sanitizers
+	FetchContent_Declare(
+		simdjson
+		GIT_REPOSITORY https://github.com/simdjson/simdjson.git
+		GIT_TAG v${SIMDJSON_VERSION}
+		GIT_SHALLOW TRUE
+	)
+
+	if(SIMDJSON_UTF8VALIDATION)
+		set(SIMDJSON_SKIPUTF8VALIDATION OFF CACHE BOOL "" FORCE)
+	else()
+		set(SIMDJSON_SKIPUTF8VALIDATION ON CACHE BOOL "" FORCE)
+	endif()
+
+	set(SIMDJSON_DEVELOPER_MODE OFF CACHE BOOL "" FORCE)
+	set(SIMDJSON_ENABLE_THREADS OFF CACHE BOOL "" FORCE)
+	set(SIMDJSON_INSTALL OFF CACHE BOOL "" FORCE)
+
+	# Build statically, it is linked into the serial library (avoid populating the variable to the cache)
+	set(_CACHE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+	set(BUILD_SHARED_LIBS OFF)
+
+	FetchContent_MakeAvailable(simdjson)
+
+	# Restore shared library value
+	set(BUILD_SHARED_LIBS ${_CACHE_BUILD_SHARED_LIBS})
+
+	# SimdJSON is linked into shared libraries, so compile it as PIC
+	set_target_properties(simdjson PROPERTIES
+		POSITION_INDEPENDENT_CODE ON
+	)
+
+	# Build the library with the same definitions used by the consumers
 	foreach(definition IN LISTS SIMDJSON_COMPILE_DEFINITIONS)
 		# UTF-8 validation is always defined by SimdJSON build system through SIMDJSON_SKIPUTF8VALIDATION
 		if(NOT definition MATCHES "^SIMDJSON_UTF8VALIDATION=")
-			set(SIMDJSON_BUILD_CXX_FLAGS "${SIMDJSON_BUILD_CXX_FLAGS} -D${definition}")
+			target_compile_definitions(simdjson PRIVATE ${definition})
 		endif()
 	endforeach()
 
-	if(SIMDJSON_UTF8VALIDATION)
-		set(SIMDJSON_SKIPUTF8VALIDATION OFF)
-	else()
-		set(SIMDJSON_SKIPUTF8VALIDATION ON)
-	endif()
+	separate_arguments(SIMDJSON_CXX_OPTIONS NATIVE_COMMAND "${SIMDJSON_CXX_FLAGS}")
 
-	set(SIMDJSON_ROOT_DIR		"${CMAKE_CURRENT_BINARY_DIR}/simdjson")
-	set(SIMDJSON_INCLUDE_DIRS	"${SIMDJSON_ROOT_DIR}/include")
-	set(SIMDJSON_LIBRARIES		"${SIMDJSON_ROOT_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}simdjson${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	target_compile_options(simdjson PRIVATE ${SIMDJSON_CXX_OPTIONS})
 
-	ExternalProject_Add(simd-json-depends
-		GIT_REPOSITORY		"https://github.com/simdjson/simdjson.git"
-		GIT_TAG				"v${SIMDJSON_VERSION}"
-		GIT_SHALLOW			TRUE
-		CMAKE_ARGS
-			-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-			-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-			-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} # Use the same build type as MetaCall
-			-DCMAKE_CXX_FLAGS=${SIMDJSON_BUILD_CXX_FLAGS}
-			-DCMAKE_EXE_LINKER_FLAGS=${SANITIZER_LINKER_FLAGS}
-			-DCMAKE_SHARED_LINKER_FLAGS=${SANITIZER_LINKER_FLAGS}
-			-DCMAKE_POSITION_INDEPENDENT_CODE=ON
-			-DCMAKE_INSTALL_PREFIX=${SIMDJSON_ROOT_DIR}
-			-DCMAKE_INSTALL_LIBDIR=lib
-			-DBUILD_SHARED_LIBS=OFF
-			-DSIMDJSON_DEVELOPER_MODE=OFF
-			-DSIMDJSON_SINGLEHEADER=ON # Install the single header
-			-DSIMDJSON_SKIPUTF8VALIDATION=${SIMDJSON_SKIPUTF8VALIDATION}
-			-DSIMDJSON_ENABLE_THREADS=OFF
-			-DSIMDJSON_INSTALL=ON
-		BUILD_BYPRODUCTS	"${SIMDJSON_LIBRARIES}"
-		TEST_COMMAND		""
-	)
+	set(SIMDJSON_INCLUDE_DIRS	"${simdjson_SOURCE_DIR}/include")
+	set(SIMDJSON_LIBRARIES		simdjson::simdjson)
 
 	set(SIMDJSON_FOUND TRUE)
 

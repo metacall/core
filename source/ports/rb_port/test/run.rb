@@ -35,6 +35,10 @@ SCRIPT
 	def test_ruby
 		assert_equal(0, MetaCall::metacall_load_from_file('rb', ['hello.rb']))
 
+		# Force the GC to collect and move objects not referenced from Ruby
+		GC.start(full_mark: true, immediate_sweep: true)
+		GC.compact if GC.respond_to?(:compact)
+
 		assert_equal(nil, MetaCall::metacall('say_null'))
 
 		assert_equal(12, MetaCall::metacall('say_multiply', 3, 4))

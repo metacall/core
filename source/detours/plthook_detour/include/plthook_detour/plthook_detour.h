@@ -19,7 +19,7 @@
  */
 
 #ifndef PLTHOOK_DETOUR_H
-#define PLTHOOK_DETOUR_H 1
+#define PLTHOOK_DETOUR_H
 
 /* -- Headers -- */
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef PREPROCESSOR_SERIAL_H
-#define PREPROCESSOR_SERIAL_H 1
+#define PREPROCESSOR_SERIAL_H
 
 /* -- Headers -- */
 

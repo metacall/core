@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_ATTRIBUTE_H
-#define REFLECT_ATTRIBUTE_H 1
+#define REFLECT_ATTRIBUTE_H
 
 #include <reflect/reflect_api.h>
 

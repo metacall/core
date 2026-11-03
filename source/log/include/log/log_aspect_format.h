@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_ASPECT_FORMAT_H
-#define LOG_ASPECT_FORMAT_H 1
+#define LOG_ASPECT_FORMAT_H
 
 /* -- Headers -- */
 

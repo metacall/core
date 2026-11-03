@@ -19,7 +19,7 @@
  */
 
 #ifndef PORTABILITY_H
-#define PORTABILITY_H 1
+#define PORTABILITY_H
 
 /* -- Headers -- */
 

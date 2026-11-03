@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_CLASS_DECL_H
-#define REFLECT_CLASS_DECL_H 1
+#define REFLECT_CLASS_DECL_H
 
 #ifdef __cplusplus
 extern "C" {

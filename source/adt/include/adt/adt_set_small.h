@@ -7,7 +7,7 @@
  */
 
 #ifndef ADT_SET_SMALL_H
-#define ADT_SET_SMALL_H 1
+#define ADT_SET_SMALL_H
 
 /*
  * Small Set

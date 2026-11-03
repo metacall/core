@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_CONSTRUCTOR_H
-#define REFLECT_CONSTRUCTOR_H 1
+#define REFLECT_CONSTRUCTOR_H
 
 #include <reflect/reflect_api.h>
 

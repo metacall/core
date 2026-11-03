@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_FORK_H
-#define METACALL_FORK_H 1
+#define METACALL_FORK_H
 
 /* -- Headers -- */
 

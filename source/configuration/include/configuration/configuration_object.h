@@ -19,7 +19,7 @@
  */
 
 #ifndef CONFIGURATION_OBJECT_H
-#define CONFIGURATION_OBJECT_H 1
+#define CONFIGURATION_OBJECT_H
 
 /* -- Headers -- */
 

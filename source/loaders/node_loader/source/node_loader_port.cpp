@@ -1188,10 +1188,10 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 	x(metacall_load_from_configuration_export); \
 	x(metacall_inspect); \
 	x(metacall_logs); \
-	x(register_bootstrap_startup);
+	x(register_bootstrap_startup)
 
 	/* Declare all the functions */
-	NODE_LOADER_PORT_DECL_X_MACRO(NODE_LOADER_PORT_DECL_FUNC)
+	NODE_LOADER_PORT_DECL_X_MACRO(NODE_LOADER_PORT_DECL_FUNC);
 
 #undef NODE_LOADER_PORT_DECL_FUNC
 #undef NODE_LOADER_PORT_DECL_X_MACRO

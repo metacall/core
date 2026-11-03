@@ -19,7 +19,7 @@
  */
 
 #ifndef DYNLINK_IMPL_BEOS_H
-#define DYNLINK_IMPL_BEOS_H 1
+#define DYNLINK_IMPL_BEOS_H
 
 /* -- Headers -- */
 

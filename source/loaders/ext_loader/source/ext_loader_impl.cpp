@@ -59,20 +59,20 @@ typedef struct loader_impl_ext_handle_lib_type
 	dynlink handle;
 	dynlink_symbol_addr addr;
 
-} * loader_impl_ext_handle_lib;
+} *loader_impl_ext_handle_lib;
 
 typedef struct loader_impl_ext_type
 {
 	std::set<fs::path> paths;
 	std::map<std::string, loader_impl_ext_handle_lib_type> destroy_list;
 
-} * loader_impl_ext;
+} *loader_impl_ext;
 
 typedef struct loader_impl_ext_handle_type
 {
 	std::vector<loader_impl_ext_handle_lib_type> extensions;
 
-} * loader_impl_ext_handle;
+} *loader_impl_ext_handle;
 
 union loader_impl_function_cast
 {

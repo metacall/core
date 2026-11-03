@@ -151,16 +151,10 @@ endfunction()
 include(Portability)
 
 #
-# clang-format and tidy
+# Code formatting (clang-format, clang-format-check and eol-check targets)
 #
 
-find_package(ClangFormat)
-
-if(ClangFormat_FOUND)
-	include(ClangDevTools)
-else()
-    message(WARNING "Linting disabled: clang-format executable not found")
-endif()
+include(Format)
 
 #
 # Compiler settings and options
@@ -257,6 +251,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(OPTION_BUILD_TESTS OR OPTION_BUILD_BENCHMARKS)
 	enable_testing()
+
+	# Run the tests through the emulator when cross-compiling to Android
+	include(AndroidEmulatorTest)
 endif()
 
 #
@@ -326,7 +323,7 @@ install(FILES README.md	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 if(OPTION_GIT_HOOKS)
 	message(STATUS "Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR}")
 	execute_process(
-		COMMAND git config --local core.hooksPath githooks/${PROJECT_OS_FAMILY}
+		COMMAND git config --local core.hooksPath githooks
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 endif()

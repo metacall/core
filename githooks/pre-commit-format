@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+# Git pre-commit hook that checks the staged files with cmake/Format.cmake:
+#  - Line endings: the staged content must use LF only.
+#  - Formatting: the C/C++ files under source/ must comply with clang-format
+#    (the version required by cmake/Format.cmake, locally or through docker/podman).
+#
+# The formatting is checked on the files of the working tree, so it may differ
+# from the staged content when a file is partially staged (git add -p).
+#
+# When the formatting fails in an interactive terminal, it offers to apply
+# the formatting and stage the files again, otherwise it prints the command.
+# Bypass the hooks with git commit --no-verify (not recommended).
+
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+FORMAT="$ROOT/cmake/Format.cmake"
+
+if ! command -v cmake >/dev/null 2>&1; then
+	echo "Error: cmake is required for checking the formatting ($FORMAT)."
+	exit 1
+fi
+
+# Staged files (added, copied, modified or renamed)
+files=()
+
+while IFS= read -r -d '' file; do
+	files+=("$file")
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+if [ ${#files[@]} -eq 0 ]; then
+	exit 0
+fi
+
+# CMake list (semicolon separated)
+files_list="$(IFS=';'; echo "${files[*]}")"
+
+# Line endings of the staged content
+if ! cmake -DMODE=eol "-DFILES=$files_list" -P "$FORMAT"; then
+	echo "Convert the files above to LF line endings and stage them again."
+	exit 1
+fi
+
+# Formatting
+if cmake -DMODE=check "-DFILES=$files_list" -P "$FORMAT"; then
+	exit 0
+fi
+
+fix_command="cmake -DMODE=fix \"-DFILES=$files_list\" -P cmake/Format.cmake"
+
+# Not interactive (i.e: commit from an IDE), print the command for fixing it
+if [ ! -t 1 ] || ! { exec < /dev/tty; } 2>/dev/null; then
+	echo "Format the files with: $fix_command"
+	exit 1
+fi
+
+# Files with unstaged changes, staging them again would include those changes
+unstaged=()
+
+while IFS= read -r -d '' file; do
+	unstaged+=("$file")
+done < <(git diff --name-only -z -- "${files[@]}")
+
+read -r -p "Apply the formatting and stage the files again? [y/N] " answer
+
+case "$answer" in
+	[yY]|[yY][eE][sS])
+		;;
+	*)
+		echo "Format the files with: $fix_command"
+		exit 1
+		;;
+esac
+
+if ! cmake -DMODE=fix "-DFILES=$files_list" -P "$FORMAT"; then
+	exit 1
+fi
+
+if [ ${#unstaged[@]} -ne 0 ]; then
+	echo "The files were formatted but not staged, because they have unstaged changes:"
+	printf '  %s\n' "${unstaged[@]}"
+	echo "Review the changes, stage them and commit again."
+	exit 1
+fi
+
+git add -- "${files[@]}" || exit 1
+
+echo "The files were formatted and staged again."
+exit 0

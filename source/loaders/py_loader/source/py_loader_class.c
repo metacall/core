@@ -49,7 +49,7 @@ struct py_loader_impl_class_type
 struct py_loader_impl_class_method_type
 {
 	PyObject_HEAD
-		loader_impl impl;
+	loader_impl impl;
 	value cls;
 	PyObject *name;
 #if PY_LOADER_IMPL_VECTORCALL

@@ -19,7 +19,7 @@
  */
 
 #ifndef FORMAT_PRINT_H
-#define FORMAT_PRINT_H 1
+#define FORMAT_PRINT_H
 
 /* -- Headers -- */
 

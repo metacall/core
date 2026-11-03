@@ -19,7 +19,7 @@
  */
 
 #ifndef SERIAL_HANDLE_H
-#define SERIAL_HANDLE_H 1
+#define SERIAL_HANDLE_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef RPC_LOADER_IMPL_H
-#define RPC_LOADER_IMPL_H 1
+#define RPC_LOADER_IMPL_H
 
 #include <rpc_loader/rpc_loader_api.h>
 

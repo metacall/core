@@ -87,7 +87,7 @@ cmake --build . --target install
 ```
 ### Format
 
-use `ghcr.io/jidicula/clang-format:12` to format the code.
+Format the code with `cmake -DMODE=fix -P cmake/Format.cmake` from the repository root (it uses clang-format 19, locally or through docker).
 
 ### Testing
 

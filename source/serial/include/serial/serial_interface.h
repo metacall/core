@@ -7,7 +7,7 @@
  */
 
 #ifndef SERIAL_INTERFACE_H
-#define SERIAL_INTERFACE_H 1
+#define SERIAL_INTERFACE_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef LOADER_H
-#define LOADER_H 1
+#define LOADER_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef LOG_VALID_SIZE_H
-#define LOG_VALID_SIZE_H 1
+#define LOG_VALID_SIZE_H
 
 /* -- Headers -- */
 

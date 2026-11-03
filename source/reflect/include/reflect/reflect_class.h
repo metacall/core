@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_CLASS_H
-#define REFLECT_CLASS_H 1
+#define REFLECT_CLASS_H
 
 #include <adt/adt_map.h>
 #include <adt/adt_set.h>
@@ -69,7 +69,7 @@ typedef struct class_interface_type
 	class_impl_interface_static_await static_await;
 	class_impl_interface_destroy destroy;
 
-} * class_interface;
+} *class_interface;
 
 typedef class_interface (*class_impl_interface_singleton)(void);
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef NODE_LOADER_BOOTSTRAP_H
-#define NODE_LOADER_BOOTSTRAP_H 1
+#define NODE_LOADER_BOOTSTRAP_H
 
 #include <configuration/configuration.h>
 

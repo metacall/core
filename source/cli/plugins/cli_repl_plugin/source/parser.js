@@ -36,12 +36,24 @@ function repl_parse(cmd) {
 		const current_type = command.types[param_count];
 		const current_regex = command.regexes[param_count];
 
+		/* A regex may match only a prefix of the remaining input. Such a partial
+		 * match is not a valid token: it has to end at a whitespace or at the end
+		 * of the command. Otherwise 'python' would be accepted as the valid loader
+		 * tag 'py' plus a bogus 'thon' parameter. */
+		const is_token_boundary = (str, position) => position >= str.length || str[position] === ' ';
+
 		switch (current_type) {
 			case 'METACALL_STRING': {
-				if (!current_regex.test(param)) {
+				const matched = current_regex.test(param);
+				const next_position = current_regex.lastIndex;
+
+				/* Reset the shared global regex before throwing, otherwise its stale
+				 * lastIndex would break the parsing of the next command */
+				if (!matched || !is_token_boundary(param, next_position)) {
+					current_regex.lastIndex = 0;
 					throw new Error(`Failed to parse the command: '${param}' of type ${current_type}, the expected regex was: ${current_regex.toString()}`)
 				}
-				const next_position = current_regex.lastIndex;
+
 				tokens.push(param.substring(0, next_position));
 				current_position += next_position;
 				break;
@@ -58,6 +70,13 @@ function repl_parse(cmd) {
 
 					/* Obtain the next position and push the current value, then skip whitespaces */
 					const next_position = current_regex.lastIndex;
+
+					/* Stop collecting on a partial match, leaving the token for the next
+					 * parameter instead of accepting it here */
+					if (!is_token_boundary(subparam, next_position)) {
+						break;
+					}
+
 					values.push(subparam.substring(0, next_position));
 					current_position = skip_whitespaces(command_str, current_position + next_position);
 
@@ -69,7 +88,7 @@ function repl_parse(cmd) {
 			}
 
 			default: {
-				throw new Error(`Failed to parse command '${original_command}', type ${current_type} is not implemented`);
+				throw new Error(`Failed to parse command '${command_str}', type ${current_type} is not implemented`);
 			}
 		}
 

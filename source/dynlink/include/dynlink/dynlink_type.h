@@ -19,7 +19,7 @@
  */
 
 #ifndef DYNLINK_TYPE_H
-#define DYNLINK_TYPE_H 1
+#define DYNLINK_TYPE_H
 
 /* -- Headers -- */
 

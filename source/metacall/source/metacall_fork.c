@@ -297,7 +297,7 @@ int metacall_fork_initialize(void)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour fork replacement");
 
-			metacall_link_destroy();
+			metacall_fork_destroy();
 
 			return 1;
 		}

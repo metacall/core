@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Haiku VM
-        uses: cross-platform-actions/action@v1.5.0
+        uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 # v1.7.0
         with:
           operating_system: haiku
           version: r1beta6

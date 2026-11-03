@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["debian:trixie-slim", "ubuntu:noble"]
+        image: ["debian:forky-slim", "debian:trixie-slim", "debian:bookworm-slim", "ubuntu:noble", "ubuntu:jammy"]
 
     steps:
       - name: Check out the repository

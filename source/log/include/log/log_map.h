@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_MAP_H
-#define LOG_MAP_H 1
+#define LOG_MAP_H
 
 /* -- Headers -- */
 

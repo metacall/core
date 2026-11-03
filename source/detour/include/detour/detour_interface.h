@@ -19,7 +19,7 @@
  */
 
 #ifndef DETOUR_INTERFACE_H
-#define DETOUR_INTERFACE_H 1
+#define DETOUR_INTERFACE_H
 
 /* -- Headers -- */
 

@@ -312,6 +312,45 @@ function Set-Lua {
 	Write-Output "-DLuaJIT_LIBRARY_SEARCH_PATHS=""$LuaDir""" >> $EnvOpts
 }
 
+function Set-ClangFormat {
+	Write-Output "Install clang-format"
+	Set-Location $ROOT_DIR
+
+	# Keep the major version in sync with FORMAT_CLANG_FORMAT_VERSION in cmake/Format.cmake
+	$LLVMVersion = '19.1.7'
+	$LLVMMajor = ([version]$LLVMVersion).Major
+	$RuntimeDir = "$env:ProgramFiles\LLVM"
+	$DepsDir = "$ROOT_DIR\dependencies"
+	$Installer = "LLVM-$LLVMVersion-win64.exe"
+
+	# Skip it if the required version is already installed
+	$ClangFormat = "$RuntimeDir\bin\clang-format.exe"
+
+	if (Test-Path -Path $ClangFormat) {
+		$Version = & $ClangFormat --version
+
+		if ("$Version" -match "clang-format version $LLVMMajor\.") {
+			Write-Output "clang-format $LLVMMajor is already installed"
+			return
+		}
+	}
+
+	mkdir -Force $DepsDir
+	Set-Location $DepsDir
+
+	if (!(Test-Path -Path "$DepsDir\$Installer")) {
+		# Download installer
+		Write-Output "LLVM installer not found downloading now..."
+		(New-Object Net.WebClient).DownloadFile("https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVMVersion/$Installer", "$DepsDir\$Installer")
+	}
+
+	# Silent installation, it installs into $RuntimeDir by default
+	Start-Process -FilePath "$DepsDir\$Installer" -Args "/S" -Verb RunAs -Wait
+
+	# cmake/FindClangFormat.cmake also searches in $RuntimeDir\bin
+	Add-to-Path "$RuntimeDir\bin"
+}
+
 function Add-to-Path {
 	$GivenPath = $args[0]
 
@@ -451,6 +490,7 @@ function Configure {
 		}
 		if ("$var" -eq 'clangformat') {
 			Write-Output "clangformat selected"
+			Set-ClangFormat
 		}
 	}
 }

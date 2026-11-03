@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_POLICY_SCHEDULE_H
-#define LOG_POLICY_SCHEDULE_H 1
+#define LOG_POLICY_SCHEDULE_H
 
 /* -- Headers -- */
 

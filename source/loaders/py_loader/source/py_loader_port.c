@@ -1074,8 +1074,11 @@ int py_port_initialize(void)
 
 	if (PyDict_SetItemString(sys_modules, metacall_definition.m_name, module) < 0)
 	{
+		Py_DecRef(module);
 		return 1;
 	}
+
+	Py_DecRef(module);
 
 	return 0;
 }

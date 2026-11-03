@@ -99,6 +99,19 @@ value value_type_copy(value v)
 
 			return cpy;
 		}
+		else if (type_id_future(id) == 0)
+		{
+			value cpy = value_copy(v);
+
+			if (cpy != NULL)
+			{
+				future f = value_to_future(cpy);
+
+				future_increment_reference(f);
+			}
+
+			return cpy;
+		}
 		else if (type_id_class(id) == 0)
 		{
 			value cpy = value_copy(v);
@@ -271,7 +284,14 @@ value value_create_ptr(const void *ptr)
 
 value value_create_future(future f)
 {
-	return value_type_create(&f, sizeof(future), TYPE_FUTURE);
+	value v = value_type_create(&f, sizeof(future), TYPE_FUTURE);
+
+	if (v != NULL)
+	{
+		future_increment_reference(f);
+	}
+
+	return v;
 }
 
 value value_create_function(function f)

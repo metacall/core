@@ -737,6 +737,64 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 ## 6. Application Programming Interface (API)
 
+The C API is declared in [`metacall.h`](../source/metacall/include/metacall/metacall.h). This example requires the [Python loader](#5311-python) and links against `libmetacall`; see [7.4](#74-build-using-scripts) for setup.
+
+```c
+#include <stdio.h>
+#include <metacall/metacall.h>
+
+int main(void)
+{
+	static const char source[] =
+		"def answer() -> int:\n"
+		"    return 42\n";
+	void *handle = NULL;
+	void *result = NULL;
+	int status = 1;
+
+	if (metacall_initialize() != 0)
+	{
+		return status;
+	}
+
+	if (metacall_load_from_memory("py", source, sizeof(source), &handle) != 0)
+	{
+		goto cleanup;
+	}
+
+	result = metacallhv_s(handle, "answer", metacall_null_args, 0);
+	if (result != NULL && metacall_value_id(result) == METACALL_LONG)
+	{
+		printf("%ld\n", metacall_value_to_long(result));
+		status = 0;
+	}
+
+cleanup:
+	metacall_value_destroy(result);
+	if (handle != NULL && metacall_clear(handle) != 0)
+	{
+		status = 1;
+	}
+	metacall_destroy();
+	return status;
+}
+```
+
+Save the example as `example.c`. With MetaCall's headers and library on the compiler and runtime search paths, compile and run on Linux:
+
+```sh
+cc -std=c99 -Wall -Wextra example.c -lmetacall -o example
+./example
+```
+
+For a custom installation, supply the compiler's `-I` and `-L` paths and the dynamic linker's library path. Set plugin and configuration paths as described in [4.2 Environment Variables](#42-environment-variables).
+
+The program prints `42`. Python's `int` annotation maps to `METACALL_LONG` in the [loader](../source/loaders/py_loader/source/py_loader_impl.c). Initialization, loading, and clearing return zero on success. Calls return a value, or `NULL` on failure; release returned values with `metacall_value_destroy` (which accepts `NULL`).
+
+Passing `&handle` with `handle = NULL` creates a private scope, accessed through handle-scoped calls such as `metacallhv_s`. Passing `&handle` when `handle` already references a loaded handle adds symbols to its scope; passing `NULL` instead exposes symbols in the loader scope for calls such as `metacall`.
+
+`metacall_clear(handle)` unloads one handle; do not free it or reuse it or its function references afterward. `metacall_destroy()` shuts down the runtimes and any remaining handles. Initialize and destroy on the same thread. See [`metacall_clear_test`](../source/tests/metacall_clear_test/source/metacall_clear_test.cpp) for further handle examples.
+
 ## 7. Build System
 
 Follow these steps to build and install **METACALL** manually.
@@ -795,7 +853,13 @@ To format the entire C/C++ codebase use:
 cmake --build build --target clang-format
 ```
 
-Be aware that this target won't exist if clang-format was not installed when cmake was last run.
+The formatting requires clang-format 21 (install it with `./tools/metacall-environment.sh clangformat`). If it is not installed, it runs through docker or podman with the image `ghcr.io/jidicula/clang-format:21`. The targets `clang-format-check` and `eol-check` run the same checks as the CI (formatting and LF line endings). They can also run without a configured build:
+
+```sh
+cmake -DMODE=fix -P cmake/Format.cmake    # format in place
+cmake -DMODE=check -P cmake/Format.cmake  # check the formatting
+cmake -DMODE=eol -P cmake/Format.cmake    # check the line endings
+```
 
 ### 7.2 Coverage
 
@@ -1005,22 +1069,49 @@ Click the button below. A workspace with all required environments will be creat
 
 ## 8 Platform Support
 
-The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
+The following platforms, architectures and compilers are tested continuously in CI (see [`.github/workflows`](/.github/workflows)).
 
-| Operative System |                                                            Architecture                                                             |  Compiler   |
-| :--------------: | :---------------------------------------------------------------------------------------------------------------------------------: | :---------: |
-|   **`ubuntu`**   |                                                             **`amd64`**                                                             |  **`gcc`**  |
-|   **`debian`**   | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`ppc64le`** **`arm/v7`** **`arm/v6`** **`loong64`** |  **`gcc`**  |
-|   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
-|  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
-|  **`freebsd`**   |                                                        **`amd64`** **`arm64`**                                                      | **`clang`** |
+| Operative System |                         Versions                          |                                       Architecture                                        |                     Compiler                      |
+| :--------------: | :-------------------------------------------------------: | :---------------------------------------------------------------------------------------: | :-----------------------------------------------: |
+|   **`debian`**   |       **`bookworm`** **`trixie`** **`forky`**             | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`arm/v7`** |              **`gcc`** **`clang`**                |
+|   **`ubuntu`**   |                 **`jammy`** **`noble`**                   |                                        **`amd64`**                                        |              **`gcc`** **`clang`**                |
+|   **`macos`**    |                    **`14`** **`15`**                      |                                  **`amd64`** **`arm64`**                                  |                 **`apple clang`**                 |
+|  **`windows`**   |              **`server 2022`** **`server 2025`**          |                                        **`amd64`**                                        |                    **`msvc`**                     |
+|  **`windows`**   | **`msys2 mingw64`** **`msys2 ucrt64`** **`msys2 clang64`** |                                        **`amd64`**                                        |      **`mingw-w64 gcc`** **`mingw-w64 clang`**    |
+|  **`freebsd`**   |                         **`15.1`**                        |                                  **`amd64`** **`arm64`**                                  |                    **`clang`**                    |
+|   **`haiku`**    |                       **`r1beta6`**                       |                                        **`amd64`**                                        |                     **`gcc`**                     |
+|  **`android`**   |                       **`api 33`**                        |                                       **`x86_64`**                                        |                 **`ndk clang`**                   |
+
+Not all loaders are tested on every platform. The following table lists the loaders built and tested on each platform:
+
+| Operative System |                                                         Loaders                                                          |
+| :--------------: | :----------------------------------------------------------------------------------------------------------------------: |
+|   **`linux`**    | `python` `ruby` `netcore8` `nodejs` `typescript` `file` `rpc` `wasm` `java` `c` `cobol` `go` `rust` `lua` |
+|   **`macos`**    |           `python` `nodejs` `typescript` `ruby` `java` `c` `wasm` `rpc` `file` `cobol` `go` `lua`           |
+| **`windows (msvc)`** |                         `python` `nodejs` `java` `ruby` `typescript` `wasm` `rpc` `lua` `file`                          |
+|  **`freebsd`**   |                     `python` `ruby` `go` `lua` `java` `cobol` `file` `rpc` (`c` `wasm` only on `amd64`)                   |
+| **`windows (mingw)`** **`haiku`** **`android`** |                                  core only (no language loaders yet)                                  |
+
+Sanitizers are tested as well: AddressSanitizer and ThreadSanitizer on Linux (`gcc` and `clang`), macOS and FreeBSD; MemorySanitizer on Linux (`clang`); AddressSanitizer on Windows (`msvc`); and Valgrind memcheck on Linux.
 
 
 ## 8.1 Docker Support
 
-To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bookworm-slim` for `amd64` architecture.
+To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:forky-slim` and are published as multi-architecture images for the following platforms:
 
-For pulling the **METACALL** `latest` image containing the runtime, use:
+- `linux/amd64`
+- `linux/amd64/v2`
+- `linux/amd64/v3`
+- `linux/386`
+- `linux/arm64`
+- `linux/riscv64`
+- `linux/arm/v7`
+
+Docker selects the image matching the host architecture automatically. To pull a specific one, use `--platform` (for example `docker pull --platform linux/arm64 metacall/core`).
+
+All the tags listed below are also published for each release with the version as prefix (for example `metacall/core:<version>-dev`), and `metacall/core:<version>` is equivalent to `latest`.
+
+For pulling the **METACALL** `latest` image containing the runtime and the CLI as entry point (equivalent to `cli`), use:
 
 ```sh
 docker pull metacall/core

@@ -92,7 +92,7 @@ target_link_libraries(${target}
 if(WIN32)
 	string(REPLACE "/" "\\\\" METACALL_LIBRARY_PATH "${PROJECT_OUTPUT_DIR}")
 else()
-	set(METACALL_LIBRARY_PATH "${PROJECT_OUTPUT_DIR}")
+	test_runtime_path(METACALL_LIBRARY_PATH "${PROJECT_OUTPUT_DIR}")
 endif()
 
 target_compile_definitions(${target}

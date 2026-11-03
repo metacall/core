@@ -19,7 +19,7 @@
  */
 
 #ifndef DETOUR_HANDLE_H
-#define DETOUR_HANDLE_H 1
+#define DETOUR_HANDLE_H
 
 /* -- Headers -- */
 

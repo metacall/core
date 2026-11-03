@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_POLICY_SCHEDULE_ASYNC_H
-#define LOG_POLICY_SCHEDULE_ASYNC_H 1
+#define LOG_POLICY_SCHEDULE_ASYNC_H
 
 /* -- Headers -- */
 

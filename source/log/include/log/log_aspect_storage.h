@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_ASPECT_STORAGE_H
-#define LOG_ASPECT_STORAGE_H 1
+#define LOG_ASPECT_STORAGE_H
 
 /* -- Headers -- */
 

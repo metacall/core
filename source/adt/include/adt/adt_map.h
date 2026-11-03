@@ -7,7 +7,7 @@
  */
 
 #ifndef ADT_MAP_H
-#define ADT_MAP_H 1
+#define ADT_MAP_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef WASM_LOADER_HANDLE_H
-#define WASM_LOADER_HANDLE_H 1
+#define WASM_LOADER_HANDLE_H
 
 #include <loader/loader.h>
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef LLVM_LOADER_IMPL_H
-#define LLVM_LOADER_IMPL_H 1
+#define LLVM_LOADER_IMPL_H
 
 #include <llvm_loader/llvm_loader_api.h>
 

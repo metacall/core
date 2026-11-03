@@ -19,7 +19,7 @@
  */
 
 #ifndef DYNLINK_IMPL_MACOS_H
-#define DYNLINK_IMPL_MACOS_H 1
+#define DYNLINK_IMPL_MACOS_H
 
 /* -- Headers -- */
 

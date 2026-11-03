@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_ASYNC_H
-#define REFLECT_ASYNC_H 1
+#define REFLECT_ASYNC_H
 
 #include <reflect/reflect_api.h>
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_ALLOCATOR_H
-#define METACALL_ALLOCATOR_H 1
+#define METACALL_ALLOCATOR_H
 
 /* -- Headers -- */
 

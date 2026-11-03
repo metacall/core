@@ -19,7 +19,7 @@
  */
 
 #ifndef DYNLINK_IMPL_WIN32_H
-#define DYNLINK_IMPL_WIN32_H 1
+#define DYNLINK_IMPL_WIN32_H
 
 /* -- Headers -- */
 

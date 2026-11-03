@@ -19,7 +19,7 @@
  */
 
 #ifndef LOG_LEVEL_H
-#define LOG_LEVEL_H 1
+#define LOG_LEVEL_H
 
 #include <log/log_api.h>
 

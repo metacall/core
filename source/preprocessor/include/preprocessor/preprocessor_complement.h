@@ -7,7 +7,7 @@
  */
 
 #ifndef PREPROCESSOR_COMPLEMENT_H
-#define PREPROCESSOR_COMPLEMENT_H 1
+#define PREPROCESSOR_COMPLEMENT_H
 
 /* -- Headers -- */
 

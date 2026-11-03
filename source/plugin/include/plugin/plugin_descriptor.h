@@ -19,7 +19,7 @@
  */
 
 #ifndef PLUGIN_DESCRIPTOR_H
-#define PLUGIN_DESCRIPTOR_H 1
+#define PLUGIN_DESCRIPTOR_H
 
 /* -- Headers -- */
 
