@@ -137,6 +137,11 @@ METACALL_API void metacall_flags(int flags);
 *
 *  @return
 *    Zero if success, different from zero otherwise
+*
+*  @warning
+*    This is a host lifecycle function. Do not call it from a host function
+*    registered with @metacall_register that was invoked by a guest runtime,
+*    because the guest interpreter is still active on the call stack.
 */
 METACALL_API int metacall_initialize(void);
 
@@ -149,6 +154,11 @@ METACALL_API int metacall_initialize(void);
 *
 *  @return
 *    Zero if success, different from zero otherwise
+*
+*  @warning
+*    This is a host lifecycle function. Do not call it from a host function
+*    registered with @metacall_register that was invoked by a guest runtime,
+*    because the guest interpreter is still active on the call stack.
 */
 METACALL_API int metacall_initialize_ex(struct metacall_initialize_configuration_type initialize_config[]);
 
@@ -905,6 +915,11 @@ METACALL_API void *metacallfms(void *func, const char *buffer, size_t size, void
 *
 *  @return
 *    Pointer to value containing the result of the call
+*
+*  @warning
+*    Do not register host lifecycle functions such as @metacall_destroy,
+*    @metacall_initialize or @metacall_initialize_ex as callbacks. They are
+*    only safe to call from the host application, not from a guest runtime.
 */
 METACALL_API int metacall_register(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, ...);
 
@@ -1650,6 +1665,14 @@ METACALL_API const char *metacall_plugin_path(void);
 /**
 *  @brief
 *    Destroy MetaCall library
+*
+*  @warning
+*    This is a host lifecycle function. Do not call it from a host function
+*    registered with @metacall_register that was invoked by a guest runtime
+*    (for example a Python or NodeJS callback), because the guest interpreter
+*    is still active on the call stack and destroying its loader causes a
+*    use-after-free when the callback returns. Call it from the host after
+*    guest execution has finished.
 */
 METACALL_API void metacall_destroy(void);
 
