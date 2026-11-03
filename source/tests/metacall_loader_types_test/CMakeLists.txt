@@ -97,20 +97,6 @@ target_compile_definitions(${target}
 	${DEFAULT_COMPILE_DEFINITIONS}
 )
 
-if(OPTION_BUILD_LOADERS_PY)
-	target_compile_definitions(${target}
-		PRIVATE
-		OPTION_BUILD_LOADERS_PY
-	)
-endif()
-
-if(OPTION_BUILD_LOADERS_LUA)
-	target_compile_definitions(${target}
-		PRIVATE
-		OPTION_BUILD_LOADERS_LUA
-	)
-endif()
-
 #
 # Compile options
 #
@@ -150,23 +136,10 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-if(TARGET simd_json_serial)
-	add_dependencies(${target}
-		simd_json_serial
-	)
-endif()
-
-if(OPTION_BUILD_LOADERS_PY)
-	add_dependencies(${target}
-		py_loader
-	)
-endif()
-
-if(OPTION_BUILD_LOADERS_LUA)
-	add_dependencies(${target}
-		lua_loader
-	)
-endif()
+add_loader_dependencies(${target}
+	py_loader
+	lua_loader
+)
 
 #
 # Define test properties

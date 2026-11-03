@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 
+#include <metacall/metacall_loaders.h>
 #include <metacall/metacall.hpp>
 
 #include <stdlib.h>
