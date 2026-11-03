@@ -19,7 +19,7 @@
  */
 
 #ifndef LOADER_NAMING_H
-#define LOADER_NAMING_H 1
+#define LOADER_NAMING_H
 
 #include <loader/loader_api.h>
 

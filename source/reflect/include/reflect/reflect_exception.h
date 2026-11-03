@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_EXCEPTION_H
-#define REFLECT_EXCEPTION_H 1
+#define REFLECT_EXCEPTION_H
 
 #include <reflect/reflect_api.h>
 

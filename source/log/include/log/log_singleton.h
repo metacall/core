@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_SINGLETON_H
-#define LOG_SINGLETON_H 1
+#define LOG_SINGLETON_H
 
 /* -- Headers -- */
 

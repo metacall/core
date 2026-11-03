@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_TYPE_H
-#define REFLECT_TYPE_H 1
+#define REFLECT_TYPE_H
 
 #include <reflect/reflect_api.h>
 
@@ -45,7 +45,7 @@ typedef struct type_interface_type
 	type_impl_interface_create create;
 	type_impl_interface_destroy destroy;
 
-} * type_interface;
+} *type_interface;
 
 typedef type_interface (*type_impl_interface_singleton)(void);
 

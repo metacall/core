@@ -19,7 +19,7 @@
  */
 
 #ifndef LOADER_MANAGER_IMPL_H
-#define LOADER_MANAGER_IMPL_H 1
+#define LOADER_MANAGER_IMPL_H
 
 /* -- Headers -- */
 

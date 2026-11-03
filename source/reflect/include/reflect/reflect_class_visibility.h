@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_CLASS_VISIBILITY_H
-#define REFLECT_CLASS_VISIBILITY_H 1
+#define REFLECT_CLASS_VISIBILITY_H
 
 #include <reflect/reflect_api.h>
 

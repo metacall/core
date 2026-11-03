@@ -20,7 +20,7 @@
  */
 
 #ifndef JS_LOADER_IMPL_GUARD_HPP
-#define JS_LOADER_IMPL_GUARD_HPP 1
+#define JS_LOADER_IMPL_GUARD_HPP
 
 #include <js_loader/js_loader_api.h>
 

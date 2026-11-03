@@ -19,7 +19,7 @@
  */
 
 #ifndef JSM_LOADER_IMPL_H
-#define JSM_LOADER_IMPL_H 1
+#define JSM_LOADER_IMPL_H
 
 #include <jsm_loader/jsm_loader_api.h>
 

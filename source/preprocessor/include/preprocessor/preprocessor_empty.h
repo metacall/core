@@ -7,7 +7,7 @@
  */
 
 #ifndef PREPROCESSOR_EMPTY_H
-#define PREPROCESSOR_EMPTY_H 1
+#define PREPROCESSOR_EMPTY_H
 
 /* -- Headers -- */
 

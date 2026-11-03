@@ -19,7 +19,7 @@
  */
 
 #ifndef JL_LOADER_IMPL_H
-#define JL_LOADER_IMPL_H 1
+#define JL_LOADER_IMPL_H
 
 #include <jl_loader/jl_loader_api.h>
 

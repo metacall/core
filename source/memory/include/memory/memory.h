@@ -19,7 +19,7 @@
  */
 
 #ifndef MEMORY_H
-#define MEMORY_H 1
+#define MEMORY_H
 
 /* -- Headers -- */
 

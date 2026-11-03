@@ -7,7 +7,7 @@
  */
 
 #ifndef MOCK_LOADER_DESCRIPTOR_H
-#define MOCK_LOADER_DESCRIPTOR_H 1
+#define MOCK_LOADER_DESCRIPTOR_H
 
 #include <mock_loader/mock_loader_api.h>
 

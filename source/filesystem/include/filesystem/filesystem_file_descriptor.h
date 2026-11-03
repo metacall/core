@@ -19,7 +19,7 @@
  */
 
 #ifndef FILESYSTEM_FILE_DESCRIPTOR_H
-#define FILESYSTEM_FILE_DESCRIPTOR_H 1
+#define FILESYSTEM_FILE_DESCRIPTOR_H
 
 /* -- Headers -- */
 

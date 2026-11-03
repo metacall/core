@@ -51,8 +51,8 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	endif()
 	set(gtest_disable_pthreads ${GTEST_DISABLE_PTHREADS} CACHE BOOL "" FORCE)
 
-	if(MSVC OR ANDROID)
-		# Build statically on Windows and Android for avoiding library location issues (avoid populating the variable to the cache),
+	if(WIN32 OR ANDROID)
+		# Build statically on Windows (MSVC and MinGW) and Android for avoiding library location issues (avoid populating the variable to the cache),
 		# in Android the tests run in the device, where the build directory is in a different path than the RPATH
 		set(_CACHE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 		set(BUILD_SHARED_LIBS OFF)
@@ -60,7 +60,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 
 	FetchContent_MakeAvailable(googletest)
 
-	if(MSVC OR ANDROID)
+	if(WIN32 OR ANDROID)
 		# Restore shared library value
 		set(BUILD_SHARED_LIBS ${_CACHE_BUILD_SHARED_LIBS})
 	endif()

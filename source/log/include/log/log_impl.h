@@ -19,7 +19,7 @@
  */
 
 #ifndef LOG_IMPL_H
-#define LOG_IMPL_H 1
+#define LOG_IMPL_H
 
 /* -- Headers -- */
 

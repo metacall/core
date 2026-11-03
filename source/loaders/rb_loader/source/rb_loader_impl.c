@@ -60,13 +60,13 @@ typedef struct loader_impl_rb_module_type
 	set function_map;
 	int empty;
 
-} * loader_impl_rb_module;
+} *loader_impl_rb_module;
 
 typedef struct loader_impl_rb_handle_type
 {
 	vector modules;
 
-} * loader_impl_rb_handle;
+} *loader_impl_rb_handle;
 
 typedef struct loader_impl_rb_function_type
 {
@@ -76,14 +76,14 @@ typedef struct loader_impl_rb_function_type
 	VALUE args_hash;
 	loader_impl impl;
 
-} * loader_impl_rb_function;
+} *loader_impl_rb_function;
 
 typedef struct loader_impl_rb_class_type
 {
 	VALUE class;
 	loader_impl impl;
 
-} * loader_impl_rb_class;
+} *loader_impl_rb_class;
 
 typedef struct loader_impl_rb_object_type
 {
@@ -92,14 +92,14 @@ typedef struct loader_impl_rb_object_type
 	loader_impl impl;
 	value obj_cls_val;
 
-} * loader_impl_rb_object;
+} *loader_impl_rb_object;
 
 typedef struct loader_impl_rb_module_eval_protect_type
 {
 	int argc;
 	VALUE *argv;
 	VALUE module;
-} * loader_impl_rb_module_eval_protect;
+} *loader_impl_rb_module_eval_protect;
 
 typedef struct loader_impl_rb_funcall_protect_type
 {
@@ -107,14 +107,14 @@ typedef struct loader_impl_rb_funcall_protect_type
 	VALUE *argv;
 	VALUE module_instance;
 	ID id;
-} * loader_impl_rb_funcall_protect;
+} *loader_impl_rb_funcall_protect;
 
 typedef struct loader_impl_rb_discover_module_protect_type
 {
 	loader_impl impl;
 	loader_impl_rb_module rb_module;
 	context ctx;
-} * loader_impl_rb_discover_module_protect;
+} *loader_impl_rb_discover_module_protect;
 
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);
@@ -402,14 +402,6 @@ VALUE rb_type_serialize(value v)
 
 		return rb_str_new_cstr(str);
 	}
-	else if (v_type == TYPE_BUFFER)
-	{
-		size_t size = value_type_size(v);
-
-		const char *buffer = value_to_buffer(v);
-
-		return rb_str_new(buffer, size);
-	}
 	else if (v_type == TYPE_NULL)
 	{
 		return Qnil;
@@ -418,15 +410,27 @@ VALUE rb_type_serialize(value v)
 	{
 		const char *buf = value_to_buffer(v);
 		size_t size = value_type_size(v);
-		/* Copy the data into a Ruby String first to avoid memory lifetime issues */
-		VALUE str = rb_str_new(buf, (long)size);
+
 #if RUBY_API_VERSION_MAJOR >= 3 && RUBY_API_VERSION_MINOR >= 1
-		/* TODO: Reference original memory instead of copying once lifetime is guaranteed */
-		/* return rb_io_buffer_new((void *)buf, size, RB_IO_BUFFER_READONLY); */
-		return rb_io_buffer_new(RSTRING_PTR(str), size, RB_IO_BUFFER_READONLY);
+		VALUE io_buf = rb_io_buffer_new(NULL, size, RB_IO_BUFFER_INTERNAL);
+
+		if (size > 0 && buf != NULL)
+		{
+			void *base = NULL;
+			size_t buf_size = 0;
+
+			rb_io_buffer_get_bytes_for_writing(io_buf, &base, &buf_size);
+
+			if (base != NULL)
+			{
+				memcpy(base, buf, size);
+			}
+		}
+
+		return io_buf;
 #else
-		/* Fallback when ruby/io/buffer.h is unavailable: return as binary string */
-		return str;
+		/* Fallback when ruby/io/buffer.h is unavailable, return a string */
+		return rb_str_new(buf, (long)size);
 #endif
 	}
 	else if (v_type == TYPE_ARRAY)

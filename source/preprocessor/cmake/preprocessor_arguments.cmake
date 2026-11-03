@@ -54,7 +54,7 @@ function(preprocessor_arguments_generate _args_size)
 		math(EXPR iterator_modulo "${iterator} % ${preprocessor_arguments_line_align}")
 
 		if(${iterator_modulo} EQUAL 0)
-			set(PREPROCESSOR_ARGS_COUNT_SEQ_IMPL_BODY "${PREPROCESSOR_ARGS_COUNT_SEQ_IMPL_BODY}${iterator}, \\\n\t")
+			set(PREPROCESSOR_ARGS_COUNT_SEQ_IMPL_BODY "${PREPROCESSOR_ARGS_COUNT_SEQ_IMPL_BODY}${iterator}, \\\n\t\t")
 		else()
 			set(PREPROCESSOR_ARGS_COUNT_SEQ_IMPL_BODY "${PREPROCESSOR_ARGS_COUNT_SEQ_IMPL_BODY}${iterator}, ")
 		endif()
@@ -71,7 +71,7 @@ function(preprocessor_arguments_generate _args_size)
 		math(EXPR iterator_modulo "${iterator} % ${preprocessor_arguments_line_align}")
 
 		if(${iterator_modulo} EQUAL 0)
-			set(PREPROCESSOR_ARGS_COMMA_SEQ_IMPL_BODY "${PREPROCESSOR_ARGS_COMMA_SEQ_IMPL_BODY}1, \\\n\t")
+			set(PREPROCESSOR_ARGS_COMMA_SEQ_IMPL_BODY "${PREPROCESSOR_ARGS_COMMA_SEQ_IMPL_BODY}1, \\\n\t\t")
 		else()
 			set(PREPROCESSOR_ARGS_COMMA_SEQ_IMPL_BODY "${PREPROCESSOR_ARGS_COMMA_SEQ_IMPL_BODY}1, ")
 		endif()
@@ -87,7 +87,8 @@ function(preprocessor_arguments_generate _args_size)
 
 		math(EXPR iterator_modulo "${iterator} % ${preprocessor_arguments_line_align}")
 
-		if(${iterator_modulo} EQUAL 0)
+		# Avoid breaking the line after the last argument, the template already does it
+		if(${iterator_modulo} EQUAL 0 AND NOT ${iterator} EQUAL ${preprocessor_arguments_limit})
 			set(PREPROCESSOR_ARGS_N_IMPL_BODY "${PREPROCESSOR_ARGS_N_IMPL_BODY}_${iterator}, \\\n\t")
 		else()
 			set(PREPROCESSOR_ARGS_N_IMPL_BODY "${PREPROCESSOR_ARGS_N_IMPL_BODY}_${iterator}, ")
@@ -96,15 +97,24 @@ function(preprocessor_arguments_generate _args_size)
 	endforeach()
 
 	# Macro implementation: PREPROCESSOR_ARGS_COMMA_IMPL
-	set(PREPROCESSOR_ARGS_COMMA_IMPL_BODY "")
+	set(preprocessor_args_comma_impl_names "")
+	set(preprocessor_args_comma_impl_values "")
 
 	math(EXPR preprocessor_arguments_limit "${PREPROCESSOR_ARGS_SIZE}")
 
-	foreach(iterator RANGE 2 ${preprocessor_arguments_limit})
+	foreach(iterator RANGE 0 ${preprocessor_arguments_limit})
 
-		set(PREPROCESSOR_ARGS_COMMA_IMPL_BODY "${PREPROCESSOR_ARGS_COMMA_IMPL_BODY}#\t\tdefine PREPROCESSOR_ARGS_COMMA_IMPL_${iterator} 0\n")
+		list(APPEND preprocessor_args_comma_impl_names "PREPROCESSOR_ARGS_COMMA_IMPL_${iterator}")
+
+		if(iterator LESS 2)
+			list(APPEND preprocessor_args_comma_impl_values "1")
+		else()
+			list(APPEND preprocessor_args_comma_impl_values "0")
+		endif()
 
 	endforeach()
+
+	preprocessor_template_align(PREPROCESSOR_ARGS_COMMA_IMPL_BODY "\t\t" preprocessor_args_comma_impl_names preprocessor_args_comma_impl_values)
 
 	# Macro implementation: PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY
 	set(PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY "")
@@ -113,7 +123,7 @@ function(preprocessor_arguments_generate _args_size)
 
 	foreach(iterator RANGE 1 ${preprocessor_arguments_limit})
 
-		set(PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY "${PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY},")
+		set(PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY "${PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY}, ")
 
 	endforeach()
 

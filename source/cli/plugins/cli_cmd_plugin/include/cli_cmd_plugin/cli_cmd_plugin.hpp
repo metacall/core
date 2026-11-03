@@ -19,7 +19,7 @@
  */
 
 #ifndef CLI_CMD_PLUGIN_H
-#define CLI_CMD_PLUGIN_H 1
+#define CLI_CMD_PLUGIN_H
 
 #include <metacall/metacall.h>
 

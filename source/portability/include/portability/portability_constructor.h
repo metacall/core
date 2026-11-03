@@ -19,7 +19,7 @@
  */
 
 #ifndef PORTABILITY_CONSTRUCTOR_H
-#define PORTABILITY_CONSTRUCTOR_H 1
+#define PORTABILITY_CONSTRUCTOR_H
 
 /* -- Headers -- */
 

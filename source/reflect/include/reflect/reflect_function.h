@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_FUNCTION_H
-#define REFLECT_FUNCTION_H 1
+#define REFLECT_FUNCTION_H
 
 #include <reflect/reflect_async.h>
 #include <reflect/reflect_signature.h>
@@ -58,7 +58,7 @@ typedef struct function_interface_type
 	function_impl_interface_await await;
 	function_impl_interface_destroy destroy;
 
-} * function_interface;
+} *function_interface;
 
 typedef function_interface (*function_impl_interface_singleton)(void);
 

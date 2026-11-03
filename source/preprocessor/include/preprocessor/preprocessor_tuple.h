@@ -19,7 +19,7 @@
  */
 
 #ifndef PREPROCESSOR_TUPLE_H
-#define PREPROCESSOR_TUPLE_H 1
+#define PREPROCESSOR_TUPLE_H
 
 /* -- Headers -- */
 

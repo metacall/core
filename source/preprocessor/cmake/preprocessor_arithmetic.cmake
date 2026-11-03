@@ -42,26 +42,38 @@ function(preprocessor_arithmetic_generate _arithmetic_size)
 	file(READ ${preprocessor_path}/preprocessor_arithmetic_body.h.in preprocessor_arithmetic_body_in)
 
 	# Definition implementation: PREPROCESSOR_INCREMENT_IMPL
-	set(PREPROCESSOR_INCREMENT_IMPL_BODY "")
+	set(preprocessor_increment_impl_names "")
+	set(preprocessor_increment_impl_values "")
 
 	foreach(iterator RANGE 0 ${PREPROCESSOR_ARITHMETIC_SIZE})
 
 		math(EXPR iterator_increment "${iterator} + 1")
 
-		set(PREPROCESSOR_INCREMENT_IMPL_BODY "${PREPROCESSOR_INCREMENT_IMPL_BODY}#define PREPROCESSOR_INCREMENT_IMPL_${iterator} ${iterator_increment}\n")
+		list(APPEND preprocessor_increment_impl_names "PREPROCESSOR_INCREMENT_IMPL_${iterator}")
+		list(APPEND preprocessor_increment_impl_values "${iterator_increment}")
 
 	endforeach()
+
+	preprocessor_template_align(PREPROCESSOR_INCREMENT_IMPL_BODY "" preprocessor_increment_impl_names preprocessor_increment_impl_values)
 
 	# Definition implementation: PREPROCESSOR_DECREMENT_IMPL
-	set(PREPROCESSOR_DECREMENT_IMPL_BODY "")
+	set(preprocessor_decrement_impl_names "")
+	set(preprocessor_decrement_impl_values "")
 
-	foreach(iterator RANGE 1 ${PREPROCESSOR_ARITHMETIC_SIZE})
+	foreach(iterator RANGE 0 ${PREPROCESSOR_ARITHMETIC_SIZE})
 
-		math(EXPR iterator_decrement "${iterator} - 1")
+		if(iterator EQUAL 0)
+			set(iterator_decrement 0)
+		else()
+			math(EXPR iterator_decrement "${iterator} - 1")
+		endif()
 
-		set(PREPROCESSOR_DECREMENT_IMPL_BODY "${PREPROCESSOR_DECREMENT_IMPL_BODY}#define PREPROCESSOR_DECREMENT_IMPL_${iterator} ${iterator_decrement}\n")
+		list(APPEND preprocessor_decrement_impl_names "PREPROCESSOR_DECREMENT_IMPL_${iterator}")
+		list(APPEND preprocessor_decrement_impl_values "${iterator_decrement}")
 
 	endforeach()
+
+	preprocessor_template_align(PREPROCESSOR_DECREMENT_IMPL_BODY "" preprocessor_decrement_impl_names preprocessor_decrement_impl_values)
 
 	# Configure arithmetic template headers
 	string(CONFIGURE ${preprocessor_arithmetic_headers_in} preprocessor_arithmetic_headers @ONLY)

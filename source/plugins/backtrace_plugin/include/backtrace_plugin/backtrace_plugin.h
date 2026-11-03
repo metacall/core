@@ -19,7 +19,7 @@
  */
 
 #ifndef BACKTRACE_PLUGIN_H
-#define BACKTRACE_PLUGIN_H 1
+#define BACKTRACE_PLUGIN_H
 
 #include <backtrace_plugin/backtrace_plugin_api.h>
 

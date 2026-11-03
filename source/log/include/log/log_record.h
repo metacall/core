@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_RECORD_H
-#define LOG_RECORD_H 1
+#define LOG_RECORD_H
 
 /* -- Headers -- */
 

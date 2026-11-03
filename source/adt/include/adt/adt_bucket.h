@@ -7,7 +7,7 @@
  */
 
 #ifndef ADT_BUCKET_H
-#define ADT_BUCKET_H 1
+#define ADT_BUCKET_H
 
 /* -- Headers -- */
 

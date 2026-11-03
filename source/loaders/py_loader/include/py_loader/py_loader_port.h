@@ -19,7 +19,7 @@
  */
 
 #ifndef PY_LOADER_PORT_H
-#define PY_LOADER_PORT_H 1
+#define PY_LOADER_PORT_H
 
 #include <py_loader/py_loader_api.h>
 

@@ -36,20 +36,20 @@ typedef struct loader_impl_dart_type
 {
 	void *impl_dart_data;
 
-} * loader_impl_dart;
+} *loader_impl_dart;
 
 typedef struct loader_impl_dart_handle_type
 {
 	void *handle_dart_data;
 
-} * loader_impl_dart_handle;
+} *loader_impl_dart_handle;
 
 typedef struct loader_impl_dart_function_type
 {
 	loader_impl_dart_handle dart_handle;
 	void *function_dart_data;
 
-} * loader_impl_dart_function;
+} *loader_impl_dart_function;
 
 int function_dart_interface_create(function func, function_impl impl)
 {

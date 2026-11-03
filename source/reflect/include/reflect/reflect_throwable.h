@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_THROWABLE_H
-#define REFLECT_THROWABLE_H 1
+#define REFLECT_THROWABLE_H
 
 #include <reflect/reflect_api.h>
 

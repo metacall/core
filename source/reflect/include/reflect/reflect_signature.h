@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_SIGNATURE_H
-#define REFLECT_SIGNATURE_H 1
+#define REFLECT_SIGNATURE_H
 
 #include <reflect/reflect_api.h>
 

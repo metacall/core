@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_SERIAL_H
-#define METACALL_SERIAL_H 1
+#define METACALL_SERIAL_H
 
 /* -- Headers -- */
 

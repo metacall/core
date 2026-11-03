@@ -41,7 +41,7 @@ typedef struct loader_impl_cob_handle_type
 {
 	std::map<std::string, void *> funcs;
 
-} * loader_impl_cob_handle;
+} *loader_impl_cob_handle;
 
 static void *loader_impl_cob_ptr = NULL;
 

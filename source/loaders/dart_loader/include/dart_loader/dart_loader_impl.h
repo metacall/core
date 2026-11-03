@@ -19,7 +19,7 @@
  */
 
 #ifndef DART_LOADER_IMPL_H
-#define DART_LOADER_IMPL_H 1
+#define DART_LOADER_IMPL_H
 
 #include <dart_loader/dart_loader_api.h>
 

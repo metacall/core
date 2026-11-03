@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_LOG_H
-#define METACALL_LOG_H 1
+#define METACALL_LOG_H
 
 /* -- Headers -- */
 

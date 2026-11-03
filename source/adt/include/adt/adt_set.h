@@ -7,7 +7,7 @@
  */
 
 #ifndef ADT_SET_H
-#define ADT_SET_H 1
+#define ADT_SET_H
 
 /* -- Headers -- */
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef CONFIGURATION_SINGLETON_H
-#define CONFIGURATION_SINGLETON_H 1
+#define CONFIGURATION_SINGLETON_H
 
 /* -- Headers -- */
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef PREPROCESSOR_BIT_H
-#define PREPROCESSOR_BIT_H 1
+#define PREPROCESSOR_BIT_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef NODE_LOADER_IMPL_H
-#define NODE_LOADER_IMPL_H 1
+#define NODE_LOADER_IMPL_H
 
 #include <node_loader/node_loader_api.h>
 
@@ -47,7 +47,7 @@ typedef struct loader_impl_async_func_await_trampoline_type
 	function_resolve_callback reject_callback;
 	void *context;
 
-} * loader_impl_async_func_await_trampoline;
+} *loader_impl_async_func_await_trampoline;
 
 NODE_LOADER_API loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config);
 

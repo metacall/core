@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_POLICY_FORMAT_BINARY_H
-#define LOG_POLICY_FORMAT_BINARY_H 1
+#define LOG_POLICY_FORMAT_BINARY_H
 
 /* -- Headers -- */
 

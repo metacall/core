@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_FUTURE_H
-#define REFLECT_FUTURE_H 1
+#define REFLECT_FUTURE_H
 
 #include <reflect/reflect_value.h>
 
@@ -51,7 +51,7 @@ typedef struct future_interface_type
 	future_impl_interface_await await;
 	future_impl_interface_destroy destroy;
 
-} * future_interface;
+} *future_interface;
 
 typedef future_interface (*future_impl_interface_singleton)(void);
 

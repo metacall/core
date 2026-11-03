@@ -19,7 +19,7 @@
  */
 
 #ifndef MEMORY_ALLOCATOR_NGINX_IMPL_H
-#define MEMORY_ALLOCATOR_NGINX_IMPL_H 1
+#define MEMORY_ALLOCATOR_NGINX_IMPL_H
 
 /* -- Headers -- */
 

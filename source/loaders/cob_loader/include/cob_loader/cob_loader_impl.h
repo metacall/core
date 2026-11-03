@@ -19,7 +19,7 @@
  */
 
 #ifndef COB_LOADER_IMPL_H
-#define COB_LOADER_IMPL_H 1
+#define COB_LOADER_IMPL_H
 
 #include <cob_loader/cob_loader_api.h>
 

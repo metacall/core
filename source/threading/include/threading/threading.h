@@ -19,7 +19,7 @@
  */
 
 #ifndef THREADING_H
-#define THREADING_H 1
+#define THREADING_H
 
 #include <threading/threading_api.h>
 

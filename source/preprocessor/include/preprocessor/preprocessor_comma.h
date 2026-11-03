@@ -19,7 +19,7 @@
  */
 
 #ifndef PREPROCESSOR_COMMA_H
-#define PREPROCESSOR_COMMA_H 1
+#define PREPROCESSOR_COMMA_H
 
 /* -- Headers -- */
 

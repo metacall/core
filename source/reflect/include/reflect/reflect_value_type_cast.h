@@ -19,7 +19,7 @@
 */
 
 #ifndef REFLECT_VALUE_TYPE_CAST_H
-#define REFLECT_VALUE_TYPE_CAST_H 1
+#define REFLECT_VALUE_TYPE_CAST_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef PLUGIN_EXTENSION_H
-#define PLUGIN_EXTENSION_H 1
+#define PLUGIN_EXTENSION_H
 
 #include <plugin_extension/plugin_extension_api.h>
 

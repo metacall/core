@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_LOADERS_H
-#define METACALL_LOADERS_H 1
+#define METACALL_LOADERS_H
 
 #cmakedefine OPTION_BUILD_LOADERS		1
 

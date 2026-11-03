@@ -19,7 +19,7 @@
  */
 
 #ifndef RB_LOADER_INCLUDE_H
-#define RB_LOADER_INCLUDE_H 1
+#define RB_LOADER_INCLUDE_H
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(_MSC_VER) && defined(boolean)
 	#undef boolean

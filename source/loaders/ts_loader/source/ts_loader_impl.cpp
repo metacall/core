@@ -43,7 +43,7 @@ typedef struct ts_loader_impl_function_type
 {
 	std::string name;
 	std::map<std::string, void *> data;
-} * ts_loader_impl_function;
+} *ts_loader_impl_function;
 
 int function_ts_interface_create(function func, function_impl impl)
 {

@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_ASPECT_SCHEDULE_H
-#define LOG_ASPECT_SCHEDULE_H 1
+#define LOG_ASPECT_SCHEDULE_H
 
 /* -- Headers -- */
 

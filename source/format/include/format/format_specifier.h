@@ -19,7 +19,7 @@
  */
 
 #ifndef FORMAT_SPECIFIER_H
-#define FORMAT_SPECIFIER_H 1
+#define FORMAT_SPECIFIER_H
 
 /* -- Headers -- */
 
@@ -107,6 +107,16 @@ extern "C" {
 	#else
 		#define FORMAT_PREFIX
 	#endif
+#endif
+
+#if defined(__MINGW32__)
+	/* MinGW printf format depends on the runtime (msvcrt, ucrt or mingw ansi stdio), not on the
+	architecture; delegate to the toolchain inttypes.h, size_t and uintptr_t have the same width on Windows */
+	#define PRIdS PRIdPTR
+	#define PRIxS PRIxPTR
+	#define PRIuS PRIuPTR
+	#define PRIXS PRIXPTR
+	#define PRIoS PRIoPTR
 #endif
 
 #if !defined(PRIdS)
