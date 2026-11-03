@@ -4213,7 +4213,10 @@ value py_loader_impl_error_value(loader_impl_py py_impl)
 
 	PyErr_Clear();
 
-	return v;
+	/* The exception has been raised in Python, so it is returned as a throwable */
+	throwable th = throwable_create(v);
+
+	return value_create_throwable(th);
 }
 
 value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj)
@@ -4248,9 +4251,7 @@ value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject
 
 	exception ex = exception_create_const(value_str, type_str, 0, traceback_str ? traceback_str : traceback_not_found);
 
-	throwable th = throwable_create(value_create_exception(ex));
-
-	ret = value_create_throwable(th);
+	ret = value_create_exception(ex);
 
 	Py_DecRef(value_str_obj);
 	Py_DecRef(traceback_list);
