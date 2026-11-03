@@ -45,7 +45,7 @@ typedef struct type_interface_type
 	type_impl_interface_create create;
 	type_impl_interface_destroy destroy;
 
-} * type_interface;
+} *type_interface;
 
 typedef type_interface (*type_impl_interface_singleton)(void);
 

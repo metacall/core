@@ -93,17 +93,6 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD
 	return()
 endif()
 
-if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
-	find_package(DotNET)
-	check_tsan_executable("${DOTNET_CORE_LIBRARY}" DotNET_TSAN)
-	if(NOT DotNET_TSAN)
-		# This test fails when run with thread sanitizer due to C# when CoreCLR is not compiled with TSAN:
-		# coreclr_initialize status (0x8007ff0b)
-		# For solving this, we should enable C# support for sanitizers and debug it properly
-		return()
-	endif()
-endif()
-
 #
 # Define environment variables
 #
@@ -213,43 +202,47 @@ endif()
 
 set(node_port_test_exec "${node_port_test}_executable")
 
-# TODO: Since MacOS 14 with ARM64, it does not support well NodeJS executable with preloaded sanitizers
-# The NodeJS initalization fails with: Node Loader failed to hook napi_register_module_v1
-if(PROJECT_OS_FAMILY STREQUAL macos)
-	# Check if NodeJS is compiled with Address Sanitizer
-	if(OPTION_BUILD_ADDRESS_SANITIZER)
-		check_asan_executable("${NodeJS_EXECUTABLE}" NodeJS_ASAN)
-		if(NOT NodeJS_ASAN)
-			# Skip this test because it gives false positives if NodeJS is not compiled with ASan
-			return()
-		endif()
-	endif()
+# Check if NodeJS is compiled with Sanitizers
+if(OPTION_BUILD_ADDRESS_SANITIZER)
+	check_asan_executable("${NodeJS_EXECUTABLE}" NodeJS_SANITIZER)
+elseif(OPTION_BUILD_THREAD_SANITIZER)
+	check_tsan_executable("${NodeJS_EXECUTABLE}" NodeJS_SANITIZER)
+elseif(OPTION_BUILD_MEMORY_SANITIZER)
+	check_msan_executable("${NodeJS_EXECUTABLE}" NodeJS_SANITIZER)
+endif()
 
-	# Check if NodeJS is compiled with Thread Sanitizer
-	if(OPTION_BUILD_THREAD_SANITIZER)
-		check_tsan_executable("${NodeJS_EXECUTABLE}" NodeJS_TSAN)
-		if(NOT NodeJS_TSAN)
-			# Skip this test because it gives false positives if NodeJS is not compiled with TSan
-			return()
-		endif()
+if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	AND NOT NodeJS_SANITIZER)
+	# Check if we can use preloaded sanitizers
+	if(NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
+		return()
 	endif()
+	set(NodeJS_PRELOAD "${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}")
 endif()
 
 # Address sanitizer does not work with Rust on Linux in NodeJS executable test
+# (the preloaded sanitizer is inherited by the linker spawned by rustc, which fails due to leaks)
 if(PROJECT_OS_LINUX AND OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_RS)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS)
 endif()
 
-# Check if we can use preloaded sanitizers
-if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
-	AND NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
-	return()
+# TODO: MacOS arm64 with Clang and Address & Thread Sanitizer fails to hook napi_register_module_v1
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"
+	AND (OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER))
+    return()
 endif()
 
 message(STATUS "Test ${node_port_test_exec}")
 
+# Grow stack size to avoid "Error: Maximum call stack size exceeded" on complex callback tests,
+# NodeJS is the host here so the node_loader cannot set it, the main thread stack (8 MB by default)
+# is shared with the native frames of the calls between runtimes, so leave enough room for them
+if(OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
+	set(NodeJS_STACK_SIZE "--stack-size=4096")
+endif()
+
 add_test(NAME ${node_port_test_exec}
-	COMMAND ${NodeJS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test.js"
+	COMMAND ${NodeJS_EXECUTABLE} ${NodeJS_STACK_SIZE} "${CMAKE_CURRENT_SOURCE_DIR}/test.js"
 )
 
 # Define test labels
@@ -267,5 +260,5 @@ test_environment_variables(${node_port_test_exec}
 	${TESTS_ENVIRONMENT_VARIABLES_OPENSSL}
 	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
 	${TESTS_SANITIZER_ENVIRONMENT_VARIABLES}
-	${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}
+	${NodeJS_PRELOAD}
 )

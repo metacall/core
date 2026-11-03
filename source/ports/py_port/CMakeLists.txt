@@ -105,19 +105,28 @@ endif()
 
 set(py_port_test_exec "${py_port_test}_executable")
 
-# Check if Python is compiled with Address Sanitizer
+# Check if Python is compiled with Sanitizers
 if(OPTION_BUILD_ADDRESS_SANITIZER)
-	check_asan_executable("${Python3_EXECUTABLE}" Python3_ASAN)
-	if(NOT Python3_ASAN)
-		# Skip this test because it gives false positives if Python is not compiled with ASan
-		return()
-	endif()
+	check_asan_executable("${Python3_EXECUTABLE}" Python3_SANITIZER)
+elseif(OPTION_BUILD_THREAD_SANITIZER)
+	check_tsan_executable("${Python3_EXECUTABLE}" Python3_SANITIZER)
+elseif(OPTION_BUILD_MEMORY_SANITIZER)
+	check_msan_executable("${Python3_EXECUTABLE}" Python3_SANITIZER)
 endif()
 
-# Check if we can use preloaded sanitizers
 if((OPTION_BUILD_ADDRESS_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER OR OPTION_BUILD_MEMORY_SANITIZER)
-	AND NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
-	return()
+	AND NOT Python3_SANITIZER)
+	# Check if we can use preloaded sanitizers
+	if(NOT TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES)
+		return()
+	endif()
+	set(Python3_PRELOAD "${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}")
+endif()
+
+# Address sanitizer does not work with Rust on Linux in Python executable test
+# (the preloaded sanitizer is inherited by the linker spawned by rustc, which fails due to leaks)
+if(PROJECT_OS_LINUX AND OPTION_BUILD_ADDRESS_SANITIZER AND OPTION_BUILD_LOADERS_RS)
+	set(TESTS_ENVIRONMENT_VARIABLES_RS)
 endif()
 
 message(STATUS "Test ${py_port_test_exec}")
@@ -143,7 +152,7 @@ test_environment_variables(${py_port_test_exec}
 	${TESTS_ENVIRONMENT_VARIABLES_RS}
 	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
 	${TESTS_SANITIZER_ENVIRONMENT_VARIABLES}
-	${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}
+	${Python3_PRELOAD}
 )
 
 #
@@ -174,5 +183,5 @@ test_environment_variables(${py_port_test_exec_alone}
 	"LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH}"
 	"METACALL_INSTALL_PATH=${PROJECT_OUTPUT_DIR}"
 	${TESTS_SANITIZER_ENVIRONMENT_VARIABLES}
-	${TESTS_SANITIZER_PRELOAD_ENVIRONMENT_VARIABLES}
+	${Python3_PRELOAD}
 )

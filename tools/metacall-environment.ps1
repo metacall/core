@@ -245,6 +245,112 @@ function Set-Curl {
 	Write-Output "-DCURL_LIBRARY_NAME=""$CURL_LIB_NAME""" >> $EnvOpts
 }
 
+function Set-Lua {
+	Write-Output "Install Lua"
+
+	Set-Location $ROOT_DIR
+
+	$RuntimeDir = "$env:ProgramFiles\luajit"
+	$DepsDir = "$ROOT_DIR\dependencies"
+	$LuaSourceDir = "$DepsDir\luajit"
+
+	# Download source
+	if (!(Test-Path -Path $LuaSourceDir)) {
+		git clone https://luajit.org/git/luajit.git $LuaSourceDir
+
+		if ($LASTEXITCODE -ne 0) {
+			throw "Failed to clone LuaJIT repository."
+		}
+	}
+
+	# Build with MSVC
+	Set-Location "$LuaSourceDir\src"
+
+	& .\msvcbuild.bat
+
+	if ($LASTEXITCODE -ne 0) {
+		throw "LuaJIT MSVC build failed."
+	}
+
+	# Create runtime directory
+	mkdir $RuntimeDir -Force | Out-Null
+	mkdir "$RuntimeDir\lua" -Force | Out-Null
+	mkdir "$RuntimeDir\lua\jit" -Force | Out-Null
+	mkdir "$RuntimeDir\include" -Force | Out-Null
+
+	# Install LuaJIT runtime
+	Copy-Item ".\luajit.exe" "$RuntimeDir\luajit.exe" -Force
+	Copy-Item ".\lua51.lib" "$RuntimeDir\lua51.lib" -Force
+	Copy-Item ".\lua51.dll" "$RuntimeDir\lua51.dll" -Force
+	Copy-Item ".\jit\*" "$RuntimeDir\lua\jit\" -Recurse -Force
+
+	# Install LuaJIT C API headers
+	$LuaHeaders = @(
+		"lua.h"
+		"lualib.h"
+		"lauxlib.h"
+		"luaconf.h"
+		"lua.hpp"
+		"luajit.h"
+	)
+
+	foreach ($Header in $LuaHeaders) {
+		Copy-Item ".\$Header" "$RuntimeDir\include\$Header" -Force
+	}
+
+	# Add LuaJIT to PATH
+	Add-to-Path $RuntimeDir
+
+	# Configure CMake
+	$EnvOpts = "$ROOT_DIR\build\CMakeConfig.txt"
+	$LuaDir = $RuntimeDir.Replace('\', '/')
+
+	Write-Output "-DLuaJIT_EXECUTABLE=""$LuaDir/luajit.exe""" >> $EnvOpts
+	Write-Output "-DLuaJIT_INCLUDE_DIR=""$LuaDir/include""" >> $EnvOpts
+	Write-Output "-DLuaJIT_LIBRARY=""$LuaDir/lua51.lib""" >> $EnvOpts
+	Write-Output "-DLuaJIT_LIBRARY_NAME=""$LuaDir/lua51.dll""" >> $EnvOpts
+	Write-Output "-DLuaJIT_LIBRARY_SEARCH_PATHS=""$LuaDir""" >> $EnvOpts
+}
+
+function Set-ClangFormat {
+	Write-Output "Install clang-format"
+	Set-Location $ROOT_DIR
+
+	# Keep the major version in sync with FORMAT_CLANG_FORMAT_VERSION in cmake/Format.cmake
+	$LLVMVersion = '19.1.7'
+	$LLVMMajor = ([version]$LLVMVersion).Major
+	$RuntimeDir = "$env:ProgramFiles\LLVM"
+	$DepsDir = "$ROOT_DIR\dependencies"
+	$Installer = "LLVM-$LLVMVersion-win64.exe"
+
+	# Skip it if the required version is already installed
+	$ClangFormat = "$RuntimeDir\bin\clang-format.exe"
+
+	if (Test-Path -Path $ClangFormat) {
+		$Version = & $ClangFormat --version
+
+		if ("$Version" -match "clang-format version $LLVMMajor\.") {
+			Write-Output "clang-format $LLVMMajor is already installed"
+			return
+		}
+	}
+
+	mkdir -Force $DepsDir
+	Set-Location $DepsDir
+
+	if (!(Test-Path -Path "$DepsDir\$Installer")) {
+		# Download installer
+		Write-Output "LLVM installer not found downloading now..."
+		(New-Object Net.WebClient).DownloadFile("https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVMVersion/$Installer", "$DepsDir\$Installer")
+	}
+
+	# Silent installation, it installs into $RuntimeDir by default
+	Start-Process -FilePath "$DepsDir\$Installer" -Args "/S" -Verb RunAs -Wait
+
+	# cmake/FindClangFormat.cmake also searches in $RuntimeDir\bin
+	Add-to-Path "$RuntimeDir\bin"
+}
+
 function Add-to-Path {
 	$GivenPath = $args[0]
 
@@ -302,30 +408,35 @@ function Configure {
 		}
 		if ("$var" -eq 'netcore') {
 			Write-Output "netcore selected"
+			# TODO
 		}
 		if ("$var" -eq 'netcore2') {
 			Write-Output "netcore 2 selected"
+			# TODO
 		}
 		if ("$var" -eq 'netcore5') {
 			Write-Output "netcore 5 selected"
-		}
-		if ("$var" -eq 'rapidjson') {
-			Write-Output "rapidjson selected"
+			# TODO
 		}
 		if (("$var" -eq 'v8') -or ("$var" -eq 'v8rep54')) {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep57') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep58') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep52') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'v8rep51') {
 			Write-Output "v8 selected"
+			# TODO
 		}
 		if ("$var" -eq 'nodejs') {
 			Write-Output "nodejs selected"
@@ -337,6 +448,7 @@ function Configure {
 		}
 		if ("$var" -eq 'file') {
 			Write-Output "file selected"
+			# TODO
 		}
 		if ("$var" -eq 'rpc') {
 			Write-Output "rpc selected"
@@ -344,6 +456,7 @@ function Configure {
 		}
 		if ("$var" -eq 'wasm') {
 			Write-Output "wasm selected"
+			# TODO
 		}
 		if ("$var" -eq 'java') {
 			Write-Output "java selected"
@@ -351,15 +464,23 @@ function Configure {
 		}
 		if ("$var" -eq 'c') {
 			Write-Output "c selected"
+			# TODO
 		}
 		if ("$var" -eq 'cobol') {
 			Write-Output "cobol selected"
+			# TODO
 		}
 		if ("$var" -eq 'go') {
 			Write-Output "go selected"
+			# TODO
 		}
 		if ("$var" -eq 'rust') {
 			Write-Output "rust selected"
+			# TODO
+		}
+		if ("$var" -eq 'lua') {
+			Write-Output "lua selected"
+			Set-Lua
 		}
 		if ("$var" -eq 'metacall') {
 			Write-Output "metacall selected"
@@ -369,6 +490,7 @@ function Configure {
 		}
 		if ("$var" -eq 'clangformat') {
 			Write-Output "clangformat selected"
+			Set-ClangFormat
 		}
 	}
 }
@@ -382,7 +504,6 @@ function Help {
 	Write-Output "	netcore"
 	Write-Output "	netcore2"
 	Write-Output "	netcore5"
-	Write-Output "	rapidjson"
 	Write-Output "	v8"
 	Write-Output "	v8rep51"
 	Write-Output "	v8rep54"
@@ -397,6 +518,8 @@ function Help {
 	Write-Output "	c"
 	Write-Output "	cobol"
 	Write-Output "	go"
+	Write-Output "	rust"
+	Write-Output "	lua"
 	Write-Output "	metacall"
 	Write-Output "	pack"
 	Write-Output "	clangformat"

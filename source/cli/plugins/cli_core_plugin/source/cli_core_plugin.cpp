@@ -32,6 +32,15 @@
 #include <unordered_map>
 #include <vector>
 
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+using UINT = unsigned int;
+
+extern "C" __declspec(dllimport) UINT __stdcall GetConsoleOutputCP();
+extern "C" __declspec(dllimport) int __stdcall SetConsoleOutputCP(UINT wCodePageID);
+
+constexpr UINT CP_UTF8 = 65001;
+#endif
+
 /* Error messages */
 #define LOAD_ERROR		"Failed to load a script"
 #define INSPECT_ERROR	"Failed to inspect MetaCall context"
@@ -453,6 +462,12 @@ void *help(size_t argc, void *args[], void *data)
 	/* Validate function parameters */
 	EXTENSION_FUNCTION_CHECK(HELP_ERROR);
 
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+	/* Enable UTF-8 output so Unicode box-drawing characters render correctly */
+	UINT prev_cp = GetConsoleOutputCP();
+	SetConsoleOutputCP(CP_UTF8);
+#endif
+
 	/* Print copyright first */
 	COPYRIGHT_PRINT();
 
@@ -635,6 +650,11 @@ void *help(size_t argc, void *args[], void *data)
 	std::cout << "\t│ help                                                                                   │" << std::endl;
 	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
 			  << std::endl;
+
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+	/* Restore the original console output code page */
+	SetConsoleOutputCP(prev_cp);
+#endif
 
 	return metacall_value_create_int(0);
 }

@@ -44,21 +44,21 @@
 	#define PORTABILITY_PATH_SIZE MAX_PATH
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 	#include <limits.h>
-	#include <sys/types.h>
-	#include <sys/sysctl.h>
 	#include <sys/stat.h>
+	#include <sys/sysctl.h>
+	#include <sys/types.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #elif defined(__HAIKU__) || defined(__BEOS__)
 	#include <limits.h>
+	#include <stddef.h>
 	#include <sys/stat.h>
 	#include <unistd.h>
-	#include <stddef.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #elif defined(sun) || defined(__sun)
-	#include <stdlib.h>
 	#include <limits.h>
+	#include <stdlib.h>
 	#include <string.h>
 	#include <sys/stat.h>
 
@@ -67,15 +67,15 @@
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
 
 	#include <limits.h>
-	#include <unistd.h>
 	#include <sys/stat.h>
+	#include <unistd.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	#include <stdlib.h>
 	#include <limits.h>
-	#include <sys/syslimits.h>
+	#include <stdlib.h>
 	#include <sys/stat.h>
+	#include <sys/syslimits.h>
 
 	#define PORTABILITY_PATH_SIZE PATH_MAX
 #else
@@ -187,6 +187,8 @@ PORTABILITY_API size_t portability_path_get_relative(const char *base, size_t ba
 PORTABILITY_API int portability_path_is_subpath(const char *parent, size_t parent_size, const char *child, size_t child_size);
 
 PORTABILITY_API int portability_path_is_absolute(const char *path, size_t size);
+
+PORTABILITY_API int portability_path_is_relative(const char *path, size_t size);
 
 PORTABILITY_API size_t portability_path_join(const char *left_path, size_t left_path_size, const char *right_path, size_t right_path_size, char *join_path, size_t join_size);
 

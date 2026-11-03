@@ -85,7 +85,7 @@ TEST_F(metacall_reload_functions_test, DefaultConstructor)
 
 		void *ret = metacallhv_s(handle0, "f", metacall_null_args, 0);
 
-		EXPECT_EQ((int)5, (int)metacall_value_to_int(ret));
+		EXPECT_EQ((long)5, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
@@ -102,7 +102,7 @@ TEST_F(metacall_reload_functions_test, DefaultConstructor)
 
 		ret = metacallhv_s(handle1, "f", metacall_null_args, 0);
 
-		EXPECT_EQ((int)6, (int)metacall_value_to_int(ret));
+		EXPECT_EQ((long)6, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 

@@ -161,8 +161,8 @@ TEST_F(preprocessor_test, for)
 {
 #define PREPROCESSOR_TEST_FOR(context, iterator, element) \
 	context \
-		PREPROCESSOR_STRINGIFY(iterator) \
-			element \
+	PREPROCESSOR_STRINGIFY(iterator) \
+		element \
 		"-"
 
 	const char for_str[] = PREPROCESSOR_FOR(PREPROCESSOR_TEST_FOR, "yeet", "a", "b", "c", "d", "e", "f");

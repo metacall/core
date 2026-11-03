@@ -26,14 +26,14 @@ extern "C" {
 /* -- Macros -- */
 
 #define PREPROCESSOR_COMPARE_IMPL(left, right) \
-	PREPROCESSOR_DETECT_PARENTHESIS(           \
+	PREPROCESSOR_DETECT_PARENTHESIS( \
 		PREPROCESSOR_COMPARE_##left(PREPROCESSOR_COMPARE_##right)(()))
 
-#define PREPROCESSOR_NOT_EQUAL(left, right)                                                                \
-	PREPROCESSOR_IF_IMPL(                                                                                  \
+#define PREPROCESSOR_NOT_EQUAL(left, right) \
+	PREPROCESSOR_IF_IMPL( \
 		PREPROCESSOR_BIT_AND(PREPROCESSOR_DETECT_COMPARABLE(left))(PREPROCESSOR_DETECT_COMPARABLE(right)), \
-		PREPROCESSOR_COMPARE_IMPL,                                                                         \
-		1 PREPROCESSOR_EMPTY_EXPANSION_VARIADIC)                                                           \
+		PREPROCESSOR_COMPARE_IMPL, \
+		1 PREPROCESSOR_EMPTY_EXPANSION_VARIADIC) \
 	(left, right)
 
 #define PREPROCESSOR_EQUAL(left, right) \

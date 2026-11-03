@@ -99,31 +99,13 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
-      - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
+      - name: Upload benchmark result
+        uses: actions/upload-artifact@v4
         if: ${{ github.event_name != 'pull_request' }}
         with:
-            name: MetaCall Benchmark (${{ matrix.os }})
-            tool: 'googlecpp'
-            output-file-path: ./build/benchmarks/metacall-benchmarks.json
-            # Access token to deploy GitHub Pages branch
-            github-token: ${{ secrets.BENCHMARKS_PUSH_TOKEN }}
-            # Disable push and deploy GitHub pages branch automatically
-            auto-push: false
-            # Github Pages repository name
-            gh-repository: github.com/metacall/core-benchmarks
-            # Github Pages branch name
-            gh-pages-branch: main
-            # Output directory
-            benchmark-data-dir-path: ./${{ matrix.os }}
-
-      - name:  Push benchmark result
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          cd  benchmark-data-repository
-          git push https://$REPO_KEY@github.com/metacall/core-benchmarks.git
-        env:
-          REPO_KEY: ${{secrets.BENCHMARKS_PUSH_TOKEN}}
+          name: benchmark-${{ matrix.os }}
+          path: ./build/benchmarks/metacall-benchmarks.json
+          if-no-files-found: error
 
   benchmark-windows:
     runs-on: ${{ matrix.os }}
@@ -173,28 +155,94 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: python3 ./tools/metacall-benchmarks-merge.py ./build/benchmarks
 
-      - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
+      - name: Upload benchmark result
+        uses: actions/upload-artifact@v4
         if: ${{ github.event_name != 'pull_request' }}
         with:
-            name: MetaCall Benchmark (${{ matrix.os }})
+          name: benchmark-${{ matrix.os }}
+          path: ./build/benchmarks/metacall-benchmarks.json
+          if-no-files-found: error
+
+  benchmark-push:
+    needs: [benchmark-unix, benchmark-windows]
+    # Push the results that are available even if some of the benchmarks failed
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the benchmarks repository
+        uses: actions/checkout@v4
+        with:
+          repository: metacall/core-benchmarks
+          ref: main
+          # Access token to push into the benchmarks repository
+          token: ${{ secrets.BENCHMARKS_PUSH_TOKEN }}
+
+      - name: Download benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-*
+          path: results
+
+      - name: Store benchmark result (macos-latest)
+        uses: benchmark-action/github-action-benchmark@v1
+        if: ${{ hashFiles('results/benchmark-macos-latest/metacall-benchmarks.json') != '' }}
+        with:
+            name: MetaCall Benchmark (macos-latest)
             tool: 'googlecpp'
-            output-file-path: ./build/benchmarks/metacall-benchmarks.json
-            # Access token to deploy GitHub Pages branch
-            github-token: ${{ secrets.BENCHMARKS_PUSH_TOKEN }}
-            # Disable push and deploy GitHub pages branch automatically
+            output-file-path: ./results/benchmark-macos-latest/metacall-benchmarks.json
+            # Commit into the core-benchmarks checkout of the workspace, push is done once at the end
+            skip-fetch-gh-pages: true
             auto-push: false
-            # Github Pages repository name
-            gh-repository: github.com/metacall/core-benchmarks
             # Github Pages branch name
             gh-pages-branch: main
             # Output directory
-            benchmark-data-dir-path: ./${{ matrix.os }}
+            benchmark-data-dir-path: ./macos-latest
 
-      - name:  Push benchmark result
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |     
-          cd  benchmark-data-repository
-          git push https://${REPO_KEY}@github.com/metacall/core-benchmarks.git
-        env:
-          REPO_KEY: ${{secrets.BENCHMARKS_PUSH_TOKEN}}
+      - name: Store benchmark result (ubuntu-latest)
+        uses: benchmark-action/github-action-benchmark@v1
+        if: ${{ hashFiles('results/benchmark-ubuntu-latest/metacall-benchmarks.json') != '' }}
+        with:
+            name: MetaCall Benchmark (ubuntu-latest)
+            tool: 'googlecpp'
+            output-file-path: ./results/benchmark-ubuntu-latest/metacall-benchmarks.json
+            # Commit into the core-benchmarks checkout of the workspace, push is done once at the end
+            skip-fetch-gh-pages: true
+            auto-push: false
+            # Github Pages branch name
+            gh-pages-branch: main
+            # Output directory
+            benchmark-data-dir-path: ./ubuntu-latest
+
+      - name: Store benchmark result (windows-2022)
+        uses: benchmark-action/github-action-benchmark@v1
+        if: ${{ hashFiles('results/benchmark-windows-2022/metacall-benchmarks.json') != '' }}
+        with:
+            name: MetaCall Benchmark (windows-2022)
+            tool: 'googlecpp'
+            output-file-path: ./results/benchmark-windows-2022/metacall-benchmarks.json
+            # Commit into the core-benchmarks checkout of the workspace, push is done once at the end
+            skip-fetch-gh-pages: true
+            auto-push: false
+            # Github Pages branch name
+            gh-pages-branch: main
+            # Output directory
+            benchmark-data-dir-path: ./windows-2022
+
+      - name: Store benchmark result (windows-2025)
+        uses: benchmark-action/github-action-benchmark@v1
+        if: ${{ hashFiles('results/benchmark-windows-2025/metacall-benchmarks.json') != '' }}
+        with:
+            name: MetaCall Benchmark (windows-2025)
+            tool: 'googlecpp'
+            output-file-path: ./results/benchmark-windows-2025/metacall-benchmarks.json
+            # Commit into the core-benchmarks checkout of the workspace, push is done once at the end
+            skip-fetch-gh-pages: true
+            auto-push: false
+            # Github Pages branch name
+            gh-pages-branch: main
+            # Output directory
+            benchmark-data-dir-path: ./windows-2025
+
+      - name: Push benchmark results
+        run: git push origin main

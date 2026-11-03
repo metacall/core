@@ -1,5 +1,5 @@
 #
-# Configure nodejs project
+# Configure lua project
 #
 
-lua_project(nod 0.1.0)
+lua_project(max 0.1.0)

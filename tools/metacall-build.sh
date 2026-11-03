@@ -27,6 +27,7 @@ BUILD_BENCHMARKS=0
 BUILD_COVERAGE=0
 BUILD_MEMCHECK=0
 BUILD_INSTALL=0
+BUILD_NOBUILD=0
 
 # Check out for sudo
 if [ "`id -u`" = '0' ]; then
@@ -70,13 +71,19 @@ sub_options() {
 			echo "Install all libraries"
 			BUILD_INSTALL=1
 		fi
+		if [ "$option" = 'nobuild' ]; then
+			echo "Skip the build and use the existing binaries"
+			BUILD_NOBUILD=1
+		fi
 	done
 }
 
 sub_build() {
 
 	# Build the project
-	cmake --build . -j$(getconf _NPROCESSORS_ONLN)
+	if [ $BUILD_NOBUILD = 0 ]; then
+		cmake --build . -j$(getconf _NPROCESSORS_ONLN)
+	fi
 
 	# Memcheck
 	if [ $BUILD_MEMCHECK = 1 ]; then
@@ -113,6 +120,7 @@ sub_help() {
 	echo "	coverage: build coverage reports"
 	echo "	memcheck: build and run all tests with memcheck"
 	echo "	install: install all libraries"
+	echo "	nobuild: skip the build and use the existing binaries (i.e: run the tests of a prebuilt build directory)"
 	echo ""
 }
 

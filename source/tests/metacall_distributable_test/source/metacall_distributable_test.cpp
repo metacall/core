@@ -127,7 +127,7 @@ TEST_F(metacall_distributable_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)metacall_value_to_int(ret), (int)35);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)35);
 
 		metacall_value_destroy(ret);
 
@@ -151,7 +151,7 @@ TEST_F(metacall_distributable_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)metacall_value_to_int(ret), (int)12);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)12);
 
 		metacall_value_destroy(ret);
 	}

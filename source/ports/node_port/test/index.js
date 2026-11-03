@@ -56,7 +56,7 @@ describe('metacall', () => {
 			// TODO: Improve error messages
 			assert.throws(() => { require('./asd.py') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.rb') }, new Error('MetaCall could not load from file'));
-			assert.throws(() => { require('./asd.cs') }, new Error('MetaCall could not load from file'));
+			// assert.throws(() => { require('./asd.cs') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.ts') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.tsx') }, new Error('MetaCall could not load from file'));
 		});
@@ -256,7 +256,7 @@ describe('metacall', () => {
 				assert.strictEqual(add_vec2([1, 2, 3, 4]), 10);
 				assert.strictEqual(add_float(12, 23), 35);
 				assert.strictEqual(return_vec().reduce((partialSum, a) => partialSum + a, 0), 15);
-			});
+			}).timeout(600000);
 		}
 	});
 

@@ -40,10 +40,10 @@ extern "C" {
 #ifndef portability_static_assert
 	#if defined(__GNUC__) || defined(__clang__)
 		#define portability_static_assert_impl_expr(predicate, expr) \
-			typedef __attribute__((unused)) char expr[2 * !!(predicate)-1]
+			typedef __attribute__((unused)) char expr[2 * !!(predicate) - 1]
 	#else
 		#define portability_static_assert_impl_expr(predicate, expr) \
-			typedef char expr[2 * !!(predicate)-1]
+			typedef char expr[2 * !!(predicate) - 1]
 	#endif
 
 	#if defined(__COUNTER__)

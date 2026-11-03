@@ -36,20 +36,20 @@ typedef struct loader_impl_mock_type
 {
 	void *impl_mock_data;
 
-} * loader_impl_mock;
+} *loader_impl_mock;
 
 typedef struct loader_impl_mock_handle_type
 {
 	void *handle_mock_data;
 
-} * loader_impl_mock_handle;
+} *loader_impl_mock_handle;
 
 typedef struct loader_impl_mock_function_type
 {
 	loader_impl_mock_handle mock_handle;
 	void *function_mock_data;
 
-} * loader_impl_mock_function;
+} *loader_impl_mock_function;
 
 int function_mock_interface_create(function func, function_impl impl)
 {

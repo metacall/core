@@ -195,7 +195,6 @@ function(configurations_write config_dir config_path)
 			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"py_loader\":\"${config_dir}/py_loader.json\",")
 		endif()
 
-
 		if(OPTION_BUILD_LOADERS_RB)
 			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"rb_loader\":\"${config_dir}/rb_loader.json\",")
 		endif()

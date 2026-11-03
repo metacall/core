@@ -33,7 +33,7 @@ typedef struct hello_world_class_type
 	float b;
 	char c[10];
 
-} * hello_world_class;
+} *hello_world_class;
 
 typedef struct hello_world_object_type
 {
@@ -41,7 +41,7 @@ typedef struct hello_world_object_type
 	char d;
 	long e;
 
-} * hello_world_object;
+} *hello_world_object;
 
 int hello_world_object_impl_interface_create(object obj, object_impl impl)
 {
@@ -150,15 +150,14 @@ void hello_world_object_impl_interface_destroy(object obj, object_impl impl)
 
 object_interface hello_world_object_impl_interface_singleton()
 {
-	static struct object_interface_type hello_world_interface
-	{
+	static struct object_interface_type hello_world_interface = {
 		&hello_world_object_impl_interface_create,
-			&hello_world_object_impl_interface_get,
-			&hello_world_object_impl_interface_set,
-			&hello_world_object_impl_interface_method_invoke,
-			&hello_world_object_impl_interface_method_await,
-			&hello_world_object_impl_interface_destructor,
-			&hello_world_object_impl_interface_destroy
+		&hello_world_object_impl_interface_get,
+		&hello_world_object_impl_interface_set,
+		&hello_world_object_impl_interface_method_invoke,
+		&hello_world_object_impl_interface_method_await,
+		&hello_world_object_impl_interface_destructor,
+		&hello_world_object_impl_interface_destroy
 	};
 
 	return &hello_world_interface;
@@ -310,15 +309,14 @@ void hello_world_class_impl_interface_destroy(klass cls, class_impl impl)
 
 class_interface hello_world_class_impl_interface_singleton()
 {
-	static struct class_interface_type hello_world_interface
-	{
+	static struct class_interface_type hello_world_interface = {
 		&hello_world_class_impl_interface_create,
-			&hello_world_class_impl_interface_constructor,
-			&hello_world_class_impl_interface_static_get,
-			&hello_world_class_impl_interface_static_set,
-			&hello_world_class_impl_interface_static_invoke,
-			&hello_world_class_impl_interface_static_await,
-			&hello_world_class_impl_interface_destroy
+		&hello_world_class_impl_interface_constructor,
+		&hello_world_class_impl_interface_static_get,
+		&hello_world_class_impl_interface_static_set,
+		&hello_world_class_impl_interface_static_invoke,
+		&hello_world_class_impl_interface_static_await,
+		&hello_world_class_impl_interface_destroy
 	};
 
 	return &hello_world_interface;

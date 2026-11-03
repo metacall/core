@@ -36,7 +36,7 @@ typedef struct constructor_node_type
 	char *name;
 	type t;
 
-} * constructor_node;
+} *constructor_node;
 
 struct constructor_type
 {

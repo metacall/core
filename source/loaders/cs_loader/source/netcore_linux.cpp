@@ -69,9 +69,10 @@ netcore_linux::~netcore_linux()
 {
 	this->stop();
 
-	if (this->libHandle)
+	if (this->libHandle != NULL)
 	{
 		dynlink_unload(this->libHandle);
+		this->libHandle = NULL;
 	}
 }
 

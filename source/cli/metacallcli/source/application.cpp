@@ -36,6 +36,18 @@ using namespace metacallcli;
 
 static bool exit_condition = true;
 
+/* -- Private Methods -- */
+
+static void application_exit_error(int status)
+{
+	/* Destroy MetaCall before exiting, otherwise the runtimes running in other threads (i.e NodeJS)
+	* will keep executing while the static destructors of the process are being run by exit,
+	* producing use after free errors (the application destructor is not called by exit) */
+	metacall_destroy();
+
+	exit(status);
+}
+
 /* -- Methods -- */
 
 void application::repl()
@@ -72,7 +84,7 @@ void application::repl()
 	if (result != 0)
 	{
 		std::cout << "Exit function was not registered properly, return code: " << result << std::endl;
-		exit(1);
+		application_exit_error(result);
 	}
 	else
 	{
@@ -265,11 +277,13 @@ bool application::cmd(std::vector<std::string> &arguments)
 application::application(int argc, char *argv[]) :
 	plugin_cli_handle(NULL), plugin_repl_handle(NULL), plugin_cmd_handle(NULL)
 {
+	int result = metacall_initialize();
+
 	/* Initialize MetaCall */
-	if (metacall_initialize() != 0)
+	if (result != 0)
 	{
 		/* Exit from application */
-		exit(1);
+		application_exit_error(result);
 	}
 
 	/* Initialize MetaCall arguments */
@@ -369,11 +383,13 @@ void application::arguments_parse(std::vector<std::string> &arguments)
 			script.c_str()
 		};
 
-		if (metacall_load_from_file(safe_tag.c_str(), scripts, 1, NULL) != 0)
+		int result = metacall_load_from_file(safe_tag.c_str(), scripts, 1, NULL);
+
+		if (result != 0)
 		{
 			/* Stop loading more scripts */
 			std::cout << "Error: Failed to load script '" << script << "' with loader '" << safe_tag << "'" << std::endl;
-			exit(1);
+			application_exit_error(result);
 		}
 	}
 }

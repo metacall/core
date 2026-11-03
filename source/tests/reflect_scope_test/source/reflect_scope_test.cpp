@@ -35,7 +35,7 @@ typedef struct example_arg_type
 	int a;
 	float b;
 	char c[10];
-} * example_arg;
+} *example_arg;
 
 typedef void (*function_example_ptr)(char, int, void *);
 
@@ -43,7 +43,7 @@ typedef struct function_impl_example_type
 {
 	function_example_ptr ptr;
 
-} * function_impl_example;
+} *function_impl_example;
 
 void function_example(char c, int i, void *p)
 {

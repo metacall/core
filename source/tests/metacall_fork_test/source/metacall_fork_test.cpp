@@ -73,9 +73,9 @@ typedef NTSTATUS(NTAPI *RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 	HANDLE DebugPort,
 	PRTL_USER_PROCESS_INFORMATION ProcessInformation);
 
-#if defined(_MSC_VER)
-	typedef long pid_t;
-#endif
+	#if defined(_MSC_VER)
+typedef long pid_t;
+	#endif
 
 pid_t fork(void);
 
