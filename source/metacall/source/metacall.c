@@ -47,7 +47,7 @@
 /* -- Definitions -- */
 
 #define METACALL_ARGS_SIZE 0x10
-#define METACALL_SERIAL	   "rapid_json"
+#define METACALL_SERIAL	   "simd_json"
 #define METACALL_DETOUR	   "plthook"
 
 /* -- Type Definitions -- */
@@ -437,7 +437,7 @@ args_error:
 
 size_t metacall_args_size(void)
 {
-	const size_t args_size = METACALL_ARGS_SIZE;
+	static const size_t args_size = METACALL_ARGS_SIZE;
 
 	return args_size;
 }
@@ -1689,7 +1689,7 @@ int metacall_register(const char *name, void *(*invoke)(size_t, void *[], void *
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		types[iterator] = (type_id)va_arg(va, int);
+		types[iterator] = (type_id)va_arg(va, enum metacall_value_id);
 	}
 
 	va_end(va);

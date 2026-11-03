@@ -1,98 +1,121 @@
 #
-# Taken from https://raw.githubusercontent.com/BlueBrain/git-cmake-format/master/FindClangFormat.cmake
-# ---------------
+# Find clang-format
 #
-# The module defines the following variables
+# Usage:
 #
-# ``ClangFormat_EXECUTABLE`` Path to clang-format executable
-# ``ClangFormat_FOUND`` True if the clang-format executable was found.
-# ``ClangFormat_VERSION`` The version of clang-format found
-# ``ClangFormat_VERSION_MAJOR`` The clang-format major version if specified, 0
-# otherwise ``ClangFormat_VERSION_MINOR`` The clang-format minor version if
-# specified, 0 otherwise ``ClangFormat_VERSION_PATCH`` The clang-format patch
-# version if specified, 0 otherwise ``ClangFormat_VERSION_COUNT`` Number of
-# version components reported by clang-format
+#	find_package(ClangFormat [<major>] [EXACT] [REQUIRED] [QUIET])
 #
-# Example usage:
+# When a version is requested, the executable clang-format-<major> and the
+# installation paths of that LLVM version are searched first. With EXACT,
+# only that major version is accepted (minor and patch are not compared,
+# because clang-format formats the same within a major version).
 #
-# .. code-block:: cmake
+# Input variables:
 #
-# find_package(ClangFormat) if(ClangFormat_FOUND) message("clang-format
-# executable found: ${ClangFormat_EXECUTABLE}\n" "version:
-# ${ClangFormat_VERSION}") endif()
+#	ClangFormat_EXECUTABLE   Path to the executable, set it to skip the search
+#
+# Result variables:
+#
+#	ClangFormat_FOUND           True if a suitable clang-format was found
+#	ClangFormat_EXECUTABLE      Path to the clang-format executable
+#	ClangFormat_VERSION         Full version (i.e: 19.1.7)
+#	ClangFormat_VERSION_MAJOR   Major version (i.e: 19)
+#	ClangFormat_VERSION_MINOR   Minor version (i.e: 1)
+#	ClangFormat_VERSION_PATCH   Patch version (i.e: 7)
+#
 
-if(ClangFormat_FOUND)
-	set(ClangFormat_FIND_QUIETLY TRUE)
-endif()
+# Search the executable of the requested major version first:
+#	1) clang-format-<major> in PATH or in the LLVM installation paths
+#	2) clang-format in the LLVM installation paths of that version
+# and then fall back to the generic search
+if(NOT ClangFormat_EXECUTABLE AND ClangFormat_FIND_VERSION_MAJOR)
+	set(ClangFormat_MAJOR "${ClangFormat_FIND_VERSION_MAJOR}")
 
-set(ClangFormat_NAMES
-	clang-format
-	clang-format-11
-	clang-format-12
-)
-
-set(ClangFormat_PATHS
-	/usr/bin
-	/usr/lib/llvm-11/bin
-	/usr/lib/llvm-12/bin
-)
-
-find_program(ClangFormat_EXECUTABLE
-	NAMES ${ClangFormat_NAMES}
-	DOC "clang-format executable"
-	PATHS ${ClangFormat_PATHS}
-)
-
-# Extract version from command "clang-format -version"
-if(ClangFormat_EXECUTABLE)
-	execute_process(COMMAND ${ClangFormat_EXECUTABLE} -version
-					OUTPUT_VARIABLE clang_format_version
-					ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-	if(clang_format_version MATCHES "clang-format version .*")
-		# clang_format_version sample: "clang-format version 3.9.1-4ubuntu3~16.04.1
-		# (tags/RELEASE_391/rc2)"
-		string(REGEX
-					REPLACE ".*clang-format version ([.0-9]+).*"
-					"\\1"
-					ClangFormat_VERSION
-					"${clang_format_version}")
-		# ClangFormat_VERSION sample: "3.9.1"
-
-		# Extract version components
-		string(REPLACE "." ";" clang_format_version "${ClangFormat_VERSION}")
-		list(LENGTH clang_format_version ClangFormat_VERSION_COUNT)
-		if(ClangFormat_VERSION_COUNT GREATER 0)
-			list(GET clang_format_version 0 ClangFormat_VERSION_MAJOR)
-		else()
-			set(ClangFormat_VERSION_MAJOR 0)
-		endif()
-		if(ClangFormat_VERSION_COUNT GREATER 1)
-			list(GET clang_format_version 1 ClangFormat_VERSION_MINOR)
-		else()
-			set(ClangFormat_VERSION_MINOR 0)
-		endif()
-		if(ClangFormat_VERSION_COUNT GREATER 2)
-			list(GET clang_format_version 2 ClangFormat_VERSION_PATCH)
-		else()
-			set(ClangFormat_VERSION_PATCH 0)
-		endif()
-	endif()
-	unset(clang_format_version)
-endif()
-
-if(ClangFormat_EXECUTABLE AND ClangFormat_VERSION)
-	set(ClangFormat_FOUND TRUE)
-
-	include(FindPackageHandleStandardArgs)
-
-	# Set standard args
-	find_package_handle_standard_args(ClangFormat
-		REQUIRED_VARS ClangFormat_EXECUTABLE
-		VERSION_VAR ClangFormat_VERSION
+	set(ClangFormat_HINTS
+		/usr/lib/llvm-${ClangFormat_MAJOR}/bin            # Debian, Ubuntu
+		/usr/lib/llvm${ClangFormat_MAJOR}/bin             # Alpine
+		/usr/local/llvm${ClangFormat_MAJOR}/bin           # FreeBSD
+		/opt/homebrew/opt/llvm@${ClangFormat_MAJOR}/bin   # macOS Homebrew (Apple Silicon)
+		/usr/local/opt/llvm@${ClangFormat_MAJOR}/bin      # macOS Homebrew (Intel)
 	)
 
-	mark_as_advanced(ClangFormat_EXECUTABLE)
-else()
-	set(ClangFormat_FOUND FALSE)
+	find_program(ClangFormat_EXECUTABLE
+		NAMES clang-format-${ClangFormat_MAJOR}
+		HINTS ${ClangFormat_HINTS}
+	)
+
+	if(NOT ClangFormat_EXECUTABLE)
+		find_program(ClangFormat_EXECUTABLE
+			NAMES clang-format
+			HINTS ${ClangFormat_HINTS}
+			NO_DEFAULT_PATH
+		)
+	endif()
+
+	unset(ClangFormat_HINTS)
+	unset(ClangFormat_MAJOR)
+endif()
+
+# Generic search (PATH, and the default LLVM installation path on Windows)
+find_program(ClangFormat_EXECUTABLE
+	NAMES clang-format
+	PATHS "$ENV{ProgramFiles}/LLVM/bin"
+	DOC "clang-format executable"
+)
+
+mark_as_advanced(ClangFormat_EXECUTABLE)
+
+# Obtain the version, the output has a vendor prefix depending on the
+# distribution (i.e: "Ubuntu clang-format version 19.1.7 (6ubuntu3)")
+unset(ClangFormat_VERSION)
+unset(ClangFormat_VERSION_MAJOR)
+unset(ClangFormat_VERSION_MINOR)
+unset(ClangFormat_VERSION_PATCH)
+
+if(ClangFormat_EXECUTABLE)
+	execute_process(
+		COMMAND "${ClangFormat_EXECUTABLE}" --version
+		OUTPUT_VARIABLE ClangFormat_VERSION_OUTPUT
+		RESULT_VARIABLE ClangFormat_VERSION_RESULT
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	if(ClangFormat_VERSION_RESULT EQUAL 0 AND ClangFormat_VERSION_OUTPUT MATCHES "clang-format version ([0-9]+)\\.([0-9]+)\\.([0-9]+)")
+		set(ClangFormat_VERSION_MAJOR "${CMAKE_MATCH_1}")
+		set(ClangFormat_VERSION_MINOR "${CMAKE_MATCH_2}")
+		set(ClangFormat_VERSION_PATCH "${CMAKE_MATCH_3}")
+		set(ClangFormat_VERSION "${ClangFormat_VERSION_MAJOR}.${ClangFormat_VERSION_MINOR}.${ClangFormat_VERSION_PATCH}")
+	endif()
+
+	unset(ClangFormat_VERSION_OUTPUT)
+	unset(ClangFormat_VERSION_RESULT)
+endif()
+
+# With EXACT only the major version is compared, the standard check would
+# compare the full version (19 against 19.1.7) and always fail
+set(ClangFormat_VERSION_CHECK ClangFormat_VERSION)
+
+if(ClangFormat_FIND_VERSION_EXACT AND ClangFormat_FIND_VERSION_COUNT EQUAL 1)
+	set(ClangFormat_VERSION_CHECK ClangFormat_VERSION_MAJOR)
+endif()
+
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args(ClangFormat
+	REQUIRED_VARS ClangFormat_EXECUTABLE ClangFormat_VERSION
+	VERSION_VAR ${ClangFormat_VERSION_CHECK}
+)
+
+unset(ClangFormat_VERSION_CHECK)
+
+# Do not keep a cached executable with the wrong version, so the next
+# configuration searches again (i.e: after installing the right version)
+if(NOT ClangFormat_FOUND AND ClangFormat_EXECUTABLE AND ClangFormat_FIND_VERSION_EXACT)
+	set(ClangFormat_EXECUTABLE_REJECTED "${ClangFormat_EXECUTABLE}")
+	unset(ClangFormat_EXECUTABLE CACHE)
+
+	# Keep it as a normal variable, so the caller can report what was found
+	set(ClangFormat_EXECUTABLE "${ClangFormat_EXECUTABLE_REJECTED}")
+	unset(ClangFormat_EXECUTABLE_REJECTED)
 endif()

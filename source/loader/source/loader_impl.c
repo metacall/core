@@ -1849,12 +1849,15 @@ void loader_impl_destroy_objects(loader_impl impl)
 		}
 
 		vector_destroy(impl->handle_impl_init_order);
+		impl->handle_impl_init_order = NULL;
 
 		/* Destroy the path to handle implementation indexing */
 		set_destroy(impl->handle_impl_path_map);
+		impl->handle_impl_path_map = NULL;
 
 		/* Destroy the handle to handle implementation indexing */
 		set_destroy(impl->handle_impl_map);
+		impl->handle_impl_map = NULL;
 
 		/* Destroy all the types */
 		{
@@ -1869,6 +1872,7 @@ void loader_impl_destroy_objects(loader_impl impl)
 		}
 
 		set_destroy(impl->type_info_map);
+		impl->type_info_map = NULL;
 	}
 }
 
@@ -1926,6 +1930,33 @@ void loader_impl_destroy_deallocate(loader_impl impl)
 	free(impl);
 }
 
+int loader_impl_destroy_runtime(loader_impl impl)
+{
+	int result = 0;
+
+	/* Destroy the runtime only once, it can be issued by MetaCall or by the host itself (i.e from the port) */
+	if (impl != NULL && impl->init == 0)
+	{
+		loader_impl_interface iface = loader_iface(impl->p);
+
+		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+		/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", plugin_name(impl->p)); */
+
+		if (iface != NULL && iface->destroy(impl) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", plugin_name(impl->p), iface->destroy);
+			result = 1;
+		}
+
+		impl->init = 1;
+
+		/* The loader data has been freed by the destroy, avoid dangling accesses to it */
+		impl->data = NULL;
+	}
+
+	return result;
+}
+
 void loader_impl_destroy_dtor(plugin p)
 {
 	loader_impl_destroy(p, plugin_impl_type(p, loader_impl));
@@ -1939,17 +1970,15 @@ void loader_impl_destroy(plugin p, loader_impl impl)
 		{
 			if (impl->init == 0)
 			{
-				loader_impl_interface iface = loader_iface(p);
-
-				/* TODO: Disable logs here until log is completely thread safe and async signal safe */
-				/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", plugin_name(p)); */
-
-				if (iface != NULL && iface->destroy(impl) != 0)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", plugin_name(p), iface->destroy);
-				}
-
-				impl->init = 1;
+				(void)loader_impl_destroy_runtime(impl);
+			}
+			else
+			{
+				/* The loader was never initialized, or its runtime was already destroyed by the host (i.e from the port),
+				* in the first case its destroy (which calls loader_unload_children) is not executed and the objects must be
+				* cleared here, otherwise they leak, in the second case the objects are already cleared and this does nothing
+				*/
+				loader_impl_destroy_objects(impl);
 			}
 
 			/* Remove the loader library from the library list */

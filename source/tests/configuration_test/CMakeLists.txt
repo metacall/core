@@ -146,6 +146,8 @@ add_test(NAME ${target}
 # Configure test data
 #
 
+test_runtime_path(CONFIGURATION_TEST_PATH "${CMAKE_CURRENT_BINARY_DIR}")
+
 configure_file(data/global.json.in ${CMAKE_CURRENT_BINARY_DIR}/global.json)
 configure_file(data/child_a.json.in ${CMAKE_CURRENT_BINARY_DIR}/child_a.json)
 configure_file(data/child_b.json.in ${CMAKE_CURRENT_BINARY_DIR}/child_b.json)

@@ -22,8 +22,8 @@ extern "C" {
 /* -- Macros -- */
 
 #if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
-	#define PREPROCESSOR_IIF_IMPL_EXPAND_ARGS(...) __VA_ARGS__
-	#define PREPROCESSOR_IIF_IMPL_EXPAND(expr) expr
+	#define PREPROCESSOR_IIF_IMPL_EXPAND_ARGS(...)				  __VA_ARGS__
+	#define PREPROCESSOR_IIF_IMPL_EXPAND(expr)					  expr
 	#define PREPROCESSOR_IIF_IMPL_EXPAND_REMOVE_PARENTHESIS(expr) PREPROCESSOR_IIF_IMPL_EXPAND(PREPROCESSOR_IIF_IMPL_EXPAND_ARGS expr)
 
 	#define PREPROCESSOR_IIF_IMPL_0(true_expr, false_expr) PREPROCESSOR_IIF_IMPL_EXPAND_REMOVE_PARENTHESIS(false_expr)

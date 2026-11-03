@@ -110,7 +110,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)metacall_value_to_int(ret), (int)25);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)25);
 
 		metacall_value_destroy(ret);
 

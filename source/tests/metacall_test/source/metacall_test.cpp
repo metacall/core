@@ -337,7 +337,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)metacall_value_to_int(ret), (int)35);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)35);
 
 		metacall_value_destroy(ret);
 
@@ -361,7 +361,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)metacall_value_to_int(ret), (int)12);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)12);
 
 		metacall_value_destroy(ret);
 
@@ -375,10 +375,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		void **v_array = metacall_value_to_array(ret);
 
-		EXPECT_EQ((int)metacall_value_to_int(v_array[0]), (int)9923);
-		EXPECT_EQ((int)metacall_value_to_int(v_array[1]), (int)9931);
-		EXPECT_EQ((int)metacall_value_to_int(v_array[2]), (int)9941);
-		EXPECT_EQ((int)metacall_value_to_int(v_array[3]), (int)9967);
+		EXPECT_EQ((long)metacall_value_to_long(v_array[0]), (long)9923);
+		EXPECT_EQ((long)metacall_value_to_long(v_array[1]), (long)9931);
+		EXPECT_EQ((long)metacall_value_to_long(v_array[2]), (long)9941);
+		EXPECT_EQ((long)metacall_value_to_long(v_array[3]), (long)9967);
 
 		metacall_value_destroy(ret);
 	}

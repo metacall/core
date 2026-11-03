@@ -115,15 +115,49 @@ cmake -DOPTION_BUILD_ADDRESS_SANITIZER=On ..
 cmake -DOPTION_BUILD_THREAD_SANITIZER=On ..
 ```
 
-## Code Formatting
+### Debug Test Failures with reproducible Docker Environment
 
-Format C/C++ code with `clang-format` version 12. CI enforces it (`jidicula/clang-format-action`, `clang-format-version: 12`); newer versions cause reformat noise.
+The `dev` image build runs the tests, so a failing test stops the build and leaves no image to inspect. Before building, temporarily append `|| true` to the build step in `tools/docker/Dockerfile` so the image is created even when tests fail (do not commit this change):
 
-```sh
-cmake --build build --target clang-format
+```dockerfile
+# Build test and install MetaCall libraries
+RUN cd $METACALL_PATH/build \
+	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS} || true
 ```
 
-The target needs a local `clang-format`, `clang-format-11`, or `clang-format-12` (`cmake/FindClangFormat.cmake`). The pre-commit hook in `githooks/` accepts 11 to 15 and recommends 11.
+Build the image with the failing configuration, for example Thread Sanitizer:
+
+```sh
+./docker-compose.sh test-thread-sanitizer
+```
+
+Then open a shell in the built image to reproduce and investigate the failing tests:
+
+```sh
+docker run --rm -it metacall/core:dev bash
+```
+
+## Code Formatting
+
+Format C/C++ code with `clang-format` version 19 (`FORMAT_CLANG_FORMAT_VERSION` in `cmake/Format.cmake`). Other major versions format differently, so `cmake/FindClangFormat.cmake` rejects them. CI runs the same checks (`.github/workflows/clang-format.yml`).
+
+```sh
+cmake --build build --target clang-format        # format in place
+cmake --build build --target clang-format-check  # check, same as CI
+cmake --build build --target eol-check           # check that tracked files use LF
+```
+
+Without a configured build, run the script directly:
+
+```sh
+cmake -DMODE=<fix|check|eol> [-DFILES="a.c;b.h"] -P cmake/Format.cmake
+```
+
+It uses a local `clang-format-19` (install it with `tools/metacall-environment.sh clangformat`). Otherwise it runs `ghcr.io/jidicula/clang-format:19` through docker or podman. It formats the tracked C/C++ files under `source/`.
+
+All files use LF line endings. clang-format leaves CRLF inside block comments, so the `eol` mode checks the git index instead.
+
+The pre-commit hook in `githooks/` runs the `eol` and `check` modes on the staged files. In a terminal it offers to apply the `fix` mode and stage the files again. `OPTION_GIT_HOOKS` sets `core.hooksPath` to `githooks`.
 
 ## Architecture
 

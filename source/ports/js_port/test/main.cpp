@@ -317,7 +317,7 @@ int StrEndsWith(const char *const str, const char *const suffix)
 void ModulesClear()
 {
 	for (module_map::iterator it = modules.begin();
-		 it != modules.end(); ++it)
+		it != modules.end(); ++it)
 	{
 /* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
 #if !defined(__MEMORYCHECK__) && !defined(__ADDRESS_SANITIZER__) && !defined(__THREAD_SANITIZER__) && !defined(__MEMORY_SANITIZER__)
@@ -666,7 +666,7 @@ int RunMain(Isolate *isolate, Platform *platform, int argc,
 			Local<String> source;
 			if (!String::NewFromUtf8(isolate, argv[++i],
 					NewStringType::kNormal)
-					 .ToLocal(&source))
+					.ToLocal(&source))
 			{
 				return 1;
 			}

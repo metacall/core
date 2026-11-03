@@ -147,28 +147,6 @@ module MetaCall
 	# Initialize the MetaCall Ruby Port
 	metacall_module_load
 
-	# When we are running MetaCall with Ruby, we should hook the at exit method
-	if ENV.key?('METACALL_HOST')
-		module Kernel
-			alias_method :original_exit, :exit
-			alias_method :original_exit_bang, :exit!
-
-			def exit(status = true)
-				if defined?(MetaCallRbLoaderPort) && MetaCall.respond_to?(:rb_loader_port_atexit)
-					MetaCallRbLoaderPort.rb_loader_port_atexit
-				end
-				original_exit(status)
-			end
-
-			def exit!(status = true)
-				if defined?(MetaCallRbLoaderPort) && MetaCall.respond_to?(:rb_loader_port_atexit)
-					MetaCallRbLoaderPort.rb_loader_port_atexit
-				end
-				original_exit_bang(status)
-			end
-		end
-	end
-
 	public
 
 	def metacall_load_from_file(tag, paths)
@@ -187,4 +165,51 @@ module MetaCall
 		MetaCallRbLoaderPort.metacall_inspect()
 	end
 
+end
+
+# When running MetaCall with Ruby as host, destroy the Ruby Loader on exit while the VM is still alive,
+# this must be done in Kernel#exit instead of at_exit because test frameworks (i.e test/unit or minitest)
+# run the tests inside at_exit procs registered before MetaCall and they call exit at the end
+module MetaCallExitHook
+	def self.destroy
+		# MetaCall must be destroyed from the thread where it was initialized, otherwise it is only marked as destroyed at VM exit
+		if Thread.current == Thread.main && defined?(MetaCallRbLoaderPort) && MetaCallRbLoaderPort.respond_to?(:rb_loader_port_atexit)
+			MetaCallRbLoaderPort.rb_loader_port_atexit
+		end
+	end
+end
+
+module Kernel
+	alias_method :__metacall_original_exit, :exit
+	alias_method :__metacall_original_exit_bang, :exit!
+
+	def exit(status = true)
+		MetaCallExitHook.destroy
+		__metacall_original_exit(status)
+	end
+
+	def exit!(status = false)
+		MetaCallExitHook.destroy
+		__metacall_original_exit_bang(status)
+	end
+
+	private :exit, :exit!, :__metacall_original_exit, :__metacall_original_exit_bang
+
+	# Kernel.exit and Kernel.exit! are module functions, so they have their own copy in the singleton
+	class << self
+		alias_method :__metacall_original_exit, :exit
+		alias_method :__metacall_original_exit_bang, :exit!
+
+		def exit(status = true)
+			MetaCallExitHook.destroy
+			__metacall_original_exit(status)
+		end
+
+		def exit!(status = false)
+			MetaCallExitHook.destroy
+			__metacall_original_exit_bang(status)
+		end
+
+		private :__metacall_original_exit, :__metacall_original_exit_bang
+	end
 end

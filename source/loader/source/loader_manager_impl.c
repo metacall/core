@@ -204,7 +204,8 @@ void loader_manager_impl_iface_destroy(plugin_manager manager, void *impl)
 
 void loader_manager_impl_set_destroyed(loader_manager_impl manager_impl, loader_impl impl)
 {
-	if (manager_impl != NULL)
+	/* The loader may be already marked as destroyed (i.e by the loader itself during its destroy) */
+	if (manager_impl != NULL && loader_manager_impl_is_destroyed(manager_impl, impl) != 0)
 	{
 		if (set_insert(manager_impl->destroy_map, impl, &loader_manager_impl_is_destroyed_ptr) != 0)
 		{

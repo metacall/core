@@ -53,7 +53,7 @@ TEST_F(metacall_ruby_integration_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)metacall_value_to_int(ret));
+		EXPECT_EQ((long)0, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 	}

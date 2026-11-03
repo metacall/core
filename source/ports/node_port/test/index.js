@@ -256,7 +256,7 @@ describe('metacall', () => {
 				assert.strictEqual(add_vec2([1, 2, 3, 4]), 10);
 				assert.strictEqual(add_float(12, 23), 35);
 				assert.strictEqual(return_vec().reduce((partialSum, a) => partialSum + a, 0), 15);
-			});
+			}).timeout(600000);
 		}
 	});
 

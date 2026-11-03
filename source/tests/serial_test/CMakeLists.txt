@@ -1,5 +1,5 @@
 # Check if this serial is enabled
-if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_METACALL OR NOT OPTION_BUILD_SERIALS_RAPID_JSON)
+if(NOT OPTION_BUILD_SERIALS)
 	return()
 endif()
 
@@ -109,6 +109,11 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	# Test serials if it are enabled
+	$<$<BOOL:${OPTION_BUILD_SERIALS_METACALL}>:OPTION_BUILD_SERIALS_METACALL>
+	$<$<BOOL:${OPTION_BUILD_SERIALS_RAPID_JSON}>:OPTION_BUILD_SERIALS_RAPID_JSON>
+	$<$<BOOL:${OPTION_BUILD_SERIALS_SIMD_JSON}>:OPTION_BUILD_SERIALS_SIMD_JSON>
 )
 
 #
@@ -150,10 +155,24 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-add_dependencies(${target}
-	metacall_serial
-	rapid_json_serial
-)
+set(serial_test_dependencies)
+
+if(OPTION_BUILD_SERIALS_METACALL)
+    list(APPEND serial_test_dependencies metacall_serial)
+endif()
+
+if(OPTION_BUILD_SERIALS_RAPID_JSON)
+    list(APPEND serial_test_dependencies rapid_json_serial)
+endif()
+
+if(OPTION_BUILD_SERIALS_SIMD_JSON)
+    list(APPEND serial_test_dependencies simd_json_serial)
+endif()
+
+if(serial_test_dependencies)
+    add_dependencies(${target} ${serial_test_dependencies})
+endif()
+
 #
 # Define test labels
 #

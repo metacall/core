@@ -8,8 +8,8 @@
 
 #if defined(WIN32) || defined(_WIN32)
 	#define WIN32_LEAN_AND_MEAN
-	#include <windows.h>
 	#include <io.h>
+	#include <windows.h>
 	#ifndef dup
 		#define dup _dup
 	#endif
@@ -185,7 +185,7 @@ typedef struct loader_impl_node_function_type
 	napi_ref func_ref;
 	napi_value *argv;
 
-} * loader_impl_node_function;
+} *loader_impl_node_function;
 
 typedef struct loader_impl_node_future_type
 {
@@ -193,7 +193,7 @@ typedef struct loader_impl_node_future_type
 	loader_impl_node node_impl;
 	napi_ref promise_ref;
 
-} * loader_impl_node_future;
+} *loader_impl_node_future;
 
 template <typename T>
 struct loader_impl_async_safe_type
@@ -691,7 +691,7 @@ typedef struct node_loader_impl_startup_args_type
 
 		return 0;
 	}
-} * node_loader_impl_startup_args;
+} *node_loader_impl_startup_args;
 
 struct loader_impl_node_type
 {
@@ -819,7 +819,7 @@ typedef struct loader_impl_napi_to_value_callback_closure_type
 	value func;
 	loader_impl_node node_impl;
 
-} * loader_impl_napi_to_value_callback_closure;
+} *loader_impl_napi_to_value_callback_closure;
 
 /* Type conversion */
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
@@ -2423,7 +2423,7 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 				if (args_size > signature_args_size)
 				{
-					delete[](func_argv);
+					delete[] (func_argv);
 				}
 			}
 		}
@@ -3556,6 +3556,29 @@ void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async_handle
 
 	node_loader_impl_exception(env, status);
 
+	/* Resolve the promise inside a callback scope, so the microtasks queued by the resolution (the .then handlers)
+	* are run when the scope is closed, before the async handle is closed; otherwise the event loop can be seen
+	* as empty and the loader destroyed while the handlers are still pending */
+	napi_value resource, resource_name;
+	napi_async_context async_context;
+	napi_callback_scope callback_scope;
+
+	status = napi_create_object(env, &resource);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_create_string_utf8(env, "node_loader_impl_handle_promise", NAPI_AUTO_LENGTH, &resource_name);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_async_init(env, resource, resource_name, &async_context);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_open_callback_scope(env, resource, async_context, &callback_scope);
+
+	node_loader_impl_exception(env, status);
+
 	/* Convert MetaCall value to napi value and call resolve or reject of NodeJS */
 	napi_value js_result = node_loader_impl_value_to_napi(handle_promise_safe->node_impl, env, handle_promise_safe->result);
 	status = handle_promise_safe->deferred_fn(env, handle_promise_safe->deferred, js_result);
@@ -3564,6 +3587,15 @@ void node_loader_impl_handle_promise_safe(napi_env env, loader_impl_async_handle
 	{
 		napi_throw_error(env, nullptr, handle_promise_safe->error_str);
 	}
+
+	/* Close the callback scope, this runs the pending microtasks */
+	status = napi_close_callback_scope(env, callback_scope);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_async_destroy(env, async_context);
+
+	node_loader_impl_exception(env, status);
 
 	/* Close the handle */
 	handle_promise_safe->destroy();
@@ -4103,16 +4135,62 @@ void node_loader_impl_thread_log(void *data)
 }
 #endif
 
+static int node_loader_impl_initialize_types(loader_impl impl)
+{
+	static struct
+	{
+		type_id id;
+		const char *name;
+	} type_id_name_pair[] = {
+		{ TYPE_BOOL, "boolean" },
+		{ TYPE_DOUBLE, "number" },
+		{ TYPE_STRING, "string" },
+		{ TYPE_NULL, "null" },
+		{ TYPE_NULL, "undefined" },
+		{ TYPE_BUFFER, "Buffer" },
+		{ TYPE_ARRAY, "Array" },
+		{ TYPE_MAP, "Map" },
+		{ TYPE_OBJECT, "Object" },
+		{ TYPE_FUNCTION, "Function" },
+		{ TYPE_FUTURE, "Promise" },
+		{ TYPE_EXCEPTION, "Error" }
+	};
+
+	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+	for (index = 0; index < size; ++index)
+	{
+		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, NULL);
+
+		if (t != NULL)
+		{
+			if (loader_impl_type_define(impl, type_name(t), t) != 0)
+			{
+				type_destroy(t);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_node node_impl;
-
-	(void)impl;
 
 	node_impl = new loader_impl_node_type();
 
 	if (node_impl == nullptr)
 	{
+		return NULL;
+	}
+
+	if (node_loader_impl_initialize_types(impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS type initialization");
+
+		delete node_impl;
 		return NULL;
 	}
 
@@ -4144,10 +4222,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread condition creation");
 
-		/* TODO: Clear resources */
-
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4155,10 +4230,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread mutex creation");
 
-		/* TODO: Clear resources */
-
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4175,10 +4247,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Logging Thread creation");
 
-			/* TODO: Clear resources */
-
 			delete node_impl;
-
 			return NULL;
 		}
 	}
@@ -4189,7 +4258,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid startup arguments creation");
 
 		delete node_impl;
-
 		return NULL;
 	}
 
@@ -4200,10 +4268,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 
-			/* TODO: Clear resources */
-
 			delete node_impl;
-
 			return NULL;
 		}
 
@@ -4476,18 +4541,8 @@ void node_loader_impl_handle_promise(loader_impl_async_handle_promise_safe_type 
 	}
 	else
 	{
-		/* Submit the task to the async queue */
-		if (handle_promise_safe->threadsafe_async.initialize(handle_promise_safe->node_impl, [](uv_async_t *handle) {
-				loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
-				node_loader_impl_handle_promise_safe(handle_promise_safe->env, handle_promise_safe);
-			}) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Filed to initialize promise safe async handle");
-		}
-		else
-		{
-			handle_promise_safe->threadsafe_async.invoke(handle_promise_safe);
-		}
+		/* Submit the task to the async queue, the handle was initialized in the JavaScript thread when creating the promise */
+		handle_promise_safe->threadsafe_async.invoke(handle_promise_safe);
 	}
 }
 
@@ -4516,6 +4571,23 @@ napi_value node_loader_impl_promise_await(loader_impl_node node_impl, napi_env e
 		return nullptr;
 	}
 
+	/* Initialize the async handle here in the JavaScript thread, because the promise can be resolved from another thread
+	* (for example, the asyncio thread of Python), and the handle keeps the event loop alive while the promise is pending,
+	* so the loader is not destroyed until it is resolved */
+	if (handle_promise_safe->threadsafe_async.initialize(node_impl, [](uv_async_t *handle) {
+			loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
+			node_loader_impl_handle_promise_safe(handle_promise_safe->env, handle_promise_safe);
+		}) != 0)
+	{
+		napi_throw_error(env, nullptr, "Failed to initialize promise safe async handle");
+
+		delete handle_promise_safe;
+
+		return nullptr;
+	}
+
+	handle_promise_safe->threadsafe_async.async_handle.data = static_cast<void *>(handle_promise_safe);
+
 	auto resolve = [](void *result, void *data) -> void * {
 		static const char promise_error_str[] = "Failed to resolve the promise";
 
@@ -4539,14 +4611,26 @@ napi_value node_loader_impl_promise_await(loader_impl_node node_impl, napi_env e
 	/* Await to the function */
 	void *ret = metacall_await_s(name, args, size, resolve, reject, handle_promise_safe);
 
-	if (metacall_value_id(ret) == METACALL_THROWABLE)
+	if (ret == NULL || metacall_value_id(ret) == METACALL_THROWABLE)
 	{
-		napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+		if (ret != NULL)
+		{
+			napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
 
-		napi_throw(env, result);
+			napi_throw(env, result);
+		}
+
+		/* The promise will not be resolved, close the handle so it does not keep the event loop alive */
+		if (handle_promise_safe->result == NULL)
+		{
+			handle_promise_safe->destroy();
+		}
 	}
 
-	node_loader_impl_finalizer(env, promise, ret);
+	/* The promise is resolved or rejected through handle_promise_safe, so the returned future is not needed anymore,
+	* destroy it now instead of in the promise finalizer, which runs at teardown when the loader is already destroyed
+	* and the future promise reference would never be deleted */
+	metacall_value_destroy(ret);
 
 	return promise;
 }
@@ -4812,6 +4896,67 @@ void node_loader_impl_walk(uv_handle_t *handle, void *arg)
 }
 #endif
 
+#if NODE_MAJOR_VERSION < 18
+/* In NodeJS < 18, the second pass phantom callbacks of N-API references are posted by V8 as a platform task
+* after a non-forced GC, and node_napi_env__::CallFinalizer defers the finalizer with a SetImmediate capturing
+* the raw napi_env (without taking a reference to it). If a GC happens in the last JavaScript turn (process 'exit'),
+* the task stays pending until node::FreeEnvironment, where it can run after the napi_env (or the reference) has been
+* deleted by the cleanup hooks, producing a use after free. A forced GC invokes all pending second pass callbacks
+* synchronously, so the finalizers are deferred before node::FreeEnvironment and they run in the first CleanupHandles,
+* while the napi_env is still alive. This must be the last JavaScript executed, so it is registered at destroy time
+* in order to run after the 'exit' handlers registered by the user code.
+*/
+static void node_loader_impl_destroy_flush_finalizers(void)
+{
+	v8::Isolate *isolate = v8::Isolate::GetCurrent();
+
+	if (isolate != nullptr)
+	{
+		isolate->LowMemoryNotification();
+	}
+}
+
+static napi_value node_loader_impl_destroy_flush_finalizers_callback(napi_env env, napi_callback_info info)
+{
+	(void)env;
+	(void)info;
+
+	node_loader_impl_destroy_flush_finalizers();
+
+	return nullptr;
+}
+
+static void node_loader_impl_destroy_flush_finalizers_register(loader_impl_node node_impl, napi_env env)
+{
+	napi_status status;
+	napi_value global, process, on, argv[2];
+
+	status = napi_get_reference_value(env, node_impl->global_ref, &global);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_get_named_property(env, global, "process", &process);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_get_named_property(env, process, "on", &on);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_create_string_utf8(env, "exit", NAPI_AUTO_LENGTH, &argv[0]);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_create_function(env, nullptr, 0, &node_loader_impl_destroy_flush_finalizers_callback, nullptr, &argv[1]);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_call_function(env, process, on, 2, argv, nullptr);
+
+	node_loader_impl_exception(env, status);
+}
+#endif
+
 void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env)
 {
 	napi_status status;
@@ -4824,6 +4969,20 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
+
+#if NODE_MAJOR_VERSION < 18
+	if (loader_impl_get_option_host(node_impl->impl) == 0)
+	{
+		/* Register the flush as the last 'exit' handler, it will run after the user ones */
+		node_loader_impl_destroy_flush_finalizers_register(node_impl, env);
+	}
+	else
+	{
+		/* In host mode we are already inside the 'exit' event (bootstrap.js), so listeners added now are not
+		* invoked by the current emit, flush the finalizers directly instead */
+		node_loader_impl_destroy_flush_finalizers();
+	}
+#endif
 
 	/* Clear thread safe functions except by destroy one */
 	if (loader_impl_get_option_host(node_impl->impl) == 0)
@@ -4861,6 +5020,15 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	* the runtime (at least the NodeJS Loader related part) destroyed.
 	*/
 	loader_set_destroyed(node_impl->impl);
+}
+
+int node_loader_impl_destroy_host(loader_impl_node node_impl, napi_env env)
+{
+	/* When running in host mode, the destroy is issued by the host itself from the JavaScript thread (i.e process.on('exit')),
+	* destroy the loader through MetaCall, so it can be deallocated later on without destroying the runtime again */
+	node_loader_impl_env(node_impl, env);
+
+	return loader_destroy_runtime(node_impl->impl);
 }
 
 void node_loader_impl_try_destroy(loader_impl_node node_impl)
@@ -4904,6 +5072,11 @@ int node_loader_impl_destroy(loader_impl impl)
 
 		/* Wait for node thread to finish */
 		uv_thread_join(&node_impl->thread);
+	}
+	else
+	{
+		/* In host mode, this is called from node_loader_impl_destroy_host, so we are already in the JavaScript thread */
+		node_loader_impl_destroy_safe_impl(node_impl, node_impl->env);
 	}
 
 	/* Clear condition syncronization object */

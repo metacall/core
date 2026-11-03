@@ -37,7 +37,7 @@ typedef struct method_interface_type
 {
 	method_impl_interface_destroy destroy;
 
-} * method_interface;
+} *method_interface;
 
 typedef method_interface (*method_impl_interface_singleton)(void);
 

@@ -50,6 +50,16 @@ public:
 	{
 		return "json";
 	}
+
+	const char *simd_json_name()
+	{
+		return "simd_json";
+	}
+	const char *simd_json_extension()
+	{
+		return "json";
+	}
+
 	const char *metacall_name()
 	{
 		return "metacall";
@@ -58,276 +68,24 @@ public:
 	{
 		return "meta";
 	}
-};
 
-TEST_F(serial_test, DefaultConstructor)
-{
-	EXPECT_EQ((int)0, (int)log_configure("metacall",
-						  log_policy_format_text(),
-						  log_policy_schedule_sync(),
-						  log_policy_storage_sequential(),
-						  log_policy_stream_stdio(stdout)));
-
-	// Create allocator
-	memory_allocator allocator = memory_allocator_std(&malloc, &realloc, &free);
-
-	EXPECT_NE((memory_allocator)NULL, (memory_allocator)allocator);
-
-	// Initialize serial
-	EXPECT_EQ((int)0, (int)serial_initialize());
-
-	// Create RapidJSON serial
-	create_serial(rapid_json_name(), rapid_json_extension());
-
-	// Create MetaCall serial
-	create_serial(metacall_name(), metacall_extension());
-
-	// RapidJSON
+	static void check_serialize(serial s, memory_allocator allocator, value v, const char *expected)
 	{
-		static const char hello_world[] = "hello world";
+		size_t size = 0;
 
-		static const value value_list[] = {
-			value_create_int(244),
-			value_create_double(6.8),
-			value_create_string(hello_world, sizeof(hello_world) - 1)
-		};
+		char *buffer = serial_serialize(s, v, &size, allocator);
 
-		static const char map_index_a[] = "aaa";
-		static const char map_index_b[] = "bbb";
-
-		static const value value_map_a[] = {
-			value_create_string(map_index_a, sizeof(map_index_a) - 1),
-			value_create_double(3.333)
-		};
-
-		static const value value_map_b[] = {
-			value_create_string(map_index_b, sizeof(map_index_b) - 1),
-			value_create_double(4.5)
-		};
-
-		static const value value_map[] = {
-			value_create_array(value_map_a, sizeof(value_map_a) / sizeof(value_map_a[0])),
-			value_create_array(value_map_b, sizeof(value_map_b) / sizeof(value_map_b[0]))
-		};
-
-		static const size_t value_list_size = sizeof(value_list) / sizeof(value_list[0]);
-		static const char value_list_str[] = "[244,6.8,\"hello world\"]";
-		static const size_t value_map_size = sizeof(value_map) / sizeof(value_map[0]);
-		static const char value_map_str[] = "{\"aaa\":3.333,\"bbb\":4.5}";
-
-		static const char json_buffer_array[] = "[\"asdf\",443,3.2]";
-		static const size_t json_buffer_array_size = 3;
-
-		static const char json_buffer_map[] = "{\"abc\":9.9,\"cde\":1.5}";
-		static const size_t json_buffer_map_size = 2;
-
-		static const char json_true[] = "true";
-		static const char json_number[] = "23434";
-		static const char json_string[] = "\"Hello World\"";
-		static const char json_string_value[] = "Hello World";
-
-		static const char json_empty_array[] = "[]";
-
-		size_t serialize_size = 0;
-
-		serial s = serial_create(rapid_json_name());
-
-		// Create value array from value list
-		value v = value_create_array(value_list, value_list_size);
-
-		EXPECT_NE((value)NULL, (value)v);
-
-		// Serialize value array into buffer
-		char *buffer = serial_serialize(s, v, &serialize_size, allocator);
-
-		EXPECT_EQ((size_t)sizeof(value_list_str), (size_t)serialize_size);
-		EXPECT_NE((char *)NULL, (char *)buffer);
-		EXPECT_STREQ(buffer, value_list_str);
-
-		value_destroy(v);
-
-		for (size_t iterator = 0; iterator < value_list_size; ++iterator)
-		{
-			value_destroy(value_list[iterator]);
-		}
+		ASSERT_NE((char *)NULL, (char *)buffer);
+		EXPECT_EQ((size_t)strlen(expected) + 1, (size_t)size);
+		EXPECT_STREQ(expected, buffer);
 
 		memory_allocator_deallocate(allocator, buffer);
 
-		// Create value map from value list map
-		v = value_create_map(value_map, value_map_size);
-
-		EXPECT_NE((value)NULL, (value)v);
-
-		// Serialize value map into buffer
-		buffer = serial_serialize(s, v, &serialize_size, allocator);
-
-		EXPECT_EQ((size_t)sizeof(value_map_str), (size_t)serialize_size);
-		EXPECT_NE((value)NULL, (value)v);
-		EXPECT_STREQ(buffer, value_map_str);
-
-		value *v_map = value_to_map(v);
-
-		for (size_t iterator = 0; iterator < value_map_size; ++iterator)
-		{
-			value *tupla = value_to_array(v_map[iterator]);
-
-			value_destroy(tupla[0]);
-			value_destroy(tupla[1]);
-
-			value_destroy(v_map[iterator]);
-		}
-
-		value_destroy(v);
-
-		memory_allocator_deallocate(allocator, buffer);
-
-		// Create an empty array
-		v = value_create_array(NULL, 0);
-
-		EXPECT_NE((value)NULL, (value)v);
-
-		// Serialize empty array into buffer
-		buffer = serial_serialize(s, v, &serialize_size, allocator);
-
-		EXPECT_EQ((size_t)sizeof(json_empty_array), (size_t)serialize_size);
-		EXPECT_NE((value)NULL, (value)v);
-		EXPECT_STREQ(buffer, json_empty_array);
-
-		value_destroy(v);
-
-		memory_allocator_deallocate(allocator, buffer);
-
-		// Deserialize json buffer array into value
-		v = serial_deserialize(s, json_buffer_array, sizeof(json_buffer_array), allocator);
-
-		EXPECT_EQ((type_id)TYPE_ARRAY, (type_id)value_type_id(v));
-		EXPECT_EQ((size_t)json_buffer_array_size, (size_t)value_type_count(v));
-
-		value *v_array = value_to_array(v);
-
-		EXPECT_NE((value *)NULL, (value *)v_array);
-
-		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(v_array[0]));
-		EXPECT_STREQ(value_to_string(v_array[0]), "asdf");
-
-		EXPECT_EQ((type_id)TYPE_INT, (type_id)value_type_id(v_array[1]));
-		EXPECT_EQ((int)443, (int)value_to_int(v_array[1]));
-
-		EXPECT_EQ((type_id)TYPE_FLOAT, (type_id)value_type_id(v_array[2]));
-		EXPECT_EQ((float)3.2f, (float)value_to_float(v_array[2]));
-
-		for (size_t iterator = 0; iterator < value_list_size; ++iterator)
-		{
-			value_destroy(v_array[iterator]);
-		}
-
-		value_destroy(v);
-
-		// Deserialize json buffer map into value
-		v = serial_deserialize(s, json_buffer_map, sizeof(json_buffer_map), allocator);
-
-		EXPECT_EQ((type_id)TYPE_MAP, (type_id)value_type_id(v));
-		EXPECT_EQ((size_t)json_buffer_map_size, (size_t)value_type_count(v));
-
-		v_map = value_to_map(v);
-
-		EXPECT_NE((value *)NULL, (value *)v_map);
-
-		EXPECT_EQ((type_id)TYPE_ARRAY, (type_id)value_type_id(v_map[0]));
-		EXPECT_EQ((type_id)TYPE_ARRAY, (type_id)value_type_id(v_map[1]));
-
-		value *tupla = value_to_array(v_map[0]);
-
-		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(tupla[0]));
-		EXPECT_STREQ(value_to_string(tupla[0]), "abc");
-
-		EXPECT_EQ((type_id)TYPE_FLOAT, (type_id)value_type_id(tupla[1]));
-		EXPECT_EQ((float)9.9f, (float)value_to_float(tupla[1]));
-
-		value_destroy(tupla[0]);
-		value_destroy(tupla[1]);
-
-		value_destroy(v_map[0]);
-
-		tupla = value_to_array(v_map[1]);
-
-		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(tupla[0]));
-		EXPECT_STREQ(value_to_string(tupla[0]), "cde");
-
-		EXPECT_EQ((type_id)TYPE_FLOAT, (type_id)value_type_id(tupla[1]));
-		EXPECT_EQ((float)1.5f, (float)value_to_float(tupla[1]));
-
-		value_destroy(tupla[0]);
-		value_destroy(tupla[1]);
-
-		value_destroy(v_map[1]);
-
-		value_destroy(v);
-
-		// Deserialize json boolean primitive type into value
-		v = serial_deserialize(s, json_true, sizeof(json_true), allocator);
-
-		EXPECT_EQ((type_id)TYPE_BOOL, (type_id)value_type_id(v));
-		EXPECT_EQ((size_t)sizeof(boolean), (size_t)value_type_size(v));
-		EXPECT_EQ((boolean)1L, (boolean)value_to_bool(v));
-
-		value_destroy(v);
-
-		// Deserialize json number primitive type into value
-		v = serial_deserialize(s, json_number, sizeof(json_number), allocator);
-
-		EXPECT_EQ((type_id)TYPE_INT, (type_id)value_type_id(v));
-		EXPECT_EQ((size_t)sizeof(int), (size_t)value_type_size(v));
-		EXPECT_EQ((int)23434, (int)value_to_int(v));
-
-		value_destroy(v);
-
-		// Deserialize json string primitive type into value
-		v = serial_deserialize(s, json_string, sizeof(json_string), allocator);
-
-		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(v));
-		EXPECT_EQ((size_t)sizeof(json_string_value), (size_t)value_type_size(v));
-		EXPECT_EQ((int)0, (int)strncmp(value_to_string(v), json_string_value, sizeof(json_string_value) - 1));
-
-		value_destroy(v);
-
-		// Regression: unsigned int > INT_MAX must not silently corrupt to a negative number.
-		// 3,000,000,000 fits in uint32 but not int32. Previously the unguarded cast
-		// returned -1,294,967,296 with no error. Now it must either round-trip as a long
-		// (on platforms where long is wide enough) or return NULL.
-		{
-			static const char json_uint_overflow[] = "3000000000";
-
-			v = serial_deserialize(s, json_uint_overflow, sizeof(json_uint_overflow), allocator);
-
-#if LONG_MAX >= 3000000000L
-			EXPECT_NE((value)NULL, (value)v);
-			EXPECT_EQ((type_id)TYPE_LONG, (type_id)value_type_id(v));
-			EXPECT_EQ((long)3000000000L, (long)value_to_long(v));
-			value_destroy(v);
-#else
-			/* On 32-bit platforms long cannot hold this value; expect a throwable error value */
-			EXPECT_NE((value)NULL, (value)v);
-			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
-			value_type_destroy(v);
-#endif
-		}
-
-		// Regression: uint64 > LONG_MAX must return a throwable, not a silently wrapped value.
-		// UINT64_MAX (18446744073709551615) cannot be represented in any MetaCall integer
-		// type; returning corrupt data here is worse than a clean exception.
-		{
-			static const char json_uint64_overflow[] = "18446744073709551615";
-
-			v = serial_deserialize(s, json_uint64_overflow, sizeof(json_uint64_overflow), allocator);
-
-			EXPECT_NE((value)NULL, (value)v);
-			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
-			value_type_destroy(v);
-		}
+		value_type_destroy(v);
 	}
 
-	// MetaCall
+	// MetaCall Serial (proof of concept, no need to fully implement it)
+	static void meta_test(const char *name, memory_allocator allocator)
 	{
 		static const char hello_world[] = "hello world";
 		static const size_t hello_world_length = sizeof(hello_world) - 1;
@@ -453,7 +211,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 		const size_t value_names_size = sizeof(value_names) / sizeof(value_names[0]);
 
-		serial s = serial_create(metacall_name());
+		serial s = serial_create(name);
 
 		for (size_t iterator = 0; iterator < value_names_size; ++iterator)
 		{
@@ -477,11 +235,399 @@ TEST_F(serial_test, DefaultConstructor)
 		}
 	}
 
-	// Clear RapidJSON serial
-	EXPECT_EQ((int)0, (int)serial_clear(serial_create(rapid_json_name())));
+	static void json_test(const char *name, memory_allocator allocator)
+	{
+		SCOPED_TRACE(name);
 
-	// Clear MetaCall serial
-	EXPECT_EQ((int)0, (int)serial_clear(serial_create(metacall_name())));
+		static const char hello_world[] = "hello world";
+
+		const value value_list[] = {
+			value_create_int(244),
+			value_create_double(6.8),
+			value_create_string(hello_world, sizeof(hello_world) - 1)
+		};
+
+		static const char map_index_a[] = "aaa";
+		static const char map_index_b[] = "bbb";
+
+		const value value_map_a[] = {
+			value_create_string(map_index_a, sizeof(map_index_a) - 1),
+			value_create_double(3.333)
+		};
+
+		const value value_map_b[] = {
+			value_create_string(map_index_b, sizeof(map_index_b) - 1),
+			value_create_double(4.5)
+		};
+
+		const value value_map[] = {
+			value_create_array(value_map_a, sizeof(value_map_a) / sizeof(value_map_a[0])),
+			value_create_array(value_map_b, sizeof(value_map_b) / sizeof(value_map_b[0]))
+		};
+
+		static const size_t value_list_size = sizeof(value_list) / sizeof(value_list[0]);
+		static const char value_list_str[] = "[244,6.8,\"hello world\"]";
+		static const size_t value_map_size = sizeof(value_map) / sizeof(value_map[0]);
+		static const char value_map_str[] = "{\"aaa\":3.333,\"bbb\":4.5}";
+
+		static const char json_buffer_array[] = "[\"asdf\",443,3.2]";
+		static const size_t json_buffer_array_size = 3;
+
+		static const char json_buffer_map[] = "{\"abc\":9.9,\"cde\":1.5}";
+		static const size_t json_buffer_map_size = 2;
+
+		static const char json_true[] = "true";
+		static const char json_number[] = "23434";
+		static const char json_string[] = "\"Hello World\"";
+		static const char json_string_value[] = "Hello World";
+
+		static const char json_empty_array[] = "[]";
+
+		size_t serialize_size = 0;
+
+		serial s = serial_create(name);
+
+		ASSERT_NE((serial)NULL, (serial)s);
+
+		// Create value array from value list
+		value v = value_create_array(value_list, value_list_size);
+
+		EXPECT_NE((value)NULL, (value)v);
+
+		// Serialize value array into buffer
+		char *buffer = serial_serialize(s, v, &serialize_size, allocator);
+
+		EXPECT_EQ((size_t)sizeof(value_list_str), (size_t)serialize_size);
+		EXPECT_NE((char *)NULL, (char *)buffer);
+		EXPECT_STREQ(buffer, value_list_str);
+
+		value_destroy(v);
+
+		for (size_t iterator = 0; iterator < value_list_size; ++iterator)
+		{
+			value_destroy(value_list[iterator]);
+		}
+
+		memory_allocator_deallocate(allocator, buffer);
+
+		// Create value map from value list map
+		v = value_create_map(value_map, value_map_size);
+
+		EXPECT_NE((value)NULL, (value)v);
+
+		// Serialize value map into buffer
+		buffer = serial_serialize(s, v, &serialize_size, allocator);
+
+		EXPECT_EQ((size_t)sizeof(value_map_str), (size_t)serialize_size);
+		EXPECT_NE((value)NULL, (value)v);
+		EXPECT_STREQ(buffer, value_map_str);
+
+		value *v_map = value_to_map(v);
+
+		for (size_t iterator = 0; iterator < value_map_size; ++iterator)
+		{
+			value *tupla = value_to_array(v_map[iterator]);
+
+			value_destroy(tupla[0]);
+			value_destroy(tupla[1]);
+
+			value_destroy(v_map[iterator]);
+		}
+
+		value_destroy(v);
+
+		memory_allocator_deallocate(allocator, buffer);
+
+		// Create an empty array
+		v = value_create_array(NULL, 0);
+
+		EXPECT_NE((value)NULL, (value)v);
+
+		// Serialize empty array into buffer
+		buffer = serial_serialize(s, v, &serialize_size, allocator);
+
+		EXPECT_EQ((size_t)sizeof(json_empty_array), (size_t)serialize_size);
+		EXPECT_NE((value)NULL, (value)v);
+		EXPECT_STREQ(buffer, json_empty_array);
+
+		value_destroy(v);
+
+		memory_allocator_deallocate(allocator, buffer);
+
+		// Deserialize json buffer array into value
+		v = serial_deserialize(s, json_buffer_array, sizeof(json_buffer_array), allocator);
+
+		EXPECT_EQ((type_id)TYPE_ARRAY, (type_id)value_type_id(v));
+		EXPECT_EQ((size_t)json_buffer_array_size, (size_t)value_type_count(v));
+
+		value *v_array = value_to_array(v);
+
+		EXPECT_NE((value *)NULL, (value *)v_array);
+
+		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(v_array[0]));
+		EXPECT_STREQ(value_to_string(v_array[0]), "asdf");
+
+		EXPECT_EQ((type_id)TYPE_INT, (type_id)value_type_id(v_array[1]));
+		EXPECT_EQ((int)443, (int)value_to_int(v_array[1]));
+
+		EXPECT_EQ((type_id)TYPE_DOUBLE, (type_id)value_type_id(v_array[2]));
+		EXPECT_EQ((double)3.2, (double)value_to_double(v_array[2]));
+
+		for (size_t iterator = 0; iterator < value_list_size; ++iterator)
+		{
+			value_destroy(v_array[iterator]);
+		}
+
+		value_destroy(v);
+
+		// Deserialize json buffer map into value
+		v = serial_deserialize(s, json_buffer_map, sizeof(json_buffer_map), allocator);
+
+		EXPECT_EQ((type_id)TYPE_MAP, (type_id)value_type_id(v));
+		EXPECT_EQ((size_t)json_buffer_map_size, (size_t)value_type_count(v));
+
+		v_map = value_to_map(v);
+
+		EXPECT_NE((value *)NULL, (value *)v_map);
+
+		EXPECT_EQ((type_id)TYPE_ARRAY, (type_id)value_type_id(v_map[0]));
+		EXPECT_EQ((type_id)TYPE_ARRAY, (type_id)value_type_id(v_map[1]));
+
+		value *tupla = value_to_array(v_map[0]);
+
+		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(tupla[0]));
+		EXPECT_STREQ(value_to_string(tupla[0]), "abc");
+
+		EXPECT_EQ((type_id)TYPE_DOUBLE, (type_id)value_type_id(tupla[1]));
+		EXPECT_EQ((double)9.9, (double)value_to_double(tupla[1]));
+
+		value_destroy(tupla[0]);
+		value_destroy(tupla[1]);
+
+		value_destroy(v_map[0]);
+
+		tupla = value_to_array(v_map[1]);
+
+		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(tupla[0]));
+		EXPECT_STREQ(value_to_string(tupla[0]), "cde");
+
+		EXPECT_EQ((type_id)TYPE_DOUBLE, (type_id)value_type_id(tupla[1]));
+		EXPECT_EQ((double)1.5, (double)value_to_double(tupla[1]));
+
+		value_destroy(tupla[0]);
+		value_destroy(tupla[1]);
+
+		value_destroy(v_map[1]);
+
+		value_destroy(v);
+
+		// Deserialize json boolean primitive type into value
+		v = serial_deserialize(s, json_true, sizeof(json_true), allocator);
+
+		EXPECT_EQ((type_id)TYPE_BOOL, (type_id)value_type_id(v));
+		EXPECT_EQ((size_t)sizeof(boolean), (size_t)value_type_size(v));
+		EXPECT_EQ((boolean)1L, (boolean)value_to_bool(v));
+
+		value_destroy(v);
+
+		// Deserialize json number primitive type into value
+		v = serial_deserialize(s, json_number, sizeof(json_number), allocator);
+
+		EXPECT_EQ((type_id)TYPE_INT, (type_id)value_type_id(v));
+		EXPECT_EQ((size_t)sizeof(int), (size_t)value_type_size(v));
+		EXPECT_EQ((int)23434, (int)value_to_int(v));
+
+		value_destroy(v);
+
+		// Deserialize json string primitive type into value
+		v = serial_deserialize(s, json_string, sizeof(json_string), allocator);
+
+		EXPECT_EQ((type_id)TYPE_STRING, (type_id)value_type_id(v));
+		EXPECT_EQ((size_t)sizeof(json_string_value), (size_t)value_type_size(v));
+		EXPECT_EQ((int)0, (int)strncmp(value_to_string(v), json_string_value, sizeof(json_string_value) - 1));
+
+		value_destroy(v);
+
+		// Regression: unsigned int > INT_MAX must not silently corrupt to a negative number.
+		// 3,000,000,000 fits in uint32 but not int32. Previously the unguarded cast
+		// returned -1,294,967,296 with no error. Now it must either round-trip as a long
+		// (on platforms where long is wide enough) or return NULL.
+		{
+			static const char json_uint_overflow[] = "3000000000";
+
+			v = serial_deserialize(s, json_uint_overflow, sizeof(json_uint_overflow), allocator);
+
+#if LONG_MAX >= 3000000000L
+			EXPECT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_LONG, (type_id)value_type_id(v));
+			EXPECT_EQ((long)3000000000L, (long)value_to_long(v));
+			value_destroy(v);
+#else
+			/* On 32-bit platforms long cannot hold this value; expect a throwable error value */
+			EXPECT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
+			value_type_destroy(v);
+#endif
+		}
+
+		// Regression: uint64 > LONG_MAX must return a throwable, not a silently wrapped value.
+		// UINT64_MAX (18446744073709551615) cannot be represented in any MetaCall integer
+		// type; returning corrupt data here is worse than a clean exception.
+		{
+			static const char json_uint64_overflow[] = "18446744073709551615";
+
+			v = serial_deserialize(s, json_uint64_overflow, sizeof(json_uint64_overflow), allocator);
+
+			EXPECT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_THROWABLE, (type_id)value_type_id(v));
+			value_type_destroy(v);
+		}
+		// Floating point numbers must be always deserialized as double, without precision loss
+		{
+			static const char json_doubles[] = "[3.2,6.8,4.5,1e300,-0.1]";
+			static const double doubles[] = { 3.2, 6.8, 4.5, 1e300, -0.1 };
+			static const size_t doubles_size = sizeof(doubles) / sizeof(doubles[0]);
+
+			v = serial_deserialize(s, json_doubles, sizeof(json_doubles), allocator);
+
+			ASSERT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_ARRAY, (type_id)value_type_id(v));
+			EXPECT_EQ((size_t)doubles_size, (size_t)value_type_count(v));
+
+			v_array = value_to_array(v);
+
+			for (size_t iterator = 0; iterator < doubles_size; ++iterator)
+			{
+				EXPECT_EQ((type_id)TYPE_DOUBLE, (type_id)value_type_id(v_array[iterator]));
+				EXPECT_EQ((double)doubles[iterator], (double)value_to_double(v_array[iterator]));
+			}
+
+			value_type_destroy(v);
+		}
+
+		// Integers exceeding 64 bits must be deserialized as double
+		{
+			static const char json_big_int[] = "18446744073709551616000";
+
+			v = serial_deserialize(s, json_big_int, sizeof(json_big_int), allocator);
+
+			ASSERT_NE((value)NULL, (value)v);
+			EXPECT_EQ((type_id)TYPE_DOUBLE, (type_id)value_type_id(v));
+			EXPECT_EQ((double)18446744073709551616000.0, (double)value_to_double(v));
+
+			value_destroy(v);
+		}
+
+		// Buffer bytes must be serialized as unsigned values independently of the signedness of char
+		{
+			static const char buffer_data[] = { 0x01, 0x7F, (char)0x80, (char)0xFF };
+			static const char json_buffer[] = "{\"data\":[1,127,128,255],\"length\":4}";
+
+			check_serialize(s, allocator, value_create_buffer(buffer_data, sizeof(buffer_data)), json_buffer);
+		}
+
+		// Primitive types serialization
+		{
+			static const char json_string_escape[] = "\"a\\\"b\\\\c\\nd\\te\"";
+			static const char string_escape[] = "a\"b\\c\nd\te";
+
+			check_serialize(s, allocator, value_create_bool(0L), "false");
+			check_serialize(s, allocator, value_create_char('A'), "\"A\"");
+			check_serialize(s, allocator, value_create_short(-123), "-123");
+			check_serialize(s, allocator, value_create_int(INT_MIN), "-2147483648");
+			check_serialize(s, allocator, value_create_float(4.5f), "4.5");
+			check_serialize(s, allocator, value_create_double(1.0), "1.0");
+			check_serialize(s, allocator, value_create_double(-0.1), "-0.1");
+			check_serialize(s, allocator, value_create_string(string_escape, sizeof(string_escape) - 1), json_string_escape);
+			check_serialize(s, allocator, value_create_null(), "null");
+#if LONG_MAX >= 5000000000L
+			check_serialize(s, allocator, value_create_long(5000000000L), "5000000000");
+#endif
+		}
+
+		// Deserialize a document whose end is placed just before a page boundary, and in the middle
+		// of a page, in order to test that the input is read properly independently of its position
+		{
+			static const char json_page[] = "{\"abc\":[1,2,3],\"def\":\"ghi\"}";
+			static const size_t page_size = 4096;
+			static const size_t offsets[] = { page_size - sizeof(json_page), page_size / 2, page_size - sizeof(json_page) - 1 };
+
+			char *page = static_cast<char *>(malloc(page_size * 3));
+
+			ASSERT_NE((char *)NULL, (char *)page);
+
+			char *aligned_page = reinterpret_cast<char *>((reinterpret_cast<uintptr_t>(page) + page_size - 1) & ~(uintptr_t)(page_size - 1));
+
+			for (size_t iterator = 0; iterator < sizeof(offsets) / sizeof(offsets[0]); ++iterator)
+			{
+				char *json = aligned_page + offsets[iterator];
+
+				memcpy(json, json_page, sizeof(json_page));
+
+				v = serial_deserialize(s, json, sizeof(json_page), allocator);
+
+				ASSERT_NE((value)NULL, (value)v);
+				EXPECT_EQ((type_id)TYPE_MAP, (type_id)value_type_id(v));
+				EXPECT_EQ((size_t)2, (size_t)value_type_count(v));
+
+				value_type_destroy(v);
+			}
+
+			free(page);
+		}
+	}
+};
+
+TEST_F(serial_test, DefaultConstructor)
+{
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
+
+	// Create allocator
+	memory_allocator allocator = memory_allocator_std(&malloc, &realloc, &free);
+
+	EXPECT_NE((memory_allocator)NULL, (memory_allocator)allocator);
+
+	// Initialize serial
+	EXPECT_EQ((int)0, (int)serial_initialize());
+
+	struct
+	{
+		const char *name;
+		const char *extension;
+		void (*run)(const char *, memory_allocator);
+	} serial_tests[] = {
+#if defined(OPTION_BUILD_SERIALS_METACALL)
+		{ metacall_name(), metacall_extension(), &serial_test::meta_test },
+#endif
+#if defined(OPTION_BUILD_SERIALS_RAPID_JSON)
+		{ rapid_json_name(), rapid_json_extension(), &serial_test::json_test },
+#endif
+#if defined(OPTION_BUILD_SERIALS_SIMD_JSON)
+		{ simd_json_name(), simd_json_extension(), &serial_test::json_test },
+#endif
+	};
+
+	// Create serials
+	for (const auto &serial_test : serial_tests)
+	{
+		create_serial(serial_test.name, serial_test.extension);
+	}
+
+	// Run tests
+	for (const auto &serial_test : serial_tests)
+	{
+		serial_test.run(serial_test.name, allocator);
+	}
+
+	// Clear serials
+	for (const auto &serial_test : serial_tests)
+	{
+		EXPECT_EQ((int)0, (int)serial_clear(serial_create(serial_test.name)));
+	}
 
 	// Destroy serial
 	serial_destroy();

@@ -45,17 +45,19 @@ function(preprocessor_for_generate _for_size)
 	set(preprocessor_for_line_align 10)
 
 	# Definition implementation: PREPROCESSOR_FOR_EACH_IMPL
-	set(PREPROCESSOR_FOR_EACH_IMPL_BODY "")
+	set(preprocessor_for_each_impl_names "")
+	set(preprocessor_for_each_impl_values "")
 
 	foreach(iterator RANGE 3 ${PREPROCESSOR_FOR_SIZE})
 
 		math(EXPR prev "${iterator} - 1")
 
-		set(PREPROCESSOR_FOR_EACH_IMPL_BODY "${PREPROCESSOR_FOR_EACH_IMPL_BODY}#define PREPROCESSOR_FOR_EACH_IMPL_${iterator}(expr, element, ...) expr(element)")
-
-		set(PREPROCESSOR_FOR_EACH_IMPL_BODY "${PREPROCESSOR_FOR_EACH_IMPL_BODY} PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_${prev}(expr, __VA_ARGS__))\n")
+		list(APPEND preprocessor_for_each_impl_names "PREPROCESSOR_FOR_EACH_IMPL_${iterator}(expr, element, ...)")
+		list(APPEND preprocessor_for_each_impl_values "expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_${prev}(expr, __VA_ARGS__))")
 
 	endforeach()
+
+	preprocessor_template_align(PREPROCESSOR_FOR_EACH_IMPL_BODY "" preprocessor_for_each_impl_names preprocessor_for_each_impl_values)
 
 	# Definition implementation: PREPROCESSOR_FOR_EACH_IMPL_GNUC
 	set(PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY "")
@@ -67,7 +69,7 @@ function(preprocessor_for_generate _for_size)
 		math(EXPR iterator_modulo "${iterator} % ${preprocessor_for_line_align}")
 
 		if(${iterator_modulo} EQUAL 0)
-			set(PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY}PREPROCESSOR_FOR_EACH_IMPL_${iterator}, \\\n\t\t\t")
+			set(PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY}PREPROCESSOR_FOR_EACH_IMPL_${iterator}, \\\n\t\t\t\t")
 		else()
 			set(PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY}PREPROCESSOR_FOR_EACH_IMPL_${iterator}, ")
 		endif()
@@ -75,17 +77,19 @@ function(preprocessor_for_generate _for_size)
 	endforeach()
 
 	# Definition implementation: PREPROCESSOR_FOR_IMPL
-	set(PREPROCESSOR_FOR_IMPL_BODY "")
+	set(preprocessor_for_impl_names "")
+	set(preprocessor_for_impl_values "")
 
 	foreach(iterator RANGE 3 ${PREPROCESSOR_FOR_SIZE})
 
 		math(EXPR prev "${iterator} - 1")
 
-		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY}#define PREPROCESSOR_FOR_IMPL_${iterator}(expr, context, iterator, element, ...) expr(context, iterator, element)")
-
-		set(PREPROCESSOR_FOR_IMPL_BODY "${PREPROCESSOR_FOR_IMPL_BODY} PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_${prev}(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__))\n")
+		list(APPEND preprocessor_for_impl_names "PREPROCESSOR_FOR_IMPL_${iterator}(expr, context, iterator, element, ...)")
+		list(APPEND preprocessor_for_impl_values "expr(context, iterator, element) PREPROCESSOR_FOR_EVAL(PREPROCESSOR_FOR_IMPL_${prev}(expr, context, PREPROCESSOR_INCREMENT(iterator), __VA_ARGS__))")
 
 	endforeach()
+
+	preprocessor_template_align(PREPROCESSOR_FOR_IMPL_BODY "" preprocessor_for_impl_names preprocessor_for_impl_values)
 
 	# Definition implementation: PREPROCESSOR_FOR_IMPL_GNUC
 	set(PREPROCESSOR_FOR_IMPL_GNUC_BODY "")
@@ -97,7 +101,7 @@ function(preprocessor_for_generate _for_size)
 		math(EXPR iterator_modulo "${iterator} % ${preprocessor_for_line_align}")
 
 		if(${iterator_modulo} EQUAL 0)
-			set(PREPROCESSOR_FOR_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_IMPL_GNUC_BODY}PREPROCESSOR_FOR_IMPL_${iterator}, \\\n\t\t\t")
+			set(PREPROCESSOR_FOR_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_IMPL_GNUC_BODY}PREPROCESSOR_FOR_IMPL_${iterator}, \\\n\t\t\t\t")
 		else()
 			set(PREPROCESSOR_FOR_IMPL_GNUC_BODY "${PREPROCESSOR_FOR_IMPL_GNUC_BODY}PREPROCESSOR_FOR_IMPL_${iterator}, ")
 		endif()

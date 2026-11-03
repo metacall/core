@@ -65,6 +65,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
       - [5.3.2 Serials](#532-serials)
         - [5.3.2.1 MetaCall](#5321-metacall)
         - [5.3.2.2 RapidJSON](#5322-rapidjson)
+        - [5.3.2.3 SimdJSON](#5323-simdjson)
       - [5.3.3 Detours](#533-detours)
         - [5.3.3.1 PLTHook](#5331-plthook)
     - [5.4 Ports](#54-ports)
@@ -526,6 +527,8 @@ Async/await is implemented using Python's standard `asyncio` facilities. The asy
 
 ##### 5.3.2.2 RapidJSON
 
+##### 5.3.2.3 SimdJSON
+
 #### 5.3.3 Detours
 
 ##### 5.3.3.1 PLTHook
@@ -734,6 +737,64 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 ## 6. Application Programming Interface (API)
 
+The C API is declared in [`metacall.h`](../source/metacall/include/metacall/metacall.h). This example requires the [Python loader](#5311-python) and links against `libmetacall`; see [7.4](#74-build-using-scripts) for setup.
+
+```c
+#include <stdio.h>
+#include <metacall/metacall.h>
+
+int main(void)
+{
+	static const char source[] =
+		"def answer() -> int:\n"
+		"    return 42\n";
+	void *handle = NULL;
+	void *result = NULL;
+	int status = 1;
+
+	if (metacall_initialize() != 0)
+	{
+		return status;
+	}
+
+	if (metacall_load_from_memory("py", source, sizeof(source), &handle) != 0)
+	{
+		goto cleanup;
+	}
+
+	result = metacallhv_s(handle, "answer", metacall_null_args, 0);
+	if (result != NULL && metacall_value_id(result) == METACALL_LONG)
+	{
+		printf("%ld\n", metacall_value_to_long(result));
+		status = 0;
+	}
+
+cleanup:
+	metacall_value_destroy(result);
+	if (handle != NULL && metacall_clear(handle) != 0)
+	{
+		status = 1;
+	}
+	metacall_destroy();
+	return status;
+}
+```
+
+Save the example as `example.c`. With MetaCall's headers and library on the compiler and runtime search paths, compile and run on Linux:
+
+```sh
+cc -std=c99 -Wall -Wextra example.c -lmetacall -o example
+./example
+```
+
+For a custom installation, supply the compiler's `-I` and `-L` paths and the dynamic linker's library path. Set plugin and configuration paths as described in [4.2 Environment Variables](#42-environment-variables).
+
+The program prints `42`. Python's `int` annotation maps to `METACALL_LONG` in the [loader](../source/loaders/py_loader/source/py_loader_impl.c). Initialization, loading, and clearing return zero on success. Calls return a value, or `NULL` on failure; release returned values with `metacall_value_destroy` (which accepts `NULL`).
+
+Passing `&handle` with `handle = NULL` creates a private scope, accessed through handle-scoped calls such as `metacallhv_s`. Passing `&handle` when `handle` already references a loaded handle adds symbols to its scope; passing `NULL` instead exposes symbols in the loader scope for calls such as `metacall`.
+
+`metacall_clear(handle)` unloads one handle; do not free it or reuse it or its function references afterward. `metacall_destroy()` shuts down the runtimes and any remaining handles. Initialize and destroy on the same thread. See [`metacall_clear_test`](../source/tests/metacall_clear_test/source/metacall_clear_test.cpp) for further handle examples.
+
 ## 7. Build System
 
 Follow these steps to build and install **METACALL** manually.
@@ -792,7 +853,13 @@ To format the entire C/C++ codebase use:
 cmake --build build --target clang-format
 ```
 
-Be aware that this target won't exist if clang-format was not installed when cmake was last run.
+The formatting requires clang-format 19 (install it with `./tools/metacall-environment.sh clangformat`). If it is not installed, it runs through docker or podman with the image `ghcr.io/jidicula/clang-format:19`. The targets `clang-format-check` and `eol-check` run the same checks as the CI (formatting and LF line endings). They can also run without a configured build:
+
+```sh
+cmake -DMODE=fix -P cmake/Format.cmake    # format in place
+cmake -DMODE=check -P cmake/Format.cmake  # check the formatting
+cmake -DMODE=eol -P cmake/Format.cmake    # check the line endings
+```
 
 ### 7.2 Coverage
 
@@ -887,7 +954,6 @@ Usage: `metacall-environment.sh` list of components, example:
 |       Components                                   |                                            Description                                                 |
 |:---------------------------------------------------|-------------------------------------------------------------------------------------------------------:|
 |       base                                         |         Compiler and base requirements for compiling MetaCall.                                         |
-|       rapidjson                                    |         Installs RapidJSON serialization for serializing MetaCall data with JSON.                      |
 |       pack                                         |         Bundle scripts into one deployable runtime.                                                    |
 |       sandbox                                      |         Provides isolated execution contexts for safer script execution.                               |
 |       backtrace                                    |         Generates detailed stack traces and improves error diagnostics across languages.               |

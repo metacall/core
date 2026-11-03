@@ -138,7 +138,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	mock_loader
-	rapid_json_serial
+	simd_json_serial
 )
 
 #

@@ -105,6 +105,8 @@ LOADER_API int loader_is_destroyed(loader_impl impl);
 
 LOADER_API void loader_set_destroyed(loader_impl impl);
 
+LOADER_API int loader_destroy_runtime(loader_impl impl);
+
 LOADER_API void loader_unload_children(loader_impl impl);
 
 LOADER_API void loader_destroy(void);

@@ -47,7 +47,7 @@ typedef struct loader_impl_async_func_await_trampoline_type
 	function_resolve_callback reject_callback;
 	void *context;
 
-} * loader_impl_async_func_await_trampoline;
+} *loader_impl_async_func_await_trampoline;
 
 NODE_LOADER_API loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config);
 
@@ -78,6 +78,8 @@ NODE_LOADER_NO_EXPORT napi_value node_loader_impl_value_to_napi(loader_impl_node
 NODE_LOADER_NO_EXPORT void node_loader_impl_env(loader_impl_node node_impl, napi_env env);
 
 NODE_LOADER_NO_EXPORT void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env);
+
+NODE_LOADER_NO_EXPORT int node_loader_impl_destroy_host(loader_impl_node node_impl, napi_env env);
 
 NODE_LOADER_NO_EXPORT void node_loader_impl_print_handles(loader_impl_node node_impl);
 

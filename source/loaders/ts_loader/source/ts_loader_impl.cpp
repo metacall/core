@@ -43,7 +43,7 @@ typedef struct ts_loader_impl_function_type
 {
 	std::string name;
 	std::map<std::string, void *> data;
-} * ts_loader_impl_function;
+} *ts_loader_impl_function;
 
 int function_ts_interface_create(function func, function_impl impl)
 {
@@ -97,6 +97,7 @@ int ts_loader_impl_initialize_types(loader_impl impl)
 		type_id id;
 		const char *name;
 	} type_id_name_pair[] = {
+		// TODO: Add more types, what happens with templates?
 		{ TYPE_BOOL, "boolean" },
 		{ TYPE_DOUBLE, "number" },
 		{ TYPE_STRING, "string" },
