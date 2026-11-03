@@ -1111,7 +1111,7 @@ Docker selects the image matching the host architecture automatically. To pull a
 
 All the tags listed below are also published for each release with the version as prefix (for example `metacall/core:<version>-dev`), and `metacall/core:<version>` is equivalent to `latest`.
 
-For pulling the **METACALL** `latest` image containing the runtime, use:
+For pulling the **METACALL** `latest` image containing the runtime and the CLI as entry point (equivalent to `cli`), use:
 
 ```sh
 docker pull metacall/core
