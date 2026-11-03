@@ -21,14 +21,13 @@
 #ifndef REFLECT_FUNCTION_H
 #define REFLECT_FUNCTION_H
 
-	#include <reflect/reflect_async.h>
-	#include <reflect/reflect_signature.h>
-	#include <reflect/reflect_value.h>
+#include <reflect/reflect_async.h>
+#include <reflect/reflect_signature.h>
+#include <reflect/reflect_value.h>
 
-	#ifdef __cplusplus
-extern "C"
-{
-	#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct function_type;
 
@@ -254,8 +253,8 @@ REFLECT_API int function_set_template(function f, reflect_template tpl);
 
 REFLECT_API reflect_template function_template(function func);
 
-	#ifdef __cplusplus
+#ifdef __cplusplus
 }
-	#endif
+#endif
 
 #endif /* REFLECT_FUNCTION_H */

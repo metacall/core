@@ -21,18 +21,17 @@
 #ifndef RS_LOADER_IMPL_H
 #define RS_LOADER_IMPL_H
 
-	#include <rs_loader/rs_loader_api.h>
+#include <rs_loader/rs_loader_api.h>
 
-	#include <loader/loader_impl_interface.h>
+#include <loader/loader_impl_interface.h>
 
-	#include <configuration/configuration.h>
+#include <configuration/configuration.h>
 
-	#include <stddef.h>
+#include <stddef.h>
 
-	#ifdef __cplusplus
-extern "C"
-{
-	#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct rs_loader_template_instantiation
 {
@@ -65,8 +64,8 @@ RS_LOADER_API int rs_loader_impl_destroy(loader_impl impl);
 
 RS_LOADER_API const char *get_attr_name(struct accessor_type *accessor);
 
-	#ifdef __cplusplus
+#ifdef __cplusplus
 }
-	#endif
+#endif
 
 #endif /* RS_LOADER_IMPL_H */
