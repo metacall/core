@@ -1069,20 +1069,47 @@ Click the button below. A workspace with all required environments will be creat
 
 ## 8 Platform Support
 
-The following platforms and architectures have been tested and are known to work correctly with all plugins of **METACALL**.
+The following platforms, architectures and compilers are tested continuously in CI (see [`.github/workflows`](/.github/workflows)).
 
-| Operative System |                                                            Architecture                                                             |  Compiler   |
-| :--------------: | :---------------------------------------------------------------------------------------------------------------------------------: | :---------: |
-|   **`ubuntu`**   |                                                             **`amd64`**                                                             |  **`gcc`**  |
-|   **`debian`**   | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`ppc64le`** **`arm/v7`** **`arm/v6`** **`loong64`** |  **`gcc`**  |
-|   **`macos`**    |                                                       **`amd64`** **`arm64`**                                                       | **`clang`** |
-|  **`windows`**   |                                                         **`x86`** **`x64`**                                                         | **`msvc`**  |
-|  **`freebsd`**   |                                                        **`amd64`** **`arm64`**                                                      | **`clang`** |
+| Operative System |                         Versions                          |                                       Architecture                                        |                     Compiler                      |
+| :--------------: | :-------------------------------------------------------: | :---------------------------------------------------------------------------------------: | :-----------------------------------------------: |
+|   **`debian`**   |       **`bookworm`** **`trixie`** **`forky`**             | **`amd64`** **`amd64/v2`** **`amd64/v3`** **`386`** **`arm64`** **`riscv64`** **`arm/v7`** |              **`gcc`** **`clang`**                |
+|   **`ubuntu`**   |                 **`jammy`** **`noble`**                   |                                        **`amd64`**                                        |              **`gcc`** **`clang`**                |
+|   **`macos`**    |                    **`14`** **`15`**                      |                                  **`amd64`** **`arm64`**                                  |                 **`apple clang`**                 |
+|  **`windows`**   |              **`server 2022`** **`server 2025`**          |                                        **`amd64`**                                        |                    **`msvc`**                     |
+|  **`windows`**   | **`msys2 mingw64`** **`msys2 ucrt64`** **`msys2 clang64`** |                                        **`amd64`**                                        |      **`mingw-w64 gcc`** **`mingw-w64 clang`**    |
+|  **`freebsd`**   |                         **`15.1`**                        |                                  **`amd64`** **`arm64`**                                  |                    **`clang`**                    |
+|   **`haiku`**    |                       **`r1beta6`**                       |                                        **`amd64`**                                        |                     **`gcc`**                     |
+|  **`android`**   |                       **`api 33`**                        |                                       **`x86_64`**                                        |                 **`ndk clang`**                   |
+
+Not all loaders are tested on every platform. The following table lists the loaders built and tested on each platform:
+
+| Operative System |                                                         Loaders                                                          |
+| :--------------: | :----------------------------------------------------------------------------------------------------------------------: |
+|   **`linux`**    | `python` `ruby` `netcore8` `nodejs` `typescript` `file` `rpc` `wasm` `java` `c` `cobol` `go` `rust` `lua` |
+|   **`macos`**    |           `python` `nodejs` `typescript` `ruby` `java` `c` `wasm` `rpc` `file` `cobol` `go` `lua`           |
+| **`windows (msvc)`** |                         `python` `nodejs` `java` `ruby` `typescript` `wasm` `rpc` `lua` `file`                          |
+|  **`freebsd`**   |                     `python` `ruby` `go` `lua` `java` `cobol` `file` `rpc` (`c` `wasm` only on `amd64`)                   |
+| **`windows (mingw)`** **`haiku`** **`android`** |                                  core only (no language loaders yet)                                  |
+
+Sanitizers are tested as well: AddressSanitizer and ThreadSanitizer on Linux (`gcc` and `clang`), macOS and FreeBSD; MemorySanitizer on Linux (`clang`); AddressSanitizer on Windows (`msvc`); and Valgrind memcheck on Linux.
 
 
 ## 8.1 Docker Support
 
-To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bookworm-slim` for `amd64` architecture.
+To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:forky-slim` and are published as multi-architecture images for the following platforms:
+
+- `linux/amd64`
+- `linux/amd64/v2`
+- `linux/amd64/v3`
+- `linux/386`
+- `linux/arm64`
+- `linux/riscv64`
+- `linux/arm/v7`
+
+Docker selects the image matching the host architecture automatically. To pull a specific one, use `--platform` (for example `docker pull --platform linux/arm64 metacall/core`).
+
+All the tags listed below are also published for each release with the version as prefix (for example `metacall/core:<version>-dev`), and `metacall/core:<version>` is equivalent to `latest`.
 
 For pulling the **METACALL** `latest` image containing the runtime, use:
 
