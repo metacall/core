@@ -19,7 +19,7 @@
  */
 
 #ifndef THREADING_THREAD_ID_H
-#define THREADING_THREAD_ID_H 1
+#define THREADING_THREAD_ID_H
 
 /* -- Headers -- */
 

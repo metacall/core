@@ -19,7 +19,7 @@
  */
 
 #ifndef PORTABILITY_PATH_H
-#define PORTABILITY_PATH_H 1
+#define PORTABILITY_PATH_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef C_LOADER_IMPL_H
-#define C_LOADER_IMPL_H 1
+#define C_LOADER_IMPL_H
 
 #include <c_loader/c_loader_api.h>
 

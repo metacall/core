@@ -19,7 +19,7 @@
  */
 
 #ifndef NODE_LOADER_IMPL_H
-#define NODE_LOADER_IMPL_H 1
+#define NODE_LOADER_IMPL_H
 
 #include <node_loader/node_loader_api.h>
 

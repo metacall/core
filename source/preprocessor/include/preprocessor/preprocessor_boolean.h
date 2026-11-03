@@ -19,7 +19,7 @@
  */
 
 #ifndef PREPROCESSOR_BOOLEAN_H
-#define PREPROCESSOR_BOOLEAN_H 1
+#define PREPROCESSOR_BOOLEAN_H
 
 /* -- Headers -- */
 

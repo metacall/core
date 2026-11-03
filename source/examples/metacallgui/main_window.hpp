@@ -1,5 +1,5 @@
 #ifndef METACALL_GUI_MAIN_WINDOW_HPP
-#define METACALL_GUI_MAIN_WINDOW_HPP 1
+#define METACALL_GUI_MAIN_WINDOW_HPP
 
 #include <QMainWindow>
 #include <QScopedPointer>

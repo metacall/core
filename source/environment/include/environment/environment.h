@@ -19,7 +19,7 @@
  */
 
 #ifndef ENVIRONMENT_H
-#define ENVIRONMENT_H 1
+#define ENVIRONMENT_H
 
 /* -- Headers -- */
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_POLICY_FORMAT_CUSTOM_H
-#define LOG_POLICY_FORMAT_CUSTOM_H 1
+#define LOG_POLICY_FORMAT_CUSTOM_H
 
 /* -- Headers -- */
 

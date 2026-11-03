@@ -19,7 +19,7 @@
  */
 
 #ifndef JAVA_LOADER_IMPL_H
-#define JAVA_LOADER_IMPL_H 1
+#define JAVA_LOADER_IMPL_H
 
 #include <java_loader/java_loader_api.h>
 

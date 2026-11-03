@@ -19,7 +19,7 @@
  */
 
 #ifndef JS_LOADER_H
-#define JS_LOADER_H 1
+#define JS_LOADER_H
 
 #include <js_loader/js_loader_api.h>
 

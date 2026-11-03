@@ -19,7 +19,7 @@
  */
 
 #ifndef THREADING_ATOMIC_REF_COUNT_H
-#define THREADING_ATOMIC_REF_COUNT_H 1
+#define THREADING_ATOMIC_REF_COUNT_H
 
 /* -- Headers -- */
 

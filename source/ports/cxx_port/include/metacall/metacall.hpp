@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_HPP
-#define METACALL_HPP 1
+#define METACALL_HPP
 
 /* -- Headers -- */
 
@@ -1032,7 +1032,7 @@ int register_function(const char *name, Ret (*func)(void), void **func_ptr)
 		}
 
 		// Get target function from closure
-		auto func = (Ret(*)(void))(data);
+		auto func = (Ret (*)(void))(data);
 
 		if constexpr (std::is_void_v<Ret>)
 		{
@@ -1084,7 +1084,7 @@ int register_function(const char *name, Ret (*func)(Args...), void **func_ptr)
 		auto tuple_args = register_function_args<Args...>(args);
 
 		// Get target function from closure
-		auto func = (Ret(*)(Args...))(data);
+		auto func = (Ret (*)(Args...))(data);
 
 		if constexpr (std::is_void_v<Ret>)
 		{

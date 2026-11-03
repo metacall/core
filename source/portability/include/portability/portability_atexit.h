@@ -19,7 +19,7 @@
  */
 
 #ifndef PORTABILITY_ATEXIT_H
-#define PORTABILITY_ATEXIT_H 1
+#define PORTABILITY_ATEXIT_H
 
 /* -- Headers -- */
 

@@ -33,7 +33,7 @@ if(CMAKE_SCRIPT_MODE_FILE)
 	cmake_minimum_required(VERSION 3.15)
 endif()
 
-set(FORMAT_CLANG_FORMAT_VERSION 19)
+set(FORMAT_CLANG_FORMAT_VERSION 21)
 set(FORMAT_CONTAINER_IMAGE "ghcr.io/jidicula/clang-format:${FORMAT_CLANG_FORMAT_VERSION}")
 set(FORMAT_SOURCE_DIRECTORY "source")
 set(FORMAT_EXTENSIONS c cc cpp cxx h hh hpp hxx inl)

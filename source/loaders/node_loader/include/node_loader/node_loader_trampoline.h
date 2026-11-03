@@ -19,7 +19,7 @@
  */
 
 #ifndef NODE_LOADER_TRAMPOLINE_H
-#define NODE_LOADER_TRAMPOLINE_H 1
+#define NODE_LOADER_TRAMPOLINE_H
 
 #include <node_loader/node_loader_api.h>
 

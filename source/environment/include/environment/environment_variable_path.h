@@ -19,7 +19,7 @@
  */
 
 #ifndef ENVIRONMENT_VARIABLE_PATH_H
-#define ENVIRONMENT_VARIABLE_PATH_H 1
+#define ENVIRONMENT_VARIABLE_PATH_H
 
 /* -- Headers -- */
 

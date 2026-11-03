@@ -19,7 +19,7 @@
  */
 
 #ifndef LOG_H
-#define LOG_H 1
+#define LOG_H
 
 /* -- Headers -- */
 

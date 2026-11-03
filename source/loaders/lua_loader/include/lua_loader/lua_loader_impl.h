@@ -19,7 +19,7 @@
  */
 
 #ifndef LUA_LOADER_IMPL_H
-#define LUA_LOADER_IMPL_H 1
+#define LUA_LOADER_IMPL_H
 
 #include <lua_loader/lua_loader_api.h>
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef PREPROCESSOR_COMPARISON_H
-#define PREPROCESSOR_COMPARISON_H 1
+#define PREPROCESSOR_COMPARISON_H
 
 /* -- Headers -- */
 

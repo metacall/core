@@ -1380,14 +1380,14 @@ sub_clang_format(){
 	cd $ROOT_DIR
 
 	# Keep it in sync with FORMAT_CLANG_FORMAT_VERSION in cmake/Format.cmake
-	LLVM_VERSION_STRING=19
+	LLVM_VERSION_STRING=21
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
 			$SUDO_CMD apt-get update
 
-			# Use the package of the distribution if available (i.e: Debian bookworm, trixie or Ubuntu noble),
-			# otherwise add the LLVM repository (i.e: Ubuntu jammy)
+			# Use the package of the distribution if available, otherwise add the LLVM repository
+			# (i.e: Debian bookworm, trixie or Ubuntu jammy, noble do not provide this version)
 			if ! apt-cache policy clang-format-${LLVM_VERSION_STRING} 2>/dev/null | grep "Candidate:" | grep -qv "(none)"; then
 				UBUNTU_CODENAME=""
 				VERSION_ID=""
@@ -1427,7 +1427,7 @@ sub_clang_format(){
 				exit 1
 			fi
 		elif [ "${LINUX_DISTRO}" = "alpine" ]; then
-			# Available since Alpine 3.21, it is installed in /usr/lib/llvm<version>/bin
+			# Available since Alpine 3.23, it is installed in /usr/lib/llvm<version>/bin
 			if ! $SUDO_CMD apk add --no-cache clang${LLVM_VERSION_STRING}-extra-tools; then
 				echo "Error: clang-format ${LLVM_VERSION_STRING} is not available in this Alpine version, use docker or podman instead (see cmake/Format.cmake)"
 				exit 1

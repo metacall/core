@@ -19,7 +19,7 @@
  */
 
 #ifndef PLUGIN_INTERFACE_HPP
-#define PLUGIN_INTERFACE_HPP 1
+#define PLUGIN_INTERFACE_HPP
 
 /* Private interface for using it inside any loader, extension or plugin for registering functions */
 /* TODO: Move this to source/metacall/include/metacall/private? */

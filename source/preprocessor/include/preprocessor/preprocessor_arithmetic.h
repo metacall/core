@@ -19,7 +19,7 @@
  */
 
 #ifndef PREPROCESSOR_ARITHMETIC_H
-#define PREPROCESSOR_ARITHMETIC_H 1
+#define PREPROCESSOR_ARITHMETIC_H
 
 /* -- Headers -- */
 

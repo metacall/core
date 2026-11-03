@@ -7,7 +7,7 @@
  */
 
 #ifndef METACALL_CLI_APPLICATION_HPP
-#define METACALL_CLI_APPLICATION_HPP 1
+#define METACALL_CLI_APPLICATION_HPP
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef RB_LOADER_H
-#define RB_LOADER_H 1
+#define RB_LOADER_H
 
 #include <rb_loader/rb_loader_api.h>
 

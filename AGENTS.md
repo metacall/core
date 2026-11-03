@@ -139,7 +139,7 @@ docker run --rm -it metacall/core:dev bash
 
 ## Code Formatting
 
-Format C/C++ code with `clang-format` version 19 (`FORMAT_CLANG_FORMAT_VERSION` in `cmake/Format.cmake`). Other major versions format differently, so `cmake/FindClangFormat.cmake` rejects them. CI runs the same checks (`.github/workflows/clang-format.yml`).
+Format C/C++ code with `clang-format` version 21 (`FORMAT_CLANG_FORMAT_VERSION` in `cmake/Format.cmake`). Other major versions format differently, so `cmake/FindClangFormat.cmake` rejects them. CI runs the same checks (`.github/workflows/clang-format.yml`).
 
 ```sh
 cmake --build build --target clang-format        # format in place
@@ -153,7 +153,7 @@ Without a configured build, run the script directly:
 cmake -DMODE=<fix|check|eol> [-DFILES="a.c;b.h"] -P cmake/Format.cmake
 ```
 
-It uses a local `clang-format-19` (install it with `tools/metacall-environment.sh clangformat`). Otherwise it runs `ghcr.io/jidicula/clang-format:19` through docker or podman. It formats the tracked C/C++ files under `source/`.
+It uses a local `clang-format-21` (install it with `tools/metacall-environment.sh clangformat`). Otherwise it runs `ghcr.io/jidicula/clang-format:21` through docker or podman. It formats the tracked C/C++ files under `source/`.
 
 All files use LF line endings. clang-format leaves CRLF inside block comments, so the `eol` mode checks the git index instead.
 

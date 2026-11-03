@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_POLICY_STORAGE_H
-#define LOG_POLICY_STORAGE_H 1
+#define LOG_POLICY_STORAGE_H
 
 /* -- Headers -- */
 

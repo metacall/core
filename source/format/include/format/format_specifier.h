@@ -19,7 +19,7 @@
  */
 
 #ifndef FORMAT_SPECIFIER_H
-#define FORMAT_SPECIFIER_H 1
+#define FORMAT_SPECIFIER_H
 
 /* -- Headers -- */
 

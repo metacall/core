@@ -19,7 +19,7 @@
  */
 
 #ifndef RAPID_JSON_SERIAL_H
-#define RAPID_JSON_SERIAL_H 1
+#define RAPID_JSON_SERIAL_H
 
 /* -- Headers -- */
 

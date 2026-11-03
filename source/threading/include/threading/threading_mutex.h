@@ -19,7 +19,7 @@
  */
 
 #ifndef THREADING_MUTEX_H
-#define THREADING_MUTEX_H 1
+#define THREADING_MUTEX_H
 
 /* -- Headers -- */
 

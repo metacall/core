@@ -18,8 +18,8 @@
 #
 #	ClangFormat_FOUND           True if a suitable clang-format was found
 #	ClangFormat_EXECUTABLE      Path to the clang-format executable
-#	ClangFormat_VERSION         Full version (i.e: 19.1.7)
-#	ClangFormat_VERSION_MAJOR   Major version (i.e: 19)
+#	ClangFormat_VERSION         Full version (i.e: 21.1.2)
+#	ClangFormat_VERSION_MAJOR   Major version (i.e: 21)
 #	ClangFormat_VERSION_MINOR   Minor version (i.e: 1)
 #	ClangFormat_VERSION_PATCH   Patch version (i.e: 7)
 #
@@ -66,7 +66,7 @@ find_program(ClangFormat_EXECUTABLE
 mark_as_advanced(ClangFormat_EXECUTABLE)
 
 # Obtain the version, the output has a vendor prefix depending on the
-# distribution (i.e: "Ubuntu clang-format version 19.1.7 (6ubuntu3)")
+# distribution (i.e: "Ubuntu clang-format version 21.1.2 (2ubuntu6)")
 unset(ClangFormat_VERSION)
 unset(ClangFormat_VERSION_MAJOR)
 unset(ClangFormat_VERSION_MINOR)
@@ -93,7 +93,7 @@ if(ClangFormat_EXECUTABLE)
 endif()
 
 # With EXACT only the major version is compared, the standard check would
-# compare the full version (19 against 19.1.7) and always fail
+# compare the full version (21 against 21.1.2) and always fail
 set(ClangFormat_VERSION_CHECK ClangFormat_VERSION)
 
 if(ClangFormat_FIND_VERSION_EXACT AND ClangFormat_FIND_VERSION_COUNT EQUAL 1)

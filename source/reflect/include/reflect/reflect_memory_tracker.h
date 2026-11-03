@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_MEMORY_TRACKER_H
-#define REFLECT_MEMORY_TRACKER_H 1
+#define REFLECT_MEMORY_TRACKER_H
 
 #include <reflect/reflect_api.h>
 

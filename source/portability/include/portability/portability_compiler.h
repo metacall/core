@@ -19,7 +19,7 @@
  */
 
 #ifndef PORTABILITY_COMPILER_H
-#define PORTABILITY_COMPILER_H 1
+#define PORTABILITY_COMPILER_H
 
 /* TODO: This needs to be implemented properly, including another file for architecture and operative system detection */
 

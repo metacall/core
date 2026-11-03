@@ -19,7 +19,7 @@
  */
 
 #ifndef ADT_HASH_H
-#define ADT_HASH_H 1
+#define ADT_HASH_H
 
 #include <adt/adt_api.h>
 

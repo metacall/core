@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_OBJECT_H
-#define REFLECT_OBJECT_H 1
+#define REFLECT_OBJECT_H
 
 #include <adt/adt_vector.h>
 

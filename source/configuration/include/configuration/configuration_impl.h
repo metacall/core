@@ -19,7 +19,7 @@
  */
 
 #ifndef CONFIGURATION_IMPL_H
-#define CONFIGURATION_IMPL_H 1
+#define CONFIGURATION_IMPL_H
 
 /* -- Headers -- */
 

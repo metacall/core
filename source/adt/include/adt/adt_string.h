@@ -19,7 +19,7 @@
  */
 
 #ifndef ADT_STRING_H
-#define ADT_STRING_H 1
+#define ADT_STRING_H
 
 #include <adt/adt_api.h>
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef THREADING_ATOMIC_WIN32_H
-#define THREADING_ATOMIC_WIN32_H 1
+#define THREADING_ATOMIC_WIN32_H
 
 /* -- Headers -- */
 

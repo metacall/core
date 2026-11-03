@@ -19,7 +19,7 @@
  */
 
 #ifndef SIMD_JSON_SERIAL_H
-#define SIMD_JSON_SERIAL_H 1
+#define SIMD_JSON_SERIAL_H
 
 /* -- Headers -- */
 

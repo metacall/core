@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_ACCESSOR_H
-#define REFLECT_ACCESSOR_H 1
+#define REFLECT_ACCESSOR_H
 
 #include <reflect/reflect_attribute_decl.h>
 #include <reflect/reflect_constructor_decl.h>

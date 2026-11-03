@@ -7,7 +7,7 @@
  */
 
 #ifndef PREPROCESSOR_STRINGIFY_H
-#define PREPROCESSOR_STRINGIFY_H 1
+#define PREPROCESSOR_STRINGIFY_H
 
 /* -- Headers -- */
 

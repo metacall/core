@@ -7,7 +7,7 @@
  */
 
 #ifndef ADT_VECTOR_H
-#define ADT_VECTOR_H 1
+#define ADT_VECTOR_H
 
 /* -- Headers -- */
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef SERIAL_H
-#define SERIAL_H 1
+#define SERIAL_H
 
 /* -- Headers -- */
 

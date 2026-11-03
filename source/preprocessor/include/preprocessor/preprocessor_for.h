@@ -19,7 +19,7 @@
  */
 
 #ifndef PREPROCESSOR_FOR_H
-#define PREPROCESSOR_FOR_H 1
+#define PREPROCESSOR_FOR_H
 
 /* -- Headers -- */
 

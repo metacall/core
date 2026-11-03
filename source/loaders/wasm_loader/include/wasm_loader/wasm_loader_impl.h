@@ -19,7 +19,7 @@
  */
 
 #ifndef WASM_LOADER_IMPL_H
-#define WASM_LOADER_IMPL_H 1
+#define WASM_LOADER_IMPL_H
 
 #include <wasm_loader/wasm_loader_api.h>
 

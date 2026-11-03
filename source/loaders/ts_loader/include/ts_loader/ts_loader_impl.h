@@ -19,7 +19,7 @@
  */
 
 #ifndef TS_LOADER_IMPL_H
-#define TS_LOADER_IMPL_H 1
+#define TS_LOADER_IMPL_H
 
 #include <ts_loader/ts_loader_api.h>
 

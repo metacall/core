@@ -7,7 +7,7 @@
  */
 
 #ifndef LOG_POLICY_STREAM_FILE_H
-#define LOG_POLICY_STREAM_FILE_H 1
+#define LOG_POLICY_STREAM_FILE_H
 
 /* -- Headers -- */
 

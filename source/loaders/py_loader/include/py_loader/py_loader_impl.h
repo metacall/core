@@ -19,7 +19,7 @@
  */
 
 #ifndef PY_LOADER_IMPL_H
-#define PY_LOADER_IMPL_H 1
+#define PY_LOADER_IMPL_H
 
 #include <py_loader/py_loader_api.h>
 

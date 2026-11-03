@@ -19,7 +19,7 @@
  */
 
 #ifndef DYNLINK_H
-#define DYNLINK_H 1
+#define DYNLINK_H
 
 /* -- Headers -- */
 

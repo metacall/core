@@ -19,7 +19,7 @@
  */
 
 #ifndef PLUGIN_H
-#define PLUGIN_H 1
+#define PLUGIN_H
 
 /* -- Headers -- */
 

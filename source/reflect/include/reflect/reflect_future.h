@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_FUTURE_H
-#define REFLECT_FUTURE_H 1
+#define REFLECT_FUTURE_H
 
 #include <reflect/reflect_value.h>
 

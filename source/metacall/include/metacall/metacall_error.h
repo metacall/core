@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_ERROR_H
-#define METACALL_ERROR_H 1
+#define METACALL_ERROR_H
 
 /* -- Headers -- */
 

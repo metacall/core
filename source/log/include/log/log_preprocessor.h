@@ -19,7 +19,7 @@
  */
 
 #ifndef LOG_PREPROCESSOR_H
-#define LOG_PREPROCESSOR_H 1
+#define LOG_PREPROCESSOR_H
 
 /* -- Headers -- */
 

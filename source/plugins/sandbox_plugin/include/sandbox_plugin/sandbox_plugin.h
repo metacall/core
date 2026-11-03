@@ -19,7 +19,7 @@
  */
 
 #ifndef SANDBOX_PLUGIN_H
-#define SANDBOX_PLUGIN_H 1
+#define SANDBOX_PLUGIN_H
 
 #include <sandbox_plugin/sandbox_plugin_api.h>
 

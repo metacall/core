@@ -19,7 +19,7 @@
  */
 
 #ifndef CR_LOADER_IMPL_MAIN_H
-#define CR_LOADER_IMPL_MAIN_H 1
+#define CR_LOADER_IMPL_MAIN_H
 
 #include <cr_loader/cr_loader_api.h>
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef MEMORY_SANITIZER_H
-#define MEMORY_SANITIZER_H 1
+#define MEMORY_SANITIZER_H
 
 /* -- Headers -- */
 

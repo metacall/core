@@ -19,7 +19,7 @@
  */
 
 #ifndef ADT_COMPARABLE_H
-#define ADT_COMPARABLE_H 1
+#define ADT_COMPARABLE_H
 
 #include <adt/adt_api.h>
 

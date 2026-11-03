@@ -7,7 +7,7 @@
  */
 
 #ifndef DETOUR_H
-#define DETOUR_H 1
+#define DETOUR_H
 
 /* -- Headers -- */
 

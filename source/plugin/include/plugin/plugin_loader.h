@@ -19,7 +19,7 @@
  */
 
 #ifndef PLUGIN_LOADER_H
-#define PLUGIN_LOADER_H 1
+#define PLUGIN_LOADER_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
 */
 
 #ifndef MOCK_LOADER_PRINT_H
-#define MOCK_LOADER_PRINT_H 1
+#define MOCK_LOADER_PRINT_H
 
 #include <mock_loader/mock_loader_api.h>
 

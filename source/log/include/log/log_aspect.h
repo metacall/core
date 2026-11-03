@@ -19,7 +19,7 @@
  */
 
 #ifndef LOG_ASPECT_H
-#define LOG_ASPECT_H 1
+#define LOG_ASPECT_H
 
 /* -- Headers -- */
 

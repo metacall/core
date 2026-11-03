@@ -19,7 +19,7 @@
  */
 
 #ifndef REFLECT_CLASS_H
-#define REFLECT_CLASS_H 1
+#define REFLECT_CLASS_H
 
 #include <adt/adt_map.h>
 #include <adt/adt_set.h>

@@ -19,7 +19,7 @@
  */
 
 #ifndef METACALL_LINK_H
-#define METACALL_LINK_H 1
+#define METACALL_LINK_H
 
 /* -- Headers -- */
 

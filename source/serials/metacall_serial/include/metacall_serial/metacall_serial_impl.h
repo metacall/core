@@ -7,7 +7,7 @@
  */
 
 #ifndef METACALL_SERIAL_IMPL_H
-#define METACALL_SERIAL_IMPL_H 1
+#define METACALL_SERIAL_IMPL_H
 
 /* -- Headers -- */
 

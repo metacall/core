@@ -7,7 +7,7 @@
  */
 
 #ifndef CONFIGURATION_H
-#define CONFIGURATION_H 1
+#define CONFIGURATION_H
 
 /* -- Headers -- */
 

@@ -19,7 +19,7 @@
  */
 
 #ifndef EXT_LOADER_H
-#define EXT_LOADER_H 1
+#define EXT_LOADER_H
 
 #include <ext_loader/ext_loader_api.h>
 

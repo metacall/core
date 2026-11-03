@@ -7,7 +7,7 @@
  */
 
 #ifndef ADT_TRIE_H
-#define ADT_TRIE_H 1
+#define ADT_TRIE_H
 
 /* -- Headers -- */
 
