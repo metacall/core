@@ -799,17 +799,28 @@ struct loader_impl_async_handle_promise_safe_type
 	loader_impl_async_handle_promise_safe_type(loader_impl_node node_impl, napi_env env) :
 		node_impl(node_impl), env(env), result(NULL) {}
 
+	static void release(loader_impl_async_handle_promise_safe_type *handle_promise_safe)
+	{
+		if (handle_promise_safe->result != NULL)
+		{
+			metacall_value_destroy(handle_promise_safe->result);
+		}
+
+		delete handle_promise_safe;
+	}
+
 	void destroy()
 	{
+		/* If the async handle was never initialized there is nothing to close and the close callback
+		* will never run, so release the context directly instead of leaking it */
+		if (threadsafe_async.initialized == false)
+		{
+			release(this);
+			return;
+		}
+
 		threadsafe_async.close([](uv_handle_t *handle) {
-			loader_impl_async_handle_promise_safe_type *handle_promise_safe = static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data);
-
-			if (handle_promise_safe->result != NULL)
-			{
-				metacall_value_destroy(handle_promise_safe->result);
-			}
-
-			delete handle_promise_safe;
+			release(static_cast<loader_impl_async_handle_promise_safe_type *>(handle->data));
 		});
 	}
 };
