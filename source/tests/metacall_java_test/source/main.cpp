@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	A plugin for loading ruby code at run-time into a process.
+ *	A plugin for loading java code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
