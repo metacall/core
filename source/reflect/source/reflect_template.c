@@ -26,6 +26,8 @@
 
 #include <adt/adt_vector.h>
 
+#include <format/format_specifier.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
@@ -48,8 +50,17 @@ reflect_template template_create(const char *name, enum template_id type, templa
 	reflect_template tpl;
 	size_t name_size;
 
-	if (name == NULL || type == TEMPLATE_TYPE_INVALID)
+	if (name == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template name, it cannot be NULL");
+
+		return NULL;
+	}
+
+	if (type == TEMPLATE_TYPE_INVALID)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) type", name);
+
 		return NULL;
 	}
 
@@ -57,6 +68,8 @@ reflect_template template_create(const char *name, enum template_id type, templa
 
 	if (tpl == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) allocation", name);
+
 		return NULL;
 	}
 
@@ -66,6 +79,8 @@ reflect_template template_create(const char *name, enum template_id type, templa
 
 	if (tpl->name == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template name allocation <%s>", name);
+
 		goto error_name;
 	}
 
@@ -77,6 +92,8 @@ reflect_template template_create(const char *name, enum template_id type, templa
 
 	if (tpl->parameters == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) parameters allocation", name);
+
 		goto error_parameters;
 	}
 
@@ -169,6 +186,8 @@ int template_add_parameter(reflect_template tpl, const char *parameter)
 
 	if (tpl == NULL || parameter == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template parameter, the template and the parameter cannot be NULL");
+
 		return 1;
 	}
 
@@ -179,6 +198,8 @@ int template_add_parameter(reflect_template tpl, const char *parameter)
 	{
 		if (strcmp(vector_at_type(tpl->parameters, iterator, char *), parameter) == 0)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) parameter %s, it is already defined", tpl->name, parameter);
+
 			return 1;
 		}
 	}
@@ -189,6 +210,8 @@ int template_add_parameter(reflect_template tpl, const char *parameter)
 
 	if (copy == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) parameter %s allocation", tpl->name, parameter);
+
 		return 1;
 	}
 
@@ -228,8 +251,24 @@ static int template_arguments_validate(reflect_template tpl, enum template_id ty
 {
 	size_t iterator;
 
-	if (tpl == NULL || tpl->type != type || args == NULL || size != vector_size(tpl->parameters))
+	if (tpl == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template instantiation, the template cannot be NULL");
+
+		return 1;
+	}
+
+	if (tpl->type != type)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, the template type %d does not match with %d", tpl->name, (int)tpl->type, (int)type);
+
+		return 1;
+	}
+
+	if (args == NULL || size != vector_size(tpl->parameters))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, it expects %" PRIuS " arguments but received %" PRIuS, tpl->name, vector_size(tpl->parameters), args == NULL ? (size_t)0 : size);
+
 		return 1;
 	}
 
@@ -239,6 +278,8 @@ static int template_arguments_validate(reflect_template tpl, enum template_id ty
 
 		if (parameter == NULL || args[iterator].name == NULL || strcmp(parameter, args[iterator].name) != 0)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %" PRIuS " (%s) does not match with parameter %s", tpl->name, iterator, args[iterator].name != NULL ? args[iterator].name : "NULL", parameter != NULL ? parameter : "NULL");
+
 			return 1;
 		}
 
@@ -246,6 +287,8 @@ static int template_arguments_validate(reflect_template tpl, enum template_id ty
 		{
 			if (args[iterator].data.t == NULL)
 			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %s has a NULL type", tpl->name, parameter);
+
 				return 1;
 			}
 		}
@@ -253,11 +296,15 @@ static int template_arguments_validate(reflect_template tpl, enum template_id ty
 		{
 			if (args[iterator].data.tpl == NULL)
 			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %s has a NULL template", tpl->name, parameter);
+
 				return 1;
 			}
 		}
 		else
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %s has an invalid kind %d", tpl->name, parameter, (int)args[iterator].kind);
+
 			return 1;
 		}
 	}
@@ -276,6 +323,8 @@ function template_instantiate_function(reflect_template tpl, template_argument a
 
 	if (tpl->interface == NULL || tpl->interface->instantiate_function == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) function instantiation, the template does not implement instantiate_function", tpl->name);
+
 		return NULL;
 	}
 
@@ -283,6 +332,8 @@ function template_instantiate_function(reflect_template tpl, template_argument a
 
 	if (f == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) function instantiation, the instantiate_function callback <%p> failed", tpl->name, tpl->interface->instantiate_function);
+
 		return NULL;
 	}
 
@@ -302,6 +353,8 @@ klass template_instantiate_class(reflect_template tpl, template_argument args[],
 
 	if (tpl->interface == NULL || tpl->interface->instantiate_class == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) class instantiation, the template does not implement instantiate_class", tpl->name);
+
 		return NULL;
 	}
 
@@ -309,6 +362,8 @@ klass template_instantiate_class(reflect_template tpl, template_argument args[],
 
 	if (cls == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) class instantiation, the instantiate_class callback <%p> failed", tpl->name, tpl->interface->instantiate_class);
+
 		return NULL;
 	}
 
