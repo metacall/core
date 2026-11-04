@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	A plugin for loading ruby code at run-time into a process.
+ *	A plugin for loading rust code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -77,6 +77,16 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 		EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
 		metacall_value_destroy(ret);
 	}
+
+	/* TODO: identity is a generic function (template), it must be instantiated before calling it,
+	* review if it should be instantiated explicitly when loading (identity::<i32>) or implicitly
+	* from the type of the arguments
+	{
+		void *ret = metacall("identity", 10);
+		EXPECT_EQ((int)10, (int)metacall_value_to_int(ret));
+		metacall_value_destroy(ret);
+	}
+	*/
 
 	{
 		void *ret = metacall("run");

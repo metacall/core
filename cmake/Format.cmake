@@ -261,7 +261,7 @@ if(DEFINED FILES)
 	# so the same files are checked than when FILES is not defined (and in the CI)
 	foreach(file IN LISTS files_normalized)
 		get_filename_component(file_extension "${file}" LAST_EXT)
-		string(SUBSTRING "${file_extension}" 1 -1 file_extension)
+		string(REGEX REPLACE "^\\." "" file_extension "${file_extension}")
 
 		if(file MATCHES "^${FORMAT_SOURCE_DIRECTORY}/" AND file_extension IN_LIST FORMAT_EXTENSIONS)
 			list(APPEND files "${file}")

@@ -78,6 +78,8 @@ static void metacall_serial_impl_serialize_exception(value v, char *dest, size_t
 
 static void metacall_serial_impl_serialize_throwable(value v, char *dest, size_t size, const char *format, size_t *length);
 
+static void metacall_serial_impl_serialize_template(value v, char *dest, size_t size, const char *format, size_t *length);
+
 /* -- Definitions -- */
 
 static const char *metacall_serialize_format[] = {
@@ -99,7 +101,8 @@ static const char *metacall_serialize_format[] = {
 	NULL, /* TODO: Class */
 	NULL, /* TODO: Object */
 	NULL, /* TODO: Exception */
-	NULL  /* TODO: Throwable */
+	NULL, /* TODO: Throwable */
+	NULL  /* TODO: Template */
 };
 
 portability_static_assert((size_t)TYPE_SIZE == (size_t)sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
@@ -124,7 +127,8 @@ static metacall_serialize_impl_ptr serialize_func[] = {
 	&metacall_serial_impl_serialize_class,
 	&metacall_serial_impl_serialize_object,
 	&metacall_serial_impl_serialize_exception,
-	&metacall_serial_impl_serialize_throwable
+	&metacall_serial_impl_serialize_throwable,
+	&metacall_serial_impl_serialize_template
 };
 
 portability_static_assert((size_t)TYPE_SIZE == (size_t)sizeof(serialize_func) / sizeof(serialize_func[0]),
@@ -377,6 +381,17 @@ void metacall_serial_impl_serialize_exception(value v, char *dest, size_t size, 
 void metacall_serial_impl_serialize_throwable(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	/* TODO: Implement throwable serialization */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)format;
+
+	*length = 0;
+}
+
+void metacall_serial_impl_serialize_template(value v, char *dest, size_t size, const char *format, size_t *length)
+{
+	/* TODO: Implement template serialization */
 	(void)v;
 	(void)dest;
 	(void)size;

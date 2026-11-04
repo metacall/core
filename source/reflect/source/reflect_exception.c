@@ -20,10 +20,10 @@
 
 #include <reflect/reflect_exception.h>
 
+#include <reflect/reflect_memory_tracker.h>
+
 #include <threading/threading_atomic_ref_count.h>
 #include <threading/threading_thread_id.h>
-
-#include <reflect/reflect_memory_tracker.h>
 
 #include <log/log.h>
 

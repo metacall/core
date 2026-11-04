@@ -1,6 +1,6 @@
 /*
- *	Loader Library by Parra Studios
- *	A plugin for loading ruby code at run-time into a process.
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2026 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *

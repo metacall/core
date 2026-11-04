@@ -132,7 +132,8 @@ public:
 			NULL, /* TODO: Class */
 			NULL, /* TODO: Object */
 			NULL, /* TODO: Exception */
-			NULL  /* TODO: Throwable */
+			NULL, /* TODO: Throwable */
+			NULL  /* TODO: Template */
 		};
 
 		portability_static_assert((int)sizeof(value_names) / sizeof(value_names[0]) == (int)TYPE_SIZE,
@@ -213,6 +214,8 @@ public:
 			*/
 			/* TODO: Implement exception properly */
 			NULL,
+			NULL,
+			/* TODO: Implement template properly */
 			NULL
 		};
 

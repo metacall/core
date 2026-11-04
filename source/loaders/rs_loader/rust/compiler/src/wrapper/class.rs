@@ -509,7 +509,7 @@ impl ToMetaResult for bool {
 
 impl ToMetaResult for char {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_char(self as i8) })
+        Ok(unsafe { metacall_value_create_char(self as c_char) })
     }
 }
 
@@ -522,7 +522,7 @@ impl ToMetaResult for usize {
 
 impl ToMetaResult for i8 {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_char(self) })
+        Ok(unsafe { metacall_value_create_char(self as c_char) })
     }
 }
 
@@ -732,7 +732,7 @@ macro_rules! convert_to {
 
 impl FromMeta for i8 {
     unsafe fn from_meta(val: MetacallValue) -> Result<Self> {
-        Ok(unsafe { metacall_value_to_char(val) })
+        Ok(unsafe { metacall_value_to_char(val) as i8 })
     }
 }
 impl FromMeta for i16 {

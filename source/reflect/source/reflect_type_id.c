@@ -41,7 +41,8 @@ static const char *type_id_name_map[] = {
 	"Class",
 	"Object",
 	"Exception",
-	"Throwable"
+	"Throwable",
+	"Template"
 };
 
 portability_static_assert((int)sizeof(type_id_name_map) / sizeof(type_id_name_map[0]) == (int)TYPE_SIZE,
@@ -136,6 +137,11 @@ int type_id_exception(type_id id)
 int type_id_throwable(type_id id)
 {
 	return !(id == TYPE_THROWABLE);
+}
+
+int type_id_template(type_id id)
+{
+	return !(id == TYPE_TEMPLATE);
 }
 
 int type_id_invalid(type_id id)

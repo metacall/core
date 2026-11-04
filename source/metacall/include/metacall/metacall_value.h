@@ -62,6 +62,7 @@ enum metacall_value_id
 	METACALL_OBJECT = 16,
 	METACALL_EXCEPTION = 17,
 	METACALL_THROWABLE = 18,
+	METACALL_TEMPLATE = 19,
 
 	METACALL_SIZE,
 	METACALL_INVALID
@@ -332,6 +333,18 @@ METACALL_API void *metacall_value_create_exception(void *ex);
 *    Pointer to value if success, null otherwise
 */
 METACALL_API void *metacall_value_create_throwable(void *th);
+
+/**
+*  @brief
+*    Create a value from template @tpl
+*
+*  @param[in] tpl
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwise
+*/
+METACALL_API void *metacall_value_create_template(void *tpl);
 
 /**
 *  @brief
@@ -691,6 +704,18 @@ METACALL_API void *metacall_value_to_throwable(void *v);
 
 /**
 *  @brief
+*    Convert value @v to template
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to template
+*/
+METACALL_API void *metacall_value_to_template(void *v);
+
+/**
+*  @brief
 *    Assign boolean @b to value @v
 *
 *  @param[in] v
@@ -986,6 +1011,21 @@ METACALL_API void *metacall_value_from_throwable(void *v, void *th);
 
 /**
 *  @brief
+*    Assign template @tpl to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] tpl
+*    Template to be assigned to value @v
+*
+*  @return
+*    Value with template @tpl assigned to it
+*/
+METACALL_API void *metacall_value_from_template(void *v, void *tpl);
+
+/**
+*  @brief
 *    Casts a value to a new type @id
 *
 *  @param[in] v
@@ -1226,6 +1266,18 @@ METACALL_API void *metacall_value_cast_exception(void **v);
 *    Value converted to throwable
 */
 METACALL_API void *metacall_value_cast_throwable(void **v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to template
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to template
+*/
+METACALL_API void *metacall_value_cast_template(void **v);
 
 /**
 *  @brief
