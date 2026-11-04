@@ -100,46 +100,76 @@ static inline uintmax_t threading_atomic_ref_count_load(threading_atomic_ref_cou
 static inline int threading_atomic_ref_count_increment(threading_atomic_ref_count ref)
 {
 #if defined(__THREAD_SANITIZER__)
+	int result = 0;
+
 	threading_mutex_lock(&ref->m);
 	{
-		++ref->count;
+		if (ref->count == THREADING_ATOMIC_REF_COUNT_MAX)
+		{
+			result = 1;
+		}
+		else
+		{
+			++ref->count;
+		}
 	}
 	threading_mutex_unlock(&ref->m);
-#else
-	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MAX)
-	{
-		return 1;
-	}
 
-	atomic_fetch_add_explicit(&ref->count, 1, memory_order_relaxed);
-#endif
+	return result;
+#else
+	uintmax_t count = atomic_load_explicit(&ref->count, memory_order_relaxed);
+
+	/* The check and the increment must be a single atomic operation, otherwise the counter can overflow */
+	do
+	{
+		if (count == THREADING_ATOMIC_REF_COUNT_MAX)
+		{
+			return 1;
+		}
+	} while (!atomic_compare_exchange_weak_explicit(&ref->count, &count, count + 1, memory_order_relaxed, memory_order_relaxed));
 
 	return 0;
+#endif
 }
 
 static inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
 {
 #if defined(__THREAD_SANITIZER__)
+	int result = 0;
+
 	threading_mutex_lock(&ref->m);
 	{
-		--ref->count;
+		if (ref->count == THREADING_ATOMIC_REF_COUNT_MIN)
+		{
+			result = 1;
+		}
+		else
+		{
+			--ref->count;
+		}
 	}
 	threading_mutex_unlock(&ref->m);
+
+	return result;
 #else
-	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MIN)
+	uintmax_t count = atomic_load_explicit(&ref->count, memory_order_relaxed);
+
+	/* The check and the decrement must be a single atomic operation, otherwise the counter can underflow */
+	do
 	{
-		return 1;
-	}
+		if (count == THREADING_ATOMIC_REF_COUNT_MIN)
+		{
+			return 1;
+		}
+	} while (!atomic_compare_exchange_weak_explicit(&ref->count, &count, count - 1, memory_order_release, memory_order_relaxed));
 
-	uintmax_t old_ref_count = atomic_fetch_sub_explicit(&ref->count, 1, memory_order_release);
-
-	if (old_ref_count == THREADING_ATOMIC_REF_COUNT_MIN + 1)
+	if (count == THREADING_ATOMIC_REF_COUNT_MIN + 1)
 	{
 		atomic_thread_fence(memory_order_acquire);
 	}
-#endif
 
 	return 0;
+#endif
 }
 
 static inline void threading_atomic_ref_count_destroy(threading_atomic_ref_count ref)
