@@ -184,12 +184,12 @@ REFLECT_API signature function_signature(function func);
  *    Pointer to the function
  *
  *  @param[in] tpl
- *    Pointer to the template, or NULL to remove the association, the
- *    function holds a reference to the template until it is destroyed
- *    or another template is set
+ *    Pointer to the template, the function holds a reference to the
+ *    template until it is destroyed
  *
  *  @return
- *    Zero on success, different from zero otherwise
+ *    Zero on success, different from zero if func is NULL or it
+ *    has already a template
  */
 REFLECT_API int function_set_template(function func, reflect_template tpl);
 

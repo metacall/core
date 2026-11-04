@@ -8,6 +8,7 @@ pub type OpaqueTypeList = *mut OpaqueType;
 mod class;
 mod function;
 mod object;
+mod template;
 
 #[repr(C)]
 pub struct TemplateArgument {
@@ -20,11 +21,13 @@ pub const TEMPLATE_ARGUMENT_TYPE: c_int = 0;
 pub const TEMPLATE_ARGUMENT_TEMPLATE: c_int = 1;
 
 pub use function::{
-    function_singleton, register_existing_function, register_function, FunctionCreate,
-    FunctionInputSignature, FunctionRegistration,
+    create_function_with_signature, function_singleton, register_existing_function,
+    register_function, FunctionCreate, FunctionInputSignature, FunctionRegistration,
 };
 
 pub use class::{class_singleton, register_class, ClassCreate, ClassRegistration};
+
+pub use template::{register_template, template_singleton, TemplateImpl};
 
 pub struct LoaderLifecycleState {
     pub execution_paths: Vec<PathBuf>,
@@ -139,7 +142,12 @@ extern "C" {
     fn metacall_loader(tag: *const c_char) -> OpaqueType;
     fn loader_is_destroyed(loader_impl: OpaqueType) -> i32;
 
-    fn template_create(name: *const c_char, template_type: c_int) -> OpaqueType;
+    fn template_create(
+        name: *const c_char,
+        template_type: c_int,
+        template_impl: OpaqueType,
+        singleton: OpaqueType,
+    ) -> OpaqueType;
 
     fn template_add_parameter(tpl: OpaqueType, parameter: *const c_char) -> c_int;
 
@@ -153,14 +161,11 @@ extern "C" {
 
     fn template_destroy(tpl: OpaqueType) -> ();
 
-    fn template_instantiate_function(
-        tpl: OpaqueType,
-        name: *const c_char,
-        args: OpaqueType,
-        size: usize,
-        function_impl: OpaqueType,
-        singleton: OpaqueType,
-    ) -> OpaqueType;
+    fn template_instantiate_function(tpl: OpaqueType, args: OpaqueType, size: usize) -> OpaqueType;
+
+    fn template_instantiate_class(tpl: OpaqueType, args: OpaqueType, size: usize) -> OpaqueType;
+
+    fn value_create_template(tpl: OpaqueType) -> OpaqueType;
 }
 
 pub const TEMPLATE_TYPE_FUNCTION: c_int = 1;
@@ -182,11 +187,16 @@ pub unsafe fn create_function(
 }
 
 /// # Safety
-/// `name` must be a valid MetaCall template name.
-pub unsafe fn create_template(name: &str, template_type: c_int) -> OpaqueType {
+/// `template_impl` and `singleton` must be valid for the template interface.
+pub unsafe fn create_template(
+    name: &str,
+    template_type: c_int,
+    template_impl: OpaqueType,
+    singleton: OpaqueType,
+) -> OpaqueType {
     let name = CString::new(name).expect("template name contains NUL");
 
-    unsafe { template_create(name.as_ptr(), template_type) }
+    unsafe { template_create(name.as_ptr(), template_type, template_impl, singleton) }
 }
 
 /// # Safety
@@ -231,27 +241,23 @@ pub unsafe fn destroy_template(tpl: OpaqueType) {
 }
 
 /// # Safety
-/// `tpl` must be a valid function template and `args` must point to a valid
-/// array of template arguments with `size` elements.
+/// `tpl` must be a valid function template and `args` must be the template
+/// arguments, one per template parameter.
 pub unsafe fn instantiate_template_function(
     tpl: OpaqueType,
-    name: &str,
     args: &mut [TemplateArgument],
-    function_impl: OpaqueType,
-    singleton: OpaqueType,
 ) -> OpaqueType {
-    let name = CString::new(name).expect("template instantiation name contains NUL");
+    unsafe { template_instantiate_function(tpl, args.as_mut_ptr() as OpaqueType, args.len()) }
+}
 
-    unsafe {
-        template_instantiate_function(
-            tpl,
-            name.as_ptr(),
-            args.as_mut_ptr() as OpaqueType,
-            args.len(),
-            function_impl,
-            singleton,
-        )
-    }
+/// # Safety
+/// `tpl` must be a valid class template and `args` must be the template
+/// arguments, one per template parameter.
+pub unsafe fn instantiate_template_class(
+    tpl: OpaqueType,
+    args: &mut [TemplateArgument],
+) -> OpaqueType {
+    unsafe { template_instantiate_class(tpl, args.as_mut_ptr() as OpaqueType, args.len()) }
 }
 
 /// # Safety

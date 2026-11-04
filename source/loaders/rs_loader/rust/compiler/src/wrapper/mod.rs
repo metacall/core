@@ -29,7 +29,10 @@ fn generate_function_wrapper(functions: &[Function]) -> String {
     ret
 }
 
-fn build_generic_mapping(template: &Function, types: &[String]) -> HashMap<String, String> {
+pub(crate) fn build_generic_mapping(
+    template: &Function,
+    types: &[String],
+) -> HashMap<String, String> {
     template
         .generics
         .iter()
@@ -38,7 +41,10 @@ fn build_generic_mapping(template: &Function, types: &[String]) -> HashMap<Strin
         .collect()
 }
 
-fn substitute_type(param: &FunctionParameter, mapping: &HashMap<String, String>) -> String {
+pub(crate) fn substitute_type(
+    param: &FunctionParameter,
+    mapping: &HashMap<String, String>,
+) -> String {
     if matches!(param.ty, FunctionType::Complex) {
         if let Some(concrete_type) = param
             .generic_name

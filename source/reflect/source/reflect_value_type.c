@@ -20,7 +20,6 @@
 
 /* -- Headers -- */
 
-#include <reflect/reflect_template.h>
 #include <reflect/reflect_value_type.h>
 
 #include <log/log.h>

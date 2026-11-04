@@ -92,12 +92,12 @@ REFLECT_API class_interface class_interface_get(klass cls);
  *    Pointer to the class
  *
  *  @param[in] tpl
- *    Pointer to the template, or NULL to remove the association, the
- *    class holds a reference to the template until it is destroyed
- *    or another template is set
+ *    Pointer to the template, the class holds a reference to the
+ *    template until it is destroyed
  *
  *  @return
- *    Zero on success, different from zero otherwise
+ *    Zero on success, different from zero if cls is NULL or it
+ *    has already a template
  */
 REFLECT_API int class_set_template(klass cls, reflect_template tpl);
 

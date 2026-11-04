@@ -95,41 +95,41 @@ pub struct FunctionRegistration {
     pub template: Option<OpaqueType>,
 }
 
-pub fn register_function(function_registration: FunctionRegistration) {
-    let sp = unsafe { context_scope(function_registration.ctx) };
-
+/// Creates a MetaCall function and sets its signature from the Rust types
+/// of its arguments and return value.
+///
+/// # Safety
+/// `loader_impl` must be a valid MetaCall loader implementation and the
+/// implementation and singleton of `create` must be valid MetaCall pointers.
+pub unsafe fn create_function_with_signature(
+    loader_impl: OpaqueType,
+    create: FunctionCreate,
+    ret: Option<String>,
+    input: &[FunctionInputSignature],
+) -> OpaqueType {
     let FunctionCreate {
         name,
         args_count,
         function_impl,
         singleton,
-    } = function_registration.function_create;
+    } = create;
     let name = CString::new(name).expect("Failed to convert function name to C string");
     let f = unsafe { function_create(name.as_ptr(), args_count, function_impl, singleton) };
 
-    let s = unsafe { function_signature(f) };
-
-    if let Some(ret) = function_registration.ret {
-        let ret = CString::new(ret).expect("Failed to convert return type to C string");
-
-        unsafe {
-            signature_set_return(
-                s,
-                loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
-            );
-        };
-    } else {
-        let ret = CString::new("Null").expect("Failed to convert return type to C string");
-
-        unsafe {
-            signature_set_return(
-                s,
-                loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
-            );
-        };
+    if f.is_null() {
+        return f;
     }
 
-    for (index, param) in function_registration.input.iter().enumerate() {
+    let s = unsafe { function_signature(f) };
+
+    let ret = CString::new(ret.unwrap_or_else(|| "Null".to_string()))
+        .expect("Failed to convert return type to C string");
+
+    unsafe {
+        signature_set_return(s, loader_impl_type(loader_impl, ret.as_ptr()));
+    };
+
+    for (index, param) in input.iter().enumerate() {
         let name = CString::new(param.name.clone())
             .expect("Failed to convert function parameter name to C string");
         let t = CString::new(param.t.clone())
@@ -140,18 +140,25 @@ pub fn register_function(function_registration: FunctionRegistration) {
                 s,
                 index,
                 name.as_ptr(),
-                loader_impl_type(function_registration.loader_impl, t.as_ptr()),
+                loader_impl_type(loader_impl, t.as_ptr()),
             )
         };
     }
 
+    f
+}
+
+pub fn register_function(function_registration: FunctionRegistration) {
     unsafe {
-        let v = value_create_function(f);
-        if scope_define(sp, function_name(f), v) != 0 {
-            value_type_destroy(v);
-            // TODO: Should return error
-        }
-    };
+        let f = create_function_with_signature(
+            function_registration.loader_impl,
+            function_registration.function_create,
+            function_registration.ret,
+            &function_registration.input,
+        );
+
+        register_existing_function(function_registration.ctx, f);
+    }
 }
 
 /// # Safety

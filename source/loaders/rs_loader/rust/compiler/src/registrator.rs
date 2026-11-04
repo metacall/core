@@ -2,8 +2,9 @@ use crate::api::ClassRegistration;
 use crate::api::{
     add_template_parameter, class_singleton, create_template, function_singleton, get_loader_type,
     instantiate_template_function, register_class, register_existing_function, register_function,
-    ClassCreate, FunctionCreate, FunctionInputSignature, FunctionRegistration, OpaqueType,
-    TemplateArgument, TEMPLATE_ARGUMENT_TYPE, TEMPLATE_TYPE_FUNCTION,
+    register_template, template_singleton, ClassCreate, FunctionCreate, FunctionInputSignature,
+    FunctionRegistration, OpaqueType, TemplateArgument, TemplateImpl, TEMPLATE_ARGUMENT_TYPE,
+    TEMPLATE_TYPE_FUNCTION,
 };
 use crate::wrapper::class;
 use crate::{Class, CompilerState, DynlinkLibrary, Function};
@@ -31,21 +32,12 @@ fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate 
     }
 }
 
-pub fn instantiate_template_by_types(
-    template: &Function,
-    types: &[String],
-    tpl: OpaqueType,
-    dynlink: &DynlinkLibrary,
-    loader_impl: OpaqueType,
-) -> OpaqueType {
-    instantiate_template(template, types, tpl, dynlink, loader_impl)
-}
-
+/// Instantiates a template through the template interface, the instantiation
+/// itself (name, implementation and signature) is done by TemplateImpl
 fn instantiate_template(
     template: &Function,
     types: &[String],
     tpl: OpaqueType,
-    dynlink: &DynlinkLibrary,
     loader_impl: OpaqueType,
 ) -> OpaqueType {
     assert_eq!(
@@ -55,26 +47,6 @@ fn instantiate_template(
         template.name,
         template.generics.len(),
         types.len()
-    );
-
-    let wrapper_name = template.instantiate_name(types.to_vec());
-
-    let register_func_name = format!("rs_loader_impl_register_fn_{}", wrapper_name);
-
-    let register_func: unsafe extern "C" fn() -> *mut class::Function = unsafe {
-        std::mem::transmute(
-            dynlink
-                .symbol(&register_func_name)
-                .unwrap_or_else(|_| panic!("unable to find register function {}", wrapper_name)),
-        )
-    };
-
-    let function_impl = unsafe { register_func() } as OpaqueType;
-
-    assert!(
-        !function_impl.is_null(),
-        "failed to create {} implementation",
-        wrapper_name
     );
 
     let names: Vec<CString> = template
@@ -104,15 +76,7 @@ fn instantiate_template(
         })
         .collect::<Vec<_>>();
 
-    unsafe {
-        instantiate_template_function(
-            tpl,
-            &wrapper_name,
-            &mut args,
-            function_impl,
-            function_singleton as OpaqueType,
-        )
-    }
+    unsafe { instantiate_template_function(tpl, &mut args) }
 }
 
 fn class_create(class: &Class, dynlink: &DynlinkLibrary) -> ClassCreate {
@@ -162,13 +126,27 @@ pub fn register(
     }
 
     for template in state.templates.iter() {
-        let tpl = unsafe { create_template(&template.name, TEMPLATE_TYPE_FUNCTION) };
+        let template_impl = Box::into_raw(Box::new(TemplateImpl::new(
+            template.clone(),
+            loader_impl,
+            dynlink,
+        ))) as OpaqueType;
 
-        assert!(
-            !tpl.is_null(),
-            "Failed to create template {}",
-            template.name
-        );
+        let tpl = unsafe {
+            create_template(
+                &template.name,
+                TEMPLATE_TYPE_FUNCTION,
+                template_impl,
+                template_singleton as OpaqueType,
+            )
+        };
+
+        if tpl.is_null() {
+            // The template interface is not called if the creation fails, so the implementation must be released here
+            drop(unsafe { Box::from_raw(template_impl as *mut TemplateImpl) });
+
+            panic!("Failed to create template {}", template.name);
+        }
 
         for generic in &template.generics {
             let result = unsafe { add_template_parameter(tpl, generic) };
@@ -179,52 +157,30 @@ pub fn register(
                 generic, template.name
             );
         }
+
+        // The template value registered in the context owns the template
+        let result = unsafe { register_template(ctx, tpl) };
+
+        assert_eq!(result, 0, "Failed to register template {}", template.name);
 
         for instantiation in state
             .instantiations
             .iter()
             .filter(|instantiation| instantiation.template == template.name)
         {
-            let function = instantiate_template_by_types(
-                template,
-                &instantiation.types,
-                tpl,
-                dynlink,
-                loader_impl,
+            let function = instantiate_template(template, &instantiation.types, tpl, loader_impl);
+
+            assert!(
+                !function.is_null(),
+                "Failed to instantiate template {} with types {:?}",
+                template.name,
+                instantiation.types
             );
 
             unsafe {
                 register_existing_function(ctx, function);
             }
         }
-    }
-
-    for instantiation in &state.instantiations {
-        let template = state
-            .templates
-            .iter()
-            .find(|template| template.name == instantiation.template)
-            .unwrap_or_else(|| panic!("Template {} not found", instantiation.template));
-
-        let tpl = unsafe { create_template(&template.name, TEMPLATE_TYPE_FUNCTION) };
-
-        assert!(
-            !tpl.is_null(),
-            "failed to create template {}",
-            template.name
-        );
-
-        for generic in &template.generics {
-            let result = unsafe { add_template_parameter(tpl, generic) };
-
-            assert_eq!(
-                result, 0,
-                "Failed to add generic parameter {} to {}",
-                generic, template.name
-            );
-        }
-
-        instantiate_template_by_types(template, &instantiation.types, tpl, dynlink, loader_impl);
     }
 
     // Register classes

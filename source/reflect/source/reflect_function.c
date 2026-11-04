@@ -209,15 +209,14 @@ int function_set_template(function func, reflect_template tpl)
 		return 1;
 	}
 
-	if (tpl != NULL && template_increment_reference(tpl) != 0)
+	if (func->tpl != NULL)
 	{
 		return 1;
 	}
 
-	/* Release the previous template if any */
-	if (func->tpl != NULL)
+	if (tpl != NULL && template_increment_reference(tpl) != 0)
 	{
-		template_destroy(func->tpl);
+		return 1;
 	}
 
 	func->tpl = tpl;

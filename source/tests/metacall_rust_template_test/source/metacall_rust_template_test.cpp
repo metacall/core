@@ -62,21 +62,21 @@ TEST_F(metacall_rust_template_test, DefaultConstructor)
 
 	ASSERT_EQ(0, result);
 
-	void *identity = metacall_function("identity_f64");
-	void *pair = metacall_function("pair_i32_f64");
+	void *identity = metacall_function("identity::<f64>");
+	void *pair = metacall_function("pair::<i32, f64>");
 
-	std::cout << "identity_f64: " << identity << std::endl;
-	std::cout << "pair_i32_f64: " << pair << std::endl;
+	std::cout << "identity::<f64>: " << identity << std::endl;
+	std::cout << "pair::<i32, f64>: " << pair << std::endl;
 
 	ASSERT_NE(identity, nullptr);
 	ASSERT_NE(pair, nullptr);
 
-	void *identity_ret = metacall("identity_f64", 42.5);
+	void *identity_ret = metacall("identity::<f64>", 42.5);
 
 	ASSERT_NE(identity_ret, nullptr);
 	EXPECT_EQ((double)metacall_value_to_double(identity_ret), 42.5);
 
-	void *pair_ret = metacall("pair_i32_f64", 123, 3.14);
+	void *pair_ret = metacall("pair::<i32, f64>", 123, 3.14);
 
 	ASSERT_NE(pair_ret, nullptr);
 	EXPECT_EQ((double)metacall_value_to_double(pair_ret), 3.14);
