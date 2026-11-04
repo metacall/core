@@ -1527,6 +1527,12 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		return py_loader_impl_value_to_capi(impl, value_type_id(inner), inner);
 	}
+	else if (id == TYPE_TEMPLATE)
+	{
+		/* TODO */
+		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python template not implemented yet for arguments");
+		return Py_ReturnNone();
+	}
 	else
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type: %d", id);
