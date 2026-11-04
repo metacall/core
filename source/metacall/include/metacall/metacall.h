@@ -1632,6 +1632,13 @@ METACALL_API void *metacall_deserialize(const char *name, const char *buffer, si
 *
 *  @return
 *    Zero if success, different from zero otherwise
+*
+*  @warning
+*    Do not call this from a host function registered with @metacall_register
+*    that was invoked by a guest runtime (for example a Python or NodeJS
+*    callback). Clearing the handle frees the guest module while its
+*    interpreter is still executing it, which can segfault when the callback
+*    returns. Call it from the host after guest execution has finished.
 */
 METACALL_API int metacall_clear(void *handle);
 
