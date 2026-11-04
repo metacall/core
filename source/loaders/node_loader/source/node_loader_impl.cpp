@@ -1758,6 +1758,13 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 
 		return node_loader_impl_value_to_napi(node_impl, env, throwable_value(th));
 	}
+	else if (id == TYPE_TEMPLATE)
+	{
+		/* TODO: Implement templates in NodeJS */
+		status = napi_get_undefined(env, &v);
+
+		node_loader_impl_exception(env, status);
+	}
 	else
 	{
 		std::string error_str("NodeJS Loader could not convert the value of type '");
