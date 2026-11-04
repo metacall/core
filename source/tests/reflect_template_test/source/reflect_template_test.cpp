@@ -154,6 +154,9 @@ TEST_F(reflect_template_test, DefaultConstructor)
 
 	ASSERT_NE((function)NULL, f);
 
+	/* The caller holds a reference, released by function_destroy */
+	EXPECT_EQ(0, function_increment_reference(f));
+
 	EXPECT_STREQ("identity<int>", function_name(f));
 
 	EXPECT_EQ(tpl, function_template(f));
@@ -199,6 +202,9 @@ TEST_F(reflect_template_test, MultipleParameters)
 	function f = template_instantiate_function(tpl, args, sizeof(args) / sizeof(args[0]));
 
 	ASSERT_NE((function)NULL, f);
+
+	/* The caller holds a reference, released by function_destroy */
+	EXPECT_EQ(0, function_increment_reference(f));
 
 	EXPECT_STREQ("pair<int, float>", function_name(f));
 
@@ -297,6 +303,9 @@ TEST_F(reflect_template_test, ClassTemplate)
 
 	ASSERT_NE((klass)NULL, cls);
 
+	/* The caller holds a reference, released by class_destroy */
+	EXPECT_EQ(0, class_increment_reference(cls));
+
 	EXPECT_STREQ("box<int>", class_name(cls));
 
 	EXPECT_EQ(tpl, class_template(cls));
@@ -331,6 +340,9 @@ TEST_F(reflect_template_test, InstanceKeepsTemplateAlive)
 	function f = template_instantiate_function(tpl, args, sizeof(args) / sizeof(args[0]));
 
 	ASSERT_NE((function)NULL, f);
+
+	/* The caller holds a reference, released by function_destroy */
+	EXPECT_EQ(0, function_increment_reference(f));
 
 	/* Release the reference of the creator, the function still holds one */
 	template_destroy(tpl);
@@ -421,6 +433,9 @@ TEST_F(reflect_template_test, NestedTemplate)
 
 	ASSERT_NE((function)NULL, pair);
 
+	/* The caller holds a reference, released by function_destroy */
+	EXPECT_EQ(0, function_increment_reference(pair));
+
 	EXPECT_STREQ("pair<int, float>", function_name(pair));
 
 	/* Designated initializers are not available in C++17 (MSVC), so the union member is assigned explicitly */
@@ -433,6 +448,9 @@ TEST_F(reflect_template_test, NestedTemplate)
 	function vector = template_instantiate_function(vector_tpl, vector_args, sizeof(vector_args) / sizeof(vector_args[0]));
 
 	ASSERT_NE((function)NULL, vector);
+
+	/* The caller holds a reference, released by function_destroy */
+	EXPECT_EQ(0, function_increment_reference(vector));
 
 	/* A template argument only carries the template, not its instantiation, so the arguments of pair are not available */
 	EXPECT_STREQ("vector<pair>", function_name(vector));
