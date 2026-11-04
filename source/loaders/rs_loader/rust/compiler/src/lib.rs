@@ -559,13 +559,7 @@ impl CompilerCallbacks {
                                     generics,
                                 );
 
-                                let is_generic = !function.generics.is_empty();
-
-                                if is_generic {
-                                    self.templates.push(function.clone());
-                                } else {
-                                    self.functions.push(function.clone());
-                                }
+                                // TODO: Generic methods are not supported yet
                                 if function.generics.is_empty() {
                                     if function.name == "new" {
                                         class.constructor = Some(function);
