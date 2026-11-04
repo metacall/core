@@ -30,6 +30,7 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_future.h>
 #include <reflect/reflect_object.h>
+#include <reflect/reflect_template.h>
 #include <reflect/reflect_throwable.h>
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_value.h>
@@ -403,6 +404,18 @@ REFLECT_API value value_create_throwable(throwable th);
 
 /**
 *  @brief
+*    Create a value from template @tpl
+*
+*  @param[in] tpl
+*    Pointer to template will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwise
+*/
+REFLECT_API value value_create_template(reflect_template tpl);
+
+/**
+*  @brief
 *    Convert value @v to boolean
 *
 *  @param[in] v
@@ -628,6 +641,18 @@ REFLECT_API exception value_to_exception(value v);
 *    Value converted to throwable
 */
 REFLECT_API throwable value_to_throwable(value v);
+
+/**
+*  @brief
+*    Convert value @v to template
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to template
+*/
+REFLECT_API reflect_template value_to_template(value v);
 
 /**
 *  @brief
@@ -923,6 +948,21 @@ REFLECT_API value value_from_exception(value v, exception ex);
 *    Value with throwable @th assigned to it
 */
 REFLECT_API value value_from_throwable(value v, throwable th);
+
+/**
+*  @brief
+*    Assign template reference @tpl to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] tpl
+*    Template to be assigned to value @v
+*
+*  @return
+*    Value with template @tpl assigned to it
+*/
+REFLECT_API value value_from_template(value v, reflect_template tpl);
 
 /**
 *  @brief

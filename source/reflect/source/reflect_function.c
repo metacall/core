@@ -19,13 +19,12 @@
  */
 
 #include <reflect/reflect_function.h>
+#include <reflect/reflect_template.h>
 #include <reflect/reflect_value_type.h>
-
-#include <threading/threading_atomic_ref_count.h>
 
 #include <reflect/reflect_memory_tracker.h>
 
-#include <reflect/reflect_template.h>
+#include <threading/threading_atomic_ref_count.h>
 
 #include <log/log.h>
 
@@ -183,23 +182,6 @@ void *function_closure(function func)
 	return NULL;
 }
 
-int function_set_template(function func, reflect_template tpl)
-{
-	if (func == NULL)
-	{
-		return 1;
-	}
-
-	func->tpl = tpl;
-
-	return 0;
-}
-
-reflect_template function_template(function func)
-{
-	return func != NULL ? func->tpl : NULL;
-}
-
 const char *function_name(function func)
 {
 	if (func != NULL)
@@ -218,6 +200,39 @@ signature function_signature(function func)
 	}
 
 	return NULL;
+}
+
+int function_set_template(function func, reflect_template tpl)
+{
+	if (func == NULL)
+	{
+		return 1;
+	}
+
+	if (tpl != NULL && template_increment_reference(tpl) != 0)
+	{
+		return 1;
+	}
+
+	/* Release the previous template if any */
+	if (func->tpl != NULL)
+	{
+		template_destroy(func->tpl);
+	}
+
+	func->tpl = tpl;
+
+	return 0;
+}
+
+reflect_template function_template(function func)
+{
+	if (func == NULL)
+	{
+		return NULL;
+	}
+
+	return func->tpl;
 }
 
 value function_metadata_name(function func)
@@ -747,6 +762,11 @@ void function_destroy(function func)
 			if (func->interface != NULL && func->interface->destroy != NULL)
 			{
 				func->interface->destroy(func, func->impl);
+			}
+
+			if (func->tpl != NULL)
+			{
+				template_destroy(func->tpl);
 			}
 
 			signature_destroy(func->s);

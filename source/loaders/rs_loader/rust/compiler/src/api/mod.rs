@@ -155,6 +155,7 @@ extern "C" {
 
     fn template_instantiate_function(
         tpl: OpaqueType,
+        name: *const c_char,
         args: OpaqueType,
         size: usize,
         function_impl: OpaqueType,
@@ -162,8 +163,8 @@ extern "C" {
     ) -> OpaqueType;
 }
 
-pub const TEMPLATE_TYPE_FUNCTION: c_int = 0;
-pub const TEMPLATE_TYPE_CLASS: c_int = 1;
+pub const TEMPLATE_TYPE_FUNCTION: c_int = 1;
+pub const TEMPLATE_TYPE_CLASS: c_int = 2;
 
 /// Creates a MetaCall function from an implementation and interface.
 ///
@@ -234,13 +235,17 @@ pub unsafe fn destroy_template(tpl: OpaqueType) {
 /// array of template arguments with `size` elements.
 pub unsafe fn instantiate_template_function(
     tpl: OpaqueType,
+    name: &str,
     args: &mut [TemplateArgument],
     function_impl: OpaqueType,
     singleton: OpaqueType,
 ) -> OpaqueType {
+    let name = CString::new(name).expect("template instantiation name contains NUL");
+
     unsafe {
         template_instantiate_function(
             tpl,
+            name.as_ptr(),
             args.as_mut_ptr() as OpaqueType,
             args.len(),
             function_impl,

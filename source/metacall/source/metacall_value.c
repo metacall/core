@@ -28,6 +28,7 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_future.h>
 #include <reflect/reflect_object.h>
+#include <reflect/reflect_template.h>
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type.h>
 
@@ -52,7 +53,8 @@ static const enum metacall_value_id value_id_map[] = {
 	METACALL_CLASS,
 	METACALL_OBJECT,
 	METACALL_EXCEPTION,
-	METACALL_THROWABLE
+	METACALL_THROWABLE,
+	METACALL_TEMPLATE
 };
 
 /* -- Static Assertions -- */
@@ -79,6 +81,7 @@ portability_static_assert(((int)TYPE_BOOL == (int)METACALL_BOOL) &&
 							  ((int)TYPE_OBJECT == (int)METACALL_OBJECT) &&
 							  ((int)TYPE_EXCEPTION == (int)METACALL_EXCEPTION) &&
 							  ((int)TYPE_THROWABLE == (int)METACALL_THROWABLE) &&
+							  ((int)TYPE_TEMPLATE == (int)METACALL_TEMPLATE) &&
 							  ((int)TYPE_SIZE == (int)METACALL_SIZE) &&
 							  ((int)TYPE_INVALID == (int)METACALL_INVALID),
 	"Internal reflect value types does not match with public metacall API value types");
@@ -339,6 +342,52 @@ static object_interface metacall_object_singleton(void)
 	return &metacall_object_interface;
 }
 
+static int metacall_template_create(reflect_template tpl, template_impl impl)
+{
+	(void)tpl;
+	(void)impl;
+
+	return 0;
+}
+
+static function metacall_template_instantiate_function(reflect_template tpl, template_impl impl, template_argument args[], size_t size)
+{
+	(void)tpl;
+	(void)impl;
+	(void)args;
+	(void)size;
+
+	return NULL;
+}
+
+static klass metacall_template_instantiate_class(reflect_template tpl, template_impl impl, template_argument args[], size_t size)
+{
+	(void)tpl;
+	(void)impl;
+	(void)args;
+	(void)size;
+
+	return NULL;
+}
+
+static void metacall_template_destroy(reflect_template tpl, template_impl impl)
+{
+	(void)tpl;
+	(void)impl;
+}
+
+static template_interface metacall_template_singleton(void)
+{
+	static struct template_interface_type metacall_template_interface = {
+		&metacall_template_create,
+		&metacall_template_instantiate_function,
+		&metacall_template_instantiate_class,
+		&metacall_template_destroy
+	};
+
+	return &metacall_template_interface;
+}
+
 void *metacall_value_create(enum metacall_value_id id)
 {
 	switch (id)
@@ -399,6 +448,9 @@ void *metacall_value_create(enum metacall_value_id id)
 
 		case METACALL_THROWABLE:
 			return value_create_throwable(throwable_create(metacall_value_create(METACALL_EXCEPTION)));
+
+		case METACALL_TEMPLATE:
+			return value_create_template(template_create("", TEMPLATE_TYPE_FUNCTION, NULL, &metacall_template_singleton));
 
 		case METACALL_SIZE:
 		case METACALL_INVALID:
@@ -505,6 +557,11 @@ void *metacall_value_create_exception(void *ex)
 void *metacall_value_create_throwable(void *th)
 {
 	return value_create_throwable(th);
+}
+
+void *metacall_value_create_template(void *tpl)
+{
+	return value_create_template(tpl);
 }
 
 size_t metacall_value_size(void *v)
@@ -694,6 +751,13 @@ void *metacall_value_to_throwable(void *v)
 	return value_to_throwable(v);
 }
 
+void *metacall_value_to_template(void *v)
+{
+	portability_assert(value_type_id(v) == TYPE_TEMPLATE);
+
+	return value_to_template(v);
+}
+
 void *metacall_value_from_bool(void *v, boolean b)
 {
 	return value_from_bool(v, b);
@@ -787,6 +851,11 @@ void *metacall_value_from_exception(void *v, void *ex)
 void *metacall_value_from_throwable(void *v, void *th)
 {
 	return value_from_throwable(v, th);
+}
+
+void *metacall_value_from_template(void *v, void *tpl)
+{
+	return value_from_template(v, tpl);
 }
 
 void *metacall_value_cast(void *v, enum metacall_value_id id)
@@ -1077,6 +1146,21 @@ void *metacall_value_cast_throwable(void **v)
 	}
 
 	return value_to_throwable(*v);
+}
+
+void *metacall_value_cast_template(void **v)
+{
+	if (value_type_id(*v) != TYPE_TEMPLATE)
+	{
+		value v_cast = value_type_cast(*v, TYPE_TEMPLATE);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_template(*v);
 }
 
 void metacall_value_destroy(void *v)

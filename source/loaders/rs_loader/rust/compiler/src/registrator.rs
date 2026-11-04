@@ -107,6 +107,7 @@ fn instantiate_template(
     unsafe {
         instantiate_template_function(
             tpl,
+            &wrapper_name,
             &mut args,
             function_impl,
             function_singleton as OpaqueType,

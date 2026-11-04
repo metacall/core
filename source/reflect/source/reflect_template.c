@@ -18,39 +18,58 @@
  *
  */
 
-#include <adt/adt_vector.h>
 #include <reflect/reflect_template.h>
 
-#include <stdio.h>
+#include <reflect/reflect_memory_tracker.h>
+
+#include <threading/threading_atomic_ref_count.h>
+
+#include <adt/adt_vector.h>
+
+#include <log/log.h>
+
 #include <stdlib.h>
 #include <string.h>
 
 struct reflect_template_type
 {
 	char *name;
-	template_type_id type;
-
+	enum template_id type;
 	vector parameters;
+	template_impl impl;
+	template_interface interface;
+	threading_atomic_ref_count_type ref;
 };
 
-reflect_template template_create(
-	const char *name,
-	template_type_id type)
+reflect_memory_tracker(template_stats);
+
+reflect_template template_create(const char *name, enum template_id type, template_impl impl, template_impl_interface_singleton singleton)
 {
-	reflect_template tpl = malloc(sizeof(struct reflect_template_type));
+	reflect_template tpl;
+	size_t name_size;
+
+	if (name == NULL || type == TEMPLATE_TYPE_INVALID)
+	{
+		return NULL;
+	}
+
+	tpl = malloc(sizeof(struct reflect_template_type));
 
 	if (tpl == NULL)
 	{
 		return NULL;
 	}
 
-	tpl->name = strdup(name);
+	name_size = strlen(name) + 1;
+
+	tpl->name = malloc(sizeof(char) * name_size);
 
 	if (tpl->name == NULL)
 	{
-		free(tpl);
-		return NULL;
+		goto error_name;
 	}
+
+	memcpy(tpl->name, name, name_size);
 
 	tpl->type = type;
 
@@ -58,83 +77,124 @@ reflect_template template_create(
 
 	if (tpl->parameters == NULL)
 	{
-		free(tpl->name);
-		free(tpl);
-		return NULL;
+		goto error_parameters;
 	}
 
+	tpl->impl = impl;
+	tpl->interface = singleton ? singleton() : NULL;
+	threading_atomic_ref_count_initialize(&tpl->ref);
+
+	if (tpl->interface != NULL && tpl->interface->create != NULL)
+	{
+		if (tpl->interface->create(tpl, impl) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) create callback <%p>", tpl->name, tpl->interface->create);
+
+			goto error_create;
+		}
+	}
+
+	reflect_memory_tracker_allocation(template_stats);
+
 	return tpl;
+
+error_create:
+	threading_atomic_ref_count_destroy(&tpl->ref);
+	vector_destroy(tpl->parameters);
+error_parameters:
+	free(tpl->name);
+error_name:
+	free(tpl);
+	return NULL;
 }
 
-static void template_format(
-	char *buffer,
-	size_t size,
-	reflect_template tpl,
-	template_argument args[],
-	size_t args_size)
+int template_increment_reference(reflect_template tpl)
 {
 	if (tpl == NULL)
 	{
-		return;
+		return 1;
 	}
 
-	strncat(buffer, tpl->name, size - strlen(buffer) - 1);
-
-	for (size_t i = 0; i < args_size; i++)
+	if (threading_atomic_ref_count_increment(&tpl->ref) == 1)
 	{
-		strncat(buffer, "_", size - strlen(buffer) - 1);
-
-		if (args[i].kind == TEMPLATE_ARGUMENT_TYPE)
-		{
-			const char *name = type_name(args[i].value_type);
-
-			if (name != NULL)
-			{
-				strncat(
-					buffer,
-					name,
-					size - strlen(buffer) - 1);
-			}
-		}
-		else if (args[i].kind == TEMPLATE_ARGUMENT_TEMPLATE)
-		{
-			strncat(
-				buffer,
-				template_name(args[i].value_template),
-				size - strlen(buffer) - 1);
-		}
+		return 1;
 	}
+
+	reflect_memory_tracker_increment(template_stats);
+
+	return 0;
+}
+
+int template_decrement_reference(reflect_template tpl)
+{
+	if (tpl == NULL)
+	{
+		return 1;
+	}
+
+	if (threading_atomic_ref_count_decrement(&tpl->ref) == 1)
+	{
+		return 1;
+	}
+
+	reflect_memory_tracker_decrement(template_stats);
+
+	return 0;
 }
 
 const char *template_name(reflect_template tpl)
 {
-	return tpl != NULL ? tpl->name : NULL;
+	if (tpl == NULL)
+	{
+		return NULL;
+	}
+
+	return tpl->name;
 }
 
-template_type_id template_type(reflect_template tpl)
+enum template_id template_type(reflect_template tpl)
 {
-	return tpl != NULL ? tpl->type : 0;
+	if (tpl == NULL)
+	{
+		return TEMPLATE_TYPE_INVALID;
+	}
+
+	return tpl->type;
 }
 
-int template_add_parameter(
-	reflect_template tpl,
-	const char *parameter)
+int template_add_parameter(reflect_template tpl, const char *parameter)
 {
+	char *copy;
+	size_t parameter_size, iterator, size;
+
 	if (tpl == NULL || parameter == NULL)
 	{
 		return 1;
 	}
 
-	char *copy = strdup(parameter);
+	size = vector_size(tpl->parameters);
+
+	/* Reject duplicated parameter names */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		if (strcmp(vector_at_type(tpl->parameters, iterator, char *), parameter) == 0)
+		{
+			return 1;
+		}
+	}
+
+	parameter_size = strlen(parameter) + 1;
+
+	copy = malloc(sizeof(char) * parameter_size);
 
 	if (copy == NULL)
 	{
 		return 1;
 	}
 
-	vector_push_back(
-		tpl->parameters,
-		&copy);
+	memcpy(copy, parameter, parameter_size);
+
+	vector_push_back(tpl->parameters, &copy);
 
 	return 0;
 }
@@ -149,85 +209,77 @@ size_t template_parameter_count(reflect_template tpl)
 	return vector_size(tpl->parameters);
 }
 
-const char *template_parameter(
-	reflect_template tpl,
-	size_t index)
+const char *template_parameter(reflect_template tpl, size_t index)
 {
-	if (tpl == NULL || index >= vector_size(tpl->parameters))
+	if (tpl == NULL)
 	{
 		return NULL;
 	}
 
-	char **parameter = (char **)vector_at(tpl->parameters, index);
+	if (index >= vector_size(tpl->parameters))
+	{
+		return NULL;
+	}
 
-	return parameter != NULL ? *parameter : NULL;
+	return vector_at_type(tpl->parameters, index, char *);
 }
 
-function template_instantiate_function(
-	reflect_template tpl,
-	template_argument args[],
-	size_t size,
-	function_impl impl,
-	function_impl_interface_singleton singleton)
+static int template_arguments_validate(reflect_template tpl, enum template_id type, template_argument args[], size_t size)
 {
-	if (tpl == NULL ||
-		tpl->type != TEMPLATE_TYPE_FUNCTION ||
-		args == NULL)
+	size_t iterator;
+
+	if (tpl == NULL || tpl->type != type || args == NULL || size != vector_size(tpl->parameters))
 	{
-		return NULL;
+		return 1;
 	}
 
-	if (size != vector_size(tpl->parameters))
+	for (iterator = 0; iterator < size; ++iterator)
 	{
-		return NULL;
-	}
+		const char *parameter = template_parameter(tpl, iterator);
 
-	for (size_t i = 0; i < size; i++)
-	{
-		const char *parameter =
-			template_parameter(tpl, i);
-
-		if (parameter == NULL ||
-			args[i].name == NULL ||
-			strcmp(parameter, args[i].name) != 0)
+		if (parameter == NULL || args[iterator].name == NULL || strcmp(parameter, args[iterator].name) != 0)
 		{
-			return NULL;
+			return 1;
 		}
 
-		if (args[i].kind == TEMPLATE_ARGUMENT_TYPE)
+		if (args[iterator].kind == TEMPLATE_ARGUMENT_TYPE)
 		{
-			if (args[i].value_type == NULL)
+			if (args[iterator].data.t == NULL)
 			{
-				return NULL;
+				return 1;
 			}
 		}
-		else if (args[i].kind == TEMPLATE_ARGUMENT_TEMPLATE)
+		else if (args[iterator].kind == TEMPLATE_ARGUMENT_TEMPLATE)
 		{
-			if (args[i].value_template == NULL)
+			if (args[iterator].data.tpl == NULL)
 			{
-				return NULL;
+				return 1;
 			}
 		}
 		else
 		{
-			return NULL;
+			return 1;
 		}
 	}
 
-	char function_name[256] = { 0 };
+	return 0;
+}
 
-	template_format(
-		function_name,
-		sizeof(function_name),
-		tpl,
-		args,
-		size);
+function template_instantiate_function(reflect_template tpl, template_argument args[], size_t size)
+{
+	function f;
 
-	function f = function_create(
-		function_name,
-		size,
-		impl,
-		singleton);
+	if (template_arguments_validate(tpl, TEMPLATE_TYPE_FUNCTION, args, size) != 0)
+	{
+		return NULL;
+	}
+
+	if (tpl->interface == NULL || tpl->interface->instantiate_function == NULL)
+	{
+		return NULL;
+	}
+
+	f = tpl->interface->instantiate_function(tpl, tpl->impl, args, size);
 
 	if (f == NULL)
 	{
@@ -236,38 +288,78 @@ function template_instantiate_function(
 
 	function_set_template(f, tpl);
 
-	for (size_t i = 0; i < size; i++)
+	return f;
+}
+
+klass template_instantiate_class(reflect_template tpl, template_argument args[], size_t size)
+{
+	klass cls;
+
+	if (template_arguments_validate(tpl, TEMPLATE_TYPE_CLASS, args, size) != 0)
 	{
-		signature_set(
-			function_signature(f),
-			i,
-			args[i].name,
-			args[i].value_type);
+		return NULL;
 	}
 
-	return f;
+	if (tpl->interface == NULL || tpl->interface->instantiate_class == NULL)
+	{
+		return NULL;
+	}
+
+	cls = tpl->interface->instantiate_class(tpl, tpl->impl, args, size);
+
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	class_set_template(cls, tpl);
+
+	return cls;
 }
 
 void template_destroy(reflect_template tpl)
 {
+	size_t iterator;
+
 	if (tpl == NULL)
 	{
 		return;
 	}
 
-	for (size_t i = 0; i < vector_size(tpl->parameters); i++)
+	if (template_decrement_reference(tpl) != 0)
 	{
-		char **parameter =
-			(char **)vector_at(tpl->parameters, i);
-
-		if (parameter != NULL)
-		{
-			free(*parameter);
-		}
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in template: %s", tpl->name);
 	}
 
-	vector_destroy(tpl->parameters);
+	if (threading_atomic_ref_count_load(&tpl->ref) == 0)
+	{
+		if (tpl->interface != NULL && tpl->interface->destroy != NULL)
+		{
+			tpl->interface->destroy(tpl, tpl->impl);
+		}
 
-	free(tpl->name);
-	free(tpl);
+		for (iterator = 0; iterator < vector_size(tpl->parameters); ++iterator)
+		{
+			char *parameter = vector_at_type(tpl->parameters, iterator, char *);
+
+			if (parameter != NULL)
+			{
+				free(parameter);
+			}
+		}
+
+		vector_destroy(tpl->parameters);
+
+		threading_atomic_ref_count_destroy(&tpl->ref);
+
+		free(tpl->name);
+		free(tpl);
+
+		reflect_memory_tracker_deallocation(template_stats);
+	}
+}
+
+void template_stats_debug(void)
+{
+	reflect_memory_tracker_print(template_stats, "TEMPLATES");
 }

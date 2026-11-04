@@ -53,6 +53,8 @@ set(headers
 	${include_path}/reflect_object.h
 	${include_path}/reflect_future.h
 	${include_path}/reflect_exception.h
+	${include_path}/reflect_template_decl.h
+	${include_path}/reflect_template.h
 	${include_path}/reflect_throwable.h
 	${include_path}/reflect_scope.h
 	${include_path}/reflect_context.h
@@ -62,7 +64,6 @@ set(headers
 	${include_path}/reflect_value_type_promotion.h
 	${include_path}/reflect_value_type_demotion.h
 	${include_path}/reflect_value_type_cast.h
-	${include_path}/reflect_template.h
 )
 
 set(sources
@@ -80,6 +81,7 @@ set(sources
 	${source_path}/reflect_object.c
 	${source_path}/reflect_future.c
 	${source_path}/reflect_exception.c
+	${source_path}/reflect_template.c
 	${source_path}/reflect_throwable.c
 	${source_path}/reflect_scope.c
 	${source_path}/reflect_context.c
@@ -89,7 +91,6 @@ set(sources
 	${source_path}/reflect_value_type_promotion.c
 	${source_path}/reflect_value_type_demotion.c
 	${source_path}/reflect_value_type_cast.c
-	${source_path}/reflect_template.c
 )
 
 # Group source files

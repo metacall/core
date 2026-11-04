@@ -255,6 +255,17 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v, r
 
 		json_v->SetString(str, length);
 	}
+	else if (id == TYPE_TEMPLATE)
+	{
+		/* TODO: Improve template serialization */
+		static const char str[] = "[Template]";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = size > 0 ? static_cast<rapidjson::SizeType>(size - 1) : 0;
+
+		json_v->SetString(str, length);
+	}
 	else if (id == TYPE_OBJECT)
 	{
 		/* TODO: Improve object serialization */

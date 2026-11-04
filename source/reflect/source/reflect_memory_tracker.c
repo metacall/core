@@ -25,6 +25,7 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_future.h>
 #include <reflect/reflect_object.h>
+#include <reflect/reflect_template.h>
 
 void reflect_memory_tracker_debug(void)
 {
@@ -34,5 +35,6 @@ void reflect_memory_tracker_debug(void)
 	object_stats_debug();
 	exception_stats_debug();
 	future_stats_debug();
+	template_stats_debug();
 #endif
 }

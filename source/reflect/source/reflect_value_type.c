@@ -20,6 +20,7 @@
 
 /* -- Headers -- */
 
+#include <reflect/reflect_template.h>
 #include <reflect/reflect_value_type.h>
 
 #include <log/log.h>
@@ -121,6 +122,19 @@ value value_type_copy(value v)
 				klass cls = value_to_class(v);
 
 				class_increment_reference(cls);
+			}
+
+			return cpy;
+		}
+		else if (type_id_template(id) == 0)
+		{
+			value cpy = value_copy(v);
+
+			if (cpy != NULL)
+			{
+				reflect_template tpl = value_to_template(v);
+
+				template_increment_reference(tpl);
 			}
 
 			return cpy;
@@ -369,6 +383,18 @@ value value_create_throwable(throwable th)
 	return value_type_create(&th, sizeof(throwable), TYPE_THROWABLE);
 }
 
+value value_create_template(reflect_template tpl)
+{
+	value v = value_type_create(&tpl, sizeof(reflect_template), TYPE_TEMPLATE);
+
+	if (v != NULL)
+	{
+		template_increment_reference(tpl);
+	}
+
+	return v;
+}
+
 boolean value_to_bool(value v)
 {
 	boolean b = 0;
@@ -506,6 +532,13 @@ throwable value_to_throwable(value v)
 	uintptr_t *uint_throwable = value_data(v);
 
 	return (throwable)(*uint_throwable);
+}
+
+reflect_template value_to_template(value v)
+{
+	uintptr_t *uint_template = value_data(v);
+
+	return (reflect_template)(*uint_template);
 }
 
 value value_from_bool(value v, boolean b)
@@ -655,6 +688,11 @@ value value_from_throwable(value v, throwable th)
 	return value_from(v, &th, sizeof(throwable));
 }
 
+value value_from_template(value v, reflect_template tpl)
+{
+	return value_from(v, &tpl, sizeof(reflect_template));
+}
+
 void value_type_destroy(value v)
 {
 	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
@@ -734,6 +772,12 @@ void value_type_destroy(value v)
 			*/
 
 			class_destroy(c);
+		}
+		else if (type_id_template(id) == 0)
+		{
+			reflect_template tpl = value_to_template(v);
+
+			template_destroy(tpl);
 		}
 		else if (type_id_object(id) == 0)
 		{

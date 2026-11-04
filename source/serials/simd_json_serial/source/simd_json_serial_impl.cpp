@@ -225,6 +225,13 @@ void simd_json_serial_impl_serialize_value(value v, simdjson::builder::string_bu
 
 		builder.append_raw(str, sizeof(str) - 1);
 	}
+	else if (id == TYPE_TEMPLATE)
+	{
+		/* TODO: Improve template serialization */
+		static const char str[] = "\"[Template]\"";
+
+		builder.append_raw(str, sizeof(str) - 1);
+	}
 	else if (id == TYPE_OBJECT)
 	{
 		/* TODO: Improve object serialization */
