@@ -961,8 +961,13 @@ type loader_impl_type(loader_impl impl, const char *name)
 
 int loader_impl_type_define(loader_impl impl, const char *name, type t)
 {
-	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
+	if (impl != NULL && impl->type_info_map != NULL && name != NULL && t != NULL)
 	{
+		if (set_contains(impl->type_info_map, (const set_key)name) == 0)
+		{
+			return 1;
+		}
+
 		return set_insert(impl->type_info_map, (const set_key)name, (set_value)t);
 	}
 

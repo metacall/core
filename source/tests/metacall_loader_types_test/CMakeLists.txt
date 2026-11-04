@@ -1,5 +1,5 @@
-# Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY)
+# Check if loaders are enabled
+if(NOT OPTION_BUILD_LOADERS)
 	return()
 endif()
 
@@ -95,7 +95,6 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
-	OPTION_BUILD_LOADERS_PY
 )
 
 #
@@ -137,8 +136,9 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-add_dependencies(${target}
+add_loader_dependencies(${target}
 	py_loader
+	lua_loader
 )
 
 #
