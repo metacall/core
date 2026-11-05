@@ -351,6 +351,82 @@ fn test_class() {
     );
 
     class_test_inner(MetaCallClass::from_name("TestClass").unwrap());
+
+    // Regression tests for MetaCallClass independent ownership and cloning
+    // 1. Dynamic class: clone, drop original first, verify clone remains usable, drop clone
+    let class = metacall::metacall_no_arg::<MetaCallClass>("test_class").unwrap();
+    let cloned_class = class.clone();
+    drop(class);
+    class_test_inner(cloned_class);
+
+    // 2. Dynamic class: reverse destruction order (drop clone first, verify original remains usable)
+    let class = metacall::metacall_no_arg::<MetaCallClass>("test_class").unwrap();
+    let cloned_class = class.clone();
+    drop(cloned_class);
+    class_test_inner(class);
+
+    // 3. Dynamic class: multiple clones surviving original drop
+    let class = metacall::metacall_no_arg::<MetaCallClass>("test_class").unwrap();
+    let c1 = class.clone();
+    let c2 = class.clone();
+    drop(class);
+    let ret_c1 = c1.call_method_no_arg::<String>("hi_function").unwrap();
+    let ret_c2 = c2.call_method_no_arg::<String>("hi_function").unwrap();
+    if ret_c1.as_str() != "there!" {
+        invalid_return_value("there!", ret_c1);
+    }
+    if ret_c2.as_str() != "there!" {
+        invalid_return_value("there!", ret_c2);
+    }
+    drop(c1);
+    let ret_c2_after = c2.call_method_no_arg::<String>("hi_function").unwrap();
+    if ret_c2_after.as_str() != "there!" {
+        invalid_return_value("there!", ret_c2_after);
+    }
+    drop(c2);
+
+    // 4. Dynamic class: borrowed construction path (new_raw_leak)
+    let class = metacall::metacall_no_arg::<MetaCallClass>("test_class").unwrap();
+    let raw = class.into_raw();
+    let borrowed = MetaCallClass::new_raw_leak(raw);
+    let clone_from_borrowed = borrowed.clone();
+    drop(borrowed);
+    class_test_inner(clone_from_borrowed);
+    unsafe {
+        metacall::bindings::metacall_value_destroy(raw);
+    }
+
+    // 5. Registry class (from_name): clone, drop original first, verify clone remains usable
+    let class = MetaCallClass::from_name("TestClass").unwrap();
+    let cloned_class = class.clone();
+    drop(class);
+    class_test_inner(cloned_class);
+
+    // 6. Registry class (from_name): reverse destruction order
+    let class = MetaCallClass::from_name("TestClass").unwrap();
+    let cloned_class = class.clone();
+    drop(cloned_class);
+    class_test_inner(class);
+
+    // 7. Registry class (from_name): multiple clones surviving original drop
+    let class = MetaCallClass::from_name("TestClass").unwrap();
+    let c1 = class.clone();
+    let c2 = class.clone();
+    drop(class);
+    let ret_c1 = c1.call_method_no_arg::<String>("hi_function").unwrap();
+    let ret_c2 = c2.call_method_no_arg::<String>("hi_function").unwrap();
+    if ret_c1.as_str() != "there!" {
+        invalid_return_value("there!", ret_c1);
+    }
+    if ret_c2.as_str() != "there!" {
+        invalid_return_value("there!", ret_c2);
+    }
+    drop(c1);
+    let ret_c2_after = c2.call_method_no_arg::<String>("hi_function").unwrap();
+    if ret_c2_after.as_str() != "there!" {
+        invalid_return_value("there!", ret_c2_after);
+    }
+    drop(c2);
 }
 fn object_test_inner(object: MetaCallObject) {
     object
