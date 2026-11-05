@@ -135,6 +135,9 @@ struct loader_impl_py_type
 	PyObject *asyncio_loop;
 	threading_thread asyncio_thread;
 	PyObject *thread_background_future_check;
+	PyObject *thread_background_future_create;
+	PyObject *thread_background_future_resolve;
+	PyObject *thread_background_future_reject;
 	PyObject *thread_background_module;
 	PyObject *thread_background_start;
 	PyObject *thread_background_run;
@@ -2495,6 +2498,30 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		goto error_thread_background_future_check;
 	}
 
+	py_impl->thread_background_future_create = PyObject_GetAttrString(py_impl->thread_background_module, "future_create");
+
+	if (py_impl->thread_background_future_create == NULL || !PyCallable_Check(py_impl->thread_background_future_create))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting future_create function");
+		goto error_thread_background_future_create;
+	}
+
+	py_impl->thread_background_future_resolve = PyObject_GetAttrString(py_impl->thread_background_module, "future_resolve");
+
+	if (py_impl->thread_background_future_resolve == NULL || !PyCallable_Check(py_impl->thread_background_future_resolve))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting future_resolve function");
+		goto error_thread_background_future_resolve;
+	}
+
+	py_impl->thread_background_future_reject = PyObject_GetAttrString(py_impl->thread_background_module, "future_reject");
+
+	if (py_impl->thread_background_future_reject == NULL || !PyCallable_Check(py_impl->thread_background_future_reject))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting future_reject function");
+		goto error_thread_background_future_reject;
+	}
+
 	py_impl->thread_background_start = PyObject_GetAttrString(py_impl->thread_background_module, "start_background_loop");
 
 	if (py_impl->thread_background_start == NULL || !PyCallable_Check(py_impl->thread_background_start))
@@ -2547,6 +2574,12 @@ error_thread_background_run:
 	Py_DecRef(py_impl->thread_background_run);
 error_thread_background_start:
 	Py_DecRef(py_impl->thread_background_start);
+error_thread_background_future_reject:
+	Py_DecRef(py_impl->thread_background_future_reject);
+error_thread_background_future_resolve:
+	Py_DecRef(py_impl->thread_background_future_resolve);
+error_thread_background_future_create:
+	Py_DecRef(py_impl->thread_background_future_create);
 error_thread_background_future_check:
 	Py_DecRef(py_impl->thread_background_future_check);
 error_thread_background_compile:
@@ -2818,6 +2851,9 @@ error_after_thread_background_module:
 	Py_DecRef(py_impl->thread_background_stop);
 	Py_DecRef(py_impl->thread_background_register_atexit);
 	Py_DecRef(py_impl->thread_background_future_check);
+	Py_DecRef(py_impl->thread_background_future_create);
+	Py_DecRef(py_impl->thread_background_future_resolve);
+	Py_DecRef(py_impl->thread_background_future_reject);
 error_after_import:
 	Py_DecRef(py_impl->import_module);
 	Py_DecRef(py_impl->import_function);
@@ -4434,6 +4470,9 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DecRef(py_impl->asyncio_module);
 	Py_DecRef(py_impl->py_task_callback_handler);
 	Py_DecRef(py_impl->thread_background_future_check);
+	Py_DecRef(py_impl->thread_background_future_create);
+	Py_DecRef(py_impl->thread_background_future_resolve);
+	Py_DecRef(py_impl->thread_background_future_reject);
 	Py_DecRef(py_impl->thread_background_module);
 	Py_DecRef(py_impl->thread_background_start);
 	Py_DecRef(py_impl->thread_background_run);
