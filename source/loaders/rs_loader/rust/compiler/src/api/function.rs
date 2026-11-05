@@ -19,12 +19,12 @@ pub struct FunctionInterface {
 }
 
 #[no_mangle]
-extern "C" fn function_singleton_create(_func: OpaqueType, _func_impl: OpaqueType) -> c_int {
+extern "C" fn function_rs_interface_create(_func: OpaqueType, _func_impl: OpaqueType) -> c_int {
     0
 }
 
 #[no_mangle]
-extern "C" fn function_singleton_invoke(
+extern "C" fn function_rs_interface_invoke(
     _func: OpaqueType,
     func_impl: OpaqueType,
     args_p: OpaqueTypeList,
@@ -41,7 +41,7 @@ extern "C" fn function_singleton_invoke(
 }
 
 #[no_mangle]
-extern "C" fn function_singleton_await(
+extern "C" fn function_rs_interface_await(
     _func: OpaqueType,
     _func_impl: OpaqueType,
     _args: OpaqueTypeList,
@@ -55,7 +55,7 @@ extern "C" fn function_singleton_await(
 }
 
 #[no_mangle]
-extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueType) {
+extern "C" fn function_rs_interface_destroy(_func: OpaqueType, func_impl: OpaqueType) {
     if !rs_loader_destroyed() && !func_impl.is_null() {
         unsafe {
             let func_ptr = Box::from_raw(func_impl as *mut class::Function);
@@ -65,12 +65,12 @@ extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueTyp
 }
 
 #[no_mangle]
-pub extern "C" fn function_singleton() -> *const FunctionInterface {
+pub extern "C" fn function_rs_singleton() -> *const FunctionInterface {
     static SINGLETON: FunctionInterface = FunctionInterface {
-        create: function_singleton_create,
-        invoke: function_singleton_invoke,
-        r#await: function_singleton_await,
-        destroy: function_singleton_destroy,
+        create: function_rs_interface_create,
+        invoke: function_rs_interface_invoke,
+        r#await: function_rs_interface_await,
+        destroy: function_rs_interface_destroy,
     };
 
     &SINGLETON

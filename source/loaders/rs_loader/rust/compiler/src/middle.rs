@@ -8,8 +8,7 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
         mutability: Mutability::No,
         reference: Reference::No,
         ty: FunctionType::Null,
-        generic: vec![],
-        generic_name: None,
+        type_args: vec![],
     };
     match &ty.kind() {
         TyKind::Int(i) => match i {
@@ -42,15 +41,17 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
         TyKind::RawPtr(_inner_ty, _) => {
             result.ty = FunctionType::Ptr;
         }
+        TyKind::Param(param) => {
+            result.ty = FunctionType::Generic(param.name.to_string());
+        }
         TyKind::Adt(def, gen) => {
             let def_ident = format!("{:?}", def);
             match def_ident.as_str() {
                 "std::vec::Vec" => {
                     result.ty = FunctionType::Array;
-                    dbg!(gen);
                     let gen_arg = gen[0];
                     if let GenericArgKind::Type(ty) = gen_arg.kind() {
-                        result.generic.push(handle_ty(&ty));
+                        result.type_args.push(handle_ty(&ty));
                     } else {
                         eprintln!("Rust Loader: Expect generic arg, get nothing");
                     }
@@ -59,13 +60,13 @@ pub fn handle_ty(ty: &Ty) -> FunctionParameter {
                     result.ty = FunctionType::Map;
                     let key = gen[0];
                     if let GenericArgKind::Type(ty) = key.kind() {
-                        result.generic.push(handle_ty(&ty));
+                        result.type_args.push(handle_ty(&ty));
                     } else {
                         eprintln!("Rust Loader: Expect key, get nothing");
                     }
                     let value = gen[1];
                     if let GenericArgKind::Type(ty) = value.kind() {
-                        result.generic.push(handle_ty(&ty));
+                        result.type_args.push(handle_ty(&ty));
                     } else {
                         eprintln!("Rust Loader: Expect value, get nothing");
                     }

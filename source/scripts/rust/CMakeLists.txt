@@ -6,8 +6,9 @@ endif()
 # Append cmake path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# Wasm project utility
+# Rust project utility
 include(RustProject)
 
 add_subdirectory(basic)
 add_subdirectory(melody)
+add_subdirectory(reinitialize)

@@ -22,12 +22,12 @@ pub struct Object {
 }
 
 #[no_mangle]
-extern "C" fn object_singleton_create(_object: OpaqueType, _object_impl: OpaqueType) -> c_int {
+extern "C" fn object_rs_interface_create(_object: OpaqueType, _object_impl: OpaqueType) -> c_int {
     0
 }
 
 #[no_mangle]
-extern "C" fn object_singleton_set(
+extern "C" fn object_rs_interface_set(
     _object: OpaqueType,
     object_impl: OpaqueType,
     accessor: OpaqueType,
@@ -49,7 +49,7 @@ extern "C" fn object_singleton_set(
 }
 
 #[no_mangle]
-extern "C" fn object_singleton_get(
+extern "C" fn object_rs_interface_get(
     _object: OpaqueType,
     object_impl: OpaqueType,
     accessor: OpaqueType,
@@ -75,7 +75,7 @@ extern "C" fn object_singleton_get(
 }
 
 #[no_mangle]
-extern "C" fn object_singleton_method_invoke(
+extern "C" fn object_rs_interface_method_invoke(
     _object: OpaqueType,
     object_impl: OpaqueType,
     method: OpaqueType,
@@ -104,7 +104,7 @@ extern "C" fn object_singleton_method_invoke(
 }
 
 #[no_mangle]
-extern "C" fn object_singleton_method_await(
+extern "C" fn object_rs_interface_method_await(
     _object: OpaqueType,
     _object_impl: OpaqueType,
     _method: OpaqueType,
@@ -115,13 +115,16 @@ extern "C" fn object_singleton_method_await(
     0 as OpaqueType
 }
 #[no_mangle]
-extern "C" fn object_singleton_destructor(_object: OpaqueType, _object_impl: OpaqueType) -> c_int {
+extern "C" fn object_rs_interface_destructor(
+    _object: OpaqueType,
+    _object_impl: OpaqueType,
+) -> c_int {
     eprintln!("Rust Loader: Object destructor not implemented");
     0
 }
 
 #[no_mangle]
-extern "C" fn object_singleton_destroy(_object: OpaqueType, object_impl: OpaqueType) {
+extern "C" fn object_rs_interface_destroy(_object: OpaqueType, object_impl: OpaqueType) {
     if !rs_loader_destroyed() && !object_impl.is_null() {
         unsafe {
             let object = Box::from_raw(object_impl as *mut Object);
@@ -131,15 +134,15 @@ extern "C" fn object_singleton_destroy(_object: OpaqueType, object_impl: OpaqueT
 }
 
 #[no_mangle]
-pub extern "C" fn object_singleton() -> *const ObjectInterface {
+pub extern "C" fn object_rs_singleton() -> *const ObjectInterface {
     static SINGLETON: ObjectInterface = ObjectInterface {
-        create: object_singleton_create,
-        get: object_singleton_get,
-        set: object_singleton_set,
-        method_invoke: object_singleton_method_invoke,
-        method_await: object_singleton_method_await,
-        destructor: object_singleton_destructor,
-        destroy: object_singleton_destroy,
+        create: object_rs_interface_create,
+        get: object_rs_interface_get,
+        set: object_rs_interface_set,
+        method_invoke: object_rs_interface_method_invoke,
+        method_await: object_rs_interface_method_await,
+        destructor: object_rs_interface_destructor,
+        destroy: object_rs_interface_destroy,
     };
 
     &SINGLETON

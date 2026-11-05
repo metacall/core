@@ -170,8 +170,7 @@ int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, const
 int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
-
-	(void)handle;
+	uint32_t options = DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NODELETE) ? NSUNLINKMODULE_OPTION_KEEP_MEMORY_MAPPED : NSUNLINKMODULE_OPTION_NONE;
 
 	/* Skip unlink when using global handle for loading symbols of the current process */
 	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
@@ -184,7 +183,7 @@ int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
 	(void)impl;
 	return 0;
 #else
-	return NSUnLinkModule(impl, 0) == TRUE ? 0 : 1;
+	return NSUnLinkModule(impl, options) == TRUE ? 0 : 1;
 #endif
 }
 

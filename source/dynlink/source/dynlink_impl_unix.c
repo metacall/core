@@ -74,6 +74,14 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 		DYNLINK_FLAGS_ADD(flags_impl, RTLD_GLOBAL);
 	}
 
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NODELETE))
+	{
+		/* On some Linux, RTLD_NODELETE may not be defined */
+#if defined(RTLD_NODELETE)
+		DYNLINK_FLAGS_ADD(flags_impl, RTLD_NODELETE);
+#endif
+	}
+
 	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
 	{
 		impl = dlopen(NULL, flags_impl);
@@ -115,6 +123,14 @@ int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 	{
 		return 0;
 	}
+
+	/* If RTLD_NODELETE is not defined, we just skip the unload of the library */
+#if !defined(RTLD_NODELETE)
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NODELETE))
+	{
+		return 0;
+	}
+#endif
 
 #if defined(__MEMORYCHECK__) || defined(__ADDRESS_SANITIZER__) || defined(__THREAD_SANITIZER__) || defined(__MEMORY_SANITIZER__)
 	/* Disable dlclose when running with valgrind or sanitizers in order to maintain stacktraces */

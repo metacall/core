@@ -45,12 +45,8 @@ pub(crate) fn substitute_type(
     param: &FunctionParameter,
     mapping: &HashMap<String, String>,
 ) -> String {
-    if matches!(param.ty, FunctionType::Complex) {
-        if let Some(concrete_type) = param
-            .generic_name
-            .as_ref()
-            .and_then(|name| mapping.get(name))
-        {
+    if let FunctionType::Generic(name) = &param.ty {
+        if let Some(concrete_type) = mapping.get(name) {
             return concrete_type.clone();
         }
     }
@@ -58,46 +54,18 @@ pub(crate) fn substitute_type(
     param.ty.to_string()
 }
 
+/// The instantiation (i.e: identity::<f64>) is a function item, rustc obtains its signature
+/// from the template declaration, so only the template arguments are written in the wrapper
 fn generate_instantiated_function_wrapper(template: &Function, types: &[String]) -> String {
-    let wrapper_name = template.instantiate_name(types.to_vec());
-
-    let mapping = build_generic_mapping(template, types);
-
-    let args = template
-        .args
-        .iter()
-        .map(|arg| format!("{}: {}", arg.name, substitute_type(arg, &mapping)))
-        .collect::<Vec<_>>()
-        .join(", ");
-
-    let return_type = template
-        .ret
-        .as_ref()
-        .map(|ret| substitute_type(ret, &mapping))
-        .unwrap_or_else(|| "()".to_string());
-
-    let call_args = template
-        .args
-        .iter()
-        .map(|arg| arg.name.clone())
-        .collect::<Vec<_>>()
-        .join(", ");
-
     format!(
-        "pub fn {wrapper_name}({args}) -> {return_type} {{\n\
-            {name}::<{types}>({call_args})\n\
-        }}\n\
-        #[unsafe(no_mangle)]\n\
+        "#[unsafe(no_mangle)]\n\
         pub unsafe extern \"C\" fn rs_loader_impl_register_fn_{wrapper_name}() -> *mut Function {{\n\
-            let f = Function::new({wrapper_name});\n\
+            let f = Function::new({name}::<{types}>);\n\
             Box::into_raw(Box::new(f))\n\
         }}\n",
-        wrapper_name = wrapper_name,
-        args = args,
-        return_type = return_type,
+        wrapper_name = template.instantiate_name(types.to_vec()),
         name = template.name,
         types = types.join(", "),
-        call_args = call_args,
     )
 }
 
@@ -256,9 +224,12 @@ pub fn generate_wrapper(
             wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
             wrapper_file.write_all(content.as_bytes())?;
 
-            let mut source = Source::build(Source::Package {
-                path: path.to_path_buf(),
-            });
+            let mut source = Source::build_with_crate_name(
+                Source::Package {
+                    path: path.to_path_buf(),
+                },
+                callbacks.source.crate_name.clone(),
+            );
             source.output = callbacks.source.output;
 
             // Construct new callback
@@ -312,9 +283,12 @@ pub fn generate_wrapper(
                     wrapper_file.write_all(content.as_bytes())?;
                     let dst = format!("include!({:?});", callbacks.source.input_path);
                     wrapper_file.write_all(dst.as_bytes())?;
-                    let mut source = Source::build(Source::File {
-                        path: temp_dir.join("wrapped_".to_owned() + &source_file),
-                    });
+                    let mut source = Source::build_with_crate_name(
+                        Source::File {
+                            path: temp_dir.join("wrapped_".to_owned() + &source_file),
+                        },
+                        callbacks.source.crate_name.clone(),
+                    );
                     source.output = callbacks.source.output;
 
                     // Construct new callback
@@ -346,9 +320,12 @@ pub fn generate_wrapper(
                         wrapper_file.write_all(content.as_bytes())?;
                         let dst = format!("include!({:?});", source_path.join("script.rs"));
                         wrapper_file.write_all(dst.as_bytes())?;
-                        let mut source = Source::build(Source::File {
-                            path: source_path.join("wrapped_script.rs"),
-                        });
+                        let mut source = Source::build_with_crate_name(
+                            Source::File {
+                                path: source_path.join("wrapped_script.rs"),
+                            },
+                            callbacks.source.crate_name.clone(),
+                        );
                         source.output = callbacks.source.output;
 
                         // Construct new callback

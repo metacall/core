@@ -4,23 +4,21 @@ use super::rustc_ast::{
 };
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 
-pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParameter {
+pub fn handle_ty(ty: &rustc_ast::Ty, type_params: &Vec<String>) -> FunctionParameter {
     let mut result = FunctionParameter {
         name: String::new(),
         mutability: Mutability::No,
         reference: Reference::No,
         ty: FunctionType::Null,
-        generic: vec![],
-        generic_name: None,
+        type_args: vec![],
     };
     match &ty.kind {
         TyKind::Path(_, path) => {
             let segment = &path.segments[0];
             let symbol_string = segment.ident.name.to_string();
 
-            if generics.contains(&symbol_string) {
-                result.ty = FunctionType::Complex;
-                result.generic_name = Some(symbol_string.clone());
+            if type_params.contains(&symbol_string) {
+                result.ty = FunctionType::Generic(symbol_string.clone());
                 result.name = symbol_string;
                 return result;
             }
@@ -37,7 +35,6 @@ pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParamete
                 "bool" => result.ty = FunctionType::bool,
                 "i8" => result.ty = FunctionType::char,
                 "str" => result.ty = FunctionType::String,
-                "complex" => result.ty = FunctionType::Complex,
                 "Vec" => {
                     result.ty = FunctionType::Array;
                     if let Some(args) = &segment.args {
@@ -45,7 +42,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParamete
                             GenericArgs::AngleBracketed(AngleBracketedArgs { args, .. }) => {
                                 for arg in args {
                                     if let AngleBracketedArg::Arg(GenericArg::Type(ty)) = arg {
-                                        result.generic.push(handle_ty(ty, generics))
+                                        result.type_args.push(handle_ty(ty, type_params))
                                     }
                                 }
                             }
@@ -61,7 +58,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParamete
                             GenericArgs::AngleBracketed(AngleBracketedArgs { args, .. }) => {
                                 for arg in args {
                                     if let AngleBracketedArg::Arg(GenericArg::Type(ty)) = arg {
-                                        result.generic.push(handle_ty(ty, generics))
+                                        result.type_args.push(handle_ty(ty, type_params))
                                     }
                                 }
                             }
@@ -76,7 +73,7 @@ pub fn handle_ty(ty: &rustc_ast::Ty, generics: &Vec<String>) -> FunctionParamete
             result.name = symbol_string;
         }
         TyKind::Ref(_, MutTy { ty, mutbl }) => {
-            let mut inner_ty = handle_ty(ty, generics);
+            let mut inner_ty = handle_ty(ty, type_params);
             inner_ty.reference = Reference::Yes;
             match mutbl {
                 rustc_ast::Mutability::Mut => inner_ty.mutability = Mutability::Yes,
@@ -101,7 +98,7 @@ fn handle_pat(pat: &Pat) -> Option<String> {
 }
 
 pub fn handle_fn(name: String, sig: &FnSig, generics: &rustc_ast::Generics) -> Function {
-    let generics_params = generics
+    let type_params = generics
         .params
         .iter()
         .map(|param| param.ident.name.to_string())
@@ -111,11 +108,11 @@ pub fn handle_fn(name: String, sig: &FnSig, generics: &rustc_ast::Generics) -> F
         name,
         ret: None,
         args: vec![],
-        generics: generics_params.clone(),
+        generics: type_params.clone(),
     };
     // parse input and output
     for arg in &sig.decl.inputs {
-        let mut param = handle_ty(&arg.ty, &generics_params);
+        let mut param = handle_ty(&arg.ty, &type_params);
         // we need to extract the name from pat.
         if let Some(name) = handle_pat(&arg.pat) {
             param.name = name;
@@ -126,7 +123,7 @@ pub fn handle_fn(name: String, sig: &FnSig, generics: &rustc_ast::Generics) -> F
     match &sig.decl.output {
         FnRetTy::Default(_) => function.ret = None,
         FnRetTy::Ty(ty) => {
-            function.ret = Some(handle_ty(ty, &generics_params));
+            function.ret = Some(handle_ty(ty, &type_params));
         }
     }
     function

@@ -1,15 +1,14 @@
 use crate::api::ClassRegistration;
 use crate::api::{
-    add_template_parameter, class_singleton, create_template, function_singleton, get_loader_type,
-    instantiate_template_function, register_class, register_existing_function, register_function,
-    register_template, template_singleton, ClassCreate, FunctionCreate, FunctionInputSignature,
-    FunctionRegistration, OpaqueType, TemplateArgument, TemplateImpl, TEMPLATE_ARGUMENT_TYPE,
-    TEMPLATE_TYPE_FUNCTION,
+    add_template_parameter, class_rs_singleton, create_template, function_rs_singleton,
+    get_loader_type, register_class, register_existing_function, register_function,
+    register_template, template_instantiate_function, template_rs_singleton, ClassCreate,
+    FunctionCreate, FunctionInputSignature, FunctionRegistration, OpaqueType, TemplateArgument,
+    TemplateImpl, TEMPLATE_ARGUMENT_TYPE, TEMPLATE_TYPE_FUNCTION,
 };
 use crate::wrapper::class;
 use crate::{Class, CompilerState, DynlinkLibrary, Function};
 use std::ffi::CString;
-//use crate::template::*;
 
 fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate {
     let name = func.name.clone();
@@ -28,7 +27,7 @@ fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate 
         name,
         args_count,
         function_impl,
-        singleton: function_singleton as OpaqueType,
+        singleton: function_rs_singleton as OpaqueType,
     }
 }
 
@@ -76,7 +75,7 @@ fn instantiate_template(
         })
         .collect::<Vec<_>>();
 
-    unsafe { instantiate_template_function(tpl, &mut args) }
+    unsafe { template_instantiate_function(tpl, args.as_mut_ptr(), args.len()) }
 }
 
 fn class_create(class: &Class, dynlink: &DynlinkLibrary) -> ClassCreate {
@@ -94,7 +93,7 @@ fn class_create(class: &Class, dynlink: &DynlinkLibrary) -> ClassCreate {
     ClassCreate {
         name,
         class_impl,
-        singleton: class_singleton as OpaqueType,
+        singleton: class_rs_singleton as OpaqueType,
         class_info: class.clone(),
     }
 }
@@ -137,7 +136,7 @@ pub fn register(
                 &template.name,
                 TEMPLATE_TYPE_FUNCTION,
                 template_impl,
-                template_singleton as OpaqueType,
+                template_rs_singleton as OpaqueType,
             )
         };
 

@@ -1,4 +1,4 @@
-use super::object::{object_singleton, Object};
+use super::object::{object_rs_singleton, Object};
 use super::*;
 use crate::wrapper::class;
 use crate::Class;
@@ -28,11 +28,11 @@ pub struct ClassInterface {
 }
 
 #[no_mangle]
-extern "C" fn class_singleton_create(_klass: OpaqueType, _class_impl: OpaqueType) -> c_int {
+extern "C" fn class_rs_interface_create(_klass: OpaqueType, _class_impl: OpaqueType) -> c_int {
     0
 }
 #[no_mangle]
-extern "C" fn class_singleton_constructor(
+extern "C" fn class_rs_interface_constructor(
     klass: OpaqueType,
     class_impl: OpaqueType,
     name: *const c_char,
@@ -51,11 +51,17 @@ extern "C" fn class_singleton_constructor(
         };
         std::mem::forget(class);
         let obj_impl_ptr = Box::into_raw(Box::new(obj_impl)) as OpaqueType;
-        object_create(name, 0, obj_impl_ptr, object_singleton as OpaqueType, klass)
+        object_create(
+            name,
+            0,
+            obj_impl_ptr,
+            object_rs_singleton as OpaqueType,
+            klass,
+        )
     }
 }
 #[no_mangle]
-extern "C" fn class_singleton_static_set(
+extern "C" fn class_rs_interface_static_set(
     _klass: OpaqueType,
     _class_impl: OpaqueType,
     _accessor: OpaqueType,
@@ -66,7 +72,7 @@ extern "C" fn class_singleton_static_set(
 }
 
 #[no_mangle]
-extern "C" fn class_singleton_static_get(
+extern "C" fn class_rs_interface_static_get(
     _klass: OpaqueType,
     _class_impl: OpaqueType,
     _accessor: OpaqueType,
@@ -76,7 +82,7 @@ extern "C" fn class_singleton_static_get(
 }
 
 #[no_mangle]
-extern "C" fn class_singleton_static_invoke(
+extern "C" fn class_rs_interface_static_invoke(
     _klass: OpaqueType,
     class_impl: OpaqueType,
     method: OpaqueType,
@@ -102,7 +108,7 @@ extern "C" fn class_singleton_static_invoke(
 }
 
 #[no_mangle]
-extern "C" fn class_singleton_static_await(
+extern "C" fn class_rs_interface_static_await(
     _klass: OpaqueType,
     _class_impl: OpaqueType,
     _method: OpaqueType,
@@ -114,7 +120,7 @@ extern "C" fn class_singleton_static_await(
 }
 
 #[no_mangle]
-extern "C" fn class_singleton_destroy(_klass: OpaqueType, class_impl: OpaqueType) {
+extern "C" fn class_rs_interface_destroy(_klass: OpaqueType, class_impl: OpaqueType) {
     if !rs_loader_destroyed() && !class_impl.is_null() {
         unsafe {
             let class = Box::from_raw(class_impl as *mut class::Class);
@@ -124,15 +130,15 @@ extern "C" fn class_singleton_destroy(_klass: OpaqueType, class_impl: OpaqueType
 }
 
 #[no_mangle]
-pub extern "C" fn class_singleton() -> *const ClassInterface {
+pub extern "C" fn class_rs_singleton() -> *const ClassInterface {
     static SINGLETON: ClassInterface = ClassInterface {
-        create: class_singleton_create,
-        constructor: class_singleton_constructor,
-        static_get: class_singleton_static_get,
-        static_set: class_singleton_static_set,
-        static_invoke: class_singleton_static_invoke,
-        static_await: class_singleton_static_await,
-        destroy: class_singleton_destroy,
+        create: class_rs_interface_create,
+        constructor: class_rs_interface_constructor,
+        static_get: class_rs_interface_static_get,
+        static_set: class_rs_interface_static_set,
+        static_invoke: class_rs_interface_static_invoke,
+        static_await: class_rs_interface_static_await,
+        destroy: class_rs_interface_destroy,
     };
 
     &SINGLETON

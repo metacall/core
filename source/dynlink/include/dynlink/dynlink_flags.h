@@ -31,12 +31,12 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define DYNLINK_FLAGS_BIND_NOW	  (0x01 << 0x00) /**< Inmediate loading bind flag */
-#define DYNLINK_FLAGS_BIND_LAZY	  (0x01 << 0x01) /**< Lazy loading bind flag */
-#define DYNLINK_FLAGS_BIND_LOCAL  (0x01 << 0x02) /**< Private visibility bind flag */
-#define DYNLINK_FLAGS_BIND_GLOBAL (0x01 << 0x03) /**< Public visibility bind flag */
-
-#define DYNLINK_FLAGS_BIND_SELF (0x01 << 0x10) /**< Private flag for when loading the current process */
+#define DYNLINK_FLAGS_BIND_NOW		(0x01 << 0x00) /**< Inmediate loading bind flag */
+#define DYNLINK_FLAGS_BIND_LAZY		(0x01 << 0x01) /**< Lazy loading bind flag */
+#define DYNLINK_FLAGS_BIND_LOCAL	(0x01 << 0x02) /**< Private visibility bind flag */
+#define DYNLINK_FLAGS_BIND_GLOBAL	(0x01 << 0x03) /**< Public visibility bind flag */
+#define DYNLINK_FLAGS_BIND_NODELETE (0x01 << 0x04) /**< Flag for keeping the library always loaded */
+#define DYNLINK_FLAGS_BIND_SELF		(0x01 << 0x10) /**< Private flag for when loading the current process */
 
 /* -- Macros -- */
 

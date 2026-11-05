@@ -101,7 +101,7 @@ impl TemplateImpl {
             name,
             args_count: input.len(),
             function_impl,
-            singleton: function_singleton as OpaqueType,
+            singleton: function_rs_singleton as OpaqueType,
         };
 
         unsafe { create_function_with_signature(self.loader_impl, function_create, ret, &input) }
@@ -109,12 +109,12 @@ impl TemplateImpl {
 }
 
 #[no_mangle]
-extern "C" fn template_singleton_create(_tpl: OpaqueType, _tpl_impl: OpaqueType) -> c_int {
+extern "C" fn template_rs_interface_create(_tpl: OpaqueType, _tpl_impl: OpaqueType) -> c_int {
     0
 }
 
 #[no_mangle]
-extern "C" fn template_singleton_instantiate_function(
+extern "C" fn template_rs_interface_instantiate_function(
     _tpl: OpaqueType,
     tpl_impl: OpaqueType,
     args_p: OpaqueType,
@@ -150,7 +150,7 @@ extern "C" fn template_singleton_instantiate_function(
 }
 
 #[no_mangle]
-extern "C" fn template_singleton_instantiate_class(
+extern "C" fn template_rs_interface_instantiate_class(
     _tpl: OpaqueType,
     _tpl_impl: OpaqueType,
     _args_p: OpaqueType,
@@ -161,7 +161,7 @@ extern "C" fn template_singleton_instantiate_class(
 }
 
 #[no_mangle]
-extern "C" fn template_singleton_destroy(_tpl: OpaqueType, tpl_impl: OpaqueType) {
+extern "C" fn template_rs_interface_destroy(_tpl: OpaqueType, tpl_impl: OpaqueType) {
     if !rs_loader_destroyed() && !tpl_impl.is_null() {
         unsafe {
             let template_impl = Box::from_raw(tpl_impl as *mut TemplateImpl);
@@ -171,12 +171,12 @@ extern "C" fn template_singleton_destroy(_tpl: OpaqueType, tpl_impl: OpaqueType)
 }
 
 #[no_mangle]
-pub extern "C" fn template_singleton() -> *const TemplateInterface {
+pub extern "C" fn template_rs_singleton() -> *const TemplateInterface {
     static SINGLETON: TemplateInterface = TemplateInterface {
-        create: template_singleton_create,
-        instantiate_function: template_singleton_instantiate_function,
-        instantiate_class: template_singleton_instantiate_class,
-        destroy: template_singleton_destroy,
+        create: template_rs_interface_create,
+        instantiate_function: template_rs_interface_instantiate_function,
+        instantiate_class: template_rs_interface_instantiate_class,
+        destroy: template_rs_interface_destroy,
     };
 
     &SINGLETON
@@ -195,7 +195,7 @@ pub unsafe fn register_template(ctx: OpaqueType, tpl: OpaqueType) -> c_int {
         return 1;
     }
 
-    let result = scope_define(sp, get_template_name(tpl) as *mut std::os::raw::c_char, v);
+    let result = scope_define(sp, template_name(tpl) as *mut std::os::raw::c_char, v);
 
     if result != 0 {
         value_type_destroy(v);

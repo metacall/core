@@ -97,8 +97,6 @@ REFLECT_API function template_instantiate_function(reflect_template tpl, templat
 
 REFLECT_API klass template_instantiate_class(reflect_template tpl, template_argument args[], size_t size);
 
-REFLECT_API void template_destroy(reflect_template tpl);
-
 /**
  *  @brief
  *    Print debug statistics about template allocations and usage
@@ -108,6 +106,8 @@ REFLECT_API void template_destroy(reflect_template tpl);
  *    (OPTION_MEMORY_TRACKER=ON at build time)
  */
 REFLECT_API void template_stats_debug(void);
+
+REFLECT_API void template_destroy(reflect_template tpl);
 
 #ifdef __cplusplus
 }

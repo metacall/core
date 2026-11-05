@@ -50,6 +50,19 @@ const char *dynlink_impl_interface_extension_win32(void)
 	return extension_win32;
 }
 
+static void dynlink_impl_interface_error_win32(const char *action, const char *path)
+{
+	DWORD error_id = GetLastError();
+	LPSTR message_buffer;
+
+	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, error_id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&message_buffer, 0, NULL);
+
+	log_write("metacall", LOG_LEVEL_ERROR, "%s: %s with error code [%d]: %.*s", action, path, error_id, size - 1, (const char *)message_buffer);
+
+	LocalFree(message_buffer);
+}
+
 dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 {
 	HMODULE impl;
@@ -66,17 +79,24 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 
 	if (impl == NULL)
 	{
-		DWORD error_id = GetLastError();
-		LPSTR message_buffer;
-
-		size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL, error_id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&message_buffer, 0, NULL);
-
-		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load: %s with error code [%d]: %.*s", dynlink_get_path(handle), error_id, size - 1, (const char *)message_buffer);
-
-		LocalFree(message_buffer);
+		dynlink_impl_interface_error_win32("Failed to load", dynlink_get_path(handle));
 
 		return NULL;
+	}
+
+	/* Pin the module, so it stays loaded until the process exits even if it is freed */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NODELETE) && !DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	{
+		HMODULE pinned;
+
+		if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_PIN, dynlink_get_path(handle), &pinned) == FALSE)
+		{
+			dynlink_impl_interface_error_win32("Failed to pin", dynlink_get_path(handle));
+
+			FreeLibrary(impl);
+
+			return NULL;
+		}
 	}
 
 	return (dynlink_impl)impl;
@@ -96,8 +116,6 @@ int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, const
 int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
-
-	(void)handle;
 
 	/* Skip unlink when using global handle for loading symbols of the current process */
 	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))

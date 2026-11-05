@@ -25,7 +25,7 @@ impl PackageRegistration {
                 )))
             }
         };
-        let dynlink = match DynlinkLibrary::new(&state.output) {
+        let dynlink = match state.load() {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DynlinkError(error)),
         };

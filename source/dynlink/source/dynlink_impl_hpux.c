@@ -129,8 +129,11 @@ int dynlink_impl_interface_unload_hpux(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 
-	/* Skip unlink when using PROG_HANDLE for the current process */
-	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF))
+	/* Skip unlink when using PROG_HANDLE for the current process, or
+	 * when using DYNLINK_FLAGS_BIND_NODELETE, shl_load has no option for keeping
+	 * the library loaded until the process exits, so we exit here
+	 */
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_SELF) || DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NODELETE))
 	{
 		return 0;
 	}

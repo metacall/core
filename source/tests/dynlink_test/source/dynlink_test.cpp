@@ -175,6 +175,34 @@ TEST_F(dynlink_test, DefaultConstructor)
 			}
 		}
 
+		/* Test library that is never unloaded from the process */
+		{
+			char library_name_platform[PORTABILITY_PATH_SIZE];
+			char absolute_path[PORTABILITY_PATH_SIZE];
+
+			dynlink_platform_name(library_name, library_name_platform);
+
+			portability_path_join(path, strlen(path) + 1, library_name_platform, strlen(library_name_platform) + 1, absolute_path, PORTABILITY_PATH_SIZE);
+
+			dynlink handle = dynlink_load_absolute(absolute_path, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_LOCAL | DYNLINK_FLAGS_BIND_NODELETE);
+
+			ASSERT_NE(handle, (dynlink)NULL);
+
+			dynlink_symbol_addr mock_loader_print_info_addr;
+
+			EXPECT_EQ((int)0, dynlink_symbol(handle, "mock_loader_print_info", &mock_loader_print_info_addr));
+
+			ASSERT_NE((dynlink_symbol_addr)mock_loader_print_info_addr, (dynlink_symbol_addr)NULL);
+
+			mock_loader_print_func print = (mock_loader_print_func)mock_loader_print_info_addr;
+
+			/* Unloading closes the handle, but the system keeps the library loaded */
+			dynlink_unload(handle);
+
+			/* The function can be called after unloading because the system has not unloaded the library */
+			EXPECT_NE((const char *)NULL, (const char *)print());
+		}
+
 		environment_variable_path_destroy(path);
 	}
 #endif
