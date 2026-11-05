@@ -252,6 +252,63 @@ fn test_function() {
             );
         },
     );
+
+    // Regression tests for MetaCallFunction independent ownership and cloning
+    // 1. Clone an instance, drop original, verify clone remains usable, drop clone
+    let function = metacall::metacall_no_arg::<MetaCallFunction>("test_function").unwrap();
+    let cloned_function = function.clone();
+    drop(function);
+    let ret = cloned_function.call_no_arg::<String>().unwrap();
+    if ret.as_str() != "hi there!" {
+        invalid_return_value("hi there!", ret);
+    }
+    drop(cloned_function);
+
+    // 2. Reverse destruction order: clone an instance, drop clone, verify original remains usable, drop original
+    let function = metacall::metacall_no_arg::<MetaCallFunction>("test_function").unwrap();
+    let cloned_function = function.clone();
+    drop(cloned_function);
+    let ret = function.call_no_arg::<String>().unwrap();
+    if ret.as_str() != "hi there!" {
+        invalid_return_value("hi there!", ret);
+    }
+    drop(function);
+
+    // 3. Multiple clones surviving original drop
+    let function = metacall::metacall_no_arg::<MetaCallFunction>("test_function").unwrap();
+    let c1 = function.clone();
+    let c2 = function.clone();
+    drop(function);
+    let ret_c1 = c1.call_no_arg::<String>().unwrap();
+    let ret_c2 = c2.call_no_arg::<String>().unwrap();
+    if ret_c1.as_str() != "hi there!" {
+        invalid_return_value("hi there!", ret_c1);
+    }
+    if ret_c2.as_str() != "hi there!" {
+        invalid_return_value("hi there!", ret_c2);
+    }
+    drop(c1);
+    let ret_c2_after = c2.call_no_arg::<String>().unwrap();
+    if ret_c2_after.as_str() != "hi there!" {
+        invalid_return_value("hi there!", ret_c2_after);
+    }
+    drop(c2);
+
+    // 4. Borrowed construction path (new_raw_leak): verify cloning a borrowed wrapper
+    // produces an independent owned wrapper (leak = false)
+    let function = metacall::metacall_no_arg::<MetaCallFunction>("test_function").unwrap();
+    let raw = function.into_raw();
+    let borrowed = MetaCallFunction::new_raw_leak(raw);
+    let clone_from_borrowed = borrowed.clone();
+    drop(borrowed);
+    let ret_borrowed = clone_from_borrowed.call_no_arg::<String>().unwrap();
+    if ret_borrowed.as_str() != "hi there!" {
+        invalid_return_value("hi there!", ret_borrowed);
+    }
+    drop(clone_from_borrowed);
+    unsafe {
+        metacall::bindings::metacall_value_destroy(raw);
+    }
 }
 fn test_null() {
     metacall::metacall::<MetaCallNull>("return_the_argument_py", [MetaCallNull()]).unwrap();
@@ -324,6 +381,80 @@ fn test_object() {
             );
         },
     );
+
+    // Regression tests for MetaCallObject independent ownership and cloning
+    // 1. Clone an instance, drop original, verify clone remains usable, drop clone
+    let object = metacall::metacall_no_arg::<MetaCallObject>("test_object").unwrap();
+    let cloned_object = object.clone();
+    drop(object);
+    let ret = cloned_object
+        .call_method_no_arg::<String>("get_hi")
+        .unwrap();
+    if ret.as_str() != "there!" {
+        invalid_return_value("there!", ret);
+    }
+    cloned_object
+        .set_attribute("hi2", String::from("clone_test_1"))
+        .unwrap();
+    let attr = cloned_object.get_attribute::<String>("hi2").unwrap();
+    if attr.as_str() != "clone_test_1" {
+        invalid_return_value("clone_test_1", attr);
+    }
+    drop(cloned_object);
+
+    // 2. Reverse destruction order: clone an instance, drop clone, verify original remains usable, drop original
+    let object = metacall::metacall_no_arg::<MetaCallObject>("test_object").unwrap();
+    let cloned_object = object.clone();
+    drop(cloned_object);
+    let ret = object.call_method_no_arg::<String>("get_hi").unwrap();
+    if ret.as_str() != "there!" {
+        invalid_return_value("there!", ret);
+    }
+    drop(object);
+
+    // 3. Multiple clones surviving original drop
+    let object = metacall::metacall_no_arg::<MetaCallObject>("test_object").unwrap();
+    let c1 = object.clone();
+    let c2 = object.clone();
+    drop(object);
+    let ret_c1 = c1.call_method_no_arg::<String>("get_hi").unwrap();
+    let ret_c2 = c2.call_method_no_arg::<String>("get_hi").unwrap();
+    if ret_c1.as_str() != "there!" {
+        invalid_return_value("there!", ret_c1);
+    }
+    if ret_c2.as_str() != "there!" {
+        invalid_return_value("there!", ret_c2);
+    }
+    c1.set_attribute("hi2", String::from("shared_object_attr"))
+        .unwrap();
+    let attr_c2 = c2.get_attribute::<String>("hi2").unwrap();
+    if attr_c2.as_str() != "shared_object_attr" {
+        invalid_return_value("shared_object_attr", attr_c2);
+    }
+    drop(c1);
+    let ret_c2_after = c2.call_method_no_arg::<String>("get_hi").unwrap();
+    if ret_c2_after.as_str() != "there!" {
+        invalid_return_value("there!", ret_c2_after);
+    }
+    drop(c2);
+
+    // 4. Borrowed construction path (new_raw_leak): verify cloning a borrowed wrapper
+    // produces an independent owned wrapper (leak = false)
+    let object = metacall::metacall_no_arg::<MetaCallObject>("test_object").unwrap();
+    let raw = object.into_raw();
+    let borrowed = MetaCallObject::new_raw_leak(raw);
+    let clone_from_borrowed = borrowed.clone();
+    drop(borrowed);
+    let ret_borrowed = clone_from_borrowed
+        .call_method_no_arg::<String>("get_hi")
+        .unwrap();
+    if ret_borrowed.as_str() != "there!" {
+        invalid_return_value("there!", ret_borrowed);
+    }
+    drop(clone_from_borrowed);
+    unsafe {
+        metacall::bindings::metacall_value_destroy(raw);
+    }
 }
 fn test_exception() {
     generate_test_custom_validation::<MetaCallException>(
