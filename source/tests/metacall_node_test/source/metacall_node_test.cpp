@@ -110,6 +110,22 @@ TEST_F(metacall_node_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 		metacall_value_destroy(args[0]);
 
+		// Test load from memory + destructured map type
+		const char buffer_destructured[] = {
+			"module.exports = { test_destructured: ({ a, b }) => a + b };"
+		};
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer_destructured, sizeof(buffer_destructured), NULL));
+
+		void *test_destructured_func = metacall_function("test_destructured");
+
+		EXPECT_NE((void *)NULL, test_destructured_func);
+
+		enum metacall_value_id param_id = METACALL_INVALID;
+
+		EXPECT_EQ((int)0, (int)metacall_function_parameter_type(test_destructured_func, 0, &param_id));
+		EXPECT_EQ((enum metacall_value_id)METACALL_MAP, param_id);
+
 		const char *node_module_scripts[] = {
 			"path"
 		};
