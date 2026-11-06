@@ -1,35 +1,92 @@
 use std::{
     ffi::{CStr, CString},
     os::raw::c_int,
+    path::PathBuf,
+    sync::Mutex,
 };
 
 use super::*;
 use crate::wrapper::{build_generic_mapping, class, substitute_type};
-use crate::{Dynlink, DynlinkLibrary, DynlinkSymbolAddr, Function};
+use crate::{
+    compile_instance, CompilerState, Dynlink, DynlinkLibrary, DynlinkSymbolAddr, Function, Linkage,
+};
 
 #[repr(C)]
 pub struct TemplateInterface {
     create: extern "C" fn(OpaqueType, OpaqueType) -> c_int,
-    instantiate_function: extern "C" fn(OpaqueType, OpaqueType, OpaqueType, usize) -> OpaqueType,
-    instantiate_class: extern "C" fn(OpaqueType, OpaqueType, OpaqueType, usize) -> OpaqueType,
+    instantiate: extern "C" fn(OpaqueType, OpaqueType, OpaqueType, usize) -> OpaqueType,
     destroy: extern "C" fn(OpaqueType, OpaqueType),
 }
 
-/// Implementation of a template (template_impl), it contains the parsed generic
-/// function and the library where its instantiations have been compiled
+/// Implementation of a template (template_impl), it contains the parsed generic function,
+/// the crate where it has been compiled (with the instantiations requested at load time)
+/// and the libraries of the instantiations compiled after load
 pub struct TemplateImpl {
     template: Function,
     loader_impl: OpaqueType,
     dynlink: Dynlink,
+    crate_name: String,
+    library: PathBuf,
+    linkage: Linkage,
+    instances: Mutex<Vec<DynlinkLibrary>>,
 }
 
 impl TemplateImpl {
-    pub fn new(template: Function, loader_impl: OpaqueType, dynlink: &DynlinkLibrary) -> Self {
+    pub fn new(
+        template: Function,
+        loader_impl: OpaqueType,
+        dynlink: &DynlinkLibrary,
+        state: &CompilerState,
+    ) -> Self {
         TemplateImpl {
             template,
             loader_impl,
             dynlink: dynlink.instance,
+            crate_name: state.crate_name.clone(),
+            library: state.output.clone(),
+            linkage: state.linkage,
+            instances: Mutex::new(Vec::new()),
         }
+    }
+
+    /// Compiles the instantiation into a new crate linked against the crate of the template,
+    /// only crates with shared linkage can be linked against (see Linkage)
+    fn compile_instance(&self, types: &[String], symbol_name: &str) -> Option<DynlinkSymbolAddr> {
+        if self.linkage != Linkage::Shared {
+            eprintln!(
+                "Rust Loader: The template {} cannot be instantiated after load, its crate is not shared",
+                self.template.name
+            );
+            return None;
+        }
+
+        let library = match compile_instance(&self.crate_name, &self.library, &self.template, types)
+        {
+            Ok(library) => library,
+            Err(error) => {
+                eprintln!(
+                    "Rust Loader: {}\n{}\n{}",
+                    error.err, error.errors, error.diagnostics
+                );
+                return None;
+            }
+        };
+
+        let symbol = match library.symbol(symbol_name) {
+            Ok(symbol) => symbol,
+            Err(error) => {
+                eprintln!("Rust Loader: {}", error);
+                return None;
+            }
+        };
+
+        // The library is kept until the template is destroyed, after its instances
+        self.instances
+            .lock()
+            .expect("Unable to lock the instances of the template")
+            .push(library);
+
+        Some(symbol)
     }
 
     fn symbol(&self, symbol_name: &str) -> Option<DynlinkSymbolAddr> {
@@ -60,17 +117,21 @@ impl TemplateImpl {
 
         let register_func_name = format!("rs_loader_impl_register_fn_{}", wrapper_name);
 
-        // The instantiation has not been generated when compiling the source
-        let register_func: unsafe extern "C" fn() -> *mut class::Function =
-            match self.symbol(&register_func_name) {
-                Some(symbol) => unsafe {
-                    std::mem::transmute::<
-                        DynlinkSymbolAddr,
-                        unsafe extern "C" fn() -> *mut class::Function,
-                    >(symbol)
-                },
-                None => return std::ptr::null_mut(),
-            };
+        // The instantiations requested at load time are in the crate of the template,
+        // otherwise the instantiation is compiled into a new crate
+        let symbol = match self
+            .symbol(&register_func_name)
+            .or_else(|| self.compile_instance(&types, &register_func_name))
+        {
+            Some(symbol) => symbol,
+            None => return std::ptr::null_mut(),
+        };
+
+        let register_func = unsafe {
+            std::mem::transmute::<DynlinkSymbolAddr, unsafe extern "C" fn() -> *mut class::Function>(
+                symbol,
+            )
+        };
 
         let function_impl = unsafe { register_func() } as OpaqueType;
 
@@ -113,9 +174,11 @@ extern "C" fn template_rs_interface_create(_tpl: OpaqueType, _tpl_impl: OpaqueTy
     0
 }
 
+/// Returns the instantiation as a value of the type of the template, which
+/// holds the reference to it, only function and class templates are handled
 #[no_mangle]
-extern "C" fn template_rs_interface_instantiate_function(
-    _tpl: OpaqueType,
+extern "C" fn template_rs_interface_instantiate(
+    tpl: OpaqueType,
     tpl_impl: OpaqueType,
     args_p: OpaqueType,
     size: usize,
@@ -146,18 +209,27 @@ extern "C" fn template_rs_interface_instantiate_function(
         }
     }
 
-    template_impl.instantiate_function(types)
-}
+    match unsafe { template_type(tpl) } {
+        TYPE_FUNCTION => {
+            let f = template_impl.instantiate_function(types);
 
-#[no_mangle]
-extern "C" fn template_rs_interface_instantiate_class(
-    _tpl: OpaqueType,
-    _tpl_impl: OpaqueType,
-    _args_p: OpaqueType,
-    _size: usize,
-) -> OpaqueType {
-    // TODO: Generic structs are not supported yet
-    std::ptr::null_mut()
+            if f.is_null() {
+                return std::ptr::null_mut();
+            }
+
+            let v = unsafe { value_create_function(f) };
+
+            if v.is_null() {
+                // The function has no references yet, so it is destroyed
+                unsafe { function_destroy(f) };
+            }
+
+            v
+        }
+        // TODO: Generic structs (class templates) are not supported yet
+        TYPE_CLASS => std::ptr::null_mut(),
+        _ => std::ptr::null_mut(),
+    }
 }
 
 #[no_mangle]
@@ -174,8 +246,7 @@ extern "C" fn template_rs_interface_destroy(_tpl: OpaqueType, tpl_impl: OpaqueTy
 pub extern "C" fn template_rs_singleton() -> *const TemplateInterface {
     static SINGLETON: TemplateInterface = TemplateInterface {
         create: template_rs_interface_create,
-        instantiate_function: template_rs_interface_instantiate_function,
-        instantiate_class: template_rs_interface_instantiate_class,
+        instantiate: template_rs_interface_instantiate,
         destroy: template_rs_interface_destroy,
     };
 

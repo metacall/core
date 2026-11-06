@@ -23,7 +23,6 @@
 #include <adt/adt_vector.h>
 
 #include <reflect/reflect_class.h>
-#include <reflect/reflect_template.h>
 #include <reflect/reflect_value_type.h>
 
 #include <reflect/reflect_accessor.h>
@@ -49,7 +48,6 @@ struct class_type
 	map static_methods;
 	set attributes;
 	set static_attributes;
-	reflect_template tpl;
 };
 
 reflect_memory_tracker(class_stats);
@@ -98,7 +96,6 @@ klass class_create(const char *name, enum accessor_type_id accessor, class_impl 
 
 	cls->impl = impl;
 	cls->accessor = accessor;
-	cls->tpl = NULL;
 	threading_atomic_ref_count_initialize(&cls->ref);
 	cls->interface = singleton ? singleton() : NULL;
 	cls->constructors = vector_create_type(constructor);
@@ -178,38 +175,6 @@ class_interface class_interface_get(klass cls)
 	}
 
 	return NULL;
-}
-
-int class_set_template(klass cls, reflect_template tpl)
-{
-	if (cls == NULL)
-	{
-		return 1;
-	}
-
-	if (cls->tpl != NULL)
-	{
-		return 1;
-	}
-
-	if (tpl != NULL && template_increment_reference(tpl) != 0)
-	{
-		return 1;
-	}
-
-	cls->tpl = tpl;
-
-	return 0;
-}
-
-reflect_template class_template(klass cls)
-{
-	if (cls == NULL)
-	{
-		return NULL;
-	}
-
-	return cls->tpl;
 }
 
 void class_attributes_begin(klass cls, set_iterator it)
@@ -898,11 +863,6 @@ void class_destroy(klass cls)
 			if (cls->interface != NULL && cls->interface->destroy != NULL)
 			{
 				cls->interface->destroy(cls, cls->impl);
-			}
-
-			if (cls->tpl != NULL)
-			{
-				template_destroy(cls->tpl);
 			}
 
 			if (cls->name != NULL)

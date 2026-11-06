@@ -19,7 +19,6 @@
  */
 
 #include <reflect/reflect_function.h>
-#include <reflect/reflect_template.h>
 #include <reflect/reflect_value_type.h>
 
 #include <reflect/reflect_memory_tracker.h>
@@ -40,7 +39,6 @@ struct function_type
 	threading_atomic_ref_count_type ref;
 	enum async_id async;
 	void *data;
-	reflect_template tpl;
 };
 
 reflect_memory_tracker(function_stats);
@@ -81,7 +79,6 @@ function function_create(const char *name, size_t args_count, function_impl impl
 	func->impl = impl;
 	func->async = SYNCHRONOUS;
 	func->data = NULL;
-	func->tpl = NULL;
 
 	func->s = signature_create(args_count);
 
@@ -200,38 +197,6 @@ signature function_signature(function func)
 	}
 
 	return NULL;
-}
-
-int function_set_template(function func, reflect_template tpl)
-{
-	if (func == NULL)
-	{
-		return 1;
-	}
-
-	if (func->tpl != NULL)
-	{
-		return 1;
-	}
-
-	if (tpl != NULL && template_increment_reference(tpl) != 0)
-	{
-		return 1;
-	}
-
-	func->tpl = tpl;
-
-	return 0;
-}
-
-reflect_template function_template(function func)
-{
-	if (func == NULL)
-	{
-		return NULL;
-	}
-
-	return func->tpl;
 }
 
 value function_metadata_name(function func)
@@ -761,11 +726,6 @@ void function_destroy(function func)
 			if (func->interface != NULL && func->interface->destroy != NULL)
 			{
 				func->interface->destroy(func, func->impl);
-			}
-
-			if (func->tpl != NULL)
-			{
-				template_destroy(func->tpl);
 			}
 
 			signature_destroy(func->s);

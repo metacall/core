@@ -33,7 +33,6 @@
 #include <reflect/reflect_method.h>
 #include <reflect/reflect_object.h>
 #include <reflect/reflect_signature.h>
-#include <reflect/reflect_template_decl.h>
 #include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
@@ -83,36 +82,6 @@ REFLECT_API int class_decrement_reference(klass cls);
 REFLECT_API class_impl class_impl_get(klass cls);
 
 REFLECT_API class_interface class_interface_get(klass cls);
-
-/**
- *  @brief
- *    Associate the template a class has been instantiated from
- *
- *  @param[in] cls
- *    Pointer to the class
- *
- *  @param[in] tpl
- *    Pointer to the template, the class holds a reference to the
- *    template until it is destroyed
- *
- *  @return
- *    Zero on success, different from zero if cls is NULL or it
- *    has already a template
- */
-REFLECT_API int class_set_template(klass cls, reflect_template tpl);
-
-/**
- *  @brief
- *    Get the template a class has been instantiated from
- *
- *  @param[in] cls
- *    Pointer to the class
- *
- *  @return
- *    Pointer to the template, or NULL if cls is NULL or it is not
- *    an instantiation of a template
- */
-REFLECT_API reflect_template class_template(klass cls);
 
 REFLECT_API void class_attributes_begin(klass cls, set_iterator it);
 

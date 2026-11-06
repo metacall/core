@@ -86,6 +86,20 @@ struct metacall_loader_type
 {
 	const char *name;
 	enum metacall_value_id id;
+	void *t;
+};
+
+enum metacall_template_argument_id
+{
+	METACALL_TEMPLATE_ARGUMENT_TYPE = 0,	/* Type obtained from metacall_loader_type(s) (field t) */
+	METACALL_TEMPLATE_ARGUMENT_CLASS = 1,	/* Class obtained from metacall_class or metacall_handle_class */
+	METACALL_TEMPLATE_ARGUMENT_TEMPLATE = 2 /* Template obtained from metacall_template or metacall_handle_template */
+};
+
+struct metacall_template_argument
+{
+	enum metacall_template_argument_id kind;
+	void *data;
 };
 
 /* -- Global Variables -- */
@@ -216,8 +230,8 @@ METACALL_API int metacall_is_initialized(const char *tag);
 *  @param[out] out_array
 *    Receives a pointer to a malloc'd array of @ref metacall_loader_type
 *    entries. Caller takes ownership and must free it with @c free. The
-*    @c name field of each entry points to loader-owned memory and must
-*    not be freed. If there is no types, it will be initialized to NULL.
+*    @c name and @c t fields of each entry point to loader-owned memory and
+*    must not be freed. If there is no types, it will be initialized to NULL.
 *
 *  @param[out] size
 *    Receives the number of entries written to @c *out_array. May be zero
@@ -227,6 +241,28 @@ METACALL_API int metacall_is_initialized(const char *tag);
 *    Zero on success, different from zero otherwise
 */
 METACALL_API int metacall_loader_types(const char *tag, struct metacall_loader_type **out_array, size_t *size);
+
+/**
+*  @brief
+*    Get the type named @name (language-side name) supported by the loader
+*    identified by @tag. The loader will be initialized if it is not already
+*    initialized.
+*
+*  @param[in] tag
+*    Extension of the script (e.g. "py", "node")
+*
+*  @param[in] name
+*    Language-side name of the type (e.g. "f64" in Rust)
+*
+*  @param[out] out
+*    Receives the type entry. The @c name and @c t fields point to
+*    loader-owned memory and must not be freed. On error, all the fields
+*    are set to NULL and @c id to METACALL_INVALID.
+*
+*  @return
+*    Zero on success, different from zero otherwise
+*/
+METACALL_API int metacall_loader_type(const char *tag, const char *name, struct metacall_loader_type *out);
 
 /**
 *  @brief
@@ -744,6 +780,82 @@ METACALL_API size_t metacall_function_size(void *func);
 *    Return 0 if it is synchronous, 1 if it is asynchronous and -1 if the function is NULL
 */
 METACALL_API int metacall_function_async(void *func);
+
+/**
+*  @brief
+*    Get the template by @name
+*
+*  @param[in] name
+*    Name of the template
+*
+*  @return
+*    Template reference, null if the template does not exist
+*/
+METACALL_API void *metacall_template(const char *name);
+
+/**
+*  @brief
+*    Get the template by @name from @handle
+*
+*  @param[in] handle
+*    Pointer to the handle returned by metacall_load_from_{file, memory, package}
+*
+*  @param[in] name
+*    Name of the template
+*
+*  @return
+*    Template reference, null if the template does not exist
+*/
+METACALL_API void *metacall_handle_template(void *handle, const char *name);
+
+/**
+*  @brief
+*    Get the number of parameters of the template @tpl
+*
+*  @param[in] tpl
+*    Template reference
+*
+*  @return
+*    Return the number of parameters, zero if @tpl is null
+*/
+METACALL_API size_t metacall_template_size(void *tpl);
+
+/**
+*  @brief
+*    Get the name of the parameter at position @index of the template @tpl
+*
+*  @param[in] tpl
+*    Template reference
+*
+*  @param[in] index
+*    Position of the parameter
+*
+*  @return
+*    Name of the parameter (owned by the template, it must not be freed),
+*    null if @tpl is null or @index is out of range
+*/
+METACALL_API const char *metacall_template_parameter(void *tpl, size_t index);
+
+/**
+*  @brief
+*    Instantiate the template @tpl with the arguments @args,
+*    instantiating it again with the same arguments returns the same value
+*
+*  @param[in] tpl
+*    Template reference
+*
+*  @param[in] args
+*    Array of arguments, one per parameter of the template, in the same order
+*
+*  @param[in] size
+*    Number of arguments
+*
+*  @return
+*    Value whose type is the type of the template (i.e: METACALL_FUNCTION or METACALL_CLASS),
+*    owned by the template (it must not be destroyed), null if the arguments are not valid
+*    or the instantiation fails
+*/
+METACALL_API void *metacall_template_instantiate(void *tpl, struct metacall_template_argument args[], size_t size);
 
 /**
 *  @brief

@@ -139,6 +139,7 @@ add_test(NAME ${target}
 add_loader_dependencies(${target}
 	py_loader
 	lua_loader
+	rs_loader
 )
 
 #

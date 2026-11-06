@@ -37,6 +37,7 @@
 
 #include <environment/environment_variable.h>
 
+#include <portability/portability_assert.h>
 #include <portability/portability_atexit.h>
 #include <portability/portability_constructor.h>
 
@@ -53,6 +54,13 @@
 /* -- Type Definitions -- */
 
 typedef value (*method_invoke_ptr)(void *, method, void *[], size_t);
+
+/* -- Static Assertions -- */
+
+portability_static_assert(((int)TEMPLATE_ARGUMENT_TYPE == (int)METACALL_TEMPLATE_ARGUMENT_TYPE) &&
+							  ((int)TEMPLATE_ARGUMENT_CLASS == (int)METACALL_TEMPLATE_ARGUMENT_CLASS) &&
+							  ((int)TEMPLATE_ARGUMENT_TEMPLATE == (int)METACALL_TEMPLATE_ARGUMENT_TEMPLATE),
+	"Internal reflect template argument kinds do not match with public metacall API template argument kinds");
 
 /* -- Global Variables -- */
 
@@ -424,6 +432,7 @@ int metacall_loader_types(const char *tag, struct metacall_loader_type **out_arr
 
 		(*out_array)[type_it].name = type_name(t);
 		(*out_array)[type_it].id = type_index(t);
+		(*out_array)[type_it].t = t;
 	}
 
 	return 0;
@@ -432,6 +441,48 @@ invalid_types_error:
 	*out_array = NULL;
 	*size = 0;
 args_error:
+	return 1;
+}
+
+int metacall_loader_type(const char *tag, const char *name, struct metacall_loader_type *out)
+{
+	set types;
+	type t;
+
+	if (out == NULL)
+	{
+		return 1;
+	}
+
+	if (tag == NULL || name == NULL)
+	{
+		goto type_error;
+	}
+
+	types = loader_get_types(tag);
+
+	if (types == NULL)
+	{
+		goto type_error;
+	}
+
+	t = (type)set_get(types, (const set_key)name);
+
+	if (t == NULL)
+	{
+		goto type_error;
+	}
+
+	out->name = type_name(t);
+	out->id = type_index(t);
+	out->t = t;
+
+	return 0;
+
+type_error:
+	out->name = NULL;
+	out->id = METACALL_INVALID;
+	out->t = NULL;
 	return 1;
 }
 
@@ -1152,6 +1203,116 @@ int metacall_function_async(void *func)
 	}
 
 	return -1;
+}
+
+void *metacall_template(const char *name)
+{
+	value tpl_val = loader_get(name);
+	reflect_template tpl = NULL;
+
+	if (value_type_id(tpl_val) == TYPE_TEMPLATE)
+	{
+		tpl = value_to_template(tpl_val);
+	}
+
+	return tpl;
+}
+
+void *metacall_handle_template(void *handle, const char *name)
+{
+	value tpl_val;
+	reflect_template tpl = NULL;
+
+	if (loader_impl_handle_validate(handle) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_template is not valid", handle);
+		return NULL;
+	}
+
+	tpl_val = loader_handle_get(handle, name);
+
+	if (value_type_id(tpl_val) == TYPE_TEMPLATE)
+	{
+		tpl = value_to_template(tpl_val);
+	}
+
+	return tpl;
+}
+
+size_t metacall_template_size(void *tpl)
+{
+	return template_parameter_count((reflect_template)tpl);
+}
+
+const char *metacall_template_parameter(void *tpl, size_t index)
+{
+	return template_parameter((reflect_template)tpl, index);
+}
+
+static template_argument *metacall_template_arguments(reflect_template tpl, struct metacall_template_argument args[], size_t size)
+{
+	template_argument *template_args;
+	size_t iterator;
+
+	if (tpl == NULL || args == NULL || size == 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template instantiation, the template and the arguments cannot be NULL");
+		return NULL;
+	}
+
+	template_args = malloc(sizeof(template_argument) * size);
+
+	if (template_args == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) arguments allocation", template_name(tpl));
+		return NULL;
+	}
+
+	/* The arguments are positional, so the name is the parameter of the same position (NULL if out of range, then the validation fails) */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		template_args[iterator].name = template_parameter(tpl, iterator);
+		template_args[iterator].kind = (enum template_argument_id)args[iterator].kind;
+
+		switch (args[iterator].kind)
+		{
+			case METACALL_TEMPLATE_ARGUMENT_TYPE:
+				template_args[iterator].data.t = (type)args[iterator].data;
+				break;
+
+			case METACALL_TEMPLATE_ARGUMENT_CLASS:
+				template_args[iterator].data.cls = (klass)args[iterator].data;
+				break;
+
+			case METACALL_TEMPLATE_ARGUMENT_TEMPLATE:
+				template_args[iterator].data.tpl = (reflect_template)args[iterator].data;
+				break;
+
+			default:
+				/* The invalid kind is rejected by the validation */
+				template_args[iterator].data.t = NULL;
+				break;
+		}
+	}
+
+	return template_args;
+}
+
+void *metacall_template_instantiate(void *tpl, struct metacall_template_argument args[], size_t size)
+{
+	template_argument *template_args = metacall_template_arguments((reflect_template)tpl, args, size);
+	value v;
+
+	if (template_args == NULL)
+	{
+		return NULL;
+	}
+
+	v = template_instantiate((reflect_template)tpl, template_args, size);
+
+	free(template_args);
+
+	return v;
 }
 
 void *metacall_handle(const char *tag, const char *name)

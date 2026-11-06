@@ -126,6 +126,76 @@ TEST_F(metacall_loader_types_test, PythonLoaderTypes)
 }
 #endif
 
+#if defined(OPTION_BUILD_LOADERS_RS)
+TEST_F(metacall_loader_types_test, RustLoaderType)
+{
+	metacall_print_info();
+
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+	struct metacall_loader_type *types = NULL;
+	size_t size = 0;
+
+	ASSERT_EQ((int)0, (int)metacall_loader_types("rs", &types, &size));
+
+	ASSERT_GT(size, (size_t)0);
+	ASSERT_NE(types, (struct metacall_loader_type *)NULL);
+
+	/* Each type of the list must be retrieved individually with the same values */
+	for (size_t i = 0; i < size; ++i)
+	{
+		struct metacall_loader_type t;
+
+		EXPECT_NE(types[i].t, (void *)NULL);
+
+		ASSERT_EQ((int)0, (int)metacall_loader_type("rs", types[i].name, &t));
+
+		EXPECT_STREQ(types[i].name, t.name);
+		EXPECT_EQ(types[i].id, t.id);
+		EXPECT_EQ(types[i].t, t.t);
+	}
+
+	free(types);
+
+	/* Known type */
+	{
+		struct metacall_loader_type t;
+
+		ASSERT_EQ((int)0, (int)metacall_loader_type("rs", "f64", &t));
+
+		EXPECT_STREQ("f64", t.name);
+		EXPECT_EQ(METACALL_DOUBLE, t.id);
+		EXPECT_NE(t.t, (void *)NULL);
+	}
+
+	/* Unknown type */
+	{
+		struct metacall_loader_type t;
+
+		EXPECT_NE((int)0, (int)metacall_loader_type("rs", "does_not_exist", &t));
+
+		EXPECT_EQ(t.name, (const char *)NULL);
+		EXPECT_EQ(METACALL_INVALID, t.id);
+		EXPECT_EQ(t.t, (void *)NULL);
+	}
+
+	/* Invalid arguments */
+	{
+		struct metacall_loader_type t;
+
+		EXPECT_NE((int)0, (int)metacall_loader_type(NULL, "f64", &t));
+		EXPECT_EQ(t.t, (void *)NULL);
+
+		EXPECT_NE((int)0, (int)metacall_loader_type("rs", NULL, &t));
+		EXPECT_EQ(t.t, (void *)NULL);
+
+		EXPECT_NE((int)0, (int)metacall_loader_type("rs", "f64", NULL));
+	}
+
+	metacall_destroy();
+}
+#endif
+
 #if defined(OPTION_BUILD_LOADERS_LUA)
 TEST_F(metacall_loader_types_test, LuaLoaderMetadata)
 {

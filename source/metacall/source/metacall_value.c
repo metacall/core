@@ -350,17 +350,7 @@ static int metacall_template_create(reflect_template tpl, template_impl impl)
 	return 0;
 }
 
-static function metacall_template_instantiate_function(reflect_template tpl, template_impl impl, template_argument args[], size_t size)
-{
-	(void)tpl;
-	(void)impl;
-	(void)args;
-	(void)size;
-
-	return NULL;
-}
-
-static klass metacall_template_instantiate_class(reflect_template tpl, template_impl impl, template_argument args[], size_t size)
+static value metacall_template_instantiate(reflect_template tpl, template_impl impl, template_argument args[], size_t size)
 {
 	(void)tpl;
 	(void)impl;
@@ -380,8 +370,7 @@ static template_interface metacall_template_singleton(void)
 {
 	static struct template_interface_type metacall_template_interface = {
 		&metacall_template_create,
-		&metacall_template_instantiate_function,
-		&metacall_template_instantiate_class,
+		&metacall_template_instantiate,
 		&metacall_template_destroy
 	};
 
@@ -450,7 +439,7 @@ void *metacall_value_create(enum metacall_value_id id)
 			return value_create_throwable(throwable_create(metacall_value_create(METACALL_EXCEPTION)));
 
 		case METACALL_TEMPLATE:
-			return value_create_template(template_create("", TEMPLATE_TYPE_FUNCTION, NULL, &metacall_template_singleton));
+			return value_create_template(template_create("", TYPE_FUNCTION, NULL, &metacall_template_singleton));
 
 		case METACALL_SIZE:
 		case METACALL_INVALID:

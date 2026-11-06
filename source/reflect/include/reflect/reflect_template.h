@@ -25,24 +25,23 @@
 
 #include <reflect/reflect_class.h>
 #include <reflect/reflect_function.h>
-#include <reflect/reflect_template_decl.h>
 #include <reflect/reflect_type.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum template_id
-{
-	TEMPLATE_TYPE_INVALID = 0,
-	TEMPLATE_TYPE_FUNCTION = 1,
-	TEMPLATE_TYPE_CLASS = 2
-};
+struct reflect_template_type;
+
+typedef void *template_impl;
+
+typedef struct reflect_template_type *reflect_template;
 
 enum template_argument_id
 {
 	TEMPLATE_ARGUMENT_TYPE = 0,
-	TEMPLATE_ARGUMENT_TEMPLATE = 1
+	TEMPLATE_ARGUMENT_CLASS = 1,
+	TEMPLATE_ARGUMENT_TEMPLATE = 2
 };
 
 typedef struct template_argument_type
@@ -53,6 +52,7 @@ typedef struct template_argument_type
 	union
 	{
 		type t;
+		klass cls;
 		reflect_template tpl;
 	} data;
 
@@ -60,24 +60,23 @@ typedef struct template_argument_type
 
 typedef int (*template_impl_interface_create)(reflect_template, template_impl);
 
-typedef function (*template_impl_interface_instantiate_function)(reflect_template, template_impl, template_argument[], size_t);
-
-typedef klass (*template_impl_interface_instantiate_class)(reflect_template, template_impl, template_argument[], size_t);
+/* Returns a value of the type of the template (function, class...), which
+holds the reference to the instance, the template owns the value afterwards */
+typedef value (*template_impl_interface_instantiate)(reflect_template, template_impl, template_argument[], size_t);
 
 typedef void (*template_impl_interface_destroy)(reflect_template, template_impl);
 
 typedef struct template_interface_type
 {
 	template_impl_interface_create create;
-	template_impl_interface_instantiate_function instantiate_function;
-	template_impl_interface_instantiate_class instantiate_class;
+	template_impl_interface_instantiate instantiate;
 	template_impl_interface_destroy destroy;
 
 } *template_interface;
 
 typedef template_interface (*template_impl_interface_singleton)(void);
 
-REFLECT_API reflect_template template_create(const char *name, enum template_id type, template_impl impl, template_impl_interface_singleton singleton);
+REFLECT_API reflect_template template_create(const char *name, type_id kind, template_impl impl, template_impl_interface_singleton singleton);
 
 REFLECT_API int template_increment_reference(reflect_template tpl);
 
@@ -85,7 +84,7 @@ REFLECT_API int template_decrement_reference(reflect_template tpl);
 
 REFLECT_API const char *template_name(reflect_template tpl);
 
-REFLECT_API enum template_id template_type(reflect_template tpl);
+REFLECT_API type_id template_type(reflect_template tpl);
 
 REFLECT_API int template_add_parameter(reflect_template tpl, const char *parameter);
 
@@ -93,9 +92,27 @@ REFLECT_API size_t template_parameter_count(reflect_template tpl);
 
 REFLECT_API const char *template_parameter(reflect_template tpl, size_t index);
 
-REFLECT_API function template_instantiate_function(reflect_template tpl, template_argument args[], size_t size);
-
-REFLECT_API klass template_instantiate_class(reflect_template tpl, template_argument args[], size_t size);
+/**
+ *  @brief
+ *    Instantiate the template @tpl with the arguments @args,
+ *    the instantiations are cached in the template, so instantiating
+ *    it again with the same arguments returns the same value
+ *
+ *  @param[in] tpl
+ *    Pointer to the template
+ *
+ *  @param[in] args
+ *    Array of arguments, one per parameter, in the same order
+ *
+ *  @param[in] size
+ *    Number of arguments
+ *
+ *  @return
+ *    Value of the type of the template (template_type), owned by the
+ *    template (it holds a reference until the template is destroyed),
+ *    or NULL on error
+ */
+REFLECT_API value template_instantiate(reflect_template tpl, template_argument args[], size_t size);
 
 /**
  *  @brief

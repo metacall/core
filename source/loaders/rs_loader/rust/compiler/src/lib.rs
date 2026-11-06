@@ -571,6 +571,7 @@ pub struct Class {
 #[derive(Clone, Debug)]
 pub struct CompilerState {
     output: PathBuf,
+    crate_name: String,
     linkage: Linkage,
     functions: Vec<Function>,
     templates: Vec<Function>,
@@ -578,25 +579,27 @@ pub struct CompilerState {
     instantiations: Vec<TemplateInstantiation>,
 }
 
+/// Loads the library of a compiled crate, as defined by its linkage
+fn load_library(path: &Path, linkage: Linkage) -> Result<DynlinkLibrary, String> {
+    match linkage {
+        Linkage::Static => {
+            DynlinkLibrary::load(path, DYNLINK_FLAGS_BIND_LOCAL | DYNLINK_FLAGS_BIND_LAZY)
+        }
+        Linkage::Shared => {
+            std_library_load()?;
+
+            DynlinkLibrary::load(
+                path,
+                DYNLINK_FLAGS_BIND_LOCAL | DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_NODELETE,
+            )
+        }
+    }
+}
+
 impl CompilerState {
     /// Loads the library of the compiled crate, as defined by its linkage
     pub fn load(&self) -> Result<DynlinkLibrary, String> {
-        match self.linkage {
-            Linkage::Static => DynlinkLibrary::load(
-                &self.output,
-                DYNLINK_FLAGS_BIND_LOCAL | DYNLINK_FLAGS_BIND_LAZY,
-            ),
-            Linkage::Shared => {
-                std_library_load()?;
-
-                DynlinkLibrary::load(
-                    &self.output,
-                    DYNLINK_FLAGS_BIND_LOCAL
-                        | DYNLINK_FLAGS_BIND_LAZY
-                        | DYNLINK_FLAGS_BIND_NODELETE,
-                )
-            }
-        }
+        load_library(&self.output, self.linkage)
     }
 }
 
@@ -607,6 +610,14 @@ pub struct CompilerError {
     err: String,
 }
 
+/// Crate compiled by the loader which another crate links against (i.e: the script crate
+/// of a template, which the crates of its instantiations link against)
+#[derive(Clone, Debug)]
+struct CrateDependency {
+    crate_name: String,
+    library: PathBuf,
+}
+
 pub struct CompilerCallbacks {
     source: SourceImpl,
     is_parsing: bool,
@@ -614,6 +625,7 @@ pub struct CompilerCallbacks {
     functions: Vec<Function>,
     templates: Vec<Function>,
     classes: Vec<Class>,
+    dependency: Option<CrateDependency>,
 }
 
 impl CompilerCallbacks {
@@ -801,7 +813,11 @@ impl CompilerCallbacks {
     /// Linkage of the crate, crates with templates are shared so they can be instantiated after
     /// load, packages are already compiled so their wrapper is always static (see Linkage)
     fn linkage(&self) -> Linkage {
-        if self.templates.is_empty() || matches!(self.source.source, Source::Package { .. }) {
+        // Crates which link against another crate share its standard library
+        if self.dependency.is_some() {
+            Linkage::Shared
+        } else if self.templates.is_empty() || matches!(self.source.source, Source::Package { .. })
+        {
             Linkage::Static
         } else {
             Linkage::Shared
@@ -862,6 +878,35 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
             config.input = Input::File(wrapped_script_path.clone());
         } else {
             config.input = self.source.input.clone().0;
+
+            // The crate links against the dependency by its exact path, the directory is
+            // added as search path for resolving the dependencies of the dependency
+            if let Some(dependency) = &self.dependency {
+                let mut externs: BTreeMap<String, ExternEntry> = BTreeMap::new();
+                let files = BTreeSet::from_iter(iter::once(CanonicalizedPath::new(
+                    dependency.library.clone(),
+                )));
+
+                externs.insert(
+                    dependency.crate_name.clone(),
+                    ExternEntry {
+                        location: ExternLocation::ExactPaths(files),
+                        is_private_dep: false,
+                        add_prelude: true,
+                        force: false,
+                        nounused_dep: false,
+                    },
+                );
+
+                config.opts.externs = Externs::new(externs);
+
+                if let Some(directory) = dependency.library.parent() {
+                    config.opts.search_paths.push(SearchPath::new(
+                        PathKind::Dependency,
+                        directory.to_path_buf(),
+                    ));
+                }
+            }
         }
         if self.is_parsing {
             let output_path = self.source.output.clone();
@@ -1250,6 +1295,7 @@ pub fn compile(
         functions: Default::default(),
         templates: Default::default(),
         classes: Default::default(),
+        dependency: None,
     };
 
     let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
@@ -1330,6 +1376,7 @@ pub fn compile(
     }) {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
+            crate_name: patched_callback.source.crate_name.clone(),
             linkage: patched_callback.linkage(),
             functions: patched_callback.functions,
             templates: patched_callback.templates,
@@ -1364,6 +1411,81 @@ pub fn compile(
             })
         }
     }
+}
+
+/// Compiles and loads the instantiation of a template with the types @types after the crate
+/// of the template (@crate_name, compiled into @library) has been loaded. The instantiation is
+/// compiled into its own crate, which links against the crate of the template and shares its
+/// standard library and runtime (metacall_class), the template is monomorphized in it.
+pub fn compile_instance(
+    crate_name: &str,
+    library: &Path,
+    template: &Function,
+    types: &[String],
+) -> Result<DynlinkLibrary, CompilerError> {
+    let error = |err: String| CompilerError {
+        diagnostics: String::new(),
+        errors: err.clone(),
+        err,
+    };
+
+    if template.generics.len() != types.len() {
+        return Err(error(format!(
+            "Template '{}' expects {} types, got {}.",
+            template.name,
+            template.generics.len(),
+            types.len()
+        )));
+    }
+
+    // The instance is compiled into the same directory of the crate of the template,
+    // so it is removed along with it when the handle is cleared
+    let destination = library
+        .parent()
+        .ok_or_else(|| error(format!("Unable to get the parent of {:?}", library)))?
+        .to_path_buf();
+
+    let instance_crate_name = unique_crate_name(&format!("{}_instance", template.name));
+    let code = wrapper::generate_instance_wrapper(crate_name, template, types);
+
+    let mut source = Source::build_with_crate_name(
+        Source::Memory {
+            name: format!("{}.rs", instance_crate_name),
+            code,
+        },
+        instance_crate_name.clone(),
+    );
+
+    source.output = destination.join(library_name(&instance_crate_name));
+
+    let mut callbacks = CompilerCallbacks {
+        source,
+        is_parsing: false,
+        destination,
+        functions: Default::default(),
+        templates: Default::default(),
+        classes: Default::default(),
+        dependency: Some(CrateDependency {
+            crate_name: crate_name.to_owned(),
+            library: library.to_path_buf(),
+        }),
+    };
+
+    let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
+    let errors_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
+
+    if let Err(err) = rustc_driver::catch_fatal_errors(|| {
+        run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
+    }) {
+        return Err(error(format!(
+            "Failed to compile the instantiation {}::<{}>: {:?}",
+            template.name,
+            types.join(", "),
+            err
+        )));
+    }
+
+    load_library(&callbacks.source.output, callbacks.linkage()).map_err(error)
 }
 
 #[cfg(test)]

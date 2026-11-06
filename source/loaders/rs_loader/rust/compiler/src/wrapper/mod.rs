@@ -69,6 +69,32 @@ fn generate_instantiated_function_wrapper(template: &Function, types: &[String])
     )
 }
 
+/// Runtime module (class.rs) of the crates of files and memory scripts, it is public so the
+/// crates of the instantiations of their templates use it instead of compiling their own
+const METACALL_CLASS_MODULE: &str =
+    "#[doc(hidden)]\npub mod metacall_class;\nuse metacall_class::*;\n";
+
+/// Generates the crate of an instantiation compiled after load (i.e: identity::<f32>), it links
+/// against the crate of the template (@crate_name) and uses its runtime (metacall_class), the
+/// template is monomorphized in this crate
+pub(crate) fn generate_instance_wrapper(
+    crate_name: &str,
+    template: &Function,
+    types: &[String],
+) -> String {
+    format!(
+        "#[unsafe(no_mangle)]\n\
+        pub unsafe extern \"C\" fn rs_loader_impl_register_fn_{wrapper_name}() -> *mut {crate_name}::metacall_class::Function {{\n\
+            let f = {crate_name}::metacall_class::Function::new({crate_name}::{name}::<{types}>);\n\
+            Box::into_raw(Box::new(f))\n\
+        }}\n",
+        wrapper_name = template.instantiate_name(types.to_vec()),
+        crate_name = crate_name,
+        name = template.name,
+        types = types.join(", "),
+    )
+}
+
 fn generate_class_wrapper(classes: &[&crate::Class]) -> String {
     let mut ret = String::new();
     for class in classes {
@@ -279,7 +305,7 @@ pub fn generate_wrapper(
                     // Include class module
                     let mut wrapper_file =
                         File::create(temp_dir.join("wrapped_".to_owned() + &source_file))?;
-                    wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
+                    wrapper_file.write_all(METACALL_CLASS_MODULE.as_bytes())?;
                     wrapper_file.write_all(content.as_bytes())?;
                     let dst = format!("include!({:?});", callbacks.source.input_path);
                     wrapper_file.write_all(dst.as_bytes())?;
@@ -316,7 +342,7 @@ pub fn generate_wrapper(
                         let mut wrapper_file = File::create(source_path.join("wrapped_script.rs"))?;
 
                         // Include class module
-                        wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
+                        wrapper_file.write_all(METACALL_CLASS_MODULE.as_bytes())?;
                         wrapper_file.write_all(content.as_bytes())?;
                         let dst = format!("include!({:?});", source_path.join("script.rs"));
                         wrapper_file.write_all(dst.as_bytes())?;

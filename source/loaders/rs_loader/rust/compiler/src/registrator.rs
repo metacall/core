@@ -2,9 +2,9 @@ use crate::api::ClassRegistration;
 use crate::api::{
     add_template_parameter, class_rs_singleton, create_template, function_rs_singleton,
     get_loader_type, register_class, register_existing_function, register_function,
-    register_template, template_instantiate_function, template_rs_singleton, ClassCreate,
+    register_template, template_instantiate, template_rs_singleton, value_to_function, ClassCreate,
     FunctionCreate, FunctionInputSignature, FunctionRegistration, OpaqueType, TemplateArgument,
-    TemplateImpl, TEMPLATE_ARGUMENT_TYPE, TEMPLATE_TYPE_FUNCTION,
+    TemplateImpl, TEMPLATE_ARGUMENT_TYPE, TYPE_FUNCTION,
 };
 use crate::wrapper::class;
 use crate::{Class, CompilerState, DynlinkLibrary, Function};
@@ -32,7 +32,8 @@ fn function_create(func: &Function, dynlink: &DynlinkLibrary) -> FunctionCreate 
 }
 
 /// Instantiates a template through the template interface, the instantiation
-/// itself (name, implementation and signature) is done by TemplateImpl
+/// itself (name, implementation and signature) is done by TemplateImpl, it returns
+/// a value owned by the template (cached), so it must not be destroyed
 fn instantiate_template(
     template: &Function,
     types: &[String],
@@ -75,7 +76,7 @@ fn instantiate_template(
         })
         .collect::<Vec<_>>();
 
-    unsafe { template_instantiate_function(tpl, args.as_mut_ptr(), args.len()) }
+    unsafe { template_instantiate(tpl, args.as_mut_ptr(), args.len()) }
 }
 
 fn class_create(class: &Class, dynlink: &DynlinkLibrary) -> ClassCreate {
@@ -129,12 +130,13 @@ pub fn register(
             template.clone(),
             loader_impl,
             dynlink,
+            state,
         ))) as OpaqueType;
 
         let tpl = unsafe {
             create_template(
                 &template.name,
-                TEMPLATE_TYPE_FUNCTION,
+                TYPE_FUNCTION,
                 template_impl,
                 template_rs_singleton as OpaqueType,
             )
@@ -167,17 +169,17 @@ pub fn register(
             .iter()
             .filter(|instantiation| instantiation.template == template.name)
         {
-            let function = instantiate_template(template, &instantiation.types, tpl, loader_impl);
+            let instance = instantiate_template(template, &instantiation.types, tpl, loader_impl);
 
             assert!(
-                !function.is_null(),
+                !instance.is_null(),
                 "Failed to instantiate template {} with types {:?}",
                 template.name,
                 instantiation.types
             );
 
             unsafe {
-                register_existing_function(ctx, function);
+                register_existing_function(ctx, value_to_function(instance));
             }
         }
     }

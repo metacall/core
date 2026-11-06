@@ -53,7 +53,6 @@ set(headers
 	${include_path}/reflect_object.h
 	${include_path}/reflect_future.h
 	${include_path}/reflect_exception.h
-	${include_path}/reflect_template_decl.h
 	${include_path}/reflect_template.h
 	${include_path}/reflect_throwable.h
 	${include_path}/reflect_scope.h

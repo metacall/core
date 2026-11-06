@@ -21,6 +21,7 @@
 #include <reflect/reflect_template.h>
 
 #include <reflect/reflect_memory_tracker.h>
+#include <reflect/reflect_value_type.h>
 
 #include <threading/threading_atomic_ref_count.h>
 
@@ -33,19 +34,37 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct template_instance_type
+{
+	template_argument *args;
+	size_t size;
+	value v;
+};
+
 struct reflect_template_type
 {
 	char *name;
-	enum template_id type;
+	type_id kind;
 	vector parameters;
+	vector instances;
 	template_impl impl;
 	template_interface interface;
 	threading_atomic_ref_count_type ref;
 };
 
+static int template_arguments_validate(reflect_template tpl, template_argument args[], size_t size);
+
+static int template_arguments_equal(template_argument left[], template_argument right[], size_t size);
+
+static value template_instance_get(reflect_template tpl, template_argument args[], size_t size);
+
+static template_argument *template_instance_arguments_copy(reflect_template tpl, template_argument args[], size_t size);
+
+static void template_instances_destroy(reflect_template tpl);
+
 reflect_memory_tracker(template_stats);
 
-reflect_template template_create(const char *name, enum template_id type, template_impl impl, template_impl_interface_singleton singleton)
+reflect_template template_create(const char *name, type_id kind, template_impl impl, template_impl_interface_singleton singleton)
 {
 	reflect_template tpl;
 	size_t name_size;
@@ -57,9 +76,9 @@ reflect_template template_create(const char *name, enum template_id type, templa
 		return NULL;
 	}
 
-	if (type == TEMPLATE_TYPE_INVALID)
+	if (type_id_invalid(kind) == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) type", name);
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) type %d", name, (int)kind);
 
 		return NULL;
 	}
@@ -86,7 +105,7 @@ reflect_template template_create(const char *name, enum template_id type, templa
 
 	memcpy(tpl->name, name, name_size);
 
-	tpl->type = type;
+	tpl->kind = kind;
 
 	tpl->parameters = vector_create(sizeof(char *));
 
@@ -97,8 +116,23 @@ reflect_template template_create(const char *name, enum template_id type, templa
 		goto error_parameters;
 	}
 
+	tpl->instances = vector_create_type(struct template_instance_type);
+
+	if (tpl->instances == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instances allocation", name);
+
+		goto error_instances;
+	}
+
 	tpl->impl = impl;
-	tpl->interface = singleton ? singleton() : NULL;
+	tpl->interface = NULL;
+
+	if (singleton != NULL)
+	{
+		tpl->interface = singleton();
+	}
+
 	threading_atomic_ref_count_initialize(&tpl->ref);
 
 	if (tpl->interface != NULL && tpl->interface->create != NULL)
@@ -117,6 +151,8 @@ reflect_template template_create(const char *name, enum template_id type, templa
 
 error_create:
 	threading_atomic_ref_count_destroy(&tpl->ref);
+	vector_destroy(tpl->instances);
+error_instances:
 	vector_destroy(tpl->parameters);
 error_parameters:
 	free(tpl->name);
@@ -169,14 +205,14 @@ const char *template_name(reflect_template tpl)
 	return tpl->name;
 }
 
-enum template_id template_type(reflect_template tpl)
+type_id template_type(reflect_template tpl)
 {
 	if (tpl == NULL)
 	{
-		return TEMPLATE_TYPE_INVALID;
+		return TYPE_INVALID;
 	}
 
-	return tpl->type;
+	return tpl->kind;
 }
 
 int template_add_parameter(reflect_template tpl, const char *parameter)
@@ -247,7 +283,7 @@ const char *template_parameter(reflect_template tpl, size_t index)
 	return vector_at_type(tpl->parameters, index, char *);
 }
 
-static int template_arguments_validate(reflect_template tpl, enum template_id type, template_argument args[], size_t size)
+static int template_arguments_validate(reflect_template tpl, template_argument args[], size_t size)
 {
 	size_t iterator;
 
@@ -258,27 +294,35 @@ static int template_arguments_validate(reflect_template tpl, enum template_id ty
 		return 1;
 	}
 
-	if (tpl->type != type)
+	if (args == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, the template type %d does not match with %d", tpl->name, (int)tpl->type, (int)type);
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, the arguments cannot be NULL", tpl->name);
 
 		return 1;
 	}
 
-	if (args == NULL || size != vector_size(tpl->parameters))
+	if (size != vector_size(tpl->parameters))
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, it expects %" PRIuS " arguments but received %" PRIuS, tpl->name, vector_size(tpl->parameters), args == NULL ? (size_t)0 : size);
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, it expects %" PRIuS " arguments but received %" PRIuS, tpl->name, vector_size(tpl->parameters), size);
 
 		return 1;
 	}
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
+		/* The size matches with the parameters, so the parameter is never NULL */
 		const char *parameter = template_parameter(tpl, iterator);
 
-		if (parameter == NULL || args[iterator].name == NULL || strcmp(parameter, args[iterator].name) != 0)
+		if (args[iterator].name == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %" PRIuS " (%s) does not match with parameter %s", tpl->name, iterator, args[iterator].name != NULL ? args[iterator].name : "NULL", parameter != NULL ? parameter : "NULL");
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %" PRIuS " has a NULL name, it should be %s", tpl->name, iterator, parameter);
+
+			return 1;
+		}
+
+		if (strcmp(parameter, args[iterator].name) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %" PRIuS " (%s) does not match with parameter %s", tpl->name, iterator, args[iterator].name, parameter);
 
 			return 1;
 		}
@@ -301,6 +345,15 @@ static int template_arguments_validate(reflect_template tpl, enum template_id ty
 				return 1;
 			}
 		}
+		else if (args[iterator].kind == TEMPLATE_ARGUMENT_CLASS)
+		{
+			if (args[iterator].data.cls == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %s has a NULL class", tpl->name, parameter);
+
+				return 1;
+			}
+		}
 		else
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, argument %s has an invalid kind %d", tpl->name, parameter, (int)args[iterator].kind);
@@ -312,64 +365,157 @@ static int template_arguments_validate(reflect_template tpl, enum template_id ty
 	return 0;
 }
 
-function template_instantiate_function(reflect_template tpl, template_argument args[], size_t size)
+static int template_arguments_equal(template_argument left[], template_argument right[], size_t size)
 {
-	function f;
+	size_t iterator;
 
-	if (template_arguments_validate(tpl, TEMPLATE_TYPE_FUNCTION, args, size) != 0)
+	for (iterator = 0; iterator < size; ++iterator)
 	{
-		return NULL;
+		if (left[iterator].kind != right[iterator].kind)
+		{
+			return 1;
+		}
+
+		if (left[iterator].kind == TEMPLATE_ARGUMENT_TYPE)
+		{
+			if (left[iterator].data.t != right[iterator].data.t)
+			{
+				return 1;
+			}
+		}
+		else if (left[iterator].kind == TEMPLATE_ARGUMENT_TEMPLATE)
+		{
+			if (left[iterator].data.tpl != right[iterator].data.tpl)
+			{
+				return 1;
+			}
+		}
+		else if (left[iterator].kind == TEMPLATE_ARGUMENT_CLASS)
+		{
+			if (left[iterator].data.cls != right[iterator].data.cls)
+			{
+				return 1;
+			}
+		}
 	}
 
-	if (tpl->interface == NULL || tpl->interface->instantiate_function == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) function instantiation, the template does not implement instantiate_function", tpl->name);
-
-		return NULL;
-	}
-
-	f = tpl->interface->instantiate_function(tpl, tpl->impl, args, size);
-
-	if (f == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) function instantiation, the instantiate_function callback <%p> failed", tpl->name, tpl->interface->instantiate_function);
-
-		return NULL;
-	}
-
-	function_set_template(f, tpl);
-
-	return f;
+	return 0;
 }
 
-klass template_instantiate_class(reflect_template tpl, template_argument args[], size_t size)
+static value template_instance_get(reflect_template tpl, template_argument args[], size_t size)
 {
-	klass cls;
+	size_t iterator, instances_size = vector_size(tpl->instances);
 
-	if (template_arguments_validate(tpl, TEMPLATE_TYPE_CLASS, args, size) != 0)
+	for (iterator = 0; iterator < instances_size; ++iterator)
+	{
+		struct template_instance_type *instance = vector_at(tpl->instances, iterator);
+
+		if (instance->size == size && template_arguments_equal(instance->args, args, size) == 0)
+		{
+			return instance->v;
+		}
+	}
+
+	return NULL;
+}
+
+static template_argument *template_instance_arguments_copy(reflect_template tpl, template_argument args[], size_t size)
+{
+	template_argument *copy = malloc(sizeof(template_argument) * size);
+	size_t iterator;
+
+	if (copy == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instance arguments allocation", tpl->name);
+
+		return NULL;
+	}
+
+	/* The names point to the parameters of the template, so they live as long as the instance */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		copy[iterator] = args[iterator];
+		copy[iterator].name = template_parameter(tpl, iterator);
+	}
+
+	return copy;
+}
+
+value template_instantiate(reflect_template tpl, template_argument args[], size_t size)
+{
+	struct template_instance_type instance;
+
+	if (template_arguments_validate(tpl, args, size) != 0)
 	{
 		return NULL;
 	}
 
-	if (tpl->interface == NULL || tpl->interface->instantiate_class == NULL)
+	instance.v = template_instance_get(tpl, args, size);
+
+	if (instance.v != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) class instantiation, the template does not implement instantiate_class", tpl->name);
+		return instance.v;
+	}
+
+	if (tpl->interface == NULL || tpl->interface->instantiate == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, the template does not implement instantiate", tpl->name);
 
 		return NULL;
 	}
 
-	cls = tpl->interface->instantiate_class(tpl, tpl->impl, args, size);
+	instance.args = template_instance_arguments_copy(tpl, args, size);
 
-	if (cls == NULL)
+	if (instance.args == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) class instantiation, the instantiate_class callback <%p> failed", tpl->name, tpl->interface->instantiate_class);
-
 		return NULL;
 	}
 
-	class_set_template(cls, tpl);
+	instance.v = tpl->interface->instantiate(tpl, tpl->impl, args, size);
 
-	return cls;
+	if (instance.v == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, the instantiate callback <%p> failed", tpl->name, tpl->interface->instantiate);
+
+		goto error_instantiate;
+	}
+
+	if (value_type_id(instance.v) != tpl->kind)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid template (%s) instantiation, the instantiate callback <%p> returned a value of type %s but the template type is %s", tpl->name, tpl->interface->instantiate, type_id_name(value_type_id(instance.v)), type_id_name(tpl->kind));
+
+		goto error_instance_type;
+	}
+
+	/* The template owns the value, which holds the reference to the instance until the template is destroyed */
+	instance.size = size;
+
+	vector_push_back(tpl->instances, &instance);
+
+	return instance.v;
+
+error_instance_type:
+	value_type_destroy(instance.v);
+error_instantiate:
+	free(instance.args);
+	return NULL;
+}
+
+static void template_instances_destroy(reflect_template tpl)
+{
+	size_t iterator, instances_size = vector_size(tpl->instances);
+
+	for (iterator = 0; iterator < instances_size; ++iterator)
+	{
+		struct template_instance_type *instance = vector_at(tpl->instances, iterator);
+
+		/* Release the reference of the template, the instance survives if someone else holds a reference */
+		value_type_destroy(instance->v);
+
+		free(instance->args);
+	}
+
+	vector_destroy(tpl->instances);
 }
 
 void template_destroy(reflect_template tpl)
@@ -388,6 +534,9 @@ void template_destroy(reflect_template tpl)
 
 	if (threading_atomic_ref_count_load(&tpl->ref) == 0)
 	{
+		/* The instances are destroyed before the template implementation, as they may depend on it */
+		template_instances_destroy(tpl);
+
 		if (tpl->interface != NULL && tpl->interface->destroy != NULL)
 		{
 			tpl->interface->destroy(tpl, tpl->impl);

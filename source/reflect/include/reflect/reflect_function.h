@@ -23,7 +23,6 @@
 
 #include <reflect/reflect_async.h>
 #include <reflect/reflect_signature.h>
-#include <reflect/reflect_template_decl.h>
 #include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
@@ -175,36 +174,6 @@ REFLECT_API const char *function_name(function func);
  *    Pointer to the function's signature
  */
 REFLECT_API signature function_signature(function func);
-
-/**
- *  @brief
- *    Associate the template a function has been instantiated from
- *
- *  @param[in] func
- *    Pointer to the function
- *
- *  @param[in] tpl
- *    Pointer to the template, the function holds a reference to the
- *    template until it is destroyed
- *
- *  @return
- *    Zero on success, different from zero if func is NULL or it
- *    has already a template
- */
-REFLECT_API int function_set_template(function func, reflect_template tpl);
-
-/**
- *  @brief
- *    Get the template a function has been instantiated from
- *
- *  @param[in] func
- *    Pointer to the function
- *
- *  @return
- *    Pointer to the template, or NULL if func is NULL or it is not
- *    an instantiation of a template
- */
-REFLECT_API reflect_template function_template(function func);
 
 /**
  *  @brief

@@ -77,7 +77,11 @@ extern "C" {
 
     fn function_signature(function: OpaqueType) -> OpaqueType;
 
+    fn function_destroy(function: OpaqueType);
+
     fn value_create_function(function: OpaqueType) -> OpaqueType;
+
+    pub fn value_to_function(v: OpaqueType) -> OpaqueType;
 
     fn value_type_destroy(v: OpaqueType);
 
@@ -143,7 +147,9 @@ extern "C" {
 
     fn template_name(tpl: OpaqueType) -> *const c_char;
 
-    pub fn template_instantiate_function(
+    fn template_type(tpl: OpaqueType) -> c_int;
+
+    pub fn template_instantiate(
         tpl: OpaqueType,
         args: *mut TemplateArgument,
         size: usize,
@@ -152,7 +158,9 @@ extern "C" {
     fn value_create_template(tpl: OpaqueType) -> OpaqueType;
 }
 
-pub const TEMPLATE_TYPE_FUNCTION: c_int = 1;
+// Values of enum type_primitive_id used as template types
+pub const TYPE_FUNCTION: c_int = 13;
+pub const TYPE_CLASS: c_int = 15;
 
 /// # Safety
 /// `template_impl` and `singleton` must be valid for the template interface.
