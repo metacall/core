@@ -19,10 +19,29 @@ unsafe impl Send for MetaCallClass {}
 unsafe impl Sync for MetaCallClass {}
 impl Clone for MetaCallClass {
     fn clone(&self) -> Self {
-        Self {
-            found_by_name: self.found_by_name,
-            leak: true,
-            value: self.value,
+        if self.found_by_name {
+            Self {
+                found_by_name: true,
+                leak: true,
+                value: self.value,
+            }
+        } else {
+            let value = if self.value.is_null() {
+                std::ptr::null_mut()
+            } else {
+                let copied = unsafe { metacall_value_copy(self.value) };
+                assert!(
+                    !copied.is_null(),
+                    "metacall_value_copy failed to clone MetaCallClass"
+                );
+                copied
+            };
+
+            Self {
+                found_by_name: false,
+                leak: false,
+                value,
+            }
         }
     }
 }

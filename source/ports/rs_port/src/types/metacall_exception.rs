@@ -1,14 +1,16 @@
-use super::{MetaCallStringConversionError, MetaCallValue};
+use super::{MetaCallNull, MetaCallStringConversionError, MetaCallValue};
 use crate::{
     bindings::{
-        metacall_exception_type, metacall_throwable_value, metacall_value_create_exception,
-        metacall_value_destroy, metacall_value_to_exception, metacall_value_to_throwable,
+        metacall_exception_type, metacall_throwable_value, metacall_value_copy,
+        metacall_value_create_exception, metacall_value_destroy, metacall_value_id,
+        metacall_value_to_exception, metacall_value_to_throwable,
     },
     cast, cstring,
 };
 use std::{
     ffi::{c_char, c_void, CStr},
     fmt::{self, Debug, Formatter},
+    rc::Rc,
     sync::Arc,
 };
 
@@ -128,20 +130,32 @@ pub enum MetaCallThrowableValue<T: MetaCallValue> {
     Specified(T),
 }
 
-/// Represents MetaCall throwable. Keep in mind that it's not supported to pass a throwable as an argument.
-pub struct MetaCallThrowable {
+#[derive(Debug)]
+struct MetaCallThrowableInner {
     leak: bool,
     value_ptr: *mut c_void,
     value: *mut c_void,
 }
-unsafe impl Send for MetaCallThrowable {}
-unsafe impl Sync for MetaCallThrowable {}
+
+impl Drop for MetaCallThrowableInner {
+    fn drop(&mut self) {
+        if !self.leak && !self.value_ptr.is_null() {
+            unsafe {
+                metacall_value_destroy(self.value_ptr);
+            }
+        }
+    }
+}
+
+/// Represents MetaCall throwable. Keep in mind that it's not supported to pass a throwable as an argument.
+pub struct MetaCallThrowable {
+    inner: Rc<MetaCallThrowableInner>,
+}
+
 impl Clone for MetaCallThrowable {
     fn clone(&self) -> Self {
         Self {
-            leak: true,
-            value: self.value,
-            value_ptr: self.value_ptr,
+            inner: Rc::clone(&self.inner),
         }
     }
 }
@@ -154,36 +168,69 @@ impl Debug for MetaCallThrowable {
 impl MetaCallThrowable {
     #[doc(hidden)]
     pub fn new_raw(value_ptr: *mut c_void) -> Self {
-        let throwable_value =
-            unsafe { metacall_throwable_value(metacall_value_to_throwable(value_ptr)) };
+        let throwable_value = if !value_ptr.is_null() {
+            unsafe {
+                let th = metacall_value_to_throwable(value_ptr);
+                if !th.is_null() {
+                    metacall_throwable_value(th)
+                } else {
+                    std::ptr::null_mut()
+                }
+            }
+        } else {
+            std::ptr::null_mut()
+        };
         Self {
-            leak: false,
-            value: throwable_value,
-            value_ptr,
+            inner: Rc::new(MetaCallThrowableInner {
+                leak: false,
+                value_ptr,
+                value: throwable_value,
+            }),
         }
     }
 
     #[doc(hidden)]
     pub fn new_raw_leak(value_ptr: *mut c_void) -> Self {
-        let throwable_value =
-            unsafe { metacall_throwable_value(metacall_value_to_throwable(value_ptr)) };
+        let throwable_value = if !value_ptr.is_null() {
+            unsafe {
+                let th = metacall_value_to_throwable(value_ptr);
+                if !th.is_null() {
+                    metacall_throwable_value(th)
+                } else {
+                    std::ptr::null_mut()
+                }
+            }
+        } else {
+            std::ptr::null_mut()
+        };
         Self {
-            leak: true,
-            value: throwable_value,
-            value_ptr,
+            inner: Rc::new(MetaCallThrowableInner {
+                leak: true,
+                value_ptr,
+                value: throwable_value,
+            }),
         }
     }
 
     /// Gets the throwable value without type casting([MetaCallValue](MetaCallValue)).
     pub fn get_value_untyped(&self) -> Box<dyn MetaCallValue> {
-        match cast::raw_to_metacallobj::<MetaCallException>(self.value) {
-            Ok(mut value) => {
-                value.leak = true;
-
-                cast::metacall_box(value)
-            }
-            Err(original) => original,
+        let inner_val = self.inner.value;
+        if inner_val.is_null() {
+            return cast::metacall_box(MetaCallNull());
         }
+
+        let type_id = unsafe { metacall_value_id(inner_val) };
+        if type_id == metacall_value_id::METACALL_THROWABLE {
+            // Nested TYPE_THROWABLE cannot be safely copied due to upstream C reflect_value_type defect
+            return cast::metacall_box(MetaCallNull());
+        }
+
+        let copied = unsafe { metacall_value_copy(inner_val) };
+        if copied.is_null() {
+            return cast::metacall_box(MetaCallNull());
+        }
+
+        cast::raw_to_metacallobj_untyped(copied)
     }
     /// Gets the throwable value.
     pub fn get_value<T: MetaCallValue>(&self) -> Result<T, Box<dyn MetaCallValue>> {
@@ -224,15 +271,6 @@ impl Drop for MetaCallException {
     fn drop(&mut self) {
         if !self.leak {
             unsafe { metacall_value_destroy(self.value) }
-        }
-    }
-}
-impl Drop for MetaCallThrowable {
-    fn drop(&mut self) {
-        unsafe {
-            if !self.leak {
-                metacall_value_destroy(self.value_ptr);
-            }
         }
     }
 }
