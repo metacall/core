@@ -3487,22 +3487,33 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 							node_loader_impl_exception(env, status);
 
-							/* Get parameter type string length */
-							status = napi_get_value_string_utf8(env, parameter_type, nullptr, 0, &parameter_type_length);
+							status = napi_typeof(env, parameter_type, &valuetype);
 
 							node_loader_impl_exception(env, status);
 
-							if (parameter_type_length > 0)
+							if (valuetype == napi_string)
 							{
-								parameter_type_str = new char[parameter_type_length + 1];
+								/* Get parameter type string length */
+								status = napi_get_value_string_utf8(env, parameter_type, nullptr, 0, &parameter_type_length);
+
+								node_loader_impl_exception(env, status);
+
+								if (parameter_type_length > 0)
+								{
+									parameter_type_str = new char[parameter_type_length + 1];
+								}
+
+								/* Get parameter type string */
+								status = napi_get_value_string_utf8(env, parameter_type, parameter_type_str, parameter_type_length + 1, &parameter_type_length);
+
+								node_loader_impl_exception(env, status);
+
+								signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, loader_impl_type(discover_safe->node_impl->impl, parameter_type_str));
 							}
-
-							/* Get parameter type string */
-							status = napi_get_value_string_utf8(env, parameter_type, parameter_type_str, parameter_type_length + 1, &parameter_type_length);
-
-							node_loader_impl_exception(env, status);
-
-							signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, loader_impl_type(discover_safe->node_impl->impl, parameter_type_str));
+							else
+							{
+								signature_set(s, static_cast<size_t>(arg_index), parameter_name_str, NULL);
+							}
 
 							if (parameter_type_str != nullptr)
 							{
