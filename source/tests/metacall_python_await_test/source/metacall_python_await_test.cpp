@@ -41,6 +41,7 @@ TEST_F(metacall_python_await_test, DefaultConstructor)
 		static const char buffer[] =
 			"import asyncio\n"
 			"import sys\n"
+			"import threading\n"
 			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
 			"from metacall import metacall_load_from_memory, metacall_await\n"
 			"script = \"\"\"\n"
@@ -51,6 +52,7 @@ TEST_F(metacall_python_await_test, DefaultConstructor)
 			"lock = threading.Lock()\n"
 			"metacall_load_from_memory('py', script)\n"
 			"async def test():\n"
+			"	global result\n"
 			"	result = await metacall_await('yeet', 1234)\n"
 			"	if result != 1234:\n"
 			"		sys.exit(1)\n"
