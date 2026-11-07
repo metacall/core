@@ -829,6 +829,40 @@ int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
 	return ret;
 }
 
+PyObject *py_loader_impl_future_create(loader_impl_py py_impl, PyObject *loop)
+{
+	return PyObject_CallFunctionObjArgs(py_impl->thread_background_future_create, loop, NULL);
+}
+
+static int py_loader_impl_future_settle(loader_impl_py py_impl, PyObject *func, PyObject *loop, PyObject *f, PyObject *obj)
+{
+	PyObject *result = PyObject_CallFunctionObjArgs(func, loop, f, obj, NULL);
+
+	if (result == NULL)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+		}
+
+		return 1;
+	}
+
+	Py_DecRef(result);
+
+	return 0;
+}
+
+int py_loader_impl_future_resolve(loader_impl_py py_impl, PyObject *loop, PyObject *f, PyObject *value)
+{
+	return py_loader_impl_future_settle(py_impl, py_impl->thread_background_future_resolve, loop, f, value);
+}
+
+int py_loader_impl_future_reject(loader_impl_py py_impl, PyObject *loop, PyObject *f, PyObject *exception)
+{
+	return py_loader_impl_future_settle(py_impl, py_impl->thread_background_future_reject, loop, f, exception);
+}
+
 int py_loader_impl_check_async(loader_impl_py py_impl, PyObject *func)
 {
 	PyObject *result = PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL);

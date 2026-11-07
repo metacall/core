@@ -62,6 +62,12 @@ PY_LOADER_NO_EXPORT PyObject *py_loader_impl_capsule_new_null(void);
 
 PY_LOADER_NO_EXPORT int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl, const int host);
 
+PY_LOADER_NO_EXPORT PyObject *py_loader_impl_future_create(loader_impl_py py_impl, PyObject *loop);
+
+PY_LOADER_NO_EXPORT int py_loader_impl_future_resolve(loader_impl_py py_impl, PyObject *loop, PyObject *f, PyObject *value);
+
+PY_LOADER_NO_EXPORT int py_loader_impl_future_reject(loader_impl_py py_impl, PyObject *loop, PyObject *f, PyObject *exception);
+
 #ifdef __cplusplus
 }
 #endif
