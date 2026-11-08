@@ -869,10 +869,12 @@ boolean metacall_value_cast_bool(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_BOOL);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return 0L;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_bool(*v);
@@ -884,10 +886,12 @@ char metacall_value_cast_char(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_CHAR);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return '\0';
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_char(*v);
@@ -899,10 +903,12 @@ short metacall_value_cast_short(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_SHORT);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return 0;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_short(*v);
@@ -914,10 +920,12 @@ int metacall_value_cast_int(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_INT);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return 0;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_int(*v);
@@ -929,10 +937,12 @@ long metacall_value_cast_long(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_LONG);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return 0L;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_long(*v);
@@ -944,10 +954,12 @@ float metacall_value_cast_float(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_FLOAT);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return 0.0f;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_float(*v);
@@ -959,10 +971,12 @@ double metacall_value_cast_double(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_DOUBLE);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return 0.0;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_double(*v);
@@ -974,10 +988,12 @@ char *metacall_value_cast_string(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_STRING);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_string(*v);
@@ -989,10 +1005,12 @@ void *metacall_value_cast_buffer(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_BUFFER);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_buffer(*v);
@@ -1004,10 +1022,12 @@ void **metacall_value_cast_array(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_ARRAY);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_array(*v);
@@ -1019,10 +1039,12 @@ void *metacall_value_cast_map(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_MAP);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_map(*v);
@@ -1034,10 +1056,12 @@ void *metacall_value_cast_ptr(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_PTR);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_ptr(*v);
@@ -1049,10 +1073,12 @@ void *metacall_value_cast_future(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_FUTURE);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_future(*v);
@@ -1064,10 +1090,12 @@ void *metacall_value_cast_function(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_FUNCTION);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_function(*v);
@@ -1079,10 +1107,12 @@ void *metacall_value_cast_null(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_NULL);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_null(*v);
@@ -1094,10 +1124,12 @@ void *metacall_value_cast_class(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_CLASS);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_class(*v);
@@ -1109,10 +1141,12 @@ void *metacall_value_cast_object(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_OBJECT);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_object(*v);
@@ -1124,10 +1158,12 @@ void *metacall_value_cast_exception(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_EXCEPTION);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_exception(*v);
@@ -1139,10 +1175,12 @@ void *metacall_value_cast_throwable(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_THROWABLE);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_throwable(*v);
@@ -1154,10 +1192,12 @@ void *metacall_value_cast_template(void **v)
 	{
 		value v_cast = value_type_cast(*v, TYPE_TEMPLATE);
 
-		if (v_cast != NULL)
+		if (v_cast == NULL)
 		{
-			*v = v_cast;
+			return NULL;
 		}
+
+		*v = v_cast;
 	}
 
 	return value_to_template(*v);

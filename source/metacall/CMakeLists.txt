@@ -220,6 +220,9 @@ target_link_libraries(${target}
 	# Haiku dependencies
 	$<$<BOOL:${PROJECT_OS_HAIKU}>:bsd>
 
+	# Windows dependencies
+	$<$<BOOL:${PROJECT_OS_WIN}>:psapi>
+
 	INTERFACE
 )
 

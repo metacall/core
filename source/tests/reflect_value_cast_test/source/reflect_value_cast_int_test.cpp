@@ -118,3 +118,20 @@ TEST_F(reflect_value_cast_int_test, int_to_double_cast)
 
 	value_destroy(v);
 }
+
+TEST_F(reflect_value_cast_int_test, string_to_int_cast_returns_null)
+{
+	/* Regression test: string-to-int cast is unimplemented in value_type_cast.
+	 * value_type_cast must return NULL (not silently reinterpret string bytes),
+	 * and metacall_value_cast_int must return 0 (not raw ASCII bytes).
+	 * See: reflect_value_type_cast.c - string cast path returns NULL.
+	 */
+	const char *text = "Hell";
+	value v = value_create_string(text, 4);
+
+	/* value_type_cast must return NULL for unimplemented string->int path */
+	value v_cast = value_type_cast(v, TYPE_INT);
+	EXPECT_EQ((value)NULL, v_cast);
+
+	value_destroy(v);
+}
