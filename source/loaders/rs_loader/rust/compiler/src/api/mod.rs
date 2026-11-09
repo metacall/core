@@ -111,7 +111,8 @@ extern "C" {
     ) -> OpaqueType;
     // fn class_register_static_attribute(class: OpaqueType, attr: OpaqueType) -> c_int;
     fn class_register_attribute(class: OpaqueType, attr: OpaqueType) -> c_int;
-    fn get_attr_name(attr: OpaqueType) -> *mut c_char;
+    fn accessor_attribute(accessor: OpaqueType) -> OpaqueType;
+    fn attribute_name(attr: OpaqueType) -> *mut c_char;
     fn method_create(
         class: OpaqueType,
         name: *const c_char,

@@ -71,6 +71,7 @@ set(sources
 	${source_path}/reflect_type_id.c
 	${source_path}/reflect_signature.c
 	${source_path}/reflect_function.c
+	${source_path}/reflect_accessor.c
 	${source_path}/reflect_attribute.c
 	${source_path}/reflect_constructor.c
 	${source_path}/reflect_memory_tracker.c

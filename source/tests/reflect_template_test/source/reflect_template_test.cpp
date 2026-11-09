@@ -471,7 +471,6 @@ TEST_F(reflect_template_test, InstanceCache)
 	/* The caller holds a reference, released by class_destroy */
 	EXPECT_EQ(0, class_increment_reference(cls));
 
-	/* Designated initializers are not available in C++17 (MSVC), so the union member is assigned explicitly */
 	template_argument class_args[1];
 
 	class_args[0].name = "T";
@@ -618,7 +617,6 @@ TEST_F(reflect_template_test, NestedTemplate)
 
 	EXPECT_STREQ("pair<int, float>", function_name(pair));
 
-	/* Designated initializers are not available in C++17 (MSVC), so the union member is assigned explicitly */
 	template_argument vector_args[1];
 
 	vector_args[0].name = "T";
@@ -662,7 +660,6 @@ TEST_F(reflect_template_test, ClassArgument)
 	/* The caller holds a reference, released by class_destroy */
 	EXPECT_EQ(0, class_increment_reference(point_cls));
 
-	/* Designated initializers are not available in C++17 (MSVC), so the union members are assigned explicitly */
 	template_argument args[2];
 
 	/* A class and a type mixed */

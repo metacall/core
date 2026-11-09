@@ -623,9 +623,8 @@ private:
 		return array_value;
 	}
 
-	// Recursive unpacking using fold expression (C++17+)
 	template <typename... Args>
-	static void create_array(void **array_ptr, std::size_t index, Args &&...args)
+	static void create_array([[maybe_unused]] void **array_ptr, [[maybe_unused]] std::size_t index, Args &&...args)
 	{
 		(([&] {
 			using Decayed = std::decay_t<Args>;

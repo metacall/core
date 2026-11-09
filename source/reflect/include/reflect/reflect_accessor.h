@@ -21,6 +21,8 @@
 #ifndef REFLECT_ACCESSOR_H
 #define REFLECT_ACCESSOR_H
 
+#include <reflect/reflect_api.h>
+
 #include <reflect/reflect_attribute_decl.h>
 #include <reflect/reflect_constructor_decl.h>
 #include <reflect/reflect_method_decl.h>
@@ -57,6 +59,14 @@ struct accessor_type
 		method m;
 	} data;
 };
+
+REFLECT_API const char *accessor_key(struct accessor_type *accessor);
+
+REFLECT_API constructor accessor_constructor(struct accessor_type *accessor);
+
+REFLECT_API attribute accessor_attribute(struct accessor_type *accessor);
+
+REFLECT_API method accessor_method(struct accessor_type *accessor);
 
 #ifdef __cplusplus
 }
