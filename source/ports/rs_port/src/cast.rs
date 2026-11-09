@@ -17,6 +17,11 @@ fn metacallobj_result_wrap<T: MetaCallValue>(
 }
 
 pub fn raw_to_metacallobj<T: MetaCallValue>(ret: *mut c_void) -> Result<T, Box<dyn MetaCallValue>> {
+    // Box<dyn MetaCallValue> accepts any type, so it has no id to compare with
+    if T::get_metacall_id() == metacall_value_id::METACALL_INVALID {
+        return <T>::from_metacall_raw(ret);
+    }
+
     let null = MetaCallNull();
 
     if ret.is_null() {
@@ -36,6 +41,11 @@ pub fn raw_to_metacallobj<T: MetaCallValue>(ret: *mut c_void) -> Result<T, Box<d
 pub fn raw_to_metacallobj_leak<T: MetaCallValue>(
     ret: *mut c_void,
 ) -> Result<T, Box<dyn MetaCallValue>> {
+    // Box<dyn MetaCallValue> accepts any type, so it has no id to compare with
+    if T::get_metacall_id() == metacall_value_id::METACALL_INVALID {
+        return <T>::from_metacall_raw_leak(ret);
+    }
+
     let null = MetaCallNull();
 
     if ret.is_null() {
@@ -84,10 +94,12 @@ pub fn raw_to_metacallobj_untyped(ret: *mut c_void) -> Box<dyn MetaCallValue> {
             metacallobj_result_wrap(<Vec<i8>>::from_metacall_raw(ret))
         }
         (_, metacall_value_id::METACALL_ARRAY) => {
-            metacallobj_result_wrap(<Vec<MetaCallNull>>::from_metacall_raw(ret))
+            metacallobj_result_wrap(<Vec<Box<dyn MetaCallValue>>>::from_metacall_raw(ret))
         }
         (_, metacall_value_id::METACALL_MAP) => {
-            metacallobj_result_wrap(<HashMap<String, MetaCallNull>>::from_metacall_raw(ret))
+            metacallobj_result_wrap(
+                <HashMap<String, Box<dyn MetaCallValue>>>::from_metacall_raw(ret),
+            )
         }
         (_, metacall_value_id::METACALL_PTR) => {
             metacallobj_result_wrap(<MetaCallPointer>::from_metacall_raw(ret))
@@ -147,10 +159,12 @@ pub fn raw_to_metacallobj_untyped_leak(ret: *mut c_void) -> Box<dyn MetaCallValu
             metacallobj_result_wrap(<Vec<i8>>::from_metacall_raw_leak(ret))
         }
         (_, metacall_value_id::METACALL_ARRAY) => {
-            metacallobj_result_wrap(<Vec<MetaCallNull>>::from_metacall_raw_leak(ret))
+            metacallobj_result_wrap(<Vec<Box<dyn MetaCallValue>>>::from_metacall_raw_leak(ret))
         }
         (_, metacall_value_id::METACALL_MAP) => {
-            metacallobj_result_wrap(<HashMap<String, MetaCallNull>>::from_metacall_raw_leak(ret))
+            metacallobj_result_wrap(
+                <HashMap<String, Box<dyn MetaCallValue>>>::from_metacall_raw_leak(ret),
+            )
         }
         (_, metacall_value_id::METACALL_PTR) => {
             metacallobj_result_wrap(<MetaCallPointer>::from_metacall_raw_leak(ret))
@@ -210,9 +224,9 @@ pub fn metacallobj_untyped_to_raw(ret: Box<dyn MetaCallValue>) -> Option<*mut c_
         return Some(v.clone().into_metacall_raw());
     } else if let Some(v) = ret.downcast_ref::<Vec<i8>>() {
         return Some(v.clone().into_metacall_raw());
-    } else if let Some(v) = ret.downcast_ref::<Vec<MetaCallNull>>() {
+    } else if let Some(v) = ret.downcast_ref::<Vec<Box<dyn MetaCallValue>>>() {
         return Some(v.clone().into_metacall_raw());
-    } else if let Some(v) = ret.downcast_ref::<HashMap<String, MetaCallNull>>() {
+    } else if let Some(v) = ret.downcast_ref::<HashMap<String, Box<dyn MetaCallValue>>>() {
         return Some(v.clone().into_metacall_raw());
     } else if let Some(v) = ret.downcast_ref::<MetaCallPointer>() {
         return Some(v.clone().into_metacall_raw());
@@ -237,4 +251,22 @@ pub fn metacallobj_untyped_to_raw(ret: Box<dyn MetaCallValue>) -> Option<*mut c_
 
 pub fn metacall_box(v: impl MetaCallValue) -> Box<dyn MetaCallValue> {
     Box::new(v) as Box<dyn MetaCallValue>
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::bindings::metacall_value_destroy;
+
+    #[test]
+    fn untyped_containers_to_raw() {
+        let array = metacall_box(vec![metacall_box(String::from("x"))]);
+        let map = metacall_box(HashMap::from([(String::from("a"), metacall_box(1))]));
+
+        for value in [array, map] {
+            let raw = metacallobj_untyped_to_raw(value).expect("container not converted");
+
+            unsafe { metacall_value_destroy(raw) };
+        }
+    }
 }

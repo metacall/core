@@ -1,5 +1,5 @@
 use crate::types::MetaCallValue;
-use std::any::Any;
+use std::{any::Any, collections::HashMap, ops::Index};
 
 pub trait MetaCallDowncast: Any {
     fn into_any(self: Box<Self>) -> Box<dyn Any>;
@@ -41,7 +41,66 @@ impl dyn MetaCallValue {
     pub fn downcast_mut<T: MetaCallValue>(&mut self) -> Option<&mut T> {
         MetaCallDowncast::as_any_mut(self).downcast_mut::<T>()
     }
+
+    /// Returns the string if the value is a string.
+    pub fn as_str(&self) -> Option<&str> {
+        self.downcast_ref::<String>().map(String::as_str)
+    }
+
+    /// Returns the map if the value is a map.
+    pub fn as_map(&self) -> Option<&HashMap<String, Box<dyn MetaCallValue>>> {
+        self.downcast_ref::<HashMap<String, Box<dyn MetaCallValue>>>()
+    }
+
+    /// Returns the array if the value is an array.
+    pub fn as_array(&self) -> Option<&Vec<Box<dyn MetaCallValue>>> {
+        self.downcast_ref::<Vec<Box<dyn MetaCallValue>>>()
+    }
 }
+
+/// Access a map by key, panics if the value is not a map or the key does not exist.
+impl Index<&str> for dyn MetaCallValue {
+    type Output = dyn MetaCallValue;
+
+    fn index(&self, key: &str) -> &Self::Output {
+        let map = self.as_map().expect("MetaCall value is not a map");
+
+        &**map.get(key).expect("MetaCall map key not found")
+    }
+}
+
+/// Access an array by position, panics if the value is not an array or out of bounds.
+impl Index<usize> for dyn MetaCallValue {
+    type Output = dyn MetaCallValue;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &*self.as_array().expect("MetaCall value is not an array")[index]
+    }
+}
+
+/// Compare a value with a string, false if the value is not a string.
+impl PartialEq<str> for dyn MetaCallValue {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == Some(other)
+    }
+}
+impl PartialEq<&str> for dyn MetaCallValue {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == Some(*other)
+    }
+}
+
+/// Compare a value with a primitive, false if the value is not of the same type.
+macro_rules! impl_partial_eq_primitive {
+    ($($t:ty),*) => {$(
+        impl PartialEq<$t> for dyn MetaCallValue {
+            fn eq(&self, other: &$t) -> bool {
+                self.downcast_ref::<$t>() == Some(other)
+            }
+        }
+    )*};
+}
+impl_partial_eq_primitive!(bool, char, i16, i32, i64, f32, f64, String);
 
 pub trait MetaCallSealed {}
 impl<T: Clone> MetaCallSealed for T {}

@@ -8,6 +8,8 @@ fn generate_bindings() {
     let mut builder = bindgen::Builder::default()
         .raw_line("#[cfg_attr(rustfmt, rustfmt::skip)]")
         .allowlist_function("metacall.*")
+        // Not reachable from any function signature (it is passed as void *ctx)
+        .allowlist_type("metacall_allocator_std_type")
         .rustified_enum("metacall_.*");
 
     if let Ok(build_dir) = env::var("CMAKE_BINARY_DIR") {

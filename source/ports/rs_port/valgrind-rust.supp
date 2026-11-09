@@ -7,6 +7,22 @@
     ...
 }
 
+# Ignore Rust runtime per-thread data (newer std versions)
+{
+    Ignore current thread handle allocated by std.
+    Memcheck:Leak
+    ...
+    fun:_ZN3std6thread7current12init_current*
+    ...
+}
+{
+    Ignore stack overflow thread info allocated by std.
+    Memcheck:Leak
+    ...
+    fun:_ZN3std3sys3pal4unix14stack_overflow11thread_info16set_current_info*
+    ...
+}
+
 # Ignore ld leaks
 {
     Ignore dynamic linker leaks.

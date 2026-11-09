@@ -368,13 +368,8 @@ impl MetaCallValue for MetaCallNull {
     fn get_metacall_id() -> metacall_value_id {
         metacall_value_id::METACALL_NULL
     }
-    fn from_metacall_raw_leak(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
-        unsafe { metacall_value_destroy(v) };
-
+    fn from_metacall_raw_leak(_v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
         Ok(MetaCallNull())
-    }
-    fn from_metacall_raw(v: *mut c_void) -> Result<Self, Box<dyn MetaCallValue>> {
-        Self::from_metacall_raw_leak(v)
     }
     fn into_metacall_raw(self) -> *mut c_void {
         self.into_raw()

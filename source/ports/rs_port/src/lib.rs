@@ -96,6 +96,12 @@ pub use init::is_initialized;
 mod metacall_mod;
 pub use metacall_mod::*;
 
+mod allocator;
+pub use allocator::MetaCallAllocator;
+
+mod serial;
+pub use serial::{deserialize, serialize};
+
 /// Contains MetaCall language inliners. Usage example: ...
 /// ```
 /// // Python

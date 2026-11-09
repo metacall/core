@@ -103,3 +103,23 @@ pub enum MetaCallClassFromNameError {
     /// Null character detected.
     UnexpectedCStringConversionErr(MetaCallStringConversionError),
 }
+
+#[derive(Debug, Clone)]
+/// This error happens when it's not possible to create the allocator.
+pub struct MetaCallAllocatorError;
+
+#[derive(Debug, Clone)]
+/// This error may happen when serializing or deserializing a value. Check your logs
+/// if you get `SerializationFailure` or `DeserializationFailure` error variant.
+pub enum MetaCallSerialError {
+    /// Failed to create the allocator for the serialized string.
+    AllocatorFailure(MetaCallAllocatorError),
+    /// The value could not be serialized.
+    SerializationFailure,
+    /// Invalid input, the serializer failed to parse it.
+    DeserializationFailure,
+    /// Failed to cast the deserialized value as the type requested.
+    FailedCasting(Box<dyn MetaCallValue>),
+    /// Null character detected.
+    UnexpectedCStringConversionErr(MetaCallStringConversionError),
+}
