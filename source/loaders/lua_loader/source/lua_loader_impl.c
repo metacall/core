@@ -25,8 +25,10 @@
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_context.h>
+#include <reflect/reflect_exception.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
+#include <reflect/reflect_throwable.h>
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_value.h>
 
@@ -490,6 +492,35 @@ static int function_lua_interface_create(function func, function_impl impl)
 	return 0;
 }
 
+static value lua_loader_impl_exception_value(lua_State *L, int status)
+{
+	const char *error_message = lua_tostring(L, -1);
+	const char *message = error_message != NULL ? error_message : "";
+
+	exception ex = exception_create_const(message, "LuaError", (int64_t)status, "");
+
+	if (ex == NULL)
+	{
+		return NULL;
+	}
+
+	return value_create_exception(ex);
+}
+
+static value lua_loader_impl_throwable_value(lua_State *L, int status)
+{
+	value v = lua_loader_impl_exception_value(L, status);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	throwable th = throwable_create(v);
+
+	return value_create_throwable(th);
+}
+
 static function_return function_lua_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_lua_function lua_func = (loader_impl_lua_function)impl;
@@ -521,11 +552,10 @@ static function_return function_lua_interface_invoke(function func, function_imp
 
 	if (status != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Lua function %s error: %s",
-			function_name(func), lua_tostring(L, -1));
+		ret = lua_loader_impl_throwable_value(L, status);
 		lua_pop(L, 1);				/* Pop error message */
 		lua_remove(L, errfunc_idx); /* Remove error handler */
-		return NULL;
+		return ret;
 	}
 
 	if (capture_results && lua_gettop(L) > errfunc_idx)
