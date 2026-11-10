@@ -62,23 +62,31 @@ TEST_F(metacall_conversion_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall::metacall_initialize());
 
-	/* Each script defines identity_<tag>, so all of them can be loaded into the global scope */
+	/* Each script defines identity_<tag> and throwable_<tag>, so all of them can be loaded into the global scope */
 	const std::map<std::string, std::string> scripts = {
 #if defined(OPTION_BUILD_LOADERS_NODE)
 		{ "node",
-			"module.exports = { identity_node: x => x };\n" },
+			"module.exports = {\n"
+			"	identity_node: x => x,\n"
+			"	throwable_node: () => { throw Error(); }\n"
+			"};\n" },
 #endif
 
 #if defined(OPTION_BUILD_LOADERS_PY)
 		{ "py",
 			"def identity_py(x):\n"
-			"	return x\n" },
+			"	return x\n"
+			"def throwable_py():\n"
+			"	raise Exception()\n" },
 #endif
 
 #if defined(OPTION_BUILD_LOADERS_RB)
 		{ "rb",
 			"def identity_rb(x)\n"
 			"	x\n"
+			"end\n"
+			"def throwable_rb()\n"
+			"	raise StandardError.new\n"
 			"end\n" },
 #endif
 
@@ -86,6 +94,9 @@ TEST_F(metacall_conversion_test, DefaultConstructor)
 		{ "lua",
 			"function identity_lua(x)\n"
 			"	return x\n"
+			"end\n"
+			"function throwable_lua()\n"
+			"	error()\n"
 			"end\n" }
 #endif
 	};
@@ -153,4 +164,17 @@ TEST_F(metacall_conversion_test, DefaultConstructor)
 	metacall::metacall_allocator_free(allocator, json);
 
 	metacall::metacall_allocator_destroy(allocator);
+
+	/* Test raising throwables across loaders */
+	for (const auto &[tag, script] : scripts)
+	{
+		(void)script;
+		const std::string throwable = "throwable_" + tag;
+
+		auto ret = metacall::metacall<metacall::value>(throwable);
+
+		EXPECT_EQ(metacall::METACALL_THROWABLE, ret.id());
+	}
+
+	metacall::metacall_destroy();
 }
