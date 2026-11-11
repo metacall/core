@@ -28,6 +28,24 @@ class metacall_cast_test : public testing::Test
 public:
 };
 
+TEST_F(metacall_cast_test, unsupported_cast_preserves_original_value)
+{
+	void *v = metacall_value_create_string("Hell", 4);
+	void *original = v;
+
+	ASSERT_NE((void *)NULL, v);
+	EXPECT_EQ((int)0, metacall_value_cast_int(&v));
+	EXPECT_EQ(original, v);
+	EXPECT_EQ(METACALL_STRING, metacall_value_id(v));
+	EXPECT_STREQ("Hell", metacall_value_to_string(v));
+
+	EXPECT_EQ((void *)NULL, metacall_value_cast_ptr(&v));
+	EXPECT_EQ(original, v);
+	EXPECT_EQ(METACALL_STRING, metacall_value_id(v));
+
+	metacall_value_destroy(v);
+}
+
 TEST_F(metacall_cast_test, DefaultConstructor)
 {
 	metacall_print_info();
