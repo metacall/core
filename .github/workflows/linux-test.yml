@@ -111,7 +111,7 @@ jobs:
           fetch-depth: 0
 
       - name: Reduce mmap ASLR entropy for sanitizers
-        if: matrix.clang != 'clang'
+        if: matrix.clang == 'clang-address-sanitizer' || matrix.clang == 'clang-thread-sanitizer'
         run: sudo sysctl vm.mmap_rnd_bits=28
 
       - name: Install, build and run Clang tests
