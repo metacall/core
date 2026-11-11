@@ -20,9 +20,7 @@
 
 #include <gtest/gtest.h>
 
-#include <metacall/metacall.h>
-
-#include <rs_loader/rs_loader_impl.h>
+#include <metacall/metacall.hpp>
 
 #include <condition_variable>
 #include <cstdlib>
@@ -33,6 +31,11 @@
 #include <sstream>
 #include <string>
 #include <thread>
+
+using namespace metacall;
+
+/* Templates to instantiate at load time, each element is { "<template>": [ "<type>", ... ] } */
+using template_map = metacall::map_typed<std::string, metacall::array>;
 
 class metacall_rust_reinitialize_test : public testing::Test
 {
@@ -46,7 +49,7 @@ protected:
 	}
 };
 
-/* The script is loaded from memory because only memory loads support template instantiations */
+/* Reads a script of the scripts folder for loading it from memory */
 static std::string script_read(const char *name)
 {
 	const char *path = std::getenv("LOADER_SCRIPT_PATH");
@@ -60,7 +63,7 @@ static std::string script_read(const char *name)
 
 static int call_int(const char *name)
 {
-	void *ret = metacall(name);
+	void *ret = metacall::metacall(name);
 
 	EXPECT_NE((void *)NULL, ret);
 
@@ -86,19 +89,19 @@ struct script_functions
 
 static void call_functions(const script_functions &functions, int value)
 {
-	void *ret = metacall(functions.identity_i32, value);
+	void *ret = metacall::metacall(functions.identity_i32, value);
 
 	ASSERT_NE((void *)NULL, ret);
 	EXPECT_EQ(value, metacall_value_to_int(ret));
 	metacall_value_destroy(ret);
 
-	ret = metacall(functions.identity_f64, value + 0.5);
+	ret = metacall::metacall(functions.identity_f64, value + 0.5);
 
 	ASSERT_NE((void *)NULL, ret);
 	EXPECT_EQ(value + 0.5, metacall_value_to_double(ret));
 	metacall_value_destroy(ret);
 
-	ret = metacall(functions.pair_i32_f64, value, value * 2.5);
+	ret = metacall::metacall(functions.pair_i32_f64, value, value * 2.5);
 
 	ASSERT_NE((void *)NULL, ret);
 	EXPECT_EQ(value * 2.5, metacall_value_to_double(ret));
@@ -275,22 +278,12 @@ TEST_F(metacall_rust_reinitialize_test, NoTemplates)
  * after load), the library is never unloaded because the destructors pin the standard library */
 TEST_F(metacall_rust_reinitialize_test, Templates)
 {
-	const char *identity_i32_types[] = { "i32" };
-	const char *identity_f64_types[] = { "f64" };
-	const char *pair_types[] = { "i32", "f64" };
-
-	const rs_loader_template_instantiation instantiations[] = {
-		{ "identity", identity_i32_types, 1 },
-		{ "identity", identity_f64_types, 1 },
-		{ "pair", pair_types, 2 }
-	};
-
-	const rs_loader_load_data data = {
-		instantiations,
-		sizeof(instantiations) / sizeof(instantiations[0])
-	};
+	template_map data{ { "templates", metacall::array(
+										  template_map{ { "identity", metacall::array("i32") } },
+										  template_map{ { "identity", metacall::array("f64") } },
+										  template_map{ { "pair", metacall::array("i32", "f64") } }) } };
 
 	const script_functions functions = { "identity::<i32>", "identity::<f64>", "pair::<i32, f64>" };
 
-	reinitialize("reinitialize_template.rs", (void *)&data, functions);
+	reinitialize("reinitialize_template.rs", data.to_raw(), functions);
 }

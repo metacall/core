@@ -1,4 +1,4 @@
-use crate::{compile, CompilerState, RegistrationError, Source};
+use crate::{compile, CompilerState, RegistrationError, Source, TemplateInstantiation};
 
 use std::{ffi::c_void, path::PathBuf};
 
@@ -11,12 +11,15 @@ pub struct FileRegistration {
     pub dynlink: Option<DynlinkLibrary>,
 }
 impl FileRegistration {
-    pub fn new(path_to_file: PathBuf) -> Result<FileRegistration, RegistrationError> {
+    pub fn new(
+        path_to_file: PathBuf,
+        instantiations: &[TemplateInstantiation],
+    ) -> Result<FileRegistration, RegistrationError> {
         let state = match compile(
             Source::build(Source::File {
                 path: path_to_file.clone(),
             }),
-            &[],
+            instantiations,
         ) {
             Ok(state) => state,
             Err(error) => {

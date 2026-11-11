@@ -57,6 +57,7 @@ set(headers
 
 set(sources
 	${source_path}/rs_loader.c
+	${source_path}/rs_loader_impl.c
 )
 
 # Group source files

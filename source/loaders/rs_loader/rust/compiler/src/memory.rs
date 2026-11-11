@@ -31,6 +31,16 @@ impl MemoryRegistration {
                 )))
             }
         };
+        // A load from memory has a single source, so all the templates must be declared in it
+        if let Some(instantiation) = instantiations
+            .iter()
+            .find(|instantiation| !state.instantiations().contains(instantiation))
+        {
+            return Err(RegistrationError::CompilationError(format!(
+                "Template '{}' not found.",
+                instantiation.template
+            )));
+        }
         let dynlink = match state.load() {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DynlinkError(error)),

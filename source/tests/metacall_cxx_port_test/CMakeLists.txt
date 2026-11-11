@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_CXX)
+if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_CXX OR NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_MOCK)
 	return()
 endif()
 
@@ -130,6 +130,14 @@ target_link_options(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+)
+
+#
+# Define dependencies
+#
+
+add_dependencies(${target}
+	mock_loader
 )
 
 #

@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_RS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_RS OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_RS)
 	return()
 endif()
 
@@ -73,8 +73,6 @@ target_include_directories(${target}
 	PRIVATE
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
-	${PROJECT_SOURCE_DIR}/source/loaders/rs_loader/include
-	${PROJECT_BINARY_DIR}/source/loaders/rs_loader/include
 )
 
 #

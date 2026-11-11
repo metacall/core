@@ -10,9 +10,9 @@ pub extern "C" fn rs_loader_impl_load_from_package(
 ) -> *mut c_void {
     loader::load(
         loader_impl,
-        path,
+        path as *const c_char,
+        0,
         1,
-        false,
         |path_buf: PathBuf,
          load_on_error: loader::LoadOnErrorPointer|
          -> Result<LoadingMethod, *mut c_void> {

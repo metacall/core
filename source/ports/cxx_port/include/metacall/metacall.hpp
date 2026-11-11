@@ -1132,6 +1132,9 @@ public:
 	explicit function(void *func_value) :
 		value_base(func_value), name(nullptr), func(metacall_value_to_function(func_value)) {}
 
+	explicit function(void *handle, const char *name) :
+		value_base(from_handle(handle, name)), name(name), func(metacall_value_to_function(to_raw())) {}
+
 	~function() {}
 
 	// Void functions do not return a value
@@ -1166,6 +1169,18 @@ public:
 	}
 
 private:
+	static void *from_handle(void *handle, const char *name)
+	{
+		void *f = metacall_handle_function(handle, name);
+
+		if (f == NULL)
+		{
+			throw std::runtime_error("Function '" + std::string(name) + "' not found in the handle");
+		}
+
+		return metacall_value_create_function(f);
+	}
+
 	const char *name;
 	void *func;
 };

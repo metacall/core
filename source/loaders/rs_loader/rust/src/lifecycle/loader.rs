@@ -62,9 +62,9 @@ pub fn load_on_error<T: Display>(error: T) -> *mut c_void {
 
 pub fn load<T>(
     loader_impl: *mut c_void,
-    loadable_path: *mut *const c_char,
+    paths: *const c_char,
+    path_size: usize,
     size: usize,
-    path_is_vector: bool,
     on_path_buf: T,
 ) -> *mut c_void
 where
@@ -75,18 +75,14 @@ where
             .as_mut()
             .expect("Unable to get lifecycle state.")
     };
-    let mut execution_paths_iterator = loader_lifecycle_state.execution_paths.iter();
-
-    let mut path: *const c_char;
-
     let mut handle_shared_object = Box::new(Vec::new());
 
     for i in 0..size {
-        if path_is_vector {
-            path = loadable_path.wrapping_add(i) as *const c_char
-        } else {
-            path = loadable_path as *const c_char;
-        }
+        // The paths are a contiguous array of strings of path_size bytes each (loader_path)
+        let path = paths.wrapping_add(i * path_size);
+
+        // Each path is searched in all the execution paths
+        let mut execution_paths_iterator = loader_lifecycle_state.execution_paths.iter();
 
         let path_slice = unsafe { CStr::from_ptr(path) }
             .to_str()

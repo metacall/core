@@ -65,9 +65,17 @@ if(OPTION_BUILD_MUSL)
 	)
 endif()
 
+# Environment for the rs_port build script, it generates the bindings from
+# the build folder and links against the MetaCall library of this build
+set(RS_PORT_ENV
+	CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+	CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
+	PROJECT_OUTPUT_DIR=${PROJECT_OUTPUT_DIR}
+)
+
 add_custom_target(${target}_clippy ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS="${RUST_LINK_FLAGS}" ${Rust_CARGO_EXECUTABLE} clippy ${TARGET_BUILD_TYPE} -- -D warnings
+	COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS="${RUST_LINK_FLAGS}" ${RS_PORT_ENV} ${Rust_CARGO_EXECUTABLE} clippy ${TARGET_BUILD_TYPE} -- -D warnings
 )
 
 add_custom_target(${target}_fmt ALL
@@ -78,13 +86,18 @@ add_custom_target(${target}_fmt ALL
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS="${RUST_LINK_FLAGS}" ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS="${RUST_LINK_FLAGS}" ${RS_PORT_ENV} ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
 )
 
 add_dependencies(${target}
 	${target}_clippy
 	${target}_fmt
+)
+
+# The rs_port links against the MetaCall library, clippy builds it too
+add_dependencies(${target}_clippy
+	metacall
 )
 
 set_property(TARGET ${target}

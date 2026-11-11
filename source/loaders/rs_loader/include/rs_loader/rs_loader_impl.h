@@ -27,24 +27,9 @@
 
 #include <configuration/configuration.h>
 
-#include <stddef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct rs_loader_template_instantiation
-{
-	const char *template_name;
-	const char **types;
-	size_t type_count;
-} rs_loader_template_instantiation;
-
-typedef struct rs_loader_load_data
-{
-	const rs_loader_template_instantiation *instantiations;
-	size_t instantiation_count;
-} rs_loader_load_data;
 
 RS_LOADER_API loader_impl_data rs_loader_impl_initialize(loader_impl impl, configuration config);
 

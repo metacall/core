@@ -516,3 +516,23 @@ TEST_F(metacall_cxx_port_test, inspect)
 
 	metacall::metacall_allocator_destroy(allocator);
 }
+
+TEST_F(metacall_cxx_port_test, handle_function)
+{
+	const char buffer[] = "mock";
+	void *handle = NULL;
+
+	ASSERT_EQ((int)0, (int)metacall::metacall_load_from_memory("mock", buffer, sizeof(buffer), &handle));
+
+	{
+		metacall::function<double, double, double> fn(handle, "two_doubles");
+
+		/* The mock loader returns always the same value */
+		EXPECT_EQ((double)3.1416, (double)fn(1.0, 2.0).to_value());
+	}
+
+	/* A function not found in the handle throws */
+	EXPECT_THROW((metacall::function<double, double, double>(handle, "does_not_exist")), std::runtime_error);
+
+	EXPECT_EQ((int)0, (int)metacall::metacall_clear(handle));
+}

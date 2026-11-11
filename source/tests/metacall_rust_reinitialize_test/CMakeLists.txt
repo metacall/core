@@ -73,8 +73,6 @@ target_include_directories(${target}
 	PRIVATE
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
-	${PROJECT_SOURCE_DIR}/source/loaders/rs_loader/include
-	${PROJECT_BINARY_DIR}/source/loaders/rs_loader/include
 )
 
 #

@@ -62,9 +62,20 @@ pub enum RegistrationError {
     DynlinkError(String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TemplateInstantiation {
     pub template: String,
+    // TODO: Nested template arguments (i.e: { "Recursive": [ "i32", { "Inner": [ "i64", "i64" ] } ] })
+    // need class templates, once they are implemented the types become a tree:
+    //
+    // pub enum TemplateArgument {
+    //     Type(String),
+    //     Template { name: String, args: Vec<TemplateArgument> },
+    // }
+    //
+    // The parser (rs_loader lifecycle/template.rs) builds it recursively, its Display renders
+    // Inner<i64, i64> so the wrappers and the instantiation names do not change, and the
+    // registrator gets the type of the instantiated class instead of using get_loader_type
     pub types: Vec<String>,
 }
 
@@ -600,6 +611,11 @@ impl CompilerState {
     /// Loads the library of the compiled crate, as defined by its linkage
     pub fn load(&self) -> Result<DynlinkLibrary, String> {
         load_library(&self.output, self.linkage)
+    }
+
+    /// Instantiations whose template is declared in the compiled crate
+    pub fn instantiations(&self) -> &[TemplateInstantiation] {
+        &self.instantiations
     }
 }
 
@@ -1338,18 +1354,17 @@ pub fn compile(
     // Parse fails, stop
     parsing_result?;
 
+    // Only the instantiations of the templates declared in this crate are compiled, a load can
+    // have multiple sources, so the caller checks that each instantiation has been found
+    let mut found = Vec::new();
+
     for instantiation in instantiations {
         let Some(template) = callbacks
             .templates
             .iter()
             .find(|template| template.name == instantiation.template)
         else {
-            let err = format!("Template '{}' not found.", instantiation.template);
-            return Err(CompilerError {
-                diagnostics: String::new(),
-                errors: err.clone(),
-                err,
-            });
+            continue;
         };
 
         if template.generics.len() != instantiation.types.len() {
@@ -1361,14 +1376,16 @@ pub fn compile(
             );
             return Err(CompilerError {
                 diagnostics: String::new(),
-                errors: err.clone(),
+                errors: String::new(),
                 err,
             });
         }
+
+        found.push(instantiation.clone());
     }
 
     let mut patched_callback =
-        generate_wrapper(callbacks, instantiations).expect("Unable to generate wrapper");
+        generate_wrapper(callbacks, &found).expect("Unable to generate wrapper");
 
     // Generate binary
     match rustc_driver::catch_fatal_errors(|| {
@@ -1381,7 +1398,7 @@ pub fn compile(
             functions: patched_callback.functions,
             templates: patched_callback.templates,
             classes: patched_callback.classes,
-            instantiations: instantiations.to_vec(),
+            instantiations: found,
         }),
         Err(err) => {
             // Read buffered diagnostics
@@ -1425,7 +1442,7 @@ pub fn compile_instance(
 ) -> Result<DynlinkLibrary, CompilerError> {
     let error = |err: String| CompilerError {
         diagnostics: String::new(),
-        errors: err.clone(),
+        errors: String::new(),
         err,
     };
 

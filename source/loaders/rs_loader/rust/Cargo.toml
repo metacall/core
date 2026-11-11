@@ -19,3 +19,4 @@ members = ["compiler"]
 [dependencies]
 # api = { path = "./api" }
 compiler = { path = "./compiler" }
+metacall = { path = "../../../ports/rs_port" }
