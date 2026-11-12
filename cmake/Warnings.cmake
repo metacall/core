@@ -64,7 +64,6 @@ if(WARNINGS_ENABLED)
 		add_compile_options(-Wpointer-arith)
 		#add_compile_options(-Wcast-qual)
 		#add_compile_options(-Winline)
-		#add_compile_options(-Wold-style-definition)
 		add_compile_options(-Wstrict-aliasing=2)
 		#add_compile_options(-Wundef)
 		add_compile_options(-Wredundant-decls)
@@ -78,7 +77,8 @@ if(WARNINGS_ENABLED)
 		endif()
 
 		# C only flags
-		#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes -Wold-style-definition -Wnested-externs")
+		#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wmissing-prototypes")
 		#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wdeclaration-after-statement")
 
 		set(WARNINGS_C_AVAILABLE 1)
