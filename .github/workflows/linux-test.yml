@@ -61,6 +61,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Reduce mmap ASLR entropy for sanitizers
+        run: sudo sysctl vm.mmap_rnd_bits=28
+
       - name: Install, build and run thread sanitizer tests
         run: ./docker-compose.sh test-${{ matrix.sanitizer }}
         env:
@@ -106,6 +109,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Reduce mmap ASLR entropy for sanitizers
+        if: matrix.clang == 'clang-address-sanitizer' || matrix.clang == 'clang-thread-sanitizer'
+        run: sudo sysctl vm.mmap_rnd_bits=28
 
       - name: Install, build and run Clang tests
         run: ./docker-compose.sh test-${{ matrix.clang }}
