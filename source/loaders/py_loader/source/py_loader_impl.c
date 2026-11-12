@@ -167,9 +167,9 @@ static int py_loader_impl_check_class(loader_impl_py py_impl, PyObject *obj);
 
 static void py_loader_impl_error_print(loader_impl_py py_impl);
 
-static value py_loader_impl_error_value(loader_impl_py py_impl);
+static value py_loader_impl_throwable_value(loader_impl_py py_impl);
 
-static value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj);
+static value py_loader_impl_exception_value(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj);
 
 #if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
 	#if (defined(__ADDRESS_SANITIZER__) || defined(__MEMORY_SANITIZER__))
@@ -483,7 +483,7 @@ value py_object_interface_method_invoke(object obj, object_impl impl, method m, 
 
 	if (result == NULL)
 	{
-		ret = py_loader_impl_error_value(loader_impl_get(obj_impl->impl));
+		ret = py_loader_impl_throwable_value(loader_impl_get(obj_impl->impl));
 		goto release;
 	}
 
@@ -1292,7 +1292,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	{
 		PyObject *tb = PyException_GetTraceback(obj);
 
-		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb ? tb : Py_NonePtr());
+		v = py_loader_impl_exception_value(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb ? tb : Py_NonePtr());
 
 		Py_DecRef(tb);
 	}
@@ -1684,7 +1684,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	if (PyErr_Occurred() != NULL)
 	{
-		v = py_loader_impl_error_value(py_impl);
+		v = py_loader_impl_throwable_value(py_impl);
 
 		if (v == NULL)
 		{
@@ -4209,13 +4209,13 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 	PyErr_Restore(type, value, traceback);
 }
 
-value py_loader_impl_error_value(loader_impl_py py_impl)
+value py_loader_impl_throwable_value(loader_impl_py py_impl)
 {
 	PyObject *type_obj = NULL, *value_obj = NULL, *traceback_obj = NULL;
 
 	PyErr_Fetch(&type_obj, &value_obj, &traceback_obj);
 
-	value v = py_loader_impl_error_value_from_exception(py_impl, type_obj, value_obj, traceback_obj);
+	value v = py_loader_impl_exception_value(py_impl, type_obj, value_obj, traceback_obj);
 
 	PyErr_Clear();
 
@@ -4225,7 +4225,7 @@ value py_loader_impl_error_value(loader_impl_py py_impl)
 	return value_create_throwable(th);
 }
 
-value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj)
+value py_loader_impl_exception_value(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj)
 {
 	static const char separator_str[] = "";
 	static const char traceback_not_found[] = "Traceback not available";

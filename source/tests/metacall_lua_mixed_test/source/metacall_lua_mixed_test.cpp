@@ -804,9 +804,11 @@ TEST_F(metacall_lua_mixed_test, runtime_error_propagation)
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
-		/* Runtime errors should return NULL */
+		/* Runtime errors should return a throwable */
 		void *ret = metacall("lua_test_runtime_error");
-		EXPECT_EQ((void *)NULL, (void *)ret);
+		ASSERT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ(METACALL_THROWABLE, metacall_value_id(ret));
+		metacall_value_destroy(ret);
 	}
 #endif /* OPTION_BUILD_LOADERS_LUA */
 
@@ -829,9 +831,11 @@ TEST_F(metacall_lua_mixed_test, runtime_error_with_nil_access)
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
-		/* Attempt to index nil should return NULL */
+		/* Attempt to index nil should return a throwable */
 		void *ret = metacall("lua_test_nil_access");
-		EXPECT_EQ((void *)NULL, (void *)ret);
+		ASSERT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ(METACALL_THROWABLE, metacall_value_id(ret));
+		metacall_value_destroy(ret);
 	}
 #endif /* OPTION_BUILD_LOADERS_LUA */
 
