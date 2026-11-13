@@ -34,9 +34,5 @@ pub fn initialize() -> Result<MetaCallDestroy, MetaCallInitError> {
 pub fn is_initialized() -> bool {
     let initialized = unsafe { metacall_is_initialized(ptr::null_mut()) };
 
-    if initialized == 0 {
-        return true;
-    }
-
-    false
+    initialized == 0
 }
