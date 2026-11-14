@@ -126,6 +126,22 @@ TEST_F(metacall_node_test, DefaultConstructor)
 		EXPECT_EQ((int)0, (int)metacall_function_parameter_type(test_destructured_func, 0, &param_id));
 		EXPECT_EQ((enum metacall_value_id)METACALL_MAP, param_id);
 
+		// Test load from memory + destructured array type
+		const char buffer_destructured_array[] = {
+			"module.exports = { test_destructured_array: ([ a, b ]) => a + b };"
+		};
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer_destructured_array, sizeof(buffer_destructured_array), NULL));
+
+		void *test_destructured_array_func = metacall_function("test_destructured_array");
+
+		EXPECT_NE((void *)NULL, test_destructured_array_func);
+
+		enum metacall_value_id param_array_id = METACALL_INVALID;
+
+		EXPECT_EQ((int)0, (int)metacall_function_parameter_type(test_destructured_array_func, 0, &param_array_id));
+		EXPECT_EQ((enum metacall_value_id)METACALL_ARRAY, param_array_id);
+
 		const char *node_module_scripts[] = {
 			"path"
 		};

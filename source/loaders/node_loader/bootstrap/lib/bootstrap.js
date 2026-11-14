@@ -252,8 +252,10 @@ function node_loader_trampoline_discover_arguments(node) {
 			args.push(null);
 			types.push('Map');
 			has_types = true;
-
-			// TODO: Support ArrayPattern for array destructuring if needed
+		} else if (p.type === 'ArrayPattern' || (p.type === 'AssignmentPattern' && p.left && p.left.type === 'ArrayPattern')) {
+			args.push(null);
+			types.push('Array');
+			has_types = true;
 		}
 	}
 
