@@ -110,6 +110,83 @@ TEST_F(metacall_node_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 		metacall_value_destroy(args[0]);
 
+		// Test load from memory + destructured map type
+		const char buffer_destructured[] = {
+			"module.exports = { test_destructured: ({ a, b }) => a + b };"
+		};
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer_destructured, sizeof(buffer_destructured), NULL));
+
+		void *test_destructured_func = metacall_function("test_destructured");
+
+		EXPECT_NE((void *)NULL, test_destructured_func);
+
+		enum metacall_value_id param_id = METACALL_INVALID;
+
+		EXPECT_EQ((int)0, (int)metacall_function_parameter_type(test_destructured_func, 0, &param_id));
+		EXPECT_EQ((enum metacall_value_id)METACALL_MAP, param_id);
+
+		void *destructured_args[] = {
+			metacall_value_create_map(NULL, 2)
+		};
+
+		void **destructured_map_value = metacall_value_to_map(destructured_args[0]);
+
+		destructured_map_value[0] = metacall_value_create_array(NULL, 2);
+		destructured_map_value[1] = metacall_value_create_array(NULL, 2);
+
+		void **destructured_pair_a = metacall_value_to_array(destructured_map_value[0]);
+		void **destructured_pair_b = metacall_value_to_array(destructured_map_value[1]);
+
+		destructured_pair_a[0] = metacall_value_create_string("a", 1);
+		destructured_pair_a[1] = metacall_value_create_double(4.0);
+
+		destructured_pair_b[0] = metacall_value_create_string("b", 1);
+		destructured_pair_b[1] = metacall_value_create_double(6.0);
+
+		ret = metacallv("test_destructured", destructured_args);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((double)10.0, (double)metacall_value_to_double(ret));
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(destructured_args[0]);
+
+		// Test load from memory + destructured array type
+		const char buffer_destructured_array[] = {
+			"module.exports = { test_destructured_array: ([ a, b ]) => a + b };"
+		};
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer_destructured_array, sizeof(buffer_destructured_array), NULL));
+
+		void *test_destructured_array_func = metacall_function("test_destructured_array");
+
+		EXPECT_NE((void *)NULL, test_destructured_array_func);
+
+		enum metacall_value_id param_array_id = METACALL_INVALID;
+
+		EXPECT_EQ((int)0, (int)metacall_function_parameter_type(test_destructured_array_func, 0, &param_array_id));
+		EXPECT_EQ((enum metacall_value_id)METACALL_ARRAY, param_array_id);
+
+		void *destructured_array_args[] = {
+			metacall_value_create_array(NULL, 2)
+		};
+
+		void **destructured_array_value = metacall_value_to_array(destructured_array_args[0]);
+
+		destructured_array_value[0] = metacall_value_create_double(3.0);
+		destructured_array_value[1] = metacall_value_create_double(4.0);
+
+		ret = metacallv("test_destructured_array", destructured_array_args);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((double)7.0, (double)metacall_value_to_double(ret));
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(destructured_array_args[0]);
+
 		const char *node_module_scripts[] = {
 			"path"
 		};
