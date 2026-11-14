@@ -200,10 +200,11 @@ struct loader_impl_async_safe_type
 {
 	uv_mutex_t mutex;
 	uv_cond_t cond;
+	bool completed;
 	T &args;
 
 	loader_impl_async_safe_type(T &args) :
-		args(args)
+		completed(false), args(args)
 	{
 		uv_mutex_init(&mutex);
 		uv_cond_init(&cond);
@@ -227,11 +228,15 @@ struct loader_impl_async_safe_type
 
 	void wait()
 	{
-		uv_cond_wait(&cond, &mutex);
+		while (!completed)
+		{
+			uv_cond_wait(&cond, &mutex);
+		}
 	}
 
 	void notify()
 	{
+		completed = true;
 		uv_cond_signal(&cond);
 	}
 };
@@ -1377,6 +1382,11 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 				return static_cast<function_return>(NULL);
 			}
 
+			/* Create reference to promise */
+			node_future->node_impl = node_impl;
+			node_future->impl = node_impl->impl;
+			node_future->promise_ref = nullptr;
+
 			f = future_create(node_future, &future_node_singleton);
 
 			if (f == NULL)
@@ -1391,11 +1401,9 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 			if (ret == NULL)
 			{
 				future_destroy(f);
-			}
 
-			/* Create reference to promise */
-			node_future->node_impl = node_impl;
-			node_future->impl = node_impl->impl;
+				return static_cast<function_return>(NULL);
+			}
 
 			status = napi_create_reference(env, v, 1, &node_future->promise_ref);
 
