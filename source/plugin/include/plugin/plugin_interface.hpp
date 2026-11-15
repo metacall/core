@@ -56,10 +56,17 @@
 		} \
 	} while (0)
 
-#define EXTENSION_FUNCTION(ret, name, ...) \
-	PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
-		EXTENSION_FUNCTION_IMPL_VOID(ret, name), \
-		EXTENSION_FUNCTION_IMPL(ret, name, __VA_ARGS__))
+/*
+ * The name goes into the variadic arguments so they are never left out (leaving
+ * them out is a GNU extension before C++20, -Wgnu-zero-variadic-macro-arguments),
+ * a comma means that it has parameter types
+ */
+#define EXTENSION_FUNCTION(ret, ...) \
+	PREPROCESSOR_TUPLE_EXPAND_MACRO( \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_COMMA(__VA_ARGS__), \
+			EXTENSION_FUNCTION_IMPL, \
+			EXTENSION_FUNCTION_IMPL_VOID), \
+		(ret, __VA_ARGS__))
 
 #define EXTENSION_FUNCTION_THROW(error) \
 	do \
@@ -78,7 +85,7 @@
 		EXTENSION_FUNCTION_THROW(error_msg.c_str()); \
 	}
 
-#define EXTENSION_FUNCTION_CHECK(error, ...) \
+#define EXTENSION_FUNCTION_CHECK_IMPL(error, ...) \
 	do \
 	{ \
 		(void)data; /* TODO: Do something with data */ \
@@ -96,5 +103,21 @@
 		} \
 		PREPROCESSOR_FOR(EXTENSION_FUNCTION_CHECK_ITERATOR, error, __VA_ARGS__) \
 	} while (0)
+
+/* Passing an empty argument after the comma is valid, unlike leaving the variadic arguments out */
+#define EXTENSION_FUNCTION_CHECK_IMPL_VOID(error) \
+	EXTENSION_FUNCTION_CHECK_IMPL(error, )
+
+/*
+ * The error goes into the variadic arguments so they are never left out (leaving
+ * them out is a GNU extension before C++20, -Wgnu-zero-variadic-macro-arguments),
+ * a comma means that it has parameter types
+ */
+#define EXTENSION_FUNCTION_CHECK(...) \
+	PREPROCESSOR_TUPLE_EXPAND_MACRO( \
+		PREPROCESSOR_IF(PREPROCESSOR_ARGS_COMMA(__VA_ARGS__), \
+			EXTENSION_FUNCTION_CHECK_IMPL, \
+			EXTENSION_FUNCTION_CHECK_IMPL_VOID), \
+		(__VA_ARGS__))
 
 #endif /* PLUGIN_INTERFACE_HPP */

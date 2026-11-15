@@ -139,6 +139,17 @@ TEST_F(preprocessor_test, foreach)
 	EXPECT_STREQ(for_each_str, "abc");
 }
 
+TEST_F(preprocessor_test, foreach_one)
+{
+#define PREPROCESSOR_TEST_FOR_EACH(expr) expr "-"
+
+	const char for_each_str[] = PREPROCESSOR_FOR_EACH(PREPROCESSOR_TEST_FOR_EACH, "a");
+
+#undef PREPROCESSOR_TEST_FOR_EACH
+
+	EXPECT_STREQ(for_each_str, "a-");
+}
+
 TEST_F(preprocessor_test, foreach_empty)
 {
 #define PREPROCESSOR_TEST_FOR_EACH(expr) "33434"
@@ -170,6 +181,21 @@ TEST_F(preprocessor_test, for)
 #undef PREPROCESSOR_TEST_FOR
 
 	EXPECT_STREQ(for_str, "yeet0a-yeet1b-yeet2c-yeet3d-yeet4e-yeet5f-");
+}
+
+TEST_F(preprocessor_test, for_one)
+{
+#define PREPROCESSOR_TEST_FOR(context, iterator, element) \
+	context \
+	PREPROCESSOR_STRINGIFY(iterator) \
+		element \
+		"-"
+
+	const char for_str[] = PREPROCESSOR_FOR(PREPROCESSOR_TEST_FOR, "yeet", "a");
+
+#undef PREPROCESSOR_TEST_FOR
+
+	EXPECT_STREQ(for_str, "yeet0a-");
 }
 
 TEST_F(preprocessor_test, if)
