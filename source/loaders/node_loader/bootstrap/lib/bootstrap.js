@@ -236,21 +236,29 @@ function node_loader_trampoline_discover_arguments_generate(args, index) {
 function node_loader_trampoline_discover_arguments(node) {
 	const params = node.params;
 	const args = [];
+	const types = [];
+	let has_types = false;
 
 	for (let i = 0; i < params.length; ++i) {
 		const p = params[i];
 
 		if (p.type === 'Identifier') {
 			args.push(p.name);
+			types.push(null);
 		} else if (p.type === 'AssignmentPattern' && p.left && p.left.type === 'Identifier') {
 			args.push(p.left.name);
-		} else if (p.type === 'ObjectPattern') {
-			// TODO: Use this trick until meta object protocol
+			types.push(null);
+		} else if (p.type === 'ObjectPattern' || (p.type === 'AssignmentPattern' && p.left && p.left.type === 'ObjectPattern')) {
 			args.push(null);
+			types.push('Map');
+			has_types = true;
+		} else if (p.type === 'ArrayPattern' || (p.type === 'AssignmentPattern' && p.left && p.left.type === 'ArrayPattern')) {
+			args.push(null);
+			types.push('Array');
+			has_types = true;
 		}
 	}
 
-	// TODO: Use this trick until meta object protocol
 	for (let i = 0; i < params.length; ++i) {
 		const p = args[i];
 
@@ -259,7 +267,10 @@ function node_loader_trampoline_discover_arguments(node) {
 		}
 	}
 
-	return args;
+	return {
+		args: args,
+		types: has_types ? types : null,
+	};
 }
 
 function node_loader_trampoline_discover_function(func) {
@@ -289,12 +300,16 @@ function node_loader_trampoline_discover_function(func) {
 				ast.body[0].expression : ast.body[0];
 
 			if (node_loader_trampoline_is_valid_symbol(node)) {
-				const args = node_loader_trampoline_discover_arguments(node);
+				const { args, types } = node_loader_trampoline_discover_arguments(node);
 				const discover = {
 					ptr: func,
 					signature: args,
 					async: node.async,
 				};
+
+				if (types) {
+					discover['types'] = types;
+				}
 
 				if (node.id && node.id.name) {
 					discover['name'] = node.id.name;
