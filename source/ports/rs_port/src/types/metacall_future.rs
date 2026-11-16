@@ -81,13 +81,16 @@ impl Clone for MetaCallFuture {
 }
 impl Debug for MetaCallFuture {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let boxed_data = unsafe { Box::from_raw(self.data) };
-        let data = if boxed_data.is::<MetaCallNull>() {
+        let data = if self.data.is_null() {
             None
         } else {
-            Some(format!("{:#?}", boxed_data))
+            let data_ref = unsafe { &*self.data };
+            if data_ref.is::<MetaCallNull>() {
+                None
+            } else {
+                Some("Some")
+            }
         };
-        Box::leak(boxed_data);
 
         let resolve = if self.resolve.is_none() {
             "None"
@@ -301,8 +304,22 @@ impl MetaCallFuture {
 
 impl Drop for MetaCallFuture {
     fn drop(&mut self) {
-        if !self.leak {
+        if !self.leak && !self.value.is_null() {
             unsafe { metacall_value_destroy(self.value) };
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MetaCallFuture;
+    use std::ptr::null_mut;
+
+    #[test]
+    fn debug_on_null_raw_future_does_not_take_ownership() {
+        let future = MetaCallFuture::new_raw_leak(null_mut());
+        let output = format!("{future:?}");
+
+        assert!(output.contains("MetaCallFuture"));
     }
 }
