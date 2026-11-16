@@ -1413,7 +1413,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 	return 1;
 }
 
-int loader_impl_load_from_memory_name(loader_impl impl, loader_name *name, const char *buffer, size_t size)
+static int loader_impl_load_from_memory_name(loader_impl impl, loader_name *name, const char *buffer, size_t size)
 {
 	/* TODO: Improve name with time or uuid */
 	static const char format[] = "%p-%p-%" PRIuS "-%u";

@@ -38,21 +38,21 @@ static void *dynlink_impl_global_handle_macos = NULL;
 
 /* -- Methods -- */
 
-const char *dynlink_impl_interface_prefix_macos(void)
+static const char *dynlink_impl_interface_prefix_macos(void)
 {
 	static const char prefix_macos[] = "lib";
 
 	return prefix_macos;
 }
 
-const char *dynlink_impl_interface_extension_macos(void)
+static const char *dynlink_impl_interface_extension_macos(void)
 {
 	static const char extension_macos[] = "dylib";
 
 	return extension_macos;
 }
 
-dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
+static dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 	NSModule impl;
@@ -136,7 +136,7 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
+static int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 	NSSymbol symbol;
@@ -167,7 +167,7 @@ int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, const
 	return (*addr == NULL);
 }
 
-int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
+static int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 	uint32_t options = DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NODELETE) ? NSUNLINKMODULE_OPTION_KEEP_MEMORY_MAPPED : NSUNLINKMODULE_OPTION_NONE;

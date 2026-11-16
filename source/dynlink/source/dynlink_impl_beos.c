@@ -31,21 +31,21 @@
 
 /* -- Methods -- */
 
-const char *dynlink_impl_interface_prefix_beos(void)
+static const char *dynlink_impl_interface_prefix_beos(void)
 {
 	static const char prefix_beos[] = "lib";
 
 	return prefix_beos;
 }
 
-const char *dynlink_impl_interface_extension_beos(void)
+static const char *dynlink_impl_interface_extension_beos(void)
 {
 	static const char extension_beos[] = "so";
 
 	return extension_beos;
 }
 
-dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
+static dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 	image_id impl = 0;
@@ -77,7 +77,7 @@ dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
+static int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	void *symbol = NULL;
 
@@ -96,7 +96,7 @@ int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, const 
 	return (*addr == NULL);
 }
 
-int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
+static int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 

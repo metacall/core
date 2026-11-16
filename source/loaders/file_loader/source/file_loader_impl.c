@@ -113,7 +113,7 @@ static int file_loader_impl_load_glob(loader_impl_file_handle handle, const load
 #endif
 static int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path);
 
-int function_file_interface_create(function func, function_impl impl)
+static int function_file_interface_create(function func, function_impl impl)
 {
 	(void)func;
 	(void)impl;
@@ -121,7 +121,7 @@ int function_file_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_file_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+static function_return function_file_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_file_function file_function = (loader_impl_file_function)impl;
 
@@ -132,7 +132,7 @@ function_return function_file_interface_invoke(function func, function_impl impl
 	return value_create_string(file_function->descriptor->path, file_function->descriptor->length);
 }
 
-function_return function_file_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+static function_return function_file_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -147,7 +147,7 @@ function_return function_file_interface_await(function func, function_impl impl,
 	return NULL;
 }
 
-void function_file_interface_destroy(function func, function_impl impl)
+static void function_file_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_file_function file_function = (loader_impl_file_function)impl;
 
@@ -159,7 +159,7 @@ void function_file_interface_destroy(function func, function_impl impl)
 	}
 }
 
-function_interface function_file_singleton(void)
+static function_interface function_file_singleton(void)
 {
 	static struct function_interface_type file_interface = {
 		&function_file_interface_create,
@@ -171,7 +171,7 @@ function_interface function_file_singleton(void)
 	return &file_interface;
 }
 
-int file_loader_impl_initialize_types(loader_impl impl)
+static int file_loader_impl_initialize_types(loader_impl impl)
 {
 	static struct
 	{

@@ -125,7 +125,7 @@ static int rb_loader_impl_interactive_terminal(void);
 static int rb_loader_impl_run_main = 1;
 static char *rb_loader_impl_main_module = NULL;
 
-int function_rb_interface_create(function func, function_impl impl)
+static int function_rb_interface_create(function func, function_impl impl)
 {
 	signature s = function_signature(func);
 
@@ -518,7 +518,7 @@ static value rb_loader_impl_throwable_value(void)
 	return value_create_throwable(th);
 }
 
-function_return function_rb_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+static function_return function_rb_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
 
@@ -669,7 +669,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 	return v;
 }
 
-function_return function_rb_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+static function_return function_rb_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -684,7 +684,7 @@ function_return function_rb_interface_await(function func, function_impl impl, f
 	return NULL;
 }
 
-void function_rb_interface_destroy(function func, function_impl impl)
+static void function_rb_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
 
@@ -705,7 +705,7 @@ void function_rb_interface_destroy(function func, function_impl impl)
 	}
 }
 
-function_interface function_rb_singleton(void)
+static function_interface function_rb_singleton(void)
 {
 	static struct function_interface_type rb_interface = {
 		&function_rb_interface_create,
@@ -717,7 +717,7 @@ function_interface function_rb_singleton(void)
 	return &rb_interface;
 }
 
-int rb_object_interface_create(object obj, object_impl impl)
+static int rb_object_interface_create(object obj, object_impl impl)
 {
 	(void)obj;
 
@@ -731,7 +731,7 @@ int rb_object_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value rb_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
+static value rb_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
 {
 	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
 	VALUE rb_val_object = rb_object->object;
@@ -756,7 +756,7 @@ value rb_object_interface_get(object obj, object_impl impl, struct accessor_type
 	return result;
 }
 
-int rb_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
+static int rb_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
 {
 	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
 	VALUE rb_val_object = rb_object->object;
@@ -778,7 +778,7 @@ int rb_object_interface_set(object obj, object_impl impl, struct accessor_type *
 	return 0;
 }
 
-value rb_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
+static value rb_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
 	(void)obj;
 
@@ -810,7 +810,7 @@ value rb_object_interface_method_invoke(object obj, object_impl impl, method m, 
 	return result;
 }
 
-value rb_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+static value rb_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)obj;
@@ -825,7 +825,7 @@ value rb_object_interface_method_await(object obj, object_impl impl, method m, o
 	return NULL;
 }
 
-int rb_object_interface_destructor(object obj, object_impl impl)
+static int rb_object_interface_destructor(object obj, object_impl impl)
 {
 	(void)obj;
 	(void)impl;
@@ -833,7 +833,7 @@ int rb_object_interface_destructor(object obj, object_impl impl)
 	return 0;
 }
 
-void rb_object_interface_destroy(object obj, object_impl impl)
+static void rb_object_interface_destroy(object obj, object_impl impl)
 {
 	(void)obj;
 
@@ -871,7 +871,7 @@ object_interface rb_object_interface_singleton(void)
 	return &rb_object_interface;
 }
 
-int rb_class_interface_create(klass cls, class_impl impl)
+static int rb_class_interface_create(klass cls, class_impl impl)
 {
 	(void)cls;
 
@@ -882,7 +882,7 @@ int rb_class_interface_create(klass cls, class_impl impl)
 	return 0;
 }
 
-object rb_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
+static object rb_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
 {
 	(void)cls;
 	(void)ctor;
@@ -910,7 +910,7 @@ object rb_class_interface_constructor(klass cls, class_impl impl, const char *na
 	return obj;
 }
 
-value rb_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
+static value rb_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
 {
 	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
 	const char *attr_name = accessor->id == ACCESSOR_TYPE_DYNAMIC ? accessor->data.key : attribute_name(accessor->data.attr);
@@ -935,7 +935,7 @@ value rb_class_interface_static_get(klass cls, class_impl impl, struct accessor_
 	return result;
 }
 
-int rb_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
+static int rb_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
 {
 	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
 	const char *attr_name = accessor->id == ACCESSOR_TYPE_DYNAMIC ? accessor->data.key : attribute_name(accessor->data.attr);
@@ -959,7 +959,7 @@ int rb_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 	return 0;
 }
 
-value rb_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
+static value rb_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	// TODO
 	(void)cls;
@@ -1001,7 +1001,7 @@ value rb_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 	return result;
 }
 
-value rb_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+static value rb_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)cls;
@@ -1016,7 +1016,7 @@ value rb_class_interface_static_await(klass cls, class_impl impl, method m, clas
 	return NULL;
 }
 
-void rb_class_interface_destroy(klass cls, class_impl impl)
+static void rb_class_interface_destroy(klass cls, class_impl impl)
 {
 	(void)cls;
 
@@ -1053,7 +1053,7 @@ class_interface rb_class_interface_singleton(void)
 	return &rb_class_interface;
 }
 
-int rb_loader_impl_initialize_types(loader_impl impl)
+static int rb_loader_impl_initialize_types(loader_impl impl)
 {
 	/* TODO: move this to loader_impl by passing the structure and loader_impl_derived callback */
 
@@ -1250,7 +1250,7 @@ int rb_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	return 0;
 }
 
-VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
+static VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
 {
 	VALUE file_exists = rb_funcall(rb_cFile, rb_intern("exist?"), 1, module_absolute_path);
 	VALUE file_valid = rb_funcall(rb_cFile, rb_intern("file?"), 1, module_absolute_path);
@@ -1270,7 +1270,7 @@ VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
 	return Qnil;
 }
 
-VALUE rb_loader_impl_load_data(loader_impl impl, const loader_path path)
+static VALUE rb_loader_impl_load_data(loader_impl impl, const loader_path path)
 {
 	VALUE load_path_array = rb_gv_get("$:");
 	VALUE load_path_array_size = rb_funcallv(load_path_array, rb_intern("size"), 0, NULL);
@@ -1305,7 +1305,7 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_path path)
 	return Qnil;
 }
 
-VALUE rb_loader_impl_module_eval_protect(VALUE args)
+static VALUE rb_loader_impl_module_eval_protect(VALUE args)
 {
 	/* TODO: Do this properly */
 	loader_impl_rb_module_eval_protect protect = (loader_impl_rb_module_eval_protect)args;
@@ -1335,7 +1335,7 @@ static void rb_loader_impl_print_exception(void)
 	}
 }
 
-int rb_loader_impl_module_eval(VALUE module, VALUE module_data, VALUE *result)
+static int rb_loader_impl_module_eval(VALUE module, VALUE module_data, VALUE *result)
 {
 	struct loader_impl_rb_module_eval_protect_type protect;
 	int state;
@@ -1355,7 +1355,7 @@ int rb_loader_impl_module_eval(VALUE module, VALUE module_data, VALUE *result)
 	return state;
 }
 
-loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE module, VALUE module_data, VALUE result)
+static loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE module, VALUE module_data, VALUE result)
 {
 	loader_impl_rb_module rb_module = malloc(sizeof(struct loader_impl_rb_module_type));
 
@@ -1407,7 +1407,7 @@ loader_impl_rb_module rb_loader_impl_create_module(VALUE name_capitalized, VALUE
 	return rb_module;
 }
 
-loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_path path, const loader_name name)
+static loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_path path, const loader_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 	VALUE name_capitalized = rb_funcallv(name_value, rb_intern("capitalize"), 0, NULL);
@@ -1619,7 +1619,7 @@ vector_error:
 	return NULL;
 }
 
-loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, const loader_name name, const char *buffer, size_t size)
+static loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -1747,7 +1747,7 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 0;
 }
 
-int rb_loader_impl_discover_func(loader_impl impl, function f, rb_function_parser function_parser)
+static int rb_loader_impl_discover_func(loader_impl impl, function f, rb_function_parser function_parser)
 {
 	signature s = function_signature(f);
 
@@ -1768,7 +1768,7 @@ int rb_loader_impl_discover_func(loader_impl impl, function f, rb_function_parse
 	return 1;
 }
 
-loader_impl_rb_function rb_function_create(loader_impl impl, loader_impl_rb_module rb_module, ID id)
+static loader_impl_rb_function rb_function_create(loader_impl impl, loader_impl_rb_module rb_module, ID id)
 {
 	loader_impl_rb_function rb_function = malloc(sizeof(struct loader_impl_rb_function_type));
 
@@ -1789,7 +1789,7 @@ loader_impl_rb_function rb_function_create(loader_impl impl, loader_impl_rb_modu
 	return NULL;
 }
 
-void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method))
+static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method))
 {
 	VALUE methods_v_size = rb_funcallv(methods, rb_intern("size"), 0, NULL);
 	int method_index, methods_size = FIX2INT(methods_v_size);
@@ -1856,7 +1856,7 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 	}
 }
 
-void rb_loader_impl_discover_attributes(klass c, const char *class_name_str, VALUE attributes, int (*register_attr)(klass, attribute))
+static void rb_loader_impl_discover_attributes(klass c, const char *class_name_str, VALUE attributes, int (*register_attr)(klass, attribute))
 {
 	size_t attributes_index, attributes_size = RARRAY_LEN(attributes);
 
@@ -2020,7 +2020,7 @@ static VALUE rb_loader_impl_discover_module_protect(VALUE args)
 	return INT2NUM(0);
 }
 
-int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_module, context ctx)
+static int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_module, context ctx)
 {
 	struct loader_impl_rb_discover_module_protect_type protect;
 	int state;

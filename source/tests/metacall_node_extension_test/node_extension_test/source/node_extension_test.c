@@ -50,4 +50,9 @@ static napi_value Init(napi_env env, napi_value exports)
 	return exports;
 }
 
+/* NAPI_MODULE defines this function without declaring it first */
+#ifdef NODE_API_MODULE_GET_API_VERSION
+NAPI_MODULE_EXPORT int32_t NODE_API_MODULE_GET_API_VERSION(void);
+#endif
+
 NAPI_MODULE(node_extension_test, Init)
