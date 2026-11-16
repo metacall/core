@@ -24,13 +24,23 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-#include <sstream>
-#include <string>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <memory>
 
 class metacall_rust_conversion_test : public testing::Test
 {
 public:
 };
+
+static bool is_synthetic_rust_type(const char *name)
+{
+	return std::strcmp(name, "Array") == 0 ||
+		   std::strcmp(name, "Map") == 0 ||
+		   std::strcmp(name, "Ptr") == 0 ||
+		   std::strcmp(name, "Null") == 0;
+}
 
 TEST_F(metacall_rust_conversion_test, DefaultConstructor)
 {
@@ -38,73 +48,71 @@ TEST_F(metacall_rust_conversion_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	// Initialize the script
+	const char identity_script[] =
+		"pub fn identity<T>(x: T) -> T {\n"
+		"    x\n"
+		"}\n";
+
+	ASSERT_EQ((int)0, (int)metacall_load_from_memory("rs", identity_script, sizeof(identity_script) - 1, NULL));
+
+	void *identity_tpl = metacall_template("identity");
+
+	ASSERT_NE(identity_tpl, nullptr);
+
+	struct metacall_loader_type *types = NULL;
+	size_t types_size = 0;
+
+	ASSERT_EQ(0, metacall_loader_types("rs", &types, &types_size));
+
+	/* The array is malloc'd for the caller, name and t are owned by the loader */
+	std::unique_ptr<struct metacall_loader_type, void (*)(void *)> types_guard(types, std::free);
+
+	ASSERT_GT(types_size, (size_t)0);
+
+	for (size_t i = 0; i < types_size; ++i)
 	{
-		std::ostringstream oss;
+		SCOPED_TRACE(types[i].name);
 
-		oss << "use std::collections::HashMap;" << std::endl;
-
-		// TODO: We can infer this with metacall_loader_types(...)
-		// but right now templates are not supported, and the types
-		// are registered in a way that cannot be converted into code
-		// porperly, you can check pub unsafe fn define_type(...)
-		// in rs_loader_impl_initialize for understanding it
-		struct rust_type_mapping
-		{
-			enum metacall_value_id id;
-			const char *rust_type;
+		struct metacall_template_argument args[] = {
+			{ METACALL_TEMPLATE_ARGUMENT_TYPE, types[i].t }
 		};
 
-		const rust_type_mapping rust_types[] = {
-			{ METACALL_BOOL, "bool" },
-			{ METACALL_CHAR, "i8" },
-			{ METACALL_SHORT, "i16" },
-			{ METACALL_INT, "i32" },
-			{ METACALL_LONG, "i64" },
-			{ METACALL_FLOAT, "f32" },
-			{ METACALL_DOUBLE, "f64" },
-			{ METACALL_STRING, "String" },
-			{ METACALL_ARRAY, "Vec<i32>" },
-			{ METACALL_MAP, "HashMap<String, String>" },
-		};
+		void *fn_val = metacall_template_instantiate(identity_tpl, args, sizeof(args) / sizeof(args[0]));
 
-		for (const auto &t : rust_types)
+		/* Non-Rust synthetic type names registered in initialize.rs (Array, Map, Ptr, Null)
+		 * fail rustc compilation because they are not valid Rust types */
+		if (is_synthetic_rust_type(types[i].name))
 		{
-			oss << "fn identity_" << metacall_value_id_name(t.id) << "(x: " << t.rust_type << ") -> " << t.rust_type << " { x }";
+			EXPECT_EQ(fn_val, nullptr);
+			std::cout << types[i].name << " (" << metacall_value_id_name(types[i].id) << ") => NULL (instantiation failed as expected)" << std::endl;
+			continue;
 		}
 
-		std::string identity_script = oss.str();
-
-		std::cout << identity_script << std::endl;
-
-		ASSERT_EQ((int)0, (int)metacall_load_from_memory("rs", identity_script.c_str(), identity_script.length(), NULL));
-	}
-
-	// Test identity
-	{
-		for (size_t id = 0; id < METACALL_SIZE; ++id)
+		if (fn_val == nullptr || metacall_value_id(fn_val) != METACALL_FUNCTION)
 		{
-			const char *type_id_name = metacall_value_id_name((enum metacall_value_id)id);
-			std::string func_name = std::string("identity_") + type_id_name;
-			void *f = metacall_function(func_name.c_str());
-
-			if (f == NULL)
-			{
-				std::cout << type_id_name << " => NULL (unsupported)" << std::endl;
-				continue;
-			}
-
-			void *args[1] = { metacall_value_create((enum metacall_value_id)id) };
-			void *ret = metacallfv(f, args);
-
-			ASSERT_NE(ret, nullptr);
-			ASSERT_EQ(metacall_value_id(ret), (enum metacall_value_id)id);
-
-			std::cout << type_id_name << " => " << metacall_value_id_name(metacall_value_id(ret)) << std::endl;
-
-			metacall_value_destroy(ret);
-			metacall_value_destroy(args[0]);
+			ADD_FAILURE() << "Failed to instantiate identity::<" << types[i].name << ">";
+			continue;
 		}
+
+		void *f = metacall_value_to_function(fn_val);
+		void *call_args[1] = { metacall_value_create(types[i].id) };
+		void *ret = metacallfv_s(f, call_args, 1);
+
+		/* metacallfv_s may replace the slot with a cast value, so always release call_args[0] itself */
+		metacall_value_destroy(call_args[0]);
+
+		if (ret == nullptr)
+		{
+			ADD_FAILURE() << "identity::<" << types[i].name << "> returned NULL";
+			continue;
+		}
+
+		EXPECT_EQ(metacall_value_id(ret), types[i].id);
+
+		std::cout << types[i].name << " (" << metacall_value_id_name(types[i].id) << ") => "
+				  << metacall_value_id_name(metacall_value_id(ret)) << std::endl;
+
+		metacall_value_destroy(ret);
 	}
 
 	metacall_destroy();
