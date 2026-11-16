@@ -15,6 +15,14 @@ namespace CSLoader.Contracts
 
     public interface ILoader
     {
+        ReflectClass[] Classes();
+
+        ReflectConstructor[] Constructors();
+
+        ReflectMethod[] Methods();
+
+        ReflectAttribute[] Attributes();
+
         ReflectFunction[] Functions();
 
         string LoadFromSourceFunctions(string[] source);

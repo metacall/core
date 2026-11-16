@@ -16,13 +16,129 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #include <cs_loader/netcore.h>
 
 #include <log/log.h>
 
 #include <exception>
+
+#include <limits>
+
+namespace
+{
+template <typename Record, typename Writer>
+Record *cs_get_metadata(Writer writer, std::vector<Record> &records, int &stored_count, int *count, const char *label)
+{
+	if (count == nullptr)
+	{
+		return nullptr;
+	}
+
+	/* Failure remains distinguishable from successful empty metadata. */
+	*count = -1;
+
+	if (writer == nullptr)
+	{
+		return nullptr;
+	}
+
+	try
+	{
+		const int maximum_attempts = 3;
+
+		for (int attempt = 0; attempt < maximum_attempts; ++attempt)
+		{
+			int required = -1;
+			int status = writer(&required, nullptr, 0);
+
+			if (status != METADATA_SUCCESS || required < 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR,
+					"Failed to query C# %s metadata", label);
+				return nullptr;
+			}
+
+			std::vector<Record> next_records;
+			const size_t required_size = static_cast<size_t>(required);
+
+			if (required_size > next_records.max_size() ||
+				required_size > std::numeric_limits<size_t>::max() / sizeof(Record))
+			{
+				log_write("metacall", LOG_LEVEL_ERROR,
+					"C# %s metadata size exceeds native limits", label);
+				return nullptr;
+			}
+
+			if (required == 0)
+			{
+				records.swap(next_records);
+				stored_count = 0;
+				*count = 0;
+				return nullptr;
+			}
+
+			/* The managed writer needs actual elements, not reserved capacity. */
+			next_records.resize(required_size);
+
+			int written = -1;
+
+			status = writer(
+				&written,
+				next_records.data(),
+				required);
+
+			if (status == METADATA_INSUFFICIENT_CAPACITY)
+			{
+				if (written <= required)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR,
+						"Invalid C# %s metadata capacity response", label);
+					return nullptr;
+				}
+
+				/* Discard this buffer and query again on the next attempt. */
+				continue;
+			}
+
+			if (status != METADATA_SUCCESS ||
+				written < 0 ||
+				written > required)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR,
+					"Failed to fill C# %s metadata", label);
+				return nullptr;
+			}
+
+			next_records.resize(static_cast<size_t>(written));
+
+			/* Publish only a completely successful result. */
+			records.swap(next_records);
+			stored_count = written;
+			*count = written;
+
+			return records.empty() ? nullptr : records.data();
+		}
+
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"C# %s metadata capacity retry limit reached", label);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"Failed to allocate or retrieve C# %s metadata: %s",
+			label, ex.what());
+	}
+	catch (...)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR,
+			"Unexpected failure retrieving C# %s metadata", label);
+	}
+
+	return nullptr;
+}
+} // namespace
 
 netcore::netcore(char *dotnet_root, char *dotnet_loader_assembly_path) :
 	dotnet_root(dotnet_root), dotnet_loader_assembly_path(dotnet_loader_assembly_path), initialized(false)
@@ -35,11 +151,28 @@ netcore::~netcore()
 
 reflect_function *netcore::get_functions(int *count)
 {
-	this->core_get_functions(&this->functions_count, this->functions);
+	return cs_get_metadata(this->core_get_functions, this->functions, this->functions_count, count, "function");
+}
 
-	*count = this->functions_count;
+reflect_class *netcore::get_classes(int *count)
+{
+	return cs_get_metadata(this->core_get_classes, this->classes, this->classes_count, count, "class");
+}
 
-	return this->functions;
+reflect_constructor *netcore::get_constructors(int *count)
+{
+	return cs_get_metadata(
+		this->core_get_constructors, this->constructors, this->constructors_count, count, "constructor");
+}
+
+reflect_method *netcore::get_methods(int *count)
+{
+	return cs_get_metadata(this->core_get_methods, this->methods, this->methods_count, count, "method");
+}
+
+reflect_attribute *netcore::get_attributes(int *count)
+{
+	return cs_get_metadata(this->core_get_attributes, this->attributes, this->attributes_count, count, "attribute");
 }
 
 bool netcore::create_delegates()
@@ -55,6 +188,66 @@ bool netcore::create_delegates()
 	}
 
 	if (!this->create_delegate(this->delegate_get_functions, delegate_cast(&this->core_get_functions)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_classes, delegate_cast(&this->core_get_classes)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_constructors, delegate_cast(&this->core_get_constructors)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_methods, delegate_cast(&this->core_get_methods)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_attributes, delegate_cast(&this->core_get_attributes)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_create_object, delegate_cast(&this->core_create_object)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_invoke_object, delegate_cast(&this->core_invoke_object)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_invoke_static, delegate_cast(&this->core_invoke_static)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_object_attribute, delegate_cast(&this->core_get_object_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_set_object_attribute, delegate_cast(&this->core_set_object_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_get_static_attribute, delegate_cast(&this->core_get_static_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_set_static_attribute, delegate_cast(&this->core_set_static_attribute)))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_destroy_object, delegate_cast(&this->core_destroy_object)))
 	{
 		return false;
 	}
@@ -286,6 +479,160 @@ execution_result *netcore::execute_with_params(const wchar_t *function, paramete
 	}
 
 	return NULL;
+}
+
+void *netcore::create_object(const char *class_name, parameters *params, long size)
+{
+	try
+	{
+		return this->core_create_object(class_name, params, size);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+execution_result *netcore::invoke_object(void *object, const char *method, parameters *params, long size)
+{
+	try
+	{
+		return this->core_invoke_object(object, method, params, size);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+execution_result *netcore::invoke_static(const char *class_name, const char *method, parameters *params, long size)
+{
+	try
+	{
+		return this->core_invoke_static(
+			class_name,
+			method,
+			params,
+			size);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+execution_result *netcore::get_object_attribute(void *object, const char *attribute)
+{
+	try
+	{
+		return this->core_get_object_attribute(object, attribute);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+bool netcore::set_object_attribute(void *object, const char *attribute, parameters *param)
+{
+	try
+	{
+		return this->core_set_object_attribute(
+				   object,
+				   attribute,
+				   param) == 0;
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return false;
+}
+
+execution_result *netcore::get_static_attribute(const char *class_name, const char *attribute)
+{
+	try
+	{
+		return this->core_get_static_attribute(
+			class_name,
+			attribute);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return NULL;
+}
+
+bool netcore::set_static_attribute(const char *class_name, const char *attribute, parameters *param)
+{
+	try
+	{
+		return this->core_set_static_attribute(
+				   class_name,
+				   attribute,
+				   param) == 0;
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
+
+	return false;
+}
+
+void netcore::destroy_object(void *object)
+{
+	try
+	{
+		this->core_destroy_object(object);
+	}
+	catch (const std::exception &ex)
+	{
+		log_write(
+			"metacall",
+			LOG_LEVEL_ERROR,
+			"Exception caught: %s",
+			ex.what());
+	}
 }
 
 void netcore::destroy_execution_result(execution_result *er)
