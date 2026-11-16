@@ -115,7 +115,7 @@ set(GO_PORT_COMPILE_DEFINITIONS
 list(JOIN GO_PORT_COMPILE_DEFINITIONS " " GO_PORT_COMPILE_DEFINITIONS)
 
 set(GO_PORT_CGO_CFLAGS "-I${CMAKE_SOURCE_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/metacall/include -I${CMAKE_BINARY_DIR}/source/include -Wall")
-set(GO_PORT_CGO_LDFLAGS "-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d>")
+set(GO_PORT_CGO_LDFLAGS "-L${PROJECT_OUTPUT_DIR} -l$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,NAME>$<$<CONFIG:DEBUG>:d> -Wl,-rpath,${PROJECT_OUTPUT_DIR}")
 
 add_custom_target(${target}
 	COMMAND ${CMAKE_COMMAND}
@@ -236,10 +236,7 @@ if((CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDeb
 
 	# Profiles to be analyzed, the goroutine leaks profile is only generated when NodeJS loader is enabled
 	set(GO_PORT_PPROF_PROFILES cpu mem block mutex goroutine)
-	# TODO: TestGoRoutineLeaks is skipped on MacOS because it fails, so this profile is not generated there
-	if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND NOT PROJECT_OS_FAMILY MATCHES "macos")
-	# TODO: Restore it once it works on MacOS
-	# if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE)
+	if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE)
 		list(APPEND GO_PORT_PPROF_PROFILES goroutine_leaks)
 	endif()
 	list(JOIN GO_PORT_PPROF_PROFILES " " GO_PORT_PPROF_PROFILES)

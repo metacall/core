@@ -2,12 +2,14 @@ package metacall
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -781,13 +783,34 @@ func TestNodeJSFuture(t *testing.T) {
 
 func TestGoRoutineLeaks(t *testing.T) {
 	requireLoader(t, "node")
-	// TODO: Shutdown deadlock on MacOS (Destroy() does not finish within 5s), skipped until it is fixed
-	if runtime.GOOS == "darwin" {
-		t.Skip("TODO: TestGoRoutineLeaks deadlocks on MacOS")
+
+	// Isolate Destroy() in a subprocess so the main test process runtime remains intact for benchmarks
+	if os.Getenv("GO_PORT_SUBPROCESS_LEAKS") != "1" {
+		timeout := 30 * time.Second
+		if deadline, ok := t.Deadline(); ok {
+			if remaining := time.Until(deadline) - time.Second; remaining < timeout {
+				timeout = remaining
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestGoRoutineLeaks$", "-test.timeout=15s")
+		cmd.Env = append(os.Environ(), "GO_PORT_SUBPROCESS_LEAKS=1")
+		out, err := cmd.CombinedOutput()
+		if ctx.Err() != nil {
+			t.Fatalf("TestGoRoutineLeaks subprocess timed out: %v\n%s", ctx.Err(), string(out))
+		}
+		if err != nil {
+			t.Fatalf("TestGoRoutineLeaks subprocess failed: %v\n%s", err, string(out))
+		}
+		return
 	}
+
 	// This test is for race condition when shutdown occur with non-empty queue which triggers a deadlock and a goroutine leak
 	// Start the port and fill the queue
-	buffer := "module.exports = { leak_test: (x) => x }"
+	// An active unreferenced timer must not prevent NodeJS from shutting down.
+	buffer := "setInterval(() => {}, 60000).unref(); module.exports = { leak_test: (x) => x }"
 	if err := LoadFromMemory("node", buffer); err != nil {
 		t.Fatal(err)
 	}
@@ -806,7 +829,12 @@ func TestGoRoutineLeaks(t *testing.T) {
 				case <-stop:
 					return
 				default:
-					Call("leak_test", "warmup")
+					if _, err := Call("leak_test", "warmup"); err != nil {
+						if !errors.Is(err, errShutdown) {
+							t.Errorf("leak_test failed: %v", err)
+						}
+						return
+					}
 				}
 			}
 		}()
@@ -923,10 +951,6 @@ func benchmarkNodeJS(b *testing.B, n int) {
 
 func BenchmarkNodeJSSequential(b *testing.B) {
 	requireLoader(b, "node")
-	// TODO: Aborts on MacOS (uv_mutex_lock on a destroyed mutex in the NodeJS future_delete threadsafe invoke)
-	if runtime.GOOS == "darwin" {
-		b.Skip("TODO: NodeJS future_delete race on MacOS")
-	}
 	for i := 0; i < b.N; i++ {
 		benchmarkNodeJS(b, 5)
 	}
@@ -934,10 +958,6 @@ func BenchmarkNodeJSSequential(b *testing.B) {
 
 func BenchmarkNodeJSParallel(b *testing.B) {
 	requireLoader(b, "node")
-	// TODO: Aborts on MacOS (uv_mutex_lock on a destroyed mutex in the NodeJS future_delete threadsafe invoke)
-	if runtime.GOOS == "darwin" {
-		b.Skip("TODO: NodeJS future_delete race on MacOS")
-	}
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			benchmarkNodeJS(b, 5)
