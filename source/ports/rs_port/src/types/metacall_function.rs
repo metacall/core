@@ -1,6 +1,8 @@
 use super::{MetaCallError, MetaCallNull, MetaCallValue};
 use crate::{
-    bindings::{metacall_value_destroy, metacall_value_to_function, metacallfv_s},
+    bindings::{
+        metacall_value_copy, metacall_value_destroy, metacall_value_to_function, metacallfv_s,
+    },
     cast,
 };
 use std::{
@@ -17,10 +19,18 @@ unsafe impl Send for MetaCallFunction {}
 unsafe impl Sync for MetaCallFunction {}
 impl Clone for MetaCallFunction {
     fn clone(&self) -> Self {
-        Self {
-            leak: true,
-            value: self.value,
-        }
+        let value = if self.value.is_null() {
+            std::ptr::null_mut()
+        } else {
+            let copied = unsafe { metacall_value_copy(self.value) };
+            assert!(
+                !copied.is_null(),
+                "metacall_value_copy failed to clone MetaCallFunction"
+            );
+            copied
+        };
+
+        Self { leak: false, value }
     }
 }
 impl Debug for MetaCallFunction {

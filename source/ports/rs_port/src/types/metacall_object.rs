@@ -4,8 +4,8 @@ use super::{
 };
 use crate::{
     bindings::{
-        metacall_object_get, metacall_object_set, metacall_value_destroy, metacall_value_to_object,
-        metacallv_object,
+        metacall_object_get, metacall_object_set, metacall_value_copy, metacall_value_destroy,
+        metacall_value_to_object, metacallv_object,
     },
     cast, cstring_enum,
 };
@@ -28,10 +28,18 @@ unsafe impl Send for MetaCallObject {}
 unsafe impl Sync for MetaCallObject {}
 impl Clone for MetaCallObject {
     fn clone(&self) -> Self {
-        Self {
-            leak: true,
-            value: self.value,
-        }
+        let value = if self.value.is_null() {
+            std::ptr::null_mut()
+        } else {
+            let copied = unsafe { metacall_value_copy(self.value) };
+            assert!(
+                !copied.is_null(),
+                "metacall_value_copy failed to clone MetaCallObject"
+            );
+            copied
+        };
+
+        Self { leak: false, value }
     }
 }
 impl Debug for MetaCallObject {
