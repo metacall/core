@@ -173,7 +173,7 @@ configuration configuration_object_initialize(const char *name, const char *path
 	return config;
 }
 
-int configuration_object_childs_valid(set_key key, set_value val)
+static int configuration_object_childs_valid(set_key key, set_value val)
 {
 	value v = val;
 

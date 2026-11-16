@@ -58,7 +58,7 @@ static metacall_link_trampoline_type metacall_link_func(void)
 	return &GetProcAddress;
 }
 
-FARPROC metacall_link_hook(HMODULE handle, LPCSTR symbol)
+static FARPROC metacall_link_hook(HMODULE handle, LPCSTR symbol)
 {
 	void *ptr;
 
@@ -99,7 +99,7 @@ static metacall_link_trampoline_type metacall_link_func(void)
 	return &dlsym;
 }
 
-void *metacall_link_hook(void *handle, const char *symbol)
+static void *metacall_link_hook(void *handle, const char *symbol)
 {
 	void *ptr;
 

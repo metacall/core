@@ -33,14 +33,14 @@
 
 /* -- Methods -- */
 
-const char *dynlink_impl_interface_prefix_hpux(void)
+static const char *dynlink_impl_interface_prefix_hpux(void)
 {
 	static const char prefix_hpux[] = "lib";
 
 	return prefix_hpux;
 }
 
-const char *dynlink_impl_interface_extension_hpux(void)
+static const char *dynlink_impl_interface_extension_hpux(void)
 {
 	/* HP-UX uses different extensions based on architecture:
 	 * - PA-RISC systems use .sl (shared library)
@@ -56,7 +56,7 @@ const char *dynlink_impl_interface_extension_hpux(void)
 	return extension_hpux;
 }
 
-dynlink_impl dynlink_impl_interface_load_hpux(dynlink handle)
+static dynlink_impl dynlink_impl_interface_load_hpux(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 	int flags_impl;
@@ -100,7 +100,7 @@ dynlink_impl dynlink_impl_interface_load_hpux(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_hpux(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
+static int dynlink_impl_interface_symbol_hpux(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	void *symbol = NULL;
 	int result;
@@ -125,7 +125,7 @@ int dynlink_impl_interface_symbol_hpux(dynlink handle, dynlink_impl impl, const 
 	return 0;
 }
 
-int dynlink_impl_interface_unload_hpux(dynlink handle, dynlink_impl impl)
+static int dynlink_impl_interface_unload_hpux(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 

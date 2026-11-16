@@ -51,7 +51,7 @@ typedef struct loader_impl_mock_function_type
 
 } *loader_impl_mock_function;
 
-int function_mock_interface_create(function func, function_impl impl)
+static int function_mock_interface_create(function func, function_impl impl)
 {
 	(void)func;
 	(void)impl;
@@ -59,7 +59,7 @@ int function_mock_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_mock_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+static function_return function_mock_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_mock_function mock_function = (loader_impl_mock_function)impl;
 
@@ -209,7 +209,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 	return NULL;
 }
 
-function_return function_mock_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+static function_return function_mock_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -224,7 +224,7 @@ function_return function_mock_interface_await(function func, function_impl impl,
 	return NULL;
 }
 
-void function_mock_interface_destroy(function func, function_impl impl)
+static void function_mock_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_mock_function mock_function = (loader_impl_mock_function)impl;
 
@@ -236,7 +236,7 @@ void function_mock_interface_destroy(function func, function_impl impl)
 	}
 }
 
-function_interface function_mock_singleton(void)
+static function_interface function_mock_singleton(void)
 {
 	static struct function_interface_type mock_interface = {
 		&function_mock_interface_create,
@@ -248,7 +248,7 @@ function_interface function_mock_singleton(void)
 	return &mock_interface;
 }
 
-int mock_loader_impl_initialize_types(loader_impl impl)
+static int mock_loader_impl_initialize_types(loader_impl impl)
 {
 	/* TODO: move this to loader_impl by passing the structure and loader_impl_derived callback */
 
@@ -405,7 +405,7 @@ int mock_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-loader_impl_mock_function mock_function_create(loader_impl_mock_handle mock_handle)
+static loader_impl_mock_function mock_function_create(loader_impl_mock_handle mock_handle)
 {
 	loader_impl_mock_function mock_function = malloc(sizeof(struct loader_impl_mock_function_type));
 

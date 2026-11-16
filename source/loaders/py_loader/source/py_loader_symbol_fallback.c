@@ -426,6 +426,10 @@ PyObject *Py_ReturnTrue(void)
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#if defined(__clang__) || defined(__GNUC__)
 
+/* Python only declares these when it is built with Py_REF_DEBUG, they cannot be static */
+void _Py_DECREF_DecRefTotal(void);
+void _Py_INCREF_IncRefTotal(void);
+
 __attribute__((weak)) void _Py_DECREF_DecRefTotal(void)
 {
 }

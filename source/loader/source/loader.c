@@ -659,7 +659,7 @@ value loader_handle_get(void *handle, const char *name)
 	return NULL;
 }
 
-value loader_metadata_impl(plugin p, loader_impl impl)
+static value loader_metadata_impl(plugin p, loader_impl impl)
 {
 	const char *tag = plugin_name(p);
 

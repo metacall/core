@@ -32,21 +32,21 @@
 
 /* -- Methods -- */
 
-const char *dynlink_impl_interface_prefix_unix(void)
+static const char *dynlink_impl_interface_prefix_unix(void)
 {
 	static const char prefix_unix[] = "lib";
 
 	return prefix_unix;
 }
 
-const char *dynlink_impl_interface_extension_unix(void)
+static const char *dynlink_impl_interface_extension_unix(void)
 {
 	static const char extension_unix[] = "so";
 
 	return extension_unix;
 }
 
-dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
+static dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 	int flags_impl;
@@ -101,7 +101,7 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
+static int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	void *symbol = dlsym(impl, name);
 
@@ -112,7 +112,7 @@ int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, const 
 	return (*addr == NULL);
 }
 
-int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
+static int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 

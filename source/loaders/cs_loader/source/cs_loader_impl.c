@@ -43,7 +43,7 @@ typedef struct
 	reflect_function *func;
 } cs_function;
 
-int function_cs_interface_create(function func, function_impl impl)
+static int function_cs_interface_create(function func, function_impl impl)
 {
 	(void)func;
 	(void)impl;
@@ -51,7 +51,7 @@ int function_cs_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_cs_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+static function_return function_cs_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	(void)func;
 	(void)size; /* TODO: Assert size and param_count are equal, varidic not allowed in C# yet */
@@ -130,7 +130,7 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	return v;
 }
 
-function_return function_cs_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+static function_return function_cs_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -145,7 +145,7 @@ function_return function_cs_interface_await(function func, function_impl impl, f
 	return NULL;
 }
 
-void function_cs_interface_destroy(function func, function_impl impl)
+static void function_cs_interface_destroy(function func, function_impl impl)
 {
 	cs_function *cs_f = (cs_function *)impl;
 
@@ -154,7 +154,7 @@ void function_cs_interface_destroy(function func, function_impl impl)
 	free(cs_f);
 }
 
-function_interface function_cs_singleton(void)
+static function_interface function_cs_singleton(void)
 {
 	static struct function_interface_type cs_interface = {
 		&function_cs_interface_create,
@@ -166,7 +166,7 @@ function_interface function_cs_singleton(void)
 	return &cs_interface;
 }
 
-int cs_loader_impl_initialize_types(loader_impl impl)
+static int cs_loader_impl_initialize_types(loader_impl impl)
 {
 	/* TODO: move this to loader_impl by passing the structure and loader_impl_derived callback */
 

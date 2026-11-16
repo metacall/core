@@ -244,7 +244,7 @@ void py_loader_impl_value_ptr_finalize(value v, void *data)
 	}
 }
 
-int type_py_interface_create(type t, type_impl impl)
+static int type_py_interface_create(type t, type_impl impl)
 {
 	(void)t;
 	(void)impl;
@@ -252,7 +252,7 @@ int type_py_interface_create(type t, type_impl impl)
 	return 0;
 }
 
-void type_py_interface_destroy(type t, type_impl impl)
+static void type_py_interface_destroy(type t, type_impl impl)
 {
 	PyObject *builtin = (PyObject *)impl;
 
@@ -276,7 +276,7 @@ type_interface type_py_singleton(void)
 	return &py_type_interface;
 }
 
-int function_py_interface_create(function func, function_impl impl)
+static int function_py_interface_create(function func, function_impl impl)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 
@@ -306,7 +306,7 @@ int function_py_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-int future_py_interface_create(future f, future_impl impl)
+static int future_py_interface_create(future f, future_impl impl)
 {
 	(void)f;
 	(void)impl;
@@ -314,7 +314,7 @@ int future_py_interface_create(future f, future_impl impl)
 	return 0;
 }
 
-void future_py_interface_destroy(future f, future_impl impl)
+static void future_py_interface_destroy(future f, future_impl impl)
 {
 	loader_impl_py_future py_future = (loader_impl_py_future)impl;
 
@@ -331,7 +331,7 @@ void future_py_interface_destroy(future f, future_impl impl)
 	}
 }
 
-future_interface future_py_singleton(void)
+static future_interface future_py_singleton(void)
 {
 	static struct future_interface_type py_future_interface = {
 		&future_py_interface_create,
@@ -342,7 +342,7 @@ future_interface future_py_singleton(void)
 	return &py_future_interface;
 }
 
-int py_object_interface_create(object obj, object_impl impl)
+static int py_object_interface_create(object obj, object_impl impl)
 {
 	(void)obj;
 
@@ -355,7 +355,7 @@ int py_object_interface_create(object obj, object_impl impl)
 }
 
 /* TODO: get and set is actually the same as static_get and static_set but applied to an object instead of a class */
-value py_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
+static value py_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
 {
 	(void)obj;
 
@@ -382,7 +382,7 @@ value py_object_interface_get(object obj, object_impl impl, struct accessor_type
 	return v;
 }
 
-int py_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
+static int py_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
 {
 	(void)obj;
 
@@ -407,7 +407,7 @@ int py_object_interface_set(object obj, object_impl impl, struct accessor_type *
 	return result;
 }
 
-value py_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
+static value py_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
 	(void)obj;
 
@@ -502,7 +502,7 @@ release:
 	return ret;
 }
 
-value py_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+static value py_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)obj;
@@ -517,7 +517,7 @@ value py_object_interface_method_await(object obj, object_impl impl, method m, o
 	return NULL;
 }
 
-int py_object_interface_destructor(object obj, object_impl impl)
+static int py_object_interface_destructor(object obj, object_impl impl)
 {
 	(void)obj;
 	(void)impl;
@@ -527,7 +527,7 @@ int py_object_interface_destructor(object obj, object_impl impl)
 	return 0;
 }
 
-void py_object_interface_destroy(object obj, object_impl impl)
+static void py_object_interface_destroy(object obj, object_impl impl)
 {
 	(void)obj;
 
@@ -562,7 +562,7 @@ object_interface py_object_interface_singleton(void)
 	return &py_object_interface;
 }
 
-int py_class_interface_create(klass cls, class_impl impl)
+static int py_class_interface_create(klass cls, class_impl impl)
 {
 	(void)cls;
 
@@ -574,7 +574,7 @@ int py_class_interface_create(klass cls, class_impl impl)
 	return 0;
 }
 
-object py_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
+static object py_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
 {
 	(void)ctor;
 
@@ -636,7 +636,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 	return obj;
 }
 
-value py_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
+static value py_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
 {
 	(void)cls;
 
@@ -670,7 +670,7 @@ value py_class_interface_static_get(klass cls, class_impl impl, struct accessor_
 	return v;
 }
 
-int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
+static int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
 {
 	(void)cls;
 
@@ -696,7 +696,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_ty
 	return result;
 }
 
-value py_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
+static value py_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	(void)cls;
 
@@ -750,7 +750,7 @@ cleanup:
 	return ret;
 }
 
-value py_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+static value py_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)cls;
@@ -765,7 +765,7 @@ value py_class_interface_static_await(klass cls, class_impl impl, method m, clas
 	return NULL;
 }
 
-void py_class_interface_destroy(klass cls, class_impl impl)
+static void py_class_interface_destroy(klass cls, class_impl impl)
 {
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
 
@@ -797,7 +797,7 @@ class_interface py_class_interface_singleton(void)
 	return &py_class_interface;
 }
 
-int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
+static int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
 {
 	PyObject *args_tuple = PyTuple_New(1);
 
@@ -826,7 +826,7 @@ int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
 	return ret;
 }
 
-int py_loader_impl_check_async(loader_impl_py py_impl, PyObject *func)
+static int py_loader_impl_check_async(loader_impl_py py_impl, PyObject *func)
 {
 	PyObject *result = PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL);
 
@@ -1541,7 +1541,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	return NULL;
 }
 
-PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *py_future)
+static PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *py_future)
 {
 	py_loader_thread_acquire();
 
@@ -1642,7 +1642,7 @@ PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *py_future)
 	}
 }
 
-function_return function_py_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
+static function_return function_py_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 	signature s = function_signature(func);
@@ -1713,7 +1713,7 @@ finalize:
 	return v;
 }
 
-function_return function_py_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+static function_return function_py_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 	signature s = function_signature(func);
@@ -1859,7 +1859,7 @@ error:
 	return NULL;
 }
 
-void function_py_interface_destroy(function func, function_impl impl)
+static void function_py_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 
@@ -1892,7 +1892,7 @@ function_interface function_py_singleton(void)
 	return &py_function_interface;
 }
 
-int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, type_id id, const char *name)
+static int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, type_id id, const char *name)
 {
 	PyObject *builtin = PyObject_GetAttrString(py_impl->builtins_module, name);
 
@@ -1923,7 +1923,7 @@ error_get_builtin:
 	return 1;
 }
 
-int py_loader_impl_import_module(loader_impl_py py_impl, PyObject **module, const char *name)
+static int py_loader_impl_import_module(loader_impl_py py_impl, PyObject **module, const char *name)
 {
 	*module = PyImport_ImportModule(name);
 
@@ -1936,7 +1936,7 @@ int py_loader_impl_import_module(loader_impl_py py_impl, PyObject **module, cons
 	return 0;
 }
 
-int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_impl)
+static int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_impl)
 {
 	if (py_loader_impl_import_module(py_impl, &py_impl->builtins_module, "builtins") != 0)
 	{
@@ -1991,7 +1991,7 @@ error_import_module:
 	return 1;
 }
 
-int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
+static int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 {
 	if (py_loader_impl_import_module(py_impl, &py_impl->inspect_module, "inspect") != 0)
 	{
@@ -2169,7 +2169,7 @@ error_after_asyncio_module:
 	return 1;
 }
 
-int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl)
+static int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl)
 {
 	(void)impl;
 
@@ -2198,7 +2198,7 @@ error_import_module:
 }
 
 #if DEBUG_ENABLED && DEBUG_PRINT_ENABLED
-int py_loader_impl_initialize_gc(loader_impl_py py_impl)
+static int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 {
 	PyObject *flags;
 
@@ -2270,7 +2270,7 @@ error_import_module:
 }
 #endif
 
-int py_loader_impl_initialize_import(loader_impl_py py_impl)
+static int py_loader_impl_initialize_import(loader_impl_py py_impl)
 {
 	static const char import_module_str[] =
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 5
@@ -2366,7 +2366,7 @@ error_import_compile:
 	return 1;
 }
 
-int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
+static int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 {
 	static const char thread_background_module_str[] =
 		"import asyncio\n"
@@ -2560,7 +2560,7 @@ error_thread_background_compile:
 	return 1;
 }
 
-int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
+static int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
 {
 	portability_executable_path_str exe_path_str = { 0 };
 	portability_executable_path_length length = 0;
@@ -2596,7 +2596,7 @@ int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
 	return 0;
 }
 
-int py_loader_impl_initialize_argv(loader_impl_py py_impl, int argc, char **argv)
+static int py_loader_impl_initialize_argv(loader_impl_py py_impl, int argc, char **argv)
 {
 	Py_ssize_t iterator, array_size = (Py_ssize_t)(argc - 1);
 	PyObject *list = PyList_New(array_size);
@@ -2896,7 +2896,7 @@ clear_current_path:
 	return result;
 }
 
-loader_impl_py_handle py_loader_impl_handle_create(size_t size)
+static loader_impl_py_handle py_loader_impl_handle_create(size_t size)
 {
 	loader_impl_py_handle py_handle = malloc(sizeof(struct loader_impl_py_handle_type));
 
@@ -2927,7 +2927,7 @@ error_alloc_handle:
 	return NULL;
 }
 
-void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
+static void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 {
 	if (module->name != NULL)
 	{
@@ -2953,7 +2953,7 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 	}
 }
 
-void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
+static void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 {
 	py_loader_thread_acquire();
 
@@ -2968,7 +2968,7 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	free(py_handle);
 }
 
-int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception, int run_main)
+static int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception, int run_main)
 {
 	if (run_main == 0)
 	{
@@ -3043,7 +3043,7 @@ error_name_create:
 	return 1;
 }
 
-int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception)
+static int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception)
 {
 	size_t length = strlen(path);
 
@@ -3098,12 +3098,12 @@ error_name_create:
 	return 1;
 }
 
-int py_loader_impl_import_exception(PyObject *exception)
+static int py_loader_impl_import_exception(PyObject *exception)
 {
 	return /*PyErr_GivenExceptionMatches(exception, PyExc_ImportErrorPtr()) ||*/ PyErr_GivenExceptionMatches(exception, PyExc_FileNotFoundErrorPtr());
 }
 
-int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception, int run_main)
+static int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception, int run_main)
 {
 	PyObject *system_paths = PySys_GetObject("path");
 
@@ -3373,7 +3373,7 @@ int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const char *func_name, const char *parameter_name)
+static type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const char *func_name, const char *parameter_name)
 {
 	type t = NULL;
 
@@ -4031,7 +4031,7 @@ void py_loader_impl_class_cache_destroy(loader_impl_py py_impl)
 	py_impl->class_cache = NULL;
 }
 
-int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context ctx)
+static int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context ctx)
 {
 	py_loader_thread_acquire();
 

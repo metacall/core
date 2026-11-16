@@ -77,8 +77,7 @@ if(WARNINGS_ENABLED)
 		endif()
 
 		# C only flags
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes -Wold-style-definition -Wnested-externs")
-		#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wmissing-prototypes")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition -Wnested-externs")
 		#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wdeclaration-after-statement")
 
 		set(WARNINGS_C_AVAILABLE 1)

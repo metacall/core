@@ -32,7 +32,7 @@
 
 /* -- Methods -- */
 
-const char *dynlink_impl_interface_prefix_win32(void)
+static const char *dynlink_impl_interface_prefix_win32(void)
 {
 #if defined(__MINGW32__) || defined(__MINGW64__)
 	static const char prefix_win32[] = "lib";
@@ -43,7 +43,7 @@ const char *dynlink_impl_interface_prefix_win32(void)
 	return prefix_win32;
 }
 
-const char *dynlink_impl_interface_extension_win32(void)
+static const char *dynlink_impl_interface_extension_win32(void)
 {
 	static const char extension_win32[] = "dll";
 
@@ -63,7 +63,7 @@ static void dynlink_impl_interface_error_win32(const char *action, const char *p
 	LocalFree(message_buffer);
 }
 
-dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
+static dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 {
 	HMODULE impl;
 	dynlink_flags flags = dynlink_get_flags(handle);
@@ -102,7 +102,7 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
+static int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, const char *name, dynlink_symbol_addr *addr)
 {
 	FARPROC proc_addr = GetProcAddress(impl, name);
 
@@ -113,7 +113,7 @@ int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, const
 	return (*addr == NULL);
 }
 
-int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
+static int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 
