@@ -106,6 +106,18 @@ METACALL_API int metacall_error_last(metacall_exception ex);
 */
 METACALL_API void metacall_error_clear(void);
 
+/**
+*  @brief
+*    Record a throwable value as the last error for the calling thread. Called
+*    internally by metacallfv_s when a loader returns a TYPE_THROWABLE value.
+*    May also be called by ports or loaders that want to set the last error
+*    directly. Copies @v so the caller retains ownership of the original value.
+*
+*  @param[in] v
+*    Throwable value to record; must be of type TYPE_THROWABLE
+*/
+METACALL_API void metacall_error_set_last(void *v);
+
 #ifdef __cplusplus
 }
 #endif
