@@ -1,15 +1,15 @@
 use super::{MetaCallStringConversionError, MetaCallValue};
 use crate::{
     bindings::{
-        metacall_exception_type, metacall_throwable_value, metacall_value_create_exception,
-        metacall_value_destroy, metacall_value_to_exception, metacall_value_to_throwable,
+        metacall_error_from_value, metacall_error_throw, metacall_exception_type,
+        metacall_throwable_value, metacall_value_copy, metacall_value_destroy,
+        metacall_value_to_throwable,
     },
     cast, cstring,
 };
 use std::{
-    ffi::{c_char, c_void, CStr},
+    ffi::{c_void, CStr, CString},
     fmt::{self, Debug, Formatter},
-    sync::Arc,
 };
 
 unsafe impl Send for metacall_exception_type {}
@@ -17,7 +17,10 @@ unsafe impl Sync for metacall_exception_type {}
 
 /// Represents MetaCall exception. You can create an exception with [new](#method.new).
 pub struct MetaCallException {
-    exception_struct: Arc<metacall_exception_type>,
+    message: String,
+    label: String,
+    stacktrace: String,
+    code: i64,
     leak: bool,
     value: *mut c_void,
 }
@@ -27,10 +30,24 @@ unsafe impl Sync for MetaCallException {}
 
 impl Clone for MetaCallException {
     fn clone(&self) -> Self {
+        let value = if self.value.is_null() {
+            std::ptr::null_mut()
+        } else {
+            let copied = unsafe { metacall_value_copy(self.value) };
+            assert!(
+                !copied.is_null(),
+                "metacall_value_copy failed to clone MetaCallException"
+            );
+            copied
+        };
+
         Self {
-            exception_struct: self.exception_struct.clone(),
-            leak: true,
-            value: self.value,
+            message: self.message.clone(),
+            label: self.label.clone(),
+            stacktrace: self.stacktrace.clone(),
+            code: self.code,
+            leak: false,
+            value,
         }
     }
 }
@@ -48,31 +65,102 @@ impl MetaCallException {
         stacktrace: impl ToString,
         code: i64,
     ) -> Result<Self, MetaCallStringConversionError> {
-        let message = cstring!(message)?.into_raw();
-        let label = cstring!(label)?.into_raw();
-        let stacktrace = cstring!(stacktrace)?.into_raw();
-        let mut exception_struct = metacall_exception_type {
-            message: message.cast(),
-            label: label.cast(),
-            stacktrace: stacktrace.cast(),
-            code,
-        };
-        let exception_ptr = unsafe {
-            metacall_value_create_exception(&mut exception_struct as *mut _ as *mut c_void)
+        let message_str = message.to_string();
+        let label_str = label.to_string();
+        let stacktrace_str = stacktrace.to_string();
+
+        let c_message = cstring!(&message_str)?;
+        let c_label = cstring!(&label_str)?;
+        let c_stacktrace = cstring!(&stacktrace_str)?;
+        let format_str = CString::new("%s").unwrap();
+
+        let th = unsafe {
+            metacall_error_throw(
+                c_label.as_ptr(),
+                code,
+                c_stacktrace.as_ptr(),
+                format_str.as_ptr(),
+                c_message.as_ptr(),
+            )
         };
 
+        assert!(
+            !th.is_null(),
+            "metacall_error_throw failed to allocate exception throwable"
+        );
+
+        let th_obj = unsafe { metacall_value_to_throwable(th) };
+        if th_obj.is_null() {
+            unsafe { metacall_value_destroy(th) };
+            panic!("metacall_value_to_throwable returned null");
+        }
+
+        let ex_val = unsafe { metacall_throwable_value(th_obj) };
+        if ex_val.is_null() {
+            unsafe { metacall_value_destroy(th) };
+            panic!("metacall_throwable_value returned null");
+        }
+
+        let copied = unsafe { metacall_value_copy(ex_val) };
+        unsafe { metacall_value_destroy(th) };
+
+        assert!(
+            !copied.is_null(),
+            "metacall_value_copy failed to copy exception value"
+        );
+
         Ok(Self {
-            exception_struct: Arc::new(exception_struct),
-            value: exception_ptr,
+            message: message_str,
+            label: label_str,
+            stacktrace: stacktrace_str,
+            code,
+            value: copied,
             leak: false,
         })
     }
 
     #[doc(hidden)]
     pub fn new_raw(value: *mut c_void) -> Self {
-        let exception = unsafe { metacall_value_to_exception(value) };
+        let mut ex_struct = metacall_exception_type {
+            message: std::ptr::null(),
+            label: std::ptr::null(),
+            stacktrace: std::ptr::null(),
+            code: 0,
+        };
+
+        if !value.is_null() {
+            // metacall_error_from_value returns 0 on success, or non-zero if value is not an
+            // exception or throwable. If it fails, ex_struct remains null/zero-initialized.
+            let _ = unsafe { metacall_error_from_value(value, &mut ex_struct) };
+        }
+
+        let message = if ex_struct.message.is_null() {
+            String::new()
+        } else {
+            unsafe { CStr::from_ptr(ex_struct.message) }
+                .to_string_lossy()
+                .into_owned()
+        };
+        let label = if ex_struct.label.is_null() {
+            String::new()
+        } else {
+            unsafe { CStr::from_ptr(ex_struct.label) }
+                .to_string_lossy()
+                .into_owned()
+        };
+        let stacktrace = if ex_struct.stacktrace.is_null() {
+            String::new()
+        } else {
+            unsafe { CStr::from_ptr(ex_struct.stacktrace) }
+                .to_string_lossy()
+                .into_owned()
+        };
+
         Self {
-            exception_struct: Arc::new(unsafe { *(exception as *mut metacall_exception_type) }),
+            message,
+            label,
+            stacktrace,
+            code: ex_struct.code,
             leak: false,
             value,
         }
@@ -80,33 +168,26 @@ impl MetaCallException {
 
     #[doc(hidden)]
     pub fn new_raw_leak(value: *mut c_void) -> Self {
-        let exception = unsafe { metacall_value_to_exception(value) };
-        Self {
-            exception_struct: Arc::new(unsafe { *(exception as *mut metacall_exception_type) }),
-            leak: true,
-            value,
-        }
-    }
-
-    fn string_convertor(string: *const c_char) -> String {
-        String::from(unsafe { CStr::from_ptr(string) }.to_str().unwrap())
+        let mut s = Self::new_raw(value);
+        s.leak = true;
+        s
     }
 
     /// Gets the exception message.
     pub fn get_message(&self) -> String {
-        Self::string_convertor(self.exception_struct.message)
+        self.message.clone()
     }
     /// Gets the exception label.
     pub fn get_label(&self) -> String {
-        Self::string_convertor(self.exception_struct.label)
+        self.label.clone()
     }
     /// Gets the exception stacktrace.
     pub fn get_stacktrace(&self) -> String {
-        Self::string_convertor(self.exception_struct.stacktrace)
+        self.stacktrace.clone()
     }
     /// Gets the exception code.
     pub fn get_code(&self) -> i64 {
-        self.exception_struct.code
+        self.code
     }
 
     #[doc(hidden)]
@@ -222,7 +303,7 @@ impl fmt::Display for MetaCallThrowable {
 
 impl Drop for MetaCallException {
     fn drop(&mut self) {
-        if !self.leak {
+        if !self.leak && !self.value.is_null() {
             unsafe { metacall_value_destroy(self.value) }
         }
     }
