@@ -673,8 +673,63 @@ clear:
 	return result;
 }
 
-// TODO
-#if 0
+static void *py_loader_port_await_settle(void *result, void *data, int rejected)
+{
+	loader_impl impl = loader_get_impl(py_loader_tag);
+	PyObject *future = (PyObject *)data;
+	PyObject *py_result, *ret;
+
+	py_loader_thread_acquire();
+
+	py_result = py_loader_impl_value_to_capi(impl, value_type_id(result), result);
+
+	if (py_result == NULL)
+	{
+		PyErr_Clear();
+		py_result = Py_ReturnNone();
+	}
+
+	if (rejected == 0)
+	{
+		ret = PyObject_CallMethod(future, "set_result", "O", py_result);
+	}
+	else
+	{
+		/* set_exception requires an exception instance, so wrap the rejected value */
+		PyObject *exception = PyExceptionInstance_Check(py_result) ? py_result : PyObject_CallFunctionObjArgs(PyExc_RuntimeErrorPtr(), py_result, NULL);
+
+		ret = PyObject_CallMethod(future, "set_exception", "O", exception);
+
+		if (exception != py_result)
+		{
+			Py_DecRef(exception);
+		}
+	}
+
+	if (ret == NULL)
+	{
+		PyErr_Print();
+	}
+
+	Py_DecRef(ret);
+	Py_DecRef(py_result);
+	Py_DecRef(future);
+
+	py_loader_thread_release();
+
+	return NULL;
+}
+
+static void *py_loader_port_await_resolve(void *result, void *data)
+{
+	return py_loader_port_await_settle(result, data, 0);
+}
+
+static void *py_loader_port_await_reject(void *result, void *data)
+{
+	return py_loader_port_await_settle(result, data, 1);
+}
+
 static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 {
 	PyObject *name, *result = NULL;
@@ -694,24 +749,24 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 
 	if (var_args_size == 0)
 	{
-		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid number of arguments, use it like: metacall('function_name', 'asd', 123, [7, 4]);");
+		PyErr_SetString(PyExc_TypeErrorPtr(), "Invalid number of arguments, use it like: metacall_await('function_name', 'asd', 123, [7, 4]);");
 		return Py_ReturnNone();
 	}
 
 	name = PyTuple_GetItem(var_args, 0);
 
-	#if PY_MAJOR_VERSION == 2
+#if PY_MAJOR_VERSION == 2
 	{
 		if (!(PyString_Check(name) && PyString_AsStringAndSize(name, &name_str, &name_length) != -1))
 		{
 			name_str = NULL;
 		}
 	}
-	#elif PY_MAJOR_VERSION == 3
+#elif PY_MAJOR_VERSION == 3
 	{
 		name_str = PyUnicode_Check(name) ? (char *)PyUnicode_AsUTF8AndSize(name, &name_length) : NULL;
 	}
-	#endif
+#endif
 
 	if (name_str == NULL)
 	{
@@ -744,55 +799,65 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 
 	/* Execute the await */
 	{
+		PyObject *futures_module = PyImport_ImportModule("concurrent.futures");
 		void *ret;
+
+		if (futures_module == NULL)
+		{
+			goto clear;
+		}
+
+		/* The caller blocks on future.result() while the loader settles it from another thread */
+		result = PyObject_CallMethod(futures_module, "Future", NULL);
+		Py_DecRef(futures_module);
+
+		if (result == NULL)
+		{
+			goto clear;
+		}
+
+		/* This reference is owned by the callbacks, they release it once the future is settled */
+		Py_IncRef(result);
 
 		py_loader_thread_release();
 
-		/* TODO: */
-		/*
-		if (value_args != NULL)
-		{
-			ret = metacallv_s(name_str, value_args, args_size);
-		}
-		else
-		{
-			ret = metacallv_s(name_str, metacall_null_args, 0);
-		}
-		*/
+		ret = metacall_await_s(name_str, value_args != NULL ? value_args : metacall_null_args, args_size, &py_loader_port_await_resolve, &py_loader_port_await_reject, result);
 
 		py_loader_thread_acquire();
 
 		if (ret == NULL)
 		{
-			result = Py_ReturnNone();
+			/* The callbacks will not be called, release both references */
+			Py_DecRef(result);
+			Py_DecRef(result);
+			result = NULL;
+			PyErr_Format(PyExc_RuntimeErrorPtr(), "Failed to await the function '%s'", name_str);
 			goto clear;
 		}
 
-		result = py_loader_impl_value_to_capi(impl, value_type_id(ret), ret);
-
+		/* The future is settled through the callbacks, so the returned value is not needed */
+		py_loader_thread_release();
 		value_type_destroy(ret);
-
-		if (result == NULL)
-		{
-			result = Py_ReturnNone();
-			goto clear;
-		}
+		py_loader_thread_acquire();
 	}
 
 clear:
 	if (value_args != NULL)
 	{
+		py_loader_thread_release();
+
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
 			value_type_destroy(value_args[args_count]);
 		}
+
+		py_loader_thread_acquire();
 
 		free(value_args);
 	}
 
 	return result;
 }
-#endif
 
 static PyObject *py_loader_port_inspect(PyObject *self, PyObject *args)
 {
@@ -1036,6 +1101,8 @@ static PyMethodDef metacall_methods[] = {
 		"Get information about all loaded objects." },
 	{ "metacall", py_loader_port_invoke, METH_VARARGS,
 		"Call a function anonymously." },
+	{ "metacall_await", py_loader_port_await, METH_VARARGS,
+		"Call an async function anonymously, returns a concurrent.futures.Future." },
 	{ "metacall_value_create_ptr", py_loader_port_value_create_ptr, METH_VARARGS,
 		"Create a new value of type Pointer." },
 	{ "metacall_value_reference", py_loader_port_value_reference, METH_VARARGS,

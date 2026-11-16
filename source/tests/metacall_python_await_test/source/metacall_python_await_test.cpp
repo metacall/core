@@ -39,7 +39,6 @@ TEST_F(metacall_python_await_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
-			"import asyncio\n"
 			"import sys\n"
 			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
 			"from metacall import metacall_load_from_memory, metacall_await\n"
@@ -47,22 +46,10 @@ TEST_F(metacall_python_await_test, DefaultConstructor)
 			"async def yeet(n):\n"
 			"	return n\n"
 			"\"\"\"\n"
-			"result = 0\n"
-			"lock = threading.Lock()\n"
 			"metacall_load_from_memory('py', script)\n"
-			"async def test():\n"
-			"	result = await metacall_await('yeet', 1234)\n"
-			"	if result != 1234:\n"
-			"		sys.exit(1)\n"
-			"	else:\n"
-			"		lock.acquire()\n"
-			"		result = 1\n"
-			"		lock.release()\n"
-			"asyncio.run(test())\n"
-			"lock.acquire()\n"
-			"if result != 1:\n"
-			"	sys.exit(2)\n"
-			"lock.release()\n";
+			"f = metacall_await('yeet', 1234)\n"
+			"if f.result(timeout=10) != 1234:\n"
+			"	sys.exit(1)\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 	}
