@@ -495,6 +495,10 @@ value simd_json_serial_impl_deserialize_value(simdjson::dom::element v)
 
 			return v_map;
 		}
+
+		default: {
+			break;
+		}
 	}
 
 	log_write("metacall", LOG_LEVEL_ERROR, "Unsupported value type in SimdJSON implementation");

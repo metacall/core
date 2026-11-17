@@ -503,6 +503,11 @@ value class_static_get(klass cls, const char *key)
 
 				case ACCESSOR_TYPE_DYNAMIC: {
 					accessor.data.key = key;
+					break;
+				}
+
+				default: {
+					break;
 				}
 			}
 
@@ -545,6 +550,11 @@ int class_static_set(klass cls, const char *key, value v)
 
 				case ACCESSOR_TYPE_DYNAMIC: {
 					accessor.data.key = key;
+					break;
+				}
+
+				default: {
+					break;
 				}
 			}
 
