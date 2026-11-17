@@ -159,7 +159,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${NodeJS_INCLUDE_DIRS} # NodeJS includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -168,6 +167,12 @@ target_include_directories(${target}
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 	$<INSTALL_INTERFACE:include>
+)
+
+# Include NodeJS (and V8) headers as system headers to avoid getting warnings from them
+target_include_directories(${target}
+	SYSTEM PRIVATE
+	${NodeJS_INCLUDE_DIRS} # NodeJS includes
 )
 
 #
