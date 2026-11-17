@@ -106,6 +106,12 @@ target_compile_options(${target}
 	${DEFAULT_COMPILE_OPTIONS}
 )
 
+# GoogleTest ASSERT_EXIT expands to a switch without a default case, Clang reports it
+# in this file even if GoogleTest is a system header (GCC does not)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	target_compile_options(${target} PRIVATE -Wno-switch-default)
+endif()
+
 #
 # Compile features
 #

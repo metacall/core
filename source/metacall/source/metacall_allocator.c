@@ -44,6 +44,10 @@ void *metacall_allocator_create(enum metacall_allocator_id allocator_id, void *c
 				(memory_allocator_nginx_impl_pcopy)nginx_ctx->pcopy,
 				(memory_allocator_nginx_impl_pfree)nginx_ctx->pfree);
 		}
+
+		default: {
+			break;
+		}
 	}
 
 	return NULL;
