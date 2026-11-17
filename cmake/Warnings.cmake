@@ -66,7 +66,7 @@ if(WARNINGS_ENABLED)
 		#add_compile_options(-Winline)
 		#add_compile_options(-Wold-style-definition)
 		add_compile_options(-Wstrict-aliasing=2)
-		#add_compile_options(-Wundef)
+		add_compile_options(-Wundef)
 		add_compile_options(-Wredundant-decls)
 
 		if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
