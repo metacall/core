@@ -12,7 +12,7 @@ in this case: ```metacall/core```
 4. You can assign the issue to yourself, add labels or a milestone to it, and attach files if necessary.
 5. Submit the newly created issue and start working on a solution by creating a fork of the repository. <br>(<a href="https://github.com/metacall/core/issues/370">Here</a> to issue used for explanation)
 
-Please note we have a [Code of Conduct](/.github/CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+Please note we have a [Code of Conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 ## Pull Request Process
 
