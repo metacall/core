@@ -187,9 +187,7 @@ sub_python(){
 
 	if [ "${OPERATIVE_SYSTEM}" = "Linux" ]; then
 		if [ "${LINUX_DISTRO}" = "debian" ] || [ "${LINUX_DISTRO}" = "ubuntu" ]; then
-			# TODO: || [ $INSTALL_THREAD_SANITIZER = 1 ]
-			# Enable thread sanitizer instrumentation when we find the bug: https://github.com/metacall/core/issues/848
-			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
+			if [ $INSTALL_MEMCHECK = 1 ] || [ $INSTALL_ADDRESS_SANITIZER = 1 ] || [ $INSTALL_THREAD_SANITIZER = 1 ] || [ $INSTALL_MEMORY_SANITIZER = 1 ]; then
 				# Download Python build dependencies and source
 				PYTHON_PKG=$(apt-cache show python3 | grep ^Depends | head -n 1 | awk '{print $2}' | cut -d',' -f1)
 				$SUDO_CMD apt-get build-dep -y "${PYTHON_PKG}"
@@ -221,7 +219,12 @@ sub_python(){
 					fi
 				elif [ $INSTALL_THREAD_SANITIZER = 1 ]; then
 					export TSAN_OPTIONS="halt_on_error=0:use_sigaltstack=0"
-					BUILD_FLAGS="--with-thread-sanitizer" # --disable-gil
+					# Disable mimalloc, it is not used as allocator (pymalloc is disabled, so it uses malloc) but its constructor
+					# registers a thread exit destructor in the thread that loads libpython, which sets itself again on each call,
+					# so it runs on the last destructor iteration after TSan has destroyed the thread state and it segfaults when
+					# libpython is loaded from a thread that exits, like NodeJS thread: https://github.com/metacall/core/issues/848
+					# This is only valid without --disable-gil, the free-threaded build requires mimalloc
+					BUILD_FLAGS="--with-thread-sanitizer --without-mimalloc" # --disable-gil
 					BUILD_LDFLAGS="-fsanitize=thread"
 					# PYTHON_EXE="${PYTHON_PKG}t"
 					PYTHON_EXE="${PYTHON_PKG}"
