@@ -225,6 +225,9 @@ sub_python(){
 					# libpython is loaded from a thread that exits, like NodeJS thread: https://github.com/metacall/core/issues/848
 					# This is only valid without --disable-gil, the free-threaded build requires mimalloc
 					BUILD_FLAGS="--with-thread-sanitizer --without-mimalloc" # --disable-gil
+					# Use -O1 (overrides -O0), with Clang and -O0 the frame of _PyEval_EvalFrameDefault in Python 3.12 is around 50KB,
+					# so the NodeJS <-> Python recursion of node_port test overflows the V8 stack size (8MB) of NodeJS thread
+					BUILD_CFLAGS="-O1"
 					BUILD_LDFLAGS="-fsanitize=thread"
 					# PYTHON_EXE="${PYTHON_PKG}t"
 					PYTHON_EXE="${PYTHON_PKG}"
