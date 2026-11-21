@@ -1615,7 +1615,7 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 
 	if (f != NULL)
 	{
-		void *args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE] = { NULL };
 
 		signature s = function_signature(f);
 
@@ -1672,7 +1672,7 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 			/* If index is valid, cast values and build arguments */
 			if (index < METACALL_ARGS_SIZE)
 			{
-				type t = signature_get_type(s, iterator);
+				type t = signature_get_type(s, index);
 
 				if (t != NULL)
 				{
@@ -1958,7 +1958,7 @@ void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size,
 
 	if (f != NULL)
 	{
-		void *args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE] = { NULL };
 
 		signature s = function_signature(f);
 
@@ -2015,7 +2015,7 @@ void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size,
 			/* If index is valid, cast values and build arguments */
 			if (index < METACALL_ARGS_SIZE)
 			{
-				type t = signature_get_type(s, iterator);
+				type t = signature_get_type(s, index);
 
 				if (t != NULL)
 				{
