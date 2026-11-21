@@ -139,6 +139,75 @@ TEST_F(metacall_map_test, DefaultConstructor)
 		metacall_value_destroy(reversed_values[0]);
 		metacall_value_destroy(reversed_values[1]);
 
+		/* Call by map using reversed integer keys array */
+		void *reversed_int_keys[] = {
+			metacall_value_create_int(1),
+			metacall_value_create_int(0)
+		};
+
+		void *reversed_int_values[] = {
+			metacall_value_create_long(2),
+			metacall_value_create_long(10)
+		};
+
+		ret = metacallfmv(func, reversed_int_keys, reversed_int_values);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)20);
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(reversed_int_keys[0]);
+		metacall_value_destroy(reversed_int_keys[1]);
+
+		metacall_value_destroy(reversed_int_values[0]);
+		metacall_value_destroy(reversed_int_values[1]);
+
+		/* Call by map with out-of-range integer key */
+		void *invalid_int_keys[] = {
+			metacall_value_create_int(99),
+			metacall_value_create_int(0)
+		};
+
+		void *invalid_int_values[] = {
+			metacall_value_create_long(2),
+			metacall_value_create_long(10)
+		};
+
+		ret = metacallfmv(func, invalid_int_keys, invalid_int_values);
+
+		EXPECT_EQ((void *)NULL, (void *)ret);
+
+		metacall_value_destroy(invalid_int_keys[0]);
+		metacall_value_destroy(invalid_int_keys[1]);
+
+		metacall_value_destroy(invalid_int_values[0]);
+		metacall_value_destroy(invalid_int_values[1]);
+
+		/* Call by map with unknown parameter name */
+		static const char unknown[] = "unknown";
+
+		void *unknown_str_keys[] = {
+			metacall_value_create_string(unknown, sizeof(unknown) - 1),
+			metacall_value_create_string(left, sizeof(left) - 1)
+		};
+
+		void *unknown_str_values[] = {
+			metacall_value_create_long(2),
+			metacall_value_create_long(10)
+		};
+
+		ret = metacallfmv(func, unknown_str_keys, unknown_str_values);
+
+		EXPECT_EQ((void *)NULL, (void *)ret);
+
+		metacall_value_destroy(unknown_str_keys[0]);
+		metacall_value_destroy(unknown_str_keys[1]);
+
+		metacall_value_destroy(unknown_str_values[0]);
+		metacall_value_destroy(unknown_str_values[1]);
+
 		/* Call by array using serial */
 		ret = metacallfs(func, args_array, sizeof(args_array), allocator);
 

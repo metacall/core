@@ -1623,6 +1623,12 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 
 		value ret;
 
+		if (args_count > METACALL_ARGS_SIZE)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Argument count exceeds METACALL_ARGS_SIZE in metacallfmv");
+			return NULL;
+		}
+
 		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			if (value_validate(keys[iterator]) != 0)
@@ -1663,14 +1669,14 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 
 				key_index = value_to_int((value)keys[iterator]);
 
-				if (key_index >= 0 && key_index < METACALL_ARGS_SIZE)
+				if (key_index >= 0 && (size_t)key_index < args_count)
 				{
 					index = (size_t)key_index;
 				}
 			}
 
 			/* If index is valid, cast values and build arguments */
-			if (index < METACALL_ARGS_SIZE)
+			if (index < args_count)
 			{
 				type t = signature_get_type(s, index);
 
@@ -1962,9 +1968,15 @@ void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size,
 
 		signature s = function_signature(f);
 
-		size_t iterator;
+		size_t iterator, args_count = signature_count(s);
 
 		value ret;
+
+		if (size > METACALL_ARGS_SIZE || size != args_count)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid size in metacallfmv_await_s");
+			return NULL;
+		}
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
@@ -2006,14 +2018,14 @@ void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size,
 
 				key_index = value_to_int((value)keys[iterator]);
 
-				if (key_index >= 0 && key_index < METACALL_ARGS_SIZE)
+				if (key_index >= 0 && (size_t)key_index < args_count)
 				{
 					index = (size_t)key_index;
 				}
 			}
 
 			/* If index is valid, cast values and build arguments */
-			if (index < METACALL_ARGS_SIZE)
+			if (index < args_count)
 			{
 				type t = signature_get_type(s, index);
 
