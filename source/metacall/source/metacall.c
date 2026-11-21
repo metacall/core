@@ -39,6 +39,7 @@
 
 #include <portability/portability_atexit.h>
 #include <portability/portability_constructor.h>
+#include <portability/portability_library_path.h>
 #include <portability/portability_path.h>
 
 #include <dynlink/dynlink.h>
@@ -213,13 +214,20 @@ static int metacall_self_load(void)
 	loader_tag tag = "c";
 	loader_path pkg = "metacall";
 	size_t length = 0;
+	dynlink_path api_path = { 0 };
 	void *options, **m, **t, **a;
-	int result;
+	const char *keys[] = { "include_search_paths", "headers", "libs" };
+	const char *paths[] = { inc_path, hdr_path, lib_file };
+	int result = 1;
 
-	if (dynlink_library_path(name, lib_path, &length) != 0)
+	dynlink_platform_name(name, lib_path);
+	if (portability_library_path_find(lib_path, raw_lib_file, &length) != 0)
 	{
 		return 1;
 	}
+
+	memcpy(lib_path, raw_lib_file, length + 1);
+	length = portability_path_get_directory_inplace(lib_path, length + 1) - 1;
 
 	/* Strip trailing slash if present to avoid double slash //.. which breaks canonical path resolution */
 	if (length > 0 && (lib_path[length - 1] == '/' || lib_path[length - 1] == '\\'))
@@ -227,7 +235,6 @@ static int metacall_self_load(void)
 		lib_path[length - 1] = '\0';
 	}
 
-	snprintf(raw_lib_file, sizeof(raw_lib_file), "%s/%s%s.%s", lib_path, dynlink_prefix(), name, dynlink_extension());
 	snprintf(raw_hdr_path, sizeof(raw_hdr_path), "%s/../include/metacall/metacall.h", lib_path);
 	snprintf(raw_inc_path, sizeof(raw_inc_path), "%s/../include", lib_path);
 
@@ -249,6 +256,13 @@ static int metacall_self_load(void)
 			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall self-load could not find metacall.h header");
 			return 1;
 		}
+
+		/* Development builds keep generated API headers next to the built library. */
+		int api_length = snprintf(api_path, sizeof(api_path), "%s/source/metacall/include", lib_path);
+		if (api_length < 0 || (size_t)api_length >= sizeof(api_path))
+		{
+			return 1;
+		}
 	}
 
 	(void)portability_path_canonical(raw_inc_path, strnlen(raw_inc_path, sizeof(raw_inc_path)) + 1, inc_path, sizeof(inc_path));
@@ -263,32 +277,45 @@ static int metacall_self_load(void)
 
 	m = metacall_value_to_map(options);
 
-	/* 1. include_search_paths: [ inc_path ] */
-	m[0] = metacall_value_create_array(NULL, 2);
-	t = metacall_value_to_array(m[0]);
-	t[0] = metacall_value_create_string("include_search_paths", sizeof("include_search_paths") - 1);
-	t[1] = metacall_value_create_array(NULL, 1);
-	a = metacall_value_to_array(t[1]);
-	a[0] = metacall_value_create_string(inc_path, strlen(inc_path));
+	for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); ++i)
+	{
+		const int has_api_path = i == 0 && api_path[0] != '\0';
 
-	/* 2. headers: [ hdr_path ] */
-	m[1] = metacall_value_create_array(NULL, 2);
-	t = metacall_value_to_array(m[1]);
-	t[0] = metacall_value_create_string("headers", sizeof("headers") - 1);
-	t[1] = metacall_value_create_array(NULL, 1);
-	a = metacall_value_to_array(t[1]);
-	a[0] = metacall_value_create_string(hdr_path, strlen(hdr_path));
+		m[i] = metacall_value_create_array(NULL, 2);
+		if (m[i] == NULL)
+		{
+			goto self_load_cleanup;
+		}
 
-	/* 3. libs: [ lib_file ] */
-	m[2] = metacall_value_create_array(NULL, 2);
-	t = metacall_value_to_array(m[2]);
-	t[0] = metacall_value_create_string("libs", sizeof("libs") - 1);
-	t[1] = metacall_value_create_array(NULL, 1);
-	a = metacall_value_to_array(t[1]);
-	a[0] = metacall_value_create_string(lib_file, strlen(lib_file));
+		t = metacall_value_to_array(m[i]);
+		t[0] = metacall_value_create_string(keys[i], strlen(keys[i]));
+		t[1] = metacall_value_create_array(NULL, has_api_path ? 2 : 1);
 
-	/* Load package into handle */
+		if (t[0] == NULL || t[1] == NULL)
+		{
+			goto self_load_cleanup;
+		}
+
+		a = metacall_value_to_array(t[1]);
+		a[0] = metacall_value_create_string(paths[i], strlen(paths[i]));
+		if (a[0] == NULL)
+		{
+			goto self_load_cleanup;
+		}
+
+		if (has_api_path)
+		{
+			a[1] = metacall_value_create_string(api_path, strlen(api_path));
+			if (a[1] == NULL)
+			{
+				goto self_load_cleanup;
+			}
+		}
+	}
+
 	result = loader_load_from_package(tag, pkg, &metacall_self_handle, options);
+
+self_load_cleanup:
 	metacall_value_destroy(options);
 	return result;
 }
@@ -2539,6 +2566,11 @@ int metacall_clear(void *handle)
 		/* TODO: Implement error handling */
 		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_clear is not valid", handle);
 		return 1;
+	}
+
+	if (handle == metacall_self_handle)
+	{
+		metacall_self_handle = NULL;
 	}
 
 	return loader_clear(handle);

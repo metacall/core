@@ -134,5 +134,8 @@ TEST_F(metacall_c_metacall_test, OptInSelfLoad)
 		metacall_value_destroy(export_val);
 	}
 
+	EXPECT_EQ(0, metacall_clear(handle));
+	EXPECT_EQ((void *)NULL, metacall_handle_self());
+
 	metacall_destroy();
 }
