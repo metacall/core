@@ -248,3 +248,17 @@ TEST_F(adt_set_test, DefaultConstructor)
 		set_destroy(s);
 	}
 }
+TEST(adt_hash_test, StringHashUsesFirstCharacter)
+{
+	EXPECT_NE(
+		hash_callback_str((hash_key) "abc"),
+		hash_callback_str((hash_key) "xbc"));
+
+	EXPECT_NE(
+		hash_callback_str((hash_key) "a"),
+		hash_callback_str((hash_key) "b"));
+
+	EXPECT_NE(
+		hash_callback_str((hash_key) "metacall"),
+		hash_callback_str((hash_key) "detacall"));
+}
