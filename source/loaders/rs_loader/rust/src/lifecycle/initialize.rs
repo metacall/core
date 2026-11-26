@@ -18,6 +18,13 @@ pub unsafe extern "C" fn rs_loader_impl_initialize(
     unsafe {
         api::define_type(
             loader_impl,
+            "bool",
+            PrimitiveMetacallProtocolTypes::Bool,
+            std::ptr::null_mut::<c_void>(),
+            std::ptr::null_mut::<c_void>(),
+        );
+        api::define_type(
+            loader_impl,
             "i8",
             PrimitiveMetacallProtocolTypes::Char,
             std::ptr::null_mut::<c_void>(),
