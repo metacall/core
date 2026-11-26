@@ -184,6 +184,95 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
+		/* Call by map with reversed keys using serial */
+		static const char args_map_reversed[] = "{\"b\":2,\"a\":10}";
+
+		ret = metacallfms_await(
+			func, args_map_reversed, sizeof(args_map_reversed), allocator, [](void *result, void *) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
+
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
+
+				EXPECT_EQ((double)metacall_value_to_double(result), (double)12.0);
+
+				printf("hello_boy_await future (from reversed map serial) callback: %f\n", metacall_value_to_double(result));
+
+				fflush(stdout);
+
+				++success_callbacks;
+
+				return NULL;
+			},
+			hello_boy_await_fail, NULL);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_FUTURE);
+
+		metacall_value_destroy(ret);
+
+		/* Call by map using reversed keys array with metacallfmv_await_s */
+		void *reversed_keys[] = {
+			metacall_value_create_string(right, sizeof(right) - 1),
+			metacall_value_create_string(left, sizeof(left) - 1)
+		};
+
+		void *reversed_values[] = {
+			metacall_value_create_double(2.0),
+			metacall_value_create_double(10.0)
+		};
+
+		ret = metacallfmv_await_s(
+			func, reversed_keys, reversed_values, 2, [](void *result, void *) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
+
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
+
+				EXPECT_EQ((double)metacall_value_to_double(result), (double)12.0);
+
+				printf("hello_boy_await future (from reversed map array) callback: %f\n", metacall_value_to_double(result));
+
+				fflush(stdout);
+
+				++success_callbacks;
+
+				return NULL;
+			},
+			hello_boy_await_fail, NULL);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_FUTURE);
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(reversed_keys[0]);
+		metacall_value_destroy(reversed_keys[1]);
+
+		metacall_value_destroy(reversed_values[0]);
+		metacall_value_destroy(reversed_values[1]);
+
+		/* Call by map with out-of-range integer key with metacallfmv_await_s */
+		void *invalid_keys[] = {
+			metacall_value_create_int(99),
+			metacall_value_create_int(0)
+		};
+
+		void *invalid_values[] = {
+			metacall_value_create_double(2.0),
+			metacall_value_create_double(10.0)
+		};
+
+		ret = metacallfmv_await_s(func, invalid_keys, invalid_values, 2, hello_boy_await_ok, hello_boy_await_fail, NULL);
+
+		EXPECT_EQ((void *)NULL, (void *)ret);
+
+		metacall_value_destroy(invalid_keys[0]);
+		metacall_value_destroy(invalid_keys[1]);
+
+		metacall_value_destroy(invalid_values[0]);
+		metacall_value_destroy(invalid_values[1]);
+
 		/* Call by map using serial (segmentation fault on vaule destroy) */
 		static const char args_random_map[] = "{\"token\":\"abc\",\"serial\":[\"XYZ\",\"ABC\"],\"range\":\"eee\"}";
 
@@ -268,8 +357,8 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		/* Total amount of successful callbacks must be 26 */
-		EXPECT_EQ((int)success_callbacks, (int)26);
+		/* Total amount of successful callbacks must be 28 */
+		EXPECT_EQ((int)success_callbacks, (int)28);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 }
