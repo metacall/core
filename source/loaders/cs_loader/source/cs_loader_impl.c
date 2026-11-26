@@ -122,6 +122,10 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 				v = value_create_string((const char *)result->ptr, strlen((const char *)result->ptr));
 				break;
 			}
+
+			default: {
+				break;
+			}
 		}
 	}
 

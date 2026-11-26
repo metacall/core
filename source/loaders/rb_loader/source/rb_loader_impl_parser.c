@@ -161,6 +161,10 @@ int rb_loader_impl_key_parse(const char *source, set function_map)
 
 				break;
 			}
+
+			default: {
+				break;
+			}
 		}
 
 		if ((comment == rb_loader_impl_comment_state_none && comment_multi_line == 1) &&

@@ -290,6 +290,11 @@ value object_get(object obj, const char *key)
 
 				case ACCESSOR_TYPE_DYNAMIC: {
 					accessor.data.key = key;
+					break;
+				}
+
+				default: {
+					break;
 				}
 			}
 
@@ -332,6 +337,11 @@ int object_set(object obj, const char *key, value v)
 
 				case ACCESSOR_TYPE_DYNAMIC: {
 					accessor.data.key = key;
+					break;
+				}
+
+				default: {
+					break;
 				}
 			}
 

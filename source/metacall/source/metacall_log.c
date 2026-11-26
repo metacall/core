@@ -89,6 +89,10 @@ int metacall_log(enum metacall_log_id log_id, void *ctx)
 				log_policy_storage_sequential(),
 				log_policy_stream_custom(custom_ctx->context, custom_ctx->stream_write, custom_ctx->stream_flush));
 		}
+
+		default: {
+			break;
+		}
 	}
 
 	return 1;
