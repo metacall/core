@@ -135,6 +135,10 @@ def metacall_load_from_memory(tag, buffer):
 def metacall(function_name, *args):
 	return module.metacall(function_name, *args)
 
+# Async invocation, returns a concurrent.futures.Future
+def metacall_await(function_name, *args):
+	return module.metacall_await(function_name, *args)
+
 # Wrap metacall inspect and transform the json string into a dict
 def metacall_inspect():
 	data = module.metacall_inspect()
