@@ -727,7 +727,7 @@ As a result, each loader must use the following instructions:
 The result of the current destruction model is that: **`metacall_initialize` and `metacall_destroy` must be done from the same thread**. This should not be a problem for developers using the CLI. But embedders must take this into account.
 
 2. **Python is the host language**, and it launches NodeJS in a new (V8) thread:
-   [TODO: Explain why callbacks deadlock in this context]
+   This model can lead to deadlocks when a NodeJS function calls back into Python. The NodeJS loader executes calls on its separate V8 event-loop thread. For synchronous calls, the calling thread waits until the NodeJS operation completes. If NodeJS invokes a Python callback while the Python-side call is still waiting, the callback may need the Python Global Interpreter Lock (GIL). If the GIL is held by the waiting Python thread, the callback cannot proceed, while the Python thread cannot continue until NodeJS finishes. This creates a deadlock. Asynchronous, non-blocking callbacks between runtimes are needed to avoid this problem.
 
 In order to end this section, here's a list of ideas that are not completely implemented yet, but they are in progress:
 
