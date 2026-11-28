@@ -24,17 +24,18 @@
 
 hash hash_callback_str(const hash_key key)
 {
-	/* djb2 */
-	const char *str = (const char *)key;
+    /* djb2 */
+    const unsigned char *str = (const unsigned char *)key;
 
-	hash h = 0x1505;
+    hash h = 0x1505;
+    unsigned char c;
 
-	while (*str++ != '\0')
-	{
-		h = (hash)(((h << 5) + h) + *str);
-	}
+    while ((c = *str++) != '\0')
+    {
+        h = ((h << 5) + h) + c;
+    }
 
-	return h;
+    return h;
 }
 
 hash hash_callback_ptr(const hash_key key)
