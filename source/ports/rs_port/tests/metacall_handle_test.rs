@@ -26,6 +26,9 @@ fn metacall_handle() {
     if result1.is_ok() {
         let out = metacall_handle_no_arg::<f64>(&mut handle1, "greet").unwrap();
         assert_eq!(out, 1.0, "Testing greet 1");
+
+        assert!(handle1.has_function("greet").unwrap());
+        assert!(!handle1.has_function("yeet").unwrap());
     }
 
     // Load second handle
@@ -48,5 +51,8 @@ fn metacall_handle() {
 
         let out = metacall_handle_no_arg::<f64>(&mut handle2, "yeet").unwrap();
         assert_eq!(out, 3.0, "Testing yeet 2");
+
+        assert!(handle2.has_function("greet").unwrap());
+        assert!(handle2.has_function("yeet").unwrap());
     }
 }
