@@ -1,9 +1,10 @@
 use crate::{
     bindings::{
-        metacall_clear, metacall_execution_path, metacall_load_from_file, metacall_load_from_memory,
+        metacall_clear, metacall_execution_path, metacall_handle_function, metacall_load_from_file,
+        metacall_load_from_memory,
     },
     cstring_enum,
-    types::MetaCallLoaderError,
+    types::{MetaCallError, MetaCallLoaderError},
 };
 use std::{
     ffi::CString,
@@ -122,6 +123,25 @@ impl Handle {
 
     pub fn as_mut_raw_ptr(&self) -> *mut c_void {
         self.0
+    }
+
+    /// Returns `true` if this handle exports a callable function named `name`.
+    ///
+    /// A null handle (the state of [`Handle::new`] before a script is loaded
+    /// into it) never exports anything and returns `Ok(false)`.
+    pub fn has_function(&self, name: impl ToString) -> Result<bool, MetaCallError> {
+        if self.0.is_null() {
+            return Ok(false);
+        }
+
+        let c_name = cstring_enum!(name, MetaCallError)?;
+
+        // SAFETY: `self.0` is non-null and was populated by `metacall_load_*`,
+        // so the C API validates it as a handle; `c_name` is NUL-terminated.
+        // `metacall_handle_function` only reads the handle's symbol table.
+        let function = unsafe { metacall_handle_function(self.0, c_name.as_ptr()) };
+
+        Ok(!function.is_null())
     }
 }
 
